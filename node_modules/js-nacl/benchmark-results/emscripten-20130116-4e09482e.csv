@@ -1,0 +1,55 @@
+Firefox/23.0
+Test,Iterations per second,Seconds per iteration
+"nacl.crypto_hash_string(\"hello\")",1413.5864135864138,0.0007074204946996465
+"nacl.crypto_hash(hello)",1334.6653346653347,0.000749251497005988
+"nacl.crypto_box_keypair_from_seed(hello)",12.18369259606373,0.08207692307692308
+"nacl.crypto_box_precompute(kp.boxPk, kp.boxSk)",12.298959318826869,0.0813076923076923
+"nacl.crypto_box_random_nonce()",42138.861138861146,0.000023731063749081335
+"nacl.crypto_box_precomputed(hello, n, selfShared)",13887.11288711289,0.00007200920797064958
+"nacl.crypto_box_open_precomputed(c, n, selfShared)",11140.859140859142,0.00008975968436154949
+"nacl.crypto_box(hello, n, kp.boxPk, kp.boxSk)",12.264150943396226,0.08153846153846155
+"nacl.crypto_box_open(c2, n, kp.boxPk, kp.boxSk)",12.275731822474032,0.08146153846153846
+"nacl.crypto_sign(m, skp.signSk)",15.932521087160262,0.06276470588235294
+"nacl.crypto_sign_open(signed, skp.signPk)",5.2128583840139004,0.19183333333333336
+
+Chrome/28.0.1500.95
+Test,Iterations per second,Seconds per iteration
+"nacl.crypto_hash_string(\"hello\")",1842.1578421578424,0.0005428416485900216
+"nacl.crypto_hash(hello)",1923.0769230769233,0.00052
+"nacl.crypto_box_keypair_from_seed(hello)",14.9402390438247,0.06693333333333333
+"nacl.crypto_box_precompute(kp.boxPk, kp.boxSk)",15.065913370998116,0.066375
+"nacl.crypto_box_random_nonce()",228716.28371628374,0.0000043722291380025765
+"nacl.crypto_box_precomputed(hello, n, selfShared)",9337.66233766234,0.00010709318497913768
+"nacl.crypto_box_open_precomputed(c, n, selfShared)",6082.9170829170835,0.00016439481031368038
+"nacl.crypto_box(hello, n, kp.boxPk, kp.boxSk)",14.985014985014987,0.06673333333333333
+"nacl.crypto_box_open(c2, n, kp.boxPk, kp.boxSk)",14.970059880239521,0.0668
+"nacl.crypto_sign(m, skp.signSk)",40.97560975609756,0.024404761904761905
+"nacl.crypto_sign_open(signed, skp.signPk)",13.133208255159474,0.07614285714285715
+
+Safari/534.59.8
+Test,Iterations per second,Seconds per iteration
+"nacl.crypto_hash_string(\"hello\")",1806.1938061938065,0.000553650442477876
+"nacl.crypto_hash(hello)",1851.1488511488515,0.0005402050728548299
+"nacl.crypto_box_keypair_from_seed(hello)",2.8490028490028494,0.351
+"nacl.crypto_box_precompute(kp.boxPk, kp.boxSk)",2.9069767441860463,0.34400000000000003
+"nacl.crypto_box_random_nonce()",374576.4235764236,0.000002669682171803782
+"nacl.crypto_box_precomputed(hello, n, selfShared)",6107.8921078921085,0.00016372260385999344
+"nacl.crypto_box_open_precomputed(c, n, selfShared)",4816.183816183817,0.00020763327110557973
+"nacl.crypto_box(hello, n, kp.boxPk, kp.boxSk)",2.9296875,0.3413333333333333
+"nacl.crypto_box_open(c2, n, kp.boxPk, kp.boxSk)",2.9069767441860463,0.34400000000000003
+"nacl.crypto_sign(m, skp.signSk)",3.770028275212064,0.26525
+"nacl.crypto_sign_open(signed, skp.signPk)",1.1242270938729624,0.8895
+
+node/v0.10.15
+Test,Iterations per second,Seconds per iteration
+"nacl.crypto_hash_string(\"hello\")",2349.65034965035,0.000425595238095238
+"nacl.crypto_hash(hello)",2741.2587412587413,0.0003647959183673469
+"nacl.crypto_box_keypair_from_seed(hello)",16.472868217054263,0.06070588235294118
+"nacl.crypto_box_precompute(kp.boxPk, kp.boxSk)",16.536964980544745,0.06047058823529412
+"nacl.crypto_box_random_nonce()",55043.95604395605,0.00001816729886204831
+"nacl.crypto_box_precomputed(hello, n, selfShared)",6516.483516483518,0.00015345699831365934
+"nacl.crypto_box_open_precomputed(c, n, selfShared)",5356.643356643357,0.0001866840731070496
+"nacl.crypto_box(hello, n, kp.boxPk, kp.boxSk)",16.377649325626205,0.06105882352941176
+"nacl.crypto_box_open(c2, n, kp.boxPk, kp.boxSk)",16.361886429258902,0.061117647058823533
+"nacl.crypto_sign(m, skp.signSk)",38.80597014925374,0.025769230769230763
+"nacl.crypto_sign_open(signed, skp.signPk)",11.374407582938389,0.08791666666666667

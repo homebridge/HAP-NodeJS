@@ -1,0 +1,14 @@
+# vim and emacs ancillary files
+*~
+*.swp
+*.swo
+
+# other stuff
+.DS_Store?
+
+# locally installed node modules
+node_modules
+.gitmodules
+
+# awsbox setup notes
+awsbox_notes.txt

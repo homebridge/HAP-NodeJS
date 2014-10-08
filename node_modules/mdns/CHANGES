@@ -1,0 +1,86 @@
+CHANGES
+
+Version 2.1.4 to 2.2.0
+
+   - moved the repository back from Wizcorp/node_mdns to agnat/node_mdns
+
+Version 2.1.3 to 2.1.4
+
+   - added service to errors from the resolver (bjornstar)
+
+Version 2.1.2 to 2.1.3
+
+   - applied the fix from 2.1.0 to remaining parts of the code base (achingbrain)
+
+Version 2.1.1 to 2.1.2
+
+   - fixed an exception that was thrown when a service went down along with its network interface (achingbrain)
+
+Version 2.1.0 to 2.1.1
+
+   - fixed the interfaceIndex patch by mrose17 as it was breaking on Node 0.8 (ronkorving)
+
+Version 2.0.0-dev to 2.1.0
+
+   - errno was broken in Node v0.10 (mrose17)
+   - allow interfaceIndex to be "really big" (mrose17)
+
+Version 1.1.0 to 2.0.0-dev
+
+   - empty version release (agnat)
+
+Version 1.0.0 to 1.1.0
+
+   - better handling of network interfaces
+   - error handling: exceptions/errors contain the numeric error code now
+
+Version 0.0.7 to 1.0.0
+
+   - replaced IOWatcher with a libuv based SocketWatcher (Tony Ealden)
+   - fixed an API typo: filterAdresses -> filterAddresses (major version bumped)
+   - first release that actually works on windows
+
+Version 0.0.6 to 0.0.7
+
+   - Bugfix: convert NULL strings to undefined values in callbacks
+
+Version 0.0.5 to 0.0.6
+
+   - use node-gyp in gyp based builds
+   - prepared a windows port
+
+Version 0.0.4 to 0.0.5
+
+   - Publish and receive TXT records
+
+   - Build universal binaries on Mac OS
+     This helps to work around a architecture mismatch between gyp-build nodes
+     and waf-build addons.
+
+   - Added experimental gyp-based build
+
+   - Continuous integration and coverage testing.
+
+   - Fixed FreeBSD build
+
+Version 0.0.3 to 0.0.4
+
+   - New service type objects:
+     The strings have been replaced with a small ServiceType object. Also, older
+     versions used TCP as the default protocol. The protocol is now mandatory.
+     However, the new syntax is much more flexible. See user guide at
+     http://agnat.github.com/node_mdns/user_guide.html#service_types.
+
+   - The 'info' object is now called 'service'
+
+   - The info.regtype property is now called service.type
+
+   - The info.serviceName property is now called service.name
+
+   - Callback signature changed:
+     flags is now a property of the service object (service.flags)
+
+   - possibly more
+
+
+vim: spell spelllang=en_us :

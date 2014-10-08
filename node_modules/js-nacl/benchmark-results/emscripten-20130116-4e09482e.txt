@@ -1,0 +1,45 @@
+emscripten git commit 4e09482e006eda934527e1707036d74245d8dd91
+Date:   Wed Jan 16 17:41:23 2013 -0800
+"Merge pull request #786 from MichaelRiss/master"
+
+Macbook Air late 2010 (3,1), 1.6 GHz Core 2 Duo, 4 GB RAM, OS X 10.6.8
+
+
+--
+
+scrypt results:
+
+
+
+
+Firefox/23.0
+Starting...
+0123456789abcdef
+
+Milliseconds for //16/1/1: 5
+Milliseconds for password/NaCl/1024/8/16: 1469
+Milliseconds for pleaseletmein/SodiumChloride/16384/8/1: 1473
+
+...done.
+
+
+Chrome/28.0.1500.95
+Starting...
+0123456789abcdef
+
+Milliseconds for //16/1/1: 1
+Milliseconds for password/NaCl/1024/8/16: 1249
+Milliseconds for pleaseletmein/SodiumChloride/16384/8/1: 1268
+
+...done.
+
+
+Safari/534.59.8
+Starting...
+0123456789abcdef
+
+Milliseconds for //16/1/1: 5
+Milliseconds for password/NaCl/1024/8/16: 14353
+Milliseconds for pleaseletmein/SodiumChloride/16384/8/1: 14167
+
+...done.

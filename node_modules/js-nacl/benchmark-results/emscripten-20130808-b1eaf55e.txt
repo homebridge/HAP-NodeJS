@@ -1,0 +1,57 @@
+emscripten git commit b1eaf55eefb815e8f3556b59ce64e6d1e0f55d55
+Date:   Thu Aug 8 14:49:41 2013 -0700
+"disable test_fcvt in s_0_x"
+
+dlmalloc() included now, avoiding the memory leak (!)
+-O2 experiment to see if Safari would behave; it doesn't
+
+Macbook Air late 2010 (3,1), 1.6 GHz Core 2 Duo, 4 GB RAM, OS X 10.6.8
+
+
+--
+
+scrypt results:
+
+
+
+Firefox/23.0
+Starting...
+0123456789abcdef
+
+Milliseconds for //16/1/1: 0
+Milliseconds for password/NaCl/1024/8/16: 770
+Milliseconds for pleaseletmein/SodiumChloride/16384/8/1: 767
+
+...done.
+
+Chrome/28.0.1500.95
+Starting...
+0123456789abcdef
+
+Milliseconds for //16/1/1: 1
+Milliseconds for password/NaCl/1024/8/16: 1868
+Milliseconds for pleaseletmein/SodiumChloride/16384/8/1: 1864
+
+...done.
+
+Safari/534.59.8
+Starting...
+0123456789abcdef
+
+FAILED
+expected: 77d6576238657b203b19ca42c18a0497f16b4844e3074ae8dfdffa3fede21442fcd0069ded0948f8326a753a0fc81f17e8d3e0fb2e0d3628cf35e20c38d18906
+actual:   e915cf31790e3d68373c6783273b037e2f08e7678498f5f66ab2f826f6867a6e0540ef1cd242204b4f335b08cb4a522418ab5a945bbdd92608153582e0ee2ae5
+Milliseconds for //16/1/1: 5
+FAILED
+expected: fdbabe1c9d3472007856e7190d01e9fe7c6ad7cbc8237830e77376634b3731622eaf30d92e22a3886ff109279d9830dac727afb94a83ee6d8360cbdfa2cc0640
+actual:   a23f1969ae7c36f645596ed7b4c51e6a7067c2c0745a067507e37baf301c1c92bbf3c80a8900dd57b2433b1d3887171b26768eabf90245a4ce8a656d43d23d6a
+FAILED
+expected: fdbabe1c9d3472007856e7190d01e9fe7c6ad7cbc8237830e77376634b3731622eaf30d92e22a3886ff109279d9830dac727afb94a83ee6d8360cbdfa2cc0640
+actual:   402068b7279c933cda716c1635a3c918c69b28ea1c4ca715654e8f0c647aa2470051176f51f67bce017b5a3e2ab10e13b29cb3554323cc72afd775d1d0b6f15a
+Milliseconds for password/NaCl/1024/8/16: 12162
+FAILED
+expected: 7023bdcb3afd7348461c06cd81fd38ebfda8fbba904f8e3ea9b543f6545da1f2d5432955613f0fcf62d49705242a9af9e61e85dc0d651e40dfcf017b45575887
+actual:   016f3cdf962a2160ff083872f441a977cc35f83a23c2fe7946b3a3b06ef74db7ba8d7a6c276c3a0918fb04df044f111c2852cf314c5809cf908ef65894dba66c
+Milliseconds for pleaseletmein/SodiumChloride/16384/8/1: 11480
+
+...done.

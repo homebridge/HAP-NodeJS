@@ -1,0 +1,6 @@
+Signature operations (per sec)
+Engine,nacl.crypto_sign,nacl.crypto_sign_open
+Chrome,2.35314304648,2.38179025276
+Firefox,10.6900046871,9.84731819678
+Safari,6.70213799806,8.40737240076
+node,0.728370070475,0.762283236994

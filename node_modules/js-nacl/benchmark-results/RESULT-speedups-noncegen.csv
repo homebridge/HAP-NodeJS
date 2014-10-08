@@ -1,0 +1,6 @@
+Random nonce generation (per sec)
+Engine,nacl.crypto_box_random_nonce
+Chrome,0.919102841294
+Firefox,0.999051705744
+Safari,1.06673440585
+node,1.00598921941

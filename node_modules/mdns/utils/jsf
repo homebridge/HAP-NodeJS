@@ -1,0 +1,63 @@
+#!/usr/bin/env node
+
+var path   = require('path')
+  , fs     = require('fs')
+  , slide  = require('slide')
+  , mkdirp = require('mkdirp')
+  , chain  = slide.chain
+
+  , outd = process.argv.pop()
+  , build_type = process.env.BUILDTYPE
+  ;
+
+//console.log(process.env);
+
+function copy(f, cb) {
+  var target = path.join(outd, path.basename(f))
+    , readStream = fs.createReadStream(f)
+    ;
+  console.log('  COPY', target);
+  readStream.pipe(fs.createWriteStream(target));
+  readStream.once('end', cb);
+}
+
+function copyFiles(files, cb) {
+  slide.asyncMap(files, copy, cb);
+}
+
+function jscoverage(files, cb) {
+  var just_do_it_kthxbye = path.join(outd, 'jscoverage.html')
+  chain( [ [ fs.writeFile, just_do_it_kthxbye, '' ]
+         , [ run_jscoverage, files]
+         , [ fs.unlink, just_do_it_kthxbye]
+         ]
+         , cb
+       )
+}
+
+function run_jscoverage(files, cb) {
+  var spawn = require('child_process').spawn
+    , cmd = process.env.JSCOVERAGE || 'jscoverage'
+    , src_dir = path.dirname(files[0])
+    , jsc = spawn(cmd, [src_dir, outd, '-v', '--no-highlight'])
+    ;
+    function log(d) { console.log(d.toString()) }
+    jsc.stdout.on('data', log);
+    jsc.stderr.on('data', log);
+    jsc.on('exit', function(code) {
+      if (code) {
+        cb(new Error('jscoverage exited with code ' + code))
+      } else {
+        cb();
+      }
+    })
+}
+
+var op = build_type === 'Coverage' ? jscoverage : copyFiles
+
+chain( [ [ mkdirp, outd ]
+       , [ op, process.argv.slice(2) ]
+       ]
+     , function(error) { if (error) { console.log(error); process.exit(1) } }
+     )
+// vim: set filetype=javascript :

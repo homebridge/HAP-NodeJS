@@ -1,0 +1,55 @@
+Firefox/23.0
+Test,Iterations per second,Seconds per iteration
+"nacl.crypto_hash_string(\"hello\")",16193.806193806196,0.00006175200493522516
+"nacl.crypto_hash(hello)",17088.911088911093,0.000058517479247047804
+"nacl.crypto_box_keypair_from_seed(hello)",29.940119760479043,0.0334
+"nacl.crypto_box_precompute(kp.boxPk, kp.boxSk)",29.732408325074335,0.03363333333333333
+"nacl.crypto_box_random_nonce()",41539.460539460546,0.000024073495105937803
+"nacl.crypto_box_precomputed(hello, n, selfShared)",11383.616383616385,0.00008784554629223342
+"nacl.crypto_box_open_precomputed(c, n, selfShared)",10623.376623376624,0.0000941320293398533
+"nacl.crypto_box(hello, n, kp.boxPk, kp.boxSk)",29.702970297029704,0.033666666666666664
+"nacl.crypto_box_open(c2, n, kp.boxPk, kp.boxSk)",29.64426877470356,0.03373333333333333
+"nacl.crypto_sign(m, skp.signSk)",51.030421982335625,0.019596153846153846
+"nacl.crypto_sign_open(signed, skp.signPk)",15.473887814313345,0.064625
+
+Chrome/28.0.1500.95
+Test,Iterations per second,Seconds per iteration
+"nacl.crypto_hash_string(\"hello\")",2287.712287712288,0.000437117903930131
+"nacl.crypto_hash(hello)",2442.5574425574428,0.0004094069529652351
+"nacl.crypto_box_keypair_from_seed(hello)",17.769002961500494,0.056277777777777774
+"nacl.crypto_box_precompute(kp.boxPk, kp.boxSk)",18.357487922705314,0.05447368421052631
+"nacl.crypto_box_random_nonce()",216420.57942057945,0.000004620632671242677
+"nacl.crypto_box_precomputed(hello, n, selfShared)",9229.77022977023,0.00010834505898906807
+"nacl.crypto_box_open_precomputed(c, n, selfShared)",6674.325674325675,0.0001498278700793294
+"nacl.crypto_box(hello, n, kp.boxPk, kp.boxSk)",18.12977099236641,0.055157894736842114
+"nacl.crypto_box_open(c2, n, kp.boxPk, kp.boxSk)",18.12977099236641,0.055157894736842114
+"nacl.crypto_sign(m, skp.signSk)",45.499505440158266,0.021978260869565214
+"nacl.crypto_sign_open(signed, skp.signPk)",14.299332697807436,0.06993333333333333
+
+Safari/534.59.8
+Test,Iterations per second,Seconds per iteration
+"nacl.crypto_hash_string(\"hello\")",2693.3066933066934,0.0003712908011869436
+"nacl.crypto_hash(hello)",2784.2157842157844,0.000359167563688554
+"nacl.crypto_box_keypair_from_seed(hello)",2.6857654431512983,0.3723333333333333
+"nacl.crypto_box_precompute(kp.boxPk, kp.boxSk)",2.7522935779816513,0.36333333333333334
+"nacl.crypto_box_random_nonce()",394157.08812260535,0.0000025370595382746053
+"nacl.crypto_box_precomputed(hello, n, selfShared)",5947.052947052947,0.00016815051234671594
+"nacl.crypto_box_open_precomputed(c, n, selfShared)",FAILED,FAILED,{"message":"nacl_raw._crypto_box_open_afternm signalled an error","line":31945,"sourceId":4640801216,"sourceURL":"file:///Users/tonyg/src/js-nacl/lib/nacl.js"}
+"nacl.crypto_box(hello, n, kp.boxPk, kp.boxSk)",2.6362038664323375,0.3793333333333333
+"nacl.crypto_box_open(c2, n, kp.boxPk, kp.boxSk)",FAILED,FAILED,{"message":"nacl_raw._crypto_box_open signalled an error","line":31945,"sourceId":4640801216,"sourceURL":"file:///Users/tonyg/src/js-nacl/lib/nacl.js"}
+"nacl.crypto_sign(m, skp.signSk)",3.1225604996096803,0.32025
+"nacl.crypto_sign_open(signed, skp.signPk)",0.9267840593141798,1.079
+
+node/v0.10.15
+Test,Iterations per second,Seconds per iteration
+"nacl.crypto_hash_string(\"hello\")",2110.889110889111,0.0004737340274491244
+"nacl.crypto_hash(hello)",2294.705294705295,0.00043578580757509794
+"nacl.crypto_box_keypair_from_seed(hello)",11.753183153770815,0.08508333333333332
+"nacl.crypto_box_precompute(kp.boxPk, kp.boxSk)",11.776251226692837,0.08491666666666665
+"nacl.crypto_box_random_nonce()",53021.97802197803,0.000018860103626943004
+"nacl.crypto_box_precomputed(hello, n, selfShared)",5439.5604395604405,0.00018383838383838382
+"nacl.crypto_box_open_precomputed(c, n, selfShared)",4740.259740259741,0.000210958904109589
+"nacl.crypto_box(hello, n, kp.boxPk, kp.boxSk)",11.799410029498526,0.08474999999999999
+"nacl.crypto_box_open(c2, n, kp.boxPk, kp.boxSk)",11.776251226692837,0.08491666666666665
+"nacl.crypto_sign(m, skp.signSk)",22.593320235756384,0.044260869565217395
+"nacl.crypto_sign_open(signed, skp.signPk)",6.8359375,0.1462857142857143

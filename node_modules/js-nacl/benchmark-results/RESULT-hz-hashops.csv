@@ -1,0 +1,6 @@
+Hash operations (per sec)
+Engine,nacl.crypto_hash_string,nacl.crypto_hash
+Chrome,2530.46953047,2686.31368631
+Firefox,31348.6513487,34528.4715285
+Safari,2873.12687313,2983.01698302
+node,2217.78221778,2528.47152847
