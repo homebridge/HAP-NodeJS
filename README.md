@@ -6,11 +6,7 @@ With this project, you should be able to create your own HomeKit Accessory on Ra
 
 The implementation may not 100% follow the HAP MFi Specification since MFi program doesn't allow individual developer to join. 
 
-Remember to run
-  ```js
-  npm rebuild
-  ```
-before actually running the server.
+Remember to run `npm rebuild` before actually running the server.
 
 You can use the following command to start the HAP Server:
   ```js
