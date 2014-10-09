@@ -12,7 +12,11 @@ HAPSession.prototype = {
 	sendHAPEvent: function sendHAPEvent(data) {
 		if (this.isEncryptInUse && (this.socket !== undefined)) {
 			var resultMsg = encryption.layer_encrypt(data,this.accessoryToControllerCount,this.accessoryToControllerKey);
-	    	this.socket.write(resultMsg);
+			try {
+				this.socket.write(resultMsg);
+			} catch (ex) {
+				console.log("An Error Occured when sending events,",ex);
+			}
 		}
 	},
 	setupSession: function setupSession(socket, hapPort) {
@@ -28,34 +32,66 @@ HAPSession.prototype = {
 	    serviceSocket.on("data", function (data) {
 	    	if (this.isEncryptInUse) {
 				var resultMsg = encryption.layer_encrypt(data,this.accessoryToControllerCount,this.accessoryToControllerKey);
-	    		socket.write(resultMsg);
+	    		try {
+					socket.write(resultMsg);
+				} catch (ex) {
+					console.log("An Error Occured when sending data from server,",ex);
+				}
 	    	} else {
-	    		socket.write(data);
+	    		try {
+					socket.write(data);
+				} catch (ex) {
+					console.log("An Error Occured when sending data from server,",ex);
+				}
 	    		this.updateEncryptTrafficStatus();
 	    	}
 		}.bind(this));
 		serviceSocket.on("close", function() {
 		  console.log('Server Disconnected');
 		  this.tcpServer.removeSession(this.localPort);
-		  socket.end();
+		  try {
+		  	socket.end();
+		  } catch (ex) {
+		  	console.log("An Error Occured when closing the socket",ex);
+		  }
 		  this.socket = undefined;
 		}.bind(this));
+		serviceSocket.on("error", function(err){
+        	console.log("An Error Occured on HAP side connection,",err);
+        	socket.end();
+    	});
 
 		//From iOS
 	    socket.on('data', function (msg) {
 	    	if (this.isEncryptInUse) {
 	    		var resultMsg = encryption.layer_decrypt(msg,this.controllerToAccessoryCount,this.controllerToAccessoryKey);
-	    		serviceSocket.write(resultMsg);
+	    		try {
+					serviceSocket.write(resultMsg);
+				} catch (ex) {
+					console.log("An Error Occured when sending data from server,",ex);
+				}
 	    	} else {
-	    		serviceSocket.write(msg);
+	    		try {
+					serviceSocket.write(msg);
+				} catch (ex) {
+					console.log("An Error Occured when sending data from server,",ex);
+				}
 	    	}
 	    }.bind(this));
 	    socket.on("close", function() {
 		  console.log('Client Disconnected');
 		  this.tcpServer.removeSession(this.localPort);
+		  try {
+		  	serviceSocket.end();
+		  } catch (ex) {
+		  	console.log("An Error Occured when closing socket to HAP Server,",ex);
+		  }
 		  this.socket = undefined;
-		  serviceSocket.end();
 		}.bind(this));
+		socket.on("error", function(err){
+        	console.log("An Error Occured on client side connection,",err);
+        	serviceSocket.end();
+    	});
 	},
 	enableEncryptionForSession: function enableEncryptionForSession(sharedSec) {
 		this.shouldEncrypt = true;
