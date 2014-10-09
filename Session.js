@@ -58,8 +58,10 @@ HAPSession.prototype = {
 		}.bind(this));
 		serviceSocket.on("error", function(err){
         	console.log("An Error Occured on HAP side connection,",err);
-        	socket.end();
-    	});
+        	this.tcpServer.removeSession(this.localPort);
+        	socket.destroy();
+        	serviceSocket.destroy();
+    	}.bind(this));
 
 		//From iOS
 	    socket.on('data', function (msg) {
@@ -90,8 +92,10 @@ HAPSession.prototype = {
 		}.bind(this));
 		socket.on("error", function(err){
         	console.log("An Error Occured on client side connection,",err);
-        	serviceSocket.end();
-    	});
+        	this.tcpServer.removeSession(this.localPort);
+        	socket.destroy();
+        	serviceSocket.destroy();
+    	}.bind(this));
 	},
 	enableEncryptionForSession: function enableEncryptionForSession(sharedSec) {
 		this.shouldEncrypt = true;
