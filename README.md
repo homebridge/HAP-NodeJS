@@ -16,3 +16,5 @@ You can use the following command to start the HAP Server:
 Special thanks to [Alex Skalozub](https://twitter.com/pieceofsummer), who reverse engineered the server side HAP. You can find his research at [here](https://gist.github.com/pieceofsummer/13272bf76ac1d6b58a30).
 
 [There](http://instagram.com/p/t4cPlcDksQ/) is a video demo running this project on Intel Edison.
+
+If you are interested in HAP over BTLE, you might want to check [this](https://gist.github.com/KhaosT/6ff09ba71d306d4c1079).
