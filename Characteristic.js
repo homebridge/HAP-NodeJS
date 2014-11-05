@@ -26,7 +26,7 @@ Characteristic.prototype = {
 	updateCharacteristicValue: function updateCharacteristicValue(value, peer) {
 		this.value = value;
 		this.updateValue(value, peer);
-		if (this.onUpdate !== undefined) {
+		if (this.onUpdate !== null) {
 			this.onUpdate(value);
 		} else {
 			console.log("Update:",value);
