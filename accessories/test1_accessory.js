@@ -1,3 +1,5 @@
+// HomeKit types required
+var types = require("./types.js")
 var exports = module.exports = {};
 
 var execute = function(accessory,characteristic,value){ console.log("executed accessory: " + accessory + ", and characteristic: " + characteristic + ", with value: " +  value + "."); }
@@ -7,11 +9,9 @@ exports.accessory = {
   username: "1A:2B:3C:4D:5E:FF",
   pincode: "031-45-154",
   services: [{
-  	_comment: "info service",
-    sType: "0000003E-0000-1000-8000-0026BB765291", 
+    sType: types.ACCESSORY_INFORMATION_STYPE, 
     characteristics: [{
-    	_comment: "name characteristic",
-    	cType: "00000023-0000-1000-8000-0026BB765291", 
+    	cType: types.NAME_CTYPE, 
     	onUpdate: null,
     	perms: ["pr"],
 		format: "string",
@@ -21,8 +21,7 @@ exports.accessory = {
 		manfDescription: "Bla",
 		designedMaxLength: 255    
     },{
-    	_comment: "manufacturer characteristic",
-    	cType: "00000020-0000-1000-8000-0026BB765291", 
+    	cType: types.MANUFACTURER_CTYPE, 
     	onUpdate: null,
     	perms: ["pr"],
 		format: "string",
@@ -32,8 +31,7 @@ exports.accessory = {
 		manfDescription: "Bla",
 		designedMaxLength: 255    
     },{
-    	_comment: "model characteristic",
-    	cType: "00000021-0000-1000-8000-0026BB765291",
+    	cType: types.MODEL_CTYPE,
     	onUpdate: null,
     	perms: ["pr"],
 		format: "string",
@@ -43,8 +41,7 @@ exports.accessory = {
 		manfDescription: "Bla",
 		designedMaxLength: 255    
     },{
-    	_comment: "serialnumber characteristic",
-    	cType: "00000030-0000-1000-8000-0026BB765291", 
+    	cType: types.SERIAL_NUMBER_CTYPE, 
     	onUpdate: null,
     	perms: ["pr"],
 		format: "string",
@@ -54,8 +51,7 @@ exports.accessory = {
 		manfDescription: "Bla",
 		designedMaxLength: 255    
     },{
-    	_comment: "identify characteristic",
-    	cType: "00000014-0000-1000-8000-0026BB765291", 
+    	cType: types.IDENTIFY_CTYPE, 
     	onUpdate: null,
     	perms: ["pw"],
 		format: "bool",
@@ -66,11 +62,9 @@ exports.accessory = {
 		designedMaxLength: 1    
     }]
   },{
-  	_comment: "light service",
-    sType: "00000043-0000-1000-8000-0026BB765291", 
+    sType: types.LIGHTBULB_STYPE, 
     characteristics: [{
-    	_comment: "name characteristics",
-    	cType: "00000023-0000-1000-8000-0026BB765291",
+    	cType: types.NAME_CTYPE,
     	onUpdate: null,
     	perms: ["pr"],
 		format: "string",
@@ -80,8 +74,7 @@ exports.accessory = {
 		manfDescription: "Bla",
 		designedMaxLength: 255   
     },{
-    	_comment: "light characteristics",
-    	cType: "00000025-0000-1000-8000-0026BB765291",
+    	cType: types.POWER_STATE_CTYPE,
     	onUpdate: function(value) { console.log("Change:",value); execute("Test Accessory 1", "light service", value); },
     	perms: ["pw","pr","ev"],
 		format: "bool",
