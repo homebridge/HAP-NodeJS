@@ -1,6 +1,7 @@
 var exports = module.exports = {};
 
-var execute = function(value){ console.log(value); }
+var execute = function(accessory,characteristic,value){ console.log("executed accessory: " + accessory + ", and characteristic: " + characteristic + ", with value: " +  value + "."); }
+
 
 exports.accessory = {
   displayName: "Test Accessory 2",
@@ -82,7 +83,7 @@ exports.accessory = {
     },{
     	_comment: "light characteristics",
     	cType: "00000025-0000-1000-8000-0026BB765291",
-    	onUpdate: function(value) { console.log("Change:",value); execute("light" + value); },
+        onUpdate: function(value) { console.log("Change:",value); execute("Test Accessory 2", "light service", value); },
     	perms: ["pw","pr","ev"],
 		format: "bool",
 		initialValue: false,
