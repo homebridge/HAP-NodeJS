@@ -5,136 +5,72 @@ var accessoryController_Factor = new require("./AccessoryController.js");
 var service_Factor = new require("./Service.js");
 var characteristic_Factor = new require("./Characteristic.js");
 
-console.log("HAP-NodeJS starting...");
+var targetPort = 51826;
 
+// Get the accessories data
+var fs = require('fs');
+var path = require('path');
+
+var accessoriesJSON = []
+
+
+// Get user defined accessories from the accessories folder
+// - user defined accessory filenames must end with "_accessory.js"
+fs.readdirSync(path.join(__dirname, "accessories")).forEach(function(file) {
+	if (file.split('_').pop()==="accessory.js") {
+		accessoriesJSON.push(require("./accessories/" + file).accessory);
+	};
+});
+
+
+console.log("HAP-NodeJS starting...");
 storage.initSync();
 
-var accessoryController = new accessoryController_Factor.AccessoryController();
-var infoService = generateAccessoryInfoService("Test Accessory 1","Rev 1","A1S2NASF88EW","Oltica");
-var lightService = generateLightService();
-accessoryController.addService(infoService);
-accessoryController.addService(lightService);
 
-var accessory = new accessory_Factor.Accessory("Test Accessory 1", "1A:2B:3C:4D:5E:FF", storage, parseInt(51822), "031-45-154", accessoryController);
-accessory.publishAccessory();
+var accessories = [];
+var accessoryControllers = [];
 
-function generateLightService() {
-	var lightService = new service_Factor.Service("00000043-0000-1000-8000-0026BB765291");
+//loop through accessories
+for (var i = 0; i < accessoriesJSON.length; i++) {
+	var accessoryController = new accessoryController_Factor.AccessoryController();
 
-	var nameOptions = {
-		type: "00000023-0000-1000-8000-0026BB765291",
-		perms: [
-			"pr"
-		],
-		format: "string",
-		initialValue: "Light 1",
-		supportEvents: false,
-		supportBonjour: false,
-		manfDescription: "Bla",
-		designedMaxLength: 255,
-	}
-	var nameChar = new characteristic_Factor.Characteristic(nameOptions);
-	lightService.addCharacteristic(nameChar);
+	//loop through services
+	for (var j = 0; j < accessoriesJSON[i].services.length; j++) {
+		var service = new service_Factor.Service(accessoriesJSON[i].services[j].sType);
 
-	var onOptions = {
-		type: "00000025-0000-1000-8000-0026BB765291",
-		perms: [
-			"pw",
-			"pr",
-			"ev"
-		],
-		format: "bool",
-		initialValue: false,
-		supportEvents: false,
-		supportBonjour: false,
-		manfDescription: "Turn On the Light",
-		designedMaxLength: 1,
-	}
-	var lightSwitchChar = new characteristic_Factor.Characteristic(onOptions, function(value) {
-		console.log("Light Status Change:",value);
-	});
-	lightService.addCharacteristic(lightSwitchChar);
+		//loop through characteristics
+		for (var k = 0; k < accessoriesJSON[i].services[j].characteristics.length; k++) {
+			var options = {
+				type: accessoriesJSON[i].services[j].characteristics[k].cType,
+				perms: accessoriesJSON[i].services[j].characteristics[k].perms,
+				format: accessoriesJSON[i].services[j].characteristics[k].format,
+				initialValue: accessoriesJSON[i].services[j].characteristics[k].initialValue,
+				supportEvents: accessoriesJSON[i].services[j].characteristics[k].supportEvents,
+				supportBonjour: accessoriesJSON[i].services[j].characteristics[k].supportBonjour,
+				manfDescription: accessoriesJSON[i].services[j].characteristics[k].manfDescription,
+				designedMaxLength: accessoriesJSON[i].services[j].characteristics[k].designedMaxLength,
+			}
 
-	return lightService;
-}
+			var characteristic = new characteristic_Factor.Characteristic(options, accessoriesJSON[i].services[j].characteristics[k].onUpdate);
 
-function generateAccessoryInfoService(name, model, sn, manufacturer) {
-	var infoService = new service_Factor.Service("0000003E-0000-1000-8000-0026BB765291");
+			service.addCharacteristic(characteristic);
+		};	
+		accessoryController.addService(service);
+	};
 
-	var nameOptions = {
-		type: "00000023-0000-1000-8000-0026BB765291",
-		perms: [
-			"pr"
-		],
-		format: "string",
-		initialValue: name,
-		supportEvents: false,
-		supportBonjour: false,
-		manfDescription: "Bla",
-		designedMaxLength: 255,
-	}
-	var nameChar = new characteristic_Factor.Characteristic(nameOptions);
-	infoService.addCharacteristic(nameChar);
+	//increment targetport for each accessory
+	targetPort = targetPort + (i*2);
 
-	var manufacturerOptions = {
-		type: "00000020-0000-1000-8000-0026BB765291",
-		perms: [
-			"pr"
-		],
-		format: "string",
-		initialValue: manufacturer,
-		supportEvents: false,
-		supportBonjour: false,
-		manfDescription: "Bla",
-		designedMaxLength: 255,
-	}
-	var manufacturerChar = new characteristic_Factor.Characteristic(manufacturerOptions);
-	infoService.addCharacteristic(manufacturerChar);
+	var accessory = new accessory_Factor.Accessory(accessoriesJSON[i].displayName, accessoriesJSON[i].username, storage, parseInt(targetPort), accessoriesJSON[i].pincode, accessoryController);
+	accessory.publishAccessory();
+	accessories[i] = accessory;
+	accessoryControllers[i] = accessoryController;
+};
 
-	var modelOptions = {
-		type: "00000021-0000-1000-8000-0026BB765291",
-		perms: [
-			"pr"
-		],
-		format: "string",
-		initialValue: model,
-		supportEvents: false,
-		supportBonjour: false,
-		manfDescription: "Bla",
-		designedMaxLength: 255,
-	}
-	var modelChar = new characteristic_Factor.Characteristic(modelOptions);
-	infoService.addCharacteristic(modelChar);
+//TODO - geta keyrt skipanir úr HK og athuga af hverju upplýsingarnar
+// sem sendar eru í execute fallið eru bara síðustu góðu upplýsingarnar 
+//(onupdate fallið inniheldur alltaf sama stöffið)
+// Þetta er closures mál.... redda því
 
-	var snOptions = {
-		type: "00000030-0000-1000-8000-0026BB765291",
-		perms: [
-			"pr"
-		],
-		format: "string",
-		initialValue: sn,
-		supportEvents: false,
-		supportBonjour: false,
-		manfDescription: "Bla",
-		designedMaxLength: 255,
-	}
-	var snChar = new characteristic_Factor.Characteristic(snOptions);
-	infoService.addCharacteristic(snChar);
 
-	var identifyOptions = {
-		type: "00000014-0000-1000-8000-0026BB765291",
-		perms: [
-			"pw"
-		],
-		format: "bool",
-		initialValue: false,
-		supportEvents: false,
-		supportBonjour: false,
-		manfDescription: "Identify Accessory",
-		designedMaxLength: 1,
-	}
-	var identifyChar = new characteristic_Factor.Characteristic(identifyOptions);
-	infoService.addCharacteristic(identifyChar);
 
-	return infoService;
-}

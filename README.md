@@ -1,3 +1,16 @@
+Fork readme
+=============
+This fork is mainly to reorganize how accessories are managed to conform to a more plugin like management.
+
+In this fork, users can define their own accessories in: accessories/*name*_accessory.js files, where name is a short description of the accessory. All defined accessories get loaded on server start. The accessory is defined using an object literal notation.
+
+This should simplify the creation and maintenance of accessories, because:
+* a) all accessories are now defined independently of the HAP-NodeJS code
+* b) each accessory hardware communication code can now be localized to the relevant *name*_accessory.js file instead of cluttering up the Core.js code, making updating cumbersome.
+
+**Note**, that this is a work in progress, code is not yet completed / tested. Status: server starts normally and can advertises accessories. Next steps is to test the add process and test whether onUpdate functions are executed as expected.
+
+
 HAP-NodeJS
 =============
 HAP-NodeJS is a Node.js implementation of HomeKit Accessory Server.
@@ -18,3 +31,5 @@ Special thanks to [Alex Skalozub](https://twitter.com/pieceofsummer), who revers
 [There](http://instagram.com/p/t4cPlcDksQ/) is a video demo running this project on Intel Edison.
 
 If you are interested in HAP over BTLE, you might want to check [this](https://gist.github.com/KhaosT/6ff09ba71d306d4c1079).
+
+
