@@ -66,11 +66,3 @@ for (var i = 0; i < accessoriesJSON.length; i++) {
 	accessories[i] = accessory;
 	accessoryControllers[i] = accessoryController;
 };
-
-//TODO - geta keyrt skipanir úr HK og athuga af hverju upplýsingarnar
-// sem sendar eru í execute fallið eru bara síðustu góðu upplýsingarnar 
-//(onupdate fallið inniheldur alltaf sama stöffið)
-// Þetta er closures mál.... redda því
-
-
-
