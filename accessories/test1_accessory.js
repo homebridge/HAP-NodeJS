@@ -15,7 +15,7 @@ exports.accessory = {
     	onUpdate: null,
     	perms: ["pr"],
 		format: "string",
-		initialValue: "Test Accessory Y",
+		initialValue: "Test Accessory 1",
 		supportEvents: false,
 		supportBonjour: false,
 		manfDescription: "Bla",
@@ -83,6 +83,17 @@ exports.accessory = {
 		supportBonjour: false,
 		manfDescription: "Turn On the Light",
 		designedMaxLength: 1    
+    },{
+    	cType: types.HUE_CTYPE,
+    	onUpdate: function(value) { console.log("Change:",value); execute("Test Accessory 1", "Light - Hue", value); },
+    	perms: ["pw","pr","ev"],
+		format: "int",
+		initialValue: 0,
+		supportEvents: false,
+		supportBonjour: false,
+		manfDescription: "Adjust Hue of Light",
+		designedMinValue: 0,
+		designedMaxValue: 255,
     }]
   }]
 }

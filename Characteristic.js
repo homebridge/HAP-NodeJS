@@ -13,6 +13,10 @@ function Characteristic(options, onUpdate) {
 	this.supportBonjour = options.supportBonjour;
 	this.manfDescription = options.manfDescription;
 	this.designedMaxLength = options.designedMaxLength;
+	this.designedMinValue = options.designedMinValue;
+	this.designedMaxValue = options.designedMaxValue;
+	this.designedMinStep = options.designedMinStep;
+	this.unit = options.unit;
 
 	this.eventEnabled = false;
 	this.bonjourEnabled = false;
@@ -46,9 +50,27 @@ Characteristic.prototype = {
 			value: this.value,
 			events: this.eventEnabled,
 			bonjour: this.bonjourEnabled,
-			description: this.manfDescription,
-			maxLen: this.designedMaxLength,
 		};
+
+		if (this.manfDescription !== undefined) {
+			object.description = this.manfDescription;
+		}
+		if (this.designedMaxLength !== undefined) {
+			object.maxLen = this.designedMaxLength;
+		}
+		if (this.designedMinValue !== undefined) {
+			object.minValue = this.designedMinValue;
+		}
+		if (this.designedMaxValue !== undefined) {
+			object.maxValue = this.designedMaxValue;
+		}
+		if (this.designedMinStep !== undefined) {
+			object.minStep = this.designedMinStep;
+		}
+		if (this.unit !== undefined) {
+			object.unit = this.unit;
+		}
+		
 		return object;
 	},
 	updateValue: function updateValue(value, peer) {

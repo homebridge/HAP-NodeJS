@@ -49,6 +49,10 @@ for (var i = 0; i < accessoriesJSON.length; i++) {
 				supportBonjour: accessoriesJSON[i].services[j].characteristics[k].supportBonjour,
 				manfDescription: accessoriesJSON[i].services[j].characteristics[k].manfDescription,
 				designedMaxLength: accessoriesJSON[i].services[j].characteristics[k].designedMaxLength,
+				designedMinValue: accessoriesJSON[i].services[j].characteristics[k].designedMinValue,
+				designedMaxValue: accessoriesJSON[i].services[j].characteristics[k].designedMaxValue,
+				designedMinStep: accessoriesJSON[i].services[j].characteristics[k].designedMinStep,
+				unit: accessoriesJSON[i].services[j].characteristics[k].unit,
 			}
 
 			var characteristic = new characteristic_Factor.Characteristic(options, accessoriesJSON[i].services[j].characteristics[k].onUpdate);
