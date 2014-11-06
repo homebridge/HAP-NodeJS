@@ -37,6 +37,9 @@ TCPServer.prototype = {
 	removeSession: function removeSession(connectPort) {
 		delete this.portMap['connectPort'];
 	},
+	retrieveSession: function retrieveSession(connectPort) {
+		return this.portMap[connectPort];
+	},
 	broadcastEvent: function broadcastEvent(data, subscribedPeers, peer) {
 		var contentData = Buffer(data);
 		var newLine_Buffer = Buffer("0D0A","hex");

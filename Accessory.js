@@ -13,6 +13,7 @@ Accessory.prototype = {
 			this._private.tcpServer.startServer();
 		}
 		if (this._private.hapServer !== undefined) {
+			this._private.hapServer.tcpServer = this._private.tcpServer;
 			this._private.hapServer.startHAPServer(this.targetPort + 1);
 		}
 	}
