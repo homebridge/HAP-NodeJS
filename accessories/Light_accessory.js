@@ -5,7 +5,7 @@ var exports = module.exports = {};
 var execute = function(accessory,characteristic,value){ console.log("executed accessory: " + accessory + ", and characteristic: " + characteristic + ", with value: " +  value + "."); }
 
 exports.accessory = {
-  displayName: "Test Accessory 1",
+  displayName: "Light 1",
   username: "1A:2B:3C:4D:5E:FF",
   pincode: "031-45-154",
   services: [{
@@ -15,7 +15,7 @@ exports.accessory = {
     	onUpdate: null,
     	perms: ["pr"],
 		format: "string",
-		initialValue: "Test Accessory 1",
+		initialValue: "Light 1",
 		supportEvents: false,
 		supportBonjour: false,
 		manfDescription: "Bla",
@@ -96,6 +96,32 @@ exports.accessory = {
 		designedMaxValue: 360,
 		designedMinStep: 1,
 		unit: "arcdegrees"
+    },{
+    	cType: types.BRIGHTNESS_CTYPE,
+    	onUpdate: function(value) { console.log("Change:",value); execute("Test Accessory 1", "Light - Brightness", value); },
+    	perms: ["pw","pr","ev"],
+		format: "int",
+		initialValue: 0,
+		supportEvents: false,
+		supportBonjour: false,
+		manfDescription: "Adjust Brightness of Light",
+		designedMinValue: 0,
+		designedMaxValue: 100,
+		designedMinStep: 1,
+		unit: "%"
+    },{
+    	cType: types.SATURATION_CTYPE,
+    	onUpdate: function(value) { console.log("Change:",value); execute("Test Accessory 1", "Light - Saturation", value); },
+    	perms: ["pw","pr","ev"],
+		format: "int",
+		initialValue: 0,
+		supportEvents: false,
+		supportBonjour: false,
+		manfDescription: "Adjust Saturation of Light",
+		designedMinValue: 0,
+		designedMaxValue: 100,
+		designedMinStep: 1,
+		unit: "%"
     }]
   }]
 }
