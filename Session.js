@@ -58,7 +58,7 @@ HAPSession.prototype = {
 		serviceSocket.on("error", function(err){
         	console.log("An Error Occured on HAP side connection,",err);
         	this.tcpServer.removeSession(this.localPort);
-        	this.socket.destroy();
+        	socket.destroy();
         	serviceSocket.destroy();
     	}.bind(this));
 
