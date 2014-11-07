@@ -52,3 +52,5 @@ exports.TARGET_RELATIVE_HUMIDITY_CTYPE = stPre + "34" + stPost;
 exports.TARGET_TEMPERATURE_CTYPE = stPre + "35" + stPost;
 exports.TEMPERATURE_UNITS_CTYPE = stPre + "36" + stPost;
 exports.VERSION_CTYPE = stPre + "37" + stPost;
+exports.CURRENTHEATINGCOOLING_CTYPE = stPre + "0F" + stPost;
+exports.TARGETHEATINGCOOLING_CTYPE = stPre + "33" + stPost;
