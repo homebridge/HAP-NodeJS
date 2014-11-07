@@ -116,7 +116,6 @@ HAPServer.prototype = {
 	//Accessories
 	responseAccessories: function responseAccessories(response) {
 		response.writeHead(200, {"Content-Type": "application/hap+json"});
-		
 		response.write(this.accessoryController.jsonPresentation());
 		response.end();
 	},
@@ -196,9 +195,9 @@ HAPServer.prototype = {
 			var clientLTPK = Buffer(this.persistStore.getItem(clientUsername.toString()),"hex");
 			
 			if (nacl.crypto_sign_verify_detached(toArrayBuffer(proof), toArrayBuffer(material), toArrayBuffer(clientLTPK))) {
-				console.log("Verify Success");
 				response.write(Buffer([0x06,0x01,0x04]));
 				response.end();
+				console.log("Verify Success");
 				this.callback(request.socket.remotePort, this.tcpServer.retrieveSession(this.currentSessionPort).session_server_sharedKey);
 			} else {
 				console.log("Invalid Signature");

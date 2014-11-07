@@ -27,9 +27,7 @@ HAPSession.prototype = {
 		serviceSocket.connect(parseInt(hapPort), "127.0.0.1", function () {
 	        console.log("Server Connection Established", serviceSocket.localPort);
 	        this.localPort = serviceSocket.localPort;
-	        if (this.socket !== undefined) {
-	        	this.registerCallback(this.socket.remotePort, serviceSocket.localPort);
-	        }
+	        this.registerCallback(socket.remotePort, serviceSocket.localPort);
 	    }.bind(this));
 	    serviceSocket.on("data", function (data) {
 	    	if (this.isEncryptInUse) {
@@ -45,7 +43,6 @@ HAPSession.prototype = {
 				} catch (ex) {
 					console.log("An Error Occured when sending data from server,",ex);
 				}
-	    		this.updateEncryptTrafficStatus();
 	    	}
 		}.bind(this));
 		serviceSocket.on("close", function() {
@@ -61,12 +58,13 @@ HAPSession.prototype = {
 		serviceSocket.on("error", function(err){
         	console.log("An Error Occured on HAP side connection,",err);
         	this.tcpServer.removeSession(this.localPort);
-        	socket.destroy();
+        	this.socket.destroy();
         	serviceSocket.destroy();
     	}.bind(this));
 
 		//From iOS
 	    socket.on('data', function (msg) {
+	    	this.updateEncryptTrafficStatus();
 	    	if (this.isEncryptInUse) {
 	    		var resultMsg = encryption.layer_decrypt(msg,this.controllerToAccessoryCount,this.controllerToAccessoryKey);
 	    		try {
@@ -119,7 +117,7 @@ HAPSession.prototype = {
 
 function HAPSession(tcpServer, socket, hapPort, persistStore, accessoryInfo, callback) {
 	if (!(this instanceof HAPSession))  {
-		return new HAPSession(tcpServer, socket, persistStore, accessoryInfo);
+		return new HAPSession(tcpServer, socket, persistStore, accessoryInfo, callback);
 	}
 	this.tcpServer = tcpServer;
 	this.socket = socket;

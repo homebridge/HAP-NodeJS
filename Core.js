@@ -66,7 +66,7 @@ for (var i = 0; i < accessoriesJSON.length; i++) {
 	targetPort = targetPort + (i*2);
 
 	var accessory = new accessory_Factor.Accessory(accessoriesJSON[i].displayName, accessoriesJSON[i].username, storage, parseInt(targetPort), accessoriesJSON[i].pincode, accessoryController);
-	accessory.publishAccessory();
 	accessories[i] = accessory;
 	accessoryControllers[i] = accessoryController;
+	accessory.publishAccessory();
 };

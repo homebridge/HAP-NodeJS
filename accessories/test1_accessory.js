@@ -93,7 +93,9 @@ exports.accessory = {
 		supportBonjour: false,
 		manfDescription: "Adjust Hue of Light",
 		designedMinValue: 0,
-		designedMaxValue: 255,
+		designedMaxValue: 360,
+		designedMinStep: 1,
+		unit: "arcdegrees"
     }]
   }]
 }
