@@ -85,12 +85,12 @@ HAPServer.prototype = {
 			console.log("Handle Add Pairing Info");
 			var clientUsername = objects[1];
 			var clientLTPK = objects[3];
-			this.persistStore.setItem(clientUsername.toString(),clientLTPK.toString("hex"));
+			this.persistStore.setItem(this.accessoryInfo.username + clientUsername.toString(),clientLTPK.toString("hex"));
 		} else if (requestType == 4) {
 			//Handle Remove
 			console.log("Handle Remove Pairing Info");
 			var clientUsername = objects[1];
-			this.persistStore.removeItem(clientUsername.toString());
+			this.persistStore.removeItem(this.accessoryInfo.username + clientUsername.toString());
 		}
 		this.persistStore.persistSync();
 		response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
@@ -192,7 +192,7 @@ HAPServer.prototype = {
 
 			var material = Buffer.concat([this.tcpServer.retrieveSession(this.currentSessionPort).session_clientPublicKey,clientUsername,this.tcpServer.retrieveSession(this.currentSessionPort).session_server_publicKey]);
 
-			var clientLTPK = Buffer(this.persistStore.getItem(clientUsername.toString()),"hex");
+			var clientLTPK = Buffer(this.persistStore.getItem(this.accessoryInfo.username + clientUsername.toString()),"hex");
 			
 			if (nacl.crypto_sign_verify_detached(toArrayBuffer(proof), toArrayBuffer(material), toArrayBuffer(clientLTPK))) {
 				response.write(Buffer([0x06,0x01,0x04]));
@@ -295,7 +295,7 @@ HAPServer.prototype = {
 	processPairStepFour: function processPairStepFour(clientUsername,clientLTPK,clientProof,response) {
 		this.session_client_LTPK = clientLTPK;
 
-		this.persistStore.setItem(clientUsername.toString(),clientLTPK.toString("hex"));
+		this.persistStore.setItem(this.accessoryInfo.username + clientUsername.toString(),clientLTPK.toString("hex"));
 		this.persistStore.persistSync();
 
 		var S_private = this.srpServer.computeK();
