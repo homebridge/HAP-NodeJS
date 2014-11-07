@@ -27,7 +27,9 @@ HAPSession.prototype = {
 		serviceSocket.connect(parseInt(hapPort), "127.0.0.1", function () {
 	        console.log("Server Connection Established", serviceSocket.localPort);
 	        this.localPort = serviceSocket.localPort;
-	        this.registerCallback(this.socket.remotePort, serviceSocket.localPort);
+	        if (this.socket !== undefined) {
+	        	this.registerCallback(this.socket.remotePort, serviceSocket.localPort);
+	        }
 	    }.bind(this));
 	    serviceSocket.on("data", function (data) {
 	    	if (this.isEncryptInUse) {
