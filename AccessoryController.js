@@ -47,7 +47,6 @@ AccessoryController.prototype = {
 	},
 	processCharacteristicsValueWrite: function processCharacteristicsValueWrite(updates, peer) {
 		var updates_objects = JSON.parse(updates.toString());
-		console.log(updates_objects);
 		var update_characteristics = updates_objects["characteristics"];
 		var update_char = update_characteristics[0];
 		if (update_char !== undefined) {
