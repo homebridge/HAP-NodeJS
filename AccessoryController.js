@@ -47,18 +47,21 @@ AccessoryController.prototype = {
 	},
 	processCharacteristicsValueWrite: function processCharacteristicsValueWrite(updates, peer) {
 		var updates_objects = JSON.parse(updates.toString());
+		console.log(updates_objects);
 		var update_characteristics = updates_objects["characteristics"];
 		var update_char = update_characteristics[0];
-		var update_char_iid = update_char["iid"];
-		var update_char_value = update_char["value"];
-		var update_char_event = update_char["ev"];
-		var charObject = this.objects[update_char_iid];
-		if (update_char_value !== undefined) {
-			charObject.updateCharacteristicValue(update_char_value, peer);
-		}
-		if (update_char_event !== undefined) {
-			charObject.updateCharacteristicEvent(update_char_event, peer);
-		}
+		if (update_char !== undefined) {
+			var update_char_iid = update_char["iid"];
+			var update_char_value = update_char["value"];
+			var update_char_event = update_char["ev"];
+			var charObject = this.objects[update_char_iid];
+			if (update_char_value !== undefined) {
+				charObject.updateCharacteristicValue(update_char_value, peer);
+			}
+			if (update_char_event !== undefined) {
+				charObject.updateCharacteristicEvent(update_char_event, peer);
+			}
+		};
 	},
 	broadcastEvent: function broadcastEvent(data, subscribedPeers, peer) {
 		if (this.tcpServer !== undefined) {
