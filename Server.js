@@ -195,18 +195,26 @@ HAPServer.prototype = {
 
 			var material = Buffer.concat([this.tcpServer.retrieveSession(this.currentSessionPort).session_clientPublicKey,clientUsername,this.tcpServer.retrieveSession(this.currentSessionPort).session_server_publicKey]);
 
-			var clientLTPK = Buffer(this.persistStore.getItem(this.accessoryInfo.username + clientUsername.toString()),"hex");
-			
-			if (ed25519.Verify(material, proof, clientLTPK)) {
-				response.write(Buffer([0x06,0x01,0x04]));
-				response.end();
-				console.log("M3: Verify Success");
-				this.callback(request.socket.remotePort, this.tcpServer.retrieveSession(this.currentSessionPort).session_server_sharedKey);
+			var keyContext = this.persistStore.getItem(this.accessoryInfo.username + clientUsername.toString());
+
+			if (keyContext) {
+				var clientLTPK = Buffer(keyContext,"hex");
+				if (ed25519.Verify(material, proof, clientLTPK)) {
+					response.write(Buffer([0x06,0x01,0x04]));
+					response.end();
+					console.log("M3: Verify Success");
+					this.callback(request.socket.remotePort, this.tcpServer.retrieveSession(this.currentSessionPort).session_server_sharedKey);
+				} else {
+					console.log("M3: Invalid Signature");
+					response.write(Buffer([0x07,0x01,0x04]));
+					response.end();
+				}
 			} else {
-				console.log("M3: Invalid Signature");
-				response.write(Buffer([0x07,0x01,0x04]));
+				console.log("M3: Cannot find Client LTPK");
+				response.write(Buffer([0x07,0x01,0x02]));
 				response.end();
 			}
+			
 		} else {
 			console.log("M3: Invalid Signature");
 			response.write(Buffer([0x07,0x01,0x02]));
