@@ -2,11 +2,10 @@ var http = require("http");
 var crypto = require("crypto");
 var srp = require("srp");
 var hkdf = require("node-hkdf");
-var url = require('url');
+var url = require("url");
+var ed25519 = require("ed25519");
 var tlvHandler = require("./TLV-Handler.js");
 var encryption = require("./Encryption.js");
-var nacl_factory = require("js-nacl");
-var nacl = nacl_factory.instantiate();
 
 function HAPServer(accessoryInfo, callback, persistStore, accessoryController) {
 	if (!(this instanceof HAPServer))  {
@@ -154,7 +153,10 @@ HAPServer.prototype = {
 		var usernameData = Buffer(this.accessoryInfo.username);
 
 		var material = Buffer.concat([publicKey,usernameData,clientPublicKey]);
-		var serverProof = Buffer(nacl.crypto_sign_detached(toArrayBuffer(material),toArrayBuffer(this.server_sign_keyPair.signSk)));
+
+		var privateKey = Buffer(this.server_sign_keyPair.signSk);
+
+		var serverProof = ed25519.Sign(material, privateKey);
 
 		var enc_salt = new Buffer("Pair-Verify-Encrypt-Salt");
 		var enc_info = new Buffer("Pair-Verify-Encrypt-Info");
@@ -174,6 +176,7 @@ HAPServer.prototype = {
 		response.write(encDataResp);
 		response.write(pubKeyResp);
 		response.end();
+		console.log("Verify M1 Finished");
 	},
 	processVerifyStepTwo: function processVerifyStepTwo(objects, response, request) {
 		console.log("Start Verify M3");
@@ -194,18 +197,18 @@ HAPServer.prototype = {
 
 			var clientLTPK = Buffer(this.persistStore.getItem(this.accessoryInfo.username + clientUsername.toString()),"hex");
 			
-			if (nacl.crypto_sign_verify_detached(toArrayBuffer(proof), toArrayBuffer(material), toArrayBuffer(clientLTPK))) {
+			if (ed25519.Verify(material, proof, clientLTPK)) {
 				response.write(Buffer([0x06,0x01,0x04]));
 				response.end();
-				console.log("Verify Success");
+				console.log("M3: Verify Success");
 				this.callback(request.socket.remotePort, this.tcpServer.retrieveSession(this.currentSessionPort).session_server_sharedKey);
 			} else {
-				console.log("Invalid Signature");
+				console.log("M3: Invalid Signature");
 				response.write(Buffer([0x07,0x01,0x04]));
 				response.end();
 			}
 		} else {
-			console.log("Invalid Signature");
+			console.log("M3: Invalid Signature");
 			response.write(Buffer([0x07,0x01,0x02]));
 			response.end();
 		}
@@ -305,7 +308,7 @@ HAPServer.prototype = {
 		
 		var completeData = Buffer.concat([output_key,clientUsername,clientLTPK]);
 		
-		if (nacl.crypto_sign_verify_detached(toArrayBuffer(clientProof), toArrayBuffer(completeData), toArrayBuffer(clientLTPK))) {
+		if (ed25519.Verify(completeData, clientProof, clientLTPK)) {
 			this.processPairStepFive(response);
 		} else {
 			console.log("Invalid Signature");
@@ -326,8 +329,9 @@ HAPServer.prototype = {
 		var usernameData = Buffer(this.accessoryInfo.username);
 
 		var material = Buffer.concat([output_key,usernameData,serverLTPK_buffer]);
+		var privateKey = Buffer(this.server_sign_keyPair.signSk);
 
-		var serverProof = Buffer(nacl.crypto_sign_detached(toArrayBuffer(material),toArrayBuffer(this.server_sign_keyPair.signSk)));
+		var serverProof = ed25519.Sign(material, privateKey);
 
 		var message = Buffer.concat([tlvHandler.encodeTLV(0x01,usernameData),tlvHandler.encodeTLV(0x03,serverLTPK_buffer),tlvHandler.encodeTLV(0x0a,serverProof)]);
 		var ciphertextBuffer = Buffer(Array(message.length));

@@ -1,8 +1,8 @@
 var advertiser_fac = require("./Advertiser.js");
 var server_fac = require("./Server.js");
 var tcpServer_fac = require("./TCPServer.js");
-var nacl_factory = require("js-nacl");
-var nacl = nacl_factory.instantiate();
+var crypto = require("crypto");
+var ed25519 = require("ed25519");
 
 Accessory.prototype = {
 	publishAccessory: function publishAccessory() {
@@ -29,7 +29,7 @@ function Accessory(displayName, username, persistStore, targetPort, pincode, acc
 	this.accessoryController = accessoryController;
 	this.accessoryInfo = new AccessoryInfo(this.displayName,this.username, pincode);
 	var savedKey = persistStore.getItem(username);
-	if (savedKey !== undefined) {
+    if (savedKey !== undefined) {
 		var keyPair = savedKey;
 		this.accessoryInfo.setKeyPair(keyPair);
 	} else {
@@ -61,7 +61,13 @@ function AccessoryInfo(displayName,username, pincode) {
 	this.displayName = displayName;
 	this.username = username;
 	this.pincode = pincode;
-	this.keyPair = nacl.crypto_sign_keypair();
+
+	var seed = crypto.randomBytes(32);
+	var keyPair = ed25519.MakeKeypair(seed);
+	this.keyPair = {
+		signSk: keyPair.privateKey,
+		signPk: keyPair.publicKey
+	};
 }
 
 module.exports = {

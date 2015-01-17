@@ -1,3 +1,0 @@
-For now, use window.crypto.getRandomValues in the browser and the
-"crypto" module in node.js for good randomness. Fallback option for
-the browser could be SJCL? http://crypto.stanford.edu/sjcl/

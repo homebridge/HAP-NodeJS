@@ -10,7 +10,7 @@ HAPSession.prototype = {
 		}
 	},
 	sendHAPEvent: function sendHAPEvent(data) {
-		if (this.isEncryptInUse && (this.socket !== undefined)) {
+        if (this.isEncryptInUse && (this.socket !== undefined)) {
 			var resultMsg = encryption.layer_encrypt(data,this.accessoryToControllerCount,this.accessoryToControllerKey);
 			try {
 				this.socket.write(resultMsg);
