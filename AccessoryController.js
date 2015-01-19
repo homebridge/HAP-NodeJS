@@ -49,7 +49,8 @@ AccessoryController.prototype = {
 		var updates_objects = JSON.parse(updates.toString());
 		console.log(updates_objects);
 		var update_characteristics = updates_objects["characteristics"];
-		for (var update_char in update_characteristics) {
+		for (var i = 0; i < update_characteristics.length; i++) {
+			var update_char = update_characteristics[i];
 			var update_char_iid = update_char["iid"];
 			var update_char_value = update_char["value"];
 			var update_char_event = update_char["ev"];
