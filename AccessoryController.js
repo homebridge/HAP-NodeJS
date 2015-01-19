@@ -49,8 +49,7 @@ AccessoryController.prototype = {
 		var updates_objects = JSON.parse(updates.toString());
 		console.log(updates_objects);
 		var update_characteristics = updates_objects["characteristics"];
-		var update_char = update_characteristics[0];
-		if (update_char !== undefined) {
+		for (var update_char in update_characteristics) {
 			var update_char_iid = update_char["iid"];
 			var update_char_value = update_char["value"];
 			var update_char_event = update_char["ev"];
@@ -61,7 +60,7 @@ AccessoryController.prototype = {
 			if (update_char_event !== undefined) {
 				charObject.updateCharacteristicEvent(update_char_event, peer);
 			}
-		};
+		}
 	},
 	broadcastEvent: function broadcastEvent(data, subscribedPeers, peer) {
 		if (this.tcpServer !== undefined) {
