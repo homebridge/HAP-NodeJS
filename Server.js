@@ -74,6 +74,7 @@ HAPServer.prototype = {
 				};
 			}.bind(this)
 		);
+		server.timeout = 0;
 		return server;
 	},
 	//Pairings
