@@ -1,8 +1,36 @@
-// HomeKit types required
 var types = require("./types.js")
+var dgram = require('dgram')
 var exports = module.exports = {};
 
-var execute = function(accessory,characteristic,value){ console.log("executed accessory: " + accessory + ", and characteristic: " + characteristic + ", with value: " +  value + "."); }
+var server = dgram.createSocket("udp4");
+
+server.on("error", function (err) {
+  console.warn("server error:\n" + err.stack);
+  server.close();
+});
+
+server.on("message", function (msg, rinfo) {
+  console.log("server got: " + msg + " from " +
+  rinfo.address + ":" + rinfo.port);
+});
+
+server.on("listening", function () {
+  var address = server.address();
+
+  server.setBroadcast(true);
+});
+
+server.bind(9761);
+
+function send(room, device, func) {
+  var buffer = new Buffer("100,!R" + room + "D" + device + "F" + func + "\n");
+
+  server.send(buffer, 0, buffer.length, 9760, "255.255.255.255", function(err, bytes) {
+    if (err) {
+      console.error(err);
+    }
+  });
+}
 
 function accessoryInformation() {
   return {
@@ -61,7 +89,7 @@ function accessoryInformation() {
   };
 }
 
-function light(name) {
+function light(name, room, device) {
   return {
     services: [accessoryInformation(),
     {
@@ -78,7 +106,7 @@ function light(name) {
         designedMaxLength: 255
       },{
         cType: types.POWER_STATE_CTYPE,
-        onUpdate: function(value) { console.log("Change:",value); execute(name, "power", value); },
+        onUpdate: function(value) { send(room, device, value? "1" : "0") },
         perms: ["pw","pr","ev"],
         format: "bool",
         initialValue: false,
@@ -88,7 +116,7 @@ function light(name) {
         designedMaxLength: 1
       },{
         cType: types.BRIGHTNESS_CTYPE,
-        onUpdate: function(value) { console.log("Change:",value); execute(name, "brightness", value); },
+        onUpdate: function(value) { send(room, device, "dP" + (value * 32 / 100).toFixed(0)) },
         perms: ["pw","pr","ev"],
         format: "int",
         initialValue: 0,
@@ -103,7 +131,7 @@ function light(name) {
   };
 }
 
-function socket(name) {
+function socket(name, room, device) {
   return {
     services: [accessoryInformation(),
     {
@@ -120,7 +148,7 @@ function socket(name) {
         designedMaxLength: 255
       },{
         cType: types.POWER_STATE_CTYPE,
-        onUpdate: function(value) { console.log("Change:",value); execute(name, "power", value); },
+        onUpdate: function(value) { send(room, device, value? "1" : "0") },
         perms: ["pw","pr","ev"],
         format: "bool",
         initialValue: false,
@@ -148,7 +176,9 @@ exports.accessories = {
   username: "1A:2B:3C:4D:5E:6F",
   pincode: "031-45-154",
   accessories: [
-    light("Test light 1"),
-    socket("Test socket 1")
+//    light("Test light 1", 1, 1),
+    socket("Test socket 1", 1, 1),
+    socket("Test socket 2", 2, 1),
+    socket("Test socket 3", 3, 1)
   ]
 }
