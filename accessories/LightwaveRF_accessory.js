@@ -2,8 +2,6 @@ var types = require("./types.js")
 var dgram = require('dgram')
 var exports = module.exports = {};
 
-//var message = new Buffer("100,!F*p\n");
-
 var sequenceNumber = 100;
 
 var server = dgram.createSocket("udp4");
@@ -25,6 +23,10 @@ server.on("listening", function () {
 });
 
 server.bind(9761);
+
+function sendRegister(value) {
+  queue.push(new Buffer("100,!F*p\n"));
+}
 
 function send(room, device, func) {
   var buffer = new Buffer(sequenceNumber + ",!R" + room + "D" + device + "F" + func + "\n");
@@ -95,7 +97,7 @@ function accessoryInformation() {
       designedMaxLength: 255
     },{
       cType: types.IDENTIFY_CTYPE,
-      onUpdate: null,
+      onUpdate: function(value) { sendRegister(value) },
       perms: ["pw"],
       format: "bool",
       initialValue: false,
