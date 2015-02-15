@@ -2,7 +2,13 @@ var types = require("./types.js")
 var dgram = require('dgram')
 var exports = module.exports = {};
 
+//var message = new Buffer("100,!F*p\n");
+
+var sequenceNumber = 100;
+
 var server = dgram.createSocket("udp4");
+
+var queue = [];
 
 server.on("error", function (err) {
   console.warn("server error:\n" + err.stack);
@@ -15,22 +21,34 @@ server.on("message", function (msg, rinfo) {
 });
 
 server.on("listening", function () {
-  var address = server.address();
-
   server.setBroadcast(true);
 });
 
 server.bind(9761);
 
 function send(room, device, func) {
-  var buffer = new Buffer("100,!R" + room + "D" + device + "F" + func + "\n");
+  var buffer = new Buffer(sequenceNumber + ",!R" + room + "D" + device + "F" + func + "\n");
 
-  server.send(buffer, 0, buffer.length, 9760, "255.255.255.255", function(err, bytes) {
-    if (err) {
-      console.error(err);
-    }
-  });
+  if( sequenceNumber++ == 1000) {
+    sequenceNumber = 100;
+  }
+
+  queue.push(buffer);
 }
+
+function sendFromQueue() {
+  var buffer = queue.shift();
+
+  if (buffer) {
+    server.send(buffer, 0, buffer.length, 9760, "255.255.255.255", function(err, bytes) {
+      if (err) {
+        console.error(err);
+      }
+    });
+  }
+}
+
+setInterval(sendFromQueue, 500);
 
 function accessoryInformation() {
   return {
@@ -135,7 +153,7 @@ function socket(name, room, device) {
   return {
     services: [accessoryInformation(),
     {
-      sType: types.OUTLET_STYPE,
+      sType: types.LIGHTBULB_STYPE,
       characteristics: [{
         cType: types.NAME_CTYPE,
         onUpdate: null,
@@ -154,17 +172,7 @@ function socket(name, room, device) {
         initialValue: false,
         supportEvents: false,
         supportBonjour: false,
-        manfDescription: "Turn on the socket",
-        designedMaxLength: 1
-      },{
-        cType: types.OUTLET_IN_USE_CTYPE,
-        onUpdate: null,
-        perms: ["pr"],
-        format: "bool",
-        initialValue: true,
-        supportEvents: false,
-        supportBonjour: false,
-        manfDescription: "Outlet in use",
+        manfDescription: "Turn On the Light",
         designedMaxLength: 1
       }]
     }]
@@ -177,8 +185,8 @@ exports.accessories = {
   pincode: "031-45-154",
   accessories: [
 //    light("Test light 1", 1, 1),
-    socket("Test socket 1", 1, 1),
-    socket("Test socket 2", 2, 1),
-    socket("Test socket 3", 3, 1)
+    socket("Light one", 1, 1),
+    socket("Light two", 2, 1),
+    socket("Light three", 3, 1)
   ]
 }
