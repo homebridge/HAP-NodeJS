@@ -21,4 +21,17 @@ Special thanks to [Alex Skalozub](https://twitter.com/pieceofsummer), who revers
 
 If you are interested in HAP over BTLE, you might want to check [this](https://gist.github.com/KhaosT/6ff09ba71d306d4c1079).
 
+Set up on Raspberry Pi
 
+Install Raspbian
+(follow instructions on ...)
+
+Passwordless ssh - useful
+Avahi hostname - useful
+(http://elinux.org/RPi_Advanced_Setup)
+
+Install node 0.10.36?
+
+http://joshondesign.com/2013/10/23/noderpi
+
+npm install pm2

@@ -25,23 +25,31 @@ server.on("listening", function () {
 server.bind(9761);
 
 function sendRegister(value) {
-  queue.push(new Buffer("100,!F*p\n"));
+  queue.push({func: "*p"});
 }
 
 function send(room, device, func) {
-  var buffer = new Buffer(sequenceNumber + ",!R" + room + "D" + device + "F" + func + "\n");
-
-  if( sequenceNumber++ == 1000) {
-    sequenceNumber = 100;
+  for (i = 0; i < queue.length; i++) {
+    if (queue[i].room == room && queue[i].device == device) {
+      queue.splice(i, 1);
+    }
   }
 
-  queue.push(buffer);
+  queue.push({room: room, device: device, func: func});
 }
 
 function sendFromQueue() {
-  var buffer = queue.shift();
+  var command = queue.shift();
 
-  if (buffer) {
+  if (command) {
+    var buffer = new Buffer(sequenceNumber + ",!" + (command.room? "R" + command.room : "") + (command.device? "D" + command.device : "") + "F" + command.func + "\n");
+
+    if( sequenceNumber++ == 1000) {
+      sequenceNumber = 100;
+    }
+
+    console.log(buffer.toString());
+
     server.send(buffer, 0, buffer.length, 9760, "255.255.255.255", function(err, bytes) {
       if (err) {
         console.error(err);
@@ -52,7 +60,7 @@ function sendFromQueue() {
 
 setInterval(sendFromQueue, 500);
 
-function accessoryInformation() {
+function accessoryInformation(name) {
   return {
     sType: types.ACCESSORY_INFORMATION_STYPE,
     characteristics: [{
@@ -60,7 +68,7 @@ function accessoryInformation() {
       onUpdate: null,
       perms: ["pr"],
       format: "string",
-      initialValue: "LightwaveRF Link",
+      initialValue: name,
       supportEvents: false,
       supportBonjour: false,
       manfDescription: "Bla",
@@ -111,7 +119,7 @@ function accessoryInformation() {
 
 function light(name, room, device) {
   return {
-    services: [accessoryInformation(),
+    services: [accessoryInformation(name),
     {
       sType: types.LIGHTBULB_STYPE,
       characteristics: [{
@@ -146,6 +154,17 @@ function light(name, room, device) {
         designedMinValue: 0,
         designedMaxValue: 100,
         designedMinStep: 6.25,
+        unit: "%"
+      },{
+        cType: "20000001-0000-1000-8000-0026BB765291",
+        onUpdate: function(value) { send(room, device, value? "d" : "uu") },
+        perms: ["pw","pr","ev"],
+        format: "bool",
+        initialValue: false,
+        supportEvents: false,
+        supportBonjour: false,
+        manfDescription: "Lock the light switch",
+        designedMaxLength: 1
       }]
     }]
   };
@@ -153,7 +172,7 @@ function light(name, room, device) {
 
 function socket(name, room, device) {
   return {
-    services: [accessoryInformation(),
+    services: [accessoryInformation(name),
     {
       sType: types.LIGHTBULB_STYPE,
       characteristics: [{
@@ -176,8 +195,26 @@ function socket(name, room, device) {
         supportBonjour: false,
         manfDescription: "Turn On the Light",
         designedMaxLength: 1
+      },{
+        cType: "20000001-0000-1000-8000-0026BB765291",
+        onUpdate: function(value) { send(room, device, value? "l" : "u") },
+        perms: ["pw","pr","ev"],
+        format: "bool",
+        initialValue: false,
+        supportEvents: false,
+        supportBonjour: false,
+        manfDescription: "Lock the light switch",
+        designedMaxLength: 1
       }]
     }]
+  };
+}
+
+function link() {
+  return {
+    services: [
+      accessoryInformation("LightwaveRF Link")
+    ]
   };
 }
 
@@ -186,7 +223,8 @@ exports.accessories = {
   username: "1A:2B:3C:4D:5E:6F",
   pincode: "031-45-154",
   accessories: [
-//    light("Test light 1", 1, 1),
+    link(),
+    light("Test light 1", 1, 2),
     socket("Light one", 1, 1),
     socket("Light two", 2, 1),
     socket("Light three", 3, 1)
