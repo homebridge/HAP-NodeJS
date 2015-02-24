@@ -54,3 +54,5 @@ exports.TEMPERATURE_UNITS_CTYPE = stPre + "36" + stPost;
 exports.VERSION_CTYPE = stPre + "37" + stPost;
 exports.CURRENTHEATINGCOOLING_CTYPE = stPre + "0F" + stPost;
 exports.TARGETHEATINGCOOLING_CTYPE = stPre + "33" + stPost;
+
+exports.CUSTOM_LW_LOCK_STATE_CTYPE = "19800001" + stPost;
