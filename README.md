@@ -6,6 +6,8 @@ With this project, you should be able to create your own HomeKit Accessory on Ra
 
 The implementation may not 100% follow the HAP MFi Specification since MFi program doesn't allow individual developer to join. 
 
+** Please use NodeJS 0.10.35/36 instead of 0.12.x There are several API changes in 0.12 which breaks the build. **
+
 Remember to run `npm rebuild` before actually running the server.
 
 Users can define their own accessories in: accessories/*name*_accessory.js files, where name is a short description of the accessory. All defined accessories get loaded on server start. The accessory is defined using an object literal notation.
