@@ -83,7 +83,7 @@ Characteristic.prototype = {
 				var eventDict = {
 					characteristics: [
 						{
-							aid: this.accessoryID,
+							aid: this.accessoryController.accessoryID,
 							iid: this.instanceID,
 							value: this.value
 						}

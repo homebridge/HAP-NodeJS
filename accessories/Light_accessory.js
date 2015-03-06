@@ -68,7 +68,7 @@ exports.accessory = {
     	onUpdate: null,
     	perms: ["pr"],
 		format: "string",
-		initialValue: "Light 1",
+		initialValue: "Light 1 Light Service",
 		supportEvents: false,
 		supportBonjour: false,
 		manfDescription: "Bla",
