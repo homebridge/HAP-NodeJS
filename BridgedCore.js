@@ -14,7 +14,7 @@ var path = require('path');
 
 var accessoriesJSON = []
 
-
+accessoriesJSON.push(require("./accessories/Bridge_Info.js").accessory);
 // Get user defined accessories from the accessories folder
 // - user defined accessory filenames must end with "_accessory.js"
 fs.readdirSync(path.join(__dirname, "accessories")).forEach(function(file) {
