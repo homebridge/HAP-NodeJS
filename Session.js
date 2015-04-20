@@ -1,5 +1,5 @@
 var encryption = require("./Encryption.js");
-var hkdf = require("node-hkdf");
+var hkdf = require("./hkdf.js");
 var net = require('net');
 var server_fac = require("./Server.js");
 

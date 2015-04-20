@@ -5,7 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "curve25519": "git://github.com/thejh/node-curve25519",
-    "ed25519": "0.0.2",
+    "ed25519": "git://github.com/dazoe/ed25519",
     "mdns": "^2.2.4",
     "node-persist": "0.0.3",
     "srp": "git://github.com/KhaosT/node-srp"
