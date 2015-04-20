@@ -1,0 +1,32 @@
+{
+  "name": "HAP-NodeJS",
+  "version": "0.0.1",
+  "description": "HAP-NodeJS ============= HAP-NodeJS is a Node.js implementation of HomeKit Accessory Server.",
+  "main": "index.js",
+  "dependencies": {
+    "curve25519": "^1.0.0",
+    "ed25519": "^0.0.2",
+    "mdns": "^2.2.0",
+    "atmosphere": "^0.0.2",
+    "atmosphere-client": "^2.2.7",
+    "node-hkdf": "^0.0.1",
+    "node-persist": "^0.0.2",
+    "srp": "^0.2.0",
+    "request": "^2.54.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/htreu/HAP-NodeJS.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/htreu/HAP-NodeJS/issues"
+  },
+  "homepage": "https://github.com/htreu/HAP-NodeJS"
+}
