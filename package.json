@@ -4,29 +4,25 @@
   "description": "HAP-NodeJS ============= HAP-NodeJS is a Node.js implementation of HomeKit Accessory Server.",
   "main": "index.js",
   "dependencies": {
-    "curve25519": "^1.0.0",
-    "ed25519": "^0.0.2",
-    "mdns": "^2.2.0",
-    "atmosphere": "^0.0.2",
-    "atmosphere-client": "^2.2.7",
-    "node-hkdf": "^0.0.1",
-    "node-persist": "^0.0.2",
-    "srp": "^0.2.0",
-    "request": "^2.54.0"
+    "curve25519": "git://github.com/thejh/node-curve25519",
+    "ed25519": "0.0.2",
+    "mdns": "^2.2.4",
+    "node-persist": "0.0.3",
+    "srp": "git://github.com/KhaosT/node-srp"
   },
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node BridgeCore.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/htreu/HAP-NodeJS.git"
+    "url": "https://github.com/KhaosT/HAP-NodeJS.git"
   },
-  "author": "",
+  "author": "Khaos Tian <khaos.tian@gmail.com> (http://tz.is/)",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/htreu/HAP-NodeJS/issues"
+    "url": "https://github.com/KhaosT/HAP-NodeJS/issues"
   },
-  "homepage": "https://github.com/htreu/HAP-NodeJS"
+  "homepage": "https://github.com/KhaosT/HAP-NodeJS"
 }
