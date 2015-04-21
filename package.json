@@ -13,7 +13,7 @@
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node BridgeCore.js"
+    "start": "node BridgedCore.js"
   },
   "repository": {
     "type": "git",
