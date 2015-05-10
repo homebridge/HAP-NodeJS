@@ -12,7 +12,7 @@ var targetPort = 51826;
 var fs = require('fs');
 var path = require('path');
 
-var accessoriesJSON = []
+var accessoriesJSON = [];
 
 accessoriesJSON.push(require("./accessories/Bridge_Info.js").accessory);
 // Get user defined accessories from the accessories folder
@@ -23,6 +23,22 @@ fs.readdirSync(path.join(__dirname, "accessories")).forEach(function(file) {
 	};
 });
 
+//snowdd1
+//Get user defined accessory factories from the accessories folder
+//- user defined accessory factory filenames must end with "_accfactory.js"
+//they MUST return an array of accessories!
+var accessoryFactoryFile;
+fs.readdirSync(path.join(__dirname, "accessories")).forEach(function(file) { //snowdd1
+	if (file.split('_').pop()==="accfactory.js") {
+		//console.log("Parsing accessory factory : "+file); //debug
+		accessoryFactoryFile = require("./accessories/" + file); // should return an array of accessories!
+		//console.log("Got an "+typeof accessoryFactoryFile + " with an length of "+accessoryFactoryFile.length);
+		for (var i = 0; i < accessoryFactoryFile.length; i++) {
+			console.log("Parsing accessory : "+i + "from file " + file);
+			accessoriesJSON.push(accessoryFactoryFile[i].accessory);
+		}
+	}
+}); //snowdd1 end
 
 console.log("HAP-NodeJS starting...");
 storage.initSync();
@@ -52,7 +68,9 @@ for (var i = 0; i < accessoriesJSON.length; i++) {
 				designedMaxValue: accessoriesJSON[i].services[j].characteristics[k].designedMaxValue,
 				designedMinStep: accessoriesJSON[i].services[j].characteristics[k].designedMinStep,
 				unit: accessoriesJSON[i].services[j].characteristics[k].unit,
-			}
+				onRegister: accessoriesJSON[i].services[j].characteristics[k].onRegister,  // snowdd1
+				locals: accessoriesJSON[i].locals //snowdd1
+			};
 
 			var characteristic = new characteristic_Factor.Characteristic(options, accessoriesJSON[i].services[j].characteristics[k].onUpdate);
 

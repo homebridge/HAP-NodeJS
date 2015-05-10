@@ -1,6 +1,7 @@
+//var debug = require("./accessories/mydebug.js");
 function Characteristic(options, onUpdate) {
 	if (!(this instanceof Characteristic))  {
-		return new Characteristic(options);
+		return new Characteristic(options, onUpdate); // snowdd1 : added onUpdate to parameters
 	}
 
 	this.instanceID = 0;
@@ -20,20 +21,39 @@ function Characteristic(options, onUpdate) {
 
 	this.eventEnabled = false;
 	this.bonjourEnabled = false;
-
+	
 	this.subscribedPeers = {};
 
 	this.onUpdate = onUpdate;
+	this.onRegister = options.onRegister;
+	this.locals = options.locals; // local attributes for device control methods // snowdd1
+	
+	// new: call onRegister function if one is supplied in the *_accessory file
+	// snowdd1
+	if (options.onRegister) {
+		// the characteristics block has a register method
+		console.log("checking "+ options.manfDescription + " "+ typeof(options.onRegister));
+		if (typeof(options.onRegister) !== "undefined") {
+			console.log("Characteristics.js: registering "+ options.manfDescription + " "+ typeof(options.onRegister));
+			//debug.iterate(this);
+			this.onRegister(this);
+		}
+	}
+	// snowdd1	 
+	
+	
+	
 }
 
 Characteristic.prototype = {
-	updateCharacteristicValue: function updateCharacteristicValue(value, peer) {
+	updateCharacteristicValue: function updateCharacteristicValue(value, peer) { // write to the device
 		this.value = value;
 		this.updateValue(value, peer);
-		if (this.onUpdate !== null) {
-			this.onUpdate(value);
+		if (this.onUpdate !== null) {  // if there is an onUpdate function in the characteristic, call it!
+			console.log("Characteristics.js:updateCharacteristicValue");
+			this.onUpdate(value); //here the onUpdate function is called
 		} else {
-			console.log("Update:",value);
+			console.log("Characteristic.js: updateCharacteristicValue without onUpdate function:",value);
 		}
 	},
 	updateCharacteristicEvent: function updateCharacteristicEvent(event, peer) {
@@ -76,7 +96,7 @@ Characteristic.prototype = {
 		
 		return object;
 	},
-	updateValue: function updateValue(value, peer) {
+	updateValue: function updateValue(value, peer) { // external updates & broadcasting updates, writing to the device is done above
 		this.value = value;
 		if(this.eventEnabled) {
 			if (this.accessoryController !== undefined) {
@@ -88,16 +108,19 @@ Characteristic.prototype = {
 							value: this.value
 						}
 					]
-				}
+				};
 				var eventJSON = JSON.stringify(eventDict);
 				this.accessoryController.broadcastEvent(eventJSON, this.subscribedPeers, peer);
 			}
-		}
+		} else { console.log("Characteristics.js:NotEventEnabled"); }
 	},
-	valueForUpdate: function valueForUpdate() {
+	valueForUpdate: function valueForUpdate() { // reading values FROM THE DEVICE, better: from this object
+		console.log("Characteristics.js:valueForUpdate called");
 		return this.value;
+		//
+		
 	}
-}
+};
 
 module.exports = {
 	Characteristic: Characteristic
