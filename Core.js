@@ -11,17 +11,34 @@ var targetPort = 51826;
 var fs = require('fs');
 var path = require('path');
 
-var accessoriesJSON = []
-
+var accessoriesJSON = [];
+var accessoryFactoryFile;
 
 // Get user defined accessories from the accessories folder
 // - user defined accessory filenames must end with "_accessory.js"
 fs.readdirSync(path.join(__dirname, "accessories")).forEach(function(file) {
 	if (file.split('_').pop()==="accessory.js") {
+		console.log("Parsing accessory: "+file); //debug
 		accessoriesJSON.push(require("./accessories/" + file).accessory);
-	};
+	}
 });
 
+// snowdd1
+// Get user defined accessory factories from the accessories folder
+//- user defined accessory factory filenames must end with "_accfactory.js"
+// they MUST return an array of accessories!
+fs.readdirSync(path.join(__dirname, "accessories")).forEach(function(file) { //snowdd1
+	if (file.split('_').pop()==="accfactory.js") {
+		//console.log("Parsing accessory factory : "+file); //debug
+		accessoryFactoryFile = require("./accessories/" + file); // should return an array of accessories!
+		//console.log("Got an "+typeof accessoryFactoryFile + " with an length of "+accessoryFactoryFile.length);
+		for (var i = 0; i < accessoryFactoryFile.length; i++) {
+			console.log("Parsing accessory : "+i);
+			accessoriesJSON.push(accessoryFactoryFile[i].accessory);
+		}
+	}
+}); 
+//snowdd1 end
 
 console.log("HAP-NodeJS starting...");
 storage.initSync();
@@ -53,14 +70,16 @@ for (var i = 0; i < accessoriesJSON.length; i++) {
 				designedMaxValue: accessoriesJSON[i].services[j].characteristics[k].designedMaxValue,
 				designedMinStep: accessoriesJSON[i].services[j].characteristics[k].designedMinStep,
 				unit: accessoriesJSON[i].services[j].characteristics[k].unit,
-			}
+				onRegister: accessoriesJSON[i].services[j].characteristics[k].onRegister,  // snowdd1
+				locals: accessoriesJSON[i].locals //snowdd1
+			};
 
 			var characteristic = new characteristic_Factor.Characteristic(options, accessoriesJSON[i].services[j].characteristics[k].onUpdate);
 
 			service.addCharacteristic(characteristic);
-		};	
+		}
 		accessoryController.addService(service);
-	};
+	}
 
 	//increment targetport for each accessory
 	targetPort = targetPort + (i*2);
@@ -69,4 +88,4 @@ for (var i = 0; i < accessoriesJSON.length; i++) {
 	accessories[i] = accessory;
 	accessoryControllers[i] = accessoryController;
 	accessory.publishAccessory();
-};
+}
