@@ -1,3 +1,4 @@
+//For actual use please refer to https://github.com/snowdd1/HAP-NodeJS-KNX
 //HomeKit types required
 //modified version SNOWDD1
 //Light with on/off switch and optional brightness control 
