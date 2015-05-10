@@ -1,0 +1,14 @@
+﻿Testing.Testroom.8/0/0	Testing only	EIS 1 'Switching' (1 Bit)	Low	8/0/100 8/4/0
+Beleuchtung.Testroom.1/0/0	Test1 with ae ä	EIS 1 'Switching' (1 Bit)	Low	1/0/100 1/4/0
+Beleuchtung.Testroom.1/0/1	Test2 with Ae Ä	EIS 1 'Switching' (1 Bit)	Low	0/2/0 0/2/1 1/0/11
+Beleuchtung.Testroom.1/0/2	Test3 with oe ö	EIS 1 'Switching' (1 Bit)	Low	1/0/12
+Beleuchtung.Testroom.1/0/4	Test4 with Oe Ö	EIS 1 'Switching' (1 Bit)	Low	1/0/14
+Beleuchtung.Testroom.1/0/5	Test5 with ue ü	EIS 1 'Switching' (1 Bit)	Low	1/0/15
+Beleuchtung.Testroom.1/0/100	Test6 with Ue Ü	EIS 1 'Switching' (1 Bit)	Low	
+Beleuchtung.Testroom.1/0/10	Test with sz ß	EIS 1 'Switching' (1 Bit)	Low	
+Beleuchtung.Testroom.1/0/11	Rückmeldung Test 1/0/1	EIS 1 'Switching' (1 Bit)	Low	
+Beleuchtung.Testroom.1/0/12	Rückmeldung Test 1/0/2	EIS 1 'Switching' (1 Bit)	Low	
+Beleuchtung.Testroom.1/0/14	Rückmeldung Test 1/0/4	EIS 1 'Switching' (1 Bit)	Low	
+Beleuchtung.Testroom.1/0/15	Rückmeldung Test  1/0/5	EIS 1 'Switching' (1 Bit)	Low	
+Beleuchtung.Testroom.1/0/3	Test7 all äöüÄÖÜß	EIS 1 'Switching' (1 Bit)	Low	0/2/0 1/0/13
+Beleuchtung.Testroom.1/0/13	Rückmeldung Test 1/0/3	EIS 1 'Switching' (1 Bit)	Low	
