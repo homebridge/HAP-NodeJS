@@ -458,7 +458,7 @@ module.exports = (function () {
 		if(strStartsWith(state['entity_id'], "light.") == true) {
 			
 			console.log("Home-Assistant Accessories: Createing accessory for Light %s (%s)", state.attributes['friendly_name'], state['entity_id']);
-			accessories.push({accessory: myLightAccFactory(state)});
+			accessories.push({accessory: accessoryTemplateLight(state)});
 		}
 		
 	}
