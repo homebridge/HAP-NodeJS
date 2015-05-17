@@ -152,7 +152,7 @@ var accessoryTemplateLight = function () {
 };
 
 //the factory creates new accessory objects with the parameters that are passed
-var myLightAccFactory = function (paramsObject) {
+var accessoryFactoryLight = function (paramsObject) {
 
 	if (typeof paramsObject === 'undefined') {
 		console.log("myAccFactory requires an paramsObject!");
@@ -169,177 +169,7 @@ var myLightAccFactory = function (paramsObject) {
 	}
 
 
-	var newAccessory = newTemplateAccessory();
-	newAccessory.username = paramsObject.entity_id;
-	newAccessory.displayName =  paramsObject.attributes.friendly_name;
-	newAccessory.locals = {
-		entity_id : paramsObject.entity_id,
-		friendly_name : paramsObject.attributes.friendly_name,
-	};
-	newAccessory.services[0].characteristics[0].initialValue = paramsObject.attributes.friendly_name; // NAME_CTYPE
-	newAccessory.services[0].characteristics[3].initialValue = "HA" + "-" + paramsObject.entity_id.toUpperCase(); // SERIAL_NUMBER_CTYPE
-	newAccessory.services[1].characteristics[0].initialValue = paramsObject.attributes.friendly_name + " Light Service"; // must access object directly
-
-	// create main characteristics for a lamp: the power switch
-	newAccessory.services[1].characteristics.push({
-		cType: types.POWER_STATE_CTYPE,
-		onUpdate: function(value) {
-			var numericValue = 0;
-			if (value) {
-				numericValue = 1;
-			}
-			console.log("Change:",value); 
-			//  function(accessory,lightID,characteristic,value)
-			execute("onUpdate", this.locals.entity_id, "on", numericValue);
-		},
-		// new snowdd1
-		/*
-		onRegister: function(assignedCharacteristic) {
-			console.log("Registering for "+ assignedCharacteristic.locals.fullname, "light service (switch)");
-//			busMonitor.registerGA(assignedCharacteristic, assignedCharacteristic.locals.listenAdresses); // register all listen addresses
-		},*/
-		perms: ["pw","pr","ev"],  // assumption: Property Read, Property Write, Events
-		format: "bool",
-		initialValue: false,
-		supportEvents: false,
-		supportBonjour: false,
-		manfDescription: "Turn lights on and off",
-		designedMaxLength: 1
-	});
-
-
-
-	// add the features of the brightness controller as a new characteristics object to the array
-	newAccessory.services[1].characteristics.push({
-		cType: types.BRIGHTNESS_CTYPE,
-		onUpdate: function(value) { 
-
-			console.log("Change:" + value.toString + value); 
-			execute("onUpdate", this.locals.entity_id, "brightness", value);
-		},
-		/*
-		onRegister: function(assignedCharacteristic) {
-			console.log("Registering for "+ assignedCharacteristic.locals.fullname, "light service (Brightness)");
-//			busMonitor.registerGA(assignedCharacteristic, assignedCharacteristic.locals.listenBrightnessAddresses); // register all listen addresses
-		},*/
-		perms: ["pw","pr","ev"],
-		format: "int",
-		initialValue: 0,
-		supportEvents: false,
-		supportBonjour: false,
-		manfDescription: "Adjust Brightness of Light",
-		designedMinValue: 0,
-		designedMaxValue: 100,
-		designedMinStep: 1,
-		unit: "%"
-	});
-
-	return newAccessory;
-};
-
-
-
-
-
-/*
- *
- * SWITCH ACCESSORY
- *
- */
-var accessoryTemplateSwitch = function () {
-	return {
-		displayName: "friendly_name", // Replace with HA friendly_name,
-		username: "entity_id",  // Replace with HA entity_id
-		pincode: "031-45-154",
-		services: [{
-			sType: types.ACCESSORY_INFORMATION_STYPE,
-			characteristics: [{
-				cType: types.NAME_CTYPE,
-				onUpdate: null,
-				perms: ["pr"],
-				format: "string",
-				initialValue: 'HA Light',
-				supportEvents: false,
-				supportBonjour: false,
-				manfDescription: "Name of accessory",
-				designedMaxLength: 255
-			},{
-				cType: types.MANUFACTURER_CTYPE,
-				onUpdate: null,
-				perms: ["pr"],
-				format: "string",
-				initialValue: "HA", //"Oltica",
-				supportEvents: false,
-				supportBonjour: false,
-				manfDescription: "Manufacturer",
-				designedMaxLength: 255
-			},{
-				cType: types.MODEL_CTYPE,
-				onUpdate: null,
-				perms: ["pr"],
-				format: "string",
-				initialValue: "light", // Lightbulb Model
-				supportEvents: false,
-				supportBonjour: false,
-				manfDescription: "Bla3",
-				designedMaxLength: 255
-			},{
-				cType: types.SERIAL_NUMBER_CTYPE,
-				onUpdate: null,
-				perms: ["pr"],
-				format: "string",
-				initialValue: "HA-eneity_id",
-				supportEvents: false,
-				supportBonjour: false,
-				manfDescription: "Serial Number",
-				designedMaxLength: 255
-			},{
-				cType: types.IDENTIFY_CTYPE,
-				onUpdate: null, // TODO: Add Identift onUpdate
-				perms: ["pw"],
-				format: "bool",
-				initialValue: false,
-				supportEvents: false,
-				supportBonjour: false,
-				manfDescription: "Identify Accessory",
-				designedMaxLength: 1
-			}]
-		},{
-			sType: types.LIGHTBULB_STYPE,
-			characteristics: [{
-				cType: types.NAME_CTYPE,
-				onUpdate: null,
-				perms: ["pr"],
-				format: "string",
-				initialValue: "General Light Service",
-				supportEvents: false,
-				supportBonjour: false,
-				manfDescription: "Name of Service",
-				designedMaxLength: 255
-			}]
-		}]
-	};
-};
-
-//the factory creates new accessory objects with the parameters that are passed
-var myLightAccFactory = function (paramsObject) {
-
-	if (typeof paramsObject === 'undefined') {
-		console.log("myAccFactory requires an paramsObject!");
-		throw {name: "ENOPARAMS", message: "required parameter missing, provide home-assistant state dictionary"};
-	}
-
-	if (typeof paramsObject.entity_id !== 'string') {
-		console.log("myAccFactory requires an paramsObject.entity_id as a string!");
-		throw {name: "ENOPARAMS", message: "required parameter missing: entity_id"};
-	}
-	if (typeof paramsObject.attributes.friendly_name !== 'string') {
-		console.log("myAccFactory requires an paramsObject.friendly_name as a string!");
-		throw {name: "ENOPARAMS", message: "required parameter missing: friendly_name"};
-	}
-
-
-	var newAccessory = newTemplateAccessory();
+	var newAccessory = accessoryTemplateLight();
 	newAccessory.username = paramsObject.entity_id;
 	newAccessory.displayName =  paramsObject.attributes.friendly_name;
 	newAccessory.locals = {
@@ -458,7 +288,7 @@ module.exports = (function () {
 		if(strStartsWith(state['entity_id'], "light.") == true) {
 			
 			console.log("Home-Assistant Accessories: Createing accessory for Light %s (%s)", state.attributes['friendly_name'], state['entity_id']);
-			accessories.push({accessory: accessoryTemplateLight(state)});
+			accessories.push({accessory: accessoryFactoryLight(state)});
 		}
 		
 	}
