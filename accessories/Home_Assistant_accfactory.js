@@ -63,6 +63,10 @@ var execute = function(accessory, entity_id, characteristic,value) {
 
 			body = {entity_id: entity_id};
 		}
+		
+		// Scripts don't stay on for long, so we turn it off again in HomeKit
+		// Doesn't seem to work though :(
+		updateRegCharacteristicValue(entity_id, characteristic, 0);
 	}
 		
 	if(path == false || body == false) {
@@ -102,6 +106,68 @@ var execute = function(accessory, entity_id, characteristic,value) {
 	post_req.end(); 
     console.log("Home-Assistant: Executed accessory %s for %s - '%s' with value '%s'", accessory, entity_id, characteristic, value);
 }
+
+
+/*
+ *
+ * Update Accessories
+ *
+ */
+
+
+/* Called onRegister when the accessory is initialized, this way we can keep
+ * track of all the real accessory objects and update them if things change. */
+var registeredCharacteristics = [];
+
+function onRegisterCallback(assignedCharacteristic) {
+
+//	console.log("Got onRegister with: %j", assignedCharacteristic);	
+	registeredCharacteristics.push(assignedCharacteristic);
+}
+
+function getRegisteredCharacteristic(entity_id, characteristicType) {
+	
+	types = {
+		"on": types.POWER_STATE_CTYPE,
+		"brightness": types.BRIGHTNESS_CTYPE,
+		"hue": types.HUE_CTYPE,
+		"saturation": types.SATURATION_CTYPE
+	}
+	
+	typeHAP = types[characteristicType];
+	if(typeHAP == undefined || typeHAP == false) {
+		
+		console.log("getRegisteredCharacteristic: Unknown type: '%s'", characteristicType);
+		return false;
+	}
+	
+	for(var i = 0; i < registeredCharacteristics.length; i++) {
+		
+		registeredCharacteristic = registeredCharacteristics[i];
+		
+		if(registeredCharacteristic.locals.entity_id == entity_id && registeredCharacteristic.type ==  typeHAP) {
+			
+			console.log("Found characteristic: %j", registeredCharacteristic)
+			return registeredCharacteristic;		
+		}
+	}
+	
+	console.log("getRegisteredCharacteristic: Did not find characteristic for '%s' with type '%s'", entity_id, characteristicType)
+	return false;
+}
+
+function updateRegCharacteristicValue(entity_id, characteristicType, value) {
+	
+	regCharacteristic = getRegisteredCharacteristic(entity_id, characteristicType);
+	
+	if(regCharacteristic != false) {
+		console.log("Updating value of %s(%s) to %s", entity_id, characteristicType, value);
+		regCharacteristic.value = value;
+	} else {
+		console.log("updateRegCharacteristicValue: Could not update value - characteristic not found");
+	}
+}
+
 
 
 /*
@@ -225,12 +291,7 @@ var accessoryFactoryLight = function (paramsObject) {
 			console.log("Change:",value); 
 			execute("onUpdate", this.locals.entity_id, "on", numericValue);
 		},
-		// new snowdd1
-		/*
-		onRegister: function(assignedCharacteristic) {
-			console.log("Registering for "+ assignedCharacteristic.locals.fullname, "light service (switch)");
-//			busMonitor.registerGA(assignedCharacteristic, assignedCharacteristic.locals.listenAdresses); // register all listen addresses
-		},*/
+		onRegister: onRegisterCallback,
 		perms: ["pw","pr","ev"],  // assumption: Property Read, Property Write, Events
 		format: "bool",
 		initialValue: false,
@@ -250,11 +311,7 @@ var accessoryFactoryLight = function (paramsObject) {
 			console.log("Change:" + value.toString + value); 
 			execute("onUpdate", this.locals.entity_id, "brightness", value);
 		},
-		/*
-		onRegister: function(assignedCharacteristic) {
-			console.log("Registering for "+ assignedCharacteristic.locals.fullname, "light service (Brightness)");
-//			busMonitor.registerGA(assignedCharacteristic, assignedCharacteristic.locals.listenBrightnessAddresses); // register all listen addresses
-		},*/
+		onRegister: onRegisterCallback,
 		perms: ["pw","pr","ev"],
 		format: "int",
 		initialValue: 0,
@@ -393,12 +450,7 @@ var accessoryFactorySwitch = function (paramsObject) {
 			console.log("Change:",value); 
 			execute("onUpdate", this.locals.entity_id, "on", numericValue);
 		},
-		// new snowdd1
-		/*
-		onRegister: function(assignedCharacteristic) {
-			console.log("Registering for "+ assignedCharacteristic.locals.fullname, "light service (switch)");
-//			busMonitor.registerGA(assignedCharacteristic, assignedCharacteristic.locals.listenAdresses); // register all listen addresses
-		},*/
+		onRegister: onRegisterCallback,
 		perms: ["pw","pr","ev"],  // assumption: Property Read, Property Write, Events
 		format: "bool",
 		initialValue: false,
