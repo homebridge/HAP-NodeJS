@@ -61,7 +61,7 @@ var execute = function(accessory, entity_id, characteristic,value) {
 				path = "/api/services/script/turn_off";			
 			}
 
-			body = {entity_id: entity_id};
+			body = {entity_id: [entity_id]};
 		}
 		
 		// Scripts don't stay on for long, so we turn it off again in HomeKit
