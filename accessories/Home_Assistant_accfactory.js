@@ -7,35 +7,68 @@ var types = require("./types.js");
 
 var home_assistant_config = require("./config/Home_Assistant_config.js");
 
-var execute = function(accessory,lightID,characteristic,value) {
+var execute = function(accessory, entity_id, characteristic,value) {
 	var http = require('http');
 	var characteristic = characteristic.toLowerCase();
 	
 	var path = false;
-	var body = {};
+	var body = false;;
 	
-	if(characteristic === "identify") {
+	if(strStartsWith(entity_id, "light.")) {
 		
-		path = "/api/services/light/turn_on";
-		body = {entity_id: lightID, flash: "short"};
-	} else if(characteristic === "on") {
-
-		if(value == 1) {
+		if(characteristic === "identify") {
+		
 			path = "/api/services/light/turn_on";
-		} else {
-			path = "/api/services/light/turn_off";			
-		}
+			body = {entity_id: entity_id, flash: "short"};
+		} else if(characteristic === "on") {
 
-		body = {entity_id: lightID};
-	} else  if(characteristic === "brightness") {
+			if(value == 1) {
+				path = "/api/services/light/turn_on";
+			} else {
+				path = "/api/services/light/turn_off";			
+			}
 
-		value = value/100;
-		value = value*255;
-		value = Math.round(value);
+			body = {entity_id: entity_id};
+		} else  if(characteristic === "brightness") {
+
+			value = value/100;
+			value = value*255;
+			value = Math.round(value);
 
 		
-		path = "/api/services/light/turn_on";
-		body = {entity_id: lightID, brightness: value };
+			path = "/api/services/light/turn_on";
+			body = {entity_id: entity_id, brightness: value };
+		}
+	} else if(strStartsWith(entity_id, "scene.")) {
+		
+		if(characteristic === "on") {
+
+			if(value == 1) {
+				path = "/api/services/scene/turn_on";
+			} else {
+				path = "/api/services/scene/turn_off";			
+			}
+
+			body = {entity_id: entity_id};
+		}
+	} else if(strStartsWith(entity_id, "script.")) {
+		
+		if(characteristic === "on") {
+
+			if(value == 1) {
+				path = "/api/services/script/turn_on";
+			} else {
+				path = "/api/services/script/turn_off";			
+			}
+
+			body = {entity_id: entity_id};
+		}
+	}
+		
+	if(path == false || body == false) {
+		
+		console.log("Home Assistant: No execution action for entity '%s' with characteristic '%s' and value '%s'", entity_id, characteristic, value);
+		return;
 	}
 	
 	var post_data = JSON.stringify(body); 
@@ -67,7 +100,7 @@ var execute = function(accessory,lightID,characteristic,value) {
 	// post the data
 	post_req.write(post_data);
 	post_req.end(); 
-    console.log("Home-Assistant: Executed accessory %s for %s - '%s' with value '%s'", accessory, lightID, characteristic, value);
+    console.log("Home-Assistant: Executed accessory %s for %s - '%s' with value '%s'", accessory, entity_id, characteristic, value);
 }
 
 
@@ -168,6 +201,7 @@ var accessoryFactoryLight = function (paramsObject) {
 		throw {name: "ENOPARAMS", message: "required parameter missing: friendly_name"};
 	}
 
+	console.log("Home-Assistant Accessories: Creating accessory for Light %s (%s)", paramsObject.attributes.friendly_name, paramsObject.entity_id);
 
 	var newAccessory = accessoryTemplateLight();
 	newAccessory.username = paramsObject.entity_id;
@@ -189,7 +223,6 @@ var accessoryFactoryLight = function (paramsObject) {
 				numericValue = 1;
 			}
 			console.log("Change:",value); 
-			//  function(accessory,lightID,characteristic,value)
 			execute("onUpdate", this.locals.entity_id, "on", numericValue);
 		},
 		// new snowdd1
@@ -240,6 +273,148 @@ var accessoryFactoryLight = function (paramsObject) {
 
 /*
  *
+ * SWITCH ACCESSORY
+ *
+ */
+var accessoryTemplateSwitch = function () {
+	return {
+		displayName: "friendly_name", // Replace with HA friendly_name,
+		username: "entity_id",  // Replace with HA entity_id
+		pincode: "031-45-154",
+		services: [{
+			sType: types.ACCESSORY_INFORMATION_STYPE,
+			characteristics: [{
+				cType: types.NAME_CTYPE,
+				onUpdate: null,
+				perms: ["pr"],
+				format: "string",
+				initialValue: 'HA Switch',
+				supportEvents: false,
+				supportBonjour: false,
+				manfDescription: "Name of accessory",
+				designedMaxLength: 255
+			},{
+				cType: types.MANUFACTURER_CTYPE,
+				onUpdate: null,
+				perms: ["pr"],
+				format: "string",
+				initialValue: "HA", //"Oltica",
+				supportEvents: false,
+				supportBonjour: false,
+				manfDescription: "Manufacturer",
+				designedMaxLength: 255
+			},{
+				cType: types.MODEL_CTYPE,
+				onUpdate: null,
+				perms: ["pr"],
+				format: "string",
+				initialValue: "switch", // Lightbulb Model
+				supportEvents: false,
+				supportBonjour: false,
+				manfDescription: "Bla3",
+				designedMaxLength: 255
+			},{
+				cType: types.SERIAL_NUMBER_CTYPE,
+				onUpdate: null,
+				perms: ["pr"],
+				format: "string",
+				initialValue: "HA-eneity_id",
+				supportEvents: false,
+				supportBonjour: false,
+				manfDescription: "Serial Number",
+				designedMaxLength: 255
+			},{
+				cType: types.IDENTIFY_CTYPE,
+				onUpdate: null, // TODO: Add Identift onUpdate
+				perms: ["pw"],
+				format: "bool",
+				initialValue: false,
+				supportEvents: false,
+				supportBonjour: false,
+				manfDescription: "Identify Accessory",
+				designedMaxLength: 1
+			}]
+		},{
+			sType: types.SWITCH_STYPE,
+			characteristics: [{
+				cType: types.NAME_CTYPE,
+				onUpdate: null,
+				perms: ["pr"],
+				format: "string",
+				initialValue: "General Switch Service",
+				supportEvents: false,
+				supportBonjour: false,
+				manfDescription: "Name of service",
+				designedMaxLength: 255
+			}]
+		}]
+	};
+};
+
+
+var accessoryFactorySwitch = function (paramsObject) {
+
+	if (typeof paramsObject === 'undefined') {
+		console.log("myAccFactory requires an paramsObject!");
+		throw {name: "ENOPARAMS", message: "required parameter missing, provide home-assistant state dictionary"};
+	}
+
+	if (typeof paramsObject.entity_id !== 'string') {
+		console.log("myAccFactory requires an paramsObject.entity_id as a string!");
+		throw {name: "ENOPARAMS", message: "required parameter missing: entity_id"};
+	}
+	if (typeof paramsObject.attributes.friendly_name !== 'string') {
+		console.log("myAccFactory requires an paramsObject.friendly_name as a string!");
+		throw {name: "ENOPARAMS", message: "required parameter missing: friendly_name"};
+	}
+
+	console.log("Home-Assistant Accessories: Creating accessory for Switch %s (%s)", paramsObject.attributes.friendly_name, paramsObject.entity_id);
+
+
+	var newAccessory = accessoryTemplateSwitch();
+	newAccessory.username = paramsObject.entity_id;
+	newAccessory.displayName =  paramsObject.attributes.friendly_name;
+	newAccessory.locals = {
+		entity_id : paramsObject.entity_id,
+		friendly_name : paramsObject.attributes.friendly_name,
+	};
+	newAccessory.services[0].characteristics[0].initialValue = paramsObject.attributes.friendly_name; // NAME_CTYPE
+	newAccessory.services[0].characteristics[3].initialValue = "HA" + "-" + paramsObject.entity_id.toUpperCase(); // SERIAL_NUMBER_CTYPE
+	newAccessory.services[1].characteristics[0].initialValue = paramsObject.attributes.friendly_name + " Switch Service"; // must access object directly
+
+	// create main characteristics for a lamp: the power switch
+	newAccessory.services[1].characteristics.push({
+		cType: types.POWER_STATE_CTYPE,
+		onUpdate: function(value) {
+			var numericValue = 0;
+			if (value) {
+				numericValue = 1;
+			}
+			console.log("Change:",value); 
+			execute("onUpdate", this.locals.entity_id, "on", numericValue);
+		},
+		// new snowdd1
+		/*
+		onRegister: function(assignedCharacteristic) {
+			console.log("Registering for "+ assignedCharacteristic.locals.fullname, "light service (switch)");
+//			busMonitor.registerGA(assignedCharacteristic, assignedCharacteristic.locals.listenAdresses); // register all listen addresses
+		},*/
+		perms: ["pw","pr","ev"],  // assumption: Property Read, Property Write, Events
+		format: "bool",
+		initialValue: false,
+		supportEvents: false,
+		supportBonjour: false,
+		manfDescription: "Change power state of switch",
+		designedMaxLength: 1
+	});
+
+	return newAccessory;
+};
+
+
+
+/*
+ *
  * Helper Functions
  *
  */
@@ -278,17 +453,18 @@ module.exports = (function () {
 	    console.log("Home-Assistant Accessories: Could not load config from Home Assistant: ", err.message);
 		return accessories;
 	}
-	
 		
 	states = JSON.parse(res.getBody('utf8'), 'utf8');
-		
+			
 	for(var i = 0; i < states.length; i++ ) {
 		
 		var state = states[i];
 		if(strStartsWith(state['entity_id'], "light.") == true) {
 			
-			console.log("Home-Assistant Accessories: Createing accessory for Light %s (%s)", state.attributes['friendly_name'], state['entity_id']);
 			accessories.push({accessory: accessoryFactoryLight(state)});
+		} else if(strStartsWith(state['entity_id'], "scene.") == true || strStartsWith(state['entity_id'], "script.") == true) {
+			
+			accessories.push({accessory: accessoryFactorySwitch(state)});			
 		}
 		
 	}
