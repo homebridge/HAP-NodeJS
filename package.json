@@ -8,7 +8,8 @@
     "ed25519": "git://github.com/dazoe/ed25519",
     "mdns": "^2.2.4",
     "node-persist": "0.0.3",
-    "srp": "git://github.com/KhaosT/node-srp"
+    "srp": "git://github.com/KhaosT/node-srp",
+    "sync-request": "2.x"
   },
   "devDependencies": {},
   "scripts": {

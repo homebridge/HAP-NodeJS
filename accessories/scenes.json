@@ -1,0 +1,20 @@
+[
+    {
+        "attributes": {
+            "friendly_name": "Romantic"
+        },
+        "entity_id": "scene.romantic",
+        "last_changed": "15:22:36 17-05-2015",
+        "last_updated": "15:23:02 17-05-2015",
+        "state": "off"
+    },
+    {
+        "attributes": {
+            "friendly_name": "Focus"
+        },
+        "entity_id": "scene.focus",
+        "last_changed": "15:22:36 17-05-2015",
+        "last_updated": "15:23:02 17-05-2015",
+        "state": "off"
+    }
+]
