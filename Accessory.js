@@ -7,7 +7,7 @@ var ed25519 = require("ed25519");
 Accessory.prototype = {
 	publishAccessory: function publishAccessory() {
 		if (this._private.advertiser !== undefined) {
-			this._private.advertiser.startAdvertising();
+			this._private.advertiser.startAdvertising(this.discoverable);
 		}
 		if (this._private.tcpServer !== undefined) {
 			this._private.tcpServer.startServer();
@@ -28,10 +28,14 @@ function Accessory(displayName, username, persistStore, targetPort, pincode, acc
 	this.targetPort = targetPort;
 	this.accessoryController = accessoryController;
 	this.accessoryInfo = new AccessoryInfo(this.displayName,this.username, pincode);
+	this.discoverable = "1";
 	var savedKey = persistStore.getItem(username);
     if (savedKey !== undefined) {
 		var keyPair = savedKey;
 		this.accessoryInfo.setKeyPair(keyPair);
+		if (keyPair.paired) {
+			this.discoverable = "0";
+		}
 	} else {
 		console.log("Cannot find secret key, creating One...");
 		persistStore.setItem(username, this.accessoryInfo.keyPair);
@@ -43,7 +47,7 @@ function Accessory(displayName, username, persistStore, targetPort, pincode, acc
 		tcpServer: new tcpServer_fac.TCPServer(targetPort, targetPort+1, persistStore, this.accessoryInfo),
 		hapServer: new server_fac.HAPServer(this.accessoryInfo, function (connectPort, sharedSec){
 			this._private.tcpServer.enableEncryptionForSession(connectPort, sharedSec);
-		}.bind(this), persistStore, accessoryController)
+		}.bind(this), persistStore, accessoryController, this)
 	}
 	this.accessoryController.tcpServer = this._private.tcpServer;
 }
@@ -66,7 +70,8 @@ function AccessoryInfo(displayName,username, pincode) {
 	var keyPair = ed25519.MakeKeypair(seed);
 	this.keyPair = {
 		signSk: keyPair.privateKey,
-		signPk: keyPair.publicKey
+		signPk: keyPair.publicKey,
+		paired: false
 	};
 }
 

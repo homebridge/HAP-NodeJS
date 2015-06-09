@@ -1,12 +1,20 @@
 var mdns = require('mdns');
 
 Advertiser.prototype = {
-	startAdvertising: function startAdvertising() {
+	startAdvertising: function startAdvertising(statusFlag) {
 		if (!this._private.isAdvertising) {
+			this._private.txt_record.sf = statusFlag;
+			this._private.ad = mdns.createAdvertisement(mdns.tcp('hap'), this.targetPort, {name: this.acc_name, txtRecord: this._private.txt_record});
 			this._private.ad.start();
 			this._private.isAdvertising = true;
 		}
 	},
+	stopAdvertising: function stopAdvertising() {
+		if (this._private.isAdvertising) {
+			this._private.ad.stop();
+			this._private.isAdvertising = false;
+		}
+	}
 }
 
 function Advertiser(port, accessory_name, accessory_id, accessory_conf, accessory_state) {
@@ -27,10 +35,9 @@ function Advertiser(port, accessory_name, accessory_id, accessory_conf, accessor
 	    id: this.acc_id,
 	    "c#": this.acc_conf,
 	    "s#": this.acc_state,
-	    sf: "1",
-	    "ff": "0"
+	    "ff": "0",
+	    "ci": "1"
 	};
-	this._private.ad = mdns.createAdvertisement(mdns.tcp('hap'), this.targetPort, {name: this.acc_name, txtRecord: this._private.txt_record});
 }
 
 module.exports = {

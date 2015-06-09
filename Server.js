@@ -7,15 +7,16 @@ var ed25519 = require("ed25519");
 var tlvHandler = require("./TLV-Handler.js");
 var encryption = require("./Encryption.js");
 
-function HAPServer(accessoryInfo, callback, persistStore, accessoryController) {
+function HAPServer(accessoryInfo, callback, persistStore, accessoryController, accessory) {
 	if (!(this instanceof HAPServer))  {
-		return new HAPServer(accessoryInfo, callback, persistStore, accessoryController);
+		return new HAPServer(accessoryInfo, callback, persistStore, accessoryController, accessory);
 	}
 	this.server_sign_keyPair = accessoryInfo.keyPair;
 	this.accessoryInfo = accessoryInfo;
 	this.persistStore = persistStore;
 	this.hapServer = this.createHAPServer();
 	this.accessoryController = accessoryController;
+	this.accessory = accessory;
 	this.callback = callback;
 }
 
@@ -308,7 +309,12 @@ HAPServer.prototype = {
 		this.session_client_LTPK = clientLTPK;
 
 		this.persistStore.setItem(this.accessoryInfo.username + clientUsername.toString(),clientLTPK.toString("hex"));
+		this.accessoryInfo.keyPair.paired = true;
+		this.persistStore.setItem(this.accessoryInfo.username, this.accessoryInfo.keyPair);
 		this.persistStore.persistSync();
+		
+		this.accessory._private.advertiser.stopAdvertising();
+		this.accessory._private.advertiser.startAdvertising("0");
 
 		var S_private = this.srpServer.computeK();
 		var controller_salt = new Buffer("Pair-Setup-Controller-Sign-Salt");
