@@ -1,3 +1,12 @@
+/*
+ * Updated 20150513: add a new optional property onRead:callback if Siri asks for a status update, 
+ * which might not have been pushed to the charcteristic
+ * 
+ * I think it is often recommendable to update the characteristics through event hooks, using the onRegister:callback 
+ * and pushing notifications to all registered devices,
+ * however there might be circumstances you want to read only if Siri asks you.   
+ */
+
 //var debug = require("./accessories/mydebug.js");
 function Characteristic(options, onUpdate) {
 	if (!(this instanceof Characteristic))  {
@@ -19,7 +28,7 @@ function Characteristic(options, onUpdate) {
 	this.designedMinStep = options.designedMinStep;
 	this.unit = options.unit;
 
-	this.eventEnabled = false;
+	this.eventEnabled = false; 
 	this.bonjourEnabled = false;
 	
 	this.subscribedPeers = {};
@@ -33,13 +42,17 @@ function Characteristic(options, onUpdate) {
 	if (options.onRegister) {
 		// the characteristics block has a register method
 		console.log("checking "+ options.manfDescription + " "+ typeof(options.onRegister));
-		if (typeof(options.onRegister) !== "undefined") {
+		if (typeof(options.onRegister) === "function") {
 			console.log("Characteristics.js: registering "+ options.manfDescription + " "+ typeof(options.onRegister));
 			//debug.iterate(this);
 			this.onRegister(this);
 		}
 	}
-	// snowdd1	 
+	// /snowdd1	 
+	
+	// snowdd1 20150513
+	this.onRead = options.onRead;
+	// /snowdd1 20150513
 	
 	
 	
@@ -50,14 +63,14 @@ Characteristic.prototype = {
 		this.value = value;
 		this.updateValue(value, peer);
 		if (this.onUpdate !== null) {  // if there is an onUpdate function in the characteristic, call it!
-			console.log("Characteristics.js:updateCharacteristicValue");
+			console.log("Characteristics.js:updateCharacteristicValue()");
 			this.onUpdate(value); //here the onUpdate function is called
 		} else {
-			console.log("Characteristic.js: updateCharacteristicValue without onUpdate function:",value);
+			console.log("Characteristic.js:updateCharacteristicValue() without onUpdate function:",value);
 		}
 	},
 	updateCharacteristicEvent: function updateCharacteristicEvent(event, peer) {
-		console.log("Enable Event:",event);
+		console.log("Characteristics.js:updateCharacteristicEvent(): Enable Event:",event);
 		this.subscribedPeers[peer] = event;
 		this.eventEnabled = event;
 	},
@@ -110,12 +123,19 @@ Characteristic.prototype = {
 					]
 				};
 				var eventJSON = JSON.stringify(eventDict);
+				console.log("Broadcasting event " + eventJSON + " to: " + JSON.stringify(this.subscribedPeers));
 				this.accessoryController.broadcastEvent(eventJSON, this.subscribedPeers, peer);
 			}
-		} else { console.log("Characteristics.js:NotEventEnabled"); }
+		} else { console.log("Characteristics.js:updateValue():NotEventEnabled"); }
 	},
 	valueForUpdate: function valueForUpdate() { // reading values FROM THE DEVICE, better: from this object
-		console.log("Characteristics.js:valueForUpdate called");
+		console.log("Characteristics.js:valueForUpdate(): called, Siri has asked for the accessory's status");
+		if (this.onRead) {
+			console.log("Characteristics.js:valueForUpdate(): invoking callback");
+			var temp = this.onRead();
+			this.value = temp ? temp : this.value;
+		}
+		console.log("Characteristics.js:valueForUpdate(): called, Siri has asked for the accessory's status: returning " + this.value);
 		return this.value;
 		//
 		
