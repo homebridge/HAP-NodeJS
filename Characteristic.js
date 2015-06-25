@@ -128,17 +128,19 @@ Characteristic.prototype = {
 			}
 		} else { console.log("Characteristics.js:updateValue():NotEventEnabled"); }
 	},
-	valueForUpdate: function valueForUpdate() { // reading values FROM THE DEVICE, better: from this object
+	valueForUpdate: function valueForUpdate(callback) { // reading values FROM THE DEVICE, better: from this object
 		console.log("Characteristics.js:valueForUpdate(): called, Siri has asked for the accessory's status");
+
 		if (this.onRead) {
 			console.log("Characteristics.js:valueForUpdate(): invoking callback");
-			var temp = this.onRead();
-			this.value = temp ? temp : this.value;
+			this.onRead(function(value){
+				this.value = value;
+				console.log("Characteristics.js:valueForUpdate(): called, Siri has asked for the accessory's status: returning " + this.value);
+				callback(this.value);
+			});
 		}
-		console.log("Characteristics.js:valueForUpdate(): called, Siri has asked for the accessory's status: returning " + this.value);
-		return this.value;
 		//
-		
+
 	}
 };
 
