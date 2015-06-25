@@ -81,10 +81,10 @@ exports.accessory = {
     		console.log("Change:",value); 
     		execute("Garage Door - current door state", "Current State", value); 
     	},
-    	onRead: function(callback) {
-    		console.log("Read:");
+    	onRead: function() { 
+    		console.log("Read:"); 
     		execute("Garage Door - current door state", "Current State", null);
-    		callback(undefined); // only testing, we have no physical device to read from
+    		return undefined; // only testing, we have no physical device to read from
     	},
     	perms: ["pr","ev"],
 		format: "int",
@@ -102,10 +102,10 @@ exports.accessory = {
     		console.log("Change:",value); 
     		execute("Garage Door - target door state", "Current State", value); 
     	},
-    	onRead: function(callback) {
-    		console.log("Read:");
+    	onRead: function() { 
+    		console.log("Read:"); 
     		execute("Garage Door - target door state", "Current State", null);
-    		callback(undefined); // only testing, we have no physical device to read from
+    		return undefined; // only testing, we have no physical device to read from
     	},
     	perms: ["pr","pw","ev"],
 		format: "int",
@@ -123,10 +123,10 @@ exports.accessory = {
     		console.log("Change:",value); 
     		execute("Garage Door - obstruction detected", "Current State", value); 
     	},
-    	onRead: function(callback) {
-    		console.log("Read:");
+    	onRead: function() { 
+    		console.log("Read:"); 
     		execute("Garage Door - obstruction detected", "Current State", null);
-    		callback(undefined); // only testing, we have no physical device to read from
+    		return undefined; // only testing, we have no physical device to read from
     	},
     	perms: ["pr","ev"],
 		format: "bool",
