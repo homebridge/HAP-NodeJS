@@ -69,6 +69,7 @@ for (var i = 0; i < accessoriesJSON.length; i++) {
 				designedMinStep: accessoriesJSON[i].services[j].characteristics[k].designedMinStep,
 				unit: accessoriesJSON[i].services[j].characteristics[k].unit,
 				onRegister: accessoriesJSON[i].services[j].characteristics[k].onRegister,  // snowdd1
+				onRead: accessoriesJSON[i].services[j].characteristics[k].onRead,  // snowdd1
 				locals: accessoriesJSON[i].locals //snowdd1
 			};
 

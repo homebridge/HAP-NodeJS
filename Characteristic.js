@@ -35,8 +35,9 @@ function Characteristic(options, onUpdate) {
 
 	this.onUpdate = onUpdate;
 	this.onRegister = options.onRegister;
+	this.onRead = options.onRead; // snowdd1 20150513
 	this.locals = options.locals; // local attributes for device control methods // snowdd1
-	
+
 	// new: call onRegister function if one is supplied in the *_accessory file
 	// snowdd1
 	if (options.onRegister) {
@@ -49,13 +50,6 @@ function Characteristic(options, onUpdate) {
 		}
 	}
 	// /snowdd1	 
-	
-	// snowdd1 20150513
-	this.onRead = options.onRead;
-	// /snowdd1 20150513
-	
-	
-	
 }
 
 Characteristic.prototype = {
@@ -128,17 +122,18 @@ Characteristic.prototype = {
 			}
 		} else { console.log("Characteristics.js:updateValue():NotEventEnabled"); }
 	},
-	valueForUpdate: function valueForUpdate() { // reading values FROM THE DEVICE, better: from this object
+	valueForUpdate: function valueForUpdate(callback) { // reading values FROM THE DEVICE, better: from this object
 		console.log("Characteristics.js:valueForUpdate(): called, Siri has asked for the accessory's status");
 		if (this.onRead) {
 			console.log("Characteristics.js:valueForUpdate(): invoking callback");
-			var temp = this.onRead();
-			this.value = temp ? temp : this.value;
+			this.onRead(function(value){
+				this.value = value;
+				console.log("Characteristics.js:valueForUpdate(): called, Siri has asked for the accessory's status: returning " + this.value);
+				callback(this.value);
+			});
+		} else {
+			callback(this.value); // if we don't implement onRead, we return the existing value immediately.
 		}
-		console.log("Characteristics.js:valueForUpdate(): called, Siri has asked for the accessory's status: returning " + this.value);
-		return this.value;
-		//
-		
 	}
 };
 
