@@ -43,19 +43,20 @@ AccessoryController.prototype = {
 		}
 		return JSON.stringify(dict);
 	},
-	jsonForCharacteristicUpdate: function jsonForCharacteristicUpdate(aid, iid) {
+	jsonForCharacteristicUpdate: function jsonForCharacteristicUpdate(aid, iid, callback) {
 		var charObject = this.objects[iid];
-		var charValue = charObject.valueForUpdate();
-		var respDict = {
-			characteristics: [
-				{
-					aid: aid,
-					iid: iid,
-					value: charValue
-				}
-			]
-		}
-		return JSON.stringify(respDict);
+		var charValue = charObject.valueForUpdate(function(value){
+			var respDict = {
+				characteristics: [
+					{
+						aid: aid,
+						iid: iid,
+						value: value
+					}
+				]
+			}
+			callback(JSON.stringify(respDict));
+		});
 	},
 	processSingleCharacteristicsValueWrite: function processSingleCharacteristicsValueWrite(update, peer) {
 		var update_char = update;
