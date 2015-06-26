@@ -106,8 +106,12 @@ HAPServer.prototype = {
 			var iids = requestDetails.query.substring(3).split(".");
 			var accessoryId = parseInt(iids[0]);
 			var characteristicId = parseInt(iids[1]);
-			response.write(this.accessoryController.jsonForCharacteristicUpdate(accessoryId,characteristicId));
-			response.end();
+
+			this.accessoryController.jsonForCharacteristicUpdate(accessoryId,characteristicId, function(json){
+				response.write(json);
+				response.end();
+			})
+
 		} else if (request.method == "PUT") {
 			response.writeHead(204, {"Content-Type": "application/hap+json"});
 			this.accessoryController.processCharacteristicsValueWrite(data, request.socket.remotePort);
