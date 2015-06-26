@@ -56,7 +56,7 @@ for (var i = 0; i < accessoriesJSON.length; i++) {
 		//loop through characteristics
 		for (var k = 0; k < accessoriesJSON[i].services[j].characteristics.length; k++) {
 			var options = {
-				type: accessoriesJSON[i].services[j].characteristics[k].onRead,
+				onRead: accessoriesJSON[i].services[j].characteristics[k].onRead,
 				type: accessoriesJSON[i].services[j].characteristics[k].cType,
 				perms: accessoriesJSON[i].services[j].characteristics[k].perms,
 				format: accessoriesJSON[i].services[j].characteristics[k].format,
