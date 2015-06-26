@@ -17,9 +17,11 @@ BridgedAccessoryController.prototype = {
 		}
 		return JSON.stringify(dict);
 	},
-	jsonForCharacteristicUpdate: function jsonForCharacteristicUpdate(aid, iid) {
+	jsonForCharacteristicUpdate: function jsonForCharacteristicUpdate(aid, iid, callback) {
 		var accessory = this.accessories[aid - 1];
-		return accessory.jsonForCharacteristicUpdate(aid,iid);
+		accessory.jsonForCharacteristicUpdate(aid,iid, function(json){
+			callback(json);
+		});
 	},
 	processCharacteristicsValueWrite: function processCharacteristicsValueWrite(updates, peer) {
 		var updates_objects = JSON.parse(updates.toString());
