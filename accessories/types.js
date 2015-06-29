@@ -17,9 +17,15 @@ exports.FAN_STYPE = stPre + "40" + stPost;
 exports.OUTLET_STYPE = stPre + "47" + stPost;
 exports.LOCK_MECHANISM_STYPE = stPre + "45" + stPost;
 exports.LOCK_MANAGEMENT_STYPE = stPre + "44" + stPost;
+exports.ALARM_STYPE = stPre + "7E" + stPost;
+exports.WINDOW_COVERING_STYPE = stPre + "8C" + stPost;
+exports.OCCUPANCY_SENSOR_STYPE = stPre + "86" + stPost;
 
 //HomeKitCharacteristicsTypes
 
+
+exports.ALARM_CURRENT_STATE_CTYPE = stPre + "66" + stPost;
+exports.ALARM_TARGET_STATE_CTYPE = stPre + "67" + stPost;
 exports.ADMIN_ONLY_ACCESS_CTYPE = stPre + "01" + stPost;
 exports.AUDIO_FEEDBACK_CTYPE = stPre + "05" + stPost;
 exports.BRIGHTNESS_CTYPE = stPre + "08" + stPost;
@@ -52,5 +58,8 @@ exports.TARGET_RELATIVE_HUMIDITY_CTYPE = stPre + "34" + stPost;
 exports.TARGET_TEMPERATURE_CTYPE = stPre + "35" + stPost;
 exports.TEMPERATURE_UNITS_CTYPE = stPre + "36" + stPost;
 exports.VERSION_CTYPE = stPre + "37" + stPost;
+exports.WINDOW_COVERING_TARGET_POSITION_CTYPE = stPre + "7C" + stPost;
+exports.WINDOW_COVERING_CURRENT_POSITION_CTYPE = stPre + "6D" + stPost;
+exports.WINDOW_COVERING_OPERATION_STATE_CTYPE = stPre + "72" + stPost;
 exports.CURRENTHEATINGCOOLING_CTYPE = stPre + "0F" + stPost;
 exports.TARGETHEATINGCOOLING_CTYPE = stPre + "33" + stPost;
