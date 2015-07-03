@@ -47,6 +47,7 @@ exports.MOTION_DETECTED_CTYPE = stPre + "22" + stPost;
 exports.NAME_CTYPE = stPre + "23" + stPost;
 exports.OBSTRUCTION_DETECTED_CTYPE = stPre + "24" + stPost;
 exports.OUTLET_IN_USE_CTYPE = stPre + "26" + stPost;
+exports.OCCUPANCY_DETECTED_CTYPE = stPre + "71" + stPost;
 exports.POWER_STATE_CTYPE = stPre + "25" + stPost;
 exports.ROTATION_DIRECTION_CTYPE = stPre + "28" + stPost;
 exports.ROTATION_SPEED_CTYPE = stPre + "29" + stPost;
