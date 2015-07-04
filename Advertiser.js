@@ -17,7 +17,7 @@ Advertiser.prototype = {
 	}
 }
 
-function Advertiser(port, accessory_name, accessory_id, accessory_conf, accessory_state) {
+function Advertiser(port, accessory_name, accessory_id, accessory_conf, accessory_state, transport_category) {
 	if (!(this instanceof Advertiser))  {
 		return new Advertiser(port, accessory_name, accessory_id, accessory_conf, accessory_state);
 	}
@@ -26,6 +26,7 @@ function Advertiser(port, accessory_name, accessory_id, accessory_conf, accessor
 	this.acc_id = accessory_id;
 	this.acc_conf = accessory_conf;
 	this.acc_state = accessory_state;
+	this.transport_category = transport_category || 1;
 	this._private = {
 		isAdvertising: false
 	}
@@ -36,7 +37,7 @@ function Advertiser(port, accessory_name, accessory_id, accessory_conf, accessor
 	    "c#": this.acc_conf,
 	    "s#": this.acc_state,
 	    "ff": "0",
-	    "ci": "1"
+	    "ci": this.transport_category
 	};
 }
 
