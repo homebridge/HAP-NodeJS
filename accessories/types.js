@@ -20,6 +20,8 @@ exports.LOCK_MANAGEMENT_STYPE = stPre + "44" + stPost;
 exports.ALARM_STYPE = stPre + "7E" + stPost;
 exports.WINDOW_COVERING_STYPE = stPre + "8C" + stPost;
 exports.OCCUPANCY_SENSOR_STYPE = stPre + "86" + stPost;
+exports.CONTACT_SENSOR_STYPE = stPre + "80" + stPost;
+exports.MOTION_SENSOR_STYPE = stPre + "85" + stPost;
 
 //HomeKitCharacteristicsTypes
 
@@ -29,7 +31,9 @@ exports.ALARM_TARGET_STATE_CTYPE = stPre + "67" + stPost;
 exports.ADMIN_ONLY_ACCESS_CTYPE = stPre + "01" + stPost;
 exports.AUDIO_FEEDBACK_CTYPE = stPre + "05" + stPost;
 exports.BRIGHTNESS_CTYPE = stPre + "08" + stPost;
+exports.BATTERY_LEVEL_CTYPE = stPre + "68" + stPost;
 exports.COOLING_THRESHOLD_CTYPE = stPre + "0D" + stPost;
+exports.CONTACT_SENSOR_STATE_CTYPE = stPre + "6A" + stPost;
 exports.CURRENT_DOOR_STATE_CTYPE = stPre + "0E" + stPost;
 exports.CURRENT_LOCK_MECHANISM_STATE_CTYPE = stPre + "1D" + stPost;
 exports.CURRENT_RELATIVE_HUMIDITY_CTYPE = stPre + "10" + stPost;
@@ -47,11 +51,14 @@ exports.MOTION_DETECTED_CTYPE = stPre + "22" + stPost;
 exports.NAME_CTYPE = stPre + "23" + stPost;
 exports.OBSTRUCTION_DETECTED_CTYPE = stPre + "24" + stPost;
 exports.OUTLET_IN_USE_CTYPE = stPre + "26" + stPost;
+exports.OCCUPANCY_DETECTED_CTYPE = stPre + "71" + stPost;
 exports.POWER_STATE_CTYPE = stPre + "25" + stPost;
 exports.ROTATION_DIRECTION_CTYPE = stPre + "28" + stPost;
 exports.ROTATION_SPEED_CTYPE = stPre + "29" + stPost;
 exports.SATURATION_CTYPE = stPre + "2F" + stPost;
 exports.SERIAL_NUMBER_CTYPE = stPre + "30" + stPost;
+exports.STATUS_LOW_BATTERY_CTYPE = stPre + "79" + stPost;
+exports.STATUS_FAULT_CTYPE = stPre + "77" + stPost;
 exports.TARGET_DOORSTATE_CTYPE = stPre + "32" + stPost;
 exports.TARGET_LOCK_MECHANISM_STATE_CTYPE = stPre + "1E" + stPost;
 exports.TARGET_RELATIVE_HUMIDITY_CTYPE = stPre + "34" + stPost;
