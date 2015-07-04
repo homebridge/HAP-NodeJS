@@ -19,9 +19,9 @@ Accessory.prototype = {
 	}
 };
 
-function Accessory(displayName, username, persistStore, targetPort, pincode, accessoryController) {
+function Accessory(displayName, username, persistStore, targetPort, pincode, accessoryController, transportCategoryType) {
 	if (!(this instanceof Accessory))  {
-		return new Accessory(displayName, username, persistStore, targetPort, pincode, accessoryController);
+		return new Accessory(displayName, username, persistStore, targetPort, pincode, accessoryController, transportCategoryType);
 	}
 	this.displayName = displayName;
 	this.username = username;
@@ -43,7 +43,7 @@ function Accessory(displayName, username, persistStore, targetPort, pincode, acc
 	}
 	this._private = {
 		store: persistStore,
-		advertiser: new advertiser_fac.Advertiser(targetPort, this.displayName,this.username,"1","1"),
+		advertiser: new advertiser_fac.Advertiser(targetPort, this.displayName,this.username,"1","1",transportCategoryType),
 		tcpServer: new tcpServer_fac.TCPServer(targetPort, targetPort+1, persistStore, this.accessoryInfo),
 		hapServer: new server_fac.HAPServer(this.accessoryInfo, function (connectPort, sharedSec){
 			this._private.tcpServer.enableEncryptionForSession(connectPort, sharedSec);

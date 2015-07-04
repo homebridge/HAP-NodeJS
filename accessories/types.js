@@ -6,6 +6,22 @@ var stPre = "000000";
 var stPost = "-0000-1000-8000-0026BB765291";
 
 
+//HomeKitTransportCategoryTypes
+exports.OTHER_TCTYPE = 1;
+exports.FAN_TCTYPE = 3;
+exports.GARAGE_DOOR_OPENER_TCTYPE = 4;
+exports.LIGHTBULB_TCTYPE = 5;
+exports.DOOR_LOCK_TCTYPE = 6;
+exports.OUTLET_TCTYPE = 7;
+exports.SWITCH_TCTYPE = 8;
+exports.THERMOSTAT_TCTYPE = 9;
+exports.SENSOR_TCTYPE = 10;
+exports.ALARM_SYSTEM_TCTYPE = 11;
+exports.DOOR_TCTYPE = 12;
+exports.WINDOW_TCTYPE = 13;
+exports.WINDOW_COVERING_TCTYPE = 14;
+exports.PROGRAMMABLE_SWITCH_TCTYPE = 15;
+
 //HomeKitServiceTypes
 
 exports.LIGHTBULB_STYPE = stPre + "43" + stPost;
