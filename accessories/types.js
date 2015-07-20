@@ -38,6 +38,8 @@ exports.WINDOW_COVERING_STYPE = stPre + "8C" + stPost;
 exports.OCCUPANCY_SENSOR_STYPE = stPre + "86" + stPost;
 exports.CONTACT_SENSOR_STYPE = stPre + "80" + stPost;
 exports.MOTION_SENSOR_STYPE = stPre + "85" + stPost;
+exports.HUMIDITY_SENSOR_STYPE = stPre + "82" + stPost;
+exports.TEMPERATURE_SENSOR_STYPE = stPre + "8A" + stPost;
 
 //HomeKitCharacteristicsTypes
 
