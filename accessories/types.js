@@ -23,25 +23,33 @@ exports.WINDOW_COVERING_TCTYPE = 14;
 exports.PROGRAMMABLE_SWITCH_TCTYPE = 15;
 
 //HomeKitServiceTypes
-
-exports.LIGHTBULB_STYPE = stPre + "43" + stPost;
-exports.SWITCH_STYPE = stPre + "49" + stPost;
-exports.THERMOSTAT_STYPE = stPre + "4A" + stPost;
-exports.GARAGE_DOOR_OPENER_STYPE = stPre + "41" + stPost;
-exports.ACCESSORY_INFORMATION_STYPE = stPre + "3E" + stPost;
-exports.FAN_STYPE = stPre + "40" + stPost;
-exports.OUTLET_STYPE = stPre + "47" + stPost;
-exports.LOCK_MECHANISM_STYPE = stPre + "45" + stPost;
-exports.LOCK_MANAGEMENT_STYPE = stPre + "44" + stPost;
+exports.AIR_QUALITY_STYPE = stPre + "8D" + stPost;
 exports.ALARM_STYPE = stPre + "7E" + stPost;
-exports.WINDOW_COVERING_STYPE = stPre + "8C" + stPost;
-exports.OCCUPANCY_SENSOR_STYPE = stPre + "86" + stPost;
+exports.CARBON_MONOXIDE_STYPE = stPre + "7F" + stPost;
 exports.CONTACT_SENSOR_STYPE = stPre + "80" + stPost;
+exports.DOOR_STYPE = stPre + "81" + stPost;
+exports.FAN_STYPE = stPre + "40" + stPost;
+exports.GARAGE_DOOR_OPENER_STYPE = stPre + "41" + stPost;
+exports.HUMIDITY_SENSOR_STYPE = stPre + "82" + stPost;
+exports.LEAK_SENSOR_STYPE = stPre + "83" + stPost;
+exports.LIGHT_SENSOR_STYPE = stPre + "84" + stPost;
+exports.LIGHTBULB_STYPE = stPre + "43" + stPost;
+exports.LOCK_MANAGEMENT_STYPE = stPre + "44" + stPost;
+exports.LOCK_MECHANISM_STYPE = stPre + "45" + stPost;
 exports.MOTION_SENSOR_STYPE = stPre + "85" + stPost;
+exports.OCCUPANCY_SENSOR_STYPE = stPre + "86" + stPost;
+exports.OUTLET_STYPE = stPre + "47" + stPost;
+exports.SMOKE_SENSOR_STYPE = stPre + "87" + stPost;
+exports.STATEFUL_PROGRAMMABLE_SWITCH_STYPE = stPre + "88" + stPost;
+exports.STATELESS_PROGRAMMABLE_SWITCH_STYPE = stPre + "89" + stPost;
+exports.SWITCH_STYPE = stPre + "49" + stPost;
+exports.TEMPERATURE_SENSOR_STYPE = stPre + "8A" + stPost;
+exports.THERMOSTAT_STYPE = stPre + "4A" + stPost;
+exports.WINDOW_STYPE = stPre + "8B" + stPost;
+exports.WINDOW_COVERING_STYPE = stPre + "8C" + stPost;
+exports.ACCESSORY_INFORMATION_STYPE = stPre + "3E" + stPost;
 
 //HomeKitCharacteristicsTypes
-
-
 exports.ALARM_CURRENT_STATE_CTYPE = stPre + "66" + stPost;
 exports.ALARM_TARGET_STATE_CTYPE = stPre + "67" + stPost;
 exports.ADMIN_ONLY_ACCESS_CTYPE = stPre + "01" + stPost;
