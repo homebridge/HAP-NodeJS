@@ -96,7 +96,6 @@ function identifyCharacteristic(identityFunction) {
     onUpdate: identityFunction,
     perms: ["pw"],
     format: "bool",
-    initialValue: true,
     supportEvents: false,
     supportBonjour: false,
     manfDescription: "Identify Accessory",

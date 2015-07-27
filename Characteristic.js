@@ -47,11 +47,13 @@ Characteristic.prototype = {
 			type: this.type,
 			perms: this.perms,
 			format: this.format,
-			value: this.value,
 			events: this.eventEnabled,
 			bonjour: this.bonjourEnabled,
 		};
 
+		if (this.value !== undefined) {
+			object.value = this.value;
+		}
 		if (this.manfDescription !== undefined) {
 			object.description = this.manfDescription;
 		}
@@ -70,7 +72,7 @@ Characteristic.prototype = {
 		if (this.unit !== undefined) {
 			object.unit = this.unit;
 		}
-		
+
 		return object;
 	},
 	updateValue: function updateValue(value, peer) {
