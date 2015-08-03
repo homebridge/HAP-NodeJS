@@ -16,7 +16,7 @@ var bridge = new Bridge('Node Bridge', uuid.generate("Node Bridge"));
 
 // Load up all accessories in the /accessories folder
 var dir = path.join(__dirname, "accessories");
-var accessories = accessoryLoader.load(dir);
+var accessories = accessoryLoader.loadDirectory(dir);
 
 // Add them all to the bridge
 accessories.forEach(function(accessory) {

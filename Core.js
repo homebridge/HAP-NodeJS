@@ -14,7 +14,7 @@ var targetPort = 51826;
 
 // Load up all accessories in the /accessories folder
 var dir = path.join(__dirname, "accessories");
-var accessories = accessoryLoader.load(dir);
+var accessories = accessoryLoader.loadDirectory(dir);
 
 // Publish them all separately (as opposed to BridgedCore which publishes them behind a single Bridge accessory)
 accessories.forEach(function(accessory) {

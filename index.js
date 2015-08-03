@@ -3,6 +3,7 @@ var Bridge = require('./lib/Bridge.js').Bridge;
 var Service = require('./lib/Service.js').Service;
 var Characteristic = require('./lib/Characteristic.js').Characteristic;
 var uuid = require('./lib/util/uuid');
+var AccessoryLoader = require('./lib/AccessoryLoader.js');
 
 // ensure Characteristic subclasses are defined
 var HomeKitTypes = require('./lib/gen/HomeKitTypes');
@@ -12,5 +13,6 @@ module.exports = {
   Bridge: Bridge,
   Service: Service,
   Characteristic: Characteristic,
-  uuid: uuid
+  uuid: uuid,
+  AccessoryLoader: AccessoryLoader
 }
