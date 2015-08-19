@@ -1,5 +1,4 @@
 var Accessory = require('../').Accessory;
-var Bridge = require('../').Bridge;
 var Service = require('../').Service;
 var Characteristic = require('../').Characteristic;
 var uuid = require('../').uuid;
