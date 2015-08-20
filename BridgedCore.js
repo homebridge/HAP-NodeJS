@@ -14,6 +14,12 @@ storage.initSync();
 // Start by creating our Bridge which will host all loaded Accessories
 var bridge = new Bridge('Node Bridge', uuid.generate("Node Bridge"));
 
+// Listen for bridge identification event
+bridge.on('identify', function(paired, callback) {
+  console.log("Node Bridge identify");
+  callback(); // success
+});
+
 // Load up all accessories in the /accessories folder
 var dir = path.join(__dirname, "accessories");
 var accessories = accessoryLoader.loadDirectory(dir);

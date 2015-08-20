@@ -39,16 +39,10 @@ lock
   .setCharacteristic(Characteristic.SerialNumber, "A1S2NASF88EW");
 
 // listen for the "identify" event for this Accessory
-lock
-  .getService(Service.AccessoryInformation)
-  .getCharacteristic(Characteristic.Identify)
-  .on('set', function(value, callback) {
-    if (value) {
-      // called when the iOS user wants to identify which Lock this is
-      FAKE_LOCK.identify();
-    }
-    callback();
-  });
+lock.on('identify', function(paired, callback) {
+  FAKE_LOCK.identify();
+  callback(); // success
+});
 
 // Add the actual Door Lock Service and listen for change events from iOS.
 // We can see the complete list of Services and Characteristics in `lib/gen/HomeKitTypes.js`
