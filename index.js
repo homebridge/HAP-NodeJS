@@ -1,14 +1,28 @@
-var accessory_Factor           = new require("./Accessory.js");
-var accessoryController_Factor = new require("./AccessoryController.js");
-var service_Factor             = new require("./Service.js");
-var characteristic_Factor      = new require("./Characteristic.js");
-var bridge_Factor              = new require("./BridgedAccessoryController.js");
-var types                      = new require("./accessories/types.js");
+var Accessory = require('./lib/Accessory.js').Accessory;
+var Bridge = require('./lib/Bridge.js').Bridge;
+var Service = require('./lib/Service.js').Service;
+var Characteristic = require('./lib/Characteristic.js').Characteristic;
+var uuid = require('./lib/util/uuid');
+var AccessoryLoader = require('./lib/AccessoryLoader.js');
+var storage = require('node-persist');
 
-var exports = module.exports = {};
-exports.accessoryFactory           = accessory_Factor;
-exports.accessoryControllerFactory = accessoryController_Factor;
-exports.serviceFactory             = service_Factor;
-exports.characteristicFactory      = characteristic_Factor;
-exports.bridgeFactory              = bridge_Factor;
-exports.types                      = types;
+// ensure Characteristic subclasses are defined
+var HomeKitTypes = require('./lib/gen/HomeKitTypes');
+
+module.exports = {
+  init: init,
+  Accessory: Accessory,
+  Bridge: Bridge,
+  Service: Service,
+  Characteristic: Characteristic,
+  uuid: uuid,
+  AccessoryLoader: AccessoryLoader
+}
+
+function init(storagePath) {
+  // initialize our underlying storage system, passing on the directory if needed
+  if (typeof storagePath !== 'undefined')
+    storage.initSync({ dir: storagePath });
+  else
+    storage.initSync(); // use whatever is default
+}
