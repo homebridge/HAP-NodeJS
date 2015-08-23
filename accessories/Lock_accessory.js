@@ -47,7 +47,7 @@ lock.on('identify', function(paired, callback) {
 // Add the actual Door Lock Service and listen for change events from iOS.
 // We can see the complete list of Services and Characteristics in `lib/gen/HomeKitTypes.js`
 lock
-  .addService(new Service.LockMechanism())
+  .addService(Service.LockMechanism)
   .getCharacteristic(Characteristic.LockTargetState)
   .on('set', function(value, callback) {
     
