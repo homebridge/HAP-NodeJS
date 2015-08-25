@@ -33,7 +33,7 @@ var light = exports.accessory = new Accessory('Light', lightUUID);
 light.username = "1A:2B:3C:4D:5E:FF";
 light.pincode = "031-45-154";
 
-// set some basic properties (these values are arbitrary)
+// set some basic properties (these values are arbitrary and setting them is optional)
 light
   .getService(Service.AccessoryInformation)
   .setCharacteristic(Characteristic.Manufacturer, "Oltica")
@@ -49,7 +49,7 @@ light.on('identify', function(paired, callback) {
 // Add the actual Lightbulb Service and listen for change events from iOS.
 // We can see the complete list of Services and Characteristics in `lib/gen/HomeKitTypes.js`
 light
-  .addService(Service.Lightbulb)
+  .addService(Service.Lightbulb, "Fake Light") // services exposed to the user should have "names" like "Fake Light" for us
   .getCharacteristic(Characteristic.On)
   .on('set', function(value, callback) {
     FAKE_LIGHT.setPowerOn(value);
