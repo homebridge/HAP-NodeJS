@@ -31,7 +31,7 @@ var lock = exports.accessory = new Accessory('Lock', lockUUID);
 lock.username = "C1:5D:3A:EE:5E:FA";
 lock.pincode = "031-45-154";
 
-// set some basic properties (these values are arbitrary)
+// set some basic properties (these values are arbitrary and setting them is optional)
 lock
   .getService(Service.AccessoryInformation)
   .setCharacteristic(Characteristic.Manufacturer, "Oltica")
@@ -47,7 +47,7 @@ lock.on('identify', function(paired, callback) {
 // Add the actual Door Lock Service and listen for change events from iOS.
 // We can see the complete list of Services and Characteristics in `lib/gen/HomeKitTypes.js`
 lock
-  .addService(Service.LockMechanism)
+  .addService(Service.LockMechanism, "Fake Lock") // services exposed to the user should have "names" like "Fake Light" for us
   .getCharacteristic(Characteristic.LockTargetState)
   .on('set', function(value, callback) {
     
