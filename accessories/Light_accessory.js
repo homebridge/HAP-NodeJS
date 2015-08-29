@@ -10,7 +10,7 @@ var FAKE_LIGHT = {
   
   setPowerOn: function(on) { 
     console.log("Turning the light %s!", on ? "on" : "off");
-    FAKE_LIGHT.powerOn = true;
+    FAKE_LIGHT.powerOn = on;
   },
   setBrightness: function(brightness) {
     console.log("Setting light brightness to %s", brightness);
@@ -56,15 +56,6 @@ light
     callback(); // Our fake Light is synchronous - this value has been successfully set
   });
 
-// also add an "optional" Characteristic for Brightness
-light
-  .getService(Service.Lightbulb)
-  .addCharacteristic(Characteristic.Brightness)
-  .on('set', function(value, callback) {
-    FAKE_LIGHT.setBrightness(value);
-    callback();
-  })
-
 // We want to intercept requests for our current power state so we can query the hardware itself instead of
 // allowing HAP-NodeJS to return the cached Characteristic.value.
 light
@@ -78,7 +69,7 @@ light
     
     var err = null; // in case there were any problems
     
-    if (FAKE_LIGHT.on) {
+    if (FAKE_LIGHT.powerOn) {
       console.log("Are we on? Yes.");
       callback(err, true);
     }
@@ -87,3 +78,15 @@ light
       callback(err, false);
     }
   });
+
+// also add an "optional" Characteristic for Brightness
+light
+  .getService(Service.Lightbulb)
+  .addCharacteristic(Characteristic.Brightness)
+  .on('get', function(callback) {
+    callback(null, FAKE_LIGHT.brightness);
+  })
+  .on('set', function(value, callback) {
+    FAKE_LIGHT.setBrightness(value);
+    callback();
+  })
