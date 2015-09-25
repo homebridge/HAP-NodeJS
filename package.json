@@ -1,7 +1,7 @@
 {
-  "name": "HAP-NodeJS",
+  "name": "hap-nodejs",
   "version": "0.0.1",
-  "description": "HAP-NodeJS ============= HAP-NodeJS is a Node.js implementation of HomeKit Accessory Server.",
+  "description": "HAP-NodeJS is a Node.js implementation of HomeKit Accessory Server.",
   "main": "index.js",
   "dependencies": {
     "curve25519": "git://github.com/KhaosT/node-curve25519",
