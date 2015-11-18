@@ -8,7 +8,7 @@
     "debug": "^2.2.0",
     "ed25519": "git://github.com/KhaosT/ed25519",
     "mdns": "^2.2.4",
-    "node-persist": "0.0.3",
+    "node-persist": "^0.0.6",
     "srp": "git://github.com/KhaosT/node-srp"
   },
   "devDependencies": {
