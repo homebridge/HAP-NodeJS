@@ -20,7 +20,7 @@ node BridgedCore.js
 Or if you wish to host each Accessory as an independent HomeKit device:
 
 ```sh
-node Code.js
+node Core.js
 ```
 
 The HAP-NodeJS library uses the [debug](https://github.com/visionmedia/debug) library for log output. You can print some or all logs by setting the `DEBUG` environment variable. For instance, to see all debug logs while running the server:
