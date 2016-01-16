@@ -7,7 +7,7 @@
     "curve25519": "git://github.com/KhaosT/node-curve25519",
     "debug": "^2.2.0",
     "ed25519": "git://github.com/KhaosT/ed25519",
-    "mdns": "^2.2.4",
+    "mdns": "git://github.com/KhaosT/node_mdns",
     "node-persist": "^0.0.6",
     "srp": "git://github.com/KhaosT/node-srp"
   },
