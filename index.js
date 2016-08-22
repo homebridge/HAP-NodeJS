@@ -1,5 +1,6 @@
 var Accessory = require('./lib/Accessory.js').Accessory;
 var Bridge = require('./lib/Bridge.js').Bridge;
+var Camera = require('./lib/Camera.js').Camera;
 var Service = require('./lib/Service.js').Service;
 var Characteristic = require('./lib/Characteristic.js').Characteristic;
 var uuid = require('./lib/util/uuid');
@@ -13,6 +14,7 @@ module.exports = {
   init: init,
   Accessory: Accessory,
   Bridge: Bridge,
+  Camera: Camera,
   Service: Service,
   Characteristic: Characteristic,
   uuid: uuid,
