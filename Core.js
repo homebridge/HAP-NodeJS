@@ -1,13 +1,9 @@
 var path = require('path');
-var storage = require('node-persist');
 var uuid = require('./').uuid;
 var Accessory = require('./').Accessory;
 var accessoryLoader = require('./lib/AccessoryLoader');
 
 console.log("HAP-NodeJS starting...");
-
-// Initialize our storage system
-storage.initSync();
 
 // Our Accessories will each have their own HAP server; we will assign ports sequentially
 var targetPort = 51826;
