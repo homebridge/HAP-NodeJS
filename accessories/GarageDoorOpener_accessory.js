@@ -1,139 +1,87 @@
-// HomeKit types required
-var types = require("./types.js");
-var exports = module.exports = {};
+var Accessory = require('../').Accessory;
+var Service = require('../').Service;
+var Characteristic = require('../').Characteristic;
+var uuid = require('../').uuid;
 
-var execute = function(accessory,characteristic,value) {
-  console.log("executed accessory: " + accessory + ", and characteristic: " + characteristic + ", with value: " +  value + "."); 
+
+var FAKE_GARAGE = {
+  opened: false,
+  open: function() {
+    console.log("Opening the Garage!");
+    //add your code here which allows the garage to open
+    FAKE_GARAGE.opened = true;
+  },
+  close: function() {
+    console.log("Closing the Garage!");
+    //add your code here which allows the garage to close
+    FAKE_GARAGE.opened = false;
+  },
+  identify: function() {
+    //add your code here which allows the garage to be identified
+    console.log("Identify the Garage");
+  },
+  status: function(){
+    //use this section to get sensor values. set the boolean FAKE_GARAGE.opened with a sensor value.
+    console.log("Sensor queried!");
+    //FAKE_GARAGE.opened = true/false;
+  }
 };
 
-exports.accessory = {
-  displayName: "Garage Door Opener",
-  username: "3C:5A:3D:EE:5E:FA",
-  pincode: "031-45-154",
-  services: [{
-    sType: types.ACCESSORY_INFORMATION_STYPE, 
-    characteristics: [{
-      cType: types.NAME_CTYPE, 
-      onUpdate: null,
-      perms: ["pr"],
-      format: "string",
-      initialValue: "Garage Door Opener",
-      supportEvents: false,
-      supportBonjour: false,
-      manfDescription: "Name of the accessory",
-      designedMaxLength: 255    
-    },{
-      cType: types.MANUFACTURER_CTYPE, 
-      onUpdate: null,
-      perms: ["pr"],
-      format: "string",
-      initialValue: "Oltica",
-      supportEvents: false,
-      supportBonjour: false,
-      manfDescription: "Manufacturer",
-      designedMaxLength: 255    
-    },{
-      cType: types.MODEL_CTYPE,
-      onUpdate: null,
-      perms: ["pr"],
-      format: "string",
-      initialValue: "Rev-1",
-      supportEvents: false,
-      supportBonjour: false,
-      manfDescription: "Model",
-      designedMaxLength: 255    
-    },{
-      cType: types.SERIAL_NUMBER_CTYPE, 
-      onUpdate: null,
-      perms: ["pr"],
-      format: "string",
-      initialValue: "A1S2NASF88EW",
-      supportEvents: false,
-      supportBonjour: false,
-      manfDescription: "SN",
-      designedMaxLength: 255    
-    },{
-      cType: types.IDENTIFY_CTYPE, 
-      onUpdate: null,
-      perms: ["pw"],
-      format: "bool",
-      initialValue: false,
-      supportEvents: false,
-      supportBonjour: false,
-      manfDescription: "Identify Accessory",
-      designedMaxLength: 1    
-    }]
-  },{
-    sType: types.GARAGE_DOOR_OPENER_STYPE, 
-    characteristics: [{
-      cType: types.NAME_CTYPE,
-      onUpdate: null,
-      perms: ["pr"],
-      format: "string",
-      initialValue: "Garage Door Opener Control",
-      supportEvents: false,
-      supportBonjour: false,
-      manfDescription: "Name of service",
-      designedMaxLength: 255   
-    },{
-      cType: types.CURRENT_DOOR_STATE_CTYPE,
-      onUpdate: function(value) { 
-        console.log("Change:",value); 
-        execute("Garage Door - current door state", "Current State", value); 
-      },
-      onRead: function(callback) {
-        console.log("Read:");
-        execute("Garage Door - current door state", "Current State", null);
-        callback(undefined); // only testing, we have no physical device to read from
-      },
-      perms: ["pr","ev"],
-      format: "int",
-      initialValue: 0,
-      supportEvents: false,
-      supportBonjour: false,
-      manfDescription: "BlaBla",
-      designedMinValue: 0,
-      designedMaxValue: 4,
-      designedMinStep: 1,
-      designedMaxLength: 1    
-    },{
-      cType: types.TARGET_DOORSTATE_CTYPE,
-      onUpdate: function(value) { 
-        console.log("Change:",value); 
-        execute("Garage Door - target door state", "Current State", value); 
-      },
-      onRead: function(callback) {
-        console.log("Read:");
-        execute("Garage Door - target door state", "Current State", null);
-        callback(undefined); // only testing, we have no physical device to read from
-      },
-      perms: ["pr","pw","ev"],
-      format: "int",
-      initialValue: 0,
-      supportEvents: false,
-      supportBonjour: false,
-      manfDescription: "BlaBla",
-      designedMinValue: 0,
-      designedMaxValue: 1,
-      designedMinStep: 1,
-      designedMaxLength: 1    
-    },{
-      cType: types.OBSTRUCTION_DETECTED_CTYPE,
-      onUpdate: function(value) { 
-        console.log("Change:",value); 
-        execute("Garage Door - obstruction detected", "Current State", value); 
-      },
-      onRead: function(callback) {
-        console.log("Read:");
-        execute("Garage Door - obstruction detected", "Current State", null);
-        callback(undefined); // only testing, we have no physical device to read from
-      },
-      perms: ["pr","ev"],
-      format: "bool",
-      initialValue: false,
-      supportEvents: false,
-      supportBonjour: false,
-      manfDescription: "BlaBla"
-    }]
-  }]
-}
+var garageUUID = uuid.generate('hap-nodejs:accessories:'+'GarageDoor');
+var garage = exports.accessory = new Accessory('Garage Door', garageUUID);
+
+// Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
+garage.username = "C1:5D:3F:EE:5E:FA"; //edit this if you use Core.js
+garage.pincode = "031-45-154";
+
+garage
+  .getService(Service.AccessoryInformation)
+  .setCharacteristic(Characteristic.Manufacturer, "Liftmaster")
+  .setCharacteristic(Characteristic.Model, "Rev-1")
+  .setCharacteristic(Characteristic.SerialNumber, "TW000165");
+
+garage.on('identify', function(paired, callback) {
+  FAKE_GARAGE.identify();
+  callback();
+});
+
+garage
+  .addService(Service.GarageDoorOpener, "Garage Door")
+  .setCharacteristic(Characteristic.TargetDoorState, Characteristic.TargetDoorState.CLOSED) // force initial state to CLOSED
+  .getCharacteristic(Characteristic.TargetDoorState)
+  .on('set', function(value, callback) {
+
+    if (value == Characteristic.TargetDoorState.CLOSED) {
+      FAKE_GARAGE.close();
+      callback();
+      garage
+        .getService(Service.GarageDoorOpener)
+        .setCharacteristic(Characteristic.CurrentDoorState, Characteristic.CurrentDoorState.CLOSED);
+    }
+    else if (value == Characteristic.TargetDoorState.OPEN) {
+      FAKE_GARAGE.open();
+      callback();
+      garage
+        .getService(Service.GarageDoorOpener)
+        .setCharacteristic(Characteristic.CurrentDoorState, Characteristic.CurrentDoorState.OPEN);
+    }
+  });
+
+
+garage
+  .getService(Service.GarageDoorOpener)
+  .getCharacteristic(Characteristic.CurrentDoorState)
+  .on('get', function(callback) {
+
+    var err = null;
+    FAKE_GARAGE.status();
+
+    if (FAKE_GARAGE.opened) {
+      console.log("Query: Is Garage Open? Yes.");
+      callback(err, Characteristic.CurrentDoorState.OPEN);
+    }
+    else {
+      console.log("Query: Is Garage Open? No.");
+      callback(err, Characteristic.CurrentDoorState.CLOSED);
+    }
+  });
