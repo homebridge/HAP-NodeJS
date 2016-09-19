@@ -49,7 +49,7 @@ fan.on('identify', function(paired, callback) {
 // Add the actual Fan Service and listen for change events from iOS.
 // We can see the complete list of Services and Characteristics in `lib/gen/HomeKitTypes.js`
 fan
-  .addService(Service.Fan, accessoryName) // services exposed to the user should have "names" like "Fake Light" for us
+  .addService(Service.Fan, "Fan") // services exposed to the user should have "names" like "Fake Light" for us
   .getCharacteristic(Characteristic.On)
   .on('set', function(value, callback) {
     FAKE_FAN.setPowerOn(value);
