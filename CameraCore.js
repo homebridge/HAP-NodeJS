@@ -11,7 +11,13 @@ storage.initSync();
 // Start by creating our Bridge which will host all loaded Accessories
 var cameraAccessory = new Accessory('Node Camera', uuid.generate("Node Camera"));
 
-var cameraSource = new Camera();
+var cameraSource = new Camera([{
+    uri: 'rtsp://planetbeing:c1VVbSratQxw@192.168.0.121:88/videoMain',
+    width: 1280,
+    height: 720,
+    fps: 30
+}]);
+
 cameraAccessory.configureCameraSource(cameraSource);
 
 cameraAccessory.on('identify', function(paired, callback) {
