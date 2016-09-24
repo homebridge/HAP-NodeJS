@@ -10,7 +10,7 @@ console.log("HAP-NodeJS starting...");
 storage.initSync();
 
 // Our Accessories will each have their own HAP server; we will assign ports sequentially
-var targetPort = 51827;
+var targetPort = 51826;
 
 // Load up all accessories in the /accessories folder
 var dir = path.join(__dirname, "accessories");
