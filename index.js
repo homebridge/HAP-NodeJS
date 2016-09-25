@@ -5,6 +5,7 @@ var Service = require('./lib/Service.js').Service;
 var Characteristic = require('./lib/Characteristic.js').Characteristic;
 var uuid = require('./lib/util/uuid');
 var AccessoryLoader = require('./lib/AccessoryLoader.js');
+var StreamController = require('./lib/StreamController.js').StreamController;
 var storage = require('node-persist');
 
 // ensure Characteristic subclasses are defined
@@ -18,7 +19,8 @@ module.exports = {
   Service: Service,
   Characteristic: Characteristic,
   uuid: uuid,
-  AccessoryLoader: AccessoryLoader
+  AccessoryLoader: AccessoryLoader,
+  StreamController: StreamController
 }
 
 function init(storagePath) {
