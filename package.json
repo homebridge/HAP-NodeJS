@@ -5,6 +5,7 @@
   "main": "index.js",
   "engines": {
     "node": ">=4.3.2"
+  },
   "dependencies": {
     "curve25519": "git://github.com/KhaosT/node-curve25519",
     "debug": "^2.2.0",
