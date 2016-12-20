@@ -55,3 +55,15 @@ Special thanks to [Alex Skalozub](https://twitter.com/pieceofsummer), who revers
 [There](http://instagram.com/p/t4cPlcDksQ/) is a video demo running this project on Intel Edison.
 
 If you are interested in HAP over BTLE, you might want to check [this](https://gist.github.com/KhaosT/6ff09ba71d306d4c1079).
+
+Projects based on HAP-NodeJS
+============================
+
+* [Homebridge](https://github.com/nfarina/homebridge) - HomeKit support for the impatient - Pluggable HomeKit Bridge. Plugins available for  e.g. Pilight, Telldus TDtool, Savant, Netatmo, Open Pixel Control, HomeWizard, Fritz!Box, LG WebOS TV, Home Assistant, HomeMatic and many many more.
+* [OpenHAB-HomeKit-Bridge](https://github.com/htreu/OpenHAB-HomeKit-Bridge) - OpenHAB HomeKit Bridge bridges openHAB items to Apple´s HomeKit Accessory Protocol. 
+* [homekit2mqtt](https://github.com/hobbyquaker/homekit2mqtt) - HomeKit to MQTT bridge.
+* [pimatic-hap](https://github.com/michbeck100/pimatic-hap) - Pimatic homekit bridge.
+* [node-red-contrib-homekit](https://github.com/mschm/node-red-contrib-homekit) - Node-RED nodes to simulate Apple HomeKit devices.
+* [ioBroker.homekit](https://github.com/ioBroker/ioBroker.homekit2) - connect ioBroker to HomeKit.
+
+
