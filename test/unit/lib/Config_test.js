@@ -24,25 +24,4 @@ describe('./lib/Config.js', function() {
     delete process.env.AVAHI_TARGET_FILE;
   });
 
-  it('should get persist env variable, true', function() {
-    process.env.PERSIST_TO_DISC = 'true';
-    var result = Config.shouldNotPersistToDisk();
-    expect(result).to.equal(false);
-    delete process.env.PERSIST_TO_DISC;
-  });
-
-  it('should get persist env variable, false', function() {
-    process.env.PERSIST_TO_DISC = 'false';
-    var result = Config.shouldNotPersistToDisk();
-    expect(result).to.equal(true);
-    delete process.env.PERSIST_TO_DISC;
-  });
-
-  it('should get persist env variable, invalid', function() {
-    process.env.PERSIST_TO_DISC = 'foo';
-    var result = Config.shouldNotPersistToDisk();
-    expect(result).to.equal(false);
-    delete process.env.PERSIST_TO_DISC;
-  });
-
 });
