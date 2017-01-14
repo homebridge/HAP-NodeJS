@@ -31,13 +31,6 @@ The HAP-NodeJS library uses the [debug](https://github.com/visionmedia/debug) li
 DEBUG=* node BridgedCore.js
 ```
 
-ENV VALUES
-==========
-
-HAP-NodeJS support env variables to configure some settings:
-
-  * `AVAHI_TARGET_FILE`: Disable usage of internal mdns package and create a Avahi service file on the defined path
-
 HOMEKIT PROTOCOL
 ================
 
