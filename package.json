@@ -13,7 +13,7 @@
     "ed25519": "^0.0.4",
     "fast-srp-hap": "^1.0.0",
     "ip": "^1.1.3",
-    "mdns": "^2.3.2",
+    "mdns": "^2.3.3",
     "node-persist": "^0.0.11"
   },
   "devDependencies": {
