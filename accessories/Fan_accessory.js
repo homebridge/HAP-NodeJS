@@ -7,6 +7,7 @@ var uuid = require('../').uuid;
 // here's a fake hardware device that we'll expose to HomeKit
 var FAKE_FAN = {
   powerOn: false,
+  rSpeed: 100,
   setPowerOn: function(on) {
     if(on){
       //put your code here to turn on the fan
@@ -19,6 +20,7 @@ var FAKE_FAN = {
   },
   setSpeed: function(value) {
     console.log("Setting fan rSpeed to %s", value);
+    FAKE_FAN.rSpeed = value;
     //put your code here to set the fan to a specific value
   },
   identify: function() {
