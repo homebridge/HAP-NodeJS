@@ -7,7 +7,7 @@ HAP-NodeJS is a Node.js implementation of HomeKit Accessory Server.
 
 With this project, you should be able to create your own HomeKit Accessory on Raspberry Pi, Intel Edison or any other platform that can run Node.js :)
 
-The implementation may not 100% follow the HAP MFi Specification since MFi program doesn't allow individual developer to join. 
+The implementation may not 100% follow the HAP MFi Specification since MFi program doesn't allow individual developer to join.
 
 Remember to run `npm install` before actually running the server.
 
@@ -30,6 +30,11 @@ The HAP-NodeJS library uses the [debug](https://github.com/visionmedia/debug) li
 ```sh
 DEBUG=* node BridgedCore.js
 ```
+
+HOMEKIT PROTOCOL
+================
+
+Hint: the Homekit Application Protocol (HAP) allows that you can pair a Homekit device with one device. As soon as the Homekit device is paired, its not possible to pair with another iOS device anymore.
 
 API
 ===
@@ -60,10 +65,8 @@ Projects based on HAP-NodeJS
 ============================
 
 * [Homebridge](https://github.com/nfarina/homebridge) - HomeKit support for the impatient - Pluggable HomeKit Bridge. Plugins available for  e.g. Pilight, Telldus TDtool, Savant, Netatmo, Open Pixel Control, HomeWizard, Fritz!Box, LG WebOS TV, Home Assistant, HomeMatic and many many more.
-* [OpenHAB-HomeKit-Bridge](https://github.com/htreu/OpenHAB-HomeKit-Bridge) - OpenHAB HomeKit Bridge bridges openHAB items to Apple´s HomeKit Accessory Protocol. 
+* [OpenHAB-HomeKit-Bridge](https://github.com/htreu/OpenHAB-HomeKit-Bridge) - OpenHAB HomeKit Bridge bridges openHAB items to Apple´s HomeKit Accessory Protocol.
 * [homekit2mqtt](https://github.com/hobbyquaker/homekit2mqtt) - HomeKit to MQTT bridge.
 * [pimatic-hap](https://github.com/michbeck100/pimatic-hap) - Pimatic homekit bridge.
 * [node-red-contrib-homekit](https://github.com/mschm/node-red-contrib-homekit) - Node-RED nodes to simulate Apple HomeKit devices.
 * [ioBroker.homekit](https://github.com/ioBroker/ioBroker.homekit2) - connect ioBroker to HomeKit.
-
-
