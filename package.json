@@ -14,7 +14,10 @@
     "fast-srp-hap": "^1.0.0",
     "ip": "^1.1.3",
     "mdns": "^2.3.3",
-    "node-persist": "^0.0.11"
+    "node-persist": "^0.0.11",
+    "lodash": "^4.17.3",
+    "q": "^1.4.1",
+    "async": "^2.1.4"
   },
   "devDependencies": {
     "simple-plist": "0.0.4"
