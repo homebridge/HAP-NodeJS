@@ -17,7 +17,8 @@
     "node-persist": "^0.0.11",
     "lodash": "^4.17.3",
     "q": "^1.4.1",
-    "async": "^2.1.4"
+    "async": "^2.1.4",
+    "hap-alexa": "^0.0.3"
   },
   "devDependencies": {
     "simple-plist": "0.0.4"
