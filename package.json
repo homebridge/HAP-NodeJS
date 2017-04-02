@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "buffer-shims": "^1.0.0",
-    "curve25519-n": "^1.1.0",
+    "curve25519-n2": "^1.1.2",
     "debug": "^2.2.0",
     "ed25519": "^0.0.4",
     "fast-srp-hap": "^1.0.0",
