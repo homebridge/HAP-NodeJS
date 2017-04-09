@@ -25,6 +25,7 @@ exports.PROGRAMMABLE_SWITCH_TCTYPE = 15;
 //HomeKitServiceTypes
 
 exports.LIGHTBULB_STYPE = stPre + "43" + stPost;
+exports.SPEAKER_STYPE = stPre + "48" + stPost;
 exports.SWITCH_STYPE = stPre + "49" + stPost;
 exports.THERMOSTAT_STYPE = stPre + "4A" + stPost;
 exports.GARAGE_DOOR_OPENER_STYPE = stPre + "41" + stPost;
@@ -59,6 +60,7 @@ exports.CURRENT_TEMPERATURE_CTYPE = stPre + "11" + stPost;
 exports.HEATING_THRESHOLD_CTYPE = stPre + "12" + stPost;
 exports.HUE_CTYPE = stPre + "13" + stPost;
 exports.IDENTIFY_CTYPE = stPre + "14" + stPost;
+exports.OUTPUTVOLUME_CTYPE = stPre + "27" + stPost;
 exports.LOCK_MANAGEMENT_AUTO_SECURE_TIMEOUT_CTYPE = stPre + "1A" + stPost;
 exports.LOCK_MANAGEMENT_CONTROL_POINT_CTYPE = stPre + "19" + stPost;
 exports.LOCK_MECHANISM_LAST_KNOWN_ACTION_CTYPE = stPre + "1C" + stPost;
