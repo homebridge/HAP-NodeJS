@@ -52,6 +52,17 @@ All known built-in Service and Characteristic types that HomeKit supports are ex
 
 See each of the corresponding class files for more explanation and notes.
 
+
+Config
+======
+
+You can configure the bridge identification using env. variables
+
+  * `HOMEKIT_MANUFACTURER`: if not set 'Default-Manufacturer' will be used
+  * `HOMEKIT_MODEL`: if not set, 'Default-Model' will be used
+  * `HOMEKIT_SERIAL`: if not set, 'Default-SerialNumber' will be used
+
+
 Notes
 =====
 
