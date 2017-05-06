@@ -15,7 +15,7 @@ var FAKE_FAN = {
     }
     else{
       //put your code here to turn off the fan
-      FAKE_FAN.powerOn = on;
+      FAKE_FAN.powerOn = off;
     }
   },
   setSpeed: function(value) {
@@ -78,7 +78,7 @@ fan
     }
   });
 
-// also add an "optional" Characteristic for spped
+// also add an "optional" Characteristic for speed
 fan
   .getService(Service.Fan)
   .addCharacteristic(Characteristic.RotationSpeed)
