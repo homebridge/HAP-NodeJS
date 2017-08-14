@@ -20,7 +20,7 @@ var ACTest_data = {
 }
 
 // This is the Accessory that we'll return to HAP-NodeJS that represents our fake fan.
-var ACTest = exports.accessory = new Accessory('Fan', uuid.generate('hap-nodejs:accessories:Fan'));
+var ACTest = exports.accessory = new Accessory('Air Conditioner', uuid.generate('hap-nodejs:accessories:airconditioner'));
 
 // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
 ACTest.username = "1A:2B:3C:4D:5E:FF";
