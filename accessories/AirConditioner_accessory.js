@@ -145,6 +145,5 @@ LightService.getCharacteristic(Characteristic.On)
       console.log( "Characteristic Light On changed to %s",value);
       callback();
     });
-LightService.setHiddenService(false);
-
+LightService.setHiddenService(true);
 ACTest.setPrimaryService(ThermostatService);
