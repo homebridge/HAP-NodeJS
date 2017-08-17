@@ -3,7 +3,6 @@ var path = require('path');
 var storage = require('node-persist');
 var uuid = require('./').uuid;
 var Bridge = require('./').Bridge;
-var Accessory = require('./').Accessory;
 var accessoryLoader = require('./lib/AccessoryLoader');
 
 console.log("HAP-NodeJS starting...");
@@ -33,6 +32,5 @@ accessories.forEach(function(accessory) {
 bridge.publish({
   username: "CC:22:3D:E3:CE:F6",
   port: 51826,
-  pincode: "031-45-154",
-  category: Accessory.Categories.BRIDGE
+  pincode: "031-45-154"
 });
