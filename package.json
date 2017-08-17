@@ -1,6 +1,6 @@
 {
   "name": "hap-nodejs",
-  "version": "0.4.30",
+  "version": "0.4.31",
   "description": "HAP-NodeJS is a Node.js implementation of HomeKit Accessory Server.",
   "main": "index.js",
   "engines": {
