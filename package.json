@@ -7,15 +7,15 @@
     "node": ">=4.3.2"
   },
   "dependencies": {
+    "bonjour": "git+https://github.com/sokarovski/bonjour.git#refactoring_and_update_txt_support",
     "buffer-shims": "^1.0.0",
     "curve25519-n2": "^1.1.2",
     "debug": "^2.2.0",
+    "decimal.js": "^7.2.3",
     "ed25519": "^0.0.4",
     "fast-srp-hap": "^1.0.1",
     "ip": "^1.1.3",
-    "bonjour": "^3.5.0",
-    "node-persist": "^0.0.11",
-    "decimal.js": "^7.2.3"
+    "node-persist": "^0.0.11"
   },
   "devDependencies": {
     "simple-plist": "0.0.4"
