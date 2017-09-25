@@ -1,4 +1,4 @@
-declare namespace HapNodeJS {
+declare namespace HAPNodeJS {
 
     export interface uuid {
         generate(data: string): string;
@@ -354,7 +354,7 @@ declare namespace HapNodeJS {
         }
     }
 
-    export interface HapNodeJS {
+    export interface HAPNodeJS {
         init(storagePath?: string): void,
         uuid: uuid,
         Accessory: Accessory,
@@ -365,7 +365,7 @@ declare namespace HapNodeJS {
 
 }
 
-declare var hapNodeJS: HapNodeJS.HapNodeJS;
+declare var hapNodeJS: HAPNodeJS.HAPNodeJS;
 
 declare module "hap-nodejs" {
     export = hapNodeJS;
