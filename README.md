@@ -3,15 +3,15 @@ HAP-NodeJS
 
 [![NPM version](https://badge.fury.io/js/hap-nodejs.svg)](http://badge.fury.io/js/hap-nodejs)
 
-HAP-NodeJS is a Node.js implementation of HomeKit Accessory Server.
+HAP-NodeJS is a Node.js implementation of the HomeKit Accessory Server.
 
-With this project, you should be able to create your own HomeKit Accessory on Raspberry Pi, Intel Edison or any other platform that can run Node.js :)
+With this project, you should be able to create your own HomeKit Accessory on a Raspberry Pi, Intel Edison, or any other platform that can run Node.js :)
 
-The implementation may not 100% follow the HAP MFi Specification since MFi program doesn't allow individual developer to join.
+The implementation may not 100% follow the HAP MFi Specification since the MFi program doesn't allow individual developers to join.
 
 Remember to run `npm install` before actually running the server.
 
-Users can define their own accessories in: accessories/*name*_accessory.js files, where name is a short description of the accessory. All defined accessories get loaded on server start. You can define accessories using an object literal notation (see [Fan_accessory.js](accessories/Fan_accessory.js) for an example) or you can use the API (see below).
+Users can define their own accessories in: accessories/[name]_accessory.js files, where [name] is a short description of the accessory. All defined accessories get loaded on server start. You can define accessories using an object literal notation (see [Fan_accessory.js](accessories/Fan_accessory.js) for an example) or you can use the API (see below).
 
 You can use the following command to start the HAP Server in Bridged mode:
 
@@ -19,13 +19,13 @@ You can use the following command to start the HAP Server in Bridged mode:
 node BridgedCore.js
 ```
 
-Or if you wish to host each Accessory as an independent HomeKit device:
+Or, if you wish to host each Accessory as an independent HomeKit device:
 
 ```sh
 node Core.js
 ```
 
-The HAP-NodeJS library uses the [debug](https://github.com/visionmedia/debug) library for log output. You can print some or all logs by setting the `DEBUG` environment variable. For instance, to see all debug logs while running the server:
+The HAP-NodeJS library uses the [debug](https://github.com/visionmedia/debug) library for log output. You can print some or all of the logs by setting the `DEBUG` environment variable. For instance, to see all debug logs while running the server:
 
 ```sh
 DEBUG=* node BridgedCore.js
