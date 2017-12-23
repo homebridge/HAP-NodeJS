@@ -15,7 +15,7 @@
     "fast-srp-hap": "^1.0.1",
     "ip": "^1.1.5",
     "mdns": "^2.3.4",
-    "node-persist": "^0.0.12",
+    "node-persist": "^2.1.0",
     "decimal.js": "^9.0.1"
   },
   "devDependencies": {
