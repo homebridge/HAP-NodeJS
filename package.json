@@ -11,7 +11,7 @@
     "buffer-shims": "^1.0.0",
     "curve25519-n2": "^1.1.2",
     "debug": "^3.1.0",
-    "ed25519": "git://github.com/jvmahon/ed25519",
+    "ed25519": "^0.0.4",
     "fast-srp-hap": "^1.0.1",
     "ip": "^1.1.5",
     "mdns": "^2.3.4",
