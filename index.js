@@ -7,6 +7,7 @@ var uuid = require('./lib/util/uuid');
 var AccessoryLoader = require('./lib/AccessoryLoader.js');
 var StreamController = require('./lib/StreamController.js').StreamController;
 var storage = require('node-persist');
+var HAPServer = require('./lib/HAPServer').HAPServer;
 
 // ensure Characteristic subclasses are defined
 var HomeKitTypes = require('./lib/gen/HomeKitTypes');
@@ -20,7 +21,8 @@ module.exports = {
   Characteristic: Characteristic,
   uuid: uuid,
   AccessoryLoader: AccessoryLoader,
-  StreamController: StreamController
+  StreamController: StreamController,
+  HAPServer: HAPServer
 }
 
 function init(storagePath) {
