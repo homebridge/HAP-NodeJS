@@ -71,3 +71,7 @@ Projects based on HAP-NodeJS
 * [node-red-contrib-homekit](https://github.com/mschm/node-red-contrib-homekit) - Node-RED nodes to simulate Apple HomeKit devices.
 * [ioBroker.homekit](https://github.com/ioBroker/ioBroker.homekit2) - connect ioBroker to HomeKit.
 * [AccessoryServer](https://github.com/Appyx/AccessoryServer) - HomeKit integration for IR/RF/IP-devices
+
+Libraries
+============================
+* [new-types-for-homekit](https://github.com/sprut666666/new-types-for-homekit) - Standard custom services for HomeKit
