@@ -11,7 +11,7 @@ var LightController = {
   model: "v1.0", //model (optional)
   serialNumber: "A12S345KGB", //serial number (optional)
 
-  power: false, //curent power status
+  power: false, //current power status
   brightness: 100, //current brightness
   hue: 0, //current hue
   saturation: 0, //current saturation
