@@ -36,3 +36,13 @@ bridge.publish({
   pincode: "031-45-154",
   category: Accessory.Categories.BRIDGE
 });
+
+var signals = { 'SIGINT': 2, 'SIGTERM': 15 };
+Object.keys(signals).forEach(function (signal) {
+  process.on(signal, function () {
+    bridge.destroy();
+    setTimeout(function (){
+        process.exit(128 + signals[signal]);
+    }, 1000)
+  });
+});

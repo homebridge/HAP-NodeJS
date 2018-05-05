@@ -35,3 +35,16 @@ accessories.forEach(function(accessory) {
     pincode: accessory.pincode
   });
 });
+
+var signals = { 'SIGINT': 2, 'SIGTERM': 15 };
+Object.keys(signals).forEach(function (signal) {
+  process.on(signal, function () {
+    for (var i = 0; i < accessories.length; i++) {
+      accessories[i].destroy();
+    }
+
+    setTimeout(function (){
+        process.exit(128 + signals[signal]);
+    }, 1000)
+  });
+});
