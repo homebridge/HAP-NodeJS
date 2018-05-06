@@ -40,7 +40,7 @@ var signals = { 'SIGINT': 2, 'SIGTERM': 15 };
 Object.keys(signals).forEach(function (signal) {
   process.on(signal, function () {
     for (var i = 0; i < accessories.length; i++) {
-      accessories[i].destroy();
+      accessories[i].unpublish();
     }
 
     setTimeout(function (){

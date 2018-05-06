@@ -31,7 +31,7 @@ cameraAccessory.publish({
 var signals = { 'SIGINT': 2, 'SIGTERM': 15 };
 Object.keys(signals).forEach(function (signal) {
   process.on(signal, function () {
-    cameraAccessory.destroy();
+    cameraAccessory.unpublish();
     setTimeout(function (){
         process.exit(128 + signals[signal]);
     }, 1000)
