@@ -81,7 +81,11 @@ sprinkler
 
         sprinkler
         .getService(Service.Valve)
-        .setCharacteristic(Characteristic.InUse, 0);
+        .setCharacteristic(Characteristic.InUse, Characteristic.InUse.NOT_IN_USE);
+        
+                sprinkler
+        .getService(Service.Valve)
+        .updateCharacteristic(Characteristic.InUse, Characteristic.InUse.NOT_IN_USE);          
 
       }, 1000);
     }
@@ -99,8 +103,12 @@ sprinkler
           
           sprinkler
           .getService(Service.Valve)
-          .setCharacteristic(Characteristic.InUse, 0);
+          .setCharacteristic(Characteristic.InUse, Characteristic.InUse.NOT_IN_USE);
           
+          sprinkler
+          .getService(Service.Valve)
+          .updateCharacteristic(Characteristic.InUse, Characteristic.InUse.NOT_IN_USE);
+           
           console.log(SPRINKLER_THING.typeName + "Turn Off");                  
 
         }, SPRINKLER_THING.defaultDuration * 1000);
@@ -109,15 +117,19 @@ sprinkler
         
         sprinkler
         .getService(Service.Valve)
-        .setCharacteristic(Characteristic.InUse, 1);
+        .setCharacteristic(Characteristic.ProgramMode, Characteristic.ProgramMode.PROGRAM_SCHEDULED);
 
         sprinkler
         .getService(Service.Valve)
-        .setCharacteristic(Characteristic.RemainingDuration, SPRINKLER.defaultDuration);        
+        .setCharacteristic(Characteristic.InUse, Characteristic.InUse.IN_USE);
 
         sprinkler
         .getService(Service.Valve)
-        .setCharacteristic(Characteristic.SetDuration, SPRINKLER.defaultDuration);
+        .setCharacteristic(Characteristic.SetDuration, SPRINKLER_THING.defaultDuration);
+
+        sprinkler
+        .getService(Service.Valve)
+        .updateCharacteristic(Characteristic.InUse, Characteristic.InUse.IN_USE);
         
       }, 1000);
     }
