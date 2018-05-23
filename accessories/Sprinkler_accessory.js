@@ -93,7 +93,7 @@ sprinkler
       SPRINKLER.active = true;
       openVentile();
       setTimeout(function() {
-        console.log(SPRINKLER_THING.typeName + " Turn On");
+        console.log(SPRINKLER.typeName + " Turn On");
         SPRINKLER.timerEnd = SPRINKLER.defaultDuration + Math.floor(new Date() / 1000);
 
         clearTimeout(timeoutObj);
@@ -109,9 +109,9 @@ sprinkler
           .getService(Service.Valve)
           .updateCharacteristic(Characteristic.InUse, Characteristic.InUse.NOT_IN_USE);
            
-          console.log(SPRINKLER_THING.typeName + "Turn Off");                  
+          console.log(SPRINKLER.typeName + "Turn Off");                  
 
-        }, SPRINKLER_THING.defaultDuration * 1000);
+        }, SPRINKLER.defaultDuration * 1000);
         
         callback(null, SPRINKLER.defaultDuration);
         
@@ -125,7 +125,7 @@ sprinkler
 
         sprinkler
         .getService(Service.Valve)
-        .setCharacteristic(Characteristic.SetDuration, SPRINKLER_THING.defaultDuration);
+        .setCharacteristic(Characteristic.SetDuration, SPRINKLER.defaultDuration);
 
         sprinkler
         .getService(Service.Valve)
@@ -140,7 +140,7 @@ sprinkler
   .getService(Service.Valve)
   .getCharacteristic(Characteristic.InUse)
   .on('get', function(callback) {
-    console.log(SPRINKLER_THING.typeName + " get In_Use");
+    console.log(SPRINKLER.typeName + " get In_Use");
     var err = null; // in case there were any problems
 
     if (SPRINKLER.active) {
@@ -151,7 +151,7 @@ sprinkler
     }
   })
   .on('set', function(newValue, callback) {
-    console.log(SPRINKLER_THING.typeName + " set In_Use => NewValue: " + newValue);    
+    console.log(SPRINKLER.typeName + " set In_Use => NewValue: " + newValue);    
   });
 
 
@@ -165,7 +165,7 @@ sprinkler
     if (SPRINKLER.active) {
       
       var duration = SPRINKLER.timerEnd - Math.floor(new Date() / 1000);
-      console.log(SPRINKLER_THING.typeName + " RemainingDuration: " + duration)
+      console.log(SPRINKLER.typeName + " RemainingDuration: " + duration)
       callback(err, duration);
     }
     else {
@@ -178,7 +178,7 @@ sprinkler
   .getService(Service.Valve)
   .getCharacteristic(Characteristic.SetDuration)
   .on('set', function(newValue, callback) {
-    console.log(SPRINKLER_THING.typeName + " SetDuration => NewValue: " + newValue);
+    console.log(SPRINKLER.typeName + " SetDuration => NewValue: " + newValue);
     
     var err = null; // in case there were any problems
     SPRINKLER.defaultDuration = newValue;
