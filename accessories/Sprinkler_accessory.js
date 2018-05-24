@@ -108,6 +108,10 @@ sprinkler
           sprinkler
           .getService(Service.Valve)
           .updateCharacteristic(Characteristic.InUse, Characteristic.InUse.NOT_IN_USE);
+          
+          sprinkler
+          .getService(Service.Valve)
+          .updateCharacteristic(Characteristic.Active, Characteristic.Active.INACTIVE);
            
           console.log(SPRINKLER.typeName + "Turn Off");                  
 
