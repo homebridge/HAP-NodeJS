@@ -330,6 +330,7 @@ declare namespace HAPNodeJS {
         toHAP(opt: any): JSON;
         publish(info: PublishInfo, allowInsecureRequest: boolean): void;
         destroy(): void;
+        setupURI(): string;
     }
 
     module Accessory {
