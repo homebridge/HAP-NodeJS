@@ -28,7 +28,19 @@ televisionService
     Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE
   );
 
-televisionService.addOptionalCharacteristic(Characteristic.RemoteKey);
+televisionService
+  .getCharacteristic(Characteristic.Active)
+  .on('set', function(newValue, callback) {
+    console.log("set Active => setNewValue: " + newValue);
+    callback(null);
+  });
+
+televisionService
+  .getCharacteristic(Characteristic.ActiveIdentifier)
+  .on('set', function(newValue, callback) {
+    console.log("set Active Identifier => setNewValue: " + newValue);
+    callback(null);
+  });
 
 televisionService
   .getCharacteristic(Characteristic.RemoteKey)
@@ -37,11 +49,21 @@ televisionService
     callback(null);
   });
 
+// Speaker
+
+var speakerService = tv.addService(Service.TelevisionSpeaker)
+
+speakerService
+  .setCharacteristic(Characteristic.Active, Characteristic.Active.ACTIVE)
+  .setCharacteristic(Characteristic.Volume, 50)
+  .setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE)
+
 // HDMI 1
 
 var inputHDMI1 = tv.addService(Service.InputSource, "HDMI 1", "HDMI 1");
 
 inputHDMI1
+  .setCharacteristic(Characteristic.Identifier, 1)
   .setCharacteristic(Characteristic.ConfiguredName, "HDMI 1")
   .setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
   .setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.HDMI);
@@ -49,7 +71,9 @@ inputHDMI1
 // HDMI 2
 
 var inputHDMI2 = tv.addService(Service.InputSource, "HDMI 2", "HDMI 2");
+
 inputHDMI2
+  .setCharacteristic(Characteristic.Identifier, 2)
   .setCharacteristic(Characteristic.ConfiguredName, "HDMI 2")
   .setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
   .setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.HDMI);
@@ -57,7 +81,9 @@ inputHDMI2
 // Netflix
 
 var inputNetflix = tv.addService(Service.InputSource, "Netflix", "Netflix");
+
 inputNetflix
+  .setCharacteristic(Characteristic.Identifier, 3)
   .setCharacteristic(Characteristic.ConfiguredName, "Netflix")
   .setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
   .setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.APPLICATION);
