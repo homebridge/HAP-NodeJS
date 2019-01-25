@@ -42,44 +42,48 @@ declare namespace HAPNodeJS {
 
         toHAP(opt: any): JSON;
 
-        AccessoryInformation: Service;
-        AirPurifier: Service;
-        AirQualitySensor: Service;
-        BatteryService: Service;
-        CameraControl: Service;
-        CameraRTPStreamManagement: Service;
-        CarbonDioxideSensor: Service;
-        CarbonMonoxideSensor: Service;
-        ContactSensor: Service;
-        Door: Service;
-        Doorbell: Service;
-        Fan: Service;
-        Fanv2: Service;
-        FilterMaintenance: Service;
-        GarageDoorOpener: Service;
-        HeaterCooler: Service;
-        HumidifierDehumidifier: Service;
-        HumiditySensor: Service;
-        LeakSensor: Service;
-        LightSensor: Service;
-        Lightbulb: Service;
-        LockManagement: Service;
-        LockMechanism: Service;
-        Microphone: Service;
-        MotionSensor: Service;
-        OccupancySensor: Service;
-        Outlet: Service;
-        SecuritySystem: Service;
-        Slat: Service;
-        SmokeSensor: Service;
-        Speaker: Service;
-        StatefulProgrammableSwitch: Service;
-        StatelessProgrammableSwitch: Service;
-        Switch: Service;
-        TemperatureSensor: Service;
-        Thermostat: Service;
-        Window: Service;
-        WindowCovering: Service;
+        AccessoryInformation: PredefinedService;
+        AirPurifier: PredefinedService;
+        AirQualitySensor: PredefinedService;
+        BatteryService: PredefinedService;
+        CameraControl: PredefinedService;
+        CameraRTPStreamManagement: PredefinedService;
+        CarbonDioxideSensor: PredefinedService;
+        CarbonMonoxideSensor: PredefinedService;
+        ContactSensor: PredefinedService;
+        Door: PredefinedService;
+        Doorbell: PredefinedService;
+        Fan: PredefinedService;
+        Fanv2: PredefinedService;
+        FilterMaintenance: PredefinedService;
+        GarageDoorOpener: PredefinedService;
+        HeaterCooler: PredefinedService;
+        HumidifierDehumidifier: PredefinedService;
+        HumiditySensor: PredefinedService;
+        LeakSensor: PredefinedService;
+        LightSensor: PredefinedService;
+        Lightbulb: PredefinedService;
+        LockManagement: PredefinedService;
+        LockMechanism: PredefinedService;
+        Microphone: PredefinedService;
+        MotionSensor: PredefinedService;
+        OccupancySensor: PredefinedService;
+        Outlet: PredefinedService;
+        SecuritySystem: PredefinedService;
+        Slat: PredefinedService;
+        SmokeSensor: PredefinedService;
+        Speaker: PredefinedService;
+        StatefulProgrammableSwitch: PredefinedService;
+        StatelessProgrammableSwitch: PredefinedService;
+        Switch: PredefinedService;
+        TemperatureSensor: PredefinedService;
+        Thermostat: PredefinedService;
+        Window: PredefinedService;
+        WindowCovering: PredefinedService;
+    }
+    
+    export interface PredefinedService {
+        new (displayName: string, subtype: string): Service;
     }
 
     export interface CameraSource {
