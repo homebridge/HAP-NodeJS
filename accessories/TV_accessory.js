@@ -80,6 +80,15 @@ speakerService.getCharacteristic(Characteristic.VolumeSelector)
     callback(null);
   });
 
+/// LiveTV
+var inputLiveTV = tv.addService(Service.InputSource, "livetv", "LiveTV");
+
+inputLiveTV
+  .setCharacteristic(Characteristic.Identifier, 0)
+  .setCharacteristic(Characteristic.ConfiguredName, "LiveTV")
+  .setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
+  .setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.TUNER);
+  
 // HDMI 1
 
 var inputHDMI1 = tv.addService(Service.InputSource, "hdmi1", "HDMI 1");
@@ -110,6 +119,30 @@ inputNetflix
   .setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
   .setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.APPLICATION);
 
+// Amazon Prime
+
+var inputPrime = tv.addService(Service.InputSource, "prime", "Amazon Prime");
+
+inputPrime
+  .setCharacteristic(Characteristic.Identifier, 4)
+  .setCharacteristic(Characteristic.ConfiguredName, "Amazon Prime")
+  .setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
+  .setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.APPLICATION);
+
+// Youtube
+
+var inputYoutube = tv.addService(Service.InputSource, "youtube", "Youtube");
+
+inputYoutube
+  .setCharacteristic(Characteristic.Identifier, 5)
+  .setCharacteristic(Characteristic.ConfiguredName, "Youtube")
+  .setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
+  .setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.APPLICATION);
+
+
+televisionService.addLinkedService(inputLiveTV);
 televisionService.addLinkedService(inputHDMI1);
 televisionService.addLinkedService(inputHDMI2);
 televisionService.addLinkedService(inputNetflix);
+televisionService.addLinkedService(inputPrime);
+televisionService.addLinkedService(inputYoutube);
