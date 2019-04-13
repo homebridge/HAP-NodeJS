@@ -78,7 +78,7 @@ fan
     }
   });
 
-// also add an "optional" Characteristic for spped
+// also add an "optional" Characteristic for speed
 fan
   .getService(Service.Fan)
   .addCharacteristic(Characteristic.RotationSpeed)
