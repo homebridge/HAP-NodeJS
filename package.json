@@ -5,7 +5,7 @@
   "main": "index.js",
   "types": "index.d.ts",
   "engines": {
-    "node": ">=4.3.2"
+    "node": ">=8.0.0"
   },
   "dependencies": {
     "buffer-shims": "^1.0.0",
