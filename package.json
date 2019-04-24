@@ -9,9 +9,8 @@
   },
   "dependencies": {
     "buffer-shims": "^1.0.0",
-    "curve25519-n": "^1.2.0",
+    "libsodium-wrappers": "^0.7.4",
     "debug": "^2.2.0",
-    "ed25519-hap": "^0.0.5",
     "fast-srp-hap": "^1.0.1",
     "ip": "^1.1.3",
     "bonjour-hap": "^3.5.1",
