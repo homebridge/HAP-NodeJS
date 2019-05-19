@@ -130,15 +130,19 @@ declare namespace HAPNodeJS {
 
     type EventCharacteristic = "get" | "set"
 
+    export type CharacteristicGetCallback<T = boolean | string | number> = (error: Error | null , value: T) => void
+    export type CharacteristicSetCallback = (error?: Error | null) => void
+    export type CharacteristicCallback = CharacteristicGetCallback | CharacteristicSetCallback
+
     export interface IEventEmitterCharacteristic {
-        addListener(event: EventCharacteristic, listener: Function): this;
-        on(event: EventCharacteristic, listener: Function): this;
-        once(event: EventCharacteristic, listener: Function): this;
-        removeListener(event: EventCharacteristic, listener: Function): this;
+        addListener(event: EventCharacteristic, listener: CharacteristicCallback): this;
+        on(event: EventCharacteristic, listener: CharacteristicCallback): this;
+        once(event: EventCharacteristic, listener: CharacteristicCallback): this;
+        removeListener(event: EventCharacteristic, listener: CharacteristicCallback): this;
         removeAllListeners(event?: EventCharacteristic): this;
         setMaxListeners(n: number): this;
         getMaxListeners(): number;
-        listeners(event: EventCharacteristic): Function[];
+        listeners(event: EventCharacteristic): CharacteristicCallback[];
         emit(event: EventCharacteristic, ...args: any[]): boolean;
         listenerCount(type: string): number;
     }
@@ -151,8 +155,8 @@ declare namespace HAPNodeJS {
         Perms: typeof Characteristic.Perms;
 
         setProps(props: CharacteristicProps): Characteristic
-        getValue(callback?: (error: Error, value: boolean | string | number) => void, context?: any, connectionID?: string): void;
-        setValue(newValue: boolean | string | number, callback?: (error: Error) => void, context?: any, connectionID?: string): Characteristic;
+        getValue(callback?: CharacteristicGetCallback, context?: any, connectionID?: string): void;
+        setValue(newValue: boolean | string | number, callback?: CharacteristicSetCallback, context?: any, connectionID?: string): Characteristic;
         updateValue(newValue: boolean | string | number, callback?: () => void, context?: any): Characteristic;
         getDefaultValue(): boolean | string | number;
         toHAP(opt: any): JSON;
