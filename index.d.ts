@@ -46,6 +46,8 @@ declare namespace HAPNodeJS {
         AirPurifier: PredefinedService;
         AirQualitySensor: PredefinedService;
         BatteryService: PredefinedService;
+        BridgeConfiguration: PredefinedService;
+        BridgingState: PredefinedService;
         CameraControl: PredefinedService;
         CameraRTPStreamManagement: PredefinedService;
         CarbonDioxideSensor: PredefinedService;
@@ -55,11 +57,14 @@ declare namespace HAPNodeJS {
         Doorbell: PredefinedService;
         Fan: PredefinedService;
         Fanv2: PredefinedService;
+        Faucet: PredefinedService;
         FilterMaintenance: PredefinedService;
         GarageDoorOpener: PredefinedService;
         HeaterCooler: PredefinedService;
         HumidifierDehumidifier: PredefinedService;
         HumiditySensor: PredefinedService;
+        InputSource: PredefinedService;
+        IrrigationSystem: PredefinedService;
         LeakSensor: PredefinedService;
         LightSensor: PredefinedService;
         Lightbulb: PredefinedService;
@@ -69,15 +74,24 @@ declare namespace HAPNodeJS {
         MotionSensor: PredefinedService;
         OccupancySensor: PredefinedService;
         Outlet: PredefinedService;
+        Pairing: PredefinedService;
+        ProtocolInformation: PredefinedService;
+        Relay: PredefinedService;
         SecuritySystem: PredefinedService;
+        ServiceLabel: PredefinedService;
         Slat: PredefinedService;
         SmokeSensor: PredefinedService;
         Speaker: PredefinedService;
         StatefulProgrammableSwitch: PredefinedService;
         StatelessProgrammableSwitch: PredefinedService;
         Switch: PredefinedService;
+        Television: PredefinedService;
+        TelevisionSpeaker: PredefinedService;
         TemperatureSensor: PredefinedService;
         Thermostat: PredefinedService;
+        TimeInformation: PredefinedService;
+        TunneledBTLEAccessoryService: PredefinedService;
+        Valve: PredefinedService;
         Window: PredefinedService;
         WindowCovering: PredefinedService;
     }
