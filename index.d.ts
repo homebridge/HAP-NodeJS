@@ -421,8 +421,8 @@ declare namespace HAPNodeJS {
         init(storagePath?: string): void,
         uuid: uuid,
         Accessory: Accessory,
-        Service: any,
-        Characteristic: any
+        Service: Service,
+        Characteristic: Characteristic
     }
 
 
