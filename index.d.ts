@@ -35,8 +35,8 @@ declare namespace HAPNodeJS {
         removeCharacteristic(characteristic: Characteristic): void;
         getCharacteristic(name: string | Function): Characteristic;
         testCharacteristic(name: string): boolean;
-        setCharacteristic(name: string | Function, value: string): Service;
-        updateCharacteristic(name: string, value: string): Service;
+        setCharacteristic(name: string | Function, value: CharacteristicValue): Service;
+        updateCharacteristic(name: string, value: CharacteristicValue): Service;
         addOptionalCharacteristic(characteristic: Characteristic | Function): void;
         getCharacteristicByIID(iid: string): Characteristic;
 
