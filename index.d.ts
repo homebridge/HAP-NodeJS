@@ -129,8 +129,9 @@ declare namespace HAPNodeJS {
     }
 
     type EventCharacteristic = "get" | "set"
+    type CharacteristicValue = boolean | string | number
 
-    export type CharacteristicGetCallback<T = boolean | string | number> = (error: Error | null , value: T) => void
+    export type CharacteristicGetCallback<T = CharacteristicValue> = (error: Error | null , value: T) => void
     export type CharacteristicSetCallback = (error?: Error | null) => void
     export type CharacteristicCallback = CharacteristicGetCallback | CharacteristicSetCallback
 
@@ -156,9 +157,9 @@ declare namespace HAPNodeJS {
 
         setProps(props: CharacteristicProps): Characteristic
         getValue(callback?: CharacteristicGetCallback, context?: any, connectionID?: string): void;
-        setValue(newValue: boolean | string | number, callback?: CharacteristicSetCallback, context?: any, connectionID?: string): Characteristic;
-        updateValue(newValue: boolean | string | number, callback?: () => void, context?: any): Characteristic;
-        getDefaultValue(): boolean | string | number;
+        setValue(newValue: CharacteristicValue, callback?: CharacteristicSetCallback, context?: any, connectionID?: string): Characteristic;
+        updateValue(newValue: CharacteristicValue, callback?: () => void, context?: any): Characteristic;
+        getDefaultValue(): CharacteristicValue;
         toHAP(opt: any): JSON;
 
         AccessoryFlags: Characteristic;
