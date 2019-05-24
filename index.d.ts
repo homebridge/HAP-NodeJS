@@ -413,12 +413,28 @@ declare namespace HAPNodeJS {
             THERMOSTAT = 9,
             SENSOR = 10,
             ALARM_SYSTEM = 11,
+            SECURITY_SYSTEM = 11,
             DOOR = 12,
             WINDOW = 13,
             WINDOW_COVERING = 14,
             PROGRAMMABLE_SWITCH = 15,
             RANGE_EXTENDER = 16,
-            CAMERA = 17
+            CAMERA = 17,
+            IP_CAMERA = 17,
+            VIDEO_DOORBELL = 18,
+            AIR_PURIFIER = 19,
+            AIR_HEATER = 20,
+            AIR_CONDITIONER = 21,
+            AIR_HUMIDIFIER = 22,
+            AIR_DEHUMIDIFIER = 23,
+            APPLE_TV = 24,
+            SPEAKER = 26,
+            AIRPORT = 27,
+            SPRINKLER = 28,
+            FAUCET = 29,
+            SHOWER_HEAD = 30,
+            TELEVISION = 31,
+            TARGET_CONTROLLER = 32
         }
     }
 
