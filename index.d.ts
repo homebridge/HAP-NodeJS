@@ -34,9 +34,9 @@ declare namespace HAPNodeJS {
         addCharacteristic(characteristic: Characteristic | Function): Characteristic;
         removeCharacteristic(characteristic: Characteristic): void;
         getCharacteristic(name: string | Function): Characteristic;
-        testCharacteristic(name: string): boolean;
-        setCharacteristic(name: string | Function, value: string): Service;
-        updateCharacteristic(name: string, value: string): Service;
+        testCharacteristic(name: string | Function): boolean;
+        setCharacteristic(name: string | Function, value: CharacteristicValue): Service;
+        updateCharacteristic(name: string | Function, value: CharacteristicValue): Service;
         addOptionalCharacteristic(characteristic: Characteristic | Function): void;
         getCharacteristicByIID(iid: string): Characteristic;
 
@@ -46,6 +46,8 @@ declare namespace HAPNodeJS {
         AirPurifier: PredefinedService;
         AirQualitySensor: PredefinedService;
         BatteryService: PredefinedService;
+        BridgeConfiguration: PredefinedService;
+        BridgingState: PredefinedService;
         CameraControl: PredefinedService;
         CameraRTPStreamManagement: PredefinedService;
         CarbonDioxideSensor: PredefinedService;
@@ -55,11 +57,14 @@ declare namespace HAPNodeJS {
         Doorbell: PredefinedService;
         Fan: PredefinedService;
         Fanv2: PredefinedService;
+        Faucet: PredefinedService;
         FilterMaintenance: PredefinedService;
         GarageDoorOpener: PredefinedService;
         HeaterCooler: PredefinedService;
         HumidifierDehumidifier: PredefinedService;
         HumiditySensor: PredefinedService;
+        InputSource: PredefinedService;
+        IrrigationSystem: PredefinedService;
         LeakSensor: PredefinedService;
         LightSensor: PredefinedService;
         Lightbulb: PredefinedService;
@@ -69,15 +74,24 @@ declare namespace HAPNodeJS {
         MotionSensor: PredefinedService;
         OccupancySensor: PredefinedService;
         Outlet: PredefinedService;
+        Pairing: PredefinedService;
+        ProtocolInformation: PredefinedService;
+        Relay: PredefinedService;
         SecuritySystem: PredefinedService;
+        ServiceLabel: PredefinedService;
         Slat: PredefinedService;
         SmokeSensor: PredefinedService;
         Speaker: PredefinedService;
         StatefulProgrammableSwitch: PredefinedService;
         StatelessProgrammableSwitch: PredefinedService;
         Switch: PredefinedService;
+        Television: PredefinedService;
+        TelevisionSpeaker: PredefinedService;
         TemperatureSensor: PredefinedService;
         Thermostat: PredefinedService;
+        TimeInformation: PredefinedService;
+        TunneledBTLEAccessoryService: PredefinedService;
+        Valve: PredefinedService;
         Window: PredefinedService;
         WindowCovering: PredefinedService;
     }
@@ -115,16 +129,21 @@ declare namespace HAPNodeJS {
     }
 
     type EventCharacteristic = "get" | "set"
+    type CharacteristicValue = boolean | string | number
+
+    export type CharacteristicGetCallback<T = CharacteristicValue> = (error: Error | null , value: T) => void
+    export type CharacteristicSetCallback = (error?: Error | null) => void
+    export type CharacteristicCallback = CharacteristicGetCallback | CharacteristicSetCallback
 
     export interface IEventEmitterCharacteristic {
-        addListener(event: EventCharacteristic, listener: Function): this;
-        on(event: EventCharacteristic, listener: Function): this;
-        once(event: EventCharacteristic, listener: Function): this;
-        removeListener(event: EventCharacteristic, listener: Function): this;
+        addListener(event: EventCharacteristic, listener: CharacteristicCallback): this;
+        on(event: EventCharacteristic, listener: CharacteristicCallback): this;
+        once(event: EventCharacteristic, listener: CharacteristicCallback): this;
+        removeListener(event: EventCharacteristic, listener: CharacteristicCallback): this;
         removeAllListeners(event?: EventCharacteristic): this;
         setMaxListeners(n: number): this;
         getMaxListeners(): number;
-        listeners(event: EventCharacteristic): Function[];
+        listeners(event: EventCharacteristic): CharacteristicCallback[];
         emit(event: EventCharacteristic, ...args: any[]): boolean;
         listenerCount(type: string): number;
     }
@@ -137,14 +156,16 @@ declare namespace HAPNodeJS {
         Perms: typeof Characteristic.Perms;
 
         setProps(props: CharacteristicProps): Characteristic
-        getValue(callback?: (error: Error, value: boolean | string | number) => void, context?: any, connectionID?: string): void;
-        setValue(newValue: boolean | string | number, callback?: (error: Error) => void, context?: any, connectionID?: string): Characteristic;
-        updateValue(newValue: boolean | string | number, callback?: () => void, context?: any): Characteristic;
-        getDefaultValue(): boolean | string | number;
+        getValue(callback?: CharacteristicGetCallback, context?: any, connectionID?: string): void;
+        setValue(newValue: CharacteristicValue, callback?: CharacteristicSetCallback, context?: any, connectionID?: string): Characteristic;
+        updateValue(newValue: CharacteristicValue, callback?: () => void, context?: any): Characteristic;
+        getDefaultValue(): CharacteristicValue;
         toHAP(opt: any): JSON;
 
         AccessoryFlags: Characteristic;
+        AccessoryIdentifier: Characteristic;
         Active: Characteristic;
+        ActiveIdentifier: Characteristic;
         AdministratorOnlyAccess: Characteristic;
         AirParticulateDensity: Characteristic;
         AirParticulateSize: Characteristic;
@@ -159,7 +180,13 @@ declare namespace HAPNodeJS {
         CarbonMonoxideDetected: Characteristic;
         CarbonMonoxideLevel: Characteristic;
         CarbonMonoxidePeakLevel: Characteristic;
+        Category: Characteristic;
         ChargingState: Characteristic;
+        ClosedCaptions: Characteristic;
+        ColorTemperature: Characteristic;
+        ConfigureBridgedAccessory: Characteristic;
+        ConfigureBridgedAccessoryStatus: Characteristic;
+        ConfiguredName: Characteristic;
         ContactSensorState: Characteristic;
         CoolingThresholdTemperature: Characteristic;
         CurrentAirPurifierState: Characteristic;
@@ -170,13 +197,20 @@ declare namespace HAPNodeJS {
         CurrentHeatingCoolingState: Characteristic;
         CurrentHorizontalTiltAngle: Characteristic;
         CurrentHumidifierDehumidifierState: Characteristic;
+        CurrentMediaState: Characteristic;
         CurrentPosition: Characteristic;
         CurrentRelativeHumidity: Characteristic;
         CurrentSlatState: Characteristic;
         CurrentTemperature: Characteristic;
         CurrentTiltAngle: Characteristic;
+        CurrentTime: Characteristic;
         CurrentVerticalTiltAngle: Characteristic;
+        CurrentVisibilityState: Characteristic;
+        DayoftheWeek: Characteristic;
         DigitalZoom: Characteristic;
+        DiscoverBridgedAccessories: Characteristic;
+        DiscoveredBridgedAccessories: Characteristic;
+        DisplayOrder: Characteristic;
         FilterChangeIndication: Characteristic;
         FilterLifeLevel: Characteristic;
         FirmwareRevision: Characteristic;
@@ -184,10 +218,16 @@ declare namespace HAPNodeJS {
         HeatingThresholdTemperature: Characteristic;
         HoldPosition: Characteristic;
         Hue: Characteristic;
+        Identifier: Characteristic;
         Identify: Characteristic;
         ImageMirroring: Characteristic;
         ImageRotation: Characteristic;
+        InUse: Characteristic;
+        InputDeviceType: Characteristic;
+        InputSourceType: Characteristic;
+        IsConfigured: Characteristic;
         LeakDetected: Characteristic;
+        LinkQuality: Characteristic;
         LockControlPoint: Characteristic;
         LockCurrentState: Characteristic;
         LockLastKnownAction: Characteristic;
@@ -197,8 +237,8 @@ declare namespace HAPNodeJS {
         Logs: Characteristic;
         Manufacturer: Characteristic;
         Model: Characteristic;
-        Mute: Characteristic;
         MotionDetected: Characteristic;
+        Mute: Characteristic;
         Name: Characteristic;
         NightVision: Characteristic;
         NitrogenDioxideDensity: Characteristic;
@@ -208,17 +248,26 @@ declare namespace HAPNodeJS {
         OpticalZoom: Characteristic;
         OutletInUse: Characteristic;
         OzoneDensity: Characteristic;
+        PM10Density: Characteristic;
+        PM2_5Density: Characteristic;
         PairSetup: Characteristic;
         PairVerify: Characteristic;
         PairingFeatures: Characteristic;
         PairingPairings: Characteristic;
-        PM10Density: Characteristic;
-        PM2_5Density: Characteristic;
+        PictureMode: Characteristic;
         PositionState: Characteristic;
+        PowerModeSelection: Characteristic;
+        ProgramMode: Characteristic;
         ProgrammableSwitchEvent: Characteristic;
         ProgrammableSwitchOutputState: Characteristic;
+        Reachable: Characteristic;
         RelativeHumidityDehumidifierThreshold: Characteristic;
         RelativeHumidityHumidifierThreshold: Characteristic;
+        RelayControlPoint: Characteristic;
+        RelayEnabled: Characteristic;
+        RelayState: Characteristic;
+        RemainingDuration: Characteristic;
+        RemoteKey: Characteristic;
         ResetFilterIndication: Characteristic;
         RotationDirection: Characteristic;
         RotationSpeed: Characteristic;
@@ -226,10 +275,14 @@ declare namespace HAPNodeJS {
         SecuritySystemAlarmType: Characteristic;
         SecuritySystemCurrentState: Characteristic;
         SecuritySystemTargetState: Characteristic;
-        SelectedStreamConfiguration: Characteristic;
+        SelectedRTPStreamConfiguration: Characteristic;
         SerialNumber: Characteristic;
+        ServiceLabelIndex: Characteristic;
+        ServiceLabelNamespace: Characteristic;
+        SetDuration: Characteristic;
         SetupEndpoints: Characteristic;
         SlatType: Characteristic;
+        SleepDiscoveryMode: Characteristic;
         SmokeDetected: Characteristic;
         SoftwareRevision: Characteristic;
         StatusActive: Characteristic;
@@ -251,16 +304,26 @@ declare namespace HAPNodeJS {
         TargetHeatingCoolingState: Characteristic;
         TargetHorizontalTiltAngle: Characteristic;
         TargetHumidifierDehumidifierState: Characteristic;
+        TargetMediaState: Characteristic;
         TargetPosition: Characteristic;
         TargetRelativeHumidity: Characteristic;
         TargetSlatState: Characteristic;
         TargetTemperature: Characteristic;
         TargetTiltAngle: Characteristic;
         TargetVerticalTiltAngle: Characteristic;
+        TargetVisibilityState: Characteristic;
         TemperatureDisplayUnits: Characteristic;
-        Version: Characteristic;
+        TimeUpdate: Characteristic;
+        TunnelConnectionTimeout: Characteristic;
+        TunneledAccessoryAdvertising: Characteristic;
+        TunneledAccessoryConnected: Characteristic;
+        TunneledAccessoryStateNumber: Characteristic;
         VOCDensity: Characteristic;
+        ValveType: Characteristic;
+        Version: Characteristic;
         Volume: Characteristic;
+        VolumeControlType: Characteristic;
+        VolumeSelector: Characteristic;
         WaterLevel: Characteristic;
     }
 
@@ -350,12 +413,28 @@ declare namespace HAPNodeJS {
             THERMOSTAT = 9,
             SENSOR = 10,
             ALARM_SYSTEM = 11,
+            SECURITY_SYSTEM = 11,
             DOOR = 12,
             WINDOW = 13,
             WINDOW_COVERING = 14,
             PROGRAMMABLE_SWITCH = 15,
             RANGE_EXTENDER = 16,
-            CAMERA = 17
+            CAMERA = 17,
+            IP_CAMERA = 17,
+            VIDEO_DOORBELL = 18,
+            AIR_PURIFIER = 19,
+            AIR_HEATER = 20,
+            AIR_CONDITIONER = 21,
+            AIR_HUMIDIFIER = 22,
+            AIR_DEHUMIDIFIER = 23,
+            APPLE_TV = 24,
+            SPEAKER = 26,
+            AIRPORT = 27,
+            SPRINKLER = 28,
+            FAUCET = 29,
+            SHOWER_HEAD = 30,
+            TELEVISION = 31,
+            TARGET_CONTROLLER = 32
         }
     }
 
@@ -363,8 +442,8 @@ declare namespace HAPNodeJS {
         init(storagePath?: string): void,
         uuid: uuid,
         Accessory: Accessory,
-        Service: any,
-        Characteristic: any
+        Service: Service,
+        Characteristic: Characteristic
     }
 
 
