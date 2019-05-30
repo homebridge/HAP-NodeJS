@@ -134,16 +134,20 @@ declare namespace HAPNodeJS {
     export type CharacteristicGetCallback<T = CharacteristicValue> = (error: Error | null , value: T) => void
     export type CharacteristicSetCallback = (error?: Error | null) => void
     export type CharacteristicCallback = CharacteristicGetCallback | CharacteristicSetCallback
+    export type CallbackGetListener = (cb: CharacteristicGetCallback) => void
+    export type CallbackSetListener<T = CharacteristicValue> = (value: T, cb: CharacteristicSetCallback) => void
+    export type CallbackListener = CallbackGetListener | CallbackSetListener
+
 
     export interface IEventEmitterCharacteristic {
-        addListener(event: EventCharacteristic, listener: CharacteristicCallback): this;
-        on(event: EventCharacteristic, listener: CharacteristicCallback): this;
-        once(event: EventCharacteristic, listener: CharacteristicCallback): this;
-        removeListener(event: EventCharacteristic, listener: CharacteristicCallback): this;
+        addListener(event: EventCharacteristic, listener: CallbackListener): this;
+        on(event: EventCharacteristic, listener: CallbackListener): this;
+        once(event: EventCharacteristic, listener: CallbackListener): this;
+        removeListener(event: EventCharacteristic, listener: CallbackListener): this;
         removeAllListeners(event?: EventCharacteristic): this;
         setMaxListeners(n: number): this;
         getMaxListeners(): number;
-        listeners(event: EventCharacteristic): CharacteristicCallback[];
+        listeners(event: EventCharacteristic): CallbackListener[];
         emit(event: EventCharacteristic, ...args: any[]): boolean;
         listenerCount(type: string): number;
     }
