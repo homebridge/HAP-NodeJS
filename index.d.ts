@@ -32,6 +32,9 @@ declare namespace HAPNodeJS {
         optionalCharacteristics: Characteristic[];
 
         addCharacteristic(characteristic: Characteristic | Function): Characteristic;
+        setHiddenService(isHidden: boolean): void;
+        addLinkedService(newLinkedService: Service | Function): void;
+        removeLinkedService(oldLinkedService: Service | Function): void;
         removeCharacteristic(characteristic: Characteristic): void;
         getCharacteristic(name: string | Function): Characteristic;
         testCharacteristic(name: string | Function): boolean;
