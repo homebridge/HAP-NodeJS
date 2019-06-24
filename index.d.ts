@@ -30,6 +30,10 @@ declare namespace HAPNodeJS {
         iid: string;
         characteristics: Characteristic[];
         optionalCharacteristics: Characteristic[];
+        
+        isHiddenService: boolean;
+        isPrimaryService: boolean;
+        linkedServices: Service[];
 
         addCharacteristic(characteristic: Characteristic | Function): Characteristic;
         setHiddenService(isHidden: boolean): void;
