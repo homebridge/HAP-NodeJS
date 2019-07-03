@@ -68,7 +68,7 @@ FanService.getCharacteristic(Characteristic.On)
   });
 
 
-// also add an "optional" Characteristic for spped
+// also add an "optional" Characteristic for speed
 FanService.addCharacteristic(Characteristic.RotationSpeed)
   .on('get', function(callback) {
     callback(null, ACTest_data.rSpeed);
