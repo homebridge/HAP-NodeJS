@@ -68,6 +68,6 @@ Projects based on HAP-NodeJS
 * [OpenHAB-HomeKit-Bridge](https://github.com/htreu/OpenHAB-HomeKit-Bridge) - OpenHAB HomeKit Bridge bridges openHAB items to Apple´s HomeKit Accessory Protocol.
 * [homekit2mqtt](https://github.com/hobbyquaker/homekit2mqtt) - HomeKit to MQTT bridge.
 * [pimatic-hap](https://github.com/michbeck100/pimatic-hap) - Pimatic homekit bridge.
-* [node-red-contrib-homekit](https://github.com/mschm/node-red-contrib-homekit) - Node-RED nodes to simulate Apple HomeKit devices.
+* [node-red-contrib-homekit](https://github.com/NRCHKB/node-red-contrib-homekit-bridged) - Node-RED nodes to simulate Apple HomeKit devices.
 * [ioBroker.homekit](https://github.com/ioBroker/ioBroker.homekit2) - connect ioBroker to HomeKit.
 * [AccessoryServer](https://github.com/Appyx/AccessoryServer) - HomeKit integration for IR/RF/IP-devices
