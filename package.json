@@ -2,8 +2,8 @@
   "name": "hap-nodejs",
   "version": "0.4.53",
   "description": "HAP-NodeJS is a Node.js implementation of HomeKit Accessory Server.",
-  "main": "src/index.js",
-  "types": "index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "engines": {
     "node": ">=4.3.2"
   },
@@ -25,6 +25,7 @@
     "typescript": "^3.5.3"
   },
   "scripts": {
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/BridgedCore.js"
   },
