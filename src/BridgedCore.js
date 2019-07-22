@@ -1,9 +1,9 @@
 var fs = require('fs');
 var path = require('path');
 var storage = require('node-persist');
-var uuid = require('./').uuid;
-var Bridge = require('./').Bridge;
-var Accessory = require('./').Accessory;
+var uuid = require('../index').uuid;
+var Bridge = require('../index').Bridge;
+var Accessory = require('../index').Accessory;
 var accessoryLoader = require('./lib/AccessoryLoader');
 
 console.log("HAP-NodeJS starting...");

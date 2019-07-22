@@ -1,7 +1,7 @@
 var storage = require('node-persist');
-var uuid = require('./').uuid;
-var Accessory = require('./').Accessory;
-var Camera = require('./').Camera;
+var uuid = require('../index').uuid;
+var Accessory = require('../index').Accessory;
+var Camera = require('../index').Camera;
 
 console.log("HAP-NodeJS starting...");
 

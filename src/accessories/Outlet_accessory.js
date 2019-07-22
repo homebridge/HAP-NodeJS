@@ -1,7 +1,7 @@
-var Accessory = require('../').Accessory;
-var Service = require('../').Service;
-var Characteristic = require('../').Characteristic;
-var uuid = require('../').uuid;
+var Accessory = require('../../index').Accessory;
+var Service = require('../../index').Service;
+var Characteristic = require('../../index').Characteristic;
+var uuid = require('../../index').uuid;
 var err = null; // in case there were any problems
 
 // here's a fake hardware device that we'll expose to HomeKit
@@ -79,4 +79,4 @@ outlet
       console.log("Are we on? No.");
       callback(err, false);
     }
-  }); 
+  });

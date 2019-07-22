@@ -1,7 +1,7 @@
-var Accessory = require('../').Accessory;
-var Service = require('../').Service;
-var Characteristic = require('../').Characteristic;
-var uuid = require('../').uuid;
+var Accessory = require('../../index').Accessory;
+var Service = require('../../index').Service;
+var Characteristic = require('../../index').Characteristic;
+var uuid = require('../../index').uuid;
 
 // here's a fake hardware device that we'll expose to HomeKit
 var SPRINKLER = {
@@ -62,18 +62,18 @@ sprinkler
   .on('set', function(newValue, callback) {
 
     console.log("set Active => setNewValue: " + newValue);
-    
+
     if (SPRINKLER.active) {
       SPRINKLER.active = false;
       closeVentile();
       setTimeout(function() {
-        console.log("Ausgeschaltet");        
+        console.log("Ausgeschaltet");
         SPRINKLER.timerEnd = SPRINKLER.defaultDuration + Math.floor(new Date() / 1000);
         callback(null);
 
         sprinkler
         .getService(Service.Valve)
-        .setCharacteristic(Characteristic.SetDuration, 0);        
+        .setCharacteristic(Characteristic.SetDuration, 0);
 
         sprinkler
         .getService(Service.Valve)
@@ -88,19 +88,19 @@ sprinkler
         console.log("Eingeschaltet");
         SPRINKLER.timerEnd = SPRINKLER.defaultDuration + Math.floor(new Date() / 1000);
         callback(null, SPRINKLER.defaultDuration);
-        
+
         sprinkler
         .getService(Service.Valve)
         .setCharacteristic(Characteristic.InUse, 1);
 
         sprinkler
         .getService(Service.Valve)
-        .setCharacteristic(Characteristic.RemainingDuration, SPRINKLER.defaultDuration);        
+        .setCharacteristic(Characteristic.RemainingDuration, SPRINKLER.defaultDuration);
 
         sprinkler
         .getService(Service.Valve)
         .setCharacteristic(Characteristic.SetDuration, SPRINKLER.defaultDuration);
-        
+
       }, 1000);
     }
   });
@@ -121,7 +121,7 @@ sprinkler
     }
   })
   .on('set', function(newValue, callback) {
-    console.log("set In_Use => NewValue: " + newValue);    
+    console.log("set In_Use => NewValue: " + newValue);
   });
 
 
@@ -133,7 +133,7 @@ sprinkler
     var err = null; // in case there were any problems
 
     if (SPRINKLER.active) {
-      
+
       var duration = SPRINKLER.timerEnd - Math.floor(new Date() / 1000);
       console.log("RemainingDuration: " + duration)
       callback(err, duration);
@@ -149,10 +149,10 @@ sprinkler
   .getCharacteristic(Characteristic.SetDuration)
   .on('set', function(newValue, callback) {
     console.log("SetDuration => NewValue: " + newValue);
-    
+
     var err = null; // in case there were any problems
     SPRINKLER.defaultDuration = newValue;
-    callback();  
+    callback();
   });
 
 
@@ -164,4 +164,4 @@ sprinkler
   function closeVentile() {
     // Add your code here
   }
-  
+

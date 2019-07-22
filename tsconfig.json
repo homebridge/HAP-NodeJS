@@ -7,13 +7,9 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": "./lib",
+    "rootDir": "./src",
 
     "strict": true,
     "esModuleInterop": true
-  },
-  "include": [
-    "lib/**/*.ts",
-    "lib/**/*.js"
-  ]
+  }
 }

@@ -11,7 +11,7 @@ The implementation may not 100% follow the HAP MFi Specification since the MFi p
 
 Remember to run `npm install` before actually running the server.
 
-Users can define their own accessories in: accessories/[name]_accessory.js files, where [name] is a short description of the accessory. All defined accessories get loaded on server start. You can define accessories using an object literal notation (see [Fan_accessory.js](accessories/Fan_accessory.js) for an example) or you can use the API (see below).
+Users can define their own accessories in: accessories/[name]_accessory.js files, where [name] is a short description of the accessory. All defined accessories get loaded on server start. You can define accessories using an object literal notation (see [Fan_accessory.js](src/accessories/Fan_accessory.js) for an example) or you can use the API (see below).
 
 You can use the following command to start the HAP Server in Bridged mode:
 
@@ -39,16 +39,16 @@ Hint: the Homekit Application Protocol (HAP) allows that you can pair a Homekit 
 API
 ===
 
-HAP-NodeJS provides a set of classes you can use to construct Accessories programatically. For an example implementation, see [Lock_accessory.js](accessories/Lock_accessory.js).
+HAP-NodeJS provides a set of classes you can use to construct Accessories programatically. For an example implementation, see [Lock_accessory.js](src/accessories/Lock_accessory.js).
 
 The key classes intended for use by API consumers are:
 
-  * [Accessory](lib/Accessory.js): Represents a HomeKit device that can be published on your local network.
-  * [Bridge](lib/Bridge.js): A kind of Accessory that can host other Accessories "behind" it while only publishing a single device.
-  * [Service](lib/Service.js): Represents a set of grouped values necessary to provide a logical function. Most of the time, when you think of a supported HomeKit device like "Thermostat" or "Door Lock", you're actualy thinking of a Service. Accessories can expose multiple services.
-  * [Characteristic](lib/Characteristic.js): Represents a particular typed variable assigned to a Service, for instance the `LockMechanism` Service contains a `CurrentDoorState` Characteristic describing whether the door is currently locked.
+  * [Accessory](src/lib/Accessory.js): Represents a HomeKit device that can be published on your local network.
+  * [Bridge](src/lib/Bridge.js): A kind of Accessory that can host other Accessories "behind" it while only publishing a single device.
+  * [Service](src/lib/Service.js): Represents a set of grouped values necessary to provide a logical function. Most of the time, when you think of a supported HomeKit device like "Thermostat" or "Door Lock", you're actualy thinking of a Service. Accessories can expose multiple services.
+  * [Characteristic](src/lib/Characteristic.js): Represents a particular typed variable assigned to a Service, for instance the `LockMechanism` Service contains a `CurrentDoorState` Characteristic describing whether the door is currently locked.
 
-All known built-in Service and Characteristic types that HomeKit supports are exposed as a separate subclass in [HomeKitTypes](lib/gen/HomeKitTypes.js).
+All known built-in Service and Characteristic types that HomeKit supports are exposed as a separate subclass in [HomeKitTypes](src/lib/gen/HomeKitTypes.js).
 
 See each of the corresponding class files for more explanation and notes.
 
