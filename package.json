@@ -20,14 +20,19 @@
   "devDependencies": {
     "@types/debug": "^4.1.4",
     "@types/ip": "^1.1.0",
-    "@types/node-persist": "^0.0.33",
+    "@types/jest": "^24.0.15",
+    "@types/node": "^12.6.8",
+    "jest": "^24.8.0",
+    "rimraf": "^2.6.3",
     "simple-plist": "0.0.4",
+    "ts-jest": "^24.0.2",
+    "ts-node": "^8.3.0",
     "typescript": "^3.5.3"
   },
   "scripts": {
-    "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/BridgedCore.js"
+    "build": "rimraf dist/ && tsc",
+    "test": "jest",
+    "start": "node dist/BridgedCore.js"
   },
   "repository": {
     "type": "git",

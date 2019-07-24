@@ -4,7 +4,7 @@
     "module": "commonjs",
     // "lib": [],
     "allowJs": true,
-    "checkJs": true,
+    "checkJs": false,
 //    "declaration": true,
 //    "declarationMap": true,
     "sourceMap": true,
@@ -13,5 +13,8 @@
 
     "strict": true,
     "esModuleInterop": true
-  }
+  },
+  "include": [
+    "src/"
+  ]
 }
