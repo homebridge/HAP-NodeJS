@@ -1,6 +1,6 @@
 import storage from 'node-persist';
 
-import { Accessory, AccessoryEvents, Camera, Categories, uuid, VoidCallback } from './';
+import { Accessory, AccessoryEventTypes, Camera, Categories, uuid, VoidCallback } from './';
 
 console.log("HAP-NodeJS starting...");
 
@@ -14,7 +14,7 @@ var cameraSource = new Camera();
 
 cameraAccessory.configureCameraSource(cameraSource);
 
-cameraAccessory.on(AccessoryEvents.IDENTIFY, function(paired: boolean, callback: VoidCallback) {
+cameraAccessory.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
   console.log("Node Camera identify");
   callback(); // success
 });

@@ -1,9 +1,9 @@
 // here's a fake hardware device that we'll expose to HomeKit
 import {
   Accessory,
-  AccessoryEvents,
+  AccessoryEventTypes,
   Characteristic,
-  CharacteristicEvents,
+  CharacteristicEventTypes,
   CharacteristicValue,
   NodeCallback,
   Service,
@@ -44,7 +44,7 @@ motionSensor
   .setCharacteristic(Characteristic.SerialNumber, "A1S2NASF88EW");
 
 // listen for the "identify" event for this Accessory
-motionSensor.on(AccessoryEvents.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
+motionSensor.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
   MOTION_SENSOR.identify();
   callback(); // success
 });
@@ -52,7 +52,7 @@ motionSensor.on(AccessoryEvents.IDENTIFY, (paired: boolean, callback: VoidCallba
 motionSensor
   .addService(Service.MotionSensor, "Fake Motion Sensor") // services exposed to the user should have "names" like "Fake Motion Sensor" for us
   .getCharacteristic(Characteristic.MotionDetected)!
-  .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
      MOTION_SENSOR.getStatus();
      callback(null, Boolean(MOTION_SENSOR.motionDetected));
 });

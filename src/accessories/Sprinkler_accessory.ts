@@ -1,5 +1,14 @@
 // here's a fake hardware device that we'll expose to HomeKit
-import { Accessory, Characteristic, CharacteristicEvents, CharacteristicValue, NodeCallback, Service, uuid } from '..';
+import {
+  Accessory,
+  Characteristic,
+  CharacteristicEventTypes,
+  CharacteristicSetCallback,
+  CharacteristicValue,
+  NodeCallback,
+  Service,
+  uuid
+} from '..';
 
 var SPRINKLER: any = {
   active: false,
@@ -47,7 +56,7 @@ sprinkler
 sprinkler
   .getService(Service.Valve)!
   .getCharacteristic(Characteristic.Active)!
-  .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
 
     console.log("get Active");
     var err = null; // in case there were any problems
@@ -59,7 +68,7 @@ sprinkler
       callback(err, false);
     }
   })
-  .on(CharacteristicEvents.SET, (newValue, callback) => {
+  .on(CharacteristicEventTypes.SET, (newValue: CharacteristicValue, callback: CharacteristicSetCallback) => {
 
     console.log("set Active => setNewValue: " + newValue);
 
@@ -109,7 +118,7 @@ sprinkler
 sprinkler
   .getService(Service.Valve)!
   .getCharacteristic(Characteristic.InUse)!
-  .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
     console.log("get In_Use");
     var err = null; // in case there were any problems
 
@@ -120,7 +129,7 @@ sprinkler
       callback(err, false);
     }
   })
-  .on(CharacteristicEvents.SET, (newValue, callback) => {
+  .on(CharacteristicEventTypes.SET, (newValue: CharacteristicValue, callback: CharacteristicSetCallback) => {
     console.log("set In_Use => NewValue: " + newValue);
   });
 
@@ -128,7 +137,7 @@ sprinkler
   sprinkler
   .getService(Service.Valve)!
   .getCharacteristic(Characteristic.RemainingDuration)!
-  .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
 
     var err = null; // in case there were any problems
 
@@ -147,7 +156,7 @@ sprinkler
   sprinkler
   .getService(Service.Valve)!
   .getCharacteristic(Characteristic.SetDuration)!
-  .on(CharacteristicEvents.SET, (newValue, callback) => {
+  .on(CharacteristicEventTypes.SET, (newValue: CharacteristicValue, callback: CharacteristicSetCallback) => {
     console.log("SetDuration => NewValue: " + newValue);
 
     var err = null; // in case there were any problems

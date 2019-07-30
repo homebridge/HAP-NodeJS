@@ -1,5 +1,5 @@
 // here's a fake temperature sensor device that we'll expose to HomeKit
-import { Accessory, Characteristic, CharacteristicEvents, CharacteristicValue, NodeCallback, Service, uuid } from '..';
+import { Accessory, Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service, uuid } from '..';
 
 var FAKE_SENSOR = {
   currentTemperature: 50,
@@ -33,7 +33,7 @@ sensor.pincode = "031-45-154";
 sensor
   .addService(Service.TemperatureSensor)!
   .getCharacteristic(Characteristic.CurrentTemperature)!
-  .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
 
     // return our current value
     callback(null, FAKE_SENSOR.getTemperature());

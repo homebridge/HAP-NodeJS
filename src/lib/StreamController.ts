@@ -8,7 +8,7 @@ import * as tlv from './util/tlv';
 import { Service } from './Service';
 import {
   Characteristic,
-  CharacteristicEvents,
+  CharacteristicEventTypes,
   CharacteristicGetCallback,
   CharacteristicSetCallback,
   CharacteristicValue
@@ -240,7 +240,7 @@ export type PreparedStreamResponse = {
   video: Source & Partial<SourceResponse>;
 }
 
-export class StreamController extends EventEmitter<any, any> {
+export class StreamController {
 
   static SetupTypes = SetupTypes;
   static SetupStatus = SetupStatus;
@@ -289,7 +289,6 @@ export class StreamController extends EventEmitter<any, any> {
     public options: StreamControllerOptions,
     public cameraSource?: Camera
   ) {
-    super();
     if (identifier === undefined) {
       throw new Error('Identifier cannot be undefined');
     }
@@ -352,46 +351,46 @@ export class StreamController extends EventEmitter<any, any> {
 
     managementService
       .getCharacteristic(Characteristic.StreamingStatus)!
-      .on(CharacteristicEvents.GET, (callback: CharacteristicGetCallback) => {
+      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
         var data = tlv.encode( 0x01, this.streamStatus );
         callback(null, data.toString('base64'));
       });
 
     managementService
       .getCharacteristic(Characteristic.SupportedRTPConfiguration)!
-      .on(CharacteristicEvents.GET, (callback: CharacteristicGetCallback) => {
+      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
         callback(null, this.supportedRTPConfiguration);
       });
 
     managementService
       .getCharacteristic(Characteristic.SupportedVideoStreamConfiguration)!
-      .on(CharacteristicEvents.GET, (callback: CharacteristicGetCallback) => {
+      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
         callback(null, this.supportedVideoStreamConfiguration);
       });
 
     managementService
       .getCharacteristic(Characteristic.SupportedAudioStreamConfiguration)!
-      .on(CharacteristicEvents.GET, (callback: CharacteristicGetCallback) => {
+      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
         callback(null, this.supportedAudioStreamConfiguration);
       });
 
     managementService
       .getCharacteristic(Characteristic.SelectedStreamConfiguration)!
-      .on(CharacteristicEvents.GET, (callback: CharacteristicGetCallback) => {
+      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
         debug('Read SelectedStreamConfiguration');
         callback(null, this.selectedConfiguration);
       })
-      .on(CharacteristicEvents.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context?: any, connectionID?: string) => {
+      .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context?: any, connectionID?: string) => {
         debug('Write SelectedStreamConfiguration');
         this._handleSelectedStreamConfigurationWrite(value, callback, connectionID!);
       });
 
     managementService
       .getCharacteristic(Characteristic.SetupEndpoints)!
-      .on(CharacteristicEvents.GET, (callback: CharacteristicGetCallback) => {
+      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
         this._handleSetupRead(callback);
       })
-      .on(CharacteristicEvents.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+      .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
         this._handleSetupWrite(value, callback);
       });
 

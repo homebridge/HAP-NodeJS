@@ -5,7 +5,12 @@ import createDebug from 'debug';
 
 import { Accessory } from './Accessory';
 import { Service } from './Service';
-import { Characteristic, CharacteristicEvents, CharacteristicValue } from './Characteristic';
+import {
+  Characteristic,
+  CharacteristicEventTypes, CharacteristicGetCallback,
+  CharacteristicSetCallback,
+  CharacteristicValue
+} from './Characteristic';
 import * as uuid from './util/uuid';
 import { NodeCallback, Nullable } from '../types';
 
@@ -160,14 +165,14 @@ export function parseCharacteristicJSON(json: any) {
   var registerFunc = json.onRegister; // optional function
 
   if (updateFunc) {
-    characteristic.on(CharacteristicEvents.SET, (value, callback) => {
+    characteristic.on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       updateFunc(value);
       callback && callback();
     });
   }
 
   if (readFunc) {
-    characteristic.on(CharacteristicEvents.GET, (callback: NodeCallback<any>) => {
+    characteristic.on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
       readFunc((value: any) => {
         callback(null, value); // old onRead callbacks don't use Error as first param
       });

@@ -1,4 +1,12 @@
-import { Accessory, Characteristic, CharacteristicEvents, Service, uuid } from '..';
+import {
+  Accessory,
+  Characteristic,
+  CharacteristicEventTypes,
+  CharacteristicSetCallback,
+  CharacteristicValue,
+  Service,
+  uuid
+} from '..';
 
 // Generate a consistent UUID for TV that will remain the same even when
 // restarting our server. We use the `uuid.generate` helper function to create a deterministic
@@ -29,7 +37,7 @@ televisionService
 
 televisionService
   .getCharacteristic(Characteristic.Active)!
-  .on(CharacteristicEvents.SET, (newValue, callback) => {
+  .on(CharacteristicEventTypes.SET, (newValue: CharacteristicValue, callback: CharacteristicSetCallback) => {
     console.log("set Active => setNewValue: " + newValue);
     callback(null);
   });
@@ -39,28 +47,28 @@ televisionService
 
 televisionService
   .getCharacteristic(Characteristic.ActiveIdentifier)!
-  .on(CharacteristicEvents.SET, (newValue, callback) => {
+  .on(CharacteristicEventTypes.SET, (newValue: CharacteristicValue, callback: CharacteristicSetCallback) => {
     console.log("set Active Identifier => setNewValue: " + newValue);
     callback(null);
   });
 
 televisionService
   .getCharacteristic(Characteristic.RemoteKey)!
-  .on(CharacteristicEvents.SET, (newValue, callback) => {
+  .on(CharacteristicEventTypes.SET, (newValue: CharacteristicValue, callback: CharacteristicSetCallback) => {
     console.log("set Remote Key => setNewValue: " + newValue);
     callback(null);
   });
 
 televisionService
   .getCharacteristic(Characteristic.PictureMode)!
-  .on(CharacteristicEvents.SET, (newValue, callback) => {
+  .on(CharacteristicEventTypes.SET, (newValue: CharacteristicValue, callback: CharacteristicSetCallback) => {
     console.log("set PictureMode => setNewValue: " + newValue);
     callback(null);
   });
 
 televisionService
   .getCharacteristic(Characteristic.PowerModeSelection)!
-  .on(CharacteristicEvents.SET, (newValue, callback) => {
+  .on(CharacteristicEventTypes.SET, (newValue: CharacteristicValue, callback: CharacteristicSetCallback) => {
     console.log("set PowerModeSelection => setNewValue: " + newValue);
     callback(null);
   });
@@ -74,7 +82,7 @@ speakerService
   .setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
 
 speakerService.getCharacteristic(Characteristic.VolumeSelector)!
-  .on(CharacteristicEvents.SET, (newValue, callback) => {
+  .on(CharacteristicEventTypes.SET, (newValue: CharacteristicValue, callback: CharacteristicSetCallback) => {
     console.log("set VolumeSelector => setNewValue: " + newValue);
     callback(null);
   });

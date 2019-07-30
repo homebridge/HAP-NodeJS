@@ -20,6 +20,15 @@ export enum EventedHTTPServerEvents {
   SESSION_CLOSE = 'session-close',
 }
 
+export type Events = {
+  listening: (port: number) => void;
+  request: (request: IncomingMessage, response: ServerResponse, session: Session, events: any) => void;
+  decrypt: (data: Buffer, decrypted: { data: Buffer; }, session: Session) => void;
+  encrypt: (data: Buffer, encrypted: { data: number | Buffer; }, session: Session) => void;
+  close: (events: any) => void;
+  'session-close': (sessionID: string, events: any) => void;
+};
+
 /**
  * EventedHTTPServer provides an HTTP-like server that supports HAP "extensions" for security and events.
  *
@@ -55,7 +64,7 @@ export enum EventedHTTPServerEvents {
  *        Fired when we wish to send data to the client device. If necessary, set the 'data' property of the
  *        'encrypted' argument to be the encrypted data and it will be sent instead.
  */
-export class EventedHTTPServer extends EventEmitter<EventedHTTPServerEvents, any> {
+export class EventedHTTPServer extends EventEmitter<Events> {
 
   _tcpServer: net.Server;
   _connections: EventedHTTPServerConnection[];
@@ -125,7 +134,7 @@ export class EventedHTTPServer extends EventEmitter<EventedHTTPServerEvents, any
  * @event 'encrypt' => function(data, {encrypted.data}, session) { }
  * @event 'close' => function() { }
  */
-class EventedHTTPServerConnection extends EventEmitter<EventedHTTPServerEvents, any> {
+class EventedHTTPServerConnection extends EventEmitter<Events> {
 
   sessionID: string;
   _remoteAddress: string;

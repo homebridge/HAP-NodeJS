@@ -1,23 +1,27 @@
 import { EventEmitter as BaseEventEmitter } from "events";
+import { Callback } from '../types';
 
-export class EventEmitter<Event extends string | symbol, Listener extends (...args: any[]) => void> extends BaseEventEmitter {
-  addListener(event: Event, listener: Listener): this {
+export type Event<T> = T & (string | symbol);
+export type EventMap = { [name: string]: Callback };
+
+export class EventEmitter<T extends EventMap, K extends Event<keyof T> = Event<keyof T>> extends BaseEventEmitter {
+  addListener(event: K, listener: T[K]): this {
     return super.addListener(event, listener);
   };
 
-  on(event: Event, listener: Listener): this {
+  on(event: K, listener: T[K]): this {
     return super.on(event, listener);
   }
 
-  once(event: Event, listener: Listener): this {
+  once(event: K, listener: T[K]): this {
     return super.once(event, listener);
   }
 
-  removeListener(event: Event, listener: Listener): this {
+  removeListener(event: K, listener: T[K]): this {
     return super.removeListener(event, listener);
   }
 
-  removeAllListeners(event?: Event): this {
+  removeAllListeners(event?: K): this {
     return super.removeAllListeners(event);
   }
 
@@ -29,11 +33,11 @@ export class EventEmitter<Event extends string | symbol, Listener extends (...ar
     return super.getMaxListeners();
   }
 
-  listeners(event: Event): Listener[] {
-    return super.listeners(event) as Listener[];
+  listeners(event: K): T[K][] {
+    return super.listeners(event) as T[K][];
   }
 
-  emit(event: Event, ...args: any[]): boolean {
+  emit(event: K, ...args: any[]): boolean {
     return super.emit(event, ...args);
   }
 

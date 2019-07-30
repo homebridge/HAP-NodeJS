@@ -5,9 +5,9 @@
 // here's a fake hardware device that we'll expose to HomeKit
 import {
   Accessory,
-  AccessoryEvents,
+  AccessoryEventTypes,
   Characteristic,
-  CharacteristicEvents,
+  CharacteristicEventTypes, CharacteristicGetCallback, CharacteristicSetCallback,
   CharacteristicValue,
   Service,
   uuid,
@@ -40,7 +40,7 @@ ACTest
   .setCharacteristic(Characteristic.Manufacturer, "Sample Company")
 
 // listen for the "identify" event for this Accessory
-ACTest.on(AccessoryEvents.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
+ACTest.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
   console.log("Fan Identified!");
   callback(); // success
 });
@@ -50,7 +50,7 @@ ACTest.on(AccessoryEvents.IDENTIFY, (paired: boolean, callback: VoidCallback) =>
 
 var FanService = ACTest.addService(Service.Fan, "Blower") // services exposed to the user should have "names" like "Fake Light" for us
 FanService.getCharacteristic(Characteristic.On)!
-  .on(CharacteristicEvents.SET, (value, callback) => {
+  .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
     console.log("Fan Power Changed To "+value);
     ACTest_data.fanPowerOn=value
     callback(); // Our fake Fan is synchronous - this value has been successfully set
@@ -59,7 +59,7 @@ FanService.getCharacteristic(Characteristic.On)!
 // We want to intercept requests for our current power state so we can query the hardware itself instead of
 // allowing HAP-NodeJS to return the cached Characteristic.value.
 FanService.getCharacteristic(Characteristic.On)!
-  .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
 
     // this event is emitted when you ask Siri directly whether your fan is on or not. you might query
     // the fan hardware itself to find this out, then call the callback. But if you take longer than a
@@ -78,10 +78,10 @@ FanService.getCharacteristic(Characteristic.On)!
 
 // also add an "optional" Characteristic for speed
 FanService.addCharacteristic(Characteristic.RotationSpeed)
-  .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
     callback(null, ACTest_data.rSpeed);
   })
-  .on(CharacteristicEvents.SET, (value: CharacteristicValue, callback: VoidCallback) => {
+  .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
     console.log("Setting fan rSpeed to %s", value);
     ACTest_data.rSpeed=value
     callback();
@@ -92,50 +92,50 @@ ThermostatService.addLinkedService(FanService);
 
 ThermostatService.getCharacteristic(Characteristic.CurrentHeatingCoolingState)!
 
-  .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
     callback(null, ACTest_data.CurrentHeatingCoolingState);
   })
-  .on(CharacteristicEvents.SET,(value: CharacteristicValue, callback) => {
+  .on(CharacteristicEventTypes.SET,(value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       ACTest_data.CurrentHeatingCoolingState=value;
       console.log( "Characteristic CurrentHeatingCoolingState changed to %s",value);
       callback();
     });
 
  ThermostatService.getCharacteristic(Characteristic.TargetHeatingCoolingState)!
-  .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
     callback(null, ACTest_data.TargetHeatingCoolingState);
   })
-  .on(CharacteristicEvents.SET,(value, callback) => {
+  .on(CharacteristicEventTypes.SET,(value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       ACTest_data.TargetHeatingCoolingState=value;
       console.log( "Characteristic TargetHeatingCoolingState changed to %s",value);
       callback();
     });
 
  ThermostatService.getCharacteristic(Characteristic.CurrentTemperature)!
-  .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
     callback(null, ACTest_data.CurrentTemperature);
   })
-  .on(CharacteristicEvents.SET,(value, callback) => {
+  .on(CharacteristicEventTypes.SET,(value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       ACTest_data.CurrentTemperature=value;
       console.log( "Characteristic CurrentTemperature changed to %s",value);
       callback();
     });
 
  ThermostatService.getCharacteristic(Characteristic.TargetTemperature)!
-  .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
     callback(null, ACTest_data.TargetTemperature);
   })
-  .on(CharacteristicEvents.SET,(value, callback) => {
+  .on(CharacteristicEventTypes.SET,(value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       ACTest_data.TargetTemperature=value;
       console.log( "Characteristic TargetTemperature changed to %s",value);
       callback();
     });
 
  ThermostatService.getCharacteristic(Characteristic.TemperatureDisplayUnits)!
-  .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
     callback(null, ACTest_data.TemperatureDisplayUnits);
   })
-  .on(CharacteristicEvents.SET,(value, callback) => {
+  .on(CharacteristicEventTypes.SET,(value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       ACTest_data.TemperatureDisplayUnits=value;
       console.log( "Characteristic TemperatureDisplayUnits changed to %s",value);
       callback();
@@ -145,10 +145,10 @@ ThermostatService.getCharacteristic(Characteristic.CurrentHeatingCoolingState)!
 
 var LightService = ACTest.addService(Service.Lightbulb, 'AC Light');
 LightService.getCharacteristic(Characteristic.On)!
-    .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+    .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
       callback(null, ACTest_data.LightOn);
     })
-    .on(CharacteristicEvents.SET, (value, callback) => {
+    .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       ACTest_data.LightOn=value;
       console.log( "Characteristic Light On changed to %s",value);
       callback();

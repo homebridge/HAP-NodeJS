@@ -4,10 +4,16 @@ import createDebug from 'debug';
 
 import * as uuid from './util/uuid';
 import { clone } from './util/clone';
-import { Service, ServiceEvents } from './Service';
-import { Characteristic, CharacteristicEvents, CharacteristicValue } from './Characteristic';
+import { Service, ServiceConfigurationChange, ServiceEventTypes } from './Service';
+import {
+  Characteristic,
+  CharacteristicEventTypes,
+  CharacteristicValue,
+  CharacteristicChange,
+  CharacteristicSetCallback
+} from './Characteristic';
 import { Advertiser } from './Advertiser';
-import { HAPServer, HAPServerEvents, Status } from './HAPServer';
+import { HAPServer, HAPServerEventTypes, Status } from './HAPServer';
 import { AccessoryInfo } from './model/AccessoryInfo';
 import { IdentifierCache } from './model/IdentifierCache';
 import { CharacteristicData, NodeCallback, Nullable, ToHAPOptions, VoidCallback, WithUUID } from '../types';
@@ -57,19 +63,26 @@ export enum Categories {
   TARGET_CONTROLLER = 32 // Remote Control
 }
 
-export enum AccessoryEvents {
-  IDENTIFY = "identify" ,
-  LISTENING = "listening" ,
+export enum AccessoryEventTypes {
+  IDENTIFY = "identify",
+  LISTENING = "listening",
   SERVICE_CONFIGURATION_CHANGE = "service-configurationChange",
   SERVICE_CHARACTERISTIC_CHANGE = "service-characteristic-change",
 }
 
+type Events = {
+  identify: (paired:boolean, cb: VoidCallback) => void;
+  listening: (port: number) => void;
+  "service-configurationChange": VoidCallback;
+  "service-characteristic-change": (change: ServiceCharacteristicChange) => void;
+}
+
 /**
- * @deprecated Use AccessoryEvents instead
+ * @deprecated Use AccessoryEventTypes instead
  */
 export type EventAccessory = "identify" | "listening" | "service-configurationChange" | "service-characteristic-change";
 
-export type Events = Record<string, any>;
+export type CharacteristicEvents = Record<string, any>;
 
 export interface PublishInfo {
   username: string;
@@ -80,12 +93,9 @@ export interface PublishInfo {
   mdns?: any;
 }
 
-export type ServiceConfigurationChange = any;
-export type ServiceCharacteristicChange = {
-  accessory: CharacteristicData;
-  characteristic: CharacteristicData;
-  newValue: CharacteristicValue;
-  context?: any;
+export type ServiceCharacteristicChange = CharacteristicChange &  {
+  accessory: Accessory;
+  service: Service;
 };
 
 export enum ResourceTypes {
@@ -125,7 +135,7 @@ type HandleSetCharacteristicsCallback = NodeCallback<Characteristic[]>;
  * @event 'service-characteristic-change' => function({service, characteristic, oldValue, newValue, context}) { }
  *        Emitted after a change in the value of one of the provided Service's Characteristics.
  */
-export class Accessory extends EventEmitter<AccessoryEvents, any> {
+export class Accessory extends EventEmitter<Events> {
 
   static Categories = Categories;
 
@@ -166,7 +176,7 @@ export class Accessory extends EventEmitter<AccessoryEvents, any> {
     // for us to identify ourselves (as opposed to an unpaired device - that case is handled by HAPServer 'identify' event)
     this.getService(Service.AccessoryInformation)!
       .getCharacteristic(Characteristic.Identify)!
-      .on(CharacteristicEvents.SET, (value, callback) => {
+      .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
         if (value) {
           const paired = true;
           this._identificationRequest(paired, callback);
@@ -177,10 +187,10 @@ export class Accessory extends EventEmitter<AccessoryEvents, any> {
   _identificationRequest(paired: boolean, callback: any) {
     debug("[%s] Identification request", this.displayName);
 
-    if (this.listeners(AccessoryEvents.IDENTIFY).length > 0) {
+    if (this.listeners(AccessoryEventTypes.IDENTIFY).length > 0) {
       // allow implementors to identify this Accessory in whatever way is appropriate, and pass along
       // the standard callback for completion.
-      this.emit(AccessoryEvents.IDENTIFY, paired, callback);
+      this.emit(AccessoryEventTypes.IDENTIFY, paired, callback);
     } else {
       debug("[%s] Identification request ignored; no listeners to 'identify' event", this.displayName);
       callback();
@@ -212,24 +222,24 @@ export class Accessory extends EventEmitter<AccessoryEvents, any> {
     if (!this.bridged) {
       this._updateConfiguration();
     } else {
-      this.emit(AccessoryEvents.SERVICE_CONFIGURATION_CHANGE, clone({accessory:this, service:service}));
+      this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({accessory:this, service:service}));
     }
 
-    service.on(ServiceEvents.SERVICE_CONFIGURATION_CHANGE, (change: ServiceConfigurationChange) => {
+    service.on(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, (change: ServiceConfigurationChange) => {
       if (!this.bridged) {
         this._updateConfiguration();
       } else {
-        this.emit(AccessoryEvents.SERVICE_CONFIGURATION_CHANGE, clone({accessory:this, service:service}));
+        this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({accessory:this, service:service}));
       }
     });
 
     // listen for changes in characteristics and bubble them up
-    service.on(ServiceEvents.CHARACTERISTIC_CHANGE, (change: ServiceCharacteristicChange) => {
-      this.emit(AccessoryEvents.SERVICE_CHARACTERISTIC_CHANGE, clone(change, {service:service}));
+    service.on(ServiceEventTypes.CHARACTERISTIC_CHANGE, (change: CharacteristicChange) => {
+      this.emit(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, clone(change, {service:service as Service}));
 
       // if we're not bridged, when we'll want to process this event through our HAPServer
       if (!this.bridged)
-        this._handleCharacteristicChange(clone(change, {accessory:this, service:service}));
+        this._handleCharacteristicChange(clone(change, {accessory:this, service:service as Service}));
 
     });
 
@@ -259,7 +269,7 @@ export class Accessory extends EventEmitter<AccessoryEvents, any> {
         if (!this.bridged) {
           this._updateConfiguration();
         } else {
-          this.emit(AccessoryEvents.SERVICE_CONFIGURATION_CHANGE, clone({ accessory: this, service: service }));
+          this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ accessory: this, service: service }));
         }
       }
   }
@@ -282,7 +292,7 @@ export class Accessory extends EventEmitter<AccessoryEvents, any> {
       if (!this.bridged) {
         this._updateConfiguration();
       } else {
-        this.emit(AccessoryEvents.SERVICE_CONFIGURATION_CHANGE, clone({accessory:this, service:service}));
+        this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({accessory:this, service:service}));
       }
 
       service.removeAllListeners();
@@ -325,11 +335,11 @@ export class Accessory extends EventEmitter<AccessoryEvents, any> {
     }
 
     // listen for changes in ANY characteristics of ANY services on this Accessory
-    accessory.on(AccessoryEvents.SERVICE_CHARACTERISTIC_CHANGE, (change: ServiceCharacteristicChange) => {
+    accessory.on(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, (change: ServiceCharacteristicChange) => {
       this._handleCharacteristicChange(clone(change, {accessory:accessory}));
     });
 
-    accessory.on(AccessoryEvents.SERVICE_CONFIGURATION_CHANGE, () => {
+    accessory.on(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, () => {
       this._updateConfiguration();
     });
 
@@ -649,17 +659,17 @@ export class Accessory extends EventEmitter<AccessoryEvents, any> {
     // create our HAP server which handles all communication between iOS devices and us
     this._server = new HAPServer(this._accessoryInfo, this.relayServer);
     this._server.allowInsecureRequest = !!allowInsecureRequest
-    this._server.on(HAPServerEvents.LISTENING, this._onListening);
-    this._server.on(HAPServerEvents.IDENTIFY, this._handleIdentify);
-    this._server.on(HAPServerEvents.PAIR, this._handlePair);
-    this._server.on(HAPServerEvents.UNPAIR, this._handleUnpair);
-    this._server.on(HAPServerEvents.ACCESSORIES, this._handleAccessories);
-    this._server.on(HAPServerEvents.GET_CHARACTERISTICS, this._handleGetCharacteristics);
-    this._server.on(HAPServerEvents.SET_CHARACTERISTICS, this._handleSetCharacteristics);
-    this._server.on(HAPServerEvents.SESSION_CLOSE, this._handleSessionClose);
+    this._server.on(HAPServerEventTypes.LISTENING, this._onListening);
+    this._server.on(HAPServerEventTypes.IDENTIFY, this._handleIdentify);
+    this._server.on(HAPServerEventTypes.PAIR, this._handlePair);
+    this._server.on(HAPServerEventTypes.UNPAIR, this._handleUnpair);
+    this._server.on(HAPServerEventTypes.ACCESSORIES, this._handleAccessories);
+    this._server.on(HAPServerEventTypes.GET_CHARACTERISTICS, this._handleGetCharacteristics);
+    this._server.on(HAPServerEventTypes.SET_CHARACTERISTICS, this._handleSetCharacteristics);
+    this._server.on(HAPServerEventTypes.SESSION_CLOSE, this._handleSessionClose);
 
     if (this.cameraSource) {
-        this._server.on(HAPServerEvents.REQUEST_RESOURCE, this._handleResource);
+        this._server.on(HAPServerEventTypes.REQUEST_RESOURCE, this._handleResource);
     }
 
     const targetPort = info.port || 0;
@@ -722,7 +732,7 @@ export class Accessory extends EventEmitter<AccessoryEvents, any> {
   _onListening(port: number) {
     // the HAP server is listening, so we can now start advertising our presence.
     this._advertiser && this._advertiser.startAdvertising(port);
-    this.emit(AccessoryEvents.LISTENING, port);
+    this.emit(AccessoryEventTypes.LISTENING, port);
   }
 
 // Called when an unpaired client wishes for us to identify ourself
@@ -775,7 +785,7 @@ export class Accessory extends EventEmitter<AccessoryEvents, any> {
   }
 
 // Called when an iOS client wishes to query the state of one or more characteristics, like "door open?", "light on?", etc.
-  _handleGetCharacteristics(data: CharacteristicData[], events: Events, callback: HandleGetCharacteristicsCallback, remote: boolean, connectionID: string) {
+  _handleGetCharacteristics(data: CharacteristicData[], events: CharacteristicEvents, callback: HandleGetCharacteristicsCallback, remote: boolean, connectionID: string) {
 
     // build up our array of responses to the characteristics requested asynchronously
     var characteristics: Characteristic[] = [];
@@ -858,7 +868,7 @@ export class Accessory extends EventEmitter<AccessoryEvents, any> {
 
 // Called when an iOS client wishes to change the state of this accessory - like opening a door, or turning on a light.
 // Or, to subscribe to change events for a particular Characteristic.
-  _handleSetCharacteristics(data: CharacteristicData[], events: Events, callback: HandleSetCharacteristicsCallback, remote: string, connectionID: string) {
+  _handleSetCharacteristics(data: CharacteristicData[], events: CharacteristicEvents, callback: HandleSetCharacteristicsCallback, remote: boolean, connectionID: string) {
 
     // data is an array of characteristics and values like this:
     // [ { aid: 1, iid: 8, value: true, ev: true } ]
@@ -989,7 +999,7 @@ export class Accessory extends EventEmitter<AccessoryEvents, any> {
     callback(new Error('resource not found'));
   }
 
-  _handleSessionClose(sessionID: string, events: Events) {
+  _handleSessionClose(sessionID: string, events: CharacteristicEvents) {
     if (this.cameraSource && this.cameraSource.handleCloseConnection) {
         this.cameraSource.handleCloseConnection(sessionID);
     }
@@ -997,7 +1007,7 @@ export class Accessory extends EventEmitter<AccessoryEvents, any> {
     this._unsubscribeEvents(events);
   }
 
-  _unsubscribeEvents(events: Events) {
+  _unsubscribeEvents(events: CharacteristicEvents) {
     for (var key in events) {
       if (key.indexOf('.') !== -1) {
         try {
@@ -1040,17 +1050,17 @@ export class Accessory extends EventEmitter<AccessoryEvents, any> {
   }
 
   _setupService(service: Service) {
-    service.on(ServiceEvents.SERVICE_CONFIGURATION_CHANGE, (change: ServiceCharacteristicChange) => {
+    service.on(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, () => {
       if (!this.bridged) {
         this._updateConfiguration();
       } else {
-        this.emit(AccessoryEvents.SERVICE_CONFIGURATION_CHANGE, clone({accessory:this, service }));
+        this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({accessory:this, service }));
       }
     });
 
     // listen for changes in characteristics and bubble them up
-    service.on(ServiceEvents.CHARACTERISTIC_CHANGE, (change: ServiceCharacteristicChange) => {
-      this.emit(AccessoryEvents.SERVICE_CHARACTERISTIC_CHANGE, clone(change, {service }));
+    service.on(ServiceEventTypes.CHARACTERISTIC_CHANGE, (change: any) => {
+      this.emit(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, clone(change, {service }));
 
       // if we're not bridged, when we'll want to process this event through our HAPServer
       if (!this.bridged)
@@ -1071,7 +1081,7 @@ export class Accessory extends EventEmitter<AccessoryEvents, any> {
     this
       .getService(Service.AccessoryInformation)!
       .getCharacteristic(Characteristic.Identify)!
-      .on(CharacteristicEvents.SET, (value, callback) => {
+      .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
         if (value) {
           var paired = true;
           this._identificationRequest(paired, callback);

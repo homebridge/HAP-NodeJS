@@ -2,7 +2,7 @@ import path from 'path';
 
 import storage from 'node-persist';
 
-import { Accessory, AccessoryEvents, AccessoryLoader, Bridge, Categories, uuid } from './';
+import { Accessory, AccessoryEventTypes, AccessoryLoader, Bridge, Categories, uuid, VoidCallback } from './';
 
 console.log("HAP-NodeJS starting...");
 
@@ -13,7 +13,7 @@ storage.initSync();
 const bridge = new Bridge('Node Bridge', uuid.generate("Node Bridge"));
 
 // Listen for bridge identification event
-bridge.on(AccessoryEvents.IDENTIFY, function(paired: boolean, callback: () => void) {
+bridge.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
   console.log("Node Bridge identify");
   callback(); // success
 });

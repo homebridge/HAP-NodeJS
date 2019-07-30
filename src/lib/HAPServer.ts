@@ -13,8 +13,8 @@ import { EventedHTTPServer, EventedHTTPServerEvents } from './util/eventedhttp';
 import { once } from './util/once';
 import { IncomingMessage, ServerResponse } from "http";
 import { Characteristic } from './Characteristic';
-import { Accessory } from './Accessory';
-import { CharacteristicData, SessionIdentifier } from '../types';
+import { Accessory, CharacteristicEvents, Resource } from './Accessory';
+import { CharacteristicData, NodeCallback, SessionIdentifier, VoidCallback } from '../types';
 import { EventEmitter } from './EventEmitter';
 
 const debug = createDebug('HAPServer');
@@ -75,17 +75,40 @@ export type HapRequest = {
   requestBody: any;
 }
 
-export enum HAPServerEvents {
+export enum HAPServerEventTypes {
   IDENTIFY = "identify",
   LISTENING = "listening",
   PAIR = 'pair',
-  VERIFY = 'verify',
   UNPAIR = 'unpair',
   ACCESSORIES = 'accessories',
   GET_CHARACTERISTICS = 'get-characteristics',
   SET_CHARACTERISTICS = 'set-characteristics',
   SESSION_CLOSE = "session-close",
   REQUEST_RESOURCE = 'request-resource'
+}
+
+export type Events = {
+  identify: (cb: VoidCallback) => void;
+  listening: (port: number) => void;
+  pair: (clientUsername: string, clientLTPK: Buffer, cb: VoidCallback) => void;
+  unpair: (clientUsername: string, cb: VoidCallback) => void;
+  accessories: (cb: NodeCallback<Accessory[]>) => void;
+  'get-characteristics': (
+    data: CharacteristicData[],
+    events: CharacteristicEvents,
+    cb: NodeCallback<Characteristic[]>,
+    remote: boolean,
+    connectionID: string,
+  ) => void;
+  'set-characteristics': (
+    data: CharacteristicData[],
+    events: CharacteristicEvents,
+    cb: NodeCallback<Characteristic[]>,
+    remote: boolean,
+    connectionID: string,
+  ) => void;
+  'session-close': (sessionID: string, events: CharacteristicEvents) => void;
+  'request-resource': (data: Resource, cb: NodeCallback<Buffer>) => void;
 }
 
 /**
@@ -145,7 +168,7 @@ export enum HAPServerEvents {
  *        connection, on which you may store event registration keys for later processing. The listener must call
  *        the provided callback when the request has been processed.
  */
-export class HAPServer extends EventEmitter<HAPServerEvents, any> {
+export class HAPServer extends EventEmitter<Events> {
 
   static Types = Types;
   static Codes = Codes;
@@ -192,7 +215,7 @@ export class HAPServer extends EventEmitter<HAPServerEvents, any> {
     // invented a manual "keepalive" mechanism where we send "empty" events perodicially, such that
     // when Node attempts to write to the socket, it discovers that it's been disconnected after
     // an additional one-minute timeout (this timeout appears to be hardcoded).
-    this._keepAliveTimerID = setInterval(this._onKeepAliveTimerTick.bind(this), 1000 * 60 * 10); // send keepalive every 10 minutes
+    this._keepAliveTimerID = setInterval(this._onKeepAliveTimerTick, 1000 * 60 * 10); // send keepalive every 10 minutes
   }
 
   listen(port: number) {
@@ -226,12 +249,8 @@ export class HAPServer extends EventEmitter<HAPServerEvents, any> {
     }
   }
 
-  private num: number = 0;
-
   _onListening(port: number) {
-    this.num = this.num + 1;
-    console.log(this.num);
-    this.emit(HAPServerEvents.LISTENING, port);
+    this.emit(HAPServerEventTypes.LISTENING, port);
   }
 
   // Called when an HTTP request was detected.
@@ -299,7 +318,7 @@ export class HAPServer extends EventEmitter<HAPServerEvents, any> {
   }
 
   _onSessionClose(sessionID: SessionIdentifier, events: any) {
-    this.emit(HAPServerEvents.SESSION_CLOSE, sessionID, events);
+    this.emit(HAPServerEventTypes.SESSION_CLOSE, sessionID, events);
   }
 
   /**
@@ -312,7 +331,7 @@ export class HAPServer extends EventEmitter<HAPServerEvents, any> {
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
       return;
     }
-    this.emit(HAPServerEvents.IDENTIFY, once((err: Error) => {
+    this.emit(HAPServerEventTypes.IDENTIFY, once((err: Error) => {
       if (!err) {
         debug("[%s] Identification success", this.accessoryInfo.username);
         response.writeHead(204);
@@ -443,7 +462,7 @@ export class HAPServer extends EventEmitter<HAPServerEvents, any> {
     var macBuffer = bufferShim.alloc(16);
     encryption.encryptAndSeal(hkdfEncKey, bufferShim.from("PS-Msg06"), message, null, ciphertextBuffer, macBuffer);
     // finally, notify listeners that we have been paired with a client
-    this.emit(HAPServerEvents.PAIR, clientUsername.toString(), clientLTPK, once((err: Error) => {
+    this.emit(HAPServerEventTypes.PAIR, clientUsername.toString(), clientLTPK, once((err?: Error) => {
       if (err) {
         debug("[%s] Error adding pairing info: %s", this.accessoryInfo.username, err.message);
         response.writeHead(500, "Server Error");
@@ -667,7 +686,7 @@ export class HAPServer extends EventEmitter<HAPServerEvents, any> {
       debug("[%s] Adding pairing info for client", this.accessoryInfo.username);
       var clientUsername = objects[Types.USERNAME];
       var clientLTPK = objects[Types.PUBLIC_KEY];
-      this.emit(HAPServerEvents.PAIR, clientUsername.toString(), clientLTPK, once((err: Error) => {
+      this.emit(HAPServerEventTypes.PAIR, clientUsername.toString(), clientLTPK, once((err: Error) => {
         if (err) {
           debug("[%s] Error adding pairing info: %s", this.accessoryInfo.username, err.message);
           response.writeHead(500, "Server Error");
@@ -680,7 +699,7 @@ export class HAPServer extends EventEmitter<HAPServerEvents, any> {
     } else if (requestType == 4) {
       debug("[%s] Removing pairing info for client", this.accessoryInfo.username);
       var clientUsername = objects[Types.USERNAME];
-      this.emit(HAPServerEvents.UNPAIR, clientUsername.toString(), once((err: Error) => {
+      this.emit(HAPServerEventTypes.UNPAIR, clientUsername.toString(), once((err?: Error) => {
         if (err) {
           debug("[%s] Error removing pairing info: %s", this.accessoryInfo.username, err.message);
           response.writeHead(500, "Server Error");
@@ -705,7 +724,7 @@ export class HAPServer extends EventEmitter<HAPServerEvents, any> {
       return;
     }
     // call out to listeners to retrieve the latest accessories JSON
-    this.emit(HAPServerEvents.ACCESSORIES, once((err: Error, accessories: Accessory[]) => {
+    this.emit(HAPServerEventTypes.ACCESSORIES, once((err: Error, accessories: Accessory[]) => {
       if (err) {
         debug("[%s] Error getting accessories: %s", this.accessoryInfo.username, err.message);
         response.writeHead(500, "Server Error");
@@ -727,7 +746,7 @@ export class HAPServer extends EventEmitter<HAPServerEvents, any> {
     } else {
       var self = this;
       // call out to listeners to retrieve the latest accessories JSON
-      this.emit(HAPServerEvents.ACCESSORIES, once((err: Error, accessories: Accessory[]) => {
+      this.emit(HAPServerEventTypes.ACCESSORIES, once((err: Error, accessories: Accessory[]) => {
         if (err) {
           debug("[%s] Error getting accessories: %s", this.accessoryInfo.username, err.message);
           return;
@@ -763,14 +782,14 @@ export class HAPServer extends EventEmitter<HAPServerEvents, any> {
         return;
       }
       var sets = (query.id as string).split(','); // ["1.9","2.14"]
-      var data: any[] = []; // [{aid:1,iid:9},{aid:2,iid:14}]
+      var data: CharacteristicData[] = []; // [{aid:1,iid:9},{aid:2,iid:14}]
       for (var i in sets) {
         var ids = sets[i].split('.'); // ["1","9"]
         var aid = parseInt(ids[0]); // accessory ID
         var iid = parseInt(ids[1]); // instance ID (for characteristic)
         data.push({aid: aid, iid: iid});
       }
-      this.emit(HAPServerEvents.GET_CHARACTERISTICS, data, events, once((err: Error, characteristics: Characteristic[]) => {
+      this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, data, events, once((err: Error, characteristics: Characteristic[]) => {
         if (!characteristics && !err)
           err = new Error("characteristics not supplied by the get-characteristics event callback");
         if (err) {
@@ -804,9 +823,9 @@ export class HAPServer extends EventEmitter<HAPServerEvents, any> {
         return;
       }
       // requestData is a JSON payload like { characteristics: [ { aid: 1, iid: 8, value: true, ev: true } ] }
-      var data = JSON.parse(requestData.toString()).characteristics as any[]; // pull out characteristics array
+      var data = JSON.parse(requestData.toString()).characteristics as CharacteristicData[]; // pull out characteristics array
       // call out to listeners to retrieve the latest accessories JSON
-      this.emit(HAPServerEvents.SET_CHARACTERISTICS, data, events, once((err: Error, characteristics: Characteristic[]) => {
+      this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, data, events, once((err: Error, characteristics: Characteristic[]) => {
         if (err) {
           debug("[%s] Error setting characteristics: %s", this.accessoryInfo.username, err.message);
           // rewrite characteristics array to include error status for each characteristic requested
@@ -834,7 +853,7 @@ export class HAPServer extends EventEmitter<HAPServerEvents, any> {
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
       return;
     }
-    if (this.listeners(HAPServerEvents.REQUEST_RESOURCE).length == 0) {
+    if (this.listeners(HAPServerEventTypes.REQUEST_RESOURCE).length == 0) {
       response.writeHead(405);
       response.end();
       return;
@@ -855,7 +874,7 @@ export class HAPServer extends EventEmitter<HAPServerEvents, any> {
       // requestData is a JSON payload
       var data = JSON.parse(requestData.toString());
       // call out to listeners to retrieve the resource, snapshot only right now
-      this.emit(HAPServerEvents.REQUEST_RESOURCE, data, once((err: Error, resource: any) => {
+      this.emit(HAPServerEventTypes.REQUEST_RESOURCE, data, once((err: Error, resource: any) => {
         if (err) {
           debug("[%s] Error getting snapshot: %s", this.accessoryInfo.username, err.message);
           response.writeHead(500);
@@ -874,7 +893,7 @@ export class HAPServer extends EventEmitter<HAPServerEvents, any> {
   _handleRemoteCharacteristicsWrite(request: HapRequest, remoteSession: RemoteSession, session: Session, events: any) {
     var data = JSON.parse(request.requestBody.toString());
     // call out to listeners to retrieve the latest accessories JSON
-    this.emit(HAPServerEvents.SET_CHARACTERISTICS, data, events, once((err: Error, characteristics: Characteristic[]) => {
+    this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, data, events, once((err: Error, characteristics: Characteristic[]) => {
       if (err) {
         debug("[%s] Error setting characteristics: %s", this.accessoryInfo.username, err.message);
         // rewrite characteristics array to include error status for each characteristic requested
@@ -893,7 +912,7 @@ export class HAPServer extends EventEmitter<HAPServerEvents, any> {
 
   _handleRemoteCharacteristicsRead(request: HapRequest, remoteSession: RemoteSession, session: Session, events: any) {
     var data = JSON.parse(request.requestBody.toString());
-    this.emit(HAPServerEvents.GET_CHARACTERISTICS, data, events, (err: Error, characteristics: Characteristic[]) => {
+    this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, data, events, (err: Error, characteristics: Characteristic[]) => {
       if (!characteristics && !err)
         err = new Error("characteristics not supplied by the get-characteristics event callback");
       if (err) {

@@ -1,8 +1,8 @@
 import {
   Accessory,
-  AccessoryEvents,
+  AccessoryEventTypes,
   Characteristic,
-  CharacteristicEvents,
+  CharacteristicEventTypes, CharacteristicSetCallback,
   CharacteristicValue, NodeCallback,
   Service,
   uuid,
@@ -54,7 +54,7 @@ outlet
   .setCharacteristic(Characteristic.SerialNumber, "A1S2NASF88EW");
 
 // listen for the "identify" event for this Accessory
-outlet.on(AccessoryEvents.IDENTIFY, function(paired: boolean, callback: VoidCallback) {
+outlet.on(AccessoryEventTypes.IDENTIFY, function(paired: boolean, callback: VoidCallback) {
   FAKE_OUTLET.identify();
   callback(); // success
 });
@@ -64,7 +64,7 @@ outlet.on(AccessoryEvents.IDENTIFY, function(paired: boolean, callback: VoidCall
 outlet
   .addService(Service.Outlet, "Fake Outlet") // services exposed to the user should have "names" like "Fake Light" for us
   .getCharacteristic(Characteristic.On)!
-  .on(CharacteristicEvents.SET, function(value, callback) {
+  .on(CharacteristicEventTypes.SET, function(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     FAKE_OUTLET.setPowerOn(value);
     callback(); // Our fake Outlet is synchronous - this value has been successfully set
   });
@@ -74,7 +74,7 @@ outlet
 outlet
   .getService(Service.Outlet)!
   .getCharacteristic(Characteristic.On)!
-  .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
 
     // this event is emitted when you ask Siri directly whether your light is on or not. you might query
     // the light hardware itself to find this out, then call the callback. But if you take longer than a

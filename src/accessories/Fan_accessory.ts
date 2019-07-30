@@ -1,9 +1,9 @@
 // here's a fake hardware device that we'll expose to HomeKit
 import {
   Accessory,
-  AccessoryEvents,
+  AccessoryEventTypes,
   Characteristic,
-  CharacteristicEvents,
+  CharacteristicEventTypes, CharacteristicSetCallback,
   CharacteristicValue,
   NodeCallback,
   Service,
@@ -50,7 +50,7 @@ fan
   .setCharacteristic(Characteristic.Manufacturer, "Sample Company")
 
 // listen for the "identify" event for this Accessory
-fan.on(AccessoryEvents.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
+fan.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
   FAKE_FAN.identify();
   callback(); // success
 });
@@ -60,7 +60,7 @@ fan.on(AccessoryEvents.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
 fan
   .addService(Service.Fan, "Fan") // services exposed to the user should have "names" like "Fake Light" for us
   .getCharacteristic(Characteristic.On)!
-  .on(CharacteristicEvents.SET, (value, callback) => {
+  .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
     FAKE_FAN.setPowerOn(value);
     callback(); // Our fake Fan is synchronous - this value has been successfully set
   });
@@ -70,7 +70,7 @@ fan
 fan
   .getService(Service.Fan)!
   .getCharacteristic(Characteristic.On)!
-  .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
 
     // this event is emitted when you ask Siri directly whether your fan is on or not. you might query
     // the fan hardware itself to find this out, then call the callback. But if you take longer than a
@@ -90,10 +90,10 @@ fan
 fan
   .getService(Service.Fan)!
   .addCharacteristic(Characteristic.RotationSpeed)
-  .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
     callback(null, FAKE_FAN.rSpeed);
   })
-  .on(CharacteristicEvents.SET, (value, callback) => {
+  .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
     FAKE_FAN.setSpeed(value);
     callback();
   })

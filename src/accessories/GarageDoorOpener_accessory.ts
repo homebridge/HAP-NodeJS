@@ -1,8 +1,8 @@
 import {
   Accessory,
-  AccessoryEvents,
+  AccessoryEventTypes,
   Characteristic,
-  CharacteristicEvents, CharacteristicValue,
+  CharacteristicEventTypes, CharacteristicSetCallback, CharacteristicValue,
   NodeCallback,
   Service,
   uuid,
@@ -47,7 +47,7 @@ garage
   .setCharacteristic(Characteristic.Model, "Rev-1")
   .setCharacteristic(Characteristic.SerialNumber, "TW000165");
 
-garage.on(AccessoryEvents.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
+garage.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
   FAKE_GARAGE.identify();
   callback();
 });
@@ -56,7 +56,7 @@ garage
   .addService(Service.GarageDoorOpener, "Garage Door")
   .setCharacteristic(Characteristic.TargetDoorState, Characteristic.TargetDoorState.CLOSED) // force initial state to CLOSED
   .getCharacteristic(Characteristic.TargetDoorState)!
-  .on(CharacteristicEvents.SET, (value, callback) => {
+  .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
 
     if (value == Characteristic.TargetDoorState.CLOSED) {
       FAKE_GARAGE.close();
@@ -78,7 +78,7 @@ garage
 garage
   .getService(Service.GarageDoorOpener)!
   .getCharacteristic(Characteristic.CurrentDoorState)!
-  .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
 
     var err = null;
     FAKE_GARAGE.status();

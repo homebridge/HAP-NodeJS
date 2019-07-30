@@ -1,17 +1,33 @@
-import { Characteristic, CharacteristicEvents, CharacteristicValue, HapCharacteristic } from './Characteristic';
+import {
+  Characteristic,
+  CharacteristicChange,
+  CharacteristicEventTypes,
+  CharacteristicValue,
+  HapCharacteristic
+} from './Characteristic';
 import { clone } from './util/clone';
 import { EventEmitter } from './EventEmitter';
 import { IdentifierCache } from './model/IdentifierCache';
 import { Nullable, ToHAPOptions, WithUUID } from '../types';
 import * as HomeKitTypes from './gen';
+import { Accessory } from './Accessory';
 
-export enum ServiceEvents {
+export enum ServiceEventTypes {
   CHARACTERISTIC_CHANGE = "characteristic-change",
   SERVICE_CONFIGURATION_CHANGE = "service-configurationChange",
 }
 
+export type ServiceConfigurationChange = {
+  service: Service;
+};
+
+type Events = {
+  "characteristic-change": (change: CharacteristicChange) => void;
+  "service-configurationChange": (change: ServiceConfigurationChange) => void;
+}
+
 /**
- * @deprecated Use ServiceEvents instead
+ * @deprecated Use ServiceEventTypes instead
  */
 export type EventService = "characteristic-change" | "service-configurationChange";
 
@@ -38,7 +54,7 @@ export type EventService = "characteristic-change" | "service-configurationChang
  * @event 'characteristic-change' => function({characteristic, oldValue, newValue, context}) { }
  *        Emitted after a change in the value of one of our Characteristics has occurred.
  */
-export class Service extends EventEmitter<ServiceEvents, any> {
+export class Service extends EventEmitter<Events> {
 
   static AccessoryInformation: typeof HomeKitTypes.Generated.AccessoryInformation;
   static AirPurifier: typeof HomeKitTypes.Generated.AirPurifier;
@@ -141,14 +157,14 @@ export class Service extends EventEmitter<ServiceEvents, any> {
     }
 
     // listen for changes in characteristics and bubble them up
-    characteristic.on(CharacteristicEvents.CHANGE, (change: any) => {
+    characteristic.on(CharacteristicEventTypes.CHANGE, (change: any) => {
       // make a new object with the relevant characteristic added, and bubble it up
-      this.emit(ServiceEvents.CHARACTERISTIC_CHANGE, clone(change, { characteristic: characteristic }));
+      this.emit(ServiceEventTypes.CHARACTERISTIC_CHANGE, clone(change, { characteristic: characteristic }));
     });
 
     this.characteristics.push(characteristic);
 
-    this.emit(ServiceEvents.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
+    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
 
     return characteristic;
   }
@@ -156,7 +172,7 @@ export class Service extends EventEmitter<ServiceEvents, any> {
 //Defines this service as hidden
   setHiddenService(isHidden: boolean) {
     this.isHiddenService = isHidden;
-    this.emit(ServiceEvents.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
+    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
   }
 
 //Allows setting other services that link to this one.
@@ -164,14 +180,14 @@ export class Service extends EventEmitter<ServiceEvents, any> {
     //TODO: Add a check if the service is on the same accessory.
     if (!this.linkedServices.includes(newLinkedService))
       this.linkedServices.push(newLinkedService);
-    this.emit(ServiceEvents.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
+    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
   }
 
   removeLinkedService(oldLinkedService: Service) {
     //TODO: Add a check if the service is on the same accessory.
     if (this.linkedServices.includes(oldLinkedService))
       this.linkedServices.splice(this.linkedServices.indexOf(oldLinkedService), 1);
-    this.emit(ServiceEvents.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
+    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
   }
 
   removeCharacteristic(characteristic: Characteristic) {
@@ -190,7 +206,7 @@ export class Service extends EventEmitter<ServiceEvents, any> {
       this.characteristics.splice(Number.parseInt(targetCharacteristicIndex), 1);
       characteristic.removeAllListeners();
 
-      this.emit(ServiceEvents.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
+      this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
     }
   }
 
@@ -337,9 +353,9 @@ export class Service extends EventEmitter<ServiceEvents, any> {
 
   _setupCharacteristic(characteristic: Characteristic) {
     // listen for changes in characteristics and bubble them up
-    characteristic.on(CharacteristicEvents.CHANGE, (change: any) => {
+    characteristic.on(CharacteristicEventTypes.CHANGE, (change: CharacteristicChange) => {
       // make a new object with the relevant characteristic added, and bubble it up
-      this.emit(ServiceEvents.CHARACTERISTIC_CHANGE, clone(change, { characteristic: characteristic }));
+      this.emit(ServiceEventTypes.CHARACTERISTIC_CHANGE, clone(change, { characteristic: characteristic }));
     });
   }
 

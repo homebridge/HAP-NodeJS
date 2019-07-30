@@ -1,8 +1,8 @@
 import {
   Accessory,
-  AccessoryEvents,
+  AccessoryEventTypes,
   Characteristic,
-  CharacteristicEvents,
+  CharacteristicEventTypes, CharacteristicSetCallback,
   CharacteristicValue,
   Service,
   uuid
@@ -47,7 +47,7 @@ lock
   .setCharacteristic(Characteristic.SerialNumber, "A1S2NASF88EW");
 
 // listen for the "identify" event for this Accessory
-lock.on(AccessoryEvents.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
+lock.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
   FAKE_LOCK.identify();
   callback(); // success
 });
@@ -57,7 +57,7 @@ lock.on(AccessoryEvents.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
 lock
   .addService(Service.LockMechanism, "Fake Lock") // services exposed to the user should have "names" like "Fake Light" for us
   .getCharacteristic(Characteristic.LockTargetState)!
-  .on(CharacteristicEvents.SET, (value, callback) => {
+  .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
 
     if (value == Characteristic.LockTargetState.UNSECURED) {
       FAKE_LOCK.unlock();
@@ -84,7 +84,7 @@ lock
 lock
   .getService(Service.LockMechanism)!
   .getCharacteristic(Characteristic.LockCurrentState)!
-  .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
 
     // this event is emitted when you ask Siri directly whether your lock is locked or not. you might query
     // the lock hardware itself to find this out, then call the callback. But if you take longer than a

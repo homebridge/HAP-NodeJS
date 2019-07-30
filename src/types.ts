@@ -8,18 +8,20 @@ export interface ToHAPOptions {
   omitValues: boolean;
 }
 
+export type Callback = (...args: any[]) => void;
 export type NodeCallback<T> = (err: Nullable<Error> | undefined, data?: T) => void;
-export type VoidCallback = () => void;
+export type VoidCallback = (err?: Nullable<Error>) => void;
 export type PrimitiveTypes = string | number | boolean;
 
 export type CharacteristicData = {
   aid: number;
   iid: number;
   v?: string;
-  value: string;
+  value?: string;
+  s?: Status;
   status?: Status;
   e?: string;
-  ev: boolean;
+  ev?: boolean;
   r?: boolean;
 }
 export type AudioCodec = {

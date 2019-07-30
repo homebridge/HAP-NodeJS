@@ -1,8 +1,8 @@
 import {
   Accessory,
-  AccessoryEvents,
+  AccessoryEventTypes,
   Characteristic,
-  CharacteristicEvents,
+  CharacteristicEventTypes, CharacteristicSetCallback,
   CharacteristicValue,
   NodeCallback,
   Service,
@@ -95,7 +95,7 @@ lightAccessory
     .setCharacteristic(Characteristic.SerialNumber, LightController.serialNumber);
 
 // listen for the "identify" event for this Accessory
-lightAccessory.on(AccessoryEvents.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
+lightAccessory.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
   LightController.identify();
   callback();
 });
@@ -105,7 +105,7 @@ lightAccessory.on(AccessoryEvents.IDENTIFY, (paired: boolean, callback: VoidCall
 lightAccessory
   .addService(Service.Lightbulb, LightController.name) // services exposed to the user should have "names" like "Light" for this case
   .getCharacteristic(Characteristic.On)!
-  .on(CharacteristicEvents.SET, (value, callback) => {
+  .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
     LightController.setPower(value);
 
     // Our light is synchronous - this value has been successfully set
@@ -117,7 +117,7 @@ lightAccessory
   })
   // We want to intercept requests for our current power state so we can query the hardware itself instead of
   // allowing HAP-NodeJS to return the cached Characteristic.value.
-  .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
     callback(null, LightController.getPower());
   });
 
@@ -133,11 +133,11 @@ lightAccessory
 lightAccessory
   .getService(Service.Lightbulb)!
   .addCharacteristic(Characteristic.Brightness)
-  .on(CharacteristicEvents.SET, (value, callback) => {
+  .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
     LightController.setBrightness(value);
     callback();
   })
-  .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
     callback(null, LightController.getBrightness());
   });
 
@@ -145,11 +145,11 @@ lightAccessory
 lightAccessory
   .getService(Service.Lightbulb)!
   .addCharacteristic(Characteristic.Saturation)!
-  .on(CharacteristicEvents.SET, (value, callback) => {
+  .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
     LightController.setSaturation(value);
     callback();
   })
-  .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
     callback(null, LightController.getSaturation());
   });
 
@@ -157,10 +157,10 @@ lightAccessory
 lightAccessory
   .getService(Service.Lightbulb)!
   .addCharacteristic(Characteristic.Hue)
-  .on(CharacteristicEvents.SET, (value, callback) => {
+  .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
     LightController.setHue(value);
     callback();
   })
-  .on(CharacteristicEvents.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
     callback(null, LightController.getHue());
   });
