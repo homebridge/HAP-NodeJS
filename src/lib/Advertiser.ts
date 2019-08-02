@@ -26,7 +26,7 @@ export class Advertiser {
     this._setupHash = this._computeSetupHash();
   }
 
-  startAdvertising(port: number) {
+  startAdvertising = (port: number) => {
 
     // stop advertising if necessary
     if (this._advertisement) {
@@ -70,11 +70,11 @@ export class Advertiser {
     });
   }
 
-  isAdvertising() {
+  isAdvertising = () => {
     return (this._advertisement != null);
   }
 
-  updateAdvertisement() {
+  updateAdvertisement = () => {
     if (this._advertisement) {
 
       var txtRecord = {
@@ -93,7 +93,7 @@ export class Advertiser {
     }
   }
 
-  stopAdvertising() {
+  stopAdvertising = () => {
     if (this._advertisement) {
       this._advertisement.stop();
       this._advertisement.destroy();
@@ -103,7 +103,7 @@ export class Advertiser {
     this._bonjourService.destroy();
   }
 
-  _computeSetupHash() {
+  _computeSetupHash = () => {
     var setupHashMaterial = this.accessoryInfo.setupID + this.accessoryInfo.username;
     var hash = crypto.createHash('sha512');
     hash.update(setupHashMaterial);

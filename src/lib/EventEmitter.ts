@@ -4,7 +4,7 @@ import { Callback } from '../types';
 export type Event<T> = T & (string | symbol);
 export type EventMap = { [name: string]: Callback };
 
-export class EventEmitter<T extends EventMap, K extends Event<keyof T> = Event<keyof T>> extends BaseEventEmitter {
+export class EventEmitter<T extends EventMap, K extends Event<keyof T> = Event<keyof T>> extends BaseEventEmitter implements TypedEventEmitter<T, K> {
   addListener(event: K, listener: T[K]): this {
     return super.addListener(event, listener);
   };
@@ -33,7 +33,7 @@ export class EventEmitter<T extends EventMap, K extends Event<keyof T> = Event<k
     return super.getMaxListeners();
   }
 
-  listeners(event: K): T[K][] {
+  listeners(event: K): T[K] [] {
     return super.listeners(event) as T[K][];
   }
 
@@ -44,4 +44,27 @@ export class EventEmitter<T extends EventMap, K extends Event<keyof T> = Event<k
   listenerCount(type: string): number {
     return super.listenerCount(type);
   }
+}
+
+
+export interface TypedEventEmitter<T extends EventMap, K extends Event<keyof T> = Event<keyof T>> extends BaseEventEmitter {
+  addListener(event: K, listener: T[K]): this;
+
+  on(event: K, listener: T[K]): this;
+
+  once(event: K, listener: T[K]): this;
+
+  removeListener(event: K, listener: T[K]): this;
+
+  removeAllListeners(event?: K): this;
+
+  setMaxListeners(n: number): this;
+
+  getMaxListeners(): number;
+
+  listeners(event: K): T[K][];
+
+  emit(event: K, ...args: any[]): boolean;
+
+  listenerCount(type: string): number;
 }

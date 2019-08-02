@@ -184,7 +184,7 @@ export class Accessory extends EventEmitter<Events> {
       });
   }
 
-  _identificationRequest(paired: boolean, callback: any) {
+  _identificationRequest = (paired: boolean, callback: CharacteristicSetCallback) => {
     debug("[%s] Identification request", this.displayName);
 
     if (this.listeners(AccessoryEventTypes.IDENTIFY).length > 0) {
@@ -197,7 +197,7 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
-  addService(service: Service | typeof Service, ...constructorArgs: any[]) {
+  addService = (service: Service | typeof Service, ...constructorArgs: any[]) => {
     // service might be a constructor like `Service.AccessoryInformation` instead of an instance
     // of Service. Coerce if necessary.
     if (typeof service === 'function')
@@ -246,7 +246,7 @@ export class Accessory extends EventEmitter<Events> {
     return service;
   }
 
-  setPrimaryService(service: Service) {
+  setPrimaryService = (service: Service) => {
       //find this service in the services list
       let targetServiceIndex, existingService: Service;
       for (let index in this.services) {
@@ -274,7 +274,7 @@ export class Accessory extends EventEmitter<Events> {
       }
   }
 
-  removeService(service: Service) {
+  removeService = (service: Service) => {
     let targetServiceIndex: number | undefined = undefined;
 
     for (let index in this.services) {
@@ -299,7 +299,7 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
-  getService<T extends WithUUID<typeof Service>>(name: string | T) {
+  getService = <T extends WithUUID<typeof Service>>(name: string | T) => {
     for (var index in this.services) {
       var service = this.services[index];
 
@@ -310,7 +310,7 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
-  updateReachability(reachable: boolean) {
+  updateReachability = (reachable: boolean) => {
     if (!this.bridged)
       throw new Error("Cannot update reachability on non-bridged accessory!");
     this.reachable = reachable;
@@ -318,7 +318,7 @@ export class Accessory extends EventEmitter<Events> {
     debug('Reachability update is no longer being supported.');
   }
 
-  addBridgedAccessory(accessory: Accessory, deferUpdate: boolean = false) {
+  addBridgedAccessory = (accessory: Accessory, deferUpdate: boolean = false) => {
     if (accessory._isBridge)
       throw new Error("Cannot Bridge another Bridge!");
 
@@ -354,7 +354,7 @@ export class Accessory extends EventEmitter<Events> {
     return accessory;
   }
 
-  addBridgedAccessories(accessories: Accessory[]) {
+  addBridgedAccessories = (accessories: Accessory[]) => {
     for (var index in accessories) {
       var accessory = accessories[index];
       this.addBridgedAccessory(accessory, true);
@@ -363,7 +363,7 @@ export class Accessory extends EventEmitter<Events> {
     this._updateConfiguration();
   }
 
-  removeBridgedAccessory(accessory: Accessory, deferUpdate: boolean) {
+  removeBridgedAccessory = (accessory: Accessory, deferUpdate: boolean) => {
     if (accessory._isBridge)
       throw new Error("Cannot Bridge another Bridge!");
 
@@ -388,7 +388,7 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
-  removeBridgedAccessories(accessories: Accessory[]) {
+  removeBridgedAccessories = (accessories: Accessory[]) => {
     for (var index in accessories) {
       var accessory = accessories[index];
       this.removeBridgedAccessory(accessory, true);
@@ -397,14 +397,14 @@ export class Accessory extends EventEmitter<Events> {
     this._updateConfiguration();
   }
 
-  removeAllBridgedAccessories() {
+  removeAllBridgedAccessories = () => {
     for (var i = this.bridgedAccessories.length - 1; i >= 0; i --) {
       this.removeBridgedAccessory(this.bridgedAccessories[i], true);
     }
     this._updateConfiguration();
   }
 
-  getCharacteristicByIID(iid: number) {
+  getCharacteristicByIID = (iid: number) => {
     for (var index in this.services) {
       var service = this.services[index];
       var characteristic = service.getCharacteristicByIID(iid);
@@ -412,14 +412,14 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
-  getBridgedAccessoryByAID(aid: number) {
+  getBridgedAccessoryByAID = (aid: number) => {
     for (var index in this.bridgedAccessories) {
       var accessory = this.bridgedAccessories[index];
       if (accessory.aid === aid) return accessory;
     }
   }
 
-  findCharacteristic(aid: number, iid: number) {
+  findCharacteristic = (aid: number, iid: number) => {
 
     // if aid === 1, the accessory is us (because we are the server), otherwise find it among our bridged
     // accessories (if any)
@@ -428,7 +428,7 @@ export class Accessory extends EventEmitter<Events> {
     return accessory && accessory.getCharacteristicByIID(iid);
   }
 
-  configureCameraSource(cameraSource: Camera) {
+  configureCameraSource = (cameraSource: Camera) => {
     this.cameraSource = cameraSource;
     for (var index in cameraSource.services) {
       var service = cameraSource.services[index];
@@ -436,7 +436,7 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
-  setupURI() {
+  setupURI = () => {
     if (this._setupURI) {
       return this._setupURI;
     }
@@ -473,7 +473,7 @@ export class Accessory extends EventEmitter<Events> {
    * Assigns aid/iid to ourselves, any Accessories we are bridging, and all associated Services+Characteristics. Uses
    * the provided identifierCache to keep IDs stable.
    */
-  _assignIDs(identifierCache: IdentifierCache) {
+  _assignIDs = (identifierCache: IdentifierCache) => {
 
     // if we are responsible for our own identifierCache, start the expiration process
     // also check weather we want to have an expiration process
@@ -518,11 +518,11 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
-  disableUnusedIDPurge() {
+  disableUnusedIDPurge = () => {
     this.shouldPurgeUnusedIDs = false;
   }
 
-  enableUnusedIDPurge() {
+  enableUnusedIDPurge = () => {
     this.shouldPurgeUnusedIDs = true;
   }
 
@@ -530,7 +530,7 @@ export class Accessory extends EventEmitter<Events> {
    * Manually purge the unused ids if you like, comes handy
    * when you have disabled auto purge so you can do it manually
    */
-  purgeUnusedIDs() {
+  purgeUnusedIDs = () => {
     //Cache the state of the purge mechanisam and set it to true
     var oldValue = this.shouldPurgeUnusedIDs;
     this.shouldPurgeUnusedIDs = true;
@@ -545,7 +545,7 @@ export class Accessory extends EventEmitter<Events> {
   /**
    * Returns a JSON representation of this Accessory suitable for delivering to HAP clients.
    */
-  toHAP(opt?: ToHAPOptions) {
+  toHAP = (opt?: ToHAPOptions) => {
 
     var servicesHAP = [];
 
@@ -585,7 +585,7 @@ export class Accessory extends EventEmitter<Events> {
    *                                that for instance an appropriate icon can be drawn for the user while adding a
    *                                new Accessory.
    */
-  publish(info: PublishInfo, allowInsecureRequest?: boolean) {
+  publish = (info: PublishInfo, allowInsecureRequest?: boolean) => {
     // attempt to load existing AccessoryInfo from disk
     this._accessoryInfo = AccessoryInfo.load(info.username);
 
@@ -681,7 +681,7 @@ export class Accessory extends EventEmitter<Events> {
    * Accessory object will no longer vaild after invoking this method
    * Trying to invoke publish() on the object will result undefined behavior
    */
-  destroy() {
+  destroy = () => {
     this.unpublish();
     if (this._accessoryInfo) {
         this._accessoryInfo.remove();
@@ -693,7 +693,7 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
-  unpublish() {
+  unpublish = () => {
     if (this._server) {
       this._server.stop();
       this._server = undefined;
@@ -704,7 +704,7 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
-  _updateConfiguration() {
+  _updateConfiguration = () => {
     if (this._advertiser && this._advertiser.isAdvertising()) {
       // get our accessory information in HAP format and determine if our configuration (that is, our
       // Accessories/Services/Characteristics) has changed since the last time we were published. make
@@ -729,20 +729,20 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
-  _onListening(port: number) {
+  _onListening = (port: number) => {
     // the HAP server is listening, so we can now start advertising our presence.
     this._advertiser && this._advertiser.startAdvertising(port);
     this.emit(AccessoryEventTypes.LISTENING, port);
   }
 
 // Called when an unpaired client wishes for us to identify ourself
-  _handleIdentify(callback: IdentifyCallback) {
+  _handleIdentify = (callback: IdentifyCallback) => {
     var paired = false;
     this._identificationRequest(paired, callback);
   }
 
 // Called when HAPServer has completed the pairing process with a client
-  _handlePair(username: string, publicKey: Buffer, callback: PairCallback) {
+  _handlePair = (username: string, publicKey: Buffer, callback: PairCallback) => {
 
     debug("[%s] Paired with client %s", this.displayName, username);
 
@@ -756,7 +756,7 @@ export class Accessory extends EventEmitter<Events> {
   }
 
 // Called when HAPServer wishes to remove/unpair the pairing information of a client
-  _handleUnpair(username: string, callback: UnpairCallback) {
+  _handleUnpair = (username: string, callback: UnpairCallback) => {
 
     debug("[%s] Unpairing with client %s", this.displayName, username);
 
@@ -773,7 +773,7 @@ export class Accessory extends EventEmitter<Events> {
   }
 
 // Called when an iOS client wishes to know all about our accessory via JSON payload
-  _handleAccessories(callback: HandleAccessoriesCallback) {
+  _handleAccessories = (callback: HandleAccessoriesCallback) => {
 
     // make sure our aid/iid's are all assigned
     this._assignIDs(this._identifierCache!);
@@ -785,7 +785,7 @@ export class Accessory extends EventEmitter<Events> {
   }
 
 // Called when an iOS client wishes to query the state of one or more characteristics, like "door open?", "light on?", etc.
-  _handleGetCharacteristics(data: CharacteristicData[], events: CharacteristicEvents, callback: HandleGetCharacteristicsCallback, remote: boolean, connectionID: string) {
+  _handleGetCharacteristics = (data: CharacteristicData[], events: CharacteristicEvents, callback: HandleGetCharacteristicsCallback, remote: boolean, connectionID: string) => {
 
     // build up our array of responses to the characteristics requested asynchronously
     var characteristics: Characteristic[] = [];
@@ -868,7 +868,7 @@ export class Accessory extends EventEmitter<Events> {
 
 // Called when an iOS client wishes to change the state of this accessory - like opening a door, or turning on a light.
 // Or, to subscribe to change events for a particular Characteristic.
-  _handleSetCharacteristics(data: CharacteristicData[], events: CharacteristicEvents, callback: HandleSetCharacteristicsCallback, remote: boolean, connectionID: string) {
+  _handleSetCharacteristics = (data: CharacteristicData[], events: CharacteristicEvents, callback: HandleSetCharacteristicsCallback, remote: boolean, connectionID: string) => {
 
     // data is an array of characteristics and values like this:
     // [ { aid: 1, iid: 8, value: true, ev: true } ]
@@ -985,7 +985,7 @@ export class Accessory extends EventEmitter<Events> {
     });
   }
 
-  _handleResource(data: Resource, callback: NodeCallback<Buffer>) {
+  _handleResource = (data: Resource, callback: NodeCallback<Buffer>) => {
     if (data["resource-type"] == ResourceTypes.IMAGE) {
       if (this.cameraSource) {
         this.cameraSource.handleSnapshotRequest({
@@ -999,7 +999,7 @@ export class Accessory extends EventEmitter<Events> {
     callback(new Error('resource not found'));
   }
 
-  _handleSessionClose(sessionID: string, events: CharacteristicEvents) {
+  _handleSessionClose = (sessionID: string, events: CharacteristicEvents) => {
     if (this.cameraSource && this.cameraSource.handleCloseConnection) {
         this.cameraSource.handleCloseConnection(sessionID);
     }
@@ -1007,7 +1007,7 @@ export class Accessory extends EventEmitter<Events> {
     this._unsubscribeEvents(events);
   }
 
-  _unsubscribeEvents(events: CharacteristicEvents) {
+  _unsubscribeEvents = (events: CharacteristicEvents) => {
     for (var key in events) {
       if (key.indexOf('.') !== -1) {
         try {
@@ -1026,7 +1026,7 @@ export class Accessory extends EventEmitter<Events> {
   }
 
 // Called internally above when a change was detected in one of our hosted Characteristics somewhere in our hierarchy.
-  _handleCharacteristicChange(change: ServiceCharacteristicChange) {
+  _handleCharacteristicChange = (change: ServiceCharacteristicChange) => {
     if (!this._server)
       return; // we're not running a HAPServer, so there's no one to notify about this event
 
@@ -1049,7 +1049,7 @@ export class Accessory extends EventEmitter<Events> {
     this._server.notifyClients(eventName, data, excludeEvents);
   }
 
-  _setupService(service: Service) {
+  _setupService = (service: Service) => {
     service.on(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, () => {
       if (!this.bridged) {
         this._updateConfiguration();
@@ -1069,7 +1069,7 @@ export class Accessory extends EventEmitter<Events> {
     });
   }
 
-  _sideloadServices(targetServices: Service[]) {
+  _sideloadServices = (targetServices: Service[]) => {
     for (var index in targetServices) {
       var target = targetServices[index];
       this._setupService(target);
@@ -1089,7 +1089,7 @@ export class Accessory extends EventEmitter<Events> {
       });
   }
 
-  _generateSetupID() {
+  _generateSetupID = () => {
     const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const bytes = crypto.randomBytes(4);
     let setupID = '';

@@ -80,7 +80,7 @@ export class Camera {
     this._createStreamControllers(2, options);
   }
 
-  handleSnapshotRequest(request: SnapshotRequest, callback: NodeCallback<Buffer>) {
+  handleSnapshotRequest = (request: SnapshotRequest, callback: NodeCallback<Buffer>) => {
     // Image request: {width: number, height: number}
     // Please override this and invoke callback(error, image buffer) when the snapshot is ready
 
@@ -88,13 +88,13 @@ export class Camera {
     callback(undefined, snapshot);
   }
 
-  handleCloseConnection(connectionID: string) {
+  handleCloseConnection = (connectionID: string) => {
     this.streamControllers.forEach(function(controller) {
       controller.handleCloseConnection(connectionID);
     });
   }
 
-  prepareStream(request: PrepareStreamRequest, callback: PreparedStreamRequestCallback) {
+  prepareStream = (request: PrepareStreamRequest, callback: PreparedStreamRequestCallback) => {
     // Invoked when iOS device requires stream
 
     const sessionInfo: Partial<SessionInfo> = {};
@@ -173,7 +173,7 @@ export class Camera {
     callback(response as PreparedStreamResponse);
   }
 
-  handleStreamRequest(request: StreamRequest) {
+  handleStreamRequest = (request: StreamRequest) => {
     // Invoked when iOS device asks stream to start/stop/reconfigure
     var sessionID = request["sessionID"];
     var requestType = request["type"];
@@ -222,7 +222,7 @@ export class Camera {
     }
   }
 
-  createCameraControlService() {
+  createCameraControlService = () => {
     var controlService = new Service.CameraControl('', '');
 
     // Developer can add control characteristics like rotation, night vision at here.
@@ -231,7 +231,7 @@ export class Camera {
   }
 
 // Private
-  _createStreamControllers(maxStreams: number, options: StreamControllerOptions) {
+  _createStreamControllers = (maxStreams: number, options: StreamControllerOptions) => {
 
     for (let i = 0; i < maxStreams; i++) {
       const streamController = new StreamController(i, options, this);

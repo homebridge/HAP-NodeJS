@@ -357,7 +357,7 @@ export class Characteristic extends EventEmitter<Events> {
    *   valid-values-range: <array of two numbers for start and end range> (Optional)
    * }
    */
-  setProps(props: CharacteristicProps) {
+  setProps = (props: CharacteristicProps) => {
     for (var key in (props || {}))
       if (Object.prototype.hasOwnProperty.call(props, key)) {
         // @ts-ignore
@@ -366,14 +366,14 @@ export class Characteristic extends EventEmitter<Events> {
     return this;
   }
 
-  subscribe() {
+  subscribe = () => {
     if (this.subscriptions === 0) {
       this.emit(CharacteristicEventTypes.SUBSCRIBE);
     }
     this.subscriptions++;
   }
 
-  unsubscribe() {
+  unsubscribe = () => {
     var wasOne = this.subscriptions === 1;
     this.subscriptions--;
     this.subscriptions = Math.max(this.subscriptions, 0);
@@ -382,7 +382,7 @@ export class Characteristic extends EventEmitter<Events> {
     }
   }
 
-  getValue(callback?: CharacteristicGetCallback, context?: any, connectionID?: string) {
+  getValue = (callback?: CharacteristicGetCallback, context?: any, connectionID?: string) => {
     // Handle special event only characteristics.
     if (this.eventOnlyCharacteristic === true) {
       if (callback) {
@@ -419,7 +419,7 @@ export class Characteristic extends EventEmitter<Events> {
     }
   }
 
-  validateValue(newValue: Nullable<CharacteristicValue>): Nullable<CharacteristicValue> {
+  validateValue = (newValue: Nullable<CharacteristicValue>): Nullable<CharacteristicValue> => {
     let isNumericType = false;
     let minValue_resolved: number | undefined = 0;
     let maxValue_resolved: number | undefined = 0;
@@ -493,12 +493,15 @@ export class Characteristic extends EventEmitter<Events> {
     };
 
     if (isNumericType) {
-      if (isNaN(Number.parseInt(newValue as string, 10)))
-        return this.value!; //This is not a number so we'll just pass out the last value.
-      if (!!newValue === false)
+      if (isNaN(Number.parseInt(newValue as string, 10))) {
+        return this.value!;
+      } //This is not a number so we'll just pass out the last value.
+      if (newValue === false) {
         return 0;
-      if (!!newValue === true)
+      }
+      if (newValue === true) {
         return 1;
+      }
       if ((this.props.maxValue && !isNaN(this.props.maxValue)) && (this.props.maxValue !== null))
         maxValue_resolved = this.props.maxValue;
       if ((this.props.minValue && !isNaN(this.props.minValue)) && (this.props.minValue !== null))
@@ -542,7 +545,7 @@ export class Characteristic extends EventEmitter<Events> {
     return newValue;
   }
 
-  setValue(newValue: Nullable<CharacteristicValue | Error>, callback?: CharacteristicSetCallback, context?: any, connectionID?: string): Characteristic {
+  setValue = (newValue: Nullable<CharacteristicValue | Error>, callback?: CharacteristicSetCallback, context?: any, connectionID?: string): Characteristic => {
     if (newValue instanceof Error) {
       this.status = newValue;
     } else {
@@ -582,7 +585,7 @@ export class Characteristic extends EventEmitter<Events> {
     return this; // for chaining
   }
 
-  updateValue(newValue: Nullable<CharacteristicValue | Error>, callback?: () => void, context?: any): Characteristic {
+  updateValue = (newValue: Nullable<CharacteristicValue | Error>, callback?: () => void, context?: any): Characteristic => {
     if (newValue instanceof Error) {
       this.status = newValue;
     } else {
@@ -601,7 +604,7 @@ export class Characteristic extends EventEmitter<Events> {
     return this; // for chaining
   }
 
-  getDefaultValue(): Nullable<CharacteristicValue> {
+  getDefaultValue = (): Nullable<CharacteristicValue> => {
     switch (this.props.format) {
       case Formats.BOOL:
         return false;
@@ -620,7 +623,7 @@ export class Characteristic extends EventEmitter<Events> {
     }
   }
 
-  _assignID(identifierCache: IdentifierCache, accessoryName: string, serviceUUID: string, serviceSubtype: string) {
+  _assignID = (identifierCache: IdentifierCache, accessoryName: string, serviceUUID: string, serviceSubtype: string) => {
     // generate our IID based on our UUID
     this.iid = identifierCache.getIID(accessoryName, serviceUUID, serviceSubtype, this.UUID);
   }
@@ -628,7 +631,7 @@ export class Characteristic extends EventEmitter<Events> {
   /**
    * Returns a JSON representation of this Accessory suitable for delivering to HAP clients.
    */
-  toHAP(opt?: ToHAPOptions) {
+  toHAP = (opt?: ToHAPOptions) => {
     // ensure our value fits within our constraints if present
     var value = this.value;
 

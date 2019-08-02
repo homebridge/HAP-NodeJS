@@ -138,7 +138,7 @@ export class Service extends EventEmitter<Events> {
     }
   }
 
-  addCharacteristic(characteristic: typeof Characteristic | Characteristic, ...constructorArgs: any[]) {
+  addCharacteristic = (characteristic: typeof Characteristic | Characteristic, ...constructorArgs: any[]) => {
     // characteristic might be a constructor like `Characteristic.Brightness` instead of an instance
     // of Characteristic. Coerce if necessary.
     if (typeof characteristic === 'function') {
@@ -170,27 +170,27 @@ export class Service extends EventEmitter<Events> {
   }
 
 //Defines this service as hidden
-  setHiddenService(isHidden: boolean) {
+  setHiddenService = (isHidden: boolean) => {
     this.isHiddenService = isHidden;
     this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
   }
 
 //Allows setting other services that link to this one.
-  addLinkedService(newLinkedService: Service) {
+  addLinkedService = (newLinkedService: Service) => {
     //TODO: Add a check if the service is on the same accessory.
     if (!this.linkedServices.includes(newLinkedService))
       this.linkedServices.push(newLinkedService);
     this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
   }
 
-  removeLinkedService(oldLinkedService: Service) {
+  removeLinkedService = (oldLinkedService: Service) => {
     //TODO: Add a check if the service is on the same accessory.
     if (this.linkedServices.includes(oldLinkedService))
       this.linkedServices.splice(this.linkedServices.indexOf(oldLinkedService), 1);
     this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
   }
 
-  removeCharacteristic(characteristic: Characteristic) {
+  removeCharacteristic = (characteristic: Characteristic) => {
     var targetCharacteristicIndex;
 
     for (var index in this.characteristics) {
@@ -212,7 +212,7 @@ export class Service extends EventEmitter<Events> {
 
   isCharacteristic<T extends typeof Characteristic>(characteristicClass: T) {};
 
-  getCharacteristic<T extends WithUUID<typeof Characteristic>>(name: string | T) {
+  getCharacteristic = <T extends WithUUID<typeof Characteristic>>(name: string | T) => {
 
     // returns a characteristic object from the service
     // If  Service.prototype.getCharacteristic(Characteristic.Type)  does not find the characteristic,
@@ -244,7 +244,7 @@ export class Service extends EventEmitter<Events> {
     }
   }
 
-  testCharacteristic(name: string | Characteristic) {
+  testCharacteristic = (name: string | Characteristic) => {
     // checks for the existence of a characteristic object in the service
     var index, characteristic;
     for (index in this.characteristics) {
@@ -258,20 +258,20 @@ export class Service extends EventEmitter<Events> {
     return false;
   }
 
-  setCharacteristic<T extends WithUUID<typeof Characteristic>>(name: string | T, value: CharacteristicValue) {
+  setCharacteristic = <T extends WithUUID<typeof Characteristic>>(name: string | T, value: CharacteristicValue) => {
     // @ts-ignore
     this.getCharacteristic(name).setValue(value);
     return this; // for chaining
   }
 
 // A function to only updating the remote value, but not firiring the 'set' event.
-  updateCharacteristic(name: string, value: CharacteristicValue) {
+  updateCharacteristic = (name: string, value: CharacteristicValue) => {
     // @ts-ignore
     this.getCharacteristic(name).updateValue(value);
     return this;
   }
 
-  addOptionalCharacteristic(characteristic: Characteristic | typeof Characteristic) {
+  addOptionalCharacteristic = (characteristic: Characteristic | typeof Characteristic) => {
     // characteristic might be a constructor like `Characteristic.Brightness` instead of an instance
     // of Characteristic. Coerce if necessary.
     if (typeof characteristic === 'function')
@@ -280,7 +280,7 @@ export class Service extends EventEmitter<Events> {
     this.optionalCharacteristics.push(characteristic);
   }
 
-  getCharacteristicByIID(iid: number) {
+  getCharacteristicByIID = (iid: number) => {
     for (var index in this.characteristics) {
       var characteristic = this.characteristics[index];
       if (characteristic.iid === iid)
@@ -288,7 +288,7 @@ export class Service extends EventEmitter<Events> {
     }
   }
 
-  _assignIDs(identifierCache: IdentifierCache, accessoryName: string, baseIID: number = 0) {
+  _assignIDs = (identifierCache: IdentifierCache, accessoryName: string, baseIID: number = 0) => {
     // the Accessory Information service must have a (reserved by IdentifierCache) ID of 1
     if (this.UUID === '0000003E-0000-1000-8000-0026BB765291') {
       this.iid = 1;
@@ -307,7 +307,7 @@ export class Service extends EventEmitter<Events> {
   /**
    * Returns a JSON representation of this Accessory suitable for delivering to HAP clients.
    */
-  toHAP(opt?: ToHAPOptions) {
+  toHAP = (opt?: ToHAPOptions) => {
 
     var characteristicsHAP = [];
 
@@ -351,7 +351,7 @@ export class Service extends EventEmitter<Events> {
     return hap as HapService;
   }
 
-  _setupCharacteristic(characteristic: Characteristic) {
+  _setupCharacteristic = (characteristic: Characteristic) => {
     // listen for changes in characteristics and bubble them up
     characteristic.on(CharacteristicEventTypes.CHANGE, (change: CharacteristicChange) => {
       // make a new object with the relevant characteristic added, and bubble it up
@@ -359,7 +359,7 @@ export class Service extends EventEmitter<Events> {
     });
   }
 
-  _sideloadCharacteristics(targetCharacteristics: Characteristic[]) {
+  _sideloadCharacteristics = (targetCharacteristics: Characteristic[]) => {
     for (var index in targetCharacteristics) {
       var target = targetCharacteristics[index];
       this._setupCharacteristic(target);

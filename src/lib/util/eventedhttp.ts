@@ -75,13 +75,13 @@ export class EventedHTTPServer extends EventEmitter<Events> {
     this._connections = []; // track all open connections (for sending events)
   }
 
-  listen(targetPort: number) {
+  listen = (targetPort: number) => {
     this._tcpServer.listen(targetPort);
 
     this._tcpServer.on('listening', () => {
-      const address = this._tcpServer.address()!;
+      const address = this._tcpServer.address();
 
-      if (typeof address !== 'string') {
+      if (address && typeof address !== 'string') {
         var port = address.port;
         debug("Server listening on port %s", port);
         this.emit(EventedHTTPServerEvents.LISTENING, port);
@@ -92,12 +92,17 @@ export class EventedHTTPServer extends EventEmitter<Events> {
     this._tcpServer.on('connection', this._onConnection);
   }
 
-  stop() {
+  stop = () => {
     this._tcpServer.close();
     this._connections = [];
   }
 
-  sendEvent(event: string, data: Buffer | string, contentType: string, exclude?: Record<string, boolean>) {
+  sendEvent = (
+    event: string,
+    data: Buffer | string,
+    contentType: string,
+    exclude?: Record<string, boolean>
+  ) => {
     for (var index in this._connections) {
       var connection = this._connections[index];
       connection.sendEvent(event, data, contentType, exclude);
@@ -106,7 +111,7 @@ export class EventedHTTPServer extends EventEmitter<Events> {
 
 // Called by net.Server when a new client connects. We will set up a new EventedHTTPServerConnection to manage the
 // lifetime of this connection.
-  _onConnection(socket: Socket) {
+  _onConnection = (socket: Socket) => {
     var connection = new EventedHTTPServerConnection(socket);
 
     // pass on session events to our listeners directly
@@ -117,7 +122,10 @@ export class EventedHTTPServer extends EventEmitter<Events> {
     this._connections.push(connection);
   }
 
-  _handleConnectionClose(connection: EventedHTTPServerConnection, events: Record<string, boolean>) {
+  _handleConnectionClose = (
+    connection: EventedHTTPServerConnection,
+    events: Record<string, boolean>
+  ) => {
     this.emit(EventedHTTPServerEvents.SESSION_CLOSE, connection.sessionID, events);
 
     // remove it from our array of connections for events

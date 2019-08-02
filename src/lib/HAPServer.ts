@@ -218,16 +218,16 @@ export class HAPServer extends EventEmitter<Events> {
     this._keepAliveTimerID = setInterval(this._onKeepAliveTimerTick, 1000 * 60 * 10); // send keepalive every 10 minutes
   }
 
-  listen(port: number) {
+  listen = (port: number) => {
     this._httpServer.listen(port);
   }
 
-  stop() {
+  stop = () => {
     this._httpServer.stop();
     clearInterval(this._keepAliveTimerID);
   }
 
-  _onKeepAliveTimerTick() {
+  _onKeepAliveTimerTick = () => {
     // send out a "keepalive" event which all connections automatically sign up for once pairVerify is
     // completed. The event contains no actual data, so iOS devices will simply ignore it.
     this.notifyClients('keepalive', {characteristics: []});
@@ -239,7 +239,7 @@ export class HAPServer extends EventEmitter<Events> {
    * @param event {string} - the name of the event (only clients who have subscribed to this name will be notified)
    * @param data {object} - the object containing the event data; will be JSON.stringify'd automatically
    */
-  notifyClients(event: string, data: any, excludeEvents?: Record<string, boolean>) {
+  notifyClients = (event: string, data: any, excludeEvents?: Record<string, boolean>) => {
     // encode notification data as JSON, set content-type, and hand it off to the server.
     this._httpServer.sendEvent(event, JSON.stringify(data), "application/hap+json", excludeEvents);
     if (this._relayServer) {
@@ -249,12 +249,12 @@ export class HAPServer extends EventEmitter<Events> {
     }
   }
 
-  _onListening(port: number) {
+  _onListening = (port: number) => {
     this.emit(HAPServerEventTypes.LISTENING, port);
   }
 
   // Called when an HTTP request was detected.
-  _onRequest(request: IncomingMessage, response: ServerResponse, session: Session, events: any) {
+  _onRequest = (request: IncomingMessage, response: ServerResponse, session: Session, events: any) => {
     debug("[%s] HAP Request: %s %s", this.accessoryInfo.username, request.method, request.url);
     // collect request data, if any
     var requestData = bufferShim.alloc(0);
@@ -278,7 +278,7 @@ export class HAPServer extends EventEmitter<Events> {
     });
   }
 
-  _onRemoteRequest(request: HapRequest, remoteSession: RemoteSession, session: Session, events: any) {
+  _onRemoteRequest = (request: HapRequest, remoteSession: RemoteSession, session: Session, events: any) => {
     debug('[%s] Remote Request: %s', this.accessoryInfo.username, request.messageType);
     if (request.messageType === HapRequestMessageTypes.PAIR_VERIFY)
       this._handleRemotePairVerify(request, remoteSession, session);
@@ -295,7 +295,7 @@ export class HAPServer extends EventEmitter<Events> {
       }));
   }
 
-  _onEncrypt(data: Buffer, encrypted: { data: Buffer; }, session: Session) {
+  _onEncrypt = (data: Buffer, encrypted: { data: Buffer; }, session: Session) => {
     // instance of HAPEncryption (created in handlePairVerifyStepOne)
     var enc = session.encryption;
     // if accessoryToControllerKey is not empty, then encryption is enabled for this connection. However, we'll
@@ -308,7 +308,7 @@ export class HAPServer extends EventEmitter<Events> {
     }
   }
 
-  _onDecrypt(data: Buffer, decrypted: { data: number | Buffer; }, session: Session) {
+  _onDecrypt = (data: Buffer, decrypted: { data: number | Buffer; }, session: Session) => {
     // possibly an instance of HAPEncryption (created in handlePairVerifyStepOne)
     var enc = session.encryption;
     // if controllerToAccessoryKey is not empty, then encryption is enabled for this connection.
@@ -317,14 +317,14 @@ export class HAPServer extends EventEmitter<Events> {
     }
   }
 
-  _onSessionClose(sessionID: SessionIdentifier, events: any) {
+  _onSessionClose = (sessionID: SessionIdentifier, events: any) => {
     this.emit(HAPServerEventTypes.SESSION_CLOSE, sessionID, events);
   }
 
   /**
    * Unpaired Accessory identification.
    */
-  _handleIdentify(request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: any) {
+  _handleIdentify = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: any) => {
     // /identify only works if the accesory is not paired
     if (!this.allowInsecureRequest && this.accessoryInfo.paired()) {
       response.writeHead(400, {"Content-Type": "application/hap+json"});
@@ -347,7 +347,7 @@ export class HAPServer extends EventEmitter<Events> {
   /**
    * iOS <-> Accessory pairing process.
    */
-  _handlePair(request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: Buffer) {
+  _handlePair = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: Buffer) => {
     // Can only be directly paired with one iOS device
     if (!this.allowInsecureRequest && this.accessoryInfo.paired()) {
       response.writeHead(403);
@@ -365,7 +365,7 @@ export class HAPServer extends EventEmitter<Events> {
   }
 
   // M1 + M2
-  _handlePairStepOne(request: IncomingMessage, response: ServerResponse, session: Session) {
+  _handlePairStepOne = (request: IncomingMessage, response: ServerResponse, session: Session) => {
     debug("[%s] Pair step 1/5", this.accessoryInfo.username);
     var salt = crypto.randomBytes(16);
     var srpParams = srp.params["3072"];
@@ -381,7 +381,7 @@ export class HAPServer extends EventEmitter<Events> {
   }
 
   // M3 + M4
-  _handlePairStepTwo(request: IncomingMessage, response: ServerResponse, session: Session, objects: Record<number, Buffer>) {
+  _handlePairStepTwo = (request: IncomingMessage, response: ServerResponse, session: Session, objects: Record<number, Buffer>) => {
     debug("[%s] Pair step 2/5", this.accessoryInfo.username);
     var A = objects[Types.PUBLIC_KEY]; // "A is a public key that exists only for a single login session."
     var M1 = objects[Types.PASSWORD_PROOF]; // "M1 is the proof that you actually know your own password."
@@ -404,7 +404,7 @@ export class HAPServer extends EventEmitter<Events> {
   }
 
   // M5-1
-  _handlePairStepThree(request: IncomingMessage, response: ServerResponse, session: Session, objects: Record<number, Buffer>) {
+  _handlePairStepThree = (request: IncomingMessage, response: ServerResponse, session: Session, objects: Record<number, Buffer>) => {
     debug("[%s] Pair step 3/5", this.accessoryInfo.username);
     // pull the SRP server we created in stepOne out of the current session
     var srpServer = session.srpServer;
@@ -429,7 +429,7 @@ export class HAPServer extends EventEmitter<Events> {
   }
 
   // M5-2
-  _handlePairStepFour(request: IncomingMessage, response: ServerResponse, session: Session, clientUsername: Buffer, clientLTPK: Buffer, clientProof: Buffer, hkdfEncKey: Buffer) {
+  _handlePairStepFour = (request: IncomingMessage, response: ServerResponse, session: Session, clientUsername: Buffer, clientLTPK: Buffer, clientProof: Buffer, hkdfEncKey: Buffer) => {
     debug("[%s] Pair step 4/5", this.accessoryInfo.username);
     var S_private = session.srpServer.computeK();
     var controllerSalt = bufferShim.from("Pair-Setup-Controller-Sign-Salt");
@@ -446,7 +446,7 @@ export class HAPServer extends EventEmitter<Events> {
   }
 
   // M5 - F + M6
-  _handlePairStepFive(request: IncomingMessage, response: ServerResponse, session: Session, clientUsername: Buffer, clientLTPK: Buffer, hkdfEncKey: Buffer) {
+  _handlePairStepFive = (request: IncomingMessage, response: ServerResponse, session: Session, clientUsername: Buffer, clientLTPK: Buffer, hkdfEncKey: Buffer) => {
     debug("[%s] Pair step 5/5", this.accessoryInfo.username);
     var S_private = session.srpServer.computeK();
     var accessorySalt = bufferShim.from("Pair-Setup-Accessory-Sign-Salt");
@@ -478,7 +478,7 @@ export class HAPServer extends EventEmitter<Events> {
   /**
    * iOS <-> Accessory pairing verification.
    */
-  _handlePairVerify(request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: Buffer) {
+  _handlePairVerify = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: Buffer) => {
     // Don't allow pair-verify without being paired first
     if (!this.allowInsecureRequest && !this.accessoryInfo.paired()) {
       response.writeHead(403);
@@ -493,7 +493,7 @@ export class HAPServer extends EventEmitter<Events> {
       this._handlePairVerifyStepTwo(request, response, session, events, objects);
   }
 
-  _handlePairVerifyStepOne(request: IncomingMessage, response: ServerResponse, session: Session, objects: Record<number, Buffer>) {
+  _handlePairVerifyStepOne = (request: IncomingMessage, response: ServerResponse, session: Session, objects: Record<number, Buffer>) => {
     debug("[%s] Pair verify step 1/2", this.accessoryInfo.username);
     var clientPublicKey = objects[Types.PUBLIC_KEY]; // Buffer
     // generate new encryption keys for this session
@@ -527,7 +527,7 @@ export class HAPServer extends EventEmitter<Events> {
     response.end(tlv.encode(Types.SEQUENCE_NUM, 0x02, Types.ENCRYPTED_DATA, Buffer.concat([ciphertextBuffer, macBuffer]), Types.PUBLIC_KEY, publicKey));
   }
 
-  _handlePairVerifyStepTwo(request: IncomingMessage, response: ServerResponse, session: Session, events: any, objects: Record<number, Buffer>) {
+  _handlePairVerifyStepTwo = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, objects: Record<number, Buffer>) => {
     debug("[%s] Pair verify step 2/2", this.accessoryInfo.username);
     var encryptedData = objects[Types.ENCRYPTED_DATA];
     var messageData = bufferShim.alloc(encryptedData.length - 16);
@@ -579,7 +579,7 @@ export class HAPServer extends EventEmitter<Events> {
     events['keepalive'] = true;
   }
 
-  _handleRemotePairVerify(request: HapRequest, remoteSession: RemoteSession, session: Session) {
+  _handleRemotePairVerify = (request: HapRequest, remoteSession: RemoteSession, session: Session) => {
     var objects = tlv.decode(request.requestBody);
     var sequence = objects[Types.SEQUENCE_NUM][0]; // value is single byte with sequence number
     if (sequence == 0x01)
@@ -588,7 +588,7 @@ export class HAPServer extends EventEmitter<Events> {
       this._handleRemotePairVerifyStepTwo(request, remoteSession, session, objects);
   }
 
-  _handleRemotePairVerifyStepOne(request: HapRequest, remoteSession: RemoteSession, session: Session, objects: Record<number, Buffer>) {
+  _handleRemotePairVerifyStepOne = (request: HapRequest, remoteSession: RemoteSession, session: Session, objects: Record<number, Buffer>) => {
     debug("[%s] Remote Pair verify step 1/2", this.accessoryInfo.username);
     var clientPublicKey = objects[Types.PUBLIC_KEY]; // Buffer
     // generate new encryption keys for this session
@@ -622,7 +622,7 @@ export class HAPServer extends EventEmitter<Events> {
     remoteSession.responseMessage(request, response);
   }
 
-  _handleRemotePairVerifyStepTwo(request: HapRequest, remoteSession: RemoteSession, session: Session, objects: Record<number, Buffer>) {
+  _handleRemotePairVerifyStepTwo = (request: HapRequest, remoteSession: RemoteSession, session: Session, objects: Record<number, Buffer>) => {
     debug("[%s] Remote Pair verify step 2/2", this.accessoryInfo.username);
     var encryptedData = objects[Types.ENCRYPTED_DATA];
     var messageData = bufferShim.alloc(encryptedData.length - 16);
@@ -671,7 +671,7 @@ export class HAPServer extends EventEmitter<Events> {
   /**
    * Pair add/remove
    */
-  _handlePairings(request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: Buffer) {
+  _handlePairings = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: Buffer) => {
     // Only accept /pairing request if there is a secure session
     if (!this.allowInsecureRequest && !session.encryption) {
       response.writeHead(401, {"Content-Type": "application/hap+json"});
@@ -717,7 +717,7 @@ export class HAPServer extends EventEmitter<Events> {
    */
 
   // Called when the client wishes to fetch all data regarding our published Accessories.
-  _handleAccessories(request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: any) {
+  _handleAccessories = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: any) => {
     if (!this.allowInsecureRequest && !session.encryption) {
       response.writeHead(401, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
@@ -736,7 +736,7 @@ export class HAPServer extends EventEmitter<Events> {
     }));
   }
 
-  _handleRemoteAccessories(request: HapRequest, remoteSession: RemoteSession, session: Session) {
+  _handleRemoteAccessories = (request: HapRequest, remoteSession: RemoteSession, session: Session) => {
     var deserializedRequest = JSON.parse(request.requestBody);
     if (!deserializedRequest['attribute-database']) {
       var response = {
@@ -761,7 +761,7 @@ export class HAPServer extends EventEmitter<Events> {
   }
 
   // Called when the client wishes to get or set particular characteristics
-  _handleCharacteristics(request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: { length: number; toString: () => string; }) {
+  _handleCharacteristics = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: { length: number; toString: () => string; }) => {
     if (!this.allowInsecureRequest && !session.encryption) {
       response.writeHead(401, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
@@ -847,7 +847,7 @@ export class HAPServer extends EventEmitter<Events> {
   }
 
   // Called when controller request snapshot
-  _handleResource(request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: { length: number; toString: () => string; }) {
+  _handleResource = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: { length: number; toString: () => string; }) => {
     if (!this.allowInsecureRequest && !session.encryption) {
       response.writeHead(401, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
@@ -890,7 +890,7 @@ export class HAPServer extends EventEmitter<Events> {
     }
   }
 
-  _handleRemoteCharacteristicsWrite(request: HapRequest, remoteSession: RemoteSession, session: Session, events: any) {
+  _handleRemoteCharacteristicsWrite = (request: HapRequest, remoteSession: RemoteSession, session: Session, events: any) => {
     var data = JSON.parse(request.requestBody.toString());
     // call out to listeners to retrieve the latest accessories JSON
     this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, data, events, once((err: Error, characteristics: Characteristic[]) => {
@@ -910,7 +910,7 @@ export class HAPServer extends EventEmitter<Events> {
     }), true);
   }
 
-  _handleRemoteCharacteristicsRead(request: HapRequest, remoteSession: RemoteSession, session: Session, events: any) {
+  _handleRemoteCharacteristicsRead = (request: HapRequest, remoteSession: RemoteSession, session: Session, events: any) => {
     var data = JSON.parse(request.requestBody.toString());
     this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, data, events, (err: Error, characteristics: Characteristic[]) => {
       if (!characteristics && !err)

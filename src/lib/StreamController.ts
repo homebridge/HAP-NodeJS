@@ -333,12 +333,12 @@ export class StreamController {
     this._createService();
   }
 
-  forceStop() {
+  forceStop = () => {
     this.connectionID = undefined;
     this._handleStopStream(undefined, true);
   }
 
-  handleCloseConnection(connectionID: string) {
+  handleCloseConnection = (connectionID: string) => {
     if (this.connectionID && this.connectionID == connectionID) {
       this.connectionID = undefined;
       this._handleStopStream();
@@ -346,7 +346,7 @@ export class StreamController {
   }
 
 // Private
-  _createService() {
+  _createService = () => {
     var managementService = new Service.CameraRTPStreamManagement('', this.identifier.toString());
 
     managementService
@@ -397,7 +397,7 @@ export class StreamController {
     this.service = managementService;
   }
 
-  _handleSelectedStreamConfigurationWrite(value: any, callback: any, connectionID: string) {
+  _handleSelectedStreamConfigurationWrite = (value: any, callback: any, connectionID: string) => {
     this.selectedConfiguration = value;
 
     var data = bufferShim.from(value, 'base64');
@@ -438,7 +438,7 @@ export class StreamController {
     }
   }
 
-  _handleStartStream(objects: Record<number, Buffer>, session: any, reconfigure: boolean = false, callback: HandleStartStreamCallback) {
+  _handleStartStream = (objects: Record<number, Buffer>, session: any, reconfigure: boolean = false, callback: HandleStartStreamCallback) => {
 
     var request: Partial<StartStreamRequest | ReconfigureStreamRequest> = {
       sessionID: this.sessionIdentifier!,
@@ -561,7 +561,7 @@ export class StreamController {
     callback();
   }
 
-  _handleStopStream(callback?: VoidCallback, silent: boolean = false) {
+  _handleStopStream = (callback?: VoidCallback, silent: boolean = false) => {
 
     let request: Partial<StopStreamRequest> = {
       "sessionID": this.sessionIdentifier!,
@@ -589,7 +589,7 @@ export class StreamController {
     }
   }
 
-  _handleSetupWrite(value: CharacteristicValue, callback: HandleSetupWriteCallback) {
+  _handleSetupWrite = (value: CharacteristicValue, callback: HandleSetupWriteCallback) => {
 
     var data = bufferShim.from(`${value}`, 'base64');
     var objects = tlv.decode(data) as any;
@@ -708,7 +708,7 @@ export class StreamController {
     }
   }
 
-  _generateSetupResponse(identifier: SessionIdentifier, response: PreparedStreamResponse, callback: VoidCallback) {
+  _generateSetupResponse = (identifier: SessionIdentifier, response: PreparedStreamResponse, callback: VoidCallback) => {
 
     let ipVer = 0;
     let ipAddress = null;
@@ -831,7 +831,7 @@ export class StreamController {
     callback();
   }
 
-  _updateStreamStatus(status: number) {
+  _updateStreamStatus = (status: number) => {
 
     this.streamStatus = status;
 
@@ -840,12 +840,12 @@ export class StreamController {
       .setValue(tlv.encode( 0x01, this.streamStatus ).toString('base64'));
   }
 
-  _handleSetupRead(callback: HandleSetupReadCallback) {
+  _handleSetupRead = (callback: HandleSetupReadCallback) => {
     debug('Setup Read');
     callback(null, this.setupResponse);
   }
 
-  _supportedRTPConfiguration(supportSRTP: boolean) {
+  _supportedRTPConfiguration = (supportSRTP: boolean) => {
     var cryptoSuite = SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80;
 
     if (!supportSRTP) {
@@ -858,7 +858,7 @@ export class StreamController {
     ).toString('base64');
   }
 
-  _supportedVideoStreamConfiguration(videoParams: StreamVideoParams) {
+  _supportedVideoStreamConfiguration = (videoParams: StreamVideoParams) => {
 
     let codec = videoParams["codec"];
     if (!codec) {
@@ -918,7 +918,7 @@ export class StreamController {
     ).toString('base64');
   }
 
-  _supportedAudioStreamConfiguration(audioParams: StreamAudioParams) {
+  _supportedAudioStreamConfiguration = (audioParams: StreamAudioParams) => {
     // Only AACELD and OPUS are accepted by iOS currently, and we need to give it something it will accept
     // for it to start the video stream.
 
