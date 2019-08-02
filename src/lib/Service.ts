@@ -8,7 +8,7 @@ import {
 import { clone } from './util/clone';
 import { EventEmitter } from './EventEmitter';
 import { IdentifierCache } from './model/IdentifierCache';
-import { Nullable, ToHAPOptions, WithUUID } from '../types';
+import { HapService, Nullable, ToHAPOptions, WithUUID } from '../types';
 import * as HomeKitTypes from './gen';
 import { Accessory } from './Accessory';
 
@@ -314,16 +314,6 @@ export class Service extends EventEmitter<Events> {
     for (var index in this.characteristics) {
       var characteristic = this.characteristics[index];
       characteristicsHAP.push(characteristic.toHAP(opt));
-    }
-
-    interface HapService {
-      iid: number;
-      type: string;
-
-      characteristics: HapCharacteristic[];
-      primary: boolean;
-      hidden: boolean;
-      linked: number[];
     }
 
     const hap: Partial<HapService> = {

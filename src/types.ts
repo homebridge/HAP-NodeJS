@@ -1,4 +1,5 @@
 import { Status } from './lib/HAPServer';
+import { HapCharacteristic } from './lib/Characteristic';
 
 export type Nullable<T> = T | null;
 
@@ -12,6 +13,16 @@ export type Callback = (...args: any[]) => void;
 export type NodeCallback<T> = (err: Nullable<Error> | undefined, data?: T) => void;
 export type VoidCallback = (err?: Nullable<Error>) => void;
 export type PrimitiveTypes = string | number | boolean;
+
+export type HapService = {
+  iid: number;
+  type: string;
+
+  characteristics: HapCharacteristic[];
+  primary: boolean;
+  hidden: boolean;
+  linked: number[];
+}
 
 export type CharacteristicData = {
   aid: number;
