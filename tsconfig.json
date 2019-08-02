@@ -8,10 +8,8 @@
       "es2017",
       "es2018"
     ],
-    "allowJs": true,
-    "checkJs": false,
-    //    "declaration": true,
-    //    "declarationMap": true,
+    "declaration": true,
+    "declarationMap": true,
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
