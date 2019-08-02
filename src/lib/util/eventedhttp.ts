@@ -190,7 +190,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     debug("[%s] New connection from client", this._remoteAddress);
   }
 
-  sendEvent(event: string, data: Buffer | string, contentType: string, excludeEvents?: Record<string, boolean>) {
+  sendEvent = (event: string, data: Buffer | string, contentType: string, excludeEvents?: Record<string, boolean>) => {
     // has this connection subscribed to the given event? if not, nothing to do!
     if (!this._events[event]) {
       return;
@@ -229,7 +229,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
       this._clientSocket.write(data);
   }
 
-  _sendPendingEvents() {
+  _sendPendingEvents = () => {
     // an existing HTTP response was finished, so let's flush our pending event buffer if necessary!
     if (this._pendingEventData.length > 0) {
       debug("[%s] Writing pending HTTP event data", this._remoteAddress);
@@ -240,7 +240,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
   }
 
   // Called only once right after constructor finishes
-  _onHttpServerListening() {
+  _onHttpServerListening = () => {
     this._httpPort = (this._httpServer.address() as AddressInfo).port;
     debug("[%s] HTTP server listening on port %s", this._remoteAddress, this._httpPort);
     // closes before this are due to retrying listening, which don't need to be handled
@@ -254,7 +254,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
   }
 
   // Called only once right after onHttpServerListening
-  _onServerSocketConnect() {
+  _onServerSocketConnect = () => {
     // we are now fully set up:
     //  - clientSocket is connected to the iOS device
     //  - serverSocket is connected to the httpServer
@@ -268,7 +268,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
   }
 
   // Received data from client (iOS)
-  _onClientSocketData(data: Buffer) {
+  _onClientSocketData = (data: Buffer) => {
     // give listeners an opportunity to decrypt this data before processing it as HTTP
     var decrypted = {data: null};
     this.emit(EventedHTTPServerEvents.DECRYPT, data, decrypted, this._session);
@@ -284,7 +284,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
   }
 
   // Received data from HTTP Server
-  _onServerSocketData(data: Buffer | string) {
+  _onServerSocketData = (data: Buffer | string) => {
     // give listeners an opportunity to encrypt this data before sending it to the client
     var encrypted = {data: null};
     this.emit(EventedHTTPServerEvents.ENCRYPT, data, encrypted, this._session);
@@ -295,7 +295,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
   }
 
   // Our internal HTTP Server has been closed (happens after we call this._httpServer.close() below)
-  _onServerSocketClose() {
+  _onServerSocketClose = () => {
     debug("[%s] HTTP connection was closed", this._remoteAddress);
     // make sure the iOS side is closed as well
     this._clientSocket.destroy();
@@ -305,12 +305,12 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
   }
 
   // Our internal HTTP Server has been closed (happens after we call this._httpServer.close() below)
-  _onServerSocketError(err: Error) {
+  _onServerSocketError = (err: Error) => {
     debug("[%s] HTTP connection error: ", this._remoteAddress, err.message);
     // _onServerSocketClose will be called next
   }
 
-  _onHttpServerRequest(request: IncomingMessage, response: OutgoingMessage) {
+  _onHttpServerRequest = (request: IncomingMessage, response: OutgoingMessage) => {
     debug("[%s] HTTP request: %s", this._remoteAddress, request.url);
     this._writingResponse = true;
     // sign up to know when the response is ended, so we can safely send EVENT responses
@@ -323,13 +323,13 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     this.emit(EventedHTTPServerEvents.REQUEST, request, response, this._session, this._events);
   }
 
-  _onHttpServerClose() {
+  _onHttpServerClose = () => {
     debug("[%s] HTTP server was closed", this._remoteAddress);
     // notify listeners that we are completely closed
     this.emit(EventedHTTPServerEvents.CLOSE, this._events);
   }
 
-  _onHttpServerError(err: Error & { code?: string }) {
+  _onHttpServerError = (err: Error & { code?: string }) => {
     debug("[%s] HTTP server error: %s", this._remoteAddress, err.message);
     if (err.code === 'EADDRINUSE') {
       this._httpServer.close();
@@ -337,13 +337,13 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     }
   }
 
-  _onClientSocketClose() {
+  _onClientSocketClose = () => {
     debug("[%s] Client connection closed", this._remoteAddress);
     // shutdown the other side
     this._serverSocket && this._serverSocket.destroy();
   }
 
-  _onClientSocketError(err: Error) {
+  _onClientSocketError = (err: Error) => {
     debug("[%s] Client connection error: %s", this._remoteAddress, err.message);
     // _onClientSocketClose will be called next
   }

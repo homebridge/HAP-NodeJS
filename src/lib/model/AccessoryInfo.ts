@@ -54,7 +54,7 @@ export class AccessoryInfo {
    * @param {string} username
    * @param {Buffer} publicKey
    */
-  addPairedClient(username: string, publicKey: Buffer) {
+  addPairedClient = (username: string, publicKey: Buffer) => {
     this.pairedClients[username] = publicKey;
   }
 
@@ -62,7 +62,7 @@ export class AccessoryInfo {
    * Remove a paired client from memory.
    * @param {string} username
    */
-  removePairedClient(username: string) {
+  removePairedClient = (username: string) => {
     delete this.pairedClients[username];
 
     if (Object.keys(this.pairedClients).length == 0) {
@@ -76,32 +76,32 @@ export class AccessoryInfo {
   }
 
 // Gets the public key for a paired client as a Buffer, or falsey value if not paired.
-  getClientPublicKey(username: string) {
+  getClientPublicKey = (username: string) => {
     return this.pairedClients[username];
   }
 
 // Returns a boolean indicating whether this accessory has been paired with a client.
-  paired(): boolean {
+  paired = (): boolean => {
     return Object.keys(this.pairedClients).length > 0; // if we have any paired clients, we're paired.
   }
 
-  updateRelayEnableState(state: boolean) {
+  updateRelayEnableState = (state: boolean) => {
     this.relayEnabled = state;
   }
 
-  updateRelayState(newState: number) {
+  updateRelayState = (newState: number) => {
     this.relayState = newState;
   }
 
-  addPairedRelayClient(username: string, accessToken: string) {
+  addPairedRelayClient = (username: string, accessToken: string) => {
     this.relayPairedControllers[username] = accessToken;
   }
 
-  removePairedRelayClient(username: string) {
+  removePairedRelayClient = (username: string) => {
     delete this.relayPairedControllers[username];
   }
 
-  save() {
+  save = () => {
     var saved = {
       displayName: this.displayName,
       category: this.category,
@@ -132,18 +132,18 @@ export class AccessoryInfo {
     storage.persistSync();
   }
 
-  remove() {
+  remove = () => {
     var key = AccessoryInfo.persistKey(this.username);
 
     storage.removeItemSync(key);
   }
 
 // Gets a key for storing this AccessoryInfo in the filesystem, like "AccessoryInfo.CC223DE3CEF3.json"
-  static persistKey(username: string) {
+  static persistKey = (username: string) => {
     return util.format("AccessoryInfo.%s.json", username.replace(/:/g, "").toUpperCase());
   }
 
-  static create(username: string) {
+  static create = (username: string) => {
     var accessoryInfo = new AccessoryInfo(username);
 
     // Create a new unique key pair for this accessory.
@@ -155,7 +155,7 @@ export class AccessoryInfo {
     return accessoryInfo;
   }
 
-  static load(username: string) {
+  static load = (username: string) => {
     var key = AccessoryInfo.persistKey(username);
     var saved = storage.getItem(key);
 

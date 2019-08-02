@@ -22,17 +22,17 @@ export class IdentifierCache {
   constructor(public username: string) {
   }
 
-  startTrackingUsage() {
+  startTrackingUsage = () => {
     this._usedCache = {};
   }
 
-  stopTrackingUsageAndExpireUnused() {
+  stopTrackingUsageAndExpireUnused = () => {
     // simply rotate in the new cache that was built during our normal getXYZ() calls.
     this._cache = this._usedCache || this._cache;
     this._usedCache = null;
   }
 
-  getCache(key: string) {
+  getCache = (key: string) => {
     var value = this._cache[key];
     // track this cache item if needed
     if (this._usedCache && typeof value !== 'undefined')
@@ -40,7 +40,7 @@ export class IdentifierCache {
     return value;
   }
 
-  setCache(key: string, value: number) {
+  setCache = (key: string, value: number) => {
     this._cache[key] = value;
     // track this cache item if needed
     if (this._usedCache)
@@ -48,14 +48,14 @@ export class IdentifierCache {
     return value;
   }
 
-  getAID(accessoryUUID: string) {
+  getAID = (accessoryUUID: string) => {
     var key = accessoryUUID;
     // ensure that our "next AID" field is not expired
     this.getCache('|nextAID');
     return this.getCache(key) || this.setCache(key, this.getNextAID());
   }
 
-  getIID(accessoryUUID: string, serviceUUID: string, serviceSubtype: string, characteristicUUID?: string) {
+  getIID = (accessoryUUID: string, serviceUUID: string, serviceSubtype: string, characteristicUUID?: string) => {
     var key = accessoryUUID
       + '|' + serviceUUID
       + (serviceSubtype ? '|' + serviceSubtype : '')
@@ -65,21 +65,21 @@ export class IdentifierCache {
     return this.getCache(key) || this.setCache(key, this.getNextIID(accessoryUUID));
   }
 
-  getNextAID() {
+  getNextAID = () => {
     var key = '|nextAID';
     var nextAID = this.getCache(key) || 2; // start at 2 because the root Accessory or Bridge must be 1
     this.setCache(key, nextAID + 1); // increment
     return nextAID;
   }
 
-  getNextIID(accessoryUUID: string) {
+  getNextIID = (accessoryUUID: string) => {
     var key = accessoryUUID + '|nextIID';
     var nextIID = this.getCache(key) || 2; // iid 1 is reserved for the Accessory Information service
     this.setCache(key, nextIID + 1); // increment
     return nextIID;
   }
 
-  save() {
+  save = () => {
     var newCacheHash = crypto.createHash('sha1').update(JSON.stringify(this._cache)).digest('hex'); //calculate hash of new cache
     if (newCacheHash != this._savedCacheHash) { //check if cache need to be saved and proceed accordingly
       var saved = {
@@ -92,7 +92,7 @@ export class IdentifierCache {
     }
   }
 
-  remove() {
+  remove = () =>  {
     var key = IdentifierCache.persistKey(this.username);
     storage.removeItemSync(key);
   }
@@ -101,11 +101,11 @@ export class IdentifierCache {
    * Persisting to File System
    */
   // Gets a key for storing this IdentifierCache in the filesystem, like "IdentifierCache.CC223DE3CEF3.json"
-  static persistKey(username: string) {
+  static persistKey = (username: string) => {
     return util.format("IdentifierCache.%s.json", username.replace(/:/g, "").toUpperCase());
   }
 
-  static load(username: string) {
+  static load = (username: string) => {
     var key = IdentifierCache.persistKey(username);
     var saved = storage.getItem(key);
     if (saved) {

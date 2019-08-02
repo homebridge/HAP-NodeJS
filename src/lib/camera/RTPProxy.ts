@@ -46,7 +46,7 @@ export default class RTPProxy extends EventEmitter {
     this.outgoingPayloadType = null;
   }
 
-  setup() {
+  setup = () => {
     return this.createSocketPair(this.type)
       .then((sockets) => {
         this.incomingRTPSocket = sockets[0];
@@ -59,7 +59,7 @@ export default class RTPProxy extends EventEmitter {
     });
   }
 
-  destroy() {
+  destroy = () => {
     if (this.incomingRTPSocket) {
       this.incomingRTPSocket.close();
     }
@@ -73,7 +73,7 @@ export default class RTPProxy extends EventEmitter {
     }
   }
 
-  incomingRTPPort() {
+  incomingRTPPort = () => {
     const address = this.incomingRTPSocket.address();
 
     if (typeof address !== 'string') {
@@ -81,7 +81,7 @@ export default class RTPProxy extends EventEmitter {
     }
   }
 
-  incomingRTCPPort() {
+  incomingRTCPPort = () => {
     const address = this.incomingRTCPSocket.address();
 
     if (typeof address !== 'string') {
@@ -89,7 +89,7 @@ export default class RTPProxy extends EventEmitter {
     }
   }
 
-  outgoingLocalPort() {
+  outgoingLocalPort = () => {
     const address = this.outgoingSocket.address();
 
     if (typeof address !== 'string') {
@@ -97,27 +97,27 @@ export default class RTPProxy extends EventEmitter {
     }
   }
 
-  setServerAddress(address: string) {
+  setServerAddress = (address: string) => {
     this.serverAddress = address;
   }
 
-  setServerRTPPort(port: number) {
+  setServerRTPPort = (port: number) => {
     this.serverRTPPort = port;
   }
 
-  setServerRTCPPort(port: number) {
+  setServerRTCPPort = (port: number) => {
     this.serverRTCPPort = port;
   }
 
-  setIncomingPayloadType(pt: number) {
+  setIncomingPayloadType = (pt: number) => {
     this.incomingPayloadType = pt;
   }
 
-  setOutgoingPayloadType(pt: number) {
+  setOutgoingPayloadType = (pt: number) => {
     this.outgoingPayloadType = pt;
   }
 
-  sendOut(msg: Buffer) {
+  sendOut = (msg: Buffer) => {
     // Just drop it if we're not setup yet, I guess.
     if(!this.outgoingAddress || !this.outgoingPort)
       return;
@@ -125,7 +125,7 @@ export default class RTPProxy extends EventEmitter {
     this.outgoingSocket.send(msg, this.outgoingPort, this.outgoingAddress);
   }
 
-  sendBack(msg: Buffer) {
+  sendBack = (msg: Buffer) => {
     // Just drop it if we're not setup yet, I guess.
     if(!this.serverAddress || !this.serverRTCPPort)
       return;
@@ -133,7 +133,7 @@ export default class RTPProxy extends EventEmitter {
     this.outgoingSocket.send(msg, this.serverRTCPPort, this.serverAddress);
   }
 
-  onBound() {
+  onBound = () => {
     if(this.disabled)
       return;
 
@@ -150,7 +150,7 @@ export default class RTPProxy extends EventEmitter {
         });
   }
 
-  rtpMessage(msg: Buffer) {
+  rtpMessage = (msg: Buffer) => {
 
     if(msg.length < 12) {
       // Not a proper RTP packet. Just forward it.
@@ -173,7 +173,7 @@ export default class RTPProxy extends EventEmitter {
     this.sendOut(msg);
   }
 
-  processRTCPMessage(msg: Buffer, transform: (pt: number, packet: Buffer) => Buffer) {
+  processRTCPMessage = (msg: Buffer, transform: (pt: number, packet: Buffer) => Buffer) => {
     let rtcpPackets = [];
     let offset = 0;
     while((offset + 4) <= msg.length) {
@@ -197,7 +197,7 @@ export default class RTPProxy extends EventEmitter {
     return null;
   }
 
-  rtcpMessage(msg: Buffer) {
+  rtcpMessage = (msg: Buffer) => {
 
     let processed = this.processRTCPMessage(msg, (pt, packet) => {
       if(pt != 200 || packet.length < 8)
@@ -213,7 +213,7 @@ export default class RTPProxy extends EventEmitter {
       this.sendOut(processed);
   }
 
-  rtcpReply(msg: Buffer) {
+  rtcpReply = (msg: Buffer) => {
 
     let processed = this.processRTCPMessage(msg, (pt, packet) => {
       if(pt != 201 || packet.length < 12)
@@ -230,7 +230,7 @@ export default class RTPProxy extends EventEmitter {
       this.sendOut(processed);
   }
 
-  createSocket(type: SocketType): Promise<Socket> {
+  createSocket = (type: SocketType): Promise<Socket> => {
     return new Promise((resolve, reject) => {
       const retry = () => {
         const socket = dgram.createSocket(type);
@@ -258,7 +258,7 @@ export default class RTPProxy extends EventEmitter {
     });
   }
 
-  createSocketPair(type: SocketType): Promise<Socket[]> {
+  createSocketPair = (type: SocketType): Promise<Socket[]> => {
     return new Promise((resolve, reject) => {
       const retry = () => {
         let socket1 = dgram.createSocket(type);

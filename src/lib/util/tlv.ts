@@ -1,16 +1,9 @@
-'use strict';
-
-var bufferShim = require('buffer-shims');
+import bufferShim from 'buffer-shims';
 
 /**
  * Type Length Value encoding/decoding, used by HAP as a wire format.
  * https://en.wikipedia.org/wiki/Type-length-value
  */
-
-module.exports = {
-    encode: encode,
-    decode: decode
-};
 
 export function encode(type: number, data: Buffer | number | string, ...args: any[]) {
 
