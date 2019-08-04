@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import bonjour, { BonjourHap, MulticastOptions, Service } from 'bonjour-hap';
 
 import { Nullable } from '../types';
+import { AccessoryInfo } from './model/AccessoryInfo';
 
 /**
  * Advertiser uses mdns to broadcast the presence of an Accessory to the local network.
@@ -18,11 +19,9 @@ export class Advertiser {
   _advertisement: Nullable<Service>;
   _setupHash: string;
 
-  constructor(public accessoryInfo: any, mdnsConfig: MulticastOptions) {
-    this.accessoryInfo = accessoryInfo;
+  constructor(public accessoryInfo: AccessoryInfo, mdnsConfig: MulticastOptions) {
     this._bonjourService = bonjour(mdnsConfig);
     this._advertisement = null;
-
     this._setupHash = this._computeSetupHash();
   }
 
@@ -40,7 +39,7 @@ export class Advertiser {
       "c#": this.accessoryInfo.configVersion + "", // "accessory conf" - represents the "configuration version" of an Accessory. Increasing this "version number" signals iOS devices to re-fetch /accessories data.
       "s#": "1", // "accessory state"
       "ff": "0",
-      "ci": this.accessoryInfo.category,
+      "ci": this.accessoryInfo.category as unknown as string,
       "sf": this.accessoryInfo.paired() ? "0" : "1", // "sf == 1" means "discoverable by HomeKit iOS clients"
       "sh": this._setupHash
     };
@@ -84,7 +83,7 @@ export class Advertiser {
         "c#": this.accessoryInfo.configVersion + "", // "accessory conf" - represents the "configuration version" of an Accessory. Increasing this "version number" signals iOS devices to re-fetch /accessories data.
         "s#": "1", // "accessory state"
         "ff": "0",
-        "ci": this.accessoryInfo.category,
+        "ci": `${this.accessoryInfo.category}`,
         "sf": this.accessoryInfo.paired() ? "0" : "1", // "sf == 1" means "discoverable by HomeKit iOS clients"
         "sh": this._setupHash
       };
