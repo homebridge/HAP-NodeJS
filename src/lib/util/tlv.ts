@@ -37,11 +37,11 @@ export function encode(type: number, data: Buffer | number | string, ...args: an
     }
 
     // do we have more to encode?
-    if (arguments.length > 2) {
+    if (args.length >= 2) {
 
       // chop off the first two arguments which we already processed, and process the rest recursively
-      const [ nextType, nextData, nextArgs ] = args;
-      const remainingTLVBuffer = encode(nextType, nextData, nextArgs);
+      const [ nextType, nextData, ...nextArgs ] = args;
+      const remainingTLVBuffer = encode(nextType, nextData, ...nextArgs);
 
       // append the remaining encoded arguments directly to the buffer
       encodedTLVBuffer = Buffer.concat([encodedTLVBuffer, remainingTLVBuffer]);
