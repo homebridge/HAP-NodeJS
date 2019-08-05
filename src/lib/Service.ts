@@ -79,9 +79,9 @@ export class Service extends EventEmitter<Events> {
   static HumiditySensor: typeof HomeKitTypes.Generated.HumiditySensor;
   static InputSource: typeof HomeKitTypes.TV.InputSource;
   static IrrigationSystem: typeof HomeKitTypes.Generated.IrrigationSystem;
-  // /**
-  //  * @deprecated Removed in iOS 11. Use ServiceLabel instead.
-  //  */
+  /**
+   * @deprecated Removed in iOS 11. Use ServiceLabel instead.
+   */
   static Label: typeof HomeKitTypes.Generated.ServiceLabel;
   static LeakSensor: typeof HomeKitTypes.Generated.LeakSensor;
   static LightSensor: typeof HomeKitTypes.Generated.LightSensor;
