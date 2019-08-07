@@ -16,6 +16,14 @@ export * from './lib/AccessoryLoader.js';
 export * from './lib/StreamController.js';
 export * from './lib/HAPServer';
 export * from './lib/gen';
+
+export * from './lib/util/chacha20poly1305';
+export * from './lib/util/clone';
+export * from './lib/util/encryption';
+export * from './lib/util/hkdf';
+export * from './lib/util/once';
+export * from './lib/util/tlv';
+
 export * from './types';
 
 export function init(storagePath: string) {
@@ -25,13 +33,3 @@ export function init(storagePath: string) {
   else
     storage.initSync(); // use whatever is default
 }
-export { Address } from './types';
-export { Source } from './types';
-export { VideoCodec } from './types';
-export { AudioCodec } from './types';
-export { VideoInfo } from './types';
-export { AudioInfo } from './types';
-export { SessionIdentifier } from './types';
-export { StreamVideoParams } from './types';
-export { Resolution } from './types';
-export { StreamAudioParams } from './types';
