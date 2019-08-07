@@ -156,7 +156,7 @@ describe('Characteristic', () => {
 
   });
 
-  describe('@get', () => {
+  describe(`@${CharacteristicEventTypes.GET}`, () => {
 
     it('should call any listeners for the event', () => {
       const characteristic = createCharacteristic(Formats.STRING);
@@ -173,7 +173,7 @@ describe('Characteristic', () => {
     });
   });
 
-  describe('@set', () => {
+  describe(`@${CharacteristicEventTypes.SET}`, () => {
 
     it('should call any listeners for the event', () => {
       const characteristic = createCharacteristic(Formats.STRING);
@@ -191,7 +191,7 @@ describe('Characteristic', () => {
     });
   });
 
-  describe('@change', () => {
+  describe(`@${CharacteristicEventTypes.CHANGE}`, () => {
 
     it('should call any listeners for the event when the characteristic is event-only, and the value is set', () => {
       const characteristic = createCharacteristic(Formats.STRING);
@@ -225,7 +225,7 @@ describe('Characteristic', () => {
     });
   });
 
-  describe('@subscribe', () => {
+  describe(`@${CharacteristicEventTypes.SUBSCRIBE}`, () => {
 
     it('should call any listeners for the event', () => {
       const characteristic = createCharacteristic(Formats.STRING);
@@ -239,7 +239,7 @@ describe('Characteristic', () => {
     });
   });
 
-  describe('@unsubscribe', () => {
+  describe(`@${CharacteristicEventTypes.UNSUBSCRIBE}`, () => {
 
     it('should call any listeners for the event', () => {
       const characteristic = createCharacteristic(Formats.STRING);
