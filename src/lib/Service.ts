@@ -161,7 +161,7 @@ export class Service extends EventEmitter<Events> {
     }
 
     // listen for changes in characteristics and bubble them up
-    characteristic.on(CharacteristicEventTypes.CHANGE, (change: any) => {
+    characteristic.on(CharacteristicEventTypes.CHANGE, (change: CharacteristicChange) => {
       // make a new object with the relevant characteristic added, and bubble it up
       this.emit(ServiceEventTypes.CHARACTERISTIC_CHANGE, clone(change, { characteristic: characteristic }));
     });
@@ -214,15 +214,11 @@ export class Service extends EventEmitter<Events> {
     }
   }
 
-  isCharacteristic<T extends typeof Characteristic>(characteristicClass: T) {};
-
   getCharacteristic = <T extends WithUUID<typeof Characteristic>>(name: string | T) => {
 
     // returns a characteristic object from the service
     // If  Service.prototype.getCharacteristic(Characteristic.Type)  does not find the characteristic,
     // but the type is in optionalCharacteristics, it adds the characteristic.type to the service and returns it.
-
-    // this.isCharacteristic(name);
 
     var index, characteristic: Characteristic;
     for (index in this.characteristics) {
@@ -263,15 +259,13 @@ export class Service extends EventEmitter<Events> {
   }
 
   setCharacteristic = <T extends WithUUID<typeof Characteristic>>(name: string | T, value: CharacteristicValue) => {
-    // @ts-ignore
-    this.getCharacteristic(name).setValue(value);
+    this.getCharacteristic(name)!.setValue(value);
     return this; // for chaining
   }
 
 // A function to only updating the remote value, but not firiring the 'set' event.
   updateCharacteristic = (name: string, value: CharacteristicValue) => {
-    // @ts-ignore
-    this.getCharacteristic(name).updateValue(value);
+    this.getCharacteristic(name)!.updateValue(value);
     return this;
   }
 
@@ -279,7 +273,7 @@ export class Service extends EventEmitter<Events> {
     // characteristic might be a constructor like `Characteristic.Brightness` instead of an instance
     // of Characteristic. Coerce if necessary.
     if (typeof characteristic === 'function')
-      characteristic = new characteristic();
+      characteristic = new characteristic() as Characteristic;
 
     this.optionalCharacteristics.push(characteristic);
   }
