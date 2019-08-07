@@ -26,14 +26,14 @@ export type ServiceConfigurationChange = {
 };
 
 type Events = {
-  "characteristic-change": (change: CharacteristicChange) => void;
-  "service-configurationChange": (change: ServiceConfigurationChange) => void;
+  [ServiceEventTypes.CHARACTERISTIC_CHANGE]: (change: CharacteristicChange) => void;
+  [ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE]: (change: ServiceConfigurationChange) => void;
 }
 
 /**
  * @deprecated Use ServiceEventTypes instead
  */
-export type EventService = "characteristic-change" | "service-configurationChange";
+export type EventService = ServiceEventTypes.CHARACTERISTIC_CHANGE | ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE;
 
 /**
  * Service represents a set of grouped values necessary to provide a logical function. For instance, a

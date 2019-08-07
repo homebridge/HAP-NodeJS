@@ -88,27 +88,27 @@ export enum HAPServerEventTypes {
 }
 
 export type Events = {
-  identify: (cb: VoidCallback) => void;
-  listening: (port: number) => void;
-  pair: (clientUsername: string, clientLTPK: Buffer, cb: VoidCallback) => void;
-  unpair: (clientUsername: string, cb: VoidCallback) => void;
-  accessories: (cb: NodeCallback<Accessory[]>) => void;
-  'get-characteristics': (
+  [HAPServerEventTypes.IDENTIFY]: (cb: VoidCallback) => void;
+  [HAPServerEventTypes.LISTENING]: (port: number) => void;
+  [HAPServerEventTypes.PAIR]: (clientUsername: string, clientLTPK: Buffer, cb: VoidCallback) => void;
+  [HAPServerEventTypes.UNPAIR]: (clientUsername: string, cb: VoidCallback) => void;
+  [HAPServerEventTypes.ACCESSORIES]: (cb: NodeCallback<Accessory[]>) => void;
+  [HAPServerEventTypes.GET_CHARACTERISTICS]: (
     data: CharacteristicData[],
     events: CharacteristicEvents,
     cb: NodeCallback<Characteristic[]>,
     remote: boolean,
     connectionID: string,
   ) => void;
-  'set-characteristics': (
+  [HAPServerEventTypes.SET_CHARACTERISTICS]: (
     data: CharacteristicData[],
     events: CharacteristicEvents,
     cb: NodeCallback<Characteristic[]>,
     remote: boolean,
     connectionID: string,
   ) => void;
-  'session-close': (sessionID: string, events: CharacteristicEvents) => void;
-  'request-resource': (data: Resource, cb: NodeCallback<Buffer>) => void;
+  [HAPServerEventTypes.SESSION_CLOSE]: (sessionID: string, events: CharacteristicEvents) => void;
+  [HAPServerEventTypes.REQUEST_RESOURCE]: (data: Resource, cb: NodeCallback<Buffer>) => void;
 }
 
 /**

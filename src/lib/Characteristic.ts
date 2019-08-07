@@ -81,17 +81,17 @@ export type CharacteristicGetCallback<T = Nullable<CharacteristicValue>> = (erro
 export type CharacteristicSetCallback = (error?: Error | null, value?: CharacteristicValue) => void
 
 type Events = {
-  change: (change: CharacteristicChange) => void;
-  get: (cb: CharacteristicGetCallback, context?: any, connectionID?: string) => void;
-  set: (value: CharacteristicValue, cb: CharacteristicSetCallback, context?: any, connectionID?: string) => void;
-  subscribe: VoidCallback;
-  unsubscribe: VoidCallback;
+  [CharacteristicEventTypes.CHANGE]: (change: CharacteristicChange) => void;
+  [CharacteristicEventTypes.GET]: (cb: CharacteristicGetCallback, context?: any, connectionID?: string) => void;
+  [CharacteristicEventTypes.SET]: (value: CharacteristicValue, cb: CharacteristicSetCallback, context?: any, connectionID?: string) => void;
+  [CharacteristicEventTypes.SUBSCRIBE]: VoidCallback;
+  [CharacteristicEventTypes.UNSUBSCRIBE]: VoidCallback;
 }
 
 /**
  * @deprecated Use CharacteristicEventTypes instead
  */
-export type EventCharacteristic = "get" | "set" | "subscribe" | "unsubscribe" | "change";
+export type EventCharacteristic = CharacteristicEventTypes.GET | CharacteristicEventTypes.SET | CharacteristicEventTypes.SUBSCRIBE | CharacteristicEventTypes.UNSUBSCRIBE | CharacteristicEventTypes.CHANGE;
 
 /**
  * Characteristic represents a particular typed variable that can be assigned to a Service. For instance, a

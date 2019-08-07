@@ -21,12 +21,12 @@ export enum EventedHTTPServerEvents {
 }
 
 export type Events = {
-  listening: (port: number) => void;
-  request: (request: IncomingMessage, response: ServerResponse, session: Session, events: any) => void;
-  decrypt: (data: Buffer, decrypted: { data: Buffer; }, session: Session) => void;
-  encrypt: (data: Buffer, encrypted: { data: number | Buffer; }, session: Session) => void;
-  close: (events: any) => void;
-  'session-close': (sessionID: string, events: any) => void;
+  [EventedHTTPServerEvents.LISTENING]: (port: number) => void;
+  [EventedHTTPServerEvents.REQUEST]: (request: IncomingMessage, response: ServerResponse, session: Session, events: any) => void;
+  [EventedHTTPServerEvents.DECRYPT]: (data: Buffer, decrypted: { data: Buffer; }, session: Session) => void;
+  [EventedHTTPServerEvents.ENCRYPT]: (data: Buffer, encrypted: { data: number | Buffer; }, session: Session) => void;
+  [EventedHTTPServerEvents.CLOSE]: (events: any) => void;
+  [EventedHTTPServerEvents.SESSION_CLOSE]: (sessionID: string, events: any) => void;
 };
 
 /**
