@@ -22,6 +22,54 @@ describe('Service', () => {
     });
   });
 
+  describe('#addCharacteristic()', () => {
+
+  });
+
+  describe('#setHiddenService()', () => {
+
+  });
+
+  describe('#addLinkedService()', () => {
+
+  });
+
+  describe('#removeLinkedService()', () => {
+
+  });
+
+  describe('#removeCharacteristic()', () => {
+
+  });
+
+  describe('#getCharacteristic()', () => {
+
+  });
+
+  describe('#testCharacteristic()', () => {
+
+  });
+
+  describe('#setCharacteristic()', () => {
+
+  });
+
+  describe('#updateCharacteristic()', () => {
+
+  });
+
+  describe('#addOptionalCharacteristic()', () => {
+
+  });
+
+  describe('#getCharacteristicByIID()', () => {
+
+  });
+
+  describe('#toHAP()', () => {
+
+  });
+
   describe(`@${ServiceEventTypes.CHARACTERISTIC_CHANGE}`, () => {
 
   });

@@ -8,6 +8,18 @@ const createCharacteristic = (type: Formats) => {
 
 describe('Characteristic', () => {
 
+  describe('#setProps()', () => {
+
+  });
+
+  describe('#subscribe()', () => {
+
+  });
+
+  describe('#unsubscribe()', () => {
+
+  });
+
   describe('#getValue()', () => {
     it('should handle special event only characteristics', () => {
       const characteristic = createCharacteristic(Formats.BOOL);
@@ -153,6 +165,10 @@ describe('Characteristic', () => {
       const characteristic = createCharacteristic(Formats.ARRAY);
       expect(characteristic.getDefaultValue()).toEqual([]);
     });
+
+  });
+
+  describe('#toHAP()', () => {
 
   });
 
