@@ -263,7 +263,7 @@ export class Service extends EventEmitter<Events> {
     return this; // for chaining
   }
 
-// A function to only updating the remote value, but not firiring the 'set' event.
+// A function to only updating the remote value, but not firing the 'set' event.
   updateCharacteristic = (name: string, value: CharacteristicValue) => {
     this.getCharacteristic(name)!.updateValue(value);
     return this;
