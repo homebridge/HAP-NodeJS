@@ -1,16 +1,20 @@
 import {
   Characteristic,
-  CharacteristicChange,
-  CharacteristicEventTypes,
-  CharacteristicValue,
-  HapCharacteristic
+  CharacteristicEventTypes
 } from './Characteristic';
 import { clone } from './util/clone';
 import { EventEmitter } from './EventEmitter';
 import { IdentifierCache } from './model/IdentifierCache';
-import { HapService, Nullable, ToHAPOptions, WithUUID } from '../types';
+import {
+  CharacteristicChange,
+  CharacteristicValue,
+  HapCharacteristic,
+  HapService,
+  Nullable,
+  ToHAPOptions,
+  WithUUID,
+} from '../types';
 import * as HomeKitTypes from './gen';
-import { Accessory } from './Accessory';
 
 export enum ServiceEventTypes {
   CHARACTERISTIC_CHANGE = "characteristic-change",

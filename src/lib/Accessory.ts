@@ -8,15 +8,21 @@ import { Service, ServiceConfigurationChange, ServiceEventTypes } from './Servic
 import {
   Characteristic,
   CharacteristicEventTypes,
-  CharacteristicValue,
-  CharacteristicChange,
   CharacteristicSetCallback
 } from './Characteristic';
 import { Advertiser } from './Advertiser';
 import { HAPServer, HAPServerEventTypes, Status } from './HAPServer';
 import { AccessoryInfo } from './model/AccessoryInfo';
 import { IdentifierCache } from './model/IdentifierCache';
-import { CharacteristicData, NodeCallback, Nullable, ToHAPOptions, VoidCallback, WithUUID } from '../types';
+import {
+  CharacteristicChange,
+  CharacteristicData, CharacteristicValue,
+  NodeCallback,
+  Nullable,
+  ToHAPOptions,
+  VoidCallback,
+  WithUUID,
+} from '../types';
 import { Camera } from './Camera';
 import { EventEmitter } from './EventEmitter';
 

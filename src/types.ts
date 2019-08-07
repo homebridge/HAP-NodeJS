@@ -1,5 +1,5 @@
 import { Status } from './lib/HAPServer';
-import { HapCharacteristic } from './lib/Characteristic';
+import { Characteristic, CharacteristicProps } from './lib/Characteristic';
 
 export type Nullable<T> = T | null;
 
@@ -14,6 +14,21 @@ export type NodeCallback<T> = (err: Nullable<Error> | undefined, data?: T) => vo
 export type VoidCallback = (err?: Nullable<Error>) => void;
 export type PrimitiveTypes = string | number | boolean;
 
+type HAPProps =
+  Pick<CharacteristicProps, 'perms' | 'format' | 'description' | 'unit' | 'maxValue' | 'minValue' | 'minStep' | 'maxLen'>
+  & Pick<Characteristic, 'valid-values' | 'valid-values-range'>
+export type HapCharacteristic = HAPProps & {
+  iid: number;
+  type: string;
+  value: string | number | {} | null;
+}
+export type CharacteristicValue = PrimitiveTypes | PrimitiveTypes[] | { [key: string]: PrimitiveTypes };
+export type CharacteristicChange = {
+  newValue: CharacteristicValue;
+  oldValue: CharacteristicValue;
+  context?: any;
+  characteristic: Characteristic;
+};
 export type HapService = {
   iid: number;
   type: string;

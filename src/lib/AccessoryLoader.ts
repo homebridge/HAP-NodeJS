@@ -8,11 +8,10 @@ import { Service } from './Service';
 import {
   Characteristic,
   CharacteristicEventTypes, CharacteristicGetCallback,
-  CharacteristicSetCallback,
-  CharacteristicValue
+  CharacteristicSetCallback
 } from './Characteristic';
 import * as uuid from './util/uuid';
-import { NodeCallback, Nullable } from '../types';
+import { CharacteristicValue, NodeCallback, Nullable } from '../types';
 
 const debug = createDebug('AccessoryLoader');
 

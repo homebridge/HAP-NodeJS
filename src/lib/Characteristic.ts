@@ -3,8 +3,15 @@ import bufferShim from 'buffer-shims';
 
 import { once } from './util/once';
 import { IdentifierCache } from './model/IdentifierCache';
-import { Callback as BasicCallback, Nullable, PrimitiveTypes, ToHAPOptions, VoidCallback } from '../types';
-import { Event, EventEmitter } from './EventEmitter';
+import {
+  CharacteristicChange,
+  CharacteristicValue,
+  HapCharacteristic,
+  Nullable,
+  ToHAPOptions,
+  VoidCallback,
+} from '../types';
+import { EventEmitter } from './EventEmitter';
 import * as HomeKitTypes from './gen';
 
 // Known HomeKit formats
@@ -54,20 +61,12 @@ export interface CharacteristicProps {
   ev?: boolean;
   description?: string;
   minValue?: number;
-  maxValue? :number;
+  maxValue?: number;
   minStep?: number;
   maxLen?: number;
   maxDataLen?: number;
   validValues?: number[];
   validValueRanges?: [number, number];
-}
-
-type HAPProps = Pick<CharacteristicProps, 'perms' | 'format' | 'description' | 'unit' | 'maxValue' | 'minValue' | 'minStep' | 'maxLen'> & Pick<Characteristic, 'valid-values' | 'valid-values-range'>
-
-export type HapCharacteristic = HAPProps & {
-  iid: number;
-  type: string;
-  value: string | number | {} | null;
 }
 
 export enum CharacteristicEventTypes {
@@ -77,14 +76,6 @@ export enum CharacteristicEventTypes {
   UNSUBSCRIBE = "unsubscribe",
   CHANGE = "change",
 }
-
-export type CharacteristicValue = PrimitiveTypes | PrimitiveTypes[] | { [key: string]: PrimitiveTypes };
-export type CharacteristicChange = {
-  newValue: CharacteristicValue;
-  oldValue: CharacteristicValue;
-  context?: any;
-  characteristic: Characteristic;
-};
 
 export type CharacteristicGetCallback<T = Nullable<CharacteristicValue>> = (error?: Error | null , value?: T) => void
 export type CharacteristicSetCallback = (error?: Error | null, value?: CharacteristicValue) => void

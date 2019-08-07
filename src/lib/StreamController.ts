@@ -10,15 +10,14 @@ import {
   Characteristic,
   CharacteristicEventTypes,
   CharacteristicGetCallback,
-  CharacteristicSetCallback,
-  CharacteristicValue
+  CharacteristicSetCallback
 } from './Characteristic';
 import RTPProxy from './camera/RTPProxy';
 import { EventEmitter } from './EventEmitter';
 import { Camera } from './Camera';
 import {
   Address,
-  AudioInfo,
+  AudioInfo, CharacteristicValue,
   NodeCallback,
   Nullable,
   SessionIdentifier,
@@ -26,7 +25,7 @@ import {
   StreamAudioParams,
   StreamVideoParams,
   VideoInfo,
-  VoidCallback
+  VoidCallback,
 } from '../types';
 
 const debug = createDebug('StreamController');
