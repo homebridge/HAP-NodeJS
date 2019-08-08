@@ -3,7 +3,6 @@ import util from 'util';
 
 import storage from 'node-persist';
 
-
 /**
  * IdentifierCache is a model class that manages a system of associating HAP "Accessory IDs" and "Instance IDs"
  * with other values that don't usually change. HomeKit Clients use Accessory/Instance IDs as a primary key of
@@ -55,7 +54,7 @@ export class IdentifierCache {
     return this.getCache(key) || this.setCache(key, this.getNextAID());
   }
 
-  getIID = (accessoryUUID: string, serviceUUID: string, serviceSubtype: string, characteristicUUID?: string) => {
+  getIID = (accessoryUUID: string, serviceUUID: string, serviceSubtype?: string, characteristicUUID?: string) => {
     var key = accessoryUUID
       + '|' + serviceUUID
       + (serviceSubtype ? '|' + serviceSubtype : '')

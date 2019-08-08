@@ -1,5 +1,3 @@
-import set = Reflect.set;
-
 class Advertisement {
   updateTxt = jest.fn();
   stop = jest.fn();

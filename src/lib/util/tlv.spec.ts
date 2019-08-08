@@ -19,5 +19,4 @@ describe('#encode()', () => {
 });
 
 describe('#decode()', () => {
-
 });

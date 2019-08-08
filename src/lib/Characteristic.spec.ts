@@ -9,15 +9,72 @@ const createCharacteristic = (type: Formats) => {
 describe('Characteristic', () => {
 
   describe('#setProps()', () => {
+    it('should overwrite existing properties', () => {
+      const characteristic = createCharacteristic(Formats.BOOL);
 
+      const NEW_PROPS = {format: Formats.STRING, perms: []};
+      characteristic.setProps(NEW_PROPS);
+
+      expect(characteristic.props).toEqual(NEW_PROPS);
+    });
   });
 
   describe('#subscribe()', () => {
+    it('correctly adds a single subscription', () => {
+      const characteristic = createCharacteristic(Formats.BOOL);
+      const subscribeSpy = jest.fn();
+      characteristic.on(CharacteristicEventTypes.SUBSCRIBE, subscribeSpy);
+      characteristic.subscribe();
 
+      expect(subscribeSpy).toHaveBeenCalledTimes(1);
+      expect(characteristic.subscriptions).toEqual(1);
+    });
+
+    it('correctly adds multiple subscriptions', () => {
+      const characteristic = createCharacteristic(Formats.BOOL);
+      const subscribeSpy = jest.fn();
+      characteristic.on(CharacteristicEventTypes.SUBSCRIBE, subscribeSpy);
+      characteristic.subscribe();
+      characteristic.subscribe();
+      characteristic.subscribe();
+
+      expect(subscribeSpy).toHaveBeenCalledTimes(1);
+      expect(characteristic.subscriptions).toEqual(3);
+    });
   });
 
   describe('#unsubscribe()', () => {
+    it('correctly removes a single subscription', () => {
+      const characteristic = createCharacteristic(Formats.BOOL);
+      const subscribeSpy = jest.fn();
+      const unsubscribeSpy = jest.fn();
+      characteristic.on(CharacteristicEventTypes.SUBSCRIBE, subscribeSpy);
+      characteristic.on(CharacteristicEventTypes.UNSUBSCRIBE, unsubscribeSpy);
+      characteristic.subscribe();
+      characteristic.unsubscribe();
 
+      expect(subscribeSpy).toHaveBeenCalledTimes(1);
+      expect(unsubscribeSpy).toHaveBeenCalledTimes(1);
+      expect(characteristic.subscriptions).toEqual(0);
+    });
+
+    it('correctly removes multiple subscriptions', () => {
+      const characteristic = createCharacteristic(Formats.BOOL);
+      const subscribeSpy = jest.fn();
+      const unsubscribeSpy = jest.fn();
+      characteristic.on(CharacteristicEventTypes.SUBSCRIBE, subscribeSpy);
+      characteristic.on(CharacteristicEventTypes.UNSUBSCRIBE, unsubscribeSpy);
+      characteristic.subscribe();
+      characteristic.subscribe();
+      characteristic.subscribe();
+      characteristic.unsubscribe();
+      characteristic.unsubscribe();
+      characteristic.unsubscribe();
+
+      expect(subscribeSpy).toHaveBeenCalledTimes(1);
+      expect(unsubscribeSpy).toHaveBeenCalledTimes(1);
+      expect(characteristic.subscriptions).toEqual(0);
+    });
   });
 
   describe('#getValue()', () => {
