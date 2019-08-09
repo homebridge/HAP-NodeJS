@@ -374,7 +374,7 @@ export class StreamController {
       });
 
     managementService
-      .getCharacteristic(Characteristic.SelectedStreamConfiguration)!
+      .getCharacteristic(Characteristic.SelectedRTPStreamConfiguration)!
       .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
         debug('Read SelectedStreamConfiguration');
         callback(null, this.selectedConfiguration);
