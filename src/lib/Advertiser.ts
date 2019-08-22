@@ -34,7 +34,7 @@ export class Advertiser {
 
     var txtRecord = {
       md: this.accessoryInfo.displayName,
-      pv: "1.0",
+      pv: "1.1",
       id: this.accessoryInfo.username,
       "c#": this.accessoryInfo.configVersion + "", // "accessory conf" - represents the "configuration version" of an Accessory. Increasing this "version number" signals iOS devices to re-fetch /accessories data.
       "s#": "1", // "accessory state"
@@ -78,7 +78,7 @@ export class Advertiser {
 
       var txtRecord = {
         md: this.accessoryInfo.displayName,
-        pv: "1.0",
+        pv: "1.1",
         id: this.accessoryInfo.username,
         "c#": this.accessoryInfo.configVersion + "", // "accessory conf" - represents the "configuration version" of an Accessory. Increasing this "version number" signals iOS devices to re-fetch /accessories data.
         "s#": "1", // "accessory state"
