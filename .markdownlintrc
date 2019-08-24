@@ -1,4 +1,5 @@
 {
   "default": true,
-  "no-hard-tabs": false
+  "no-hard-tabs": false,
+  "whitespace": true
 }
