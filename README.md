@@ -16,19 +16,19 @@ Users can define their own accessories in: accessories/[name]_accessory.ts files
 You can use the following command to start the HAP Server in Bridged mode:
 
 ```sh
-ts-node BridgedCore.ts
+ts-node --files src/BridgedCore.ts
 ```
 
 Or, if you wish to host each Accessory as an independent HomeKit device:
 
 ```sh
-ts-node Core.ts
+ts-node --files src/Core.ts
 ```
 
 The HAP-NodeJS library uses the [debug](https://github.com/visionmedia/debug) library for log output. You can print some or all of the logs by setting the `DEBUG` environment variable. For instance, to see all debug logs while running the server:
 
 ```sh
-DEBUG=* ts-node BridgedCore.ts
+DEBUG=* ts-node --files src/BridgedCore.ts
 ```
 
 HOMEKIT PROTOCOL
