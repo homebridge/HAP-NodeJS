@@ -1,3 +1,4 @@
 {
-  "*.ts": ["eslint --fix", "prettier --write", "git add"]
+  "*.ts": ["eslint --fix", "prettier --write", "git add"],
+  "*.md": ["markdownlint", "git add"]
 }
