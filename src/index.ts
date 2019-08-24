@@ -7,13 +7,13 @@ import * as uuidFunctions from './lib/util/uuid';
 export const AccessoryLoader = accessoryLoader;
 export const uuid = uuidFunctions;
 
-export * from './lib/Accessory.js';
-export * from './lib/Bridge.js';
-export * from './lib/Camera.js';
-export * from './lib/Service.js';
-export * from './lib/Characteristic.js';
-export * from './lib/AccessoryLoader.js';
-export * from './lib/StreamController.js';
+export * from './lib/Accessory';
+export * from './lib/Bridge';
+export * from './lib/Camera';
+export * from './lib/Service';
+export * from './lib/Characteristic';
+export * from './lib/AccessoryLoader';
+export * from './lib/StreamController';
 export * from './lib/HAPServer';
 export * from './lib/gen';
 
