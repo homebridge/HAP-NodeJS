@@ -3,11 +3,12 @@ import http, { IncomingMessage, OutgoingMessage, ServerResponse } from 'http';
 
 import createDebug from 'debug';
 import bufferShim from 'buffer-shims';
+import srp from 'fast-srp-hap';
 
 import * as uuid from './uuid';
-import { Nullable } from '../../types';
+import { Nullable, SessionIdentifier } from '../../types';
 import { EventEmitter } from '../EventEmitter';
-import { Session } from '../HAPServer';
+import { HAPEncryption } from '../HAPServer';
 
 const debug = createDebug('EventedHTTPServer');
 
@@ -133,6 +134,42 @@ export class EventedHTTPServer extends EventEmitter<Events> {
   }
 }
 
+export class Session {
+
+  static sessions: Record<string, Session> = {};
+
+  _connection: EventedHTTPServerConnection;
+
+  sessionID: SessionIdentifier;
+  encryption?: HAPEncryption;
+  srpServer?: srp.Server;
+  username?: string;
+
+  constructor(connection: EventedHTTPServerConnection) {
+    this._connection = connection;
+    this.sessionID = connection.sessionID;
+  }
+
+  establishSession = (username: string) => {
+    this.username = username;
+
+    Session.sessions[username] = this;
+  };
+
+  _connectionDestroyed = () => {
+    if (this.username)
+      delete Session.sessions[this.username];
+  };
+
+  destroyConnection = () => {
+    this._connection._clientSocket.destroy();
+  };
+
+  destroyConnectionAfterWrite = () => {
+    this._connection._killSocketAfterWrite = true;
+  };
+
+}
 
 /**
  * Manages a single iOS-initiated HTTP connection during its lifetime.
@@ -149,11 +186,12 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
   _pendingClientSocketData: Nullable<Buffer>;
   _fullySetup: boolean;
   _writingResponse: boolean;
+  _killSocketAfterWrite: boolean;
   _pendingEventData: Buffer;
   _clientSocket: Socket;
   _httpServer: http.Server;
   _serverSocket: Nullable<Socket>;
-  _session: { sessionID: string; };
+  _session: Session;
   _events: Record<string, boolean>;
   _httpPort?: number;
 
@@ -165,6 +203,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     this._pendingClientSocketData = bufferShim.alloc(0); // data received from client before HTTP proxy is fully setup
     this._fullySetup = false; // true when we are finished establishing connections
     this._writingResponse = false; // true while we are composing an HTTP response (so events can wait)
+    this._killSocketAfterWrite = false;
     this._pendingEventData = bufferShim.alloc(0); // event data waiting to be sent until after an in-progress HTTP response is being written
     // clientSocket is the socket connected to the actual iOS device
     this._clientSocket = clientSocket;
@@ -182,9 +221,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     this._httpServer.on('error', this._onHttpServerError);
     this._httpServer.listen(0);
     // an arbitrary dict that users of this class can store values in to associate with this particular connection
-    this._session = {
-      sessionID: this.sessionID
-    };
+    this._session = new Session(this);
     // a collection of event names subscribed to by this connection
     this._events = {}; // this._events[eventName] = true (value is arbitrary, but must be truthy)
     debug("[%s] New connection from client", this._remoteAddress);
@@ -292,6 +329,12 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
       data = encrypted.data!;
     // proxy it along to the client (iOS)
     this._clientSocket.write(data);
+
+    if (this._killSocketAfterWrite) {
+      setTimeout(() => {
+        this._clientSocket.destroy();
+      }, 10);
+    }
   }
 
   // Our internal HTTP Server has been closed (happens after we call this._httpServer.close() below)
@@ -341,6 +384,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     debug("[%s] Client connection closed", this._remoteAddress);
     // shutdown the other side
     this._serverSocket && this._serverSocket.destroy();
+    this._session._connectionDestroyed();
   }
 
   _onClientSocketError = (err: Error) => {

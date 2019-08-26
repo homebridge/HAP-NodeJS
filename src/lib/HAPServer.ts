@@ -9,13 +9,14 @@ import url from 'url';
 import * as encryption from './util/encryption';
 import * as hkdf from './util/hkdf';
 import * as tlv from './util/tlv';
-import { EventedHTTPServer, EventedHTTPServerEvents } from './util/eventedhttp';
+import { EventedHTTPServer, EventedHTTPServerEvents, Session } from './util/eventedhttp';
 import { once } from './util/once';
 import { IncomingMessage, ServerResponse } from "http";
 import { Characteristic } from './Characteristic';
 import { Accessory, CharacteristicEvents, Resource } from './Accessory';
-import { CharacteristicData, NodeCallback, SessionIdentifier, VoidCallback } from '../types';
+import { CharacteristicData, NodeCallback, PairingsCallback, SessionIdentifier, VoidCallback } from '../types';
 import { EventEmitter } from './EventEmitter';
+import { PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
 
 const debug = createDebug('HAPServer');
 
@@ -40,7 +41,7 @@ export enum TLVValues {
   PERMISSIONS = 0x0B, // None (0x00): regular user, 0x01: Admin (able to add/remove/list pairings)
   FRAGMENT_DATA = 0x0C,
   FRAGMENT_LAST = 0x0D,
-  SEPARATOR = 0x0FF
+  SEPARATOR = 0x0FF // Zero-length TLV that separates different TLVs in a list.
 }
 
 export enum Methods {
@@ -89,12 +90,6 @@ export enum Status {
   INSUFFICIENT_AUTHORIZATION = -70411
 }
 
-export type Session = {
-  sessionID: SessionIdentifier;
-  encryption: HAPEncryption;
-  srpServer: srp.Server;
-};
-
 export enum HapRequestMessageTypes {
   PAIR_VERIFY = 'pair-verify',
   DISCOVERY = 'discovery',
@@ -115,7 +110,9 @@ export enum HAPServerEventTypes {
   IDENTIFY = "identify",
   LISTENING = "listening",
   PAIR = 'pair',
-  UNPAIR = 'unpair',
+  ADD_PAIRING = 'add-pairing',
+  REMOVE_PAIRING = 'remove_pairing',
+  LIST_PAIRINGS = 'list-pairings',
   ACCESSORIES = 'accessories',
   GET_CHARACTERISTICS = 'get-characteristics',
   SET_CHARACTERISTICS = 'set-characteristics',
@@ -127,7 +124,9 @@ export type Events = {
   [HAPServerEventTypes.IDENTIFY]: (cb: VoidCallback) => void;
   [HAPServerEventTypes.LISTENING]: (port: number) => void;
   [HAPServerEventTypes.PAIR]: (clientUsername: string, clientLTPK: Buffer, cb: VoidCallback) => void;
-  [HAPServerEventTypes.UNPAIR]: (clientUsername: string, cb: VoidCallback) => void;
+  [HAPServerEventTypes.ADD_PAIRING]: (controller: string, username: string, publicKey: Buffer, permission: number, callback: PairingsCallback<void>) => void;
+  [HAPServerEventTypes.REMOVE_PAIRING]: (controller: string, username: string, callback: PairingsCallback<void>) => void;
+  [HAPServerEventTypes.LIST_PAIRINGS]: (controller: string, callback: PairingsCallback<PairingInformation[]>) => void;
   [HAPServerEventTypes.ACCESSORIES]: (cb: NodeCallback<Accessory[]>) => void;
   [HAPServerEventTypes.GET_CHARACTERISTICS]: (
     data: CharacteristicData[],
@@ -387,9 +386,9 @@ export class HAPServer extends EventEmitter<Events> {
   _handlePair = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: Buffer) => {
     // Can only be directly paired with one iOS device
     if (!this.allowInsecureRequest && this.accessoryInfo.paired()) {
-      response.writeHead(403);
-      response.end();
-      return;
+        response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
+        response.end(tlv.encode(TLVValues.STATE, States.M2, TLVValues.ERROR_CODE, Codes.UNAVAILABLE));
+        return;
     }
     var objects = tlv.decode(requestData);
     var sequence = objects[TLVValues.SEQUENCE_NUM][0]; // value is single byte with sequence number
@@ -423,7 +422,7 @@ export class HAPServer extends EventEmitter<Events> {
     var A = objects[TLVValues.PUBLIC_KEY]; // "A is a public key that exists only for a single login session."
     var M1 = objects[TLVValues.PASSWORD_PROOF]; // "M1 is the proof that you actually know your own password."
     // pull the SRP server we created in stepOne out of the current session
-    var srpServer = session.srpServer;
+    var srpServer = session.srpServer!;
     srpServer.setA(A);
     try {
       srpServer.checkM1(M1);
@@ -444,7 +443,7 @@ export class HAPServer extends EventEmitter<Events> {
   _handlePairStepThree = (request: IncomingMessage, response: ServerResponse, session: Session, objects: Record<number, Buffer>) => {
     debug("[%s] Pair step 3/5", this.accessoryInfo.username);
     // pull the SRP server we created in stepOne out of the current session
-    var srpServer = session.srpServer;
+    var srpServer = session.srpServer!;
     var encryptedData = objects[TLVValues.ENCRYPTED_DATA];
     var messageData = bufferShim.alloc(encryptedData.length - 16);
     var authTagData = bufferShim.alloc(16);
@@ -468,7 +467,7 @@ export class HAPServer extends EventEmitter<Events> {
   // M5-2
   _handlePairStepFour = (request: IncomingMessage, response: ServerResponse, session: Session, clientUsername: Buffer, clientLTPK: Buffer, clientProof: Buffer, hkdfEncKey: Buffer) => {
     debug("[%s] Pair step 4/5", this.accessoryInfo.username);
-    var S_private = session.srpServer.computeK();
+    var S_private = session.srpServer!.computeK();
     var controllerSalt = bufferShim.from("Pair-Setup-Controller-Sign-Salt");
     var controllerInfo = bufferShim.from("Pair-Setup-Controller-Sign-Info");
     var outputKey = hkdf.HKDF("sha512", controllerSalt, S_private, controllerInfo, 32);
@@ -485,7 +484,7 @@ export class HAPServer extends EventEmitter<Events> {
   // M5 - F + M6
   _handlePairStepFive = (request: IncomingMessage, response: ServerResponse, session: Session, clientUsername: Buffer, clientLTPK: Buffer, hkdfEncKey: Buffer) => {
     debug("[%s] Pair step 5/5", this.accessoryInfo.username);
-    var S_private = session.srpServer.computeK();
+    var S_private = session.srpServer!.computeK();
     var accessorySalt = bufferShim.from("Pair-Setup-Accessory-Sign-Salt");
     var accessoryInfo = bufferShim.from("Pair-Setup-Accessory-Sign-Info");
     var outputKey = hkdf.HKDF("sha512", accessorySalt, S_private, accessoryInfo, 32);
@@ -516,12 +515,6 @@ export class HAPServer extends EventEmitter<Events> {
    * iOS <-> Accessory pairing verification.
    */
   _handlePairVerify = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: Buffer) => {
-    // Don't allow pair-verify without being paired first
-    if (!this.allowInsecureRequest && !this.accessoryInfo.paired()) {
-      response.writeHead(403);
-      response.end();
-      return;
-    }
     var objects = tlv.decode(requestData);
     var sequence = objects[TLVValues.SEQUENCE_NUM][0]; // value is single byte with sequence number
     if (sequence == 0x01)
@@ -573,11 +566,11 @@ export class HAPServer extends EventEmitter<Events> {
     encryptedData.copy(authTagData, 0, encryptedData.length - 16, encryptedData.length);
     var plaintextBuffer = bufferShim.alloc(messageData.length);
     // instance of HAPEncryption (created in handlePairVerifyStepOne)
-    var enc = session.encryption;
+    var enc = session.encryption!;
     if (!encryption.verifyAndDecrypt(enc.hkdfPairEncKey, bufferShim.from("PV-Msg03"), messageData, authTagData, null, plaintextBuffer)) {
       debug("[%s] M3: Invalid signature", this.accessoryInfo.username);
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.ERROR_CODE, Codes.INVALID_REQUEST));
+        response.end(tlv.encode(TLVValues.STATE, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
       return;
     }
     var decoded = tlv.decode(plaintextBuffer);
@@ -591,13 +584,13 @@ export class HAPServer extends EventEmitter<Events> {
     if (!clientPublicKey) {
       debug("[%s] Client %s attempting to verify, but we are not paired; rejecting client", this.accessoryInfo.username, clientUsername);
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.ERROR_CODE, Codes.INVALID_REQUEST));
+        response.end(tlv.encode(TLVValues.STATE, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
       return;
     }
     if (!tweetnacl.sign.detached.verify(material, proof, clientPublicKey)) {
       debug("[%s] Client %s provided an invalid signature", this.accessoryInfo.username, clientUsername);
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.ERROR_CODE, Codes.INVALID_REQUEST));
+      response.end(tlv.encode(TLVValues.STATE, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
       return;
     }
     debug("[%s] Client %s verification complete", this.accessoryInfo.username, clientUsername);
@@ -614,6 +607,7 @@ export class HAPServer extends EventEmitter<Events> {
     // Our connection is now completely setup. We now want to subscribe this connection to special
     // "keepalive" events for detecting when connections are closed by the client.
     events['keepalive'] = true;
+    session.establishSession(clientUsername.toString());
   }
 
   _handleRemotePairVerify = (request: HapRequest, remoteSession: RemoteSession, session: Session) => {
@@ -668,10 +662,10 @@ export class HAPServer extends EventEmitter<Events> {
     encryptedData.copy(authTagData, 0, encryptedData.length - 16, encryptedData.length);
     var plaintextBuffer = bufferShim.alloc(messageData.length);
     // instance of HAPEncryption (created in handlePairVerifyStepOne)
-    var enc = session.encryption;
+    var enc = session.encryption!;
     if (!encryption.verifyAndDecrypt(enc.hkdfPairEncKey, bufferShim.from("PV-Msg03"), messageData, authTagData, null, plaintextBuffer)) {
       debug("[%s] M3: Invalid signature", this.accessoryInfo.username);
-      var response = tlv.encode(TLVValues.ERROR_CODE, Codes.INVALID_REQUEST);
+      var response = tlv.encode(TLVValues.STATE, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION);
       remoteSession.responseMessage(request, response);
       return;
     }
@@ -685,13 +679,13 @@ export class HAPServer extends EventEmitter<Events> {
     // disagree. Respond with invalid request (seems to match HomeKit Accessory Simulator behavior)
     if (!clientPublicKey) {
       debug("[%s] Client %s attempting to verify, but we are not paired; rejecting client", this.accessoryInfo.username, clientUsername);
-      var response = tlv.encode(TLVValues.ERROR_CODE, Codes.INVALID_REQUEST);
+      var response = tlv.encode(TLVValues.STATE, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION);
       remoteSession.responseMessage(request, response);
       return;
     }
     if (!tweetnacl.sign.detached.verify(material, proof, clientPublicKey)) {
       debug("[%s] Client %s provided an invalid signature", this.accessoryInfo.username, clientUsername);
-      var response = tlv.encode(TLVValues.ERROR_CODE, Codes.INVALID_REQUEST);
+      var response = tlv.encode(TLVValues.STATE, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION);
       remoteSession.responseMessage(request, response);
       return;
     }
@@ -706,7 +700,7 @@ export class HAPServer extends EventEmitter<Events> {
   }
 
   /**
-   * Pair add/remove
+   * Pair add/remove/list
    */
   _handlePairings = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: Buffer) => {
     // Only accept /pairing request if there is a secure session
@@ -715,36 +709,73 @@ export class HAPServer extends EventEmitter<Events> {
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
       return;
     }
-    var objects = tlv.decode(requestData);
-    var requestType = objects[TLVValues.REQUEST_TYPE][0]; // value is single byte with request type
-    if (requestType == 3) {
-      // technically we're already paired and communicating securely if the client is able to call /pairings at all!
-      // but maybe the client wants to change their public key? so we'll emit 'pair' like we just paired again
-      debug("[%s] Adding pairing info for client", this.accessoryInfo.username);
-      var clientUsername = objects[TLVValues.USERNAME];
-      var clientLTPK = objects[TLVValues.PUBLIC_KEY];
-      this.emit(HAPServerEventTypes.PAIR, clientUsername.toString(), clientLTPK, once((err: Error) => {
-        if (err) {
-          debug("[%s] Error adding pairing info: %s", this.accessoryInfo.username, err.message);
-          response.writeHead(500, "Server Error");
-          response.end();
+
+    const objects = tlv.decode(requestData);
+    const method = objects[TLVValues.METHOD][0]; // value is single byte with request type
+
+    const state = objects[TLVValues.STATE][0];
+    if (state !== States.M1) {
+      return;
+    }
+
+    if (method === Methods.ADD_PAIRING) {
+      const identifier = objects[TLVValues.IDENTIFIER].toString();
+      const publicKey = objects[TLVValues.PUBLIC_KEY];
+      const permissions = objects[TLVValues.PERMISSIONS][0] as PermissionTypes;
+
+      this.emit(HAPServerEventTypes.ADD_PAIRING, session.username, identifier, publicKey, permissions, once((errorCode: number, data?: void) => {
+        if (errorCode > 0) {
+          debug("[%s] Pairings: failed ADD_PAIRING with code %d", this.accessoryInfo.username, errorCode);
+          response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
+          response.end(tlv.encode(TLVValues.STATE, States.M2, TLVValues.ERROR_CODE, errorCode));
           return;
         }
+
         response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
-        response.end(tlv.encode(TLVValues.SEQUENCE_NUM, 0x02));
+        response.end(tlv.encode(TLVValues.STATE, States.M2));
+        debug("[%s] Pairings: successfully executed ADD_PAIRING", this.accessoryInfo.username);
       }));
-    } else if (requestType == 4) {
-      debug("[%s] Removing pairing info for client", this.accessoryInfo.username);
-      var clientUsername = objects[TLVValues.USERNAME];
-      this.emit(HAPServerEventTypes.UNPAIR, clientUsername.toString(), once((err?: Error) => {
-        if (err) {
-          debug("[%s] Error removing pairing info: %s", this.accessoryInfo.username, err.message);
-          response.writeHead(500, "Server Error");
-          response.end();
+    } else if (method === Methods.REMOVE_PAIRING) {
+      const identifier = objects[TLVValues.IDENTIFIER].toString();
+
+      this.emit(HAPServerEventTypes.REMOVE_PAIRING, session.username, identifier, once((errorCode: number, data?: void) => {
+        if (errorCode > 0) {
+          debug("[%s] Pairings: failed REMOVE_PAIRING with code %d", this.accessoryInfo.username, errorCode);
+          response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
+          response.end(tlv.encode(TLVValues.STATE, States.M2, TLVValues.ERROR_CODE, errorCode));
           return;
         }
+
         response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
-        response.end(tlv.encode(TLVValues.SEQUENCE_NUM, 0x02));
+        response.end(tlv.encode(TLVValues.STATE, States.M2));
+        debug("[%s] Pairings: successfully executed REMOVE_PAIRING", this.accessoryInfo.username);
+      }));
+    } else if (method === Methods.LIST_PAIRINGS) {
+      this.emit(HAPServerEventTypes.LIST_PAIRINGS, session.username, once((errorCode: number, data?: PairingInformation[]) => {
+        if (errorCode > 0) {
+          debug("[%s] Pairings: failed LIST_PAIRINGS with code %d", this.accessoryInfo.username, errorCode);
+          response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
+          response.end(tlv.encode(TLVValues.STATE, States.M2, TLVValues.ERROR_CODE, errorCode));
+          return;
+        }
+
+        const tlvList = [] as any[];
+        data!.forEach((value: PairingInformation, index: number) => {
+          if (index > 0) {
+            tlvList.push(TLVValues.SEPARATOR, Buffer.alloc(0));
+          }
+
+          tlvList.push(
+              TLVValues.IDENTIFIER, value.username,
+              TLVValues.PUBLIC_KEY, value.publicKey,
+              TLVValues.PERMISSIONS, value.permission
+          );
+        });
+
+        const list = tlv.encode(TLVValues.STATE, States.M2, ...tlvList);
+        response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
+        response.end(list);
+        debug("[%s] Pairings: successfully executed LIST_PAIRINGS", this.accessoryInfo.username);
       }));
     }
   }
@@ -974,7 +1005,7 @@ export class HAPServer extends EventEmitter<Events> {
  * Simple struct to hold vars needed to support HAP encryption.
  */
 
-class HAPEncryption {
+export class HAPEncryption {
 
   clientPublicKey: Buffer;
   secretKey: Buffer;
