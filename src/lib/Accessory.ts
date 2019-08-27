@@ -599,6 +599,9 @@ export class Accessory extends EventEmitter<Events> {
    *                                new Accessory.
    */
   publish = (info: PublishInfo, allowInsecureRequest?: boolean) => {
+    this.addService(Service.ProtocolInformation) // add the protocol information service to the primary accessory
+        .setCharacteristic(Characteristic.Version, Advertiser.protocolVersionService);
+
     // attempt to load existing AccessoryInfo from disk
     this._accessoryInfo = AccessoryInfo.load(info.username);
 
