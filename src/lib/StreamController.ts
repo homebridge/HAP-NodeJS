@@ -353,25 +353,25 @@ export class StreamController {
       .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
         var data = tlv.encode( 0x01, this.streamStatus );
         callback(null, data.toString('base64'));
-      });
+      }).getValue();
 
     managementService
       .getCharacteristic(Characteristic.SupportedRTPConfiguration)!
       .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
         callback(null, this.supportedRTPConfiguration);
-      });
+      }).getValue();
 
     managementService
       .getCharacteristic(Characteristic.SupportedVideoStreamConfiguration)!
       .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
         callback(null, this.supportedVideoStreamConfiguration);
-      });
+      }).getValue();
 
     managementService
       .getCharacteristic(Characteristic.SupportedAudioStreamConfiguration)!
       .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
         callback(null, this.supportedAudioStreamConfiguration);
-      });
+      }).getValue();
 
     managementService
       .getCharacteristic(Characteristic.SelectedRTPStreamConfiguration)!
