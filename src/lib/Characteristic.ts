@@ -69,6 +69,12 @@ export interface CharacteristicProps {
   validValueRanges?: [number, number];
 }
 
+export enum Access {
+  READ = 0x00,
+  WRITE = 0x01,
+  NOTIFY = 0x02
+}
+
 export enum CharacteristicEventTypes {
   GET = "get",
   SET = "set",
@@ -317,6 +323,7 @@ export class Characteristic extends EventEmitter<Events> {
   value: Nullable<CharacteristicValue> = null;
   status: Nullable<Error> = null;
   eventOnlyCharacteristic: boolean = false;
+  accessRestrictedToAdmins: Access[] = [];
   props: CharacteristicProps;
   subscriptions: number = 0;
 
@@ -491,15 +498,15 @@ export class Characteristic extends EventEmitter<Events> {
     };
 
     if (isNumericType) {
-      if (isNaN(Number.parseInt(newValue as string, 10))) {
-        return this.value!;
-      } //This is not a number so we'll just pass out the last value.
       if (newValue === false) {
         return 0;
       }
       if (newValue === true) {
         return 1;
       }
+      if (isNaN(Number.parseInt(newValue as string, 10))) {
+        return this.value!;
+      } //This is not a number so we'll just pass out the last value.
       if ((this.props.maxValue && !isNaN(this.props.maxValue)) && (this.props.maxValue !== null))
         maxValue_resolved = this.props.maxValue;
       if ((this.props.minValue && !isNaN(this.props.minValue)) && (this.props.minValue !== null))
@@ -553,13 +560,16 @@ export class Characteristic extends EventEmitter<Events> {
     var oldValue = this.value;
     if (this.listeners(CharacteristicEventTypes.SET).length > 0) {
       // allow a listener to handle the setting of this value, and wait for completion
-      this.emit(CharacteristicEventTypes.SET, newValue, once((err: Error) => {
+      this.emit(CharacteristicEventTypes.SET, newValue, once((err: Error, writeResponse?: CharacteristicValue) => {
         this.status = err;
         if (err) {
           // pass the error along to our callback
           if (callback)
             callback(err);
         } else {
+          if (writeResponse !== undefined && this.props.perms.includes(Perms.WRITE_RESPONSE))
+            newValue = writeResponse; // support write response simply by letting the implementor pass the response as second argument to the callback
+
           if (newValue === undefined || newValue === null)
             newValue = this.getDefaultValue() as CharacteristicValue;
           // setting the value was a success; so we can cache it now

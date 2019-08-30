@@ -6,6 +6,7 @@ import * as uuid from './util/uuid';
 import { clone } from './util/clone';
 import { Service, ServiceConfigurationChange, ServiceEventTypes } from './Service';
 import {
+  Access,
   Characteristic,
   CharacteristicEventTypes,
   CharacteristicSetCallback,
@@ -27,6 +28,7 @@ import {
 } from '../types';
 import { Camera } from './Camera';
 import { EventEmitter } from './EventEmitter';
+import { Session } from "./util/eventedhttp";
 
 // var HomeKitTypes = require('./gen/HomeKitTypes');
 // var RelayServer = require("./util/relayserver").RelayServer;
@@ -842,7 +844,7 @@ export class Accessory extends EventEmitter<Events> {
   }
 
 // Called when an iOS client wishes to query the state of one or more characteristics, like "door open?", "light on?", etc.
-  _handleGetCharacteristics = (data: CharacteristicData[], events: CharacteristicEvents, callback: HandleGetCharacteristicsCallback, remote: boolean, connectionID: string) => {
+  _handleGetCharacteristics = (data: CharacteristicData[], events: CharacteristicEvents, callback: HandleGetCharacteristicsCallback, remote: boolean, session: Session) => {
 
     // build up our array of responses to the characteristics requested asynchronously
     var characteristics: CharacteristicData[] = [];
@@ -886,6 +888,27 @@ export class Accessory extends EventEmitter<Events> {
           callback(null, characteristics);
         }
         return;
+      }
+
+      if (characteristic.accessRestrictedToAdmins.includes(Access.READ)) {
+        let verifiable = true;
+        if (!session || !session.username || !this._accessoryInfo) {
+          verifiable = false;
+          debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for reading (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid)
+        }
+
+        if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(session.username!)) {
+          const response: any = {
+            aid: aid,
+            iid: iid
+          };
+          response[statusKey] = Status.INSUFFICIENT_PRIVILEGES;
+          characteristics.push(response);
+
+          if (characteristics.length === data.length)
+            callback(null, characteristics);
+          return;
+        }
       }
 
       // Found the Characteristic! Get the value!
@@ -932,14 +955,14 @@ export class Accessory extends EventEmitter<Events> {
         if (characteristics.length === data.length)
           callback(null, characteristics);
 
-      }, context, connectionID);
+      }, context, session? session.sessionID as string: undefined);
 
     });
   }
 
 // Called when an iOS client wishes to change the state of this accessory - like opening a door, or turning on a light.
 // Or, to subscribe to change events for a particular Characteristic.
-  _handleSetCharacteristics = (data: CharacteristicData[], events: CharacteristicEvents, callback: HandleSetCharacteristicsCallback, remote: boolean, connectionID: string) => {
+  _handleSetCharacteristics = (data: CharacteristicData[], events: CharacteristicEvents, callback: HandleSetCharacteristicsCallback, remote: boolean, session: Session) => {
 
     // data is an array of characteristics and values like this:
     // [ { aid: 1, iid: 8, value: true, ev: true } ]
@@ -1001,6 +1024,27 @@ export class Accessory extends EventEmitter<Events> {
           return;
         }
 
+        if (characteristic.accessRestrictedToAdmins.includes(Access.NOTIFY)) {
+          let verifiable = true;
+          if (!session || !session.username || !this._accessoryInfo) {
+            verifiable = false;
+            debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for notify (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid)
+          }
+
+          if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(session.username!)) {
+            const response: any = {
+              aid: aid,
+              iid: iid
+            };
+            response[statusKey] = Status.INSUFFICIENT_PRIVILEGES;
+            characteristics.push(response);
+
+            if (characteristics.length === data.length)
+              callback(null, characteristics);
+            return;
+          }
+        }
+
         debug('[%s] %s Characteristic "%s" for events', this.displayName, ev ? "Registering" : "Unregistering", characteristic.displayName);
 
         // store event registrations in the supplied "events" dict which is associated with the connection making
@@ -1035,6 +1079,27 @@ export class Accessory extends EventEmitter<Events> {
           return;
         }
 
+        if (characteristic.accessRestrictedToAdmins.includes(Access.WRITE)) {
+          let verifiable = true;
+          if (!session || !session.username || !this._accessoryInfo) {
+            verifiable = false;
+            debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for write (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid)
+          }
+
+          if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(session.username!)) {
+            const response: any = {
+              aid: aid,
+              iid: iid
+            };
+            response[statusKey] = Status.INSUFFICIENT_PRIVILEGES;
+            characteristics.push(response);
+
+            if (characteristics.length === data.length)
+              callback(null, characteristics);
+            return;
+          }
+        }
+
         debug('[%s] Setting Characteristic "%s" to value %s', this.displayName, characteristic.displayName, value);
 
         // set the value and wait for success
@@ -1066,7 +1131,7 @@ export class Accessory extends EventEmitter<Events> {
           if (characteristics.length === data.length)
             callback(null, characteristics);
 
-        }, context, connectionID);
+        }, context, session? session.sessionID as string: undefined);
 
       } else {
         // no value to set, so we're done (success)

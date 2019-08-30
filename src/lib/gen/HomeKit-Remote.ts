@@ -1,7 +1,7 @@
 // manually created
 
-import {Characteristic, Formats, Perms} from '../Characteristic';
-import {Service} from '../Service';
+import { Access, Characteristic, Formats, Perms } from '../Characteristic';
+import { Service } from '../Service';
 
 
 /**
@@ -39,6 +39,7 @@ export class TargetControlList extends Characteristic {
             perms: [Perms.PAIRED_WRITE, Perms.PAIRED_READ, Perms.WRITE_RESPONSE]
         });
         this.value = this.getDefaultValue();
+        this.accessRestrictedToAdmins = [Access.READ, Access.WRITE]
     }
 
 }
@@ -60,6 +61,7 @@ export class ButtonEvent extends Characteristic {
             perms: [Perms.PAIRED_READ, Perms.NOTIFY]
         });
         this.value = this.getDefaultValue();
+        this.accessRestrictedToAdmins = [Access.NOTIFY];
     }
 
 }

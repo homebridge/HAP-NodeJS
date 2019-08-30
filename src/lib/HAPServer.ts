@@ -133,14 +133,14 @@ export type Events = {
     events: CharacteristicEvents,
     cb: NodeCallback<CharacteristicData[]>,
     remote: boolean,
-    connectionID: string,
+    session: Session,
   ) => void;
   [HAPServerEventTypes.SET_CHARACTERISTICS]: (
     data: CharacteristicData[],
     events: CharacteristicEvents,
     cb: NodeCallback<CharacteristicData[]>,
     remote: boolean,
-    connectionID: string,
+    session: Session,
   ) => void;
   [HAPServerEventTypes.SESSION_CLOSE]: (sessionID: string, events: CharacteristicEvents) => void;
   [HAPServerEventTypes.REQUEST_RESOURCE]: (data: Resource, cb: NodeCallback<Buffer>) => void;
@@ -886,7 +886,7 @@ export class HAPServer extends EventEmitter<Events> {
         // 207 "multi-status" is returned when an error occurs reading a characteristic. otherwise 200 is returned
         response.writeHead(errorOccurred? 207: 200, {"Content-Type": "application/hap+json"});
         response.end(JSON.stringify({characteristics: characteristics}));
-      }), false, session.sessionID);
+      }), false, session);
     } else if (request.method == "PUT") {
       if (!session.encryption) {
         if (!request.headers || (request.headers && request.headers["authorization"] !== this.accessoryInfo.pincode)) {
@@ -938,7 +938,7 @@ export class HAPServer extends EventEmitter<Events> {
           response.writeHead(204); // 204 "No content"
           response.end();
         }
-      }), false, session.sessionID);
+      }), false, session);
     }
   }
 
