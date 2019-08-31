@@ -8,7 +8,8 @@ import { Service, ServiceConfigurationChange, ServiceEventTypes } from './Servic
 import {
   Characteristic,
   CharacteristicEventTypes,
-  CharacteristicSetCallback
+  CharacteristicSetCallback,
+  Perms
 } from './Characteristic';
 import { Advertiser } from './Advertiser';
 import { HAPServer, HAPServerEventTypes, Status } from './HAPServer';
@@ -118,8 +119,8 @@ type IdentifyCallback = VoidCallback;
 type PairCallback = VoidCallback;
 type UnpairCallback = VoidCallback;
 type HandleAccessoriesCallback = NodeCallback<{ accessories: any[] }>;
-type HandleGetCharacteristicsCallback = NodeCallback<Characteristic[]>;
-type HandleSetCharacteristicsCallback = NodeCallback<Characteristic[]>;
+type HandleGetCharacteristicsCallback = NodeCallback<CharacteristicData[]>;
+type HandleSetCharacteristicsCallback = NodeCallback<CharacteristicData[]>;
 
 /**
  * Accessory is a virtual HomeKit device. It can publish an associated HAP server for iOS devices to communicate
@@ -794,7 +795,7 @@ export class Accessory extends EventEmitter<Events> {
   _handleGetCharacteristics = (data: CharacteristicData[], events: CharacteristicEvents, callback: HandleGetCharacteristicsCallback, remote: boolean, connectionID: string) => {
 
     // build up our array of responses to the characteristics requested asynchronously
-    var characteristics: Characteristic[] = [];
+    var characteristics: CharacteristicData[] = [];
     var statusKey = remote ? 's' : 'status';
     var valueKey = remote ? 'v' : 'value';
 
@@ -819,6 +820,21 @@ export class Accessory extends EventEmitter<Events> {
         if (characteristics.length === data.length)
           callback(null, characteristics);
 
+        return;
+      }
+
+      if (!characteristic.props.perms.includes(Perms.PAIRED_READ)) { // check if we are allowed to read from this characteristic
+        debug('[%s] Tried reading from Characteristic which does not allow reading (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid);
+        const response: any = {
+          aid: aid,
+          iid: iid
+        };
+        response[statusKey] = Status.WRITE_ONLY_CHARACTERISTIC;
+        characteristics.push(response);
+
+        if (characteristics.length === data.length) {
+          callback(null, characteristics);
+        }
         return;
       }
 
@@ -852,7 +868,6 @@ export class Accessory extends EventEmitter<Events> {
             iid: iid
           };
           response[valueKey] = value;
-          response[statusKey] = 0;
 
           if (includeEvent) {
             var eventName = aid + '.' + iid;
@@ -882,7 +897,7 @@ export class Accessory extends EventEmitter<Events> {
     debug("[%s] Processing characteristic set: %s", this.displayName, JSON.stringify(data));
 
     // build up our array of responses to the characteristics requested asynchronously
-    var characteristics: Characteristic[] = [];
+    var characteristics: CharacteristicData[] = [];
 
     data.forEach((characteristicData) => {
       var aid = characteristicData.aid;
@@ -921,6 +936,21 @@ export class Accessory extends EventEmitter<Events> {
       // if "ev" is present, that means we need to register or unregister this client for change events for
       // this characteristic.
       if (typeof ev !== 'undefined') {
+        if (!characteristic.props.perms.includes(Perms.NOTIFY)) { // check if notify is allowed for this characteristic
+          debug('[%s] Tried enabling notifications for Characteristic which does not allow notify (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid);
+          const response: any = {
+            aid: aid,
+            iid: iid
+          };
+          response[statusKey] = Status.NOTIFICATION_NOT_SUPPORTED;
+          characteristics.push(response);
+
+          if (characteristics.length === data.length) {
+            callback(null, characteristics);
+          }
+          return;
+        }
+
         debug('[%s] %s Characteristic "%s" for events', this.displayName, ev ? "Registering" : "Unregistering", characteristic.displayName);
 
         // store event registrations in the supplied "events" dict which is associated with the connection making
@@ -940,6 +970,20 @@ export class Accessory extends EventEmitter<Events> {
 
       // Found the characteristic - set the value if there is one
       if (typeof value !== 'undefined') {
+        if (!characteristic.props.perms.includes(Perms.PAIRED_WRITE)) { // check if write is allowed for this characteristic
+          debug('[%s] Tried writing to Characteristic which does not allow writing (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid);
+          const response: any = {
+            aid: aid,
+            iid: iid
+          };
+          response[statusKey] = Status.READ_ONLY_CHARACTERISTIC;
+          characteristics.push(response);
+
+          if (characteristics.length === data.length) {
+            callback(null, characteristics);
+          }
+          return;
+        }
 
         debug('[%s] Setting Characteristic "%s" to value %s', this.displayName, characteristic.displayName, value);
 
