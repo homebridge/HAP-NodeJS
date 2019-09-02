@@ -26,15 +26,16 @@ export function loadDirectory(dir: string): Accessory[] {
   var accessories: Accessory[] = [];
 
   fs.readdirSync(dir).forEach((file) => {
+    const suffix = file.split('_').pop();
 
     // "Accessories" are modules that export a single accessory.
-    if (file.split('_').pop() === 'accessory.js') {
+    if (suffix === 'accessory.js' || suffix === 'accessory.ts') {
       debug('Parsing accessory: %s', file);
       var loadedAccessory = require(path.join(dir, file)).accessory;
       accessories.push(loadedAccessory);
     }
     // "Accessory Factories" are modules that export an array of accessories.
-    else if (file.split('_').pop() === 'accfactory.js') {
+    else if (suffix === 'accfactory.js' ||suffix === 'accfactory.ts') {
       debug('Parsing accessory factory: %s', file);
 
       // should return an array of objects { accessory: accessory-json }
