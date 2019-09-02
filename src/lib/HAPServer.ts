@@ -853,11 +853,6 @@ export class HAPServer extends EventEmitter<Events> {
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
       return;
     }
-    if (this.listeners(HAPServerEventTypes.REQUEST_RESOURCE).length == 0) {
-      response.writeHead(405);
-      response.end();
-      return;
-    }
     if (request.method == "POST") {
       if (!session.encryption) {
         if (!request.headers || (request.headers && request.headers["authorization"] !== this.accessoryInfo.pincode)) {
@@ -877,7 +872,7 @@ export class HAPServer extends EventEmitter<Events> {
       this.emit(HAPServerEventTypes.REQUEST_RESOURCE, data, once((err: Error, resource: any) => {
         if (err) {
           debug("[%s] Error getting snapshot: %s", this.accessoryInfo.username, err.message);
-          response.writeHead(500);
+          response.writeHead(405);
           response.end();
         } else {
           response.writeHead(200, {"Content-Type": "image/jpeg"});

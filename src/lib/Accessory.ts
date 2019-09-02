@@ -109,6 +109,7 @@ export enum ResourceTypes {
 }
 
 export type Resource = {
+  'aid'?: number;
   'image-height': number;
   'image-width': number;
   'resource-type': ResourceTypes;
@@ -673,10 +674,7 @@ export class Accessory extends EventEmitter<Events> {
     this._server.on(HAPServerEventTypes.GET_CHARACTERISTICS, this._handleGetCharacteristics);
     this._server.on(HAPServerEventTypes.SET_CHARACTERISTICS, this._handleSetCharacteristics);
     this._server.on(HAPServerEventTypes.SESSION_CLOSE, this._handleSessionClose);
-
-    if (this.cameraSource) {
-        this._server.on(HAPServerEventTypes.REQUEST_RESOURCE, this._handleResource);
-    }
+    this._server.on(HAPServerEventTypes.REQUEST_RESOURCE, this._handleResource);
 
     const targetPort = info.port || 0;
     this._server.listen(targetPort);
@@ -993,16 +991,35 @@ export class Accessory extends EventEmitter<Events> {
 
   _handleResource = (data: Resource, callback: NodeCallback<Buffer>) => {
     if (data["resource-type"] == ResourceTypes.IMAGE) {
-      if (this.cameraSource) {
-        this.cameraSource.handleSnapshotRequest({
-          width: data["image-width"],
-          height: data["image-height"]
-        }, callback);
+      const aid = data["aid"]; // aid is optionally supplied by HomeKit (for example when camera is bridged, multiple cams, etc)
+
+      let cameraSource;
+      if (aid) {
+        if (this.aid === aid && this.cameraSource) { // bridge is probably not a camera but it is theoretically possible
+          cameraSource = this.cameraSource;
+        } else {
+          const accessory = this.getBridgedAccessoryByAID(aid);
+          if (accessory && accessory.cameraSource) {
+            cameraSource = accessory.cameraSource;
+          }
+        }
+      } else if (this.cameraSource) { // aid was not supplied, check if this accessory is a camera
+        cameraSource = this.cameraSource;
+      }
+
+      if (!cameraSource) {
+        callback(new Error("resource not found"));
         return;
       }
+
+      cameraSource.handleSnapshotRequest({
+        width: data["image-width"],
+        height: data["image-height"]
+      }, callback);
+      return;
     }
 
-    callback(new Error('resource not found'));
+    callback(new Error('unsupported image type: ' + data["resource-type"]));
   }
 
   _handleSessionClose = (sessionID: string, events: CharacteristicEvents) => {
