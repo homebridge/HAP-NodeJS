@@ -9,7 +9,7 @@ With this project, you should be able to create your own HomeKit Accessory on a 
 
 The implementation may not 100% follow the HAP MFi Specification since the MFi program doesn't allow individual developers to join.
 
-Remember to run `npm install` before actually running the server.
+Remember to run `npm install` and `npm install --only=dev` before actually running the server.
 
 Users can define their own accessories in: accessories/[name]_accessory.ts files, where [name] is a short description of the accessory. All defined accessories get loaded on server start. You can define accessories using an object literal notation (see [Fan_accessory.ts](src/accessories/Fan_accessory.ts) for an example) or you can use the API (see below).
 
