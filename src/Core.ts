@@ -36,7 +36,9 @@ accessories.forEach((accessory) => {
     // @ts-ignore
     username: accessory.username,
     // @ts-ignore
-    pincode: accessory.pincode
+    pincode: accessory.pincode,
+    // @ts-ignore
+    category: accessory.category
   });
 });
 
