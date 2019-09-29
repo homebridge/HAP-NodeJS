@@ -131,14 +131,14 @@ export type Events = {
   [HAPServerEventTypes.GET_CHARACTERISTICS]: (
     data: CharacteristicData[],
     events: CharacteristicEvents,
-    cb: NodeCallback<Characteristic[]>,
+    cb: NodeCallback<CharacteristicData[]>,
     remote: boolean,
     connectionID: string,
   ) => void;
   [HAPServerEventTypes.SET_CHARACTERISTICS]: (
     data: CharacteristicData[],
     events: CharacteristicEvents,
-    cb: NodeCallback<Characteristic[]>,
+    cb: NodeCallback<CharacteristicData[]>,
     remote: boolean,
     connectionID: string,
   ) => void;
@@ -705,7 +705,7 @@ export class HAPServer extends EventEmitter<Events> {
   _handlePairings = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: Buffer) => {
     // Only accept /pairing request if there is a secure session
     if (!this.allowInsecureRequest && !session.encryption) {
-      response.writeHead(401, {"Content-Type": "application/hap+json"});
+      response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
       return;
     }
@@ -787,7 +787,7 @@ export class HAPServer extends EventEmitter<Events> {
   // Called when the client wishes to fetch all data regarding our published Accessories.
   _handleAccessories = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: any) => {
     if (!this.allowInsecureRequest && !session.encryption) {
-      response.writeHead(401, {"Content-Type": "application/hap+json"});
+      response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
       return;
     }
@@ -831,7 +831,7 @@ export class HAPServer extends EventEmitter<Events> {
   // Called when the client wishes to get or set particular characteristics
   _handleCharacteristics = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: { length: number; toString: () => string; }) => {
     if (!this.allowInsecureRequest && !session.encryption) {
-      response.writeHead(401, {"Content-Type": "application/hap+json"});
+      response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
       return;
     }
@@ -857,7 +857,7 @@ export class HAPServer extends EventEmitter<Events> {
         var iid = parseInt(ids[1]); // instance ID (for characteristic)
         data.push({aid: aid, iid: iid});
       }
-      this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, data, events, once((err: Error, characteristics: Characteristic[]) => {
+      this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, data, events, once((err: Error, characteristics: CharacteristicData[]) => {
         if (!characteristics && !err)
           err = new Error("characteristics not supplied by the get-characteristics event callback");
         if (err) {
@@ -868,19 +868,29 @@ export class HAPServer extends EventEmitter<Events> {
             characteristics.push({
               aid: data[i].aid,
               iid: data[i].iid,
-              // @ts-ignore
               status: Status.SERVICE_COMMUNICATION_FAILURE
             });
           }
         }
-        // 207 is "multi-status" since HomeKit may be requesting multiple things and any one can fail independently
-        response.writeHead(207, {"Content-Type": "application/hap+json"});
+
+        let errorOccurred = false;
+        for (let i = 0; i < characteristics.length; i++) {
+          const value = characteristics[i];
+          if ((value.status !== undefined && value.status !== 0)
+              || (value.s !== undefined && value.s !== 0)) {
+            errorOccurred = true;
+            break;
+          }
+        }
+
+        // 207 "multi-status" is returned when an error occurs reading a characteristic. otherwise 200 is returned
+        response.writeHead(errorOccurred? 207: 200, {"Content-Type": "application/hap+json"});
         response.end(JSON.stringify({characteristics: characteristics}));
       }), false, session.sessionID);
     } else if (request.method == "PUT") {
       if (!session.encryption) {
         if (!request.headers || (request.headers && request.headers["authorization"] !== this.accessoryInfo.pincode)) {
-          response.writeHead(401, {"Content-Type": "application/hap+json"});
+          response.writeHead(470, {"Content-Type": "application/hap+json"});
           response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
           return;
         }
@@ -893,7 +903,7 @@ export class HAPServer extends EventEmitter<Events> {
       // requestData is a JSON payload like { characteristics: [ { aid: 1, iid: 8, value: true, ev: true } ] }
       var data = JSON.parse(requestData.toString()).characteristics as CharacteristicData[]; // pull out characteristics array
       // call out to listeners to retrieve the latest accessories JSON
-      this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, data, events, once((err: Error, characteristics: Characteristic[]) => {
+      this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, data, events, once((err: Error, characteristics: CharacteristicData[]) => {
         if (err) {
           debug("[%s] Error setting characteristics: %s", this.accessoryInfo.username, err.message);
           // rewrite characteristics array to include error status for each characteristic requested
@@ -907,9 +917,27 @@ export class HAPServer extends EventEmitter<Events> {
             });
           }
         }
-        // 207 is "multi-status" since HomeKit may be setting multiple things and any one can fail independently
-        response.writeHead(207, {"Content-Type": "application/hap+json"});
-        response.end(JSON.stringify({characteristics: characteristics}));
+
+        let multiStatus = false;
+        for (let i = 0; i < characteristics.length; i++) {
+          const characteristic = characteristics[i];
+          if ((characteristic.status !== undefined && characteristic.status !== 0)
+              || (characteristic.s !== undefined && characteristic.s !== 0)
+              || characteristic.value !== undefined) { // also send multiStatus on write response requests
+            multiStatus = true;
+            break;
+          }
+        }
+
+        if (multiStatus) {
+          // 207 is "multi-status" since HomeKit may be setting multiple things and any one can fail independently
+          response.writeHead(207, {"Content-Type": "application/hap+json"});
+          response.end(JSON.stringify({characteristics: characteristics}));
+        } else {
+          // if everything went fine send 204 no content response
+          response.writeHead(204); // 204 "No content"
+          response.end();
+        }
       }), false, session.sessionID);
     }
   }
@@ -917,14 +945,14 @@ export class HAPServer extends EventEmitter<Events> {
   // Called when controller request snapshot
   _handleResource = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: { length: number; toString: () => string; }) => {
     if (!this.allowInsecureRequest && !session.encryption) {
-      response.writeHead(401, {"Content-Type": "application/hap+json"});
+      response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
       return;
     }
     if (request.method == "POST") {
       if (!session.encryption) {
         if (!request.headers || (request.headers && request.headers["authorization"] !== this.accessoryInfo.pincode)) {
-          response.writeHead(401, {"Content-Type": "application/hap+json"});
+          response.writeHead(470, {"Content-Type": "application/hap+json"});
           response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
           return;
         }
@@ -956,7 +984,7 @@ export class HAPServer extends EventEmitter<Events> {
   _handleRemoteCharacteristicsWrite = (request: HapRequest, remoteSession: RemoteSession, session: Session, events: any) => {
     var data = JSON.parse(request.requestBody.toString());
     // call out to listeners to retrieve the latest accessories JSON
-    this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, data, events, once((err: Error, characteristics: Characteristic[]) => {
+    this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, data, events, once((err: Error, characteristics: CharacteristicData[]) => {
       if (err) {
         debug("[%s] Error setting characteristics: %s", this.accessoryInfo.username, err.message);
         // rewrite characteristics array to include error status for each characteristic requested
@@ -975,7 +1003,7 @@ export class HAPServer extends EventEmitter<Events> {
 
   _handleRemoteCharacteristicsRead = (request: HapRequest, remoteSession: RemoteSession, session: Session, events: any) => {
     var data = JSON.parse(request.requestBody.toString());
-    this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, data, events, (err: Error, characteristics: Characteristic[]) => {
+    this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, data, events, (err: Error, characteristics: CharacteristicData[]) => {
       if (!characteristics && !err)
         err = new Error("characteristics not supplied by the get-characteristics event callback");
       if (err) {
