@@ -11,14 +11,15 @@ import {
   CharacteristicSetCallback
 } from './Characteristic';
 import { Advertiser } from './Advertiser';
-import { HAPServer, HAPServerEventTypes, Status } from './HAPServer';
-import { AccessoryInfo } from './model/AccessoryInfo';
+import { Codes, HAPServer, HAPServerEventTypes, Status } from './HAPServer';
+import { AccessoryInfo, PairingInformation, PermissionTypes } from './model/AccessoryInfo';
 import { IdentifierCache } from './model/IdentifierCache';
 import {
   CharacteristicChange,
   CharacteristicData, CharacteristicValue,
   NodeCallback,
   Nullable,
+  PairingsCallback,
   ToHAPOptions,
   VoidCallback,
   WithUUID,
@@ -117,7 +118,9 @@ export type Resource = {
 
 type IdentifyCallback = VoidCallback;
 type PairCallback = VoidCallback;
-type UnpairCallback = VoidCallback;
+type AddPairingCallback = PairingsCallback<void>;
+type RemovePairingCallback = PairingsCallback<void>;
+type ListPairingsCallback = PairingsCallback<PairingInformation[]>;
 type HandleAccessoriesCallback = NodeCallback<{ accessories: any[] }>;
 type HandleGetCharacteristicsCallback = NodeCallback<Characteristic[]>;
 type HandleSetCharacteristicsCallback = NodeCallback<Characteristic[]>;
@@ -669,7 +672,9 @@ export class Accessory extends EventEmitter<Events> {
     this._server.on(HAPServerEventTypes.LISTENING, this._onListening);
     this._server.on(HAPServerEventTypes.IDENTIFY, this._handleIdentify);
     this._server.on(HAPServerEventTypes.PAIR, this._handlePair);
-    this._server.on(HAPServerEventTypes.UNPAIR, this._handleUnpair);
+    this._server.on(HAPServerEventTypes.ADD_PAIRING, this._handleAddPairing);
+    this._server.on(HAPServerEventTypes.REMOVE_PAIRING, this._handleRemovePairing);
+    this._server.on(HAPServerEventTypes.LIST_PAIRINGS, this._handleListPairings);
     this._server.on(HAPServerEventTypes.ACCESSORIES, this._handleAccessories);
     this._server.on(HAPServerEventTypes.GET_CHARACTERISTICS, this._handleGetCharacteristics);
     this._server.on(HAPServerEventTypes.SET_CHARACTERISTICS, this._handleSetCharacteristics);
@@ -750,7 +755,7 @@ export class Accessory extends EventEmitter<Events> {
 
     debug("[%s] Paired with client %s", this.displayName, username);
 
-    this._accessoryInfo && this._accessoryInfo.addPairedClient(username, publicKey);
+    this._accessoryInfo && this._accessoryInfo.addPairedClient(username, publicKey, PermissionTypes.ADMIN);
     this._accessoryInfo && this._accessoryInfo.save();
 
     // update our advertisement so it can pick up on the paired status of AccessoryInfo
@@ -759,22 +764,69 @@ export class Accessory extends EventEmitter<Events> {
     callback();
   }
 
-// Called when HAPServer wishes to remove/unpair the pairing information of a client
-  _handleUnpair = (username: string, callback: UnpairCallback) => {
-
-    debug("[%s] Unpairing with client %s", this.displayName, username);
-
-    // Unpair
-    this._accessoryInfo && this._accessoryInfo.removePairedClient(username);
-    this._accessoryInfo && this._accessoryInfo.save();
-
-    // update our advertisement so it can pick up on the paired status of AccessoryInfo
-    if (this._advertiser) {
-      this._advertiser.updateAdvertisement();
+// called when a controller adds an additional pairing
+  _handleAddPairing = (controller: string, username: string, publicKey: Buffer, permission: PermissionTypes, callback: AddPairingCallback) => {
+    if (!this._accessoryInfo) {
+      callback(Codes.UNAVAILABLE);
+      return;
     }
 
-    callback();
-  }
+    if (!this._accessoryInfo.hasAdminPermissions(controller)) {
+      callback(Codes.AUTHENTICATION);
+      return;
+    }
+
+    const existingKey = this._accessoryInfo.getClientPublicKey(username);
+    if (existingKey) {
+      if (existingKey.toString() !== publicKey.toString()) {
+        callback(Codes.UNKNOWN);
+        return;
+      }
+
+      this._accessoryInfo.updatePermission(username, permission);
+    } else {
+      this._accessoryInfo.addPairedClient(username, publicKey, permission);
+    }
+
+    this._accessoryInfo.save();
+    // there should be no need to update advertisement
+    callback(0);
+  };
+
+  _handleRemovePairing = (controller: string, username: string, callback: RemovePairingCallback) => {
+    if (!this._accessoryInfo) {
+      callback(Codes.UNAVAILABLE);
+      return;
+    }
+
+    if (!this._accessoryInfo.hasAdminPermissions(controller)) {
+      callback(Codes.AUTHENTICATION);
+      return;
+    }
+
+    this._accessoryInfo.removePairedClient(controller, username);
+    this._accessoryInfo.save();
+
+    if (!this._accessoryInfo.paired()) {
+      this._advertiser && this._advertiser.updateAdvertisement();
+    }
+
+    callback(0);
+  };
+
+  _handleListPairings = (controller: string, callback: ListPairingsCallback) => {
+    if (!this._accessoryInfo) {
+      callback(Codes.UNAVAILABLE);
+      return;
+    }
+
+    if (!this._accessoryInfo.hasAdminPermissions(controller)) {
+      callback(Codes.AUTHENTICATION);
+      return;
+    }
+
+    callback(0, this._accessoryInfo.listPairings());
+  };
 
 // Called when an iOS client wishes to know all about our accessory via JSON payload
   _handleAccessories = (callback: HandleAccessoriesCallback) => {

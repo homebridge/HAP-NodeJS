@@ -4,6 +4,18 @@ import tweetnacl from 'tweetnacl';
 import bufferShim from 'buffer-shims';
 
 import { Categories } from '../Accessory';
+import { Session } from "../util/eventedhttp";
+
+export enum PermissionTypes {
+  USER = 0x00,
+  ADMIN = 0x01, // admins are the only ones who can add/remove/list pairings (also some characteristics are restricted)
+}
+
+export type PairingInformation = {
+  username: string,
+  publicKey: Buffer,
+  permission: PermissionTypes,
+}
 
 /**
  * AccessoryInfo is a model class containing a subset of Accessory data relevant to the internal HAP server,
@@ -16,7 +28,8 @@ export class AccessoryInfo {
   pincode: string;
   signSk: any;
   signPk: any;
-  pairedClients: Record<string, Buffer>;
+  pairedClients: Record<string, PairingInformation>;
+  pairedAdminClients: number;
   configVersion: number;
   configHash: string;
   setupID: string;
@@ -35,7 +48,8 @@ export class AccessoryInfo {
     this.pincode = "";
     this.signSk = bufferShim.alloc(0);
     this.signPk = bufferShim.alloc(0);
-    this.pairedClients = {}; // pairedClients[clientUsername:string] = clientPublicKey:Buffer
+    this.pairedClients = {};
+    this.pairedAdminClients = 0;
     this.configVersion = 1;
     this.configHash = "";
 
@@ -53,16 +67,63 @@ export class AccessoryInfo {
    * Add a paired client to memory.
    * @param {string} username
    * @param {Buffer} publicKey
+   * @param {PermissionTypes} permission
    */
-  addPairedClient = (username: string, publicKey: Buffer) => {
-    this.pairedClients[username] = publicKey;
-  }
+  addPairedClient = (username: string, publicKey: Buffer, permission: PermissionTypes) => {
+    this.pairedClients[username] = {
+      username: username,
+      publicKey: publicKey,
+      permission: permission
+    };
+
+    if (permission === PermissionTypes.ADMIN)
+      this.pairedAdminClients++;
+  };
+
+  updatePermission = (username: string, permission: PermissionTypes) => {
+    const pairingInformation = this.pairedClients[username];
+
+    if (pairingInformation) {
+      const oldPermission = pairingInformation.permission;
+      pairingInformation.permission = permission;
+
+      if (oldPermission === PermissionTypes.ADMIN && permission !== PermissionTypes.ADMIN) {
+        this.pairedAdminClients--;
+      } else if (oldPermission !== PermissionTypes.ADMIN && permission === PermissionTypes.ADMIN) {
+        this.pairedAdminClients++;
+      }
+    }
+  };
+
+  listPairings = () => {
+    const array = [] as PairingInformation[];
+
+    for (const username in this.pairedClients) {
+      const pairingInformation = this.pairedClients[username] as PairingInformation;
+      array.push(pairingInformation);
+    }
+
+    return array;
+  };
 
   /**
    * Remove a paired client from memory.
+   * @param controller - the username/identifier of the controller initiated the removal of the pairing
    * @param {string} username
    */
-  removePairedClient = (username: string) => {
+  removePairedClient = (controller: string, username: string) => {
+    this._removePairedClient0(controller, username);
+
+    if (this.pairedAdminClients === 0) { // if we don't have any admin clients left paired it is required to kill all normal clients
+      for (const username0 in this.pairedClients) {
+        this._removePairedClient0(controller, username0);
+      }
+    }
+  };
+
+  _removePairedClient0 = (controller: string, username: string) => {
+    if (this.pairedClients[username] && this.pairedClients[username].permission === PermissionTypes.ADMIN)
+      this.pairedAdminClients--;
     delete this.pairedClients[username];
 
     if (Object.keys(this.pairedClients).length == 0) {
@@ -73,12 +134,40 @@ export class AccessoryInfo {
       this.relayPairedControllers = {};
       this.accessoryBagURL = "";
     }
-  }
+
+    const existingSession = Session.sessions[username];
+    if (existingSession) {
+      if (controller === username) {
+        existingSession.destroyConnectionAfterWrite();
+      } else {
+        existingSession.destroyConnection();
+      }
+    }
+  };
+
+  /**
+   * Check if username is paired
+   * @param username
+   */
+  isPaired = (username: string) => {
+    return !!this.pairedClients[username];
+  };
+
+  hasAdminPermissions = (username: string) => {
+    if (!username) return false;
+    const pairingInformation = this.pairedClients[username];
+    return !!pairingInformation && pairingInformation.permission === PermissionTypes.ADMIN;
+  };
 
 // Gets the public key for a paired client as a Buffer, or falsey value if not paired.
   getClientPublicKey = (username: string) => {
-    return this.pairedClients[username];
-  }
+    const pairingInformation = this.pairedClients[username];
+    if (pairingInformation) {
+      return pairingInformation.publicKey;
+    } else {
+      return undefined;
+    }
+  };
 
 // Returns a boolean indicating whether this accessory has been paired with a client.
   paired = (): boolean => {
@@ -109,6 +198,10 @@ export class AccessoryInfo {
       signSk: this.signSk.toString('hex'),
       signPk: this.signPk.toString('hex'),
       pairedClients: {},
+      // moving permissions into an extra object, so there is nothing to migrate from old files.
+      // if the legac node-persist storage should be upgraded some time, it would be reasonable to combine the storage
+      // of public keys (pairedClients object) and permissions.
+      pairedClientsPermission: {},
       configVersion: this.configVersion,
       configHash: this.configHash,
       setupID: this.setupID,
@@ -121,9 +214,11 @@ export class AccessoryInfo {
     };
 
     for (var username in this.pairedClients) {
-      var publicKey = this.pairedClients[username];
+      const pairingInformation = this.pairedClients[username];
       //@ts-ignore
-      saved.pairedClients[username] = publicKey.toString('hex');
+      saved.pairedClients[username] = pairingInformation.publicKey.toString('hex');
+      // @ts-ignore
+      saved.pairedClientsPermission[username] = pairingInformation.permission;
     }
 
     var key = AccessoryInfo.persistKey(this.username);
@@ -170,7 +265,17 @@ export class AccessoryInfo {
       info.pairedClients = {};
       for (var username in saved.pairedClients || {}) {
         var publicKey = saved.pairedClients[username];
-        info.pairedClients[username] = bufferShim.from(publicKey, 'hex');
+        let permission = saved.pairedClientsPermission? saved.pairedClientsPermission[username]: undefined;
+        if (permission === undefined)
+          permission = PermissionTypes.ADMIN; // defaulting to admin permissions is the only suitable solution, there is no way to recover permissions
+
+        info.pairedClients[username] = {
+          username: username,
+          publicKey: bufferShim.from(publicKey, 'hex'),
+          permission: permission
+        };
+        if (permission === PermissionTypes.ADMIN)
+          info.pairedAdminClients++;
       }
 
       info.configVersion = saved.configVersion || 1;

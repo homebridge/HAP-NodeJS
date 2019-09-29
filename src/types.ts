@@ -12,6 +12,7 @@ export interface ToHAPOptions {
 export type Callback = (...args: any[]) => void;
 export type NodeCallback<T> = (err: Nullable<Error> | undefined, data?: T) => void;
 export type VoidCallback = (err?: Nullable<Error>) => void;
+export type PairingsCallback<T> = (err: number, data?: T) => void;
 export type PrimitiveTypes = string | number | boolean;
 
 type HAPProps =
