@@ -26,7 +26,7 @@ export * from './lib/util/tlv';
 
 export * from './types';
 
-export function init(storagePath: string) {
+export function init(storagePath?: string) {
   // initialize our underlying storage system, passing on the directory if needed
   if (typeof storagePath !== 'undefined')
     storage.initSync({ dir: storagePath });
