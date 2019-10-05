@@ -6,38 +6,60 @@
 HAP-NodeJS is a Node.js implementation of the HomeKit Accessory Server.
 
 With this project, you should be able to create your own HomeKit Accessory on
-a Raspberry Pi, Intel Edison, or any other platform that can run Node.js :)
+a Raspberry Pi, Intel Edison, or any other platform that can run Node.js 😃
 
 The implementation may not 100% follow the HAP MFi Specification since the MFi
 program doesn't allow individual developers to join.
 
-Remember to run `yarn`/`npm install` before actually running the server.
+## Setting up the project
 
-Users can define their own accessories in: `accessories/[name]_accessory.ts`
-files, where `[name]` is a short description of the accessory. All defined
-accessories get loaded on server start. You can define accessories using an
-object literal notation (see [`Fan_accessory.ts`](src/accessories/Fan_accessory.ts)
-for an example) or you can use the API (see below).
+Run the following commands to clone the project, install all dependencies and
+compile the Typescript sources to Javascript.
+
+```bash
+git clone https://github.com/KhaosT/HAP-NodeJS
+cd HAP-NodeJS
+```
+
+Then depending on which package manager you use, run the following:
+
+```bash
+yarn
+yarn build
+```
+
+OR
+
+```bash
+npm install && npm install --only=dev
+npm run build
+```
 
 You can use the following command to start the HAP Server in Bridged mode:
 
-```sh
-ts-node --files src/BridgedCore.ts
+```bash
+node dist/BridgedCore.ts
 ```
 
 Or, if you wish to host each Accessory as an independent HomeKit device:
 
-```sh
-ts-node --files src/Core.ts
+```bash
+node dist/Core.ts
 ```
 
-The HAP-NodeJS library uses the [`debug`][link-lib-debug] library for log output.
-You can print some or all of the logs by setting the `DEBUG` environment
+The HAP-NodeJS library uses the [`debug`][link-lib-debug] library for log
+output. You can print some or all of the logs by setting the `DEBUG` environment
 variable. For instance, to see all debug logs while running the server:
 
-```sh
-DEBUG=* ts-node --files src/BridgedCore.ts
+```bash
+DEBUG=* node dist/BridgedCore.ts
 ```
+
+For more guidance on developing accessories, please check
+[ACCESSORIES.md](ACCESSORIES.md).
+
+For more information about contributing patches, please check
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Projects based on HAP-NodeJS
 
@@ -61,6 +83,18 @@ DEBUG=* ts-node --files src/BridgedCore.ts
 - [AccessoryServer][link-proj-accessoryserver] - HomeKit integration for
   IR/RF/IP-devices
 
+## Notes
+
+Special thanks to [Alex Skalozub][link-alex-skalozub], who reverse-engineered
+the server side HAP. ~~You can find his research [here][link-homekit-research]
+.~~ (Sadly, on Nov 4, Apple sent the [DMCA][link-apple-dmca] request to Github
+to remove the research.)
+
+[There](http://instagram.com/p/t4cPlcDksQ/) is a video demo running this project
+on Intel Edison.
+
+If you are interested in HAP over BTLE, you might want to check [this][link-hap-over-btle].
+
 [icon-license]: https://img.shields.io/github/license/KhaosT/hap-nodejs.svg?longCache=true&style=flat-square
 [link-license]: LICENSE
 [icon-npm]: https://img.shields.io/npm/v/hap-nodejs.svg?longCache=true&style=flat-square
@@ -74,3 +108,8 @@ DEBUG=* ts-node --files src/BridgedCore.ts
 [link-proj-node-red-contrib-homekit]: https://github.com/NRCHKB/node-red-contrib-homekit-bridged
 [link-proj-ioBroker-homekit]: https://github.com/ioBroker/ioBroker.homekit2
 [link-proj-accessoryserver]: https://github.com/Appyx/AccessoryServer
+
+[link-alex-skalozub]: https://twitter.com/pieceofsummer
+[link-homekit-research]: https://gist.github.com/pieceofsummer/13272bf76ac1d6b58a30
+[link-apple-dmca]: https://github.com/github/dmca/blob/master/2014/2014-11-04-Apple.md
+[link-hap-over-btle]: https://gist.github.com/KhaosT/6ff09ba71d306d4c1079

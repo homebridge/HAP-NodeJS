@@ -29,16 +29,6 @@
   developing, please [rebase or squash them][link-git-rewrite] before
   submitting.
 
-## Migrating to v0.5.0
-
-Users with pre-existing accessories will find themselves unable to run HAP
--NodeJS upon upgrading. This is due to the fact that the project was re-written
-in [Typescript][link-typescript].
-
-By default, the Typescript compiler is not set up to allow importing Javascript
-files. This can easily be changed by setting the [`allowJs`][link-tsconfig-options]
-option to `true` in your `tsconfig.json`.
-
 ## Running tests
 
 In order to contribute, you'll need to checkout the source from GitHub and
@@ -69,61 +59,9 @@ will be deployed as soon as possible.
 
 **Happy coding**!
 
-## HomeKit Protocol
-
-Hint: the Homekit Application Protocol (HAP) allows that you can pair a Homekit
-device with one device. As soon as the Homekit device is paired, its not
-possible to pair with another iOS device anymore.
-
-## API
-
-HAP-NodeJS provides a set of classes you can use to construct Accessories
-programatically. For an example implementation, see [Lock_accessory.ts](src/accessories/Lock_accessory.ts).
-
-The key classes intended for use by API consumers are:
-
-- [Accessory](src/lib/Accessory.ts): Represents a HomeKit device that can be
-published on your local network.
-
-- [Bridge](src/lib/Bridge.ts): A kind of Accessory that can host other
-Accessories "behind" it while only publishing a single device.
-
-- [Service](src/lib/Service.ts): Represents a set of grouped values necessary
-to provide a logical function. Most of the time, when you think of a
-supported HomeKit device like "Thermostat" or "Door Lock", you're actually
-thinking of a Service. Accessories can expose multiple services.
-
-- [Characteristic](src/lib/Characteristic.ts): Represents a particular typed
-variable assigned to a Service, for instance the `LockMechanism` Service
-contains a `CurrentDoorState` Characteristic describing whether the door
-is currently locked.
-
-All known built-in Service and Characteristic types that HomeKit supports are
-exposed as a separate subclass in [HomeKitTypes](src/lib/gen/HomeKit.ts).
-
-See each of the corresponding classes for more explanation and notes.
-
-## Notes
-
-Special thanks to [Alex Skalozub][link-alex-skalozub], who reverse-engineered
-the server side HAP. ~~You can find his research [here][link-homekit-research]
-.~~ (Sadly, on Nov 4, Apple sent the [DMCA][link-apple-dmca] request to Github
-to remove the research.)
-
-[There](http://instagram.com/p/t4cPlcDksQ/) is a video demo running this project
-on Intel Edison.
-
-If you are interested in HAP over BTLE, you might want to check [this][link-hap-over-btle].
-
 [link-eslint]: https://eslint.org/
 [link-prettier]: https://prettier.io/
-[link-typescript]: https://www.typescriptlang.org/
-[link-tsconfig-options]: https://www.typescriptlang.org/docs/handbook/compiler-options.html
 [link-semver]: http://semver.org/
 [link-git-rewrite]: http://www.git-scm.com/book/en/v2/Git-Tools-Rewriting-History#Changing-Multiple-Commit-Messages
 [link-conventional-changelog]: https://github.com/conventional-changelog/conventional-changelog
 [link-responsible-disclosure]: http://en.wikipedia.org/wiki/Responsible_disclosure
-[link-alex-skalozub]: https://twitter.com/pieceofsummer
-[link-homekit-research]: https://gist.github.com/pieceofsummer/13272bf76ac1d6b58a30
-[link-apple-dmca]: https://github.com/github/dmca/blob/master/2014/2014-11-04-Apple.md
-[link-hap-over-btle]: https://gist.github.com/KhaosT/6ff09ba71d306d4c1079
