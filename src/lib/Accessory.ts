@@ -27,6 +27,7 @@ import {
 } from '../types';
 import { Camera } from './Camera';
 import { EventEmitter } from './EventEmitter';
+import { Session } from "./util/eventedhttp";
 
 // var HomeKitTypes = require('./gen/HomeKitTypes');
 // var RelayServer = require("./util/relayserver").RelayServer;
@@ -766,13 +767,13 @@ export class Accessory extends EventEmitter<Events> {
   }
 
 // called when a controller adds an additional pairing
-  _handleAddPairing = (controller: string, username: string, publicKey: Buffer, permission: PermissionTypes, callback: AddPairingCallback) => {
+  _handleAddPairing = (controller: Session, username: string, publicKey: Buffer, permission: PermissionTypes, callback: AddPairingCallback) => {
     if (!this._accessoryInfo) {
       callback(Codes.UNAVAILABLE);
       return;
     }
 
-    if (!this._accessoryInfo.hasAdminPermissions(controller)) {
+    if (!this._accessoryInfo.hasAdminPermissions(controller.username!)) {
       callback(Codes.AUTHENTICATION);
       return;
     }
@@ -794,13 +795,13 @@ export class Accessory extends EventEmitter<Events> {
     callback(0);
   };
 
-  _handleRemovePairing = (controller: string, username: string, callback: RemovePairingCallback) => {
+  _handleRemovePairing = (controller: Session, username: string, callback: RemovePairingCallback) => {
     if (!this._accessoryInfo) {
       callback(Codes.UNAVAILABLE);
       return;
     }
 
-    if (!this._accessoryInfo.hasAdminPermissions(controller)) {
+    if (!this._accessoryInfo.hasAdminPermissions(controller.username!)) {
       callback(Codes.AUTHENTICATION);
       return;
     }
@@ -815,13 +816,13 @@ export class Accessory extends EventEmitter<Events> {
     callback(0);
   };
 
-  _handleListPairings = (controller: string, callback: ListPairingsCallback) => {
+  _handleListPairings = (controller: Session, callback: ListPairingsCallback) => {
     if (!this._accessoryInfo) {
       callback(Codes.UNAVAILABLE);
       return;
     }
 
-    if (!this._accessoryInfo.hasAdminPermissions(controller)) {
+    if (!this._accessoryInfo.hasAdminPermissions(controller.username!)) {
       callback(Codes.AUTHENTICATION);
       return;
     }

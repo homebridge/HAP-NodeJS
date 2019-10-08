@@ -124,9 +124,9 @@ export type Events = {
   [HAPServerEventTypes.IDENTIFY]: (cb: VoidCallback) => void;
   [HAPServerEventTypes.LISTENING]: (port: number) => void;
   [HAPServerEventTypes.PAIR]: (clientUsername: string, clientLTPK: Buffer, cb: VoidCallback) => void;
-  [HAPServerEventTypes.ADD_PAIRING]: (controller: string, username: string, publicKey: Buffer, permission: number, callback: PairingsCallback<void>) => void;
-  [HAPServerEventTypes.REMOVE_PAIRING]: (controller: string, username: string, callback: PairingsCallback<void>) => void;
-  [HAPServerEventTypes.LIST_PAIRINGS]: (controller: string, callback: PairingsCallback<PairingInformation[]>) => void;
+  [HAPServerEventTypes.ADD_PAIRING]: (controller: Session, username: string, publicKey: Buffer, permission: number, callback: PairingsCallback<void>) => void;
+  [HAPServerEventTypes.REMOVE_PAIRING]: (controller: Session, username: string, callback: PairingsCallback<void>) => void;
+  [HAPServerEventTypes.LIST_PAIRINGS]: (controller: Session, callback: PairingsCallback<PairingInformation[]>) => void;
   [HAPServerEventTypes.ACCESSORIES]: (cb: NodeCallback<Accessory[]>) => void;
   [HAPServerEventTypes.GET_CHARACTERISTICS]: (
     data: CharacteristicData[],
@@ -723,7 +723,7 @@ export class HAPServer extends EventEmitter<Events> {
       const publicKey = objects[TLVValues.PUBLIC_KEY];
       const permissions = objects[TLVValues.PERMISSIONS][0] as PermissionTypes;
 
-      this.emit(HAPServerEventTypes.ADD_PAIRING, session.username, identifier, publicKey, permissions, once((errorCode: number, data?: void) => {
+      this.emit(HAPServerEventTypes.ADD_PAIRING, session, identifier, publicKey, permissions, once((errorCode: number, data?: void) => {
         if (errorCode > 0) {
           debug("[%s] Pairings: failed ADD_PAIRING with code %d", this.accessoryInfo.username, errorCode);
           response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
@@ -738,7 +738,7 @@ export class HAPServer extends EventEmitter<Events> {
     } else if (method === Methods.REMOVE_PAIRING) {
       const identifier = objects[TLVValues.IDENTIFIER].toString();
 
-      this.emit(HAPServerEventTypes.REMOVE_PAIRING, session.username, identifier, once((errorCode: number, data?: void) => {
+      this.emit(HAPServerEventTypes.REMOVE_PAIRING, session, identifier, once((errorCode: number, data?: void) => {
         if (errorCode > 0) {
           debug("[%s] Pairings: failed REMOVE_PAIRING with code %d", this.accessoryInfo.username, errorCode);
           response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
@@ -751,7 +751,7 @@ export class HAPServer extends EventEmitter<Events> {
         debug("[%s] Pairings: successfully executed REMOVE_PAIRING", this.accessoryInfo.username);
       }));
     } else if (method === Methods.LIST_PAIRINGS) {
-      this.emit(HAPServerEventTypes.LIST_PAIRINGS, session.username, once((errorCode: number, data?: PairingInformation[]) => {
+      this.emit(HAPServerEventTypes.LIST_PAIRINGS, session, once((errorCode: number, data?: PairingInformation[]) => {
         if (errorCode > 0) {
           debug("[%s] Pairings: failed LIST_PAIRINGS with code %d", this.accessoryInfo.username, errorCode);
           response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
