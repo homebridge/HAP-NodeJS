@@ -136,37 +136,76 @@ export class EventedHTTPServer extends EventEmitter<Events> {
 
 export class Session {
 
-  static sessions: Record<string, Session> = {};
+  /*
+    Session dictionary indexed by username/identifier. The username uniquely identifies every person added to the home.
+    So there can be multiple sessions open for a single username (multiple Apple devices connected to the same Apple ID).
+   */
+  private static sessions: Record<string, Session[]> = {};
 
   _connection: EventedHTTPServerConnection;
 
-  sessionID: SessionIdentifier;
+  sessionID: string;
   encryption?: HAPEncryption;
   srpServer?: srp.Server;
-  username?: string;
+  username?: string; // username is unique to every user in the home
 
   constructor(connection: EventedHTTPServerConnection) {
     this._connection = connection;
     this.sessionID = connection.sessionID;
   }
 
+  /*
+    establishSession gets called after an pairVerify.
+    establishSession does not get called after the first pairing gets added, as any HomeKit controller will initiate a
+    pairVerify after the pair procedure. HAP-NodeJS though will treat the connection as verified immediately
+    after the pair procedure was successful (based on the encryption field).
+   */
   establishSession = (username: string) => {
     this.username = username;
 
-    Session.sessions[username] = this;
+    let sessions: Session[] = Session.sessions[username];
+    if (!sessions) {
+      sessions = [];
+      Session.sessions[username] = sessions;
+    }
+
+    if (sessions.includes(this)) {
+      return; // ensure this doesn't get added more than one time
+    }
+
+    sessions.push(this);
   };
 
+  // called when socket of this session is destroyed
   _connectionDestroyed = () => {
-    if (this.username)
-      delete Session.sessions[this.username];
+    if (!this.username) {
+      return;
+    }
+
+    const sessions: Session[] = Session.sessions[this.username];
+    if (sessions) {
+      const index = sessions.indexOf(this);
+      if (index >= 0) {
+        sessions.splice(index, 1);
+      }
+    }
   };
 
-  destroyConnection = () => {
-    this._connection._clientSocket.destroy();
-  };
+  static destroyExistingConnectionsAfterUnpair = (initiator: Session, username: string) => {
+    const sessions: Session[] = Session.sessions[username];
 
-  destroyConnectionAfterWrite = () => {
-    this._connection._killSocketAfterWrite = true;
+    if (sessions) {
+      sessions.forEach(session => {
+        if (initiator.sessionID === session.sessionID) {
+          // the session which initiated the unpair removed it's own username, wait until the unpair request is finished
+          // until we kill his connection
+          session._connection._killSocketAfterWrite = true;
+        } else {
+          // as HomeKit requires it, destroy any active session which got unpaired
+          session._connection._clientSocket.destroy();
+        }
+      });
+    }
   };
 
 }

@@ -108,10 +108,10 @@ export class AccessoryInfo {
 
   /**
    * Remove a paired client from memory.
-   * @param controller - the username/identifier of the controller initiated the removal of the pairing
+   * @param controller - the session of the controller initiated the removal of the pairing
    * @param {string} username
    */
-  removePairedClient = (controller: string, username: string) => {
+  removePairedClient = (controller: Session, username: string) => {
     this._removePairedClient0(controller, username);
 
     if (this.pairedAdminClients === 0) { // if we don't have any admin clients left paired it is required to kill all normal clients
@@ -121,7 +121,7 @@ export class AccessoryInfo {
     }
   };
 
-  _removePairedClient0 = (controller: string, username: string) => {
+  _removePairedClient0 = (controller: Session, username: string) => {
     if (this.pairedClients[username] && this.pairedClients[username].permission === PermissionTypes.ADMIN)
       this.pairedAdminClients--;
     delete this.pairedClients[username];
@@ -135,14 +135,7 @@ export class AccessoryInfo {
       this.accessoryBagURL = "";
     }
 
-    const existingSession = Session.sessions[username];
-    if (existingSession) {
-      if (controller === username) {
-        existingSession.destroyConnectionAfterWrite();
-      } else {
-        existingSession.destroyConnection();
-      }
-    }
+    Session.destroyExistingConnectionsAfterUnpair(controller, username);
   };
 
   /**
