@@ -69,6 +69,12 @@ export interface CharacteristicProps {
   validValueRanges?: [number, number];
 }
 
+export enum Access {
+  READ = 0x00,
+  WRITE = 0x01,
+  NOTIFY = 0x02
+}
+
 export enum CharacteristicEventTypes {
   GET = "get",
   SET = "set",
@@ -142,6 +148,7 @@ export class Characteristic extends EventEmitter<Events> {
   static AudioFeedback: typeof HomeKitTypes.Generated.AudioFeedback;
   static BatteryLevel: typeof HomeKitTypes.Generated.BatteryLevel;
   static Brightness: typeof HomeKitTypes.Generated.Brightness;
+  static ButtonEvent: typeof HomeKitTypes.Remote.ButtonEvent;
   static CarbonDioxideDetected: typeof HomeKitTypes.Generated.CarbonDioxideDetected;
   static CarbonDioxideLevel: typeof HomeKitTypes.Generated.CarbonDioxideLevel;
   static CarbonDioxidePeakLevel: typeof HomeKitTypes.Generated.CarbonDioxidePeakLevel;
@@ -251,6 +258,7 @@ export class Characteristic extends EventEmitter<Events> {
   static SecuritySystemAlarmType: typeof HomeKitTypes.Generated.SecuritySystemAlarmType;
   static SecuritySystemCurrentState: typeof HomeKitTypes.Generated.SecuritySystemCurrentState;
   static SecuritySystemTargetState: typeof HomeKitTypes.Generated.SecuritySystemTargetState;
+  static SelectedAudioStreamConfiguration: typeof HomeKitTypes.Remote.SelectedAudioStreamConfiguration;
   /**
    * @deprecated Removed in iOS 11. Use SelectedRTPStreamConfiguration instead.
    */
@@ -260,7 +268,9 @@ export class Characteristic extends EventEmitter<Events> {
   static ServiceLabelIndex: typeof HomeKitTypes.Generated.ServiceLabelIndex;
   static ServiceLabelNamespace: typeof HomeKitTypes.Generated.ServiceLabelNamespace;
   static SetDuration: typeof HomeKitTypes.Generated.SetDuration;
+  static SetupDataStreamTransport: typeof HomeKitTypes.DataStream.SetupDataStreamTransport;
   static SetupEndpoints: typeof HomeKitTypes.Generated.SetupEndpoints;
+  static SiriInputType: typeof HomeKitTypes.Remote.SiriInputType;
   static SlatType: typeof HomeKitTypes.Generated.SlatType;
   static SleepDiscoveryMode: typeof HomeKitTypes.TV.SleepDiscoveryMode;
   static SmokeDetected: typeof HomeKitTypes.Generated.SmokeDetected;
@@ -273,11 +283,14 @@ export class Characteristic extends EventEmitter<Events> {
   static StreamingStatus: typeof HomeKitTypes.Generated.StreamingStatus;
   static SulphurDioxideDensity: typeof HomeKitTypes.Generated.SulphurDioxideDensity;
   static SupportedAudioStreamConfiguration: typeof HomeKitTypes.Generated.SupportedAudioStreamConfiguration;
+  static SupportedDataStreamTransportConfiguration: typeof HomeKitTypes.DataStream.SupportedDataStreamTransportConfiguration;
   static SupportedRTPConfiguration: typeof HomeKitTypes.Generated.SupportedRTPConfiguration;
   static SupportedVideoStreamConfiguration: typeof HomeKitTypes.Generated.SupportedVideoStreamConfiguration;
   static SwingMode: typeof HomeKitTypes.Generated.SwingMode;
   static TargetAirPurifierState: typeof HomeKitTypes.Generated.TargetAirPurifierState;
   static TargetAirQuality: typeof HomeKitTypes.Generated.TargetAirQuality;
+  static TargetControlList: typeof HomeKitTypes.Remote.TargetControlList;
+  static TargetControlSupportedConfiguration: typeof HomeKitTypes.Remote.TargetControlSupportedConfiguration;
   static TargetDoorState: typeof HomeKitTypes.Generated.TargetDoorState;
   static TargetFanState: typeof HomeKitTypes.Generated.TargetFanState;
   static TargetHeaterCoolerState: typeof HomeKitTypes.Generated.TargetHeaterCoolerState;
@@ -310,6 +323,7 @@ export class Characteristic extends EventEmitter<Events> {
   value: Nullable<CharacteristicValue> = null;
   status: Nullable<Error> = null;
   eventOnlyCharacteristic: boolean = false;
+  accessRestrictedToAdmins: Access[] = [];
   props: CharacteristicProps;
   subscriptions: number = 0;
 
@@ -484,15 +498,15 @@ export class Characteristic extends EventEmitter<Events> {
     };
 
     if (isNumericType) {
-      if (isNaN(Number.parseInt(newValue as string, 10))) {
-        return this.value!;
-      } //This is not a number so we'll just pass out the last value.
       if (newValue === false) {
         return 0;
       }
       if (newValue === true) {
         return 1;
       }
+      if (isNaN(Number.parseInt(newValue as string, 10))) {
+        return this.value!;
+      } //This is not a number so we'll just pass out the last value.
       if ((this.props.maxValue && !isNaN(this.props.maxValue)) && (this.props.maxValue !== null))
         maxValue_resolved = this.props.maxValue;
       if ((this.props.minValue && !isNaN(this.props.minValue)) && (this.props.minValue !== null))
@@ -546,13 +560,16 @@ export class Characteristic extends EventEmitter<Events> {
     var oldValue = this.value;
     if (this.listeners(CharacteristicEventTypes.SET).length > 0) {
       // allow a listener to handle the setting of this value, and wait for completion
-      this.emit(CharacteristicEventTypes.SET, newValue, once((err: Error) => {
+      this.emit(CharacteristicEventTypes.SET, newValue, once((err: Error, writeResponse?: CharacteristicValue) => {
         this.status = err;
         if (err) {
           // pass the error along to our callback
           if (callback)
             callback(err);
         } else {
+          if (writeResponse !== undefined && this.props.perms.includes(Perms.WRITE_RESPONSE))
+            newValue = writeResponse; // support write response simply by letting the implementor pass the response as second argument to the callback
+
           if (newValue === undefined || newValue === null)
             newValue = this.getDefaultValue() as CharacteristicValue;
           // setting the value was a success; so we can cache it now

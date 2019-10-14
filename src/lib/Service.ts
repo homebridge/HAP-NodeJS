@@ -63,6 +63,7 @@ export class Service extends EventEmitter<Events> {
   static AccessoryInformation: typeof HomeKitTypes.Generated.AccessoryInformation;
   static AirPurifier: typeof HomeKitTypes.Generated.AirPurifier;
   static AirQualitySensor: typeof HomeKitTypes.Generated.AirQualitySensor;
+  static AudioStreamManagement: typeof HomeKitTypes.Remote.AudioStreamManagement;
   static BatteryService: typeof HomeKitTypes.Generated.BatteryService;
   static BridgeConfiguration: typeof HomeKitTypes.Bridged.BridgeConfiguration;
   static BridgingState: typeof HomeKitTypes.Bridged.BridgingState;
@@ -71,6 +72,7 @@ export class Service extends EventEmitter<Events> {
   static CarbonDioxideSensor: typeof HomeKitTypes.Generated.CarbonDioxideSensor;
   static CarbonMonoxideSensor: typeof HomeKitTypes.Generated.CarbonMonoxideSensor;
   static ContactSensor: typeof HomeKitTypes.Generated.ContactSensor;
+  static DataStreamTransportManagement: typeof HomeKitTypes.DataStream.DataStreamTransportManagement;
   static Door: typeof HomeKitTypes.Generated.Door;
   static Doorbell: typeof HomeKitTypes.Generated.Doorbell;
   static Fan: typeof HomeKitTypes.Generated.Fan;
@@ -101,12 +103,15 @@ export class Service extends EventEmitter<Events> {
   static Relay: typeof HomeKitTypes.Bridged.Relay;
   static SecuritySystem: typeof HomeKitTypes.Generated.SecuritySystem;
   static ServiceLabel: typeof HomeKitTypes.Generated.ServiceLabel;
+  static Siri: typeof HomeKitTypes.Remote.Siri;
   static Slat: typeof HomeKitTypes.Generated.Slat;
   static SmokeSensor: typeof HomeKitTypes.Generated.SmokeSensor;
   static Speaker: typeof HomeKitTypes.Generated.Speaker;
   static StatefulProgrammableSwitch: typeof HomeKitTypes.Bridged.StatefulProgrammableSwitch;
   static StatelessProgrammableSwitch: typeof HomeKitTypes.Generated.StatelessProgrammableSwitch;
   static Switch: typeof HomeKitTypes.Generated.Switch;
+  static TargetControl: typeof HomeKitTypes.Remote.TargetControl;
+  static TargetControlManagement: typeof HomeKitTypes.Remote.TargetControlManagement;
   static Television: typeof HomeKitTypes.TV.Television;
   static TelevisionSpeaker: typeof HomeKitTypes.TV.TelevisionSpeaker;
   static TemperatureSensor: typeof HomeKitTypes.Generated.TemperatureSensor;

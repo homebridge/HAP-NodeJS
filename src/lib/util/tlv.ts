@@ -77,3 +77,85 @@ export function decode(data: Buffer) {
 
     return objects;
 }
+
+export function decodeList(data: Buffer, entryStartId: number) {
+    const objectsList: Record<number, Buffer>[] = [];
+
+    let leftLength = data.length;
+    let currentIndex = 0;
+
+    let objects: Record<number, Buffer> | undefined = undefined;
+
+    for (; leftLength > 0;) {
+        const type = data[currentIndex]; // T
+        const length = data[currentIndex + 1]; // L
+        const value = data.slice(currentIndex + 2, currentIndex + 2 + length); // V
+
+        if (type === entryStartId) { // we got the start of a new entry
+            if (objects !== undefined) { // save the previous entry
+                objectsList.push(objects);
+            }
+
+            objects = {};
+        }
+
+        if (objects === undefined)
+            throw new Error("Error parsing tlv list: Encountered uninitialized storage object");
+
+        if (objects[type]) { // append to buffer if we have an already data for this type
+            objects[type] = Buffer.concat([value, objects[type]]);
+        } else {
+            objects[type] = value;
+        }
+
+        currentIndex += 2 + length;
+        leftLength -= 2 + length;
+    }
+
+    if (objects !== undefined)
+        objectsList.push(objects); // push last entry
+
+    return objectsList;
+}
+
+export function writeUInt64(value: number) {
+    const float64 = new Float64Array(1);
+    float64[0] = value;
+
+    const buffer = Buffer.alloc(float64.buffer.byteLength);
+    const view = new Uint8Array(float64.buffer);
+    for (let i = 0; i < buffer.length; i++) {
+        buffer[i] = view[i];
+    }
+
+    return buffer;
+}
+
+export function readUInt64(buffer: Buffer) {
+    const float64 = new Float64Array(buffer);
+    return float64[0];
+}
+
+export function writeUInt32(value: number) {
+    const buffer = bufferShim.alloc(4);
+
+    buffer.writeUInt32LE(value, 0);
+
+    return buffer;
+}
+
+export function readUInt32(buffer: Buffer) {
+    return buffer.readUInt32LE(0);
+}
+
+export function writeUInt16(value: number) {
+    const buffer = bufferShim.alloc(2);
+
+    buffer.writeUInt16LE(value, 0);
+
+    return buffer;
+}
+
+export function readUInt16(buffer: Buffer) {
+    return buffer.readUInt16LE(0);
+}
