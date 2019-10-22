@@ -70,7 +70,8 @@ export enum Categories {
   FAUCET = 29,
   SHOWER_HEAD = 30,
   TELEVISION = 31,
-  TARGET_CONTROLLER = 32 // Remote Control
+  TARGET_CONTROLLER = 32, // Remote Control
+  ROUTER = 33 // HomeKit enabled router
 }
 
 export enum AccessoryEventTypes {
