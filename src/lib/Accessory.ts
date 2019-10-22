@@ -64,6 +64,7 @@ export enum Categories {
   AIR_HUMIDIFIER = 22, //Not in HAP Spec
   AIR_DEHUMIDIFIER = 23, // Not in HAP Spec
   APPLE_TV = 24,
+  HOMEPOD = 25, // HomePod
   SPEAKER = 26,
   AIRPORT = 27,
   SPRINKLER = 28,
