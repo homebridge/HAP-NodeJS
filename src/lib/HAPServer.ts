@@ -106,6 +106,26 @@ export type HapRequest = {
   requestBody: any;
 }
 
+export interface CharacteristicGetQueryParams {
+  /** Accessory/Characteristic identifiers */
+  id: string;
+  /** If '1' include the format, unit, minValue, maxValue, minStep and maxLen properties */
+  meta?: '0' | '1';
+  /** If '1' include permissions */
+  perms?: '0' | '1';
+  /** If '1' include types */
+  type?: '0' | '1';
+  /** If '1' include an 'ev' property indicating if the client has subscribed to events for each characteristic */
+  ev?: '0' | '1';
+}
+
+export interface CharacteristicGetOptions {
+  includeMeta?: boolean;
+  includePerms?: boolean;
+  includeType?: boolean;
+  includeEvent?: boolean;
+}
+
 export enum HAPServerEventTypes {
   IDENTIFY = "identify",
   LISTENING = "listening",
@@ -134,6 +154,7 @@ export type Events = {
     cb: NodeCallback<CharacteristicData[]>,
     remote: boolean,
     session: Session,
+    options: CharacteristicGetOptions,
   ) => void;
   [HAPServerEventTypes.SET_CHARACTERISTICS]: (
     data: CharacteristicData[],
@@ -843,13 +864,14 @@ export class HAPServer extends EventEmitter<Events> {
     if (request.method == "GET") {
       // Extract the query params from the URL which looks like: /characteristics?id=1.9,2.14,...
       var parseQueryString = true;
-      var query = url.parse(request.url!, parseQueryString).query; // { id: '1.9,2.14' }
+      var query = url.parse(request.url!, parseQueryString).query as unknown as CharacteristicGetQueryParams; // { id: '1.9,2.14' }
       if (query == undefined || query.id == undefined) {
         response.writeHead(500);
         response.end();
         return;
       }
-      var sets = (query.id as string).split(','); // ["1.9","2.14"]
+
+      var sets = query.id.split(','); // ["1.9","2.14"]
       var data: CharacteristicData[] = []; // [{aid:1,iid:9},{aid:2,iid:14}]
       for (var i in sets) {
         var ids = sets[i].split('.'); // ["1","9"]
@@ -857,6 +879,14 @@ export class HAPServer extends EventEmitter<Events> {
         var iid = parseInt(ids[1]); // instance ID (for characteristic)
         data.push({aid: aid, iid: iid});
       }
+
+      const options: CharacteristicGetOptions = {
+        includeMeta: query.meta === '1',
+        includePerms: query.perms === '1',
+        includeType: query.type === '1',
+        includeEvent: query.ev === '1',
+      };
+
       this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, data, events, once((err: Error, characteristics: CharacteristicData[]) => {
         if (!characteristics && !err)
           err = new Error("characteristics not supplied by the get-characteristics event callback");
@@ -886,7 +916,7 @@ export class HAPServer extends EventEmitter<Events> {
         // 207 "multi-status" is returned when an error occurs reading a characteristic. otherwise 200 is returned
         response.writeHead(errorOccurred? 207: 200, {"Content-Type": "application/hap+json"});
         response.end(JSON.stringify({characteristics: characteristics}));
-      }), false, session);
+      }), false, session, options);
     } else if (request.method == "PUT") {
       if (!session.encryption) {
         if (!request.headers || (request.headers && request.headers["authorization"] !== this.accessoryInfo.pincode)) {

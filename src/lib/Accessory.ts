@@ -13,7 +13,7 @@ import {
   Perms
 } from './Characteristic';
 import { Advertiser } from './Advertiser';
-import { Codes, HAPServer, HAPServerEventTypes, Status } from './HAPServer';
+import { Codes, HAPServer, HAPServerEventTypes, Status, CharacteristicGetOptions } from './HAPServer';
 import { AccessoryInfo, PairingInformation, PermissionTypes } from './model/AccessoryInfo';
 import { IdentifierCache } from './model/IdentifierCache';
 import {
@@ -844,7 +844,7 @@ export class Accessory extends EventEmitter<Events> {
   }
 
 // Called when an iOS client wishes to query the state of one or more characteristics, like "door open?", "light on?", etc.
-  _handleGetCharacteristics = (data: CharacteristicData[], events: CharacteristicEvents, callback: HandleGetCharacteristicsCallback, remote: boolean, session: Session) => {
+  _handleGetCharacteristics = (data: CharacteristicData[], events: CharacteristicEvents, callback: HandleGetCharacteristicsCallback, remote: boolean, session: Session, options: CharacteristicGetOptions) => {
 
     // build up our array of responses to the characteristics requested asynchronously
     var characteristics: CharacteristicData[] = [];
@@ -855,12 +855,12 @@ export class Accessory extends EventEmitter<Events> {
       var aid = characteristicData.aid;
       var iid = characteristicData.iid;
 
-      var includeEvent = characteristicData.e;
+      var includeEvent = characteristicData.e || options.includeEvent;
 
       var characteristic = this.findCharacteristic(characteristicData.aid, characteristicData.iid);
 
       if (!characteristic) {
-        debug('[%s] Could not find a Characteristic with iid of %s and aid of %s', this.displayName, characteristicData.aid, characteristicData.iid);
+        debug('[%s] Could not find a Characteristic with aid of %s and iid of %s', this.displayName, characteristicData.aid, characteristicData.iid);
         var response: any = {
           aid: aid,
           iid: iid
@@ -876,11 +876,25 @@ export class Accessory extends EventEmitter<Events> {
       }
 
       if (!characteristic.props.perms.includes(Perms.PAIRED_READ)) { // check if we are allowed to read from this characteristic
-        debug('[%s] Tried reading from Characteristic which does not allow reading (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid);
+        debug('[%s] Tried reading from Characteristic which does not allow reading (aid of %s and iid of %s)', this.displayName, characteristicData.aid, characteristicData.iid);
         const response: any = {
           aid: aid,
           iid: iid
         };
+        if (options.includeMeta) {
+          if (characteristic.props.format != null) response.format = characteristic.props.format;
+          if (characteristic.props.unit != null) response.unit = characteristic.props.unit;
+          if (characteristic.props.minValue != null) response.minValue = characteristic.props.minValue;
+          if (characteristic.props.maxValue != null) response.maxValue = characteristic.props.maxValue;
+          if (characteristic.props.minStep != null) response.minStep = characteristic.props.minStep;
+          if (characteristic.props.maxLen != null) response.maxLen = characteristic.props.maxLen;
+        }
+        if (options.includePerms) {
+          response.perms = characteristic.props.perms;
+        }
+        if (options.includeType) {
+          response.type = characteristic.UUID;
+        }
         response[statusKey] = Status.WRITE_ONLY_CHARACTERISTIC;
         characteristics.push(response);
 
@@ -894,7 +908,7 @@ export class Accessory extends EventEmitter<Events> {
         let verifiable = true;
         if (!session || !session.username || !this._accessoryInfo) {
           verifiable = false;
-          debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for reading (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid)
+          debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for reading (aid of %s and iid of %s)', this.displayName, characteristicData.aid, characteristicData.iid)
         }
 
         if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(session.username!)) {
@@ -902,6 +916,20 @@ export class Accessory extends EventEmitter<Events> {
             aid: aid,
             iid: iid
           };
+          if (options.includeMeta) {
+            if (characteristic.props.format != null) response.format = characteristic.props.format;
+            if (characteristic.props.unit != null) response.unit = characteristic.props.unit;
+            if (characteristic.props.minValue != null) response.minValue = characteristic.props.minValue;
+            if (characteristic.props.maxValue != null) response.maxValue = characteristic.props.maxValue;
+            if (characteristic.props.minStep != null) response.minStep = characteristic.props.minStep;
+            if (characteristic.props.maxLen != null) response.maxLen = characteristic.props.maxLen;
+          }
+          if (options.includePerms) {
+            response.perms = characteristic.props.perms;
+          }
+          if (options.includeType) {
+            response.type = characteristic.UUID;
+          }
           response[statusKey] = Status.INSUFFICIENT_PRIVILEGES;
           characteristics.push(response);
 
@@ -933,6 +961,20 @@ export class Accessory extends EventEmitter<Events> {
             aid: aid,
             iid: iid
           };
+          if (options.includeMeta) {
+            if (characteristic!.props.format != null) response.format = characteristic!.props.format;
+            if (characteristic!.props.unit != null) response.unit = characteristic!.props.unit;
+            if (characteristic!.props.minValue != null) response.minValue = characteristic!.props.minValue;
+            if (characteristic!.props.maxValue != null) response.maxValue = characteristic!.props.maxValue;
+            if (characteristic!.props.minStep != null) response.minStep = characteristic!.props.minStep;
+            if (characteristic!.props.maxLen != null) response.maxLen = characteristic!.props.maxLen;
+          }
+          if (options.includePerms) {
+            response.perms = characteristic!.props.perms;
+          }
+          if (options.includeType) {
+            response.type = characteristic!.UUID;
+          }
           response[statusKey] = hapStatus(err);
           characteristics.push(response);
         } else {
@@ -942,9 +984,23 @@ export class Accessory extends EventEmitter<Events> {
           };
           response[valueKey] = value;
 
+          if (options.includeMeta) {
+            if (characteristic!.props.format != null) response.format = characteristic!.props.format;
+            if (characteristic!.props.unit != null) response.unit = characteristic!.props.unit;
+            if (characteristic!.props.minValue != null) response.minValue = characteristic!.props.minValue;
+            if (characteristic!.props.maxValue != null) response.maxValue = characteristic!.props.maxValue;
+            if (characteristic!.props.minStep != null) response.minStep = characteristic!.props.minStep;
+            if (characteristic!.props.maxLen != null) response.maxLen = characteristic!.props.maxLen;
+          }
+          if (options.includePerms) {
+            response.perms = characteristic!.props.perms;
+          }
+          if (options.includeType) {
+            response.type = characteristic!.UUID;
+          }
           if (includeEvent) {
             var eventName = aid + '.' + iid;
-            response['e'] = (events[eventName] === true);
+            response.ev = (events[eventName] === true);
           }
 
           // compose the response and add it to the list
