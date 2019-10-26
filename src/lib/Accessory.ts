@@ -13,7 +13,7 @@ import {
   Perms
 } from './Characteristic';
 import { Advertiser } from './Advertiser';
-import { Codes, HAPServer, HAPServerEventTypes, Status, CharacteristicGetOptions } from './HAPServer';
+import { Codes, HAPServer, HAPServerEventTypes, Status, CharacteristicGetOptions, CharacteristicWriteData } from './HAPServer';
 import { AccessoryInfo, PairingInformation, PermissionTypes } from './model/AccessoryInfo';
 import { IdentifierCache } from './model/IdentifierCache';
 import {
@@ -1018,7 +1018,7 @@ export class Accessory extends EventEmitter<Events> {
 
 // Called when an iOS client wishes to change the state of this accessory - like opening a door, or turning on a light.
 // Or, to subscribe to change events for a particular Characteristic.
-  _handleSetCharacteristics = (data: CharacteristicData[], events: CharacteristicEvents, callback: HandleSetCharacteristicsCallback, remote: boolean, session: Session) => {
+  _handleSetCharacteristics = (data: CharacteristicWriteData[], events: CharacteristicEvents, callback: HandleSetCharacteristicsCallback, remote: boolean, session: Session) => {
 
     // data is an array of characteristics and values like this:
     // [ { aid: 1, iid: 8, value: true, ev: true } ]
@@ -1031,8 +1031,8 @@ export class Accessory extends EventEmitter<Events> {
     data.forEach((characteristicData) => {
       var aid = characteristicData.aid;
       var iid = characteristicData.iid;
-      var value = remote ? characteristicData.v : characteristicData.value;
-      var ev = remote ? characteristicData.e : characteristicData.ev;
+      var value = remote ? (characteristicData as CharacteristicData).v : characteristicData.value;
+      var ev = remote ? (characteristicData as CharacteristicData).e : characteristicData.ev;
       var includeValue = characteristicData.r || false;
 
       var statusKey = remote ? 's' : 'status';
@@ -1159,7 +1159,7 @@ export class Accessory extends EventEmitter<Events> {
         debug('[%s] Setting Characteristic "%s" to value %s', this.displayName, characteristic.displayName, value);
 
         // set the value and wait for success
-        characteristic.setValue(value, (err) => {
+        characteristic.setValue(value, (err, writeResponse) => {
 
           if (err) {
             debug('[%s] Error setting Characteristic "%s" to value %s: ', this.displayName, characteristic!.displayName, value, err.message);
@@ -1178,7 +1178,7 @@ export class Accessory extends EventEmitter<Events> {
             response[statusKey] = 0;
 
             if (includeValue)
-              response['value'] = characteristic!.value;
+              response['value'] = characteristic!.props.perms.includes(Perms.WRITE_RESPONSE) ? writeResponse : characteristic!.value;
 
             characteristics.push(response);
           }
@@ -1187,7 +1187,7 @@ export class Accessory extends EventEmitter<Events> {
           if (characteristics.length === data.length)
             callback(null, characteristics);
 
-        }, context, session? session.sessionID as string: undefined);
+        }, context, session ? session.sessionID as string : undefined, characteristicData);
 
       } else {
         // no value to set, so we're done (success)

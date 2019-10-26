@@ -126,6 +126,16 @@ export interface CharacteristicGetOptions {
   includeEvent?: boolean;
 }
 
+export interface CharacteristicWriteData {
+  aid: number;
+  iid: number;
+  value?: any;
+  ev?: boolean;
+  authData?: string;
+  remote?: boolean;
+  r?: boolean;
+}
+
 export enum HAPServerEventTypes {
   IDENTIFY = "identify",
   LISTENING = "listening",
@@ -871,12 +881,12 @@ export class HAPServer extends EventEmitter<Events> {
         return;
       }
 
-      var sets = query.id.split(','); // ["1.9","2.14"]
-      var data: CharacteristicData[] = []; // [{aid:1,iid:9},{aid:2,iid:14}]
+      const sets = query.id.split(','); // ["1.9","2.14"]
+      const data: CharacteristicData[] = []; // [{aid:1,iid:9},{aid:2,iid:14}]
       for (var i in sets) {
-        var ids = sets[i].split('.'); // ["1","9"]
-        var aid = parseInt(ids[0]); // accessory ID
-        var iid = parseInt(ids[1]); // instance ID (for characteristic)
+        const ids = sets[i].split('.'); // ["1","9"]
+        const aid = parseInt(ids[0]); // accessory ID
+        const iid = parseInt(ids[1]); // instance ID (for characteristic)
         data.push({aid: aid, iid: iid});
       }
 
@@ -930,8 +940,9 @@ export class HAPServer extends EventEmitter<Events> {
         response.end(JSON.stringify({status: Status.INVALID_VALUE_IN_REQUEST}));
         return;
       }
+
       // requestData is a JSON payload like { characteristics: [ { aid: 1, iid: 8, value: true, ev: true } ] }
-      var data = JSON.parse(requestData.toString()).characteristics as CharacteristicData[]; // pull out characteristics array
+      const data = JSON.parse(requestData.toString()).characteristics as CharacteristicWriteData[]; // pull out characteristics array
       // call out to listeners to retrieve the latest accessories JSON
       this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, data, events, once((err: Error, characteristics: CharacteristicData[]) => {
         if (err) {

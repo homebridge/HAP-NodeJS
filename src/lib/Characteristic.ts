@@ -13,6 +13,7 @@ import {
 } from '../types';
 import { EventEmitter } from './EventEmitter';
 import * as HomeKitTypes from './gen';
+import { CharacteristicWriteData } from './HAPServer';
 
 // Known HomeKit formats
 export enum Formats {
@@ -89,7 +90,7 @@ export type CharacteristicSetCallback = (error?: Error | null, value?: Character
 type Events = {
   [CharacteristicEventTypes.CHANGE]: (change: CharacteristicChange) => void;
   [CharacteristicEventTypes.GET]: (cb: CharacteristicGetCallback, context?: any, connectionID?: string) => void;
-  [CharacteristicEventTypes.SET]: (value: CharacteristicValue, cb: CharacteristicSetCallback, context?: any, connectionID?: string) => void;
+  [CharacteristicEventTypes.SET]: (value: CharacteristicValue, cb: CharacteristicSetCallback, context?: any, connectionID?: string, writeData?: CharacteristicWriteData) => void;
   [CharacteristicEventTypes.SUBSCRIBE]: VoidCallback;
   [CharacteristicEventTypes.UNSUBSCRIBE]: VoidCallback;
 }
@@ -550,7 +551,7 @@ export class Characteristic extends EventEmitter<Events> {
     return newValue;
   }
 
-  setValue = (newValue: Nullable<CharacteristicValue | Error>, callback?: CharacteristicSetCallback, context?: any, connectionID?: string): Characteristic => {
+  setValue = (newValue: Nullable<CharacteristicValue | Error>, callback?: CharacteristicSetCallback, context?: any, connectionID?: string, writeData?: CharacteristicWriteData): Characteristic => {
     if (newValue instanceof Error) {
       this.status = newValue;
     } else {
@@ -567,19 +568,17 @@ export class Characteristic extends EventEmitter<Events> {
           if (callback)
             callback(err);
         } else {
-          if (writeResponse !== undefined && this.props.perms.includes(Perms.WRITE_RESPONSE))
-            newValue = writeResponse; // support write response simply by letting the implementor pass the response as second argument to the callback
-
           if (newValue === undefined || newValue === null)
             newValue = this.getDefaultValue() as CharacteristicValue;
           // setting the value was a success; so we can cache it now
           this.value = newValue as CharacteristicValue;
+
           if (callback)
-            callback();
+            callback(null, writeResponse);
           if (this.eventOnlyCharacteristic === true || oldValue !== newValue)
             this.emit(CharacteristicEventTypes.CHANGE, {oldValue: oldValue, newValue: newValue, context: context});
         }
-      }), context, connectionID);
+      }), context, connectionID, writeData);
     } else {
       if (newValue === undefined || newValue === null)
         newValue = this.getDefaultValue() as CharacteristicValue;
