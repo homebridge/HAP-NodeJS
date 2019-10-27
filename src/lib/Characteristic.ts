@@ -14,6 +14,7 @@ import {
 import { EventEmitter } from './EventEmitter';
 import * as HomeKitTypes from './gen';
 import { CharacteristicWriteData } from './HAPServer';
+import { Session } from './util/eventedhttp';
 
 // Known HomeKit formats
 export enum Formats {
@@ -89,8 +90,8 @@ export type CharacteristicSetCallback = (error?: Error | null, value?: Character
 
 type Events = {
   [CharacteristicEventTypes.CHANGE]: (change: CharacteristicChange) => void;
-  [CharacteristicEventTypes.GET]: (cb: CharacteristicGetCallback, context?: any, connectionID?: string) => void;
-  [CharacteristicEventTypes.SET]: (value: CharacteristicValue, cb: CharacteristicSetCallback, context?: any, connectionID?: string, writeData?: CharacteristicWriteData) => void;
+  [CharacteristicEventTypes.GET]: (cb: CharacteristicGetCallback, session?: Session) => void;
+  [CharacteristicEventTypes.SET]: (value: CharacteristicValue, cb: CharacteristicSetCallback, session?: Session, writeData?: CharacteristicWriteData) => void;
   [CharacteristicEventTypes.SUBSCRIBE]: VoidCallback;
   [CharacteristicEventTypes.UNSUBSCRIBE]: VoidCallback;
 }
@@ -388,7 +389,7 @@ export class Characteristic extends EventEmitter<Events> {
     }
   }
 
-  getValue = (callback?: CharacteristicGetCallback, context?: any, connectionID?: string) => {
+  getValue = (callback?: CharacteristicGetCallback, session?: Session) => {
     // Handle special event only characteristics.
     if (this.eventOnlyCharacteristic === true) {
       if (callback) {
@@ -415,9 +416,9 @@ export class Characteristic extends EventEmitter<Events> {
             callback(null, newValue);
           // emit a change event if necessary
           if (oldValue !== newValue)
-            this.emit(CharacteristicEventTypes.CHANGE, {oldValue: oldValue, newValue: newValue, context: context});
+            this.emit(CharacteristicEventTypes.CHANGE, {oldValue, newValue, session, context: session ? session.events : null});
         }
-      }), context, connectionID);
+      }), session);
     } else {
       // no one is listening to the 'get' event, so just return the cached value
       if (callback)
@@ -551,7 +552,7 @@ export class Characteristic extends EventEmitter<Events> {
     return newValue;
   }
 
-  setValue = (newValue: Nullable<CharacteristicValue | Error>, callback?: CharacteristicSetCallback, context?: any, connectionID?: string, writeData?: CharacteristicWriteData): Characteristic => {
+  setValue = (newValue: Nullable<CharacteristicValue | Error>, callback?: CharacteristicSetCallback, session?: Session, writeData?: CharacteristicWriteData): Characteristic => {
     if (newValue instanceof Error) {
       this.status = newValue;
     } else {
@@ -576,9 +577,9 @@ export class Characteristic extends EventEmitter<Events> {
           if (callback)
             callback(null, writeResponse);
           if (this.eventOnlyCharacteristic === true || oldValue !== newValue)
-            this.emit(CharacteristicEventTypes.CHANGE, {oldValue: oldValue, newValue: newValue, context: context});
+            this.emit(CharacteristicEventTypes.CHANGE, {oldValue, newValue, session, context: session ? session.events : null});
         }
-      }), context, connectionID, writeData);
+      }), session, writeData);
     } else {
       if (newValue === undefined || newValue === null)
         newValue = this.getDefaultValue() as CharacteristicValue;
@@ -587,7 +588,7 @@ export class Characteristic extends EventEmitter<Events> {
       if (callback)
         callback();
       if (this.eventOnlyCharacteristic === true || oldValue !== newValue)
-        this.emit(CharacteristicEventTypes.CHANGE, {oldValue: oldValue, newValue: newValue, context: context});
+        this.emit(CharacteristicEventTypes.CHANGE, {oldValue, newValue, session, context: session ? session.events : null});
     }
     return this; // for chaining
   }

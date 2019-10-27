@@ -27,6 +27,7 @@ import {
   VideoInfo,
   VoidCallback,
 } from '../types';
+import { Session } from './util/eventedhttp';
 
 const debug = createDebug('StreamController');
 
@@ -379,9 +380,9 @@ export class StreamController {
         debug('Read SelectedStreamConfiguration');
         callback(null, this.selectedConfiguration);
       })
-      .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context?: any, connectionID?: string) => {
+      .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, session?: Session) => {
         debug('Write SelectedStreamConfiguration');
-        this._handleSelectedStreamConfigurationWrite(value, callback, connectionID!);
+        this._handleSelectedStreamConfigurationWrite(value, callback, session!.sessionID);
       });
 
     managementService

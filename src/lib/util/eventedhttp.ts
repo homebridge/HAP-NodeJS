@@ -6,7 +6,7 @@ import bufferShim from 'buffer-shims';
 import srp from 'fast-srp-hap';
 
 import * as uuid from './uuid';
-import { Nullable, SessionIdentifier } from '../../types';
+import { Nullable, CharacteristicEvents } from '../../types';
 import { EventEmitter } from '../EventEmitter';
 import { HAPEncryption } from '../HAPServer';
 
@@ -21,13 +21,13 @@ export enum EventedHTTPServerEvents {
   SESSION_CLOSE = 'session-close',
 }
 
-export type Events = {
+type Events = {
   [EventedHTTPServerEvents.LISTENING]: (port: number) => void;
-  [EventedHTTPServerEvents.REQUEST]: (request: IncomingMessage, response: ServerResponse, session: Session, events: any) => void;
+  [EventedHTTPServerEvents.REQUEST]: (request: IncomingMessage, response: ServerResponse, session: Session) => void;
   [EventedHTTPServerEvents.DECRYPT]: (data: Buffer, decrypted: { data: Buffer; }, session: Session) => void;
   [EventedHTTPServerEvents.ENCRYPT]: (data: Buffer, encrypted: { data: number | Buffer; }, session: Session) => void;
-  [EventedHTTPServerEvents.CLOSE]: (events: any) => void;
-  [EventedHTTPServerEvents.SESSION_CLOSE]: (sessionID: string, events: any) => void;
+  [EventedHTTPServerEvents.CLOSE]: (session: Session) => void;
+  [EventedHTTPServerEvents.SESSION_CLOSE]: (session: Session) => void;
 };
 
 /**
@@ -50,7 +50,7 @@ export type Events = {
  * @event 'listening' => function() { }
  *        Emitted when the server is fully set up and ready to receive connections.
  *
- * @event 'request' => function(request, response, session, events) { }
+ * @event 'request' => function(request, response, session) { }
  *        Just like the 'http' module, request is http.IncomingMessage and response is http.ServerResponse.
  *        The 'session' param is an arbitrary object that you can use to store data associated with this connection;
  *        it will not be used by this class. The 'events' param is an object where the keys are the names of
@@ -102,7 +102,7 @@ export class EventedHTTPServer extends EventEmitter<Events> {
     event: string,
     data: Buffer | string,
     contentType: string,
-    exclude?: Record<string, boolean>
+    exclude?: CharacteristicEvents
   ) => {
     for (var index in this._connections) {
       var connection = this._connections[index];
@@ -116,18 +116,23 @@ export class EventedHTTPServer extends EventEmitter<Events> {
     var connection = new EventedHTTPServerConnection(socket);
 
     // pass on session events to our listeners directly
-    connection.on(EventedHTTPServerEvents.REQUEST, (request: IncomingMessage, response: ServerResponse, session: Session, events: any) => { this.emit(EventedHTTPServerEvents.REQUEST, request, response, session, events); });
-    connection.on(EventedHTTPServerEvents.ENCRYPT, (data: Buffer, encrypted: { data: Buffer; }, session: Session) => { this.emit(EventedHTTPServerEvents.ENCRYPT, data, encrypted, session); });
-    connection.on(EventedHTTPServerEvents.DECRYPT, (data: Buffer, decrypted: { data: number | Buffer; }, session: Session) => { this.emit(EventedHTTPServerEvents.DECRYPT, data, decrypted, session); });
-    connection.on(EventedHTTPServerEvents.CLOSE, (events: any) => { this._handleConnectionClose(connection, events); });
+    connection.on(EventedHTTPServerEvents.REQUEST, (request: IncomingMessage, response: ServerResponse, session: Session) => {
+      this.emit(EventedHTTPServerEvents.REQUEST, request, response, session);
+    });
+    connection.on(EventedHTTPServerEvents.ENCRYPT, (data: Buffer, encrypted: { data: Buffer; }, session: Session) => {
+      this.emit(EventedHTTPServerEvents.ENCRYPT, data, encrypted, session);
+    });
+    connection.on(EventedHTTPServerEvents.DECRYPT, (data: Buffer, decrypted: { data: number | Buffer; }, session: Session) => {
+      this.emit(EventedHTTPServerEvents.DECRYPT, data, decrypted, session);
+    });
+    connection.on(EventedHTTPServerEvents.CLOSE, (session: Session) => {
+      this._handleConnectionClose(connection, session);
+    });
     this._connections.push(connection);
   }
 
-  _handleConnectionClose = (
-    connection: EventedHTTPServerConnection,
-    events: Record<string, boolean>
-  ) => {
-    this.emit(EventedHTTPServerEvents.SESSION_CLOSE, connection.sessionID, events);
+  _handleConnectionClose = (connection: EventedHTTPServerConnection, session: Session) => {
+    this.emit(EventedHTTPServerEvents.SESSION_CLOSE, session);
 
     // remove it from our array of connections for events
     this._connections.splice(this._connections.indexOf(connection), 1);
@@ -145,6 +150,7 @@ export class Session {
   _connection: EventedHTTPServerConnection;
 
   sessionID: string;
+  events: CharacteristicEvents;
   encryption?: HAPEncryption;
   srpServer?: srp.Server;
   username?: string; // username is unique to every user in the home
@@ -152,6 +158,7 @@ export class Session {
   constructor(connection: EventedHTTPServerConnection) {
     this._connection = connection;
     this.sessionID = connection.sessionID;
+    this.events = connection._events;
   }
 
   /*
@@ -231,7 +238,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
   _httpServer: http.Server;
   _serverSocket: Nullable<Socket>;
   _session: Session;
-  _events: Record<string, boolean>;
+  _events: CharacteristicEvents;
   _httpPort?: number;
 
   constructor(clientSocket: Socket) {
@@ -266,7 +273,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     debug("[%s] New connection from client", this._remoteAddress);
   }
 
-  sendEvent = (event: string, data: Buffer | string, contentType: string, excludeEvents?: Record<string, boolean>) => {
+  sendEvent = (event: string, data: Buffer | string, contentType: string, excludeEvents?: CharacteristicEvents) => {
     // has this connection subscribed to the given event? if not, nothing to do!
     if (!this._events[event]) {
       return;
@@ -402,13 +409,13 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
       this._sendPendingEvents();
     });
     // pass it along to listeners
-    this.emit(EventedHTTPServerEvents.REQUEST, request, response, this._session, this._events);
+    this.emit(EventedHTTPServerEvents.REQUEST, request, response, this._session);
   }
 
   _onHttpServerClose = () => {
     debug("[%s] HTTP server was closed", this._remoteAddress);
     // notify listeners that we are completely closed
-    this.emit(EventedHTTPServerEvents.CLOSE, this._events);
+    this.emit(EventedHTTPServerEvents.CLOSE, this._session);
   }
 
   _onHttpServerError = (err: Error & { code?: string }) => {

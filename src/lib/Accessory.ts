@@ -25,6 +25,7 @@ import {
   ToHAPOptions,
   VoidCallback,
   WithUUID,
+  CharacteristicEvents,
 } from '../types';
 import { Camera } from './Camera';
 import { EventEmitter } from './EventEmitter';
@@ -91,8 +92,6 @@ type Events = {
  * @deprecated Use AccessoryEventTypes instead
  */
 export type EventAccessory = "identify" | "listening" | "service-configurationChange" | "service-characteristic-change";
-
-export type CharacteristicEvents = Record<string, any>;
 
 export interface PublishInfo {
   username: string;
@@ -844,7 +843,7 @@ export class Accessory extends EventEmitter<Events> {
   }
 
 // Called when an iOS client wishes to query the state of one or more characteristics, like "door open?", "light on?", etc.
-  _handleGetCharacteristics = (data: CharacteristicData[], events: CharacteristicEvents, callback: HandleGetCharacteristicsCallback, remote: boolean, session: Session, options: CharacteristicGetOptions) => {
+  _handleGetCharacteristics = (data: CharacteristicData[], session: Session, options: CharacteristicGetOptions, callback: HandleGetCharacteristicsCallback, remote: boolean) => {
 
     // build up our array of responses to the characteristics requested asynchronously
     var characteristics: CharacteristicData[] = [];
@@ -948,7 +947,7 @@ export class Accessory extends EventEmitter<Events> {
       // cached Characteristic value, an internal 'change' event will be emitted which will cause us to
       // notify all connected clients about that new value. But this client is about to get the new value
       // anyway, so we don't want to notify it twice.
-      var context = events;
+      var context = session.events;
 
       // set the value and wait for success
       characteristic.getValue((err, value) => {
@@ -1000,7 +999,7 @@ export class Accessory extends EventEmitter<Events> {
           }
           if (includeEvent) {
             var eventName = aid + '.' + iid;
-            response.ev = (events[eventName] === true);
+            response.ev = (session.events[eventName] === true);
           }
 
           // compose the response and add it to the list
@@ -1011,14 +1010,14 @@ export class Accessory extends EventEmitter<Events> {
         if (characteristics.length === data.length)
           callback(null, characteristics);
 
-      }, context, session? session.sessionID as string: undefined);
+      }, session);
 
     });
   }
 
 // Called when an iOS client wishes to change the state of this accessory - like opening a door, or turning on a light.
 // Or, to subscribe to change events for a particular Characteristic.
-  _handleSetCharacteristics = (data: CharacteristicWriteData[], events: CharacteristicEvents, callback: HandleSetCharacteristicsCallback, remote: boolean, session: Session) => {
+  _handleSetCharacteristics = (data: CharacteristicWriteData[], session: Session, callback: HandleSetCharacteristicsCallback, remote: boolean) => {
 
     // data is an array of characteristics and values like this:
     // [ { aid: 1, iid: 8, value: true, ev: true } ]
@@ -1060,7 +1059,7 @@ export class Accessory extends EventEmitter<Events> {
       // by Characteristic and passed on to the corresponding 'change' events bubbled up from Characteristic
       // through Service and Accessory. We'll assign it to the events object since it essentially represents
       // the connection requesting the change.
-      var context = events;
+      var context = session.events;
 
       // if "ev" is present, that means we need to register or unregister this client for change events for
       // this characteristic.
@@ -1107,14 +1106,14 @@ export class Accessory extends EventEmitter<Events> {
         // the request.
         var eventName = aid + '.' + iid;
 
-        if (ev === true && events[eventName] != true) {
-          events[eventName] = true; // value is arbitrary, just needs to be non-falsey
+        if (ev === true && session.events[eventName] != true) {
+          session.events[eventName] = true; // value is arbitrary, just needs to be non-falsey
           characteristic.subscribe();
         }
 
-        if (ev === false && events[eventName] != undefined) {
+        if (ev === false && session.events[eventName] != undefined) {
           characteristic.unsubscribe();
-          delete events[eventName]; // unsubscribe by deleting name from dict
+          delete session.events[eventName]; // unsubscribe by deleting name from dict
         }
       }
 
@@ -1187,7 +1186,7 @@ export class Accessory extends EventEmitter<Events> {
           if (characteristics.length === data.length)
             callback(null, characteristics);
 
-        }, context, session ? session.sessionID as string : undefined, characteristicData);
+        }, session, characteristicData);
 
       } else {
         // no value to set, so we're done (success)
@@ -1239,12 +1238,12 @@ export class Accessory extends EventEmitter<Events> {
     callback(new Error('unsupported image type: ' + data["resource-type"]));
   }
 
-  _handleSessionClose = (sessionID: string, events: CharacteristicEvents) => {
+  _handleSessionClose = (session: Session) => {
     if (this.cameraSource && this.cameraSource.handleCloseConnection) {
-        this.cameraSource.handleCloseConnection(sessionID);
+        this.cameraSource.handleCloseConnection(session.sessionID);
     }
 
-    this._unsubscribeEvents(events);
+    this._unsubscribeEvents(session.events);
   }
 
   _unsubscribeEvents = (events: CharacteristicEvents) => {
@@ -1283,7 +1282,7 @@ export class Accessory extends EventEmitter<Events> {
 
     // pull the events object associated with the original connection (if any) that initiated the change request,
     // which we assigned in handleGetCharacteristics/handleSetCharacteristics.
-    var excludeEvents = change.context;
+    var excludeEvents = change.session ? change.session.events : undefined;
 
     // pass it along to notifyClients() so that it can omit the connection where events === excludeEvents.
     this._server.notifyClients(eventName, data, excludeEvents);

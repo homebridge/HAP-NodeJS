@@ -12,9 +12,8 @@ import * as tlv from './util/tlv';
 import { EventedHTTPServer, EventedHTTPServerEvents, Session } from './util/eventedhttp';
 import { once } from './util/once';
 import { IncomingMessage, ServerResponse } from "http";
-import { Characteristic } from './Characteristic';
-import { Accessory, CharacteristicEvents, Resource } from './Accessory';
-import { CharacteristicData, NodeCallback, PairingsCallback, SessionIdentifier, VoidCallback } from '../types';
+import { Accessory, Resource } from './Accessory';
+import { CharacteristicData, NodeCallback, PairingsCallback, VoidCallback, CharacteristicEvents } from '../types';
 import { EventEmitter } from './EventEmitter';
 import { PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
 
@@ -150,7 +149,7 @@ export enum HAPServerEventTypes {
   REQUEST_RESOURCE = 'request-resource'
 }
 
-export type Events = {
+type Events = {
   [HAPServerEventTypes.IDENTIFY]: (cb: VoidCallback) => void;
   [HAPServerEventTypes.LISTENING]: (port: number) => void;
   [HAPServerEventTypes.PAIR]: (clientUsername: string, clientLTPK: Buffer, cb: VoidCallback) => void;
@@ -160,20 +159,18 @@ export type Events = {
   [HAPServerEventTypes.ACCESSORIES]: (cb: NodeCallback<Accessory[]>) => void;
   [HAPServerEventTypes.GET_CHARACTERISTICS]: (
     data: CharacteristicData[],
-    events: CharacteristicEvents,
-    cb: NodeCallback<CharacteristicData[]>,
-    remote: boolean,
     session: Session,
     options: CharacteristicGetOptions,
+    cb: NodeCallback<CharacteristicData[]>,
+    remote: boolean,
   ) => void;
   [HAPServerEventTypes.SET_CHARACTERISTICS]: (
     data: CharacteristicData[],
-    events: CharacteristicEvents,
+    session: Session,
     cb: NodeCallback<CharacteristicData[]>,
     remote: boolean,
-    session: Session,
   ) => void;
-  [HAPServerEventTypes.SESSION_CLOSE]: (sessionID: string, events: CharacteristicEvents) => void;
+  [HAPServerEventTypes.SESSION_CLOSE]: (session: Session) => void;
   [HAPServerEventTypes.REQUEST_RESOURCE]: (data: Resource, cb: NodeCallback<Buffer>) => void;
 }
 
@@ -222,17 +219,17 @@ export type Events = {
  *        Accessories in the case of a Bridge Accessory. The listener must call the provided callback function
  *        when the accessory data is ready. We will automatically JSON.stringify the data.
  *
- * @event 'get-characteristics' => function(data, events, callback(err, characteristics), remote, connectionID) { }
+ * @event 'get-characteristics' => function(data, session, options, callback(err, characteristics), remote) { }
  *        This event is emitted when a client wishes to retrieve the current value of one or more characteristics.
  *        The listener must call the provided callback function when the values are ready. iOS clients can typically
  *        wait up to 10 seconds for this call to return. We will automatically JSON.stringify the data (which must
  *        be an array) and wrap it in an object with a top-level "characteristics" property.
  *
- * @event 'set-characteristics' => function(data, events, callback(err), remote, connectionID) { }
+ * @event 'set-characteristics' => function(data, session, callback(err), remote) { }
  *        This event is emitted when a client wishes to set the current value of one or more characteristics and/or
- *        subscribe to one or more events. The 'events' param is an initially-empty object, associated with the current
- *        connection, on which you may store event registration keys for later processing. The listener must call
- *        the provided callback when the request has been processed.
+ *        subscribe to one or more events. The 'session.events' param is an initially-empty object, associated with
+ *        the current connection, on which you may store event registration keys for later processing. The listener
+ *        must call the provided callback when the request has been processed.
  */
 export class HAPServer extends EventEmitter<Events> {
 
@@ -241,7 +238,7 @@ export class HAPServer extends EventEmitter<Events> {
   static Codes = Codes;
   static Status = Status;
 
-  static handlers: Record<string, string> = {
+  static handlers: Record<string, keyof HAPServer> = {
     '/identify': '_handleIdentify',
     '/pair-setup': '_handlePair',
     '/pair-verify': '_handlePairVerify',
@@ -306,7 +303,7 @@ export class HAPServer extends EventEmitter<Events> {
    * @param event {string} - the name of the event (only clients who have subscribed to this name will be notified)
    * @param data {object} - the object containing the event data; will be JSON.stringify'd automatically
    */
-  notifyClients = (event: string, data: any, excludeEvents?: Record<string, boolean>) => {
+  notifyClients = (event: string, data: any, excludeEvents?: CharacteristicEvents) => {
     // encode notification data as JSON, set content-type, and hand it off to the server.
     this._httpServer.sendEvent(event, JSON.stringify(data), "application/hap+json", excludeEvents);
     if (this._relayServer) {
@@ -321,7 +318,7 @@ export class HAPServer extends EventEmitter<Events> {
   }
 
   // Called when an HTTP request was detected.
-  _onRequest = (request: IncomingMessage, response: ServerResponse, session: Session, events: any) => {
+  _onRequest = (request: IncomingMessage, response: ServerResponse, session: Session) => {
     debug("[%s] HAP Request: %s %s", this.accessoryInfo.username, request.method, request.url);
     // collect request data, if any
     var requestData = bufferShim.alloc(0);
@@ -335,7 +332,7 @@ export class HAPServer extends EventEmitter<Events> {
       for (var path in HAPServer.handlers)
         if (new RegExp('^' + path + '/?$').test(pathname)) { // match exact string and allow trailing slash
           const handler = HAPServer.handlers[path] as keyof HAPServer;
-          this[handler](request, response, session, events, requestData);
+          this[handler](request, response, session, requestData);
           return;
         }
       // nobody handled this? reply 404
@@ -384,14 +381,14 @@ export class HAPServer extends EventEmitter<Events> {
     }
   }
 
-  _onSessionClose = (sessionID: SessionIdentifier, events: any) => {
-    this.emit(HAPServerEventTypes.SESSION_CLOSE, sessionID, events);
+  _onSessionClose = (session: Session) => {
+    this.emit(HAPServerEventTypes.SESSION_CLOSE, session);
   }
 
   /**
    * Unpaired Accessory identification.
    */
-  _handleIdentify = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: any) => {
+  _handleIdentify = (request: IncomingMessage, response: ServerResponse, session: Session, requestData: Buffer) => {
     // /identify only works if the accesory is not paired
     if (!this.allowInsecureRequest && this.accessoryInfo.paired()) {
       response.writeHead(400, {"Content-Type": "application/hap+json"});
@@ -414,7 +411,7 @@ export class HAPServer extends EventEmitter<Events> {
   /**
    * iOS <-> Accessory pairing process.
    */
-  _handlePair = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: Buffer) => {
+  _handlePair = (request: IncomingMessage, response: ServerResponse, session: Session, requestData: Buffer) => {
     // Can only be directly paired with one iOS device
     if (!this.allowInsecureRequest && this.accessoryInfo.paired()) {
         response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
@@ -545,13 +542,13 @@ export class HAPServer extends EventEmitter<Events> {
   /**
    * iOS <-> Accessory pairing verification.
    */
-  _handlePairVerify = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: Buffer) => {
+  _handlePairVerify = (request: IncomingMessage, response: ServerResponse, session: Session, requestData: Buffer) => {
     var objects = tlv.decode(requestData);
     var sequence = objects[TLVValues.SEQUENCE_NUM][0]; // value is single byte with sequence number
     if (sequence == 0x01)
       this._handlePairVerifyStepOne(request, response, session, objects);
     else if (sequence == 0x03)
-      this._handlePairVerifyStepTwo(request, response, session, events, objects);
+      this._handlePairVerifyStepTwo(request, response, session, objects);
   }
 
   _handlePairVerifyStepOne = (request: IncomingMessage, response: ServerResponse, session: Session, objects: Record<number, Buffer>) => {
@@ -588,7 +585,7 @@ export class HAPServer extends EventEmitter<Events> {
     response.end(tlv.encode(TLVValues.SEQUENCE_NUM, 0x02, TLVValues.ENCRYPTED_DATA, Buffer.concat([ciphertextBuffer, macBuffer]), TLVValues.PUBLIC_KEY, publicKey));
   }
 
-  _handlePairVerifyStepTwo = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, objects: Record<number, Buffer>) => {
+  _handlePairVerifyStepTwo = (request: IncomingMessage, response: ServerResponse, session: Session, objects: Record<number, Buffer>) => {
     debug("[%s] Pair verify step 2/2", this.accessoryInfo.username);
     var encryptedData = objects[TLVValues.ENCRYPTED_DATA];
     var messageData = bufferShim.alloc(encryptedData.length - 16);
@@ -637,7 +634,7 @@ export class HAPServer extends EventEmitter<Events> {
     enc.controllerToAccessoryKey = hkdf.HKDF("sha512", encSalt, enc.sharedSec, infoWrite, 32);
     // Our connection is now completely setup. We now want to subscribe this connection to special
     // "keepalive" events for detecting when connections are closed by the client.
-    events['keepalive'] = true;
+    session.events['keepalive'] = true;
     session.establishSession(clientUsername.toString());
   }
 
@@ -733,7 +730,7 @@ export class HAPServer extends EventEmitter<Events> {
   /**
    * Pair add/remove/list
    */
-  _handlePairings = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: Buffer) => {
+  _handlePairings = (request: IncomingMessage, response: ServerResponse, session: Session, requestData: Buffer) => {
     // Only accept /pairing request if there is a secure session
     if (!this.allowInsecureRequest && !session.encryption) {
       response.writeHead(470, {"Content-Type": "application/hap+json"});
@@ -816,7 +813,7 @@ export class HAPServer extends EventEmitter<Events> {
    */
 
   // Called when the client wishes to fetch all data regarding our published Accessories.
-  _handleAccessories = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: any) => {
+  _handleAccessories = (request: IncomingMessage, response: ServerResponse, session: Session, requestData: Buffer) => {
     if (!this.allowInsecureRequest && !session.encryption) {
       response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
@@ -860,7 +857,7 @@ export class HAPServer extends EventEmitter<Events> {
   }
 
   // Called when the client wishes to get or set particular characteristics
-  _handleCharacteristics = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: { length: number; toString: () => string; }) => {
+  _handleCharacteristics = (request: IncomingMessage, response: ServerResponse, session: Session, requestData: Buffer) => {
     if (!this.allowInsecureRequest && !session.encryption) {
       response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
@@ -897,7 +894,7 @@ export class HAPServer extends EventEmitter<Events> {
         includeEvent: query.ev === '1',
       };
 
-      this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, data, events, once((err: Error, characteristics: CharacteristicData[]) => {
+      this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, data, session, options, once((err: Error, characteristics: CharacteristicData[]) => {
         if (!characteristics && !err)
           err = new Error("characteristics not supplied by the get-characteristics event callback");
         if (err) {
@@ -926,7 +923,7 @@ export class HAPServer extends EventEmitter<Events> {
         // 207 "multi-status" is returned when an error occurs reading a characteristic. otherwise 200 is returned
         response.writeHead(errorOccurred? 207: 200, {"Content-Type": "application/hap+json"});
         response.end(JSON.stringify({characteristics: characteristics}));
-      }), false, session, options);
+      }), false);
     } else if (request.method == "PUT") {
       if (!session.encryption) {
         if (!request.headers || (request.headers && request.headers["authorization"] !== this.accessoryInfo.pincode)) {
@@ -944,7 +941,7 @@ export class HAPServer extends EventEmitter<Events> {
       // requestData is a JSON payload like { characteristics: [ { aid: 1, iid: 8, value: true, ev: true } ] }
       const data = JSON.parse(requestData.toString()).characteristics as CharacteristicWriteData[]; // pull out characteristics array
       // call out to listeners to retrieve the latest accessories JSON
-      this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, data, events, once((err: Error, characteristics: CharacteristicData[]) => {
+      this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, data, session, once((err: Error, characteristics: CharacteristicData[]) => {
         if (err) {
           debug("[%s] Error setting characteristics: %s", this.accessoryInfo.username, err.message);
           // rewrite characteristics array to include error status for each characteristic requested
@@ -979,12 +976,12 @@ export class HAPServer extends EventEmitter<Events> {
           response.writeHead(204); // 204 "No content"
           response.end();
         }
-      }), false, session);
+      }), false);
     }
   }
 
   // Called when controller request snapshot
-  _handleResource = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: { length: number; toString: () => string; }) => {
+  _handleResource = (request: IncomingMessage, response: ServerResponse, session: Session, requestData: Buffer) => {
     if (!this.allowInsecureRequest && !session.encryption) {
       response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
@@ -1025,7 +1022,7 @@ export class HAPServer extends EventEmitter<Events> {
   _handleRemoteCharacteristicsWrite = (request: HapRequest, remoteSession: RemoteSession, session: Session, events: any) => {
     var data = JSON.parse(request.requestBody.toString());
     // call out to listeners to retrieve the latest accessories JSON
-    this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, data, events, once((err: Error, characteristics: CharacteristicData[]) => {
+    this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, data, session, once((err: Error, characteristics: CharacteristicData[]) => {
       if (err) {
         debug("[%s] Error setting characteristics: %s", this.accessoryInfo.username, err.message);
         // rewrite characteristics array to include error status for each characteristic requested
@@ -1044,7 +1041,7 @@ export class HAPServer extends EventEmitter<Events> {
 
   _handleRemoteCharacteristicsRead = (request: HapRequest, remoteSession: RemoteSession, session: Session, events: any) => {
     var data = JSON.parse(request.requestBody.toString());
-    this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, data, events, (err: Error, characteristics: CharacteristicData[]) => {
+    this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, data, session, {}, (err: Error, characteristics: CharacteristicData[]) => {
       if (!characteristics && !err)
         err = new Error("characteristics not supplied by the get-characteristics event callback");
       if (err) {
@@ -1063,7 +1060,6 @@ export class HAPServer extends EventEmitter<Events> {
     }, true);
   }
 }
-
 
 /**
  * Simple struct to hold vars needed to support HAP encryption.

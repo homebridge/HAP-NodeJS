@@ -1,5 +1,6 @@
 import { Status } from './lib/HAPServer';
 import { Characteristic, CharacteristicProps } from './lib/Characteristic';
+import { Session } from './lib/util/eventedhttp';
 
 export type Nullable<T> = T | null;
 
@@ -27,9 +28,12 @@ export type CharacteristicValue = PrimitiveTypes | PrimitiveTypes[] | { [key: st
 export type CharacteristicChange = {
   newValue: CharacteristicValue;
   oldValue: CharacteristicValue;
-  context?: any;
+  session?: Session;
+  context?: CharacteristicEvents;
   characteristic: Characteristic;
 };
+export type CharacteristicEvents = Record<string, true>;
+
 export type HapService = {
   iid: number;
   type: string;
