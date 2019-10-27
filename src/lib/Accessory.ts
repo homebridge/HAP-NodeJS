@@ -64,13 +64,15 @@ export enum Categories {
   AIR_HUMIDIFIER = 22, //Not in HAP Spec
   AIR_DEHUMIDIFIER = 23, // Not in HAP Spec
   APPLE_TV = 24,
+  HOMEPOD = 25, // HomePod
   SPEAKER = 26,
   AIRPORT = 27,
   SPRINKLER = 28,
   FAUCET = 29,
   SHOWER_HEAD = 30,
   TELEVISION = 31,
-  TARGET_CONTROLLER = 32 // Remote Control
+  TARGET_CONTROLLER = 32, // Remote Control
+  ROUTER = 33 // HomeKit enabled router
 }
 
 export enum AccessoryEventTypes {
