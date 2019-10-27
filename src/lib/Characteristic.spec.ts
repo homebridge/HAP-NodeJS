@@ -1,10 +1,14 @@
-import { Characteristic, CharacteristicEventTypes, Formats } from './Characteristic';
+import { Characteristic, CharacteristicEventTypes, CharacteristicProps, Formats } from './Characteristic';
 import { generate } from './util/uuid';
 import './gen';
 
 const createCharacteristic = (type: Formats) => {
   return new Characteristic('Test', generate('Foo'), { format: type, perms: [] });
-}
+};
+
+const createCharacteristicWithProps = (props: CharacteristicProps) => {
+  return new Characteristic('Test', generate('Foo'), props);
+};
 
 describe('Characteristic', () => {
 
@@ -108,8 +112,22 @@ describe('Characteristic', () => {
 
     it('should validate a float property', () => {
       const VALUE = 1.024;
-      const characteristic = createCharacteristic(Formats.FLOAT);
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.FLOAT,
+        minStep: 0.001,
+        perms: [],
+      });
       expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+    });
+
+    it('should cut off decimal places correctly', function () {
+      const VALUE = 1.5642;
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.FLOAT,
+        minStep: 0.1,
+        perms: [],
+      });
+      expect(characteristic.validateValue(VALUE)).toEqual(1.5);
     });
 
     it('should validate a UINT8 property', () => {
