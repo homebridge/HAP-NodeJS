@@ -525,7 +525,7 @@ export class Characteristic extends EventEmitter<Events> {
           stepDecimals = minStep_resolved.toString().split(".")[1].length || 0;
         //Use Decimal to detemine the lowest value within the step.
         try {
-          var decimalVal = new Decimal(Number.parseInt(newValue as string));
+          var decimalVal = new Decimal(parseFloat(newValue as string));
           var decimalDiff = decimalVal.mod(minStep_resolved);
           decimalVal = decimalVal.minus(decimalDiff);
           if (stepDecimals === 0) {
