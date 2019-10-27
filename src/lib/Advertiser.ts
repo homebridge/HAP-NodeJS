@@ -56,7 +56,7 @@ export class Advertiser {
      */
     var host = this.accessoryInfo.username.replace(/\:/ig, "_") + '.local';
     var advertiseName = this.accessoryInfo.displayName
-      + "-"
+      + " "
       + crypto.createHash('sha512').update(this.accessoryInfo.username, 'utf8').digest('hex').slice(0, 4).toUpperCase();
 
     // create/recreate our advertisement
