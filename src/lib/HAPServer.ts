@@ -141,7 +141,7 @@ export interface CharacteristicsReadRequest {
 }
 
 export type CharacteristicsWriteRequest = {
-  characteristics: CharacteristicData[],
+  characteristics: CharacteristicWriteData[],
   pid?: number
 }
 
