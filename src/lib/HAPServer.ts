@@ -146,7 +146,8 @@ export enum HAPServerEventTypes {
   GET_CHARACTERISTICS = 'get-characteristics',
   SET_CHARACTERISTICS = 'set-characteristics',
   SESSION_CLOSE = "session-close",
-  REQUEST_RESOURCE = 'request-resource'
+  REQUEST_RESOURCE = 'request-resource',
+  UNHANDLED_REQUEST = 'unhandled-request'
 }
 
 type Events = {
@@ -172,6 +173,7 @@ type Events = {
   ) => void;
   [HAPServerEventTypes.SESSION_CLOSE]: (session: Session) => void;
   [HAPServerEventTypes.REQUEST_RESOURCE]: (data: Resource, cb: NodeCallback<Buffer>) => void;
+  [HAPServerEventTypes.UNHANDLED_REQUEST]: (req: IncomingMessage, res: ServerResponse, session: Session) => void;
 }
 
 /**
@@ -230,6 +232,10 @@ type Events = {
  *        subscribe to one or more events. The 'session.events' param is an initially-empty object, associated with
  *        the current connection, on which you may store event registration keys for later processing. The listener
  *        must call the provided callback when the request has been processed.
+ * 
+ * @event 'unhandled-request' => function(req, res, session) {}
+ *        This event is emitted when the server isn't able to handle a request. This could be used to add a custom
+ *        page explaining what this server is, or instructions for pairing with the server.
  */
 export class HAPServer extends EventEmitter<Events> {
 
@@ -320,26 +326,31 @@ export class HAPServer extends EventEmitter<Events> {
   // Called when an HTTP request was detected.
   _onRequest = (request: IncomingMessage, response: ServerResponse, session: Session) => {
     debug("[%s] HAP Request: %s %s", this.accessoryInfo.username, request.method, request.url);
-    // collect request data, if any
-    var requestData = bufferShim.alloc(0);
-    request.on('data', (data) => {
-      requestData = Buffer.concat([requestData, data]);
-    });
-    request.on('end', () => {
-      // parse request.url (which can contain querystring, etc.) into components, then extract just the path
-      var pathname = url.parse(request.url!).pathname!;
-      // all request data received; now process this request
-      for (var path in HAPServer.handlers)
-        if (new RegExp('^' + path + '/?$').test(pathname)) { // match exact string and allow trailing slash
-          const handler = HAPServer.handlers[path] as keyof HAPServer;
+    // parse request.url (which can contain querystring, etc.) into components, then extract just the path
+    var pathname = url.parse(request.url!).pathname!;
+    // all request data received; now process this request
+    for (var path in HAPServer.handlers)
+      if (new RegExp('^' + path + '/?$').test(pathname)) { // match exact string and allow trailing slash
+        const handler = HAPServer.handlers[path];
+        // collect request data, if any
+        var requestData = bufferShim.alloc(0);
+        request.on('data', (data) => {
+          requestData = Buffer.concat([requestData, data]);
+        });
+        request.on('end', () => {
           this[handler](request, response, session, requestData);
-          return;
-        }
+        });
+        return;
+      }
+
+    if (this.listenerCount(HAPServerEventTypes.UNHANDLED_REQUEST)) {
+      this.emit(HAPServerEventTypes.UNHANDLED_REQUEST, request, response, session);
+    } else {
       // nobody handled this? reply 404
       debug("[%s] WARNING: Handler for %s not implemented", this.accessoryInfo.username, request.url);
       response.writeHead(404, "Not found", {'Content-Type': 'text/html'});
       response.end();
-    });
+    }
   }
 
   _onRemoteRequest = (request: HapRequest, remoteSession: RemoteSession, session: Session, events: any) => {
