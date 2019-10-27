@@ -15,7 +15,7 @@ import { IncomingMessage, ServerResponse } from "http";
 import { Accessory, Resource } from './Accessory';
 import { CharacteristicData, NodeCallback, PairingsCallback, VoidCallback, CharacteristicEvents } from '../types';
 import { EventEmitter } from './EventEmitter';
-import { PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
+import { PairingInformation, PermissionTypes, AccessoryInfo } from "./model/AccessoryInfo";
 
 const debug = createDebug('HAPServer');
 
@@ -270,14 +270,12 @@ export class HAPServer extends EventEmitter<Events> {
   };
 
   _httpServer: EventedHTTPServer;
-  _relayServer?: any;
 
   allowInsecureRequest: boolean;
   _keepAliveTimerID: NodeJS.Timeout;
 
-  constructor(public accessoryInfo: any, public relayServer?: any) {
+  constructor(public readonly accessoryInfo: AccessoryInfo, public _relayServer?: any) {
     super();
-    this.accessoryInfo = accessoryInfo;
     this.allowInsecureRequest = false;
     // internal server that does all the actual communication
     this._httpServer = new EventedHTTPServer();
@@ -286,8 +284,7 @@ export class HAPServer extends EventEmitter<Events> {
     this._httpServer.on(EventedHTTPServerEvents.ENCRYPT, this._onEncrypt);
     this._httpServer.on(EventedHTTPServerEvents.DECRYPT, this._onDecrypt);
     this._httpServer.on(EventedHTTPServerEvents.SESSION_CLOSE, this._onSessionClose);
-    if (relayServer) {
-      this._relayServer = relayServer;
+    if (this._relayServer) {
       this._relayServer.on('request', this._onRemoteRequest);
       this._relayServer.on('encrypt', this._onEncrypt);
       this._relayServer.on('decrypt', this._onDecrypt);
