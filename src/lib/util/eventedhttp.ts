@@ -149,6 +149,9 @@ export class Session {
   srpServer?: srp.Server;
   username?: string; // username is unique to every user in the home
 
+  timedWritePid?: number;
+  timedWriteTimeout?: NodeJS.Timeout;
+
   constructor(connection: EventedHTTPServerConnection) {
     this._connection = connection;
     this.sessionID = connection.sessionID;

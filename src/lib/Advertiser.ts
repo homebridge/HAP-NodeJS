@@ -15,6 +15,9 @@ import { AccessoryInfo } from './model/AccessoryInfo';
  */
 export class Advertiser {
 
+  static protocolVersion: string = "1.1";
+  static protocolVersionService: string = "1.1.0";
+
   _bonjourService: BonjourHap;
   _advertisement: Nullable<Service>;
   _setupHash: string;
@@ -34,7 +37,7 @@ export class Advertiser {
 
     var txtRecord = {
       md: this.accessoryInfo.displayName,
-      pv: "1.0",
+      pv: Advertiser.protocolVersion,
       id: this.accessoryInfo.username,
       "c#": this.accessoryInfo.configVersion + "", // "accessory conf" - represents the "configuration version" of an Accessory. Increasing this "version number" signals iOS devices to re-fetch /accessories data.
       "s#": "1", // "accessory state"
@@ -78,7 +81,7 @@ export class Advertiser {
 
       var txtRecord = {
         md: this.accessoryInfo.displayName,
-        pv: "1.0",
+        pv: Advertiser.protocolVersion,
         id: this.accessoryInfo.username,
         "c#": this.accessoryInfo.configVersion + "", // "accessory conf" - represents the "configuration version" of an Accessory. Increasing this "version number" signals iOS devices to re-fetch /accessories data.
         "s#": "1", // "accessory state"

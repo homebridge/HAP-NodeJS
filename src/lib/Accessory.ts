@@ -13,7 +13,7 @@ import {
   Perms
 } from './Characteristic';
 import { Advertiser } from './Advertiser';
-import { Codes, HAPServer, HAPServerEventTypes, Status } from './HAPServer';
+import { CharacteristicsWriteRequest, Codes, HAPServer, HAPServerEventTypes, Status } from './HAPServer';
 import { AccessoryInfo, PairingInformation, PermissionTypes } from './model/AccessoryInfo';
 import { IdentifierCache } from './model/IdentifierCache';
 import {
@@ -119,6 +119,12 @@ export type Resource = {
   'image-height': number;
   'image-width': number;
   'resource-type': ResourceTypes;
+}
+
+enum WriteRequestState {
+  REGULAR_REQUEST,
+  TIMED_WRITE_AUTHENTICATED,
+  TIMED_WRITE_REJECTED
 }
 
 type IdentifyCallback = VoidCallback;
@@ -601,6 +607,9 @@ export class Accessory extends EventEmitter<Events> {
    *                                new Accessory.
    */
   publish = (info: PublishInfo, allowInsecureRequest?: boolean) => {
+    this.addService(Service.ProtocolInformation) // add the protocol information service to the primary accessory
+        .setCharacteristic(Characteristic.Version, Advertiser.protocolVersionService);
+
     // attempt to load existing AccessoryInfo from disk
     this._accessoryInfo = AccessoryInfo.load(info.username);
 
@@ -964,12 +973,28 @@ export class Accessory extends EventEmitter<Events> {
 
 // Called when an iOS client wishes to change the state of this accessory - like opening a door, or turning on a light.
 // Or, to subscribe to change events for a particular Characteristic.
-  _handleSetCharacteristics = (data: CharacteristicData[], events: CharacteristicEvents, callback: HandleSetCharacteristicsCallback, remote: boolean, session: Session) => {
+  _handleSetCharacteristics = (writeRequest: CharacteristicsWriteRequest, events: CharacteristicEvents, callback: HandleSetCharacteristicsCallback, remote: boolean, session: Session) => {
+    const data = writeRequest.characteristics;
 
     // data is an array of characteristics and values like this:
     // [ { aid: 1, iid: 8, value: true, ev: true } ]
 
     debug("[%s] Processing characteristic set: %s", this.displayName, JSON.stringify(data));
+
+    let writeState: WriteRequestState = WriteRequestState.REGULAR_REQUEST;
+    if (writeRequest.pid !== undefined) { // check for timed writes
+      if (session.timedWritePid === writeRequest.pid) {
+        writeState = WriteRequestState.TIMED_WRITE_AUTHENTICATED;
+        clearTimeout(session.timedWriteTimeout!);
+        session.timedWritePid = undefined;
+        session.timedWriteTimeout = undefined;
+
+        debug("[%s] Timed write request got acknowledged for pid %d", this.displayName, writeRequest.pid);
+      } else {
+        writeState = WriteRequestState.TIMED_WRITE_REJECTED;
+        debug("[%s] TTL for timed write request has probably expired for pid %d", this.displayName, writeRequest.pid);
+      }
+    }
 
     // build up our array of responses to the characteristics requested asynchronously
     var characteristics: CharacteristicData[] = [];
@@ -998,6 +1023,19 @@ export class Accessory extends EventEmitter<Events> {
         if (characteristics.length === data.length)
           callback(null, characteristics);
 
+        return;
+      }
+
+      if (writeState === WriteRequestState.TIMED_WRITE_REJECTED) {
+        const response: any = {
+          aid: aid,
+          iid: iid
+        };
+        response[statusKey] = Status.INVALID_VALUE_IN_REQUEST;
+        characteristics.push(response);
+
+        if (characteristics.length === data.length)
+          callback(null, characteristics);
         return;
       }
 
@@ -1100,6 +1138,20 @@ export class Accessory extends EventEmitter<Events> {
               callback(null, characteristics);
             return;
           }
+        }
+
+        if (characteristic.props.perms.includes(Perms.TIMED_WRITE) && writeState !== WriteRequestState.TIMED_WRITE_AUTHENTICATED) {
+          debug('[%s] Tried writing to a timed write only Characteristic without properly preparing (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid);
+          const response: any = {
+            aid: aid,
+            iid: iid
+          };
+          response[statusKey] = Status.INVALID_VALUE_IN_REQUEST;
+          characteristics.push(response);
+
+          if (characteristics.length === data.length)
+            callback(null, characteristics);
+          return;
         }
 
         debug('[%s] Setting Characteristic "%s" to value %s', this.displayName, characteristic.displayName, value);
