@@ -135,6 +135,16 @@ export interface CharacteristicWriteData {
   r?: boolean;
 }
 
+export type CharacteristicsWriteRequest = {
+  characteristics: CharacteristicData[],
+  pid?: number
+}
+
+export type PrepareWriteRequest = {
+  ttl: number,
+  pid: number
+}
+
 export enum HAPServerEventTypes {
   IDENTIFY = "identify",
   LISTENING = "listening",
@@ -166,7 +176,7 @@ type Events = {
     remote: boolean,
   ) => void;
   [HAPServerEventTypes.SET_CHARACTERISTICS]: (
-    data: CharacteristicData[],
+    writeRequest: CharacteristicsWriteRequest,
     session: Session,
     cb: NodeCallback<CharacteristicData[]>,
     remote: boolean,
@@ -251,6 +261,7 @@ export class HAPServer extends EventEmitter<Events> {
     '/pairings': '_handlePairings',
     '/accessories': '_handleAccessories',
     '/characteristics': '_handleCharacteristics',
+    '/prepare': '_prepareWrite',
     '/resource': '_handleResource'
   };
 
@@ -950,9 +961,10 @@ export class HAPServer extends EventEmitter<Events> {
       }
 
       // requestData is a JSON payload like { characteristics: [ { aid: 1, iid: 8, value: true, ev: true } ] }
-      const data = JSON.parse(requestData.toString()).characteristics as CharacteristicWriteData[]; // pull out characteristics array
+      var writeRequest = JSON.parse(requestData.toString()) as CharacteristicsWriteRequest;
+      var data = writeRequest.characteristics; // pull out characteristics array
       // call out to listeners to retrieve the latest accessories JSON
-      this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, data, session, once((err: Error, characteristics: CharacteristicData[]) => {
+      this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, writeRequest, session, once((err: Error, characteristics: CharacteristicData[]) => {
         if (err) {
           debug("[%s] Error setting characteristics: %s", this.accessoryInfo.username, err.message);
           // rewrite characteristics array to include error status for each characteristic requested
@@ -990,6 +1002,43 @@ export class HAPServer extends EventEmitter<Events> {
       }), false);
     }
   }
+
+  // Called when controller requests a timed write
+  _prepareWrite = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: { length: number; toString: () => string; }) => {
+    if (!this.allowInsecureRequest && !session.encryption) {
+      response.writeHead(470, {"Content-Type": "application/hap+json"});
+      response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
+      return;
+    }
+
+    if (request.method == "PUT") {
+      if (requestData.length == 0) {
+        response.writeHead(400, {"Content-Type": "application/hap+json"});
+        response.end(JSON.stringify({status: Status.INVALID_VALUE_IN_REQUEST}));
+        return;
+      }
+
+      const data = JSON.parse(requestData.toString()) as PrepareWriteRequest;
+
+      if (data.pid && data.ttl) {
+        debug("[%s] Received prepare write request with pid %d and ttl %d", this.accessoryInfo.username, data.pid, data.ttl);
+
+        if (session.timedWriteTimeout) // clear any currently existing timeouts
+          clearTimeout(session.timedWriteTimeout);
+
+        session.timedWritePid = data.pid;
+        session.timedWriteTimeout = setTimeout(() => {
+          debug("[%s] Timed write request timed out for pid %d", this.accessoryInfo.username, data.pid);
+          session.timedWritePid = undefined;
+          session.timedWriteTimeout = undefined;
+        }, data.ttl);
+
+        response.writeHead(200, {"Content-Type": "application/hap+json"});
+        response.end(JSON.stringify({status: Status.SUCCESS}));
+        return;
+      }
+    }
+  };
 
   // Called when controller request snapshot
   _handleResource = (request: IncomingMessage, response: ServerResponse, session: Session, requestData: Buffer) => {
