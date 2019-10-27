@@ -135,6 +135,11 @@ export interface CharacteristicWriteData {
   r?: boolean;
 }
 
+export interface CharacteristicsReadRequest {
+  characteristics: CharacteristicData[];
+  options: CharacteristicGetOptions;
+}
+
 export type CharacteristicsWriteRequest = {
   characteristics: CharacteristicData[],
   pid?: number
@@ -169,9 +174,8 @@ type Events = {
   [HAPServerEventTypes.LIST_PAIRINGS]: (controller: Session, callback: PairingsCallback<PairingInformation[]>) => void;
   [HAPServerEventTypes.ACCESSORIES]: (cb: NodeCallback<Accessory[]>) => void;
   [HAPServerEventTypes.GET_CHARACTERISTICS]: (
-    data: CharacteristicData[],
+    readRequest: CharacteristicsReadRequest,
     session: Session,
-    options: CharacteristicGetOptions,
     cb: NodeCallback<CharacteristicData[]>,
     remote: boolean,
   ) => void;
@@ -909,14 +913,17 @@ export class HAPServer extends EventEmitter<Events> {
         data.push({aid: aid, iid: iid});
       }
 
-      const options: CharacteristicGetOptions = {
-        includeMeta: query.meta === '1',
-        includePerms: query.perms === '1',
-        includeType: query.type === '1',
-        includeEvent: query.ev === '1',
+      const readRequest: CharacteristicsReadRequest = {
+        characteristics: data,
+        options: {
+          includeMeta: query.meta === '1',
+          includePerms: query.perms === '1',
+          includeType: query.type === '1',
+          includeEvent: query.ev === '1',
+        }
       };
 
-      this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, data, session, options, once((err: Error, characteristics: CharacteristicData[]) => {
+      this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, readRequest, session, once((err: Error, characteristics: CharacteristicData[]) => {
         if (!characteristics && !err)
           err = new Error("characteristics not supplied by the get-characteristics event callback");
         if (err) {
@@ -1080,9 +1087,12 @@ export class HAPServer extends EventEmitter<Events> {
   }
 
   _handleRemoteCharacteristicsWrite = (request: HapRequest, remoteSession: RemoteSession, session: Session, events: any) => {
+    const writeRequest: CharacteristicsWriteRequest = {
+      characteristics: JSON.parse(request.requestBody.toString())
+    };
     var data = JSON.parse(request.requestBody.toString());
     // call out to listeners to retrieve the latest accessories JSON
-    this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, data, session, once((err: Error, characteristics: CharacteristicData[]) => {
+    this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, writeRequest, session, once((err: Error, characteristics: CharacteristicData[]) => {
       if (err) {
         debug("[%s] Error setting characteristics: %s", this.accessoryInfo.username, err.message);
         // rewrite characteristics array to include error status for each characteristic requested
@@ -1100,18 +1110,21 @@ export class HAPServer extends EventEmitter<Events> {
   }
 
   _handleRemoteCharacteristicsRead = (request: HapRequest, remoteSession: RemoteSession, session: Session, events: any) => {
-    var data = JSON.parse(request.requestBody.toString());
-    this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, data, session, {}, (err: Error, characteristics: CharacteristicData[]) => {
+    const readRequest: CharacteristicsReadRequest = {
+      characteristics: JSON.parse(request.requestBody.toString()),
+      options: {}
+    };
+    this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, readRequest, session, (err: Error, characteristics: CharacteristicData[]) => {
       if (!characteristics && !err)
         err = new Error("characteristics not supplied by the get-characteristics event callback");
       if (err) {
         debug("[%s] Error getting characteristics: %s", this.accessoryInfo.username, err.stack);
         // rewrite characteristics array to include error status for each characteristic requested
         characteristics = [];
-        for (var i in data) {
+        for (var i in readRequest.characteristics) {
           characteristics.push({
-            aid: data[i].aid,
-            iid: data[i].iid,
+            aid: readRequest.characteristics[i].aid,
+            iid: readRequest.characteristics[i].iid,
             s: Status.SERVICE_COMMUNICATION_FAILURE
           } as any);
         }

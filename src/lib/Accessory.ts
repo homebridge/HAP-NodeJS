@@ -13,7 +13,10 @@ import {
   Perms
 } from './Characteristic';
 import { Advertiser } from './Advertiser';
-import { CharacteristicsWriteRequest, Codes, HAPServer, HAPServerEventTypes, Status, CharacteristicGetOptions, CharacteristicWriteData } from './HAPServer';
+import {
+  CharacteristicsReadRequest, CharacteristicsWriteRequest,
+  HAPServer, HAPServerEventTypes, Status, Codes,
+} from './HAPServer';
 import { AccessoryInfo, PairingInformation, PermissionTypes } from './model/AccessoryInfo';
 import { IdentifierCache } from './model/IdentifierCache';
 import {
@@ -854,7 +857,8 @@ export class Accessory extends EventEmitter<Events> {
   }
 
 // Called when an iOS client wishes to query the state of one or more characteristics, like "door open?", "light on?", etc.
-  _handleGetCharacteristics = (data: CharacteristicData[], session: Session, options: CharacteristicGetOptions, callback: HandleGetCharacteristicsCallback, remote: boolean) => {
+  _handleGetCharacteristics = (readRequest: CharacteristicsReadRequest, session: Session, callback: HandleGetCharacteristicsCallback, remote: boolean) => {
+    const {characteristics: data, options} = readRequest;
 
     // build up our array of responses to the characteristics requested asynchronously
     var characteristics: CharacteristicData[] = [];
