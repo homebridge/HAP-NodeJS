@@ -90,8 +90,8 @@ export type CharacteristicSetCallback = (error?: Error | null, value?: Character
 
 type Events = {
   [CharacteristicEventTypes.CHANGE]: (change: CharacteristicChange) => void;
-  [CharacteristicEventTypes.GET]: (cb: CharacteristicGetCallback, session?: Session) => void;
-  [CharacteristicEventTypes.SET]: (value: CharacteristicValue, cb: CharacteristicSetCallback, session?: Session, writeData?: CharacteristicWriteData) => void;
+  [CharacteristicEventTypes.GET]: (cb: CharacteristicGetCallback, session?: Session, connectionID?: string) => void;
+  [CharacteristicEventTypes.SET]: (value: CharacteristicValue, cb: CharacteristicSetCallback, session?: Session, connectionID?: string, writeData?: CharacteristicWriteData) => void;
   [CharacteristicEventTypes.SUBSCRIBE]: VoidCallback;
   [CharacteristicEventTypes.UNSUBSCRIBE]: VoidCallback;
 }
@@ -418,7 +418,7 @@ export class Characteristic extends EventEmitter<Events> {
           if (oldValue !== newValue)
             this.emit(CharacteristicEventTypes.CHANGE, {oldValue, newValue, session, context: session ? session.events : null});
         }
-      }), session);
+      }), session, session ? session.sessionID : undefined);
     } else {
       // no one is listening to the 'get' event, so just return the cached value
       if (callback)
@@ -579,7 +579,7 @@ export class Characteristic extends EventEmitter<Events> {
           if (this.eventOnlyCharacteristic === true || oldValue !== newValue)
             this.emit(CharacteristicEventTypes.CHANGE, {oldValue, newValue, session, context: session ? session.events : null});
         }
-      }), session, writeData);
+      }), session, session ? session.sessionID : undefined, typeof writeData === 'string' ? undefined : writeData);
     } else {
       if (newValue === undefined || newValue === null)
         newValue = this.getDefaultValue() as CharacteristicValue;
