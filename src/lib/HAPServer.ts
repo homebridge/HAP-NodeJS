@@ -1008,7 +1008,7 @@ export class HAPServer extends EventEmitter<Events> {
   }
 
   // Called when controller requests a timed write
-  _prepareWrite = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: { length: number; toString: () => string; }) => {
+  _prepareWrite = (request: IncomingMessage, response: ServerResponse, session: Session, requestData: Buffer) => {
     if (!this.allowInsecureRequest && !session.encryption) {
       response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
