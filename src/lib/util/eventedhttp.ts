@@ -70,6 +70,12 @@ export class EventedHTTPServer extends EventEmitter<Events> {
   _tcpServer: net.Server;
   _connections: EventedHTTPServerConnection[];
 
+  /**
+   * Session dictionary indexed by username/identifier. The username uniquely identifies every person added to the home.
+   * So there can be multiple sessions open for a single username (multiple devices connected to the same Apple ID).
+   */
+  sessions: Record<string, Session[]> = {};
+
   constructor() {
     super();
     this._tcpServer = net.createServer();
@@ -113,7 +119,7 @@ export class EventedHTTPServer extends EventEmitter<Events> {
 // Called by net.Server when a new client connects. We will set up a new EventedHTTPServerConnection to manage the
 // lifetime of this connection.
   _onConnection = (socket: Socket) => {
-    var connection = new EventedHTTPServerConnection(socket);
+    var connection = new EventedHTTPServerConnection(this, socket);
 
     // pass on session events to our listeners directly
     connection.on(EventedHTTPServerEvents.REQUEST, (request: IncomingMessage, response: ServerResponse, session: Session, events: any) => { this.emit(EventedHTTPServerEvents.REQUEST, request, response, session, events); });
@@ -136,13 +142,8 @@ export class EventedHTTPServer extends EventEmitter<Events> {
 
 export class Session {
 
-  /*
-    Session dictionary indexed by username/identifier. The username uniquely identifies every person added to the home.
-    So there can be multiple sessions open for a single username (multiple Apple devices connected to the same Apple ID).
-   */
-  private static sessions: Record<string, Session[]> = {};
-
-  _connection: EventedHTTPServerConnection;
+  readonly _server: EventedHTTPServer;
+  readonly _connection: EventedHTTPServerConnection;
 
   sessionID: string;
   encryption?: HAPEncryption;
@@ -154,6 +155,7 @@ export class Session {
   timedWriteTimeout?: NodeJS.Timeout;
 
   constructor(connection: EventedHTTPServerConnection) {
+    this._server = connection.server;
     this._connection = connection;
     this.sessionID = connection.sessionID;
   }
@@ -167,10 +169,10 @@ export class Session {
     this.authenticated = true;
     this.username = username;
 
-    let sessions: Session[] = Session.sessions[username];
+    let sessions: Session[] = this._server.sessions[username];
     if (!sessions) {
       sessions = [];
-      Session.sessions[username] = sessions;
+      this._server.sessions[username] = sessions;
     }
 
     if (sessions.includes(this)) {
@@ -186,18 +188,19 @@ export class Session {
       return;
     }
 
-    const sessions: Session[] = Session.sessions[this.username];
+    const sessions: Session[] = this._server.sessions[this.username];
     if (sessions) {
       const index = sessions.indexOf(this);
       if (index >= 0) {
         sessions[index].authenticated = false;
         sessions.splice(index, 1);
       }
+      if (!sessions.length) delete this._server.sessions;
     }
   };
 
   static destroyExistingConnectionsAfterUnpair = (initiator: Session, username: string) => {
-    const sessions: Session[] = Session.sessions[username];
+    const sessions: Session[] = initiator._server.sessions[username];
 
     if (sessions) {
       sessions.forEach(session => {
@@ -211,6 +214,7 @@ export class Session {
           session._connection._clientSocket.destroy();
         }
       });
+      if (!sessions.length) delete initiator._server.sessions;
     }
   };
 
@@ -226,6 +230,7 @@ export class Session {
  */
 class EventedHTTPServerConnection extends EventEmitter<Events> {
 
+  readonly server: EventedHTTPServer;
   sessionID: string;
   _remoteAddress: string;
   _pendingClientSocketData: Nullable<Buffer>;
@@ -240,9 +245,10 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
   _events: Record<string, boolean>;
   _httpPort?: number;
 
-  constructor(clientSocket: Socket) {
+  constructor(server: EventedHTTPServer, clientSocket: Socket) {
     super();
 
+    this.server = server;
     this.sessionID = uuid.generate(clientSocket.remoteAddress + ':' + clientSocket.remotePort);
     this._remoteAddress = clientSocket.remoteAddress!; // cache because it becomes undefined in 'onClientSocketClose'
     this._pendingClientSocketData = bufferShim.alloc(0); // data received from client before HTTP proxy is fully setup
