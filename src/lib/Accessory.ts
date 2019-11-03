@@ -80,6 +80,8 @@ export enum AccessoryEventTypes {
   LISTENING = "listening",
   SERVICE_CONFIGURATION_CHANGE = "service-configurationChange",
   SERVICE_CHARACTERISTIC_CHANGE = "service-characteristic-change",
+  PAIRED = "paired",
+  UNPAIRED = "unpaired",
 }
 
 type Events = {
@@ -87,6 +89,8 @@ type Events = {
   listening: (port: number) => void;
   "service-configurationChange": VoidCallback;
   "service-characteristic-change": (change: ServiceCharacteristicChange) => void;
+  [AccessoryEventTypes.PAIRED]: () => void;
+  [AccessoryEventTypes.UNPAIRED]: () => void;
 }
 
 /**
@@ -163,6 +167,7 @@ export class Accessory extends EventEmitter<Events> {
   aid: Nullable<number> = null; // assigned by us in assignIDs() or by a Bridge
   _isBridge: boolean = false; // true if we are a Bridge (creating a new instance of the Bridge subclass sets this to true)
   bridged: boolean = false; // true if we are hosted "behind" a Bridge Accessory
+  bridge?: Accessory; // if accessory is bridged, this property points to the bridge which bridges this accessory
   bridgedAccessories: Accessory[] = []; // If we are a Bridge, these are the Accessories we are bridging
   reachable: boolean = true;
   cameraSource: Nullable<Camera> = null;
@@ -331,6 +336,16 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
+  /**
+   * Returns the bridging accessory if this accessory is bridged.
+   * Otherwise returns itself.
+   *
+   * @returns the primary accessory
+   */
+  getPrimaryAccessory = (): Accessory => {
+    return this.bridged? this.bridge!: this;
+  }
+
   updateReachability = (reachable: boolean) => {
     if (!this.bridged)
       throw new Error("Cannot update reachability on non-bridged accessory!");
@@ -365,6 +380,7 @@ export class Accessory extends EventEmitter<Events> {
     });
 
     accessory.bridged = true;
+    accessory.bridge = this;
 
     this.bridgedAccessories.push(accessory);
 
@@ -776,6 +792,8 @@ export class Accessory extends EventEmitter<Events> {
     this._advertiser && this._advertiser.updateAdvertisement();
 
     callback();
+
+    this.emit(AccessoryEventTypes.PAIRED);
   }
 
 // called when a controller adds an additional pairing
@@ -823,6 +841,7 @@ export class Accessory extends EventEmitter<Events> {
 
     if (!this._accessoryInfo.paired()) {
       this._advertiser && this._advertiser.updateAdvertisement();
+      this.emit(AccessoryEventTypes.UNPAIRED);
     }
 
     callback(0);
