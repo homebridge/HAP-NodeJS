@@ -403,12 +403,18 @@ export class HAPServer extends EventEmitter<Events> {
     }
     var objects = tlv.decode(requestData);
     var sequence = objects[TLVValues.SEQUENCE_NUM][0]; // value is single byte with sequence number
-    if (sequence == 0x01)
+    if (sequence == States.M1)
       this._handlePairStepOne(request, response, session);
-    else if (sequence == 0x03)
+    else if (sequence == States.M3 && session._pairSetupState === States.M2)
       this._handlePairStepTwo(request, response, session, objects);
-    else if (sequence == 0x05)
+    else if (sequence == States.M5 && session._pairSetupState === States.M4)
       this._handlePairStepThree(request, response, session, objects);
+    else {
+      // Invalid state/sequence number
+      response.writeHead(400, {"Content-Type": "application/pairing+tlv8"});
+      response.end(tlv.encode(TLVValues.STATE, sequence + 1, TLVValues.ERROR_CODE, Codes.UNKNOWN));
+      return;
+    }
   }
 
   // M1 + M2
@@ -423,7 +429,8 @@ export class HAPServer extends EventEmitter<Events> {
       // attach it to the current TCP session
       session.srpServer = srpServer;
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, 0x02, TLVValues.SALT, salt, TLVValues.PUBLIC_KEY, srpB));
+      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M2, TLVValues.SALT, salt, TLVValues.PUBLIC_KEY, srpB));
+      session._pairSetupState = States.M2;
     });
   }
 
@@ -441,13 +448,15 @@ export class HAPServer extends EventEmitter<Events> {
       // most likely the client supplied an incorrect pincode.
       debug("[%s] Error while checking pincode: %s", this.accessoryInfo.username, err.message);
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, 0x04, TLVValues.ERROR_CODE, Codes.INVALID_REQUEST));
+      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M4, TLVValues.ERROR_CODE, Codes.INVALID_REQUEST));
+      session._pairSetupState = undefined;
       return;
     }
     // "M2 is the proof that the server actually knows your password."
     var M2 = srpServer.computeM2();
     response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
-    response.end(tlv.encode(TLVValues.SEQUENCE_NUM, 0x04, TLVValues.PASSWORD_PROOF, M2));
+    response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M4, TLVValues.PASSWORD_PROOF, M2));
+    session._pairSetupState = States.M4;
   }
 
   // M5-1
@@ -486,7 +495,8 @@ export class HAPServer extends EventEmitter<Events> {
     if (!tweetnacl.sign.detached.verify(completeData, clientProof, clientLTPK)) {
       debug("[%s] Invalid signature", this.accessoryInfo.username);
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, 0x06, TLVValues.ERROR_CODE, Codes.INVALID_REQUEST));
+      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M6, TLVValues.ERROR_CODE, Codes.INVALID_REQUEST));
+      session._pairSetupState = undefined;
       return;
     }
     this._handlePairStepFive(request, response, session, clientUsername, clientLTPK, hkdfEncKey);
@@ -514,11 +524,13 @@ export class HAPServer extends EventEmitter<Events> {
         debug("[%s] Error adding pairing info: %s", this.accessoryInfo.username, err.message);
         response.writeHead(500, "Server Error");
         response.end();
+        session._pairSetupState = undefined;
         return;
       }
       // send final pairing response to client
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
       response.end(tlv.encode(TLVValues.SEQUENCE_NUM, 0x06, TLVValues.ENCRYPTED_DATA, Buffer.concat([ciphertextBuffer, macBuffer])));
+      session._pairSetupState = undefined;
     }));
   }
 
@@ -528,10 +540,16 @@ export class HAPServer extends EventEmitter<Events> {
   _handlePairVerify = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: Buffer) => {
     var objects = tlv.decode(requestData);
     var sequence = objects[TLVValues.SEQUENCE_NUM][0]; // value is single byte with sequence number
-    if (sequence == 0x01)
+    if (sequence == States.M1)
       this._handlePairVerifyStepOne(request, response, session, objects);
-    else if (sequence == 0x03)
+    else if (sequence == States.M3 && session._pairVerifyState === States.M2)
       this._handlePairVerifyStepTwo(request, response, session, events, objects);
+    else {
+      // Invalid state/sequence number
+      response.writeHead(400, {"Content-Type": "application/pairing+tlv8"});
+      response.end(tlv.encode(TLVValues.STATE, sequence + 1, TLVValues.ERROR_CODE, Codes.UNKNOWN));
+      return;
+    }
   }
 
   _handlePairVerifyStepOne = (request: IncomingMessage, response: ServerResponse, session: Session, objects: Record<number, Buffer>) => {
@@ -565,7 +583,8 @@ export class HAPServer extends EventEmitter<Events> {
     var macBuffer = bufferShim.alloc(16);
     encryption.encryptAndSeal(outputKey, bufferShim.from("PV-Msg02"), message, null, ciphertextBuffer, macBuffer);
     response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
-    response.end(tlv.encode(TLVValues.SEQUENCE_NUM, 0x02, TLVValues.ENCRYPTED_DATA, Buffer.concat([ciphertextBuffer, macBuffer]), TLVValues.PUBLIC_KEY, publicKey));
+    response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M2, TLVValues.ENCRYPTED_DATA, Buffer.concat([ciphertextBuffer, macBuffer]), TLVValues.PUBLIC_KEY, publicKey));
+    session._pairVerifyState = States.M2;
   }
 
   _handlePairVerifyStepTwo = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, objects: Record<number, Buffer>) => {
@@ -581,7 +600,8 @@ export class HAPServer extends EventEmitter<Events> {
     if (!encryption.verifyAndDecrypt(enc.hkdfPairEncKey, bufferShim.from("PV-Msg03"), messageData, authTagData, null, plaintextBuffer)) {
       debug("[%s] M3: Invalid signature", this.accessoryInfo.username);
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
-        response.end(tlv.encode(TLVValues.STATE, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
+      response.end(tlv.encode(TLVValues.STATE, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
+      session._pairVerifyState = undefined;
       return;
     }
     var decoded = tlv.decode(plaintextBuffer);
@@ -595,13 +615,15 @@ export class HAPServer extends EventEmitter<Events> {
     if (!clientPublicKey) {
       debug("[%s] Client %s attempting to verify, but we are not paired; rejecting client", this.accessoryInfo.username, clientUsername);
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
-        response.end(tlv.encode(TLVValues.STATE, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
+      response.end(tlv.encode(TLVValues.STATE, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
+      session._pairVerifyState = undefined;
       return;
     }
     if (!tweetnacl.sign.detached.verify(material, proof, clientPublicKey)) {
       debug("[%s] Client %s provided an invalid signature", this.accessoryInfo.username, clientUsername);
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
       response.end(tlv.encode(TLVValues.STATE, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
+      session._pairVerifyState = undefined;
       return;
     }
     debug("[%s] Client %s verification complete", this.accessoryInfo.username, clientUsername);
@@ -619,6 +641,7 @@ export class HAPServer extends EventEmitter<Events> {
     // "keepalive" events for detecting when connections are closed by the client.
     events['keepalive'] = true;
     session.establishSession(clientUsername.toString());
+    session._pairVerifyState = undefined;
   }
 
   _handleRemotePairVerify = (request: HapRequest, remoteSession: RemoteSession, session: Session) => {
@@ -708,6 +731,7 @@ export class HAPServer extends EventEmitter<Events> {
     enc.controllerToAccessoryKey = hkdf.HKDF("sha512", encSalt, enc.sharedSec, infoWrite, 32);
     var response = tlv.encode(TLVValues.SEQUENCE_NUM, 0x04);
     remoteSession.responseMessage(request, response);
+    session.establishSession(clientUsername.toString());
   }
 
   /**
@@ -715,7 +739,7 @@ export class HAPServer extends EventEmitter<Events> {
    */
   _handlePairings = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: Buffer) => {
     // Only accept /pairing request if there is a secure session
-    if (!this.allowInsecureRequest && !session.encryption) {
+    if (!this.allowInsecureRequest && !session.authenticated) {
       response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
       return;
@@ -797,7 +821,7 @@ export class HAPServer extends EventEmitter<Events> {
 
   // Called when the client wishes to fetch all data regarding our published Accessories.
   _handleAccessories = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: any) => {
-    if (!this.allowInsecureRequest && !session.encryption) {
+    if (!this.allowInsecureRequest && !session.authenticated) {
       response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
       return;
@@ -841,7 +865,7 @@ export class HAPServer extends EventEmitter<Events> {
 
   // Called when the client wishes to get or set particular characteristics
   _handleCharacteristics = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: { length: number; toString: () => string; }) => {
-    if (!this.allowInsecureRequest && !session.encryption) {
+    if (!this.allowInsecureRequest && !session.authenticated) {
       response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
       return;
@@ -899,7 +923,7 @@ export class HAPServer extends EventEmitter<Events> {
         response.end(JSON.stringify({characteristics: characteristics}));
       }), false, session);
     } else if (request.method == "PUT") {
-      if (!session.encryption) {
+      if (!session.authenticated) {
         if (!request.headers || (request.headers && request.headers["authorization"] !== this.accessoryInfo.pincode)) {
           response.writeHead(470, {"Content-Type": "application/hap+json"});
           response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
@@ -956,7 +980,7 @@ export class HAPServer extends EventEmitter<Events> {
 
   // Called when controller requests a timed write
   _prepareWrite = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: { length: number; toString: () => string; }) => {
-    if (!this.allowInsecureRequest && !session.encryption) {
+    if (!this.allowInsecureRequest && !session.authenticated) {
       response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
       return;
@@ -993,13 +1017,13 @@ export class HAPServer extends EventEmitter<Events> {
 
   // Called when controller request snapshot
   _handleResource = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: { length: number; toString: () => string; }) => {
-    if (!this.allowInsecureRequest && !session.encryption) {
+    if (!this.allowInsecureRequest && !session.authenticated) {
       response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
       return;
     }
     if (request.method == "POST") {
-      if (!session.encryption) {
+      if (!session.authenticated) {
         if (!request.headers || (request.headers && request.headers["authorization"] !== this.accessoryInfo.pincode)) {
           response.writeHead(470, {"Content-Type": "application/hap+json"});
           response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
