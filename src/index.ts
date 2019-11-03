@@ -16,6 +16,7 @@ export * from './lib/AccessoryLoader';
 export * from './lib/StreamController';
 export * from './lib/HAPServer';
 export * from './lib/gen';
+export * from './lib/datastream';
 
 export * from './lib/util/chacha20poly1305';
 export * from './lib/util/clone';
