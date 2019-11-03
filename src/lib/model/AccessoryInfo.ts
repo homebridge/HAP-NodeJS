@@ -1,5 +1,6 @@
 import storage from 'node-persist';
 import util from 'util';
+import assert from 'assert';
 import tweetnacl from 'tweetnacl';
 import bufferShim from 'buffer-shims';
 
@@ -22,6 +23,9 @@ export type PairingInformation = {
  * such as encryption keys and username. It is persisted to disk.
  */
 export class AccessoryInfo {
+
+  static readonly deviceIdPattern: RegExp = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+
   username: string;
   displayName: string;
   category: Categories;
@@ -40,7 +44,7 @@ export class AccessoryInfo {
   relayPairedControllers: Record<string, string>;
   accessoryBagURL: string;
 
-  constructor(username: string) {
+  private constructor(username: string) {
     this.username = username;
     this.displayName = "";
     // @ts-ignore
@@ -232,6 +236,7 @@ export class AccessoryInfo {
   }
 
   static create = (username: string) => {
+    AccessoryInfo.assertValidUsername(username);
     var accessoryInfo = new AccessoryInfo(username);
 
     // Create a new unique key pair for this accessory.
@@ -244,6 +249,8 @@ export class AccessoryInfo {
   }
 
   static load = (username: string) => {
+    AccessoryInfo.assertValidUsername(username);
+
     var key = AccessoryInfo.persistKey(username);
     var saved = storage.getItem(key);
 
@@ -289,5 +296,15 @@ export class AccessoryInfo {
       return null;
     }
   }
+
+  static assertValidUsername = (username: string) => {
+    assert.ok(AccessoryInfo.deviceIdPattern.test(username),
+        "The supplied username (" + username + ") is not valid " +
+        "(expected a format like 'XX:XX:XX:XX:XX:XX' with XX being a valid hexadecimal string). " +
+        "Note that, if you had this accessory already paired with the invalid username, you will need to repair " +
+        "the accessory and reconfigure your services in the Home app. " +
+        "Using an invalid username will lead to unexpected behaviour.")
+  };
+
 }
 
