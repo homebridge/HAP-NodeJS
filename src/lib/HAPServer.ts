@@ -708,6 +708,7 @@ export class HAPServer extends EventEmitter<Events> {
     enc.controllerToAccessoryKey = hkdf.HKDF("sha512", encSalt, enc.sharedSec, infoWrite, 32);
     var response = tlv.encode(TLVValues.SEQUENCE_NUM, 0x04);
     remoteSession.responseMessage(request, response);
+    session.establishSession(clientUsername.toString());
   }
 
   /**
@@ -715,7 +716,7 @@ export class HAPServer extends EventEmitter<Events> {
    */
   _handlePairings = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: Buffer) => {
     // Only accept /pairing request if there is a secure session
-    if (!this.allowInsecureRequest && !session.encryption) {
+    if (!this.allowInsecureRequest && !session.authenticated) {
       response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
       return;
@@ -797,7 +798,7 @@ export class HAPServer extends EventEmitter<Events> {
 
   // Called when the client wishes to fetch all data regarding our published Accessories.
   _handleAccessories = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: any) => {
-    if (!this.allowInsecureRequest && !session.encryption) {
+    if (!this.allowInsecureRequest && !session.authenticated) {
       response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
       return;
@@ -841,7 +842,7 @@ export class HAPServer extends EventEmitter<Events> {
 
   // Called when the client wishes to get or set particular characteristics
   _handleCharacteristics = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: { length: number; toString: () => string; }) => {
-    if (!this.allowInsecureRequest && !session.encryption) {
+    if (!this.allowInsecureRequest && !session.authenticated) {
       response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
       return;
@@ -899,7 +900,7 @@ export class HAPServer extends EventEmitter<Events> {
         response.end(JSON.stringify({characteristics: characteristics}));
       }), false, session);
     } else if (request.method == "PUT") {
-      if (!session.encryption) {
+      if (!session.authenticated) {
         if (!request.headers || (request.headers && request.headers["authorization"] !== this.accessoryInfo.pincode)) {
           response.writeHead(470, {"Content-Type": "application/hap+json"});
           response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
@@ -956,7 +957,7 @@ export class HAPServer extends EventEmitter<Events> {
 
   // Called when controller requests a timed write
   _prepareWrite = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: { length: number; toString: () => string; }) => {
-    if (!this.allowInsecureRequest && !session.encryption) {
+    if (!this.allowInsecureRequest && !session.authenticated) {
       response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
       return;
@@ -993,13 +994,13 @@ export class HAPServer extends EventEmitter<Events> {
 
   // Called when controller request snapshot
   _handleResource = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: { length: number; toString: () => string; }) => {
-    if (!this.allowInsecureRequest && !session.encryption) {
+    if (!this.allowInsecureRequest && !session.authenticated) {
       response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
       return;
     }
     if (request.method == "POST") {
-      if (!session.encryption) {
+      if (!session.authenticated) {
         if (!request.headers || (request.headers && request.headers["authorization"] !== this.accessoryInfo.pincode)) {
           response.writeHead(470, {"Content-Type": "application/hap+json"});
           response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));

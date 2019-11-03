@@ -147,6 +147,7 @@ export class Session {
   sessionID: string;
   encryption?: HAPEncryption;
   srpServer?: srp.Server;
+  authenticated = false;
   username?: string; // username is unique to every user in the home
 
   timedWritePid?: number;
@@ -157,13 +158,13 @@ export class Session {
     this.sessionID = connection.sessionID;
   }
 
-  /*
-    establishSession gets called after an pairVerify.
-    establishSession does not get called after the first pairing gets added, as any HomeKit controller will initiate a
-    pairVerify after the pair procedure. HAP-NodeJS though will treat the connection as verified immediately
-    after the pair procedure was successful (based on the encryption field).
+  /**
+   * establishSession gets called after a pair verify.
+   * establishSession does not get called after the first pairing gets added, as any HomeKit controller will initiate a
+   * pair verify after the pair setup procedure.
    */
   establishSession = (username: string) => {
+    this.authenticated = true;
     this.username = username;
 
     let sessions: Session[] = Session.sessions[username];
@@ -189,6 +190,7 @@ export class Session {
     if (sessions) {
       const index = sessions.indexOf(this);
       if (index >= 0) {
+        sessions[index].authenticated = false;
         sessions.splice(index, 1);
       }
     }
@@ -199,6 +201,7 @@ export class Session {
 
     if (sessions) {
       sessions.forEach(session => {
+        session.authenticated = false;
         if (initiator.sessionID === session.sessionID) {
           // the session which initiated the unpair removed it's own username, wait until the unpair request is finished
           // until we kill his connection
@@ -434,16 +437,3 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     // _onClientSocketClose will be called next
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
