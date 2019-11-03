@@ -146,8 +146,10 @@ export class Session {
   readonly _connection: EventedHTTPServerConnection;
 
   sessionID: string;
-  encryption?: HAPEncryption;
+  _pairSetupState?: number;
   srpServer?: srp.Server;
+  _pairVerifyState?: number;
+  encryption?: HAPEncryption;
   authenticated = false;
   username?: string; // username is unique to every user in the home
 
