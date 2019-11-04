@@ -3249,6 +3249,166 @@ export class PeriodicSnapshotsActive extends Characteristic {
 Characteristic.PeriodicSnapshotsActive = PeriodicSnapshotsActive;
 
 /**
+ * Characteristic "Network Client Control"
+ */
+
+export class NetworkClientControl extends Characteristic {
+
+  static readonly UUID: string = '0000020C-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Network Client Control', NetworkClientControl.UUID);
+    this.setProps({
+      format: Formats.TLV8,
+      perms: [Perms.READ, Perms.NOTIFY]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.NetworkClientControl = NetworkClientControl;
+
+/**
+ * Characteristic "Network Client Status Control"
+ */
+
+export class NetworkClientStatusControl extends Characteristic {
+
+  static readonly UUID: string = '0000020D-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Network Client Status Control', NetworkClientStatusControl.UUID);
+    this.setProps({
+      format: Formats.TLV8,
+      perms: [Perms.READ, Perms.NOTIFY]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.NetworkClientStatusControl = NetworkClientStatusControl;
+
+/**
+ * Characteristic "Router Status"
+ */
+
+export class RouterStatus extends Characteristic {
+
+  static readonly UUID: string = '0000020E-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Router Status', RouterStatus.UUID);
+    this.setProps({
+      format: Formats.UINT8,
+      perms: [Perms.READ, Perms.NOTIFY]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.RouterStatus = RouterStatus;
+
+/**
+ * Characteristic "Supported Router Configuration"
+ */
+
+export class SupportedRouterConfiguration extends Characteristic {
+
+  static readonly UUID: string = '00000210-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Supported Router Configuration', SupportedRouterConfiguration.UUID);
+    this.setProps({
+      format: Formats.TLV8,
+      perms: [Perms.READ, Perms.NOTIFY]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.SupportedRouterConfiguration = SupportedRouterConfiguration;
+
+/**
+ * Characteristic "WAN Configuration List"
+ */
+
+export class WANConfigurationList extends Characteristic {
+
+  static readonly UUID: string = '00000211-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('WAN Configuration List', WANConfigurationList.UUID);
+    this.setProps({
+      format: Formats.TLV8,
+      perms: [Perms.READ, Perms.NOTIFY]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.WANConfigurationList = WANConfigurationList;
+
+/**
+ * Characteristic "WAN Status List"
+ */
+
+export class WANStatusList extends Characteristic {
+
+  static readonly UUID: string = '00000212-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('WAN Status List', WANStatusList.UUID);
+    this.setProps({
+      format: Formats.TLV8,
+      perms: [Perms.READ, Perms.NOTIFY]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.WANStatusList = WANStatusList;
+
+/**
+ * Characteristic "Managed Network Enable"
+ */
+
+export class ManagedNetworkEnable extends Characteristic {
+
+  static readonly UUID: string = '00000215-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Managed Network Enable', ManagedNetworkEnable.UUID);
+    this.setProps({
+      format: Formats.UINT8,
+      perms: [Perms.READ, Perms.NOTIFY]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.ManagedNetworkEnable = ManagedNetworkEnable;
+
+/**
+ * Characteristic "Network Access Violation Control"
+ */
+
+export class NetworkAccessViolationControl extends Characteristic {
+
+  static readonly UUID: string = '0000021F-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Network Access Violation Control', NetworkAccessViolationControl.UUID);
+    this.setProps({
+      format: Formats.UINT8,
+      perms: [Perms.READ, Perms.NOTIFY]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.NetworkAccessViolationControl = NetworkAccessViolationControl;
+
+/**
  * Service "Accessory Information"
  */
 
@@ -4308,3 +4468,31 @@ export class CameraRecordingManagement extends Service {
 }
 
 Service.CameraRecordingManagement = CameraRecordingManagement;
+
+/**
+ * Service "Wi-Fi Router"
+ */
+
+export class WiFiRouter extends Service {
+
+  static UUID: string = '0000020A-0000-1000-8000-0026BB765291';
+
+  constructor(displayName: string, subtype: string) {
+    super(displayName, WiFiRouter.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.NetworkClientControl);
+    this.addCharacteristic(Characteristic.NetworkClientStatusControl);
+    this.addCharacteristic(Characteristic.RouterStatus);
+    this.addCharacteristic(Characteristic.SupportedRouterConfiguration);
+    this.addCharacteristic(Characteristic.WANConfigurationList);
+    this.addCharacteristic(Characteristic.WANStatusList);
+    this.addCharacteristic(Characteristic.ManagedNetworkEnable);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.Name);
+    this.addOptionalCharacteristic(Characteristic.NetworkAccessViolationControl);
+  }
+}
+
+Service.WiFiRouter = WiFiRouter;
