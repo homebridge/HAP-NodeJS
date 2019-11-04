@@ -75,6 +75,7 @@ export const ROTATION_DIRECTION_CTYPE = stPre + "28" + stPost;
 export const ROTATION_SPEED_CTYPE = stPre + "29" + stPost;
 export const SATURATION_CTYPE = stPre + "2F" + stPost;
 export const SERIAL_NUMBER_CTYPE = stPre + "30" + stPost;
+export const FIRMWARE_REVISION_CTYPE = stPre + "52" + stPost;
 export const STATUS_LOW_BATTERY_CTYPE = stPre + "79" + stPost;
 export const STATUS_FAULT_CTYPE = stPre + "77" + stPost;
 export const TARGET_DOORSTATE_CTYPE = stPre + "32" + stPost;
