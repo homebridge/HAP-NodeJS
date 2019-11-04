@@ -197,7 +197,7 @@ export class Session {
         sessions[index].authenticated = false;
         sessions.splice(index, 1);
       }
-      if (!sessions.length) delete this._server.sessions;
+      if (!sessions.length) delete this._server.sessions[this.username];
     }
   };
 
@@ -216,7 +216,6 @@ export class Session {
           session._connection._clientSocket.destroy();
         }
       });
-      if (!sessions.length) delete initiator._server.sessions;
     }
   };
 
