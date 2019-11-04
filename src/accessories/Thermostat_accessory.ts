@@ -89,7 +89,7 @@ export const accessory = {
       cType: types.CURRENTHEATINGCOOLING_CTYPE,
       onUpdate: (value: CharacteristicValue) => { console.log("Change:",value); execute("Thermostat", "Current HC", value); },
       perms: ["pr","ev"],
-      format: "int",
+      format: "uint8",
       initialValue: 0,
       supportEvents: false,
       supportBonjour: false,
