@@ -187,7 +187,7 @@ export class Accessory extends EventEmitter<Events> {
     // create our initial "Accessory Information" Service that all Accessories are expected to have
     this
       .addService(Service.AccessoryInformation)
-      .setCharacteristic(Characteristic.Name, displayName)
+      .setCharacteristic(Characteristic.Name, displayName + " " + crypto.createHash('sha512').update(UUID, 'utf8').digest('hex').slice(0, 4).toUpperCase())
       .setCharacteristic(Characteristic.Manufacturer, "Default-Manufacturer")
       .setCharacteristic(Characteristic.Model, "Default-Model")
       .setCharacteristic(Characteristic.SerialNumber, "Default-SerialNumber")
@@ -224,6 +224,21 @@ export class Accessory extends EventEmitter<Events> {
     if (typeof service === 'function')
       service = new service(constructorArgs[0], constructorArgs[1], constructorArgs[2]) as Service;
       // service = new (Function.prototype.bind.apply(service, arguments));
+
+    // @ts-ignore
+
+    if(typeof this.username !== 'undefined') {
+        // @ts-ignore
+        if(typeof service.displayName !== 'undefined') {
+            // @ts-ignore
+            service.displayName = service.displayName + " " + crypto.createHash('sha512').update(this.UUID, 'utf8').digest('hex').slice(0, 4).toUpperCase();
+        }
+        // @ts-ignore
+        if(typeof service.characteristics[0].displayName !== 'undefined' && service.characteristics[0].displayName == "Name") {
+            // @ts-ignore
+            service.characteristics[0].value = service.characteristics[0].value + " " + crypto.createHash('sha512').update(this.UUID, 'utf8').digest('hex').slice(0, 4).toUpperCase();
+        }
+    }
 
     // check for UUID+subtype conflict
     for (var index in this.services) {
@@ -630,7 +645,7 @@ export class Accessory extends EventEmitter<Events> {
     this._accessoryInfo.setupID = this._setupID;
 
     // make sure we have up-to-date values in AccessoryInfo, then save it in case they changed (or if we just created it)
-    this._accessoryInfo.displayName = this.displayName;
+    this._accessoryInfo.displayName = this.displayName + " " + crypto.createHash('sha512').update(this.UUID, 'utf8').digest('hex').slice(0, 4).toUpperCase();
     this._accessoryInfo.category = info.category || Categories.OTHER;
     this._accessoryInfo.pincode = info.pincode;
     this._accessoryInfo.save();

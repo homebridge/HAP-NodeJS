@@ -47,28 +47,13 @@ export class Advertiser {
       "sh": this._setupHash
     };
 
-    /**
-     * The host name of the component is probably better to be
-     * the username of the hosted accessory + '.local'.
-     * By default 'bonjour' doesnt add '.local' at the end of the os.hostname
-     * this causes to return 'raspberrypi' on raspberry pi / raspbian
-     * then when the phone queryies for A/AAAA record it is being queried
-     * on normal dns, not on mdns. By Adding the username of the accessory
-     * probably the problem will also fix a possible problem
-     * of having multiple pi's on same network
-     */
-    var host = this.accessoryInfo.username.replace(/\:/ig, "_") + '.local';
-    var advertiseName = this.accessoryInfo.displayName
-      + " "
-      + crypto.createHash('sha512').update(this.accessoryInfo.username, 'utf8').digest('hex').slice(0, 4).toUpperCase();
-
     // create/recreate our advertisement
     this._advertisement = this._bonjourService.publish({
-      name: advertiseName,
+      name: this.accessoryInfo.displayName,
       type: "hap",
       port: port,
       txt: txtRecord,
-      host: host
+      host: this.accessoryInfo.username.replace(/\:/ig, "_") + '.local'
     });
   }
 
@@ -113,5 +98,5 @@ export class Advertiser {
 
     return setupHash;
   }
-}
 
+}
