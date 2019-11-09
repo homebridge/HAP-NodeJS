@@ -2902,7 +2902,7 @@ export class TemperatureDisplayUnits extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -3040,7 +3040,7 @@ export class RecordingAudioActive extends Characteristic {
     super('Recording Audio Active', RecordingAudioActive.UUID);
     this.setProps({
         format: Formats.UINT8,
-        perms: [Perms.READ, Perms.NOTIFY]
+        perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -3140,7 +3140,7 @@ export class CameraOperatingModeIndicator extends Characteristic {
     super('Camera Operating Mode Indicator', CameraOperatingModeIndicator.UUID);
     this.setProps({
         format: Formats.BOOL,
-        perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+        perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -3160,7 +3160,7 @@ export class EventSnapshotsActive extends Characteristic {
     super('Event Snapshots Active', EventSnapshotsActive.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -3180,7 +3180,7 @@ export class HomeKitCameraActive extends Characteristic {
     super('HomeKit Camera Active', HomeKitCameraActive.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -3240,7 +3240,7 @@ export class PeriodicSnapshotsActive extends Characteristic {
     super('Periodic Snapshots Active', PeriodicSnapshotsActive.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -3260,7 +3260,7 @@ export class NetworkClientControl extends Characteristic {
     super('Network Client Control', NetworkClientControl.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE, Perms.WRITE_RESPONSE]
     });
     this.value = this.getDefaultValue();
   }
@@ -3280,7 +3280,7 @@ export class NetworkClientStatusControl extends Characteristic {
     super('Network Client Status Control', NetworkClientStatusControl.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.WRITE_RESPONSE]
     });
     this.value = this.getDefaultValue();
   }
@@ -3320,7 +3320,7 @@ export class SupportedRouterConfiguration extends Characteristic {
     super('Supported Router Configuration', SupportedRouterConfiguration.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ]
     });
     this.value = this.getDefaultValue();
   }
@@ -3380,7 +3380,7 @@ export class ManagedNetworkEnable extends Characteristic {
     super('Managed Network Enable', ManagedNetworkEnable.UUID);
     this.setProps({
       format: Formats.UINT8,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -3400,7 +3400,7 @@ export class NetworkAccessViolationControl extends Characteristic {
     super('Network Access Violation Control', NetworkAccessViolationControl.UUID);
     this.setProps({
       format: Formats.UINT8,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE, Perms.WRITE_RESPONSE]
     });
     this.value = this.getDefaultValue();
   }
