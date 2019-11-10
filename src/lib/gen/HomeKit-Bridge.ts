@@ -1,5 +1,5 @@
-import { Characteristic, Formats, Perms } from '../Characteristic';
-import { Service } from '../Service';
+import { Characteristic, Formats, Perms } from "../Characteristic";
+import { Service } from "../Service";
 
 /**
  *
@@ -12,14 +12,13 @@ import { Service } from '../Service';
  */
 
 export class AppMatchingIdentifier extends Characteristic {
-
-  static readonly UUID: string = '000000A4-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000A4-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('App Matching Identifier', AppMatchingIdentifier.UUID);
+    super("App Matching Identifier", AppMatchingIdentifier.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ]
+      perms: [Perms.READ],
     });
     this.value = this.getDefaultValue();
   }
@@ -32,17 +31,16 @@ Characteristic.AppMatchingIdentifier = AppMatchingIdentifier;
  */
 
 export class ProgrammableSwitchOutputState extends Characteristic {
-
-  static readonly UUID: string = '00000074-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000074-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Programmable Switch Output State', ProgrammableSwitchOutputState.UUID);
+    super("Programmable Switch Output State", ProgrammableSwitchOutputState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -55,14 +53,13 @@ Characteristic.ProgrammableSwitchOutputState = ProgrammableSwitchOutputState;
  */
 
 export class SoftwareRevision extends Characteristic {
-
-  static readonly UUID: string = '00000054-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000054-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Software Revision', SoftwareRevision.UUID);
+    super("Software Revision", SoftwareRevision.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.READ]
+      perms: [Perms.READ],
     });
     this.value = this.getDefaultValue();
   }
@@ -75,10 +72,9 @@ Characteristic.SoftwareRevision = SoftwareRevision;
  */
 
 export class CameraControl extends Service {
+  static readonly UUID: string = "00000111-0000-1000-8000-0026BB765291";
 
-  static readonly UUID: string = '00000111-0000-1000-8000-0026BB765291'
-
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName: string, subtype?: string) {
     super(displayName, CameraControl.UUID, subtype);
 
     // Required Characteristics
@@ -105,10 +101,9 @@ Service.CameraControl = CameraControl;
  */
 
 export class StatefulProgrammableSwitch extends Service {
+  static readonly UUID: string = "00000088-0000-1000-8000-0026BB765291";
 
-  static readonly UUID: string = '00000088-0000-1000-8000-0026BB765291'
-
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName: string, subtype?: string) {
     super(displayName, StatefulProgrammableSwitch.UUID, subtype);
 
     // Required Characteristics
@@ -133,14 +128,13 @@ Service.StatefulProgrammableSwitch = StatefulProgrammableSwitch;
  */
 
 export class AccessoryIdentifier extends Characteristic {
-
-  static readonly UUID: string = '00000057-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000057-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Accessory Identifier', AccessoryIdentifier.UUID);
+    super("Accessory Identifier", AccessoryIdentifier.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.READ]
+      perms: [Perms.READ],
     });
     this.value = this.getDefaultValue();
   }
@@ -153,17 +147,16 @@ Characteristic.AccessoryIdentifier = AccessoryIdentifier;
  */
 
 export class Category extends Characteristic {
-
-  static readonly UUID: string = '000000A3-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000A3-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Category', Category.UUID);
+    super("Category", Category.UUID);
     this.setProps({
       format: Formats.UINT16,
       maxValue: 16,
       minValue: 1,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -176,14 +169,13 @@ Characteristic.Category = Category;
  */
 
 export class ConfigureBridgedAccessory extends Characteristic {
-
-  static readonly UUID: string = '000000A0-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000A0-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Configure Bridged Accessory', ConfigureBridgedAccessory.UUID);
+    super("Configure Bridged Accessory", ConfigureBridgedAccessory.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.WRITE]
+      perms: [Perms.WRITE],
     });
     this.value = this.getDefaultValue();
   }
@@ -196,14 +188,13 @@ Characteristic.ConfigureBridgedAccessory = ConfigureBridgedAccessory;
  */
 
 export class ConfigureBridgedAccessoryStatus extends Characteristic {
-
-  static readonly UUID: string = '0000009D-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000009D-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Configure Bridged Accessory Status', ConfigureBridgedAccessoryStatus.UUID);
+    super("Configure Bridged Accessory Status", ConfigureBridgedAccessoryStatus.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -216,14 +207,13 @@ Characteristic.ConfigureBridgedAccessoryStatus = ConfigureBridgedAccessoryStatus
  */
 
 export class CurrentTime extends Characteristic {
-
-  static readonly UUID: string = '0000009B-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000009B-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Current Time', CurrentTime.UUID);
+    super("Current Time", CurrentTime.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.READ, Perms.WRITE]
+      perms: [Perms.READ, Perms.WRITE],
     });
     this.value = this.getDefaultValue();
   }
@@ -236,17 +226,16 @@ Characteristic.CurrentTime = CurrentTime;
  */
 
 export class DayoftheWeek extends Characteristic {
-
-  static readonly UUID: string = '00000098-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000098-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Day of the Week', DayoftheWeek.UUID);
+    super("Day of the Week", DayoftheWeek.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 7,
       minValue: 1,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE]
+      perms: [Perms.READ, Perms.WRITE],
     });
     this.value = this.getDefaultValue();
   }
@@ -259,18 +248,17 @@ Characteristic.DayoftheWeek = DayoftheWeek;
  */
 
 export class DiscoverBridgedAccessories extends Characteristic {
-
   // The value property of DiscoverBridgedAccessories must be one of the following:
   static readonly START_DISCOVERY = 0;
   static readonly STOP_DISCOVERY = 1;
 
-  static readonly UUID: string = '0000009E-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000009E-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Discover Bridged Accessories', DiscoverBridgedAccessories.UUID);
+    super("Discover Bridged Accessories", DiscoverBridgedAccessories.UUID);
     this.setProps({
       format: Formats.UINT8,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -283,14 +271,13 @@ Characteristic.DiscoverBridgedAccessories = DiscoverBridgedAccessories;
  */
 
 export class DiscoveredBridgedAccessories extends Characteristic {
-
-  static readonly UUID: string = '0000009F-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000009F-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Discovered Bridged Accessories', DiscoveredBridgedAccessories.UUID);
+    super("Discovered Bridged Accessories", DiscoveredBridgedAccessories.UUID);
     this.setProps({
       format: Formats.UINT16,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -303,17 +290,16 @@ Characteristic.DiscoveredBridgedAccessories = DiscoveredBridgedAccessories;
  */
 
 export class LinkQuality extends Characteristic {
-
-  static readonly UUID: string = '0000009C-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000009C-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Link Quality', LinkQuality.UUID);
+    super("Link Quality", LinkQuality.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 4,
       minValue: 1,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -326,14 +312,13 @@ Characteristic.LinkQuality = LinkQuality;
  */
 
 export class Reachable extends Characteristic {
-
-  static readonly UUID: string = '00000063-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000063-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Reachable', Reachable.UUID);
+    super("Reachable", Reachable.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -346,14 +331,13 @@ Characteristic.Reachable = Reachable;
  */
 
 export class RelayControlPoint extends Characteristic {
-
-  static readonly UUID: string = '0000005E-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000005E-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Relay Control Point', RelayControlPoint.UUID);
+    super("Relay Control Point", RelayControlPoint.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -366,14 +350,13 @@ Characteristic.RelayControlPoint = RelayControlPoint;
  */
 
 export class RelayEnabled extends Characteristic {
-
-  static readonly UUID: string = '0000005B-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000005B-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Relay Enabled', RelayEnabled.UUID);
+    super("Relay Enabled", RelayEnabled.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -386,14 +369,13 @@ Characteristic.RelayEnabled = RelayEnabled;
  */
 
 export class RelayState extends Characteristic {
-
-  static readonly UUID: string = '0000005C-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000005C-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Relay State', RelayState.UUID);
+    super("Relay State", RelayState.UUID);
     this.setProps({
       format: Formats.UINT8,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -406,14 +388,13 @@ Characteristic.RelayState = RelayState;
  */
 
 export class TimeUpdate extends Characteristic {
-
-  static readonly UUID: string = '0000009A-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000009A-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Time Update', TimeUpdate.UUID);
+    super("Time Update", TimeUpdate.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -426,14 +407,13 @@ Characteristic.TimeUpdate = TimeUpdate;
  */
 
 export class TunnelConnectionTimeout extends Characteristic {
-
-  static readonly UUID: string = '00000061-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000061-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Tunnel Connection Timeout ', TunnelConnectionTimeout.UUID);
+    super("Tunnel Connection Timeout ", TunnelConnectionTimeout.UUID);
     this.setProps({
       format: Formats.UINT32,
-      perms: [Perms.WRITE, Perms.READ, Perms.NOTIFY]
+      perms: [Perms.WRITE, Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -446,14 +426,13 @@ Characteristic.TunnelConnectionTimeout = TunnelConnectionTimeout;
  */
 
 export class TunneledAccessoryAdvertising extends Characteristic {
-
-  static readonly UUID: string = '00000060-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000060-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Tunneled Accessory Advertising', TunneledAccessoryAdvertising.UUID);
+    super("Tunneled Accessory Advertising", TunneledAccessoryAdvertising.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.WRITE, Perms.READ, Perms.NOTIFY]
+      perms: [Perms.WRITE, Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -466,14 +445,13 @@ Characteristic.TunneledAccessoryAdvertising = TunneledAccessoryAdvertising;
  */
 
 export class TunneledAccessoryConnected extends Characteristic {
-
-  static readonly UUID: string = '00000059-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000059-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Tunneled Accessory Connected', TunneledAccessoryConnected.UUID);
+    super("Tunneled Accessory Connected", TunneledAccessoryConnected.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.WRITE, Perms.READ, Perms.NOTIFY]
+      perms: [Perms.WRITE, Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -486,14 +464,13 @@ Characteristic.TunneledAccessoryConnected = TunneledAccessoryConnected;
  */
 
 export class TunneledAccessoryStateNumber extends Characteristic {
-
-  static readonly UUID: string = '00000058-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000058-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Tunneled Accessory State Number', TunneledAccessoryStateNumber.UUID);
+    super("Tunneled Accessory State Number", TunneledAccessoryStateNumber.UUID);
     this.setProps({
       format: Formats.FLOAT,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -506,14 +483,13 @@ Characteristic.TunneledAccessoryStateNumber = TunneledAccessoryStateNumber;
  */
 
 export class Version extends Characteristic {
-
-  static readonly UUID: string = '00000037-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000037-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Version', Version.UUID);
+    super("Version", Version.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.READ]
+      perms: [Perms.READ],
     });
     this.value = this.getDefaultValue();
   }
@@ -526,10 +502,9 @@ Characteristic.Version = Version;
  */
 
 export class BridgeConfiguration extends Service {
+  static readonly UUID: string = "000000A1-0000-1000-8000-0026BB765291";
 
-  static readonly UUID: string = '000000A1-0000-1000-8000-0026BB765291';
-
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName: string, subtype?: string) {
     super(displayName, BridgeConfiguration.UUID, subtype);
 
     // Required Characteristics
@@ -550,10 +525,9 @@ Service.BridgeConfiguration = BridgeConfiguration;
  */
 
 export class BridgingState extends Service {
+  static readonly UUID: string = "00000062-0000-1000-8000-0026BB765291";
 
-  static readonly UUID: string = '00000062-0000-1000-8000-0026BB765291';
-
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName: string, subtype?: string) {
     super(displayName, BridgingState.UUID, subtype);
 
     // Required Characteristics
@@ -574,10 +548,9 @@ Service.BridgingState = BridgingState;
  */
 
 export class Pairing extends Service {
+  static readonly UUID: string = "00000055-0000-1000-8000-0026BB765291";
 
-  static readonly UUID: string = '00000055-0000-1000-8000-0026BB765291';
-
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName: string, subtype?: string) {
     super(displayName, Pairing.UUID, subtype);
 
     // Required Characteristics
@@ -597,10 +570,9 @@ Service.Pairing = Pairing;
  */
 
 export class ProtocolInformation extends Service {
+  static readonly UUID: string = "000000A2-0000-1000-8000-0026BB765291";
 
-  static readonly UUID: string = '000000A2-0000-1000-8000-0026BB765291';
-
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName: string, subtype?: string) {
     super(displayName, ProtocolInformation.UUID, subtype);
 
     // Required Characteristics
@@ -617,10 +589,9 @@ Service.ProtocolInformation = ProtocolInformation;
  */
 
 export class Relay extends Service {
+  static readonly UUID: string = "0000005A-0000-1000-8000-0026BB765291";
 
-  static readonly UUID: string = '0000005A-0000-1000-8000-0026BB765291';
-
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName: string, subtype?: string) {
     super(displayName, Relay.UUID, subtype);
 
     // Required Characteristics
@@ -639,10 +610,9 @@ Service.Relay = Relay;
  */
 
 export class TimeInformation extends Service {
+  static readonly UUID: string = "00000099-0000-1000-8000-0026BB765291";
 
-  static readonly UUID: string = '00000099-0000-1000-8000-0026BB765291';
-
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName: string, subtype?: string) {
     super(displayName, TimeInformation.UUID, subtype);
 
     // Required Characteristics
@@ -662,10 +632,9 @@ Service.TimeInformation = TimeInformation;
  */
 
 export class TunneledBTLEAccessoryService extends Service {
+  static readonly UUID: string = "00000056-0000-1000-8000-0026BB765291";
 
-  static readonly UUID: string = '00000056-0000-1000-8000-0026BB765291';
-
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName: string, subtype?: string) {
     super(displayName, TunneledBTLEAccessoryService.UUID, subtype);
 
     // Required Characteristics

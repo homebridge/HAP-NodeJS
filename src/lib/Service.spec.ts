@@ -1,80 +1,51 @@
-import { Service, ServiceEventTypes } from './Service';
-import { generate } from './util/uuid';
-import './gen';
-import { Characteristic } from './Characteristic';
+import { Service, ServiceEventTypes } from "./Service";
+import { generate } from "./util/uuid";
+import "./gen";
+import { Characteristic } from "./Characteristic";
 
 const createService = () => {
-  return new Service('Test', generate('Foo'), 'subtype');
-}
+  return new Service("Test", generate("Foo"), "subtype");
+};
 
-describe('Service', () => {
-
-  describe('#constructor()', () => {
-    it('should set the name characteristic to the display name', () => {
+describe("Service", () => {
+  describe("#constructor()", () => {
+    it("should set the name characteristic to the display name", () => {
       const service = createService();
-      expect(service.getCharacteristic(Characteristic.Name)!.value).toEqual('Test');
+      expect(service.getCharacteristic(Characteristic.Name)!.value).toEqual("Test");
     });
 
-    it('should fail to load with no UUID', () => {
+    it("should fail to load with no UUID", () => {
       expect(() => {
-        new Service('Test', '', 'subtype');
-      }).toThrow('valid UUID');
+        new Service("Test", "", "subtype");
+      }).toThrow("valid UUID");
     });
   });
 
-  describe('#addCharacteristic()', () => {
+  describe("#addCharacteristic()", () => {});
 
-  });
+  describe("#setHiddenService()", () => {});
 
-  describe('#setHiddenService()', () => {
+  describe("#addLinkedService()", () => {});
 
-  });
+  describe("#removeLinkedService()", () => {});
 
-  describe('#addLinkedService()', () => {
+  describe("#removeCharacteristic()", () => {});
 
-  });
+  describe("#getCharacteristic()", () => {});
 
-  describe('#removeLinkedService()', () => {
+  describe("#testCharacteristic()", () => {});
 
-  });
+  describe("#setCharacteristic()", () => {});
 
-  describe('#removeCharacteristic()', () => {
+  describe("#updateCharacteristic()", () => {});
 
-  });
+  describe("#addOptionalCharacteristic()", () => {});
 
-  describe('#getCharacteristic()', () => {
+  describe("#getCharacteristicByIID()", () => {});
 
-  });
+  describe("#toHAP()", () => {});
 
-  describe('#testCharacteristic()', () => {
+  describe(`@${ServiceEventTypes.CHARACTERISTIC_CHANGE}`, () => {});
 
-  });
-
-  describe('#setCharacteristic()', () => {
-
-  });
-
-  describe('#updateCharacteristic()', () => {
-
-  });
-
-  describe('#addOptionalCharacteristic()', () => {
-
-  });
-
-  describe('#getCharacteristicByIID()', () => {
-
-  });
-
-  describe('#toHAP()', () => {
-
-  });
-
-  describe(`@${ServiceEventTypes.CHARACTERISTIC_CHANGE}`, () => {
-
-  });
-
-  describe(`@${ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE}`, () => {
-
-  });
+  describe(`@${ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE}`, () => {});
 });

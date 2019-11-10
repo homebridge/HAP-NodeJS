@@ -2,43 +2,49 @@ import {
   Accessory,
   AccessoryEventTypes,
   Characteristic,
-  CharacteristicEventTypes, CharacteristicSetCallback,
-  CharacteristicValue, NodeCallback,
+  CharacteristicEventTypes,
+  CharacteristicSetCallback,
+  CharacteristicValue,
+  NodeCallback,
   Service,
   uuid,
-  VoidCallback
-} from '..';
-import { Nullable } from '../types';
+  VoidCallback,
+} from "..";
+import { Nullable } from "../types";
 
 let err: Nullable<Error> = null; // in case there were any problems
 
 // here's a fake hardware device that we'll expose to HomeKit
 var FAKE_OUTLET = {
   powerOn: false,
-    setPowerOn: (on: CharacteristicValue) => {
+  setPowerOn: (on: CharacteristicValue) => {
     console.log("Turning the outlet %s!...", on ? "on" : "off");
     if (on) {
-          FAKE_OUTLET.powerOn = true;
-          if(err) { return console.log(err); }
-          console.log("...outlet is now on.");
+      FAKE_OUTLET.powerOn = true;
+      if (err) {
+        return console.log(err);
+      }
+      console.log("...outlet is now on.");
     } else {
-          FAKE_OUTLET.powerOn = false;
-          if(err) { return console.log(err); }
-          console.log("...outlet is now off.");
+      FAKE_OUTLET.powerOn = false;
+      if (err) {
+        return console.log(err);
+      }
+      console.log("...outlet is now off.");
     }
   },
-    identify: function() {
+  identify: function() {
     console.log("Identify the outlet.");
-    }
-}
+  },
+};
 
 // Generate a consistent UUID for our outlet Accessory that will remain the same even when
 // restarting our server. We use the `uuid.generate` helper function to create a deterministic
 // UUID based on an arbitrary "namespace" and the accessory name.
-var outletUUID = uuid.generate('hap-nodejs:accessories:Outlet');
+var outletUUID = uuid.generate("hap-nodejs:accessories:Outlet");
 
 // This is the Accessory that we'll return to HAP-NodeJS that represents our fake light.
-var outlet = exports.accessory = new Accessory('Outlet', outletUUID);
+var outlet = (exports.accessory = new Accessory("Outlet", outletUUID));
 
 // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
 // @ts-ignore
@@ -75,7 +81,6 @@ outlet
   .getService(Service.Outlet)!
   .getCharacteristic(Characteristic.On)!
   .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
-
     // this event is emitted when you ask Siri directly whether your light is on or not. you might query
     // the light hardware itself to find this out, then call the callback. But if you take longer than a
     // few seconds to respond, Siri will give up.
@@ -85,8 +90,7 @@ outlet
     if (FAKE_OUTLET.powerOn) {
       console.log("Are we on? Yes.");
       callback(err, true);
-    }
-    else {
+    } else {
       console.log("Are we on? No.");
       callback(err, false);
     }

@@ -5,16 +5,16 @@ import {
   CharacteristicSetCallback,
   CharacteristicValue,
   Service,
-  uuid
-} from '..';
+  uuid,
+} from "..";
 
 // Generate a consistent UUID for TV that will remain the same even when
 // restarting our server. We use the `uuid.generate` helper function to create a deterministic
 // UUID based on an arbitrary "namespace" and the word "tv".
-var tvUUID = uuid.generate('hap-nodejs:accessories:tv');
+var tvUUID = uuid.generate("hap-nodejs:accessories:tv");
 
 // This is the Accessory that we'll return to HAP-NodeJS.
-var tv = exports.accessory = new Accessory('TV', tvUUID);
+var tv = (exports.accessory = new Accessory("TV", tvUUID));
 
 // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
 // @ts-ignore
@@ -26,14 +26,12 @@ tv.pincode = "031-45-154";
 // We can see the complete list of Services and Characteristics in `lib/gen/HomeKit.ts`
 var televisionService = tv.addService(Service.Television, "Television", "Television");
 
-televisionService
-  .setCharacteristic(Characteristic.ConfiguredName, "Television");
+televisionService.setCharacteristic(Characteristic.ConfiguredName, "Television");
 
-televisionService
-  .setCharacteristic(
-    Characteristic.SleepDiscoveryMode,
-    Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE
-  );
+televisionService.setCharacteristic(
+  Characteristic.SleepDiscoveryMode,
+  Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE,
+);
 
 televisionService
   .getCharacteristic(Characteristic.Active)!
@@ -42,8 +40,7 @@ televisionService
     callback(null);
   });
 
-televisionService
-  .setCharacteristic(Characteristic.ActiveIdentifier, 1);
+televisionService.setCharacteristic(Characteristic.ActiveIdentifier, 1);
 
 televisionService
   .getCharacteristic(Characteristic.ActiveIdentifier)!
@@ -75,13 +72,14 @@ televisionService
 
 // Speaker
 
-var speakerService = tv.addService(Service.TelevisionSpeaker)
+var speakerService = tv.addService(Service.TelevisionSpeaker);
 
 speakerService
   .setCharacteristic(Characteristic.Active, Characteristic.Active.ACTIVE)
   .setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
 
-speakerService.getCharacteristic(Characteristic.VolumeSelector)!
+speakerService
+  .getCharacteristic(Characteristic.VolumeSelector)!
   .on(CharacteristicEventTypes.SET, (newValue: CharacteristicValue, callback: CharacteristicSetCallback) => {
     console.log("set VolumeSelector => setNewValue: " + newValue);
     callback(null);

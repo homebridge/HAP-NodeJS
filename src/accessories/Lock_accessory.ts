@@ -2,12 +2,13 @@ import {
   Accessory,
   AccessoryEventTypes,
   Characteristic,
-  CharacteristicEventTypes, CharacteristicSetCallback,
+  CharacteristicEventTypes,
+  CharacteristicSetCallback,
   CharacteristicValue,
   Service,
-  uuid
-} from '../';
-import { NodeCallback, VoidCallback } from '../types';
+  uuid,
+} from "../";
+import { NodeCallback, VoidCallback } from "../types";
 
 // here's a fake hardware device that we'll expose to HomeKit
 var FAKE_LOCK = {
@@ -22,16 +23,16 @@ var FAKE_LOCK = {
   },
   identify: () => {
     console.log("Identify the lock!");
-  }
-}
+  },
+};
 
 // Generate a consistent UUID for our Lock Accessory that will remain the same even when
 // restarting our server. We use the `uuid.generate` helper function to create a deterministic
 // UUID based on an arbitrary "namespace" and the word "lock".
-var lockUUID = uuid.generate('hap-nodejs:accessories:lock');
+var lockUUID = uuid.generate("hap-nodejs:accessories:lock");
 
 // This is the Accessory that we'll return to HAP-NodeJS that represents our fake lock.
-var lock = exports.accessory = new Accessory('Lock', lockUUID);
+var lock = (exports.accessory = new Accessory("Lock", lockUUID));
 
 // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
 // @ts-ignore
@@ -58,7 +59,6 @@ lock
   .addService(Service.LockMechanism, "Fake Lock") // services exposed to the user should have "names" like "Fake Light" for us
   .getCharacteristic(Characteristic.LockTargetState)!
   .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-
     if (value == Characteristic.LockTargetState.UNSECURED) {
       FAKE_LOCK.unlock();
       callback(); // Our fake Lock is synchronous - this value has been successfully set
@@ -67,8 +67,7 @@ lock
       lock
         .getService(Service.LockMechanism)!
         .setCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.UNSECURED);
-    }
-    else if (value == Characteristic.LockTargetState.SECURED) {
+    } else if (value == Characteristic.LockTargetState.SECURED) {
       FAKE_LOCK.lock();
       callback(); // Our fake Lock is synchronous - this value has been successfully set
 
@@ -85,7 +84,6 @@ lock
   .getService(Service.LockMechanism)!
   .getCharacteristic(Characteristic.LockCurrentState)!
   .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
-
     // this event is emitted when you ask Siri directly whether your lock is locked or not. you might query
     // the lock hardware itself to find this out, then call the callback. But if you take longer than a
     // few seconds to respond, Siri will give up.
@@ -95,8 +93,7 @@ lock
     if (FAKE_LOCK.locked) {
       console.log("Are we locked? Yes.");
       callback(err, Characteristic.LockCurrentState.SECURED);
-    }
-    else {
+    } else {
       console.log("Are we locked? No.");
       callback(err, Characteristic.LockCurrentState.UNSECURED);
     }

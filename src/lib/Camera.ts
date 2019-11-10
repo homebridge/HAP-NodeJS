@@ -1,24 +1,25 @@
-import crypto from 'crypto';
-import fs from 'fs';
-import ip from 'ip';
-import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
+import crypto from "crypto";
+import fs from "fs";
+import ip from "ip";
+import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 
-import { Service } from './Service';
+import { Service } from "./Service";
 import {
   PreparedStreamRequestCallback,
   PreparedStreamResponse,
-  PrepareStreamRequest, StreamController,
+  PrepareStreamRequest,
+  StreamController,
   StreamControllerOptions,
   StreamRequest,
-  StreamRequestTypes
+  StreamRequestTypes,
 } from "./StreamController";
-import * as uuid from './util/uuid';
-import { Address, NodeCallback, SessionIdentifier } from '../types';
+import * as uuid from "./util/uuid";
+import { Address, NodeCallback, SessionIdentifier } from "../types";
 
 export type SnapshotRequest = {
   height: number;
   width: number;
-}
+};
 
 export type SessionInfo = {
   address: string;
@@ -28,7 +29,7 @@ export type SessionInfo = {
   video_port: number;
   video_srtp: Buffer;
   video_ssrc: number;
-}
+};
 
 export class Camera {
   services: Service[] = [];
@@ -37,7 +38,6 @@ export class Camera {
   ongoingSessions: Record<string, ChildProcessWithoutNullStreams> = {};
 
   constructor() {
-
     const options: StreamControllerOptions = {
       proxy: false, // Requires RTP/RTCP MUX Proxy
       disable_audio_proxy: false, // If proxy = true, you can opt out audio proxy via this
@@ -58,23 +58,23 @@ export class Camera {
         ],
         codec: {
           profiles: [0, 1, 2], // Enum, please refer StreamController.VideoCodecParamProfileIDTypes
-          levels: [0, 1, 2] // Enum, please refer StreamController.VideoCodecParamLevelTypes
-        }
+          levels: [0, 1, 2], // Enum, please refer StreamController.VideoCodecParamLevelTypes
+        },
       },
       audio: {
         comfort_noise: false,
         codecs: [
           {
             type: "OPUS", // Audio Codec
-            samplerate: 24 // 8, 16, 24 KHz
+            samplerate: 24, // 8, 16, 24 KHz
           },
           {
             type: "AAC-eld",
-            samplerate: 16
-          }
-        ]
-      }
-    }
+            samplerate: 16,
+          },
+        ],
+      },
+    };
 
     this.createCameraControlService();
     this.createSecureVideoService();
@@ -85,15 +85,15 @@ export class Camera {
     // Image request: {width: number, height: number}
     // Please override this and invoke callback(error, image buffer) when the snapshot is ready
 
-    var snapshot = fs.readFileSync(__dirname + '/res/snapshot.jpg');
+    var snapshot = fs.readFileSync(__dirname + "/res/snapshot.jpg");
     callback(undefined, snapshot);
-  }
+  };
 
   handleCloseConnection = (connectionID: string) => {
     this.streamControllers.forEach(function(controller) {
       controller.handleCloseConnection(connectionID);
     });
-  }
+  };
 
   prepareStream = (request: PrepareStreamRequest, callback: PreparedStreamRequestCallback) => {
     // Invoked when iOS device requires stream
@@ -122,7 +122,7 @@ export class Camera {
         port: targetPort,
         ssrc: ssrc,
         srtp_key: srtp_key,
-        srtp_salt: srtp_salt
+        srtp_salt: srtp_salt,
       };
 
       response["video"] = videoResp;
@@ -147,7 +147,7 @@ export class Camera {
         port: targetPort,
         ssrc: ssrc,
         srtp_key: srtp_key,
-        srtp_salt: srtp_salt
+        srtp_salt: srtp_salt,
       };
 
       response["audio"] = audioResp;
@@ -159,7 +159,7 @@ export class Camera {
 
     let currentAddress = ip.address();
     var addressResp: Partial<Address> = {
-      address: currentAddress
+      address: currentAddress,
     };
 
     if (ip.isV4Format(currentAddress)) {
@@ -172,7 +172,7 @@ export class Camera {
     this.pendingSessions[uuid.unparse(sessionID)] = sessionInfo as SessionInfo;
 
     callback(response as PreparedStreamResponse);
-  }
+  };
 
   handleStreamRequest = (request: StreamRequest) => {
     // Invoked when iOS device asks stream to start/stop/reconfigure
@@ -207,46 +207,68 @@ export class Camera {
           let videoKey = sessionInfo["video_srtp"];
           let videoSsrc = sessionInfo["video_ssrc"];
 
-          let ffmpegCommand = '-re -f avfoundation -r 29.970000 -i 0:0 -threads 0 -vcodec libx264 -an -pix_fmt yuv420p -r '+ fps +' -f rawvideo -tune zerolatency -vf scale='+ width +':'+ height +' -b:v '+ bitrate +'k -bufsize '+ bitrate +'k -payload_type 99 -ssrc '+ videoSsrc +' -f rtp -srtp_out_suite AES_CM_128_HMAC_SHA1_80 -srtp_out_params '+videoKey.toString('base64')+' srtp://'+targetAddress+':'+targetVideoPort+'?rtcpport='+targetVideoPort+'&localrtcpport='+targetVideoPort+'&pkt_size=1378';
-          this.ongoingSessions[sessionIdentifier] = spawn('ffmpeg', ffmpegCommand.split(' '), { env: process.env });
+          let ffmpegCommand =
+            "-re -f avfoundation -r 29.970000 -i 0:0 -threads 0 -vcodec libx264 -an -pix_fmt yuv420p -r " +
+            fps +
+            " -f rawvideo -tune zerolatency -vf scale=" +
+            width +
+            ":" +
+            height +
+            " -b:v " +
+            bitrate +
+            "k -bufsize " +
+            bitrate +
+            "k -payload_type 99 -ssrc " +
+            videoSsrc +
+            " -f rtp -srtp_out_suite AES_CM_128_HMAC_SHA1_80 -srtp_out_params " +
+            videoKey.toString("base64") +
+            " srtp://" +
+            targetAddress +
+            ":" +
+            targetVideoPort +
+            "?rtcpport=" +
+            targetVideoPort +
+            "&localrtcpport=" +
+            targetVideoPort +
+            "&pkt_size=1378";
+          this.ongoingSessions[sessionIdentifier] = spawn("ffmpeg", ffmpegCommand.split(" "), { env: process.env });
         }
 
         delete this.pendingSessions[sessionIdentifier];
       } else if (requestType == StreamRequestTypes.STOP) {
         var ffmpegProcess = this.ongoingSessions[sessionIdentifier];
         if (ffmpegProcess) {
-          ffmpegProcess.kill('SIGKILL');
+          ffmpegProcess.kill("SIGKILL");
         }
 
         delete this.ongoingSessions[sessionIdentifier];
       }
     }
-  }
+  };
 
   createCameraControlService = () => {
-    var controlService = new Service.CameraControl('', '');
+    var controlService = new Service.CameraControl("", "");
 
     // Developer can add control characteristics like rotation, night vision at here.
 
     this.services.push(controlService);
-  }
+  };
 
   createSecureVideoService = () => {
-    var myCameraOperatingMode = new Service.CameraOperatingMode('','');
+    var myCameraOperatingMode = new Service.CameraOperatingMode("", "");
     this.services.push(myCameraOperatingMode);
 
-    var myCameraRecordingManagement = new Service.CameraRecordingManagement('','');
+    var myCameraRecordingManagement = new Service.CameraRecordingManagement("", "");
     this.services.push(myCameraRecordingManagement);
-  }
+  };
 
-// Private
+  // Private
   _createStreamControllers = (maxStreams: number, options: StreamControllerOptions) => {
-
     for (let i = 0; i < maxStreams; i++) {
       const streamController = new StreamController(i, options, this);
 
       this.services.push(streamController.service!);
       this.streamControllers.push(streamController);
     }
-  }
+  };
 }

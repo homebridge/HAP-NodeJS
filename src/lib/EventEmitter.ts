@@ -1,5 +1,5 @@
 import { EventEmitter as BaseEventEmitter } from "events";
-import { Callback } from '../types';
+import { Callback } from "../types";
 
 export type EventKey = string | symbol;
 export type Event<T> = T & EventKey;
@@ -8,7 +8,7 @@ export type EventMap = { [name: string]: Callback };
 export class EventEmitter<T extends EventMap, K extends Event<keyof T> = Event<keyof T>> extends BaseEventEmitter {
   addListener(event: K, listener: T[K]): this {
     return super.addListener(event, listener);
-  };
+  }
 
   on(event: K, listener: T[K]): this {
     return super.on(event, listener);
@@ -34,7 +34,7 @@ export class EventEmitter<T extends EventMap, K extends Event<keyof T> = Event<k
     return super.getMaxListeners();
   }
 
-  listeners(event: K): T[K] [] {
+  listeners(event: K): T[K][] {
     return super.listeners(event) as T[K][];
   }
 

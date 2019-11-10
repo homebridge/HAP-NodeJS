@@ -3,7 +3,6 @@
 const stPre = "000000";
 const stPost = "-0000-1000-8000-0026BB765291";
 
-
 //HomeKitTransportCategoryTypes
 export const OTHER_TCTYPE = 1;
 export const FAN_TCTYPE = 3;
@@ -40,7 +39,6 @@ export const HUMIDITY_SENSOR_STYPE = stPre + "82" + stPost;
 export const TEMPERATURE_SENSOR_STYPE = stPre + "8A" + stPost;
 
 //HomeKitCharacteristicsTypes
-
 
 export const ALARM_CURRENT_STATE_CTYPE = stPre + "66" + stPost;
 export const ALARM_TARGET_STATE_CTYPE = stPre + "67" + stPost;

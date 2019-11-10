@@ -3,7 +3,6 @@
  * added to the cloned copy of the original object passed.
  */
 export function clone<T, U>(object: T, extend?: U): T & U {
-
   var cloned = {} as Record<any, any>;
 
   for (var key in object) {
@@ -15,4 +14,4 @@ export function clone<T, U>(object: T, extend?: U): T & U {
   }
 
   return cloned;
-};
+}

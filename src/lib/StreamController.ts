@@ -1,23 +1,24 @@
-import crypto from 'crypto';
+import crypto from "crypto";
 
-import ip from 'ip';
-import bufferShim from 'buffer-shims';
-import createDebug from 'debug';
+import ip from "ip";
+import bufferShim from "buffer-shims";
+import createDebug from "debug";
 
-import * as tlv from './util/tlv';
-import { Service } from './Service';
+import * as tlv from "./util/tlv";
+import { Service } from "./Service";
 import {
   Characteristic,
   CharacteristicEventTypes,
   CharacteristicGetCallback,
-  CharacteristicSetCallback
-} from './Characteristic';
-import RTPProxy from './camera/RTPProxy';
-import { EventEmitter } from './EventEmitter';
-import { Camera } from './Camera';
+  CharacteristicSetCallback,
+} from "./Characteristic";
+import RTPProxy from "./camera/RTPProxy";
+import { EventEmitter } from "./EventEmitter";
+import { Camera } from "./Camera";
 import {
   Address,
-  AudioInfo, CharacteristicValue,
+  AudioInfo,
+  CharacteristicValue,
   NodeCallback,
   Nullable,
   SessionIdentifier,
@@ -26,9 +27,9 @@ import {
   StreamVideoParams,
   VideoInfo,
   VoidCallback,
-} from '../types';
+} from "../types";
 
-const debug = createDebug('StreamController');
+const debug = createDebug("StreamController");
 
 export enum SetupTypes {
   SESSION_ID = 0x01,
@@ -37,58 +38,58 @@ export enum SetupTypes {
   VIDEO_SRTP_PARAM = 0x04,
   AUDIO_SRTP_PARAM = 0x05,
   VIDEO_SSRC = 0x06,
-  AUDIO_SSRC = 0x07
+  AUDIO_SSRC = 0x07,
 }
 
 export enum SetupStatus {
   SUCCESS = 0x00,
   BUSY = 0x01,
-  ERROR = 0x02
+  ERROR = 0x02,
 }
 
 export enum SetupAddressVer {
   IPV4 = 0x00,
-  IPV6 = 0x01
+  IPV6 = 0x01,
 }
 
 export enum SetupAddressInfo {
   ADDRESS_VER = 0x01,
   ADDRESS = 0x02,
   VIDEO_RTP_PORT = 0x03,
-  AUDIO_RTP_PORT = 0x04
+  AUDIO_RTP_PORT = 0x04,
 }
 
 export enum SetupSRTP_PARAM {
   CRYPTO = 0x01,
   MASTER_KEY = 0x02,
-  MASTER_SALT = 0x03
+  MASTER_SALT = 0x03,
 }
 
 export enum StreamingStatus {
   AVAILABLE = 0x00,
   STREAMING = 0x01,
-  BUSY = 0x02
+  BUSY = 0x02,
 }
 
 export enum RTPConfigTypes {
-  CRYPTO = 0x02
+  CRYPTO = 0x02,
 }
 
 export enum SRTPCryptoSuites {
   AES_CM_128_HMAC_SHA1_80 = 0x00,
   AES_CM_256_HMAC_SHA1_80 = 0x01,
-  NONE = 0x02
+  NONE = 0x02,
 }
 
 export enum VideoTypes {
   CODEC = 0x01,
   CODEC_PARAM = 0x02,
   ATTRIBUTES = 0x03,
-  RTP_PARAM = 0x04
+  RTP_PARAM = 0x04,
 }
 
 export enum VideoCodecTypes {
-  H264 = 0x00
+  H264 = 0x00,
 }
 
 export enum VideoCodecParamTypes {
@@ -96,40 +97,40 @@ export enum VideoCodecParamTypes {
   LEVEL = 0x02,
   PACKETIZATION_MODE = 0x03,
   CVO_ENABLED = 0x04,
-  CVO_ID = 0x05
+  CVO_ID = 0x05,
 }
 
 export enum VideoCodecParamCVOTypes {
   UNSUPPORTED = 0x01,
-  SUPPORTED = 0x02
+  SUPPORTED = 0x02,
 }
 
 export enum VideoCodecParamProfileIDTypes {
   BASELINE = 0x00,
   MAIN = 0x01,
-  HIGH = 0x02
+  HIGH = 0x02,
 }
 
 export enum VideoCodecParamLevelTypes {
   TYPE3_1 = 0x00,
   TYPE3_2 = 0x01,
-  TYPE4_0 = 0x02
+  TYPE4_0 = 0x02,
 }
 
 export enum VideoCodecParamPacketizationModeTypes {
-  NON_INTERLEAVED = 0x00
+  NON_INTERLEAVED = 0x00,
 }
 
 export enum VideoAttributesTypes {
   IMAGE_WIDTH = 0x01,
   IMAGE_HEIGHT = 0x02,
-  FRAME_RATE = 0x03
+  FRAME_RATE = 0x03,
 }
 
 export enum SelectedStreamConfigurationTypes {
   SESSION = 0x01,
   VIDEO = 0x02,
-  AUDIO = 0x03
+  AUDIO = 0x03,
 }
 
 export enum RTPParamTypes {
@@ -138,39 +139,39 @@ export enum RTPParamTypes {
   MAX_BIT_RATE = 0x03,
   RTCP_SEND_INTERVAL = 0x04,
   MAX_MTU = 0x05,
-  COMFORT_NOISE_PAYLOAD_TYPE = 0x06
+  COMFORT_NOISE_PAYLOAD_TYPE = 0x06,
 }
 
 export enum AudioTypes {
   CODEC = 0x01,
   CODEC_PARAM = 0x02,
   RTP_PARAM = 0x03,
-  COMFORT_NOISE = 0x04
+  COMFORT_NOISE = 0x04,
 }
 
 export enum AudioCodecTypes {
   PCMU = 0x00,
   PCMA = 0x01,
   AACELD = 0x02,
-  OPUS = 0x03
+  OPUS = 0x03,
 }
 
 export enum AudioCodecParamTypes {
   CHANNEL = 0x01,
   BIT_RATE = 0x02,
   SAMPLE_RATE = 0x03,
-  PACKET_TIME = 0x04
+  PACKET_TIME = 0x04,
 }
 
 export enum AudioCodecParamBitRateTypes {
   VARIABLE = 0x00,
-  CONSTANT = 0x01
+  CONSTANT = 0x01,
 }
 
 export enum AudioCodecParamSampleRateTypes {
   KHZ_8 = 0x00,
   KHZ_16 = 0x01,
-  KHZ_24 = 0x02
+  KHZ_24 = 0x02,
 }
 
 export type StreamControllerOptions = {
@@ -179,16 +180,16 @@ export type StreamControllerOptions = {
   srtp: boolean;
   audio: StreamAudioParams;
   video: StreamVideoParams;
-}
+};
 
 export type HandleSetupReadCallback = NodeCallback<string | undefined>;
 export type HandleSetupWriteCallback = () => any;
 export type HandleStartStreamCallback = VoidCallback;
 
 export enum StreamRequestTypes {
-  RECONFIGURE = 'reconfigure',
-  START = 'start',
-  STOP = 'stop',
+  RECONFIGURE = "reconfigure",
+  START = "start",
+  STOP = "stop",
 }
 
 export type StreamRequest = {
@@ -196,33 +197,33 @@ export type StreamRequest = {
   type: StreamRequestTypes;
   video?: VideoInfo;
   audio?: AudioInfo;
-}
+};
 
 export type StartStreamRequest = {
   sessionID: SessionIdentifier;
   type: StreamRequestTypes.START;
   audio: AudioInfo;
   video: VideoInfo;
-}
+};
 
 export type ReconfigureStreamRequest = {
   sessionID: SessionIdentifier;
   type: StreamRequestTypes.RECONFIGURE;
   audio: AudioInfo;
   video: VideoInfo;
-}
+};
 
 export type StopStreamRequest = {
   sessionID: SessionIdentifier;
   type: StreamRequestTypes.STOP;
-}
+};
 
 export type PrepareStreamRequest = {
   sessionID: SessionIdentifier;
   targetAddress: string;
   audio: Source;
   video: Source;
-}
+};
 
 export type PreparedStreamRequestCallback = (response: PreparedStreamResponse) => void;
 
@@ -232,15 +233,14 @@ export type SourceResponse = {
   proxy_server_address: string;
   proxy_server_rtp: number;
   proxy_server_rtcp: number;
-}
+};
 export type PreparedStreamResponse = {
   address: Address;
   audio: Source & Partial<SourceResponse>;
   video: Source & Partial<SourceResponse>;
-}
+};
 
 export class StreamController {
-
   static SetupTypes = SetupTypes;
   static SetupStatus = SetupStatus;
   static SetupAddressVer = SetupAddressVer;
@@ -283,21 +283,17 @@ export class StreamController {
   audioProxy: any;
   videoProxy: any;
 
-  constructor(
-    public identifier: any,
-    public options: StreamControllerOptions,
-    public cameraSource?: Camera
-  ) {
+  constructor(public identifier: any, public options: StreamControllerOptions, public cameraSource?: Camera) {
     if (identifier === undefined) {
-      throw new Error('Identifier cannot be undefined');
+      throw new Error("Identifier cannot be undefined");
     }
 
     if (!options) {
-      throw new Error('Options cannot be undefined');
+      throw new Error("Options cannot be undefined");
     }
 
     if (!cameraSource) {
-      throw new Error('CameraSource cannot be undefined');
+      throw new Error("CameraSource cannot be undefined");
     }
 
     this.identifier = identifier;
@@ -312,14 +308,14 @@ export class StreamController {
 
     let videoParams = options["video"];
     if (!videoParams) {
-      throw new Error('Video parameters cannot be undefined in options');
+      throw new Error("Video parameters cannot be undefined in options");
     }
 
     this.supportedVideoStreamConfiguration = this._supportedVideoStreamConfiguration(videoParams);
 
     let audioParams = options["audio"];
     if (!audioParams) {
-      throw new Error('Audio parameters cannot be undefined in options');
+      throw new Error("Audio parameters cannot be undefined in options");
     }
 
     this.supportedAudioStreamConfiguration = this._supportedAudioStreamConfiguration(audioParams);
@@ -335,54 +331,61 @@ export class StreamController {
   forceStop = () => {
     this.connectionID = undefined;
     this._handleStopStream(undefined, true);
-  }
+  };
 
   handleCloseConnection = (connectionID: string) => {
     if (this.connectionID && this.connectionID == connectionID) {
       this.connectionID = undefined;
       this._handleStopStream();
     }
-  }
+  };
 
-// Private
+  // Private
   _createService = () => {
-    var managementService = new Service.CameraRTPStreamManagement('', this.identifier.toString());
+    var managementService = new Service.CameraRTPStreamManagement("", this.identifier.toString());
 
     managementService
       .getCharacteristic(Characteristic.StreamingStatus)!
       .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-        var data = tlv.encode( 0x01, this.streamStatus );
-        callback(null, data.toString('base64'));
-      }).getValue();
+        var data = tlv.encode(0x01, this.streamStatus);
+        callback(null, data.toString("base64"));
+      })
+      .getValue();
 
     managementService
       .getCharacteristic(Characteristic.SupportedRTPConfiguration)!
       .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
         callback(null, this.supportedRTPConfiguration);
-      }).getValue();
+      })
+      .getValue();
 
     managementService
       .getCharacteristic(Characteristic.SupportedVideoStreamConfiguration)!
       .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
         callback(null, this.supportedVideoStreamConfiguration);
-      }).getValue();
+      })
+      .getValue();
 
     managementService
       .getCharacteristic(Characteristic.SupportedAudioStreamConfiguration)!
       .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
         callback(null, this.supportedAudioStreamConfiguration);
-      }).getValue();
+      })
+      .getValue();
 
     managementService
       .getCharacteristic(Characteristic.SelectedRTPStreamConfiguration)!
       .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-        debug('Read SelectedStreamConfiguration');
+        debug("Read SelectedStreamConfiguration");
         callback(null, this.selectedConfiguration);
       })
-      .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context?: any, connectionID?: string) => {
-        debug('Write SelectedStreamConfiguration');
-        this._handleSelectedStreamConfigurationWrite(value, callback, connectionID!);
-      });
+      .on(
+        CharacteristicEventTypes.SET,
+        (value: CharacteristicValue, callback: CharacteristicSetCallback, context?: any, connectionID?: string) => {
+          debug("Write SelectedStreamConfiguration");
+          this._handleSelectedStreamConfigurationWrite(value, callback, connectionID!);
+        },
+      );
 
     managementService
       .getCharacteristic(Characteristic.SetupEndpoints)!
@@ -394,17 +397,17 @@ export class StreamController {
       });
 
     this.service = managementService;
-  }
+  };
 
   _handleSelectedStreamConfigurationWrite = (value: any, callback: any, connectionID: string) => {
     this.selectedConfiguration = value;
 
-    var data = bufferShim.from(value, 'base64');
+    var data = bufferShim.from(value, "base64");
     var objects = tlv.decode(data);
 
     var session;
 
-    if(objects[SelectedStreamConfigurationTypes.SESSION]) {
+    if (objects[SelectedStreamConfigurationTypes.SESSION]) {
       session = tlv.decode(objects[SelectedStreamConfigurationTypes.SESSION]);
       this.sessionIdentifier = session[0x01];
 
@@ -419,7 +422,7 @@ export class StreamController {
         this._handleStartStream(objects, session, false, callback);
       } else if (requestType == 0) {
         if (this.connectionID && this.connectionID != connectionID) {
-          debug("Received stop stream request from a different connection.")
+          debug("Received stop stream request from a different connection.");
         } else {
           this.connectionID = undefined;
         }
@@ -435,19 +438,23 @@ export class StreamController {
       debug("Unexpected request for Selected Stream Configuration");
       callback();
     }
-  }
+  };
 
-  _handleStartStream = (objects: Record<number, Buffer>, session: any, reconfigure: boolean = false, callback: HandleStartStreamCallback) => {
-
+  _handleStartStream = (
+    objects: Record<number, Buffer>,
+    session: any,
+    reconfigure: boolean = false,
+    callback: HandleStartStreamCallback,
+  ) => {
     var request: Partial<StartStreamRequest | ReconfigureStreamRequest> = {
       sessionID: this.sessionIdentifier!,
-      type: !reconfigure ? StreamRequestTypes.START : StreamRequestTypes.RECONFIGURE
+      type: !reconfigure ? StreamRequestTypes.START : StreamRequestTypes.RECONFIGURE,
     };
 
     let videoPT = null;
     let audioPT = null;
 
-    if(objects[SelectedStreamConfigurationTypes.VIDEO]) {
+    if (objects[SelectedStreamConfigurationTypes.VIDEO]) {
       var videoInfo: Partial<VideoInfo> = {};
 
       var video = tlv.decode(objects[SelectedStreamConfigurationTypes.VIDEO]);
@@ -495,7 +502,7 @@ export class StreamController {
       request["video"] = videoInfo as VideoInfo;
     }
 
-    if(objects[SelectedStreamConfigurationTypes.AUDIO]) {
+    if (objects[SelectedStreamConfigurationTypes.AUDIO]) {
       var audioInfo: Partial<AudioInfo> = {};
 
       var audio = tlv.decode(objects[SelectedStreamConfigurationTypes.AUDIO]);
@@ -558,13 +565,12 @@ export class StreamController {
 
     this._updateStreamStatus(StreamingStatus.STREAMING);
     callback();
-  }
+  };
 
   _handleStopStream = (callback?: VoidCallback, silent: boolean = false) => {
-
     let request: Partial<StopStreamRequest> = {
-      "sessionID": this.sessionIdentifier!,
-      "type": StreamRequestTypes.STOP,
+      sessionID: this.sessionIdentifier!,
+      type: StreamRequestTypes.STOP,
     };
 
     if (!silent) {
@@ -586,11 +592,10 @@ export class StreamController {
     if (callback) {
       callback();
     }
-  }
+  };
 
   _handleSetupWrite = (value: CharacteristicValue, callback: HandleSetupWriteCallback) => {
-
-    var data = bufferShim.from(`${value}`, 'base64');
+    var data = bufferShim.from(`${value}`, "base64");
     var objects = tlv.decode(data) as any;
 
     this.sessionIdentifier = objects[SetupTypes.SESSION_ID];
@@ -599,7 +604,7 @@ export class StreamController {
     var targetAddressPayload = objects[SetupTypes.ADDRESS];
     var processedAddressInfo = tlv.decode(targetAddressPayload) as any;
     var isIPv6 = processedAddressInfo[SetupAddressInfo.ADDRESS_VER][0];
-    var targetAddress = processedAddressInfo[SetupAddressInfo.ADDRESS].toString('utf8');
+    var targetAddress = processedAddressInfo[SetupAddressInfo.ADDRESS].toString("utf8");
     var targetVideoPort = processedAddressInfo[SetupAddressInfo.VIDEO_RTP_PORT].readUInt16LE(0);
     var targetAudioPort = processedAddressInfo[SetupAddressInfo.AUDIO_RTP_PORT].readUInt16LE(0);
 
@@ -618,20 +623,30 @@ export class StreamController {
     var audioMasterSalt = processedAudioInfo[SetupSRTP_PARAM.MASTER_SALT];
 
     debug(
-      '\nSession: ', this.sessionIdentifier,
-      '\nControllerAddress: ', targetAddress,
-      '\nVideoPort: ', targetVideoPort,
-      '\nAudioPort: ', targetAudioPort,
-      '\nVideo Crypto: ', videoCryptoSuite,
-      '\nVideo Master Key: ', videoMasterKey,
-      '\nVideo Master Salt: ', videoMasterSalt,
-      '\nAudio Crypto: ', audioCryptoSuite,
-      '\nAudio Master Key: ', audioMasterKey,
-      '\nAudio Master Salt: ', audioMasterSalt
+      "\nSession: ",
+      this.sessionIdentifier,
+      "\nControllerAddress: ",
+      targetAddress,
+      "\nVideoPort: ",
+      targetVideoPort,
+      "\nAudioPort: ",
+      targetAudioPort,
+      "\nVideo Crypto: ",
+      videoCryptoSuite,
+      "\nVideo Master Key: ",
+      videoMasterKey,
+      "\nVideo Master Salt: ",
+      videoMasterSalt,
+      "\nAudio Crypto: ",
+      audioCryptoSuite,
+      "\nAudio Master Key: ",
+      audioMasterKey,
+      "\nAudio Master Salt: ",
+      audioMasterSalt,
     );
 
     var request: Partial<PrepareStreamRequest> = {
-      "sessionID": this.sessionIdentifier!,
+      sessionID: this.sessionIdentifier!,
     };
 
     var videoInfo: Partial<Source> = {};
@@ -655,9 +670,10 @@ export class StreamController {
       request["video"] = videoInfo as Source;
       request["audio"] = audioInfo as Source;
 
-      this.cameraSource && this.cameraSource.prepareStream(request as PrepareStreamRequest, (response: PreparedStreamResponse) => {
-        this._generateSetupResponse(this.sessionIdentifier!, response, callback);
-      });
+      this.cameraSource &&
+        this.cameraSource.prepareStream(request as PrepareStreamRequest, (response: PreparedStreamResponse) => {
+          this._generateSetupResponse(this.sessionIdentifier!, response, callback);
+        });
     } else {
       request["targetAddress"] = ip.address();
       var promises = [];
@@ -667,7 +683,7 @@ export class StreamController {
         outgoingAddress: targetAddress,
         outgoingPort: targetVideoPort,
         outgoingSSRC: videoSSRCNumber,
-        disabled: false
+        disabled: false,
       });
 
       promises.push(this.videoProxy.setup());
@@ -679,7 +695,7 @@ export class StreamController {
           outgoingAddress: targetAddress,
           outgoingPort: targetAudioPort,
           outgoingSSRC: audioSSRCNumber,
-          disabled: this.videoOnly
+          disabled: this.videoOnly,
         });
 
         promises.push(this.audioProxy.setup());
@@ -700,15 +716,19 @@ export class StreamController {
         request["video"] = videoInfo as Source;
         request["audio"] = audioInfo as Source;
 
-        this.cameraSource && this.cameraSource.prepareStream(request as PrepareStreamRequest, (response: PreparedStreamResponse) => {
-          this._generateSetupResponse(this.sessionIdentifier!, response, callback);
-        });
+        this.cameraSource &&
+          this.cameraSource.prepareStream(request as PrepareStreamRequest, (response: PreparedStreamResponse) => {
+            this._generateSetupResponse(this.sessionIdentifier!, response, callback);
+          });
       });
     }
-  }
+  };
 
-  _generateSetupResponse = (identifier: SessionIdentifier, response: PreparedStreamResponse, callback: VoidCallback) => {
-
+  _generateSetupResponse = (
+    identifier: SessionIdentifier,
+    response: PreparedStreamResponse,
+    callback: VoidCallback,
+  ) => {
     let ipVer = 0;
     let ipAddress = null;
     const videoPort = bufferShim.alloc(2);
@@ -768,7 +788,6 @@ export class StreamController {
         audioPort.writeUInt16LE(audioInfo["port"], 0);
         audioSSRC.writeUInt32LE(audioInfo["ssrc"]!, 0);
       }
-
     } else {
       let addressInfo = response["address"];
 
@@ -796,53 +815,70 @@ export class StreamController {
         let audioSalt = audioInfo["srtp_salt"];
 
         videoSRTP = tlv.encode(
-          SetupSRTP_PARAM.CRYPTO, SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80,
-          SetupSRTP_PARAM.MASTER_KEY, videoKey,
-          SetupSRTP_PARAM.MASTER_SALT, videoSalt
+          SetupSRTP_PARAM.CRYPTO,
+          SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80,
+          SetupSRTP_PARAM.MASTER_KEY,
+          videoKey,
+          SetupSRTP_PARAM.MASTER_SALT,
+          videoSalt,
         );
 
         audioSRTP = tlv.encode(
-          SetupSRTP_PARAM.CRYPTO, SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80,
-          SetupSRTP_PARAM.MASTER_KEY, audioKey,
-          SetupSRTP_PARAM.MASTER_SALT, audioSalt
+          SetupSRTP_PARAM.CRYPTO,
+          SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80,
+          SetupSRTP_PARAM.MASTER_KEY,
+          audioKey,
+          SetupSRTP_PARAM.MASTER_SALT,
+          audioSalt,
         );
       }
     }
 
     var addressTLV = tlv.encode(
-      SetupAddressInfo.ADDRESS_VER, ipVer,
-      SetupAddressInfo.ADDRESS, ipAddress,
-      SetupAddressInfo.VIDEO_RTP_PORT, videoPort,
-      SetupAddressInfo.AUDIO_RTP_PORT, audioPort
+      SetupAddressInfo.ADDRESS_VER,
+      ipVer,
+      SetupAddressInfo.ADDRESS,
+      ipAddress,
+      SetupAddressInfo.VIDEO_RTP_PORT,
+      videoPort,
+      SetupAddressInfo.AUDIO_RTP_PORT,
+      audioPort,
     );
 
     var responseTLV = tlv.encode(
-      SetupTypes.SESSION_ID, identifier,
-      SetupTypes.STATUS, SetupStatus.SUCCESS,
-      SetupTypes.ADDRESS, addressTLV,
-      SetupTypes.VIDEO_SRTP_PARAM, videoSRTP,
-      SetupTypes.AUDIO_SRTP_PARAM, audioSRTP,
-      SetupTypes.VIDEO_SSRC, videoSSRC,
-      SetupTypes.AUDIO_SSRC, audioSSRC
+      SetupTypes.SESSION_ID,
+      identifier,
+      SetupTypes.STATUS,
+      SetupStatus.SUCCESS,
+      SetupTypes.ADDRESS,
+      addressTLV,
+      SetupTypes.VIDEO_SRTP_PARAM,
+      videoSRTP,
+      SetupTypes.AUDIO_SRTP_PARAM,
+      audioSRTP,
+      SetupTypes.VIDEO_SSRC,
+      videoSSRC,
+      SetupTypes.AUDIO_SSRC,
+      audioSSRC,
     );
 
-    this.setupResponse = responseTLV.toString('base64');
+    this.setupResponse = responseTLV.toString("base64");
     callback();
-  }
+  };
 
   _updateStreamStatus = (status: number) => {
-
     this.streamStatus = status;
 
-    this.service && this.service
-      .getCharacteristic(Characteristic.StreamingStatus)!
-      .setValue(tlv.encode( 0x01, this.streamStatus ).toString('base64'));
-  }
+    this.service &&
+      this.service
+        .getCharacteristic(Characteristic.StreamingStatus)!
+        .setValue(tlv.encode(0x01, this.streamStatus).toString("base64"));
+  };
 
   _handleSetupRead = (callback: HandleSetupReadCallback) => {
-    debug('Setup Read');
+    debug("Setup Read");
     callback(null, this.setupResponse);
-  }
+  };
 
   _supportedRTPConfiguration = (supportSRTP: boolean) => {
     var cryptoSuite = SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80;
@@ -852,20 +888,18 @@ export class StreamController {
       debug("Client claims it doesn't support SRTP. The stream may stops working with future iOS releases.");
     }
 
-    return tlv.encode(
-      RTPConfigTypes.CRYPTO, cryptoSuite
-    ).toString('base64');
-  }
+    return tlv.encode(RTPConfigTypes.CRYPTO, cryptoSuite).toString("base64");
+  };
 
   _supportedVideoStreamConfiguration = (videoParams: StreamVideoParams) => {
-
     let codec = videoParams["codec"];
     if (!codec) {
-      throw new Error('Video codec cannot be undefined');
+      throw new Error("Video codec cannot be undefined");
     }
 
     var videoCodecParamsTLV = tlv.encode(
-      VideoCodecParamTypes.PACKETIZATION_MODE, VideoCodecParamPacketizationModeTypes.NON_INTERLEAVED
+      VideoCodecParamTypes.PACKETIZATION_MODE,
+      VideoCodecParamPacketizationModeTypes.NON_INTERLEAVED,
     );
 
     let profiles = codec["profiles"];
@@ -882,13 +916,13 @@ export class StreamController {
 
     let resolutions = videoParams["resolutions"];
     if (!resolutions) {
-      throw new Error('Video resolutions cannot be undefined');
+      throw new Error("Video resolutions cannot be undefined");
     }
 
     var videoAttrsTLV = bufferShim.alloc(0);
     resolutions.forEach(function(resolution) {
       if (resolution.length != 3) {
-        throw new Error('Unexpected video resolution');
+        throw new Error("Unexpected video resolution");
       }
 
       var imageWidth = bufferShim.alloc(2);
@@ -899,23 +933,26 @@ export class StreamController {
       frameRate.writeUInt8(resolution[2], 0);
 
       var videoAttrTLV = tlv.encode(
-        VideoAttributesTypes.IMAGE_WIDTH, imageWidth,
-        VideoAttributesTypes.IMAGE_HEIGHT, imageHeight,
-        VideoAttributesTypes.FRAME_RATE, frameRate
+        VideoAttributesTypes.IMAGE_WIDTH,
+        imageWidth,
+        VideoAttributesTypes.IMAGE_HEIGHT,
+        imageHeight,
+        VideoAttributesTypes.FRAME_RATE,
+        frameRate,
       );
       var videoAttrBuffer = tlv.encode(VideoTypes.ATTRIBUTES, videoAttrTLV);
       videoAttrsTLV = Buffer.concat([videoAttrsTLV, videoAttrBuffer]);
     });
 
     var configurationTLV = tlv.encode(
-      VideoTypes.CODEC, VideoCodecTypes.H264,
-      VideoTypes.CODEC_PARAM, videoCodecParamsTLV
+      VideoTypes.CODEC,
+      VideoCodecTypes.H264,
+      VideoTypes.CODEC_PARAM,
+      videoCodecParamsTLV,
     );
 
-    return tlv.encode(
-      0x01, Buffer.concat([configurationTLV, videoAttrsTLV])
-    ).toString('base64');
-  }
+    return tlv.encode(0x01, Buffer.concat([configurationTLV, videoAttrsTLV])).toString("base64");
+  };
 
   _supportedAudioStreamConfiguration = (audioParams: StreamAudioParams) => {
     // Only AACELD and OPUS are accepted by iOS currently, and we need to give it something it will accept
@@ -929,13 +966,13 @@ export class StreamController {
 
     let codecs = audioParams["codecs"];
     if (!codecs) {
-      throw new Error('Audio codecs cannot be undefined');
+      throw new Error("Audio codecs cannot be undefined");
     }
 
     var audioConfigurationsBuffer = bufferShim.alloc(0);
     var hasSupportedCodec = false;
 
-    codecs.forEach(function(codecParam){
+    codecs.forEach(function(codecParam) {
       var codec = AudioCodecTypes.OPUS;
       var bitrate = AudioCodecParamBitRateTypes.CONSTANT;
       var samplerate = AudioCodecParamSampleRateTypes.KHZ_24;
@@ -943,7 +980,7 @@ export class StreamController {
       let param_type = codecParam["type"];
       let param_samplerate = codecParam["samplerate"];
 
-      if (param_type == 'OPUS') {
+      if (param_type == "OPUS") {
         hasSupportedCodec = true;
         bitrate = AudioCodecParamBitRateTypes.VARIABLE;
       } else if (param_type == "AAC-eld") {
@@ -967,21 +1004,21 @@ export class StreamController {
       }
 
       var audioParamTLV = tlv.encode(
-        AudioCodecParamTypes.CHANNEL, 1,
-        AudioCodecParamTypes.BIT_RATE, bitrate,
-        AudioCodecParamTypes.SAMPLE_RATE, samplerate
+        AudioCodecParamTypes.CHANNEL,
+        1,
+        AudioCodecParamTypes.BIT_RATE,
+        bitrate,
+        AudioCodecParamTypes.SAMPLE_RATE,
+        samplerate,
       );
 
-      var audioConfiguration = tlv.encode(
-        AudioTypes.CODEC, codec,
-        AudioTypes.CODEC_PARAM, audioParamTLV
-      );
+      var audioConfiguration = tlv.encode(AudioTypes.CODEC, codec, AudioTypes.CODEC_PARAM, audioParamTLV);
 
       audioConfigurationsBuffer = Buffer.concat([audioConfigurationsBuffer, tlv.encode(0x01, audioConfiguration)]);
     });
 
     // If we're not one of the supported codecs
-    if(!hasSupportedCodec) {
+    if (!hasSupportedCodec) {
       debug("Client doesn't support any audio codec that HomeKit supports.");
 
       var codec = AudioCodecTypes.OPUS;
@@ -989,23 +1026,21 @@ export class StreamController {
       var samplerate = AudioCodecParamSampleRateTypes.KHZ_24;
 
       var audioParamTLV = tlv.encode(
-        AudioCodecParamTypes.CHANNEL, 1,
-        AudioCodecParamTypes.BIT_RATE, bitrate,
-        AudioCodecParamTypes.SAMPLE_RATE, AudioCodecParamSampleRateTypes.KHZ_24
+        AudioCodecParamTypes.CHANNEL,
+        1,
+        AudioCodecParamTypes.BIT_RATE,
+        bitrate,
+        AudioCodecParamTypes.SAMPLE_RATE,
+        AudioCodecParamSampleRateTypes.KHZ_24,
       );
 
-
-      var audioConfiguration = tlv.encode(
-        AudioTypes.CODEC, codec,
-        AudioTypes.CODEC_PARAM, audioParamTLV
-      );
+      var audioConfiguration = tlv.encode(AudioTypes.CODEC, codec, AudioTypes.CODEC_PARAM, audioParamTLV);
 
       audioConfigurationsBuffer = tlv.encode(0x01, audioConfiguration);
 
       this.videoOnly = true;
     }
 
-    return Buffer.concat([audioConfigurationsBuffer, tlv.encode(0x02, comfortNoiseValue)]).toString('base64');
-  }
+    return Buffer.concat([audioConfigurationsBuffer, tlv.encode(0x02, comfortNoiseValue)]).toString("base64");
+  };
 }
-

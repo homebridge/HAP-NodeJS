@@ -1,17 +1,15 @@
 // @ts-ignore
-import storage from 'node-persist';
+import storage from "node-persist";
 
-import { IdentifierCache } from './IdentifierCache';
+import { IdentifierCache } from "./IdentifierCache";
 
-const createIdentifierCache = (username = 'username') => {
+const createIdentifierCache = (username = "username") => {
   return new IdentifierCache(username);
-}
+};
 
-describe('IdentifierCache', () => {
-
-  describe('#startTrackingUsage()', () => {
-
-    it ('creates a cache to track usage and expiring keys', () => {
+describe("IdentifierCache", () => {
+  describe("#startTrackingUsage()", () => {
+    it("creates a cache to track usage and expiring keys", () => {
       const identifierCache = createIdentifierCache();
 
       expect(identifierCache._usedCache).toBeNull();
@@ -20,8 +18,8 @@ describe('IdentifierCache', () => {
     });
   });
 
-  describe('#stopTrackingUsageAndExpireUnused()', () => {
-    it ('creates a cache to track usage and expiring keys', () => {
+  describe("#stopTrackingUsageAndExpireUnused()", () => {
+    it("creates a cache to track usage and expiring keys", () => {
       const identifierCache = createIdentifierCache();
 
       expect(identifierCache._usedCache).toBeNull();
@@ -32,77 +30,73 @@ describe('IdentifierCache', () => {
     });
   });
 
-  describe('#getCache()', () => {
-    it ('retrieves an item from the cache', () => {
+  describe("#getCache()", () => {
+    it("retrieves an item from the cache", () => {
       const identifierCache = createIdentifierCache();
 
       const VALUE = 1;
-      identifierCache.setCache('foo', VALUE);
+      identifierCache.setCache("foo", VALUE);
 
-      expect(identifierCache.getCache('foo')).toEqual(VALUE);
+      expect(identifierCache.getCache("foo")).toEqual(VALUE);
     });
 
-    it ('returns undefined if an item is not found in the cache', () => {
+    it("returns undefined if an item is not found in the cache", () => {
       const identifierCache = createIdentifierCache();
 
-      expect(identifierCache.getCache('foo')).toBeUndefined();
+      expect(identifierCache.getCache("foo")).toBeUndefined();
     });
   });
 
-  describe('#setCache()', () => {
-    it ('overwrites an existing item in the cache', () => {
+  describe("#setCache()", () => {
+    it("overwrites an existing item in the cache", () => {
       const identifierCache = createIdentifierCache();
 
       const VALUE = 2;
-      identifierCache.setCache('foo', 1);
-      identifierCache.setCache('foo', VALUE);
+      identifierCache.setCache("foo", 1);
+      identifierCache.setCache("foo", VALUE);
 
-      expect(identifierCache.getCache('foo')).toEqual(VALUE);
+      expect(identifierCache.getCache("foo")).toEqual(VALUE);
     });
   });
 
-  describe('#getAID()', () => {
-    it('creates an entry in the cache if the key is not found', () => {
+  describe("#getAID()", () => {
+    it("creates an entry in the cache if the key is not found", () => {
       const identifierCache = createIdentifierCache();
 
-      const result = identifierCache.getAID('00');
+      const result = identifierCache.getAID("00");
       expect(result).toEqual(2);
     });
   });
 
-  describe('#getIID()', () => {
-    it('creates an entry in the cache if the key is not found', () => {
+  describe("#getIID()", () => {
+    it("creates an entry in the cache if the key is not found", () => {
       const identifierCache = createIdentifierCache();
 
-      const result = identifierCache.getIID('00', '11', 'subtype', '99');
+      const result = identifierCache.getIID("00", "11", "subtype", "99");
       expect(result).toEqual(2);
     });
 
-    it('creates an entry in the cache if the key is not found, without a characteristic UUID', () => {
+    it("creates an entry in the cache if the key is not found, without a characteristic UUID", () => {
       const identifierCache = createIdentifierCache();
 
-      const result = identifierCache.getIID('00', '11', 'subtype');
+      const result = identifierCache.getIID("00", "11", "subtype");
       expect(result).toEqual(2);
     });
 
-    it('creates an entry in the cache if the key is not found, without a service subtype or characteristic UUID', () => {
+    it("creates an entry in the cache if the key is not found, without a service subtype or characteristic UUID", () => {
       const identifierCache = createIdentifierCache();
 
-      const result = identifierCache.getIID('00', '11');
+      const result = identifierCache.getIID("00", "11");
       expect(result).toEqual(2);
     });
   });
 
-  describe('#getNextAID()', () => {
+  describe("#getNextAID()", () => {});
 
-  });
+  describe("#getNextIID()", () => {});
 
-  describe('#getNextIID()', () => {
-
-  });
-
-  describe('#save()', () => {
-    it('persists the cache to file storage', () => {
+  describe("#save()", () => {
+    it("persists the cache to file storage", () => {
       const identifierCache = createIdentifierCache();
       identifierCache.save();
 
@@ -111,8 +105,8 @@ describe('IdentifierCache', () => {
     });
   });
 
-  describe('#remove()', () => {
-    it('removes the cache from file storage', () => {
+  describe("#remove()", () => {
+    it("removes the cache from file storage", () => {
       const identifierCache = createIdentifierCache();
       identifierCache.remove();
 
@@ -120,14 +114,12 @@ describe('IdentifierCache', () => {
     });
   });
 
-  describe('persistKey()', () => {
-    it('returns a correctly formatted key for persistence', () => {
-      const key = IdentifierCache.persistKey('username');
-      expect(key).toEqual('IdentifierCache.USERNAME.json');
+  describe("persistKey()", () => {
+    it("returns a correctly formatted key for persistence", () => {
+      const key = IdentifierCache.persistKey("username");
+      expect(key).toEqual("IdentifierCache.USERNAME.json");
     });
   });
 
-  describe('load()', () => {
-
-  });
+  describe("load()", () => {});
 });

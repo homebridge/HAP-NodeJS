@@ -1,5 +1,4 @@
-declare module 'fast-srp-hap' {
-
+declare module "fast-srp-hap" {
   export const params: Record<string, any>;
   export function genKey(num: number, callback: (err: Error, key: Buffer) => void): void;
 

@@ -2,16 +2,16 @@ import {
   Accessory,
   AccessoryEventTypes,
   Characteristic,
-  CharacteristicEventTypes, CharacteristicSetCallback,
+  CharacteristicEventTypes,
+  CharacteristicSetCallback,
   CharacteristicValue,
   NodeCallback,
   Service,
   uuid,
-  VoidCallback
-} from '..';
+  VoidCallback,
+} from "..";
 
 class LightControllerClass {
-
   name: CharacteristicValue = "Simple Light"; //name of accessory
   pincode: CharacteristicValue = "031-45-154";
   username: CharacteristicValue = "FA:3C:ED:5A:1A:1A"; // MAC like address used by HomeKit to differentiate accessories.
@@ -26,48 +26,57 @@ class LightControllerClass {
 
   outputLogs = false; //output logs
 
-  setPower(status: CharacteristicValue) { //set power of accessory
-    if(this.outputLogs) console.log("Turning the '%s' %s", this.name, status ? "on" : "off");
+  setPower(status: CharacteristicValue) {
+    //set power of accessory
+    if (this.outputLogs) console.log("Turning the '%s' %s", this.name, status ? "on" : "off");
     this.power = status;
   }
 
-  getPower() { //get power of accessory
-    if(this.outputLogs) console.log("'%s' is %s.", this.name, this.power ? "on" : "off");
+  getPower() {
+    //get power of accessory
+    if (this.outputLogs) console.log("'%s' is %s.", this.name, this.power ? "on" : "off");
     return this.power;
   }
 
-  setBrightness(brightness: CharacteristicValue) { //set brightness
-    if(this.outputLogs) console.log("Setting '%s' brightness to %s", this.name, brightness);
+  setBrightness(brightness: CharacteristicValue) {
+    //set brightness
+    if (this.outputLogs) console.log("Setting '%s' brightness to %s", this.name, brightness);
     this.brightness = brightness;
   }
 
-  getBrightness() { //get brightness
-    if(this.outputLogs) console.log("'%s' brightness is %s", this.name, this.brightness);
+  getBrightness() {
+    //get brightness
+    if (this.outputLogs) console.log("'%s' brightness is %s", this.name, this.brightness);
     return this.brightness;
   }
 
-  setSaturation(saturation: CharacteristicValue) { //set brightness
-    if(this.outputLogs) console.log("Setting '%s' saturation to %s", this.name, saturation);
+  setSaturation(saturation: CharacteristicValue) {
+    //set brightness
+    if (this.outputLogs) console.log("Setting '%s' saturation to %s", this.name, saturation);
     this.saturation = saturation;
   }
 
-  getSaturation() { //get brightness
-    if(this.outputLogs) console.log("'%s' saturation is %s", this.name, this.saturation);
+  getSaturation() {
+    //get brightness
+    if (this.outputLogs) console.log("'%s' saturation is %s", this.name, this.saturation);
     return this.saturation;
   }
 
-  setHue(hue: CharacteristicValue) { //set brightness
-    if(this.outputLogs) console.log("Setting '%s' hue to %s", this.name, hue);
+  setHue(hue: CharacteristicValue) {
+    //set brightness
+    if (this.outputLogs) console.log("Setting '%s' hue to %s", this.name, hue);
     this.hue = hue;
   }
 
-  getHue() { //get hue
-    if(this.outputLogs) console.log("'%s' hue is %s", this.name, this.hue);
+  getHue() {
+    //get hue
+    if (this.outputLogs) console.log("'%s' hue is %s", this.name, this.hue);
     return this.hue;
   }
 
-  identify() { //identify the accessory
-    if(this.outputLogs) console.log("Identify the '%s'", this.name);
+  identify() {
+    //identify the accessory
+    if (this.outputLogs) console.log("Identify the '%s'", this.name);
   }
 }
 
@@ -76,10 +85,10 @@ const LightController = new LightControllerClass();
 // Generate a consistent UUID for our light Accessory that will remain the same even when
 // restarting our server. We use the `uuid.generate` helper function to create a deterministic
 // UUID based on an arbitrary "namespace" and the word "light".
-var lightUUID = uuid.generate('hap-nodejs:accessories:light' + LightController.name);
+var lightUUID = uuid.generate("hap-nodejs:accessories:light" + LightController.name);
 
 // This is the Accessory that we'll return to HAP-NodeJS that represents our light.
-var lightAccessory = exports.accessory = new Accessory(LightController.name as string, lightUUID);
+var lightAccessory = (exports.accessory = new Accessory(LightController.name as string, lightUUID));
 
 // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
 // @ts-ignore
@@ -90,9 +99,9 @@ lightAccessory.pincode = LightController.pincode;
 // set some basic properties (these values are arbitrary and setting them is optional)
 lightAccessory
   .getService(Service.AccessoryInformation)!
-    .setCharacteristic(Characteristic.Manufacturer, LightController.manufacturer)
-    .setCharacteristic(Characteristic.Model, LightController.model)
-    .setCharacteristic(Characteristic.SerialNumber, LightController.serialNumber);
+  .setCharacteristic(Characteristic.Manufacturer, LightController.manufacturer)
+  .setCharacteristic(Characteristic.Model, LightController.model)
+  .setCharacteristic(Characteristic.SerialNumber, LightController.serialNumber);
 
 // listen for the "identify" event for this Accessory
 lightAccessory.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
