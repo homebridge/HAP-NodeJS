@@ -140,10 +140,24 @@ export class EventedHTTPServer extends EventEmitter<Events> {
   }
 }
 
-export class Session {
+export enum HAPSessionEvents {
+  CLOSED = "closed",
+}
+
+export type HAPSessionEventMap = {
+  [HAPSessionEvents.CLOSED]: () => void;
+}
+
+export class Session extends EventEmitter<HAPSessionEventMap> {
 
   readonly _server: EventedHTTPServer;
   readonly _connection: EventedHTTPServerConnection;
+  /*
+    Session dictionary indexed by sessionID. SessionID is a custom generated id by HAP-NodeJS unique to every open connection.
+    SessionID gets passed to get/set handlers for characteristics. We mainly need this dictionary in order
+    to access the sharedSecret in the HAPEncryption object from the SetupDataStreamTransport characteristic set handler.
+   */
+  private static sessionsBySessionID: Record<string, Session> = {};
 
   sessionID: string;
   _pairSetupState?: number;
@@ -157,9 +171,12 @@ export class Session {
   timedWriteTimeout?: NodeJS.Timeout;
 
   constructor(connection: EventedHTTPServerConnection) {
+    super();
     this._server = connection.server;
     this._connection = connection;
     this.sessionID = connection.sessionID;
+
+    Session.sessionsBySessionID[this.sessionID] = this;
   }
 
   /**
@@ -186,19 +203,21 @@ export class Session {
 
   // called when socket of this session is destroyed
   _connectionDestroyed = () => {
-    if (!this.username) {
-      return;
+    delete Session.sessionsBySessionID[this.sessionID];
+
+    if (this.username) {
+      const sessions: Session[] = this._server.sessions[this.username];
+      if (sessions) {
+        const index = sessions.indexOf(this);
+        if (index >= 0) {
+          sessions[index].authenticated = false;
+          sessions.splice(index, 1);
+        }
+        if (!sessions.length) delete this._server.sessions[this.username];
+      }
     }
 
-    const sessions: Session[] = this._server.sessions[this.username];
-    if (sessions) {
-      const index = sessions.indexOf(this);
-      if (index >= 0) {
-        sessions[index].authenticated = false;
-        sessions.splice(index, 1);
-      }
-      if (!sessions.length) delete this._server.sessions[this.username];
-    }
+    this.emit(HAPSessionEvents.CLOSED);
   };
 
   static destroyExistingConnectionsAfterUnpair = (initiator: Session, username: string) => {
@@ -218,6 +237,10 @@ export class Session {
       });
     }
   };
+
+  static getSession(sessionID: string) {
+    return this.sessionsBySessionID[sessionID];
+  }
 
 }
 

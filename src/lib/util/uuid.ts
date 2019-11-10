@@ -36,3 +36,12 @@ export function unparse(buf: Buffer | string, offset: number = 0) {
          buf[i++].toString(16) + buf[i++].toString(16) +
          buf[i++].toString(16) + buf[i++].toString(16);
 }
+
+export function write(uuid: string, buf: Buffer, offset: number = 0) {
+  uuid = uuid.replace(/-/g, "");
+
+  for (let i = 0; i < uuid.length; i += 2) {
+    const octet = uuid.substring(i, i + 2);
+    buf.write(octet, offset++, "hex");
+  }
+}

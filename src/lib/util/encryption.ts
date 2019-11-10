@@ -234,7 +234,7 @@ function writeUInt64BE(number: number, buffer: Buffer, offset: number = 0) {
   buffer.writeUInt32BE(hl[1], offset + 4)
 }
 
-function writeUInt64LE (number: number, buffer: Buffer, offset: number = 0) {
+export function writeUInt64LE (number: number, buffer: Buffer, offset: number = 0) {
   var hl = uintHighLow(number)
   buffer.writeUInt32LE(hl[1], offset)
   buffer.writeUInt32LE(hl[0], offset + 4)
