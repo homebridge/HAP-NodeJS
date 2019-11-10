@@ -1,10 +1,9 @@
-import { Accessory, Categories, uuid } from '..';
-import { ButtonState, ButtonType, HomeKitRemoteController } from "../lib/HomeKitRemoteController";
+import { Accessory, ButtonState, ButtonType, Categories, HomeKitRemoteController, uuid } from '..';
 import * as http from "http";
 import url, { UrlWithParsedQuery } from "url";
+import { GStreamerAudioProducer, GStreamerOptions } from "./gstreamer-audioProducer";
 
 const remoteUUID = uuid.generate('hap-nodejs:accessories:remote');
-
 const remote = exports.accessory = new Accessory('Remote', remoteUUID);
 
 // @ts-ignore
@@ -13,7 +12,16 @@ remote.username = "DB:AF:E0:5C:69:76";
 remote.pincode = "874-23-897";
 remote.category = Categories.TARGET_CONTROLLER;
 
-const controller = new HomeKitRemoteController();
+// ----------------- for siri support -----------------
+// CHANGE this to enable siri support. Read docs in 'gstreamer-audioProducer.ts' for necessary package dependencies
+const siriSupport = false;
+const gstreamerOptions: Partial<GStreamerOptions> = { // any configuration regarding the producer can be made here
+};
+// ----------------------------------------------------
+
+const controller = siriSupport
+    ? new HomeKitRemoteController(GStreamerAudioProducer, gstreamerOptions)
+    : new HomeKitRemoteController();
 controller.addServicesToAccessory(remote);
 
 /*
@@ -21,15 +29,14 @@ controller.addServicesToAccessory(remote);
     The supported routes are listed below. The http server runs on port 8080 as default.
     This example should not be used except for testing as the http server is unsecured.
 
-    /press?button=<buttonId>&time=<timeInMS>  - presses a given button for a given time. Time is optional and defaults to 200
+    /listTargets  -  list all currently configured apple tvs and their respective configuration
+    /getActiveTarget  -  return the current target id of the controlled device
+    /getActive  -  get the value of the active characteristic (active means the apple tv for the activeTarget is listening)
+
+    /press?button=<buttonId>&time=<timeInMS>  - presses a given button for a given time. Time is optional and defaults to 200ms
     /button?button=<buttonId>&state=<stateId>  - send a single button event
     /getTargetId?name=<name of apple TV>  -   get the target identifier for the given name of the apple tv
     /setActiveTarget?identifier=<id>  - set currently controlled apple tv
-
-    /listTargets  -  list all currently configured apple tvs and their respective configuration
-    /getActiveTarget  -  return the current target id of the controlled device
-    /getActive  -  get the value of the active characteristic
-    /setActive  -  set the value of the active characteristic (HomeKit seems to set the accessory active itself after configuration)
  */
 
 http.createServer((request, response) => {
@@ -132,8 +139,7 @@ http.createServer((request, response) => {
             return;
         }
 
-        controller.pushButton(button);
-        setTimeout(() => controller.releaseButton(button), time);
+        controller.pushAndReleaseButton(button, time);
 
         response.writeHead(200, {"Content-Type": "text/html"});
         response.end("OK");
@@ -144,21 +150,9 @@ http.createServer((request, response) => {
         response.writeHead(200, {"Content-Type": "application/json"});
         response.end(JSON.stringify(targets, undefined, 4));
         return;
-    } else if (pathname === "setActive") {
-        if (query === undefined || query.active === undefined) {
-            response.writeHead(400, {"Content-Type": "text/html"});
-            response.end("Bad request. Must include 'active' in query string!");
-            return;
-        }
-
-        const str = (query.active as string).toLowerCase();
-        controller.active = str === "true" || str === "1";
-        response.writeHead(200, {"Content-Type": "text/html"});
-        response.end("OK");
-        return;
     } else if (pathname === "getActive") {
         response.writeHead(200, {"Content-Type": "text/html"});
-        response.end(controller.active? "true": "false");
+        response.end(controller.isActive()? "true": "false");
         return;
     } else {
         response.writeHead(404, {"Content-Type": "text/html"});
