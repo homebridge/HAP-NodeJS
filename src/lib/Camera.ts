@@ -77,6 +77,7 @@ export class Camera {
     }
 
     this.createCameraControlService();
+    this.createSecureVideoService();
     this._createStreamControllers(2, options);
   }
 
@@ -230,6 +231,14 @@ export class Camera {
     this.services.push(controlService);
   }
 
+  createSecureVideoService = () => {
+    var myCameraOperatingMode = new Service.CameraOperatingMode('','');
+    this.services.push(myCameraOperatingMode);
+
+    var myCameraRecordingManagement = new Service.CameraRecordingManagement('','');
+    this.services.push(myCameraRecordingManagement);
+  }
+
 // Private
   _createStreamControllers = (maxStreams: number, options: StreamControllerOptions) => {
 
@@ -241,4 +250,3 @@ export class Camera {
     }
   }
 }
-
