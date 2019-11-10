@@ -1,6 +1,6 @@
+import './gen';
 import { Characteristic, CharacteristicEventTypes, CharacteristicProps, Formats } from './Characteristic';
 import { generate } from './util/uuid';
-import './gen';
 
 const createCharacteristic = (type: Formats) => {
   return new Characteristic('Test', generate('Foo'), { format: type, perms: [] });
