@@ -3300,6 +3300,9 @@ export class RouterStatus extends Characteristic {
     super('Router Status', RouterStatus.UUID);
     this.setProps({
       format: Formats.UINT8,
+      maxValue: 1,
+      minValue: 0,
+      validValues: [0,1],
       perms: [Perms.READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
@@ -3380,6 +3383,9 @@ export class ManagedNetworkEnable extends Characteristic {
     super('Managed Network Enable', ManagedNetworkEnable.UUID);
     this.setProps({
       format: Formats.UINT8,
+      maxValue: 1,
+      minValue: 0,
+      validValues: [0,1],
       perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
     });
     this.value = this.getDefaultValue();
@@ -3407,6 +3413,33 @@ export class NetworkAccessViolationControl extends Characteristic {
 }
 
 Characteristic.NetworkAccessViolationControl = NetworkAccessViolationControl;
+
+/**
+ * Characteristic "Wi-Fi Satellite Status"
+ */
+
+export class WiFiSatelliteStatus extends Characteristic {
+  // The value property of WiFiSatelliteStatus must be one of the following:
+  static readonly UNKNOWN = 0;
+  static readonly CONNECTED = 1;
+  static readonly NOT_CONNECTED = 2;
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Wi-Fi Satellite Status', WiFiSatelliteStatus.UUID);
+    this.setProps({
+      format: Formats.UINT8,
+      maxValue: 2,
+      minValue: 0,
+      validValues: [0,1,2],
+      perms: [Perms.PAIRED_READ, Perms.EVENTS]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.WiFiSatelliteStatus = WiFiSatelliteStatus;
 
 /**
  * Service "Accessory Information"
@@ -4496,3 +4529,20 @@ export class WiFiRouter extends Service {
 }
 
 Service.WiFiRouter = WiFiRouter;
+
+/**
+ * Service "Wi-Fi Satellite"
+ */
+
+export class WiFiSatellite extends Service {
+  static readonly UUID: string = '0000020F-0000-1000-8000-0026BB765291';
+
+  constructor(displayName: string, subtype: string) {
+    super(displayName, WiFiSatellite.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.WiFiSatelliteStatus);
+  }
+}
+
+Service.WiFiSatellite = WiFiSatellite;
