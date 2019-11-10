@@ -189,7 +189,7 @@ export class PictureMode extends Characteristic {
   constructor() {
     super('Picture Mode', PictureMode.UUID);
     this.setProps({
-      format: Formats.UINT16,
+      format: Formats.UINT8,
       maxValue: 13,
       minValue: 0,
       validValues: [0,1,2,3,4,5,6,7,8,9,10,11,12,13],
