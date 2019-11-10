@@ -3029,6 +3029,226 @@ export class WaterLevel extends Characteristic {
 Characteristic.WaterLevel = WaterLevel;
 
 /**
+ * Characteristic "Recording Audio Active"
+ */
+
+export class RecordingAudioActive extends Characteristic {
+
+  static readonly UUID: string = '00000226-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Recording Audio Active', RecordingAudioActive.UUID);
+    this.setProps({
+        format: Formats.UINT8,
+        perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.RecordingAudioActive = RecordingAudioActive;
+
+/**
+ * Characteristic "Supported Camera Recording Configuration"
+ */
+
+export class SupportedCameraRecordingConfiguration extends Characteristic {
+
+  static readonly UUID: string = '00000205-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Supported Camera Recording Configuration', SupportedCameraRecordingConfiguration.UUID);
+    this.setProps({
+        format: Formats.TLV8,
+        perms: [Perms.READ, Perms.NOTIFY]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.SupportedCameraRecordingConfiguration = SupportedCameraRecordingConfiguration;
+
+/**
+ * Characteristic "Supported Video Recording Configuration"
+ */
+
+export class SupportedVideoRecordingConfiguration extends Characteristic {
+
+  static readonly UUID: string = '00000206-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Supported Video Recording Configuration', SupportedVideoRecordingConfiguration.UUID);
+    this.setProps({
+        format: Formats.TLV8,
+        perms: [Perms.READ, Perms.NOTIFY]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.SupportedVideoRecordingConfiguration = SupportedVideoRecordingConfiguration;
+
+/**
+ * Characteristic "Supported Audio Recording Configuration"
+ */
+
+export class SupportedAudioRecordingConfiguration extends Characteristic {
+
+  static readonly UUID: string = '00000207-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Supported Audio Recording Configuration', SupportedAudioRecordingConfiguration.UUID);
+    this.setProps({
+        format: Formats.TLV8,
+        perms: [Perms.READ, Perms.NOTIFY]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.SupportedAudioRecordingConfiguration = SupportedAudioRecordingConfiguration;
+
+/**
+ * Characteristic "Selected Camera Recording Configuration"
+ */
+
+export class SelectedCameraRecordingConfiguration extends Characteristic {
+
+  static readonly UUID: string = '00000209-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Selected Camera Recording Configuration', SelectedCameraRecordingConfiguration.UUID);
+    this.setProps({
+        format: Formats.TLV8,
+        perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.SelectedCameraRecordingConfiguration = SelectedCameraRecordingConfiguration;
+
+/**
+ * Characteristic "Camera Operating Mode Indicator"
+ */
+
+export class CameraOperatingModeIndicator extends Characteristic {
+
+  static readonly UUID: string = '0000021D-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Camera Operating Mode Indicator', CameraOperatingModeIndicator.UUID);
+    this.setProps({
+        format: Formats.BOOL,
+        perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.CameraOperatingModeIndicator = CameraOperatingModeIndicator;
+
+/**
+ * Characteristic "Event Snapshots Active"
+ */
+
+export class EventSnapshotsActive extends Characteristic {
+
+  static readonly UUID: string = '00000223-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Event Snapshots Active', EventSnapshotsActive.UUID);
+    this.setProps({
+      format: Formats.BOOL,
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.EventSnapshotsActive = EventSnapshotsActive;
+
+/**
+ * Characteristic "HomeKit Camera Active"
+ */
+
+export class HomeKitCameraActive extends Characteristic {
+
+  static readonly UUID: string = '0000021B-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('HomeKit Camera Active', HomeKitCameraActive.UUID);
+    this.setProps({
+      format: Formats.BOOL,
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.HomeKitCameraActive = HomeKitCameraActive;
+
+/**
+ * Characteristic "Manually disabled"
+ */
+
+export class ManuallyDisabled extends Characteristic {
+
+  static readonly UUID: string = '00000227-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Manually disabled', ManuallyDisabled.UUID);
+    this.setProps({
+      format: Formats.BOOL,
+      perms: [Perms.READ, Perms.NOTIFY]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.ManuallyDisabled = ManuallyDisabled;
+
+/**
+ * Characteristic "Third Party Camera Active"
+ */
+
+export class ThirdPartyCameraActive extends Characteristic {
+
+  static readonly UUID: string = '0000021C-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Third Party Camera Active', ThirdPartyCameraActive.UUID);
+    this.setProps({
+      format: Formats.BOOL,
+      perms: [Perms.READ, Perms.NOTIFY]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.ThirdPartyCameraActive = ThirdPartyCameraActive;
+
+/**
+ * Characteristic "Periodic Snapshots Active"
+ */
+
+export class PeriodicSnapshotsActive extends Characteristic {
+
+  static readonly UUID: string = '00000225-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Periodic Snapshots Active', PeriodicSnapshotsActive.UUID);
+    this.setProps({
+      format: Formats.BOOL,
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.PeriodicSnapshotsActive = PeriodicSnapshotsActive;
+
+/**
  * Characteristic "Network Client Control"
  */
 
@@ -4196,6 +4416,58 @@ export class WindowCovering extends Service {
 }
 
 Service.WindowCovering = WindowCovering;
+
+/**
+ * Service "Camera Operating Mode"
+ */
+
+export class CameraOperatingMode extends Service {
+
+  static UUID: string = '0000021A-0000-1000-8000-0026BB765291';
+
+  constructor(displayName: string, subtype: string) {
+    super(displayName, CameraOperatingMode.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.EventSnapshotsActive);
+    this.addCharacteristic(Characteristic.HomeKitCameraActive);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.Name);
+    this.addOptionalCharacteristic(Characteristic.ManuallyDisabled);
+    this.addOptionalCharacteristic(Characteristic.NightVision);
+    this.addOptionalCharacteristic(Characteristic.ThirdPartyCameraActive);
+    this.addOptionalCharacteristic(Characteristic.PeriodicSnapshotsActive);
+  }
+}
+
+Service.CameraOperatingMode = CameraOperatingMode;
+
+/**
+ * Service "Camera Recording Management"
+ */
+
+export class CameraRecordingManagement extends Service {
+
+  static UUID: string = '00000204-0000-1000-8000-0026BB765291';
+
+  constructor(displayName: string, subtype: string) {
+    super(displayName, CameraRecordingManagement.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.Active);
+    this.addCharacteristic(Characteristic.SupportedCameraRecordingConfiguration);
+    this.addCharacteristic(Characteristic.SupportedVideoRecordingConfiguration);
+    this.addCharacteristic(Characteristic.SupportedAudioRecordingConfiguration);
+    this.addCharacteristic(Characteristic.SelectedCameraRecordingConfiguration);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.Name);
+    this.addOptionalCharacteristic(Characteristic.RecordingAudioActive);
+  }
+}
+
+Service.CameraRecordingManagement = CameraRecordingManagement;
 
 /**
  * Service "Wi-Fi Router"
