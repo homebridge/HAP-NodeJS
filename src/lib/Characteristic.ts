@@ -329,6 +329,14 @@ export class Characteristic extends EventEmitter<Events> {
   static SupportedAudioRecordingConfiguration: typeof HomeKitTypes.Generated.SupportedAudioRecordingConfiguration;
   static SelectedCameraRecordingConfiguration: typeof HomeKitTypes.Generated.SelectedCameraRecordingConfiguration;
   static CameraOperatingModeIndicator: typeof HomeKitTypes.Generated.CameraOperatingModeIndicator;
+  static NetworkClientControl: typeof HomeKitTypes.Generated.NetworkClientControl;
+  static NetworkClientStatusControl: typeof HomeKitTypes.Generated.NetworkClientStatusControl;
+  static RouterStatus: typeof HomeKitTypes.Generated.RouterStatus;
+  static SupportedRouterConfiguration: typeof HomeKitTypes.Generated.SupportedRouterConfiguration;
+  static WANConfigurationList: typeof HomeKitTypes.Generated.WANConfigurationList;
+  static WANStatusList: typeof HomeKitTypes.Generated.WANStatusList;
+  static ManagedNetworkEnable: typeof HomeKitTypes.Generated.ManagedNetworkEnable;
+  static NetworkAccessViolationControl: typeof HomeKitTypes.Generated.NetworkAccessViolationControl;
 
   iid: Nullable<number> = null;
   value: Nullable<CharacteristicValue> = null;
