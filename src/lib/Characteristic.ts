@@ -337,6 +337,7 @@ export class Characteristic extends EventEmitter<Events> {
   static WANStatusList: typeof HomeKitTypes.Generated.WANStatusList;
   static ManagedNetworkEnable: typeof HomeKitTypes.Generated.ManagedNetworkEnable;
   static NetworkAccessViolationControl: typeof HomeKitTypes.Generated.NetworkAccessViolationControl;
+  static WiFiSatelliteStatus: typeof HomeKitTypes.Generated.WiFiSatelliteStatus;
 
   iid: Nullable<number> = null;
   value: Nullable<CharacteristicValue> = null;
