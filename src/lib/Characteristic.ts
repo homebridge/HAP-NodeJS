@@ -318,6 +318,14 @@ export class Characteristic extends EventEmitter<Events> {
   static VolumeControlType: typeof HomeKitTypes.TV.VolumeControlType;
   static VolumeSelector: typeof HomeKitTypes.TV.VolumeSelector;
   static WaterLevel: typeof HomeKitTypes.Generated.WaterLevel;
+  static NetworkClientControl: typeof HomeKitTypes.Generated.NetworkClientControl;
+  static NetworkClientStatusControl: typeof HomeKitTypes.Generated.NetworkClientStatusControl;
+  static RouterStatus: typeof HomeKitTypes.Generated.RouterStatus;
+  static SupportedRouterConfiguration: typeof HomeKitTypes.Generated.SupportedRouterConfiguration;
+  static WANConfigurationList: typeof HomeKitTypes.Generated.WANConfigurationList;
+  static WANStatusList: typeof HomeKitTypes.Generated.WANStatusList;
+  static ManagedNetworkEnable: typeof HomeKitTypes.Generated.ManagedNetworkEnable;
+  static NetworkAccessViolationControl: typeof HomeKitTypes.Generated.NetworkAccessViolationControl;
 
   iid: Nullable<number> = null;
   value: Nullable<CharacteristicValue> = null;

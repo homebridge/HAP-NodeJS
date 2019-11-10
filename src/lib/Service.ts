@@ -121,6 +121,7 @@ export class Service extends EventEmitter<Events> {
   static Valve: typeof HomeKitTypes.Generated.Valve;
   static Window: typeof HomeKitTypes.Generated.Window;
   static WindowCovering: typeof HomeKitTypes.Generated.WindowCovering;
+  static WiFiRouter: typeof HomeKitTypes.Generated.WiFiRouter;
 
   iid: Nullable<number> = null; // assigned later by our containing Accessory
   name: Nullable<string> = null;
