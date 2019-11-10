@@ -53,6 +53,16 @@ export const accessory = {
       manfDescription: "Bla",
       designedMaxLength: 255
     },{
+       cType: types.FIRMWARE_REVISION_CTYPE,
+       onUpdate: null,
+       perms: ["pr"],
+       format: "string",
+       initialValue: "1.0.0",
+       supportEvents: false,
+       supportBonjour: false,
+       manfDescription: "Bla",
+       designedMaxLength: 255
+   },{
       cType: types.IDENTIFY_CTYPE,
       onUpdate: null,
       perms: ["pw"],
@@ -79,7 +89,7 @@ export const accessory = {
       cType: types.CURRENTHEATINGCOOLING_CTYPE,
       onUpdate: (value: CharacteristicValue) => { console.log("Change:",value); execute("Thermostat", "Current HC", value); },
       perms: ["pr","ev"],
-      format: "int",
+      format: "uint8",
       initialValue: 0,
       supportEvents: false,
       supportBonjour: false,
