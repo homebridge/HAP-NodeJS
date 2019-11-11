@@ -6,6 +6,7 @@
 import {
   Accessory,
   AccessoryEventTypes,
+  Categories,
   Characteristic,
   CharacteristicEventTypes, CharacteristicGetCallback, CharacteristicSetCallback,
   CharacteristicValue,
@@ -33,6 +34,8 @@ var ACTest = exports.accessory = new Accessory('Air Conditioner', uuid.generate(
 ACTest.username = "1A:2B:3C:4D:5E:FF";
 // @ts-ignore
 ACTest.pincode = "031-45-154";
+// @ts-ignore
+ACTest.category = Categories.THERMOSTAT;
 
 // set some basic properties (these values are arbitrary and setting them is optional)
 ACTest

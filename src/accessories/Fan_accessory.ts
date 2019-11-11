@@ -2,6 +2,7 @@
 import {
   Accessory,
   AccessoryEventTypes,
+  Categories,
   Characteristic,
   CharacteristicEventTypes, CharacteristicSetCallback,
   CharacteristicValue,
@@ -43,6 +44,8 @@ var fan = exports.accessory = new Accessory('Fan', uuid.generate('hap-nodejs:acc
 fan.username = "1A:2B:3C:4D:5E:FF";
 // @ts-ignore
 fan.pincode = "031-45-154";
+// @ts-ignore
+fan.category = Categories.FAN;
 
 // set some basic properties (these values are arbitrary and setting them is optional)
 fan

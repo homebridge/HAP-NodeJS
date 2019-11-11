@@ -1,5 +1,6 @@
 import {
   Accessory,
+  Categories,
   Characteristic,
   CharacteristicEventTypes,
   CharacteristicSetCallback,
@@ -21,6 +22,8 @@ var tv = exports.accessory = new Accessory('TV', tvUUID);
 tv.username = "A3:FB:3D:4D:2E:AC";
 // @ts-ignore
 tv.pincode = "031-45-154";
+// @ts-ignore
+tv.category = Categories.TELEVISION;
 
 // Add the actual TV Service and listen for change events from iOS.
 // We can see the complete list of Services and Characteristics in `lib/gen/HomeKit.ts`

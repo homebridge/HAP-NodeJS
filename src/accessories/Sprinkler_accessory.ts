@@ -1,6 +1,7 @@
 // here's a fake hardware device that we'll expose to HomeKit
 import {
   Accessory,
+  Categories,
   Characteristic,
   CharacteristicEventTypes,
   CharacteristicSetCallback,
@@ -40,6 +41,8 @@ var sprinkler = exports.accessory = new Accessory('💦 Sprinkler', sprinklerUUI
 sprinkler.username = "A3:AB:3D:4D:2E:A3";
 // @ts-ignore
 sprinkler.pincode = "123-44-567";
+// @ts-ignore
+sprinkler.category = Categories.SPRINKLER;
 
 // Add the actual Valve Service and listen for change events from iOS.
 // We can see the complete list of Services and Characteristics in `lib/gen/HomeKit.ts`
@@ -173,4 +176,3 @@ sprinkler
   function closeVentile() {
     // Add your code here
   }
-

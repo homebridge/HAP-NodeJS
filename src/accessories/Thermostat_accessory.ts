@@ -1,6 +1,6 @@
 // HomeKit types required
 import * as types from "./types";
-import { CharacteristicValue } from '..';
+import { Categories, CharacteristicValue } from '..';
 
 const execute = (accessory: string, characteristic: string, value: CharacteristicValue) => {
   console.log("executed accessory: " + accessory + ", and characteristic: " + characteristic + ", with value: " +  value + ".");
@@ -10,6 +10,7 @@ export const accessory = {
   displayName: "Thermostat 1",
   username: "CA:3E:BC:4D:5E:FF",
   pincode: "031-45-154",
+  category: Categories.THERMOSTAT,
   services: [{
     sType: types.ACCESSORY_INFORMATION_STYPE,
     characteristics: [{
