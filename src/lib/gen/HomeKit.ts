@@ -4470,6 +4470,7 @@ export class CameraOperatingMode extends Service {
     this.addOptionalCharacteristic(Characteristic.ManuallyDisabled);
     this.addOptionalCharacteristic(Characteristic.NightVision);
     this.addOptionalCharacteristic(Characteristic.ThirdPartyCameraActive);
+    this.addOptionalCharacteristic(Characteristic.CameraOperatingModeIndicator);
     this.addOptionalCharacteristic(Characteristic.PeriodicSnapshotsActive);
   }
 }
