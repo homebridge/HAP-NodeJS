@@ -318,7 +318,7 @@ export class Characteristic extends EventEmitter<Events> {
   static VolumeControlType: typeof HomeKitTypes.TV.VolumeControlType;
   static VolumeSelector: typeof HomeKitTypes.TV.VolumeSelector;
   static WaterLevel: typeof HomeKitTypes.Generated.WaterLevel;
-  static ManuallyDisabled: typeof HomeKitTypes.Generated.HomeKitCameraActive;
+  static ManuallyDisabled: typeof HomeKitTypes.Generated.ManuallyDisabled;
   static ThirdPartyCameraActive: typeof HomeKitTypes.Generated.ThirdPartyCameraActive;
   static PeriodicSnapshotsActive: typeof HomeKitTypes.Generated.PeriodicSnapshotsActive;
   static EventSnapshotsActive: typeof HomeKitTypes.Generated.EventSnapshotsActive;
