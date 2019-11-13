@@ -1,6 +1,7 @@
 import {
   Accessory,
   AccessoryEventTypes,
+  Categories,
   Characteristic,
   CharacteristicEventTypes, CharacteristicSetCallback, CharacteristicValue,
   NodeCallback,
@@ -40,6 +41,8 @@ var garage = exports.accessory = new Accessory('Garage Door', garageUUID);
 garage.username = "C1:5D:3F:EE:5E:FA"; //edit this if you use Core.js
 // @ts-ignore
 garage.pincode = "031-45-154";
+// @ts-ignore
+garage.category = Categories.GARAGE_DOOR_OPENER;
 
 garage
   .getService(Service.AccessoryInformation)!

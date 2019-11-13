@@ -1,5 +1,5 @@
 // here's a fake temperature sensor device that we'll expose to HomeKit
-import { Accessory, Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service, uuid } from '..';
+import { Accessory, Categories, Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service, uuid } from '..';
 
 var FAKE_SENSOR = {
   currentTemperature: 50,
@@ -27,6 +27,8 @@ var sensor = exports.accessory = new Accessory('Temperature Sensor', sensorUUID)
 sensor.username = "C1:5D:3A:AE:5E:FA";
 // @ts-ignore
 sensor.pincode = "031-45-154";
+// @ts-ignore
+sensor.category = Categories.SENSOR;
 
 // Add the actual TemperatureSensor Service.
 // We can see the complete list of Services and Characteristics in `lib/gen/HomeKit.ts`

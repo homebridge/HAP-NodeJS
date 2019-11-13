@@ -1,6 +1,7 @@
 import {
   Accessory,
   AccessoryEventTypes,
+  Categories,
   Characteristic,
   CharacteristicEventTypes, CharacteristicSetCallback,
   CharacteristicValue, NodeCallback,
@@ -45,6 +46,8 @@ var outlet = exports.accessory = new Accessory('Outlet', outletUUID);
 outlet.username = "1A:2B:3C:4D:5D:FF";
 // @ts-ignore
 outlet.pincode = "031-45-154";
+// @ts-ignore
+outlet.category = Categories.OUTLET;
 
 // set some basic properties (these values are arbitrary and setting them is optional)
 outlet

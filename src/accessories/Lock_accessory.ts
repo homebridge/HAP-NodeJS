@@ -1,6 +1,7 @@
 import {
   Accessory,
   AccessoryEventTypes,
+  Categories,
   Characteristic,
   CharacteristicEventTypes, CharacteristicSetCallback,
   CharacteristicValue,
@@ -38,6 +39,8 @@ var lock = exports.accessory = new Accessory('Lock', lockUUID);
 lock.username = "C1:5D:3A:EE:5E:FA";
 // @ts-ignore
 lock.pincode = "031-45-154";
+// @ts-ignore
+lock.category = Categories.DOOR_LOCK;
 
 // set some basic properties (these values are arbitrary and setting them is optional)
 lock
