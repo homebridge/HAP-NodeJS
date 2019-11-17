@@ -179,7 +179,7 @@ function getCharacteristicFormatsKey(format: string) {
 
   // look up the key in our known-formats dict
   for (var key in Formats)
-    if (Formats[key] == format)
+    if (Formats[key as keyof typeof Formats] == format)
       return key;
 
   throw new Error("Unknown characteristic format '" + format + "'");
@@ -188,7 +188,7 @@ function getCharacteristicFormatsKey(format: string) {
 function getCharacteristicUnitsKey(units: string) {
   // look up the key in our known-units dict
   for (var key in Units)
-    if (Units[key] == units)
+    if (Units[key as keyof typeof Units] == units)
       return key;
 
   throw new Error("Unknown characteristic units '" + units + "'");
