@@ -3034,13 +3034,16 @@ Characteristic.WaterLevel = WaterLevel;
 
 export class RecordingAudioActive extends Characteristic {
 
+  static readonly DISABLE = 0;
+  static readonly ENABLE = 1;
+
   static readonly UUID: string = '00000226-0000-1000-8000-0026BB765291';
 
   constructor() {
     super('Recording Audio Active', RecordingAudioActive.UUID);
     this.setProps({
         format: Formats.UINT8,
-        perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
+        perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -3134,12 +3137,15 @@ Characteristic.SelectedCameraRecordingConfiguration = SelectedCameraRecordingCon
 
 export class CameraOperatingModeIndicator extends Characteristic {
 
+  static readonly DISABLE = 0;
+  static readonly ENABLE = 1;
+
   static readonly UUID: string = '0000021D-0000-1000-8000-0026BB765291';
 
   constructor() {
     super('Camera Operating Mode Indicator', CameraOperatingModeIndicator.UUID);
     this.setProps({
-        format: Formats.BOOL,
+        format: Formats.UINT8,
         perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
     });
     this.value = this.getDefaultValue();
@@ -3154,13 +3160,16 @@ Characteristic.CameraOperatingModeIndicator = CameraOperatingModeIndicator;
 
 export class EventSnapshotsActive extends Characteristic {
 
+  static readonly DISABLE = 0;
+  static readonly ENABLE = 1;
+
   static readonly UUID: string = '00000223-0000-1000-8000-0026BB765291';
 
   constructor() {
     super('Event Snapshots Active', EventSnapshotsActive.UUID);
     this.setProps({
-      format: Formats.BOOL,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
+      format: Formats.UINT8,
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -3174,12 +3183,15 @@ Characteristic.EventSnapshotsActive = EventSnapshotsActive;
 
 export class HomeKitCameraActive extends Characteristic {
 
+  static readonly OFF = 0;
+  static readonly ON = 1;
+
   static readonly UUID: string = '0000021B-0000-1000-8000-0026BB765291';
 
   constructor() {
     super('HomeKit Camera Active', HomeKitCameraActive.UUID);
     this.setProps({
-      format: Formats.BOOL,
+      format: Formats.UINT8,
       perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
     });
     this.value = this.getDefaultValue();
@@ -3193,6 +3205,9 @@ Characteristic.HomeKitCameraActive = HomeKitCameraActive;
  */
 
 export class ManuallyDisabled extends Characteristic {
+
+  static readonly ENABLED = 0;
+  static readonly DISABLED = 1;
 
   static readonly UUID: string = '00000227-0000-1000-8000-0026BB765291';
 
@@ -3214,12 +3229,15 @@ Characteristic.ManuallyDisabled = ManuallyDisabled;
 
 export class ThirdPartyCameraActive extends Characteristic {
 
+  static readonly OFF = 0;
+  static readonly ON = 1;
+
   static readonly UUID: string = '0000021C-0000-1000-8000-0026BB765291';
 
   constructor() {
     super('Third Party Camera Active', ThirdPartyCameraActive.UUID);
     this.setProps({
-      format: Formats.BOOL,
+      format: Formats.UINT8,
       perms: [Perms.READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
@@ -3234,13 +3252,16 @@ Characteristic.ThirdPartyCameraActive = ThirdPartyCameraActive;
 
 export class PeriodicSnapshotsActive extends Characteristic {
 
+  static readonly DISABLE = 0;
+  static readonly ENABLE = 1;
+
   static readonly UUID: string = '00000225-0000-1000-8000-0026BB765291';
 
   constructor() {
     super('Periodic Snapshots Active', PeriodicSnapshotsActive.UUID);
     this.setProps({
-      format: Formats.BOOL,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
+      format: Formats.UINT8,
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -4478,15 +4499,15 @@ export class CameraOperatingMode extends Service {
 Service.CameraOperatingMode = CameraOperatingMode;
 
 /**
- * Service "Camera Recording Management"
+ * Service "Camera Event Recording Management"
  */
 
-export class CameraRecordingManagement extends Service {
+export class CameraEventRecordingManagement extends Service {
 
   static UUID: string = '00000204-0000-1000-8000-0026BB765291';
 
   constructor(displayName: string, subtype: string) {
-    super(displayName, CameraRecordingManagement.UUID, subtype);
+    super(displayName, CameraEventRecordingManagement.UUID, subtype);
 
     // Required Characteristics
     this.addCharacteristic(Characteristic.Active);
@@ -4494,14 +4515,14 @@ export class CameraRecordingManagement extends Service {
     this.addCharacteristic(Characteristic.SupportedVideoRecordingConfiguration);
     this.addCharacteristic(Characteristic.SupportedAudioRecordingConfiguration);
     this.addCharacteristic(Characteristic.SelectedCameraRecordingConfiguration);
+    this.addCharacteristic(Characteristic.RecordingAudioActive);
 
     // Optional Characteristics
     this.addOptionalCharacteristic(Characteristic.Name);
-    this.addOptionalCharacteristic(Characteristic.RecordingAudioActive);
   }
 }
 
-Service.CameraRecordingManagement = CameraRecordingManagement;
+Service.CameraEventRecordingManagement = CameraEventRecordingManagement;
 
 /**
  * Service "Wi-Fi Router"
