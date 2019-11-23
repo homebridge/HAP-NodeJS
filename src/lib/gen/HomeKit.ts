@@ -35,7 +35,7 @@ export class ProductData extends Characteristic {
     super('Product Data', ProductData.UUID);
     this.setProps({
       format: Formats.DATA,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ]
     });
     this.value = this.getDefaultValue();
   }
