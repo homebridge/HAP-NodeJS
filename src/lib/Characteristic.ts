@@ -137,6 +137,7 @@ export class Characteristic extends EventEmitter<Events> {
   static Perms = Perms;
 
   static AccessoryFlags: typeof HomeKitTypes.Generated.AccessoryFlags;
+  static ProductData: typeof HomeKitTypes.Generated.ProductData;
   static AccessoryIdentifier: typeof HomeKitTypes.Bridged.AccessoryIdentifier;
   static Active: typeof HomeKitTypes.Generated.Active;
   static ActiveIdentifier: typeof HomeKitTypes.TV.ActiveIdentifier;

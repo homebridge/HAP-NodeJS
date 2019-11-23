@@ -24,6 +24,26 @@ export class AccessoryFlags extends Characteristic {
 Characteristic.AccessoryFlags = AccessoryFlags;
 
 /**
+ * Characteristic "Product Data"
+ */
+
+export class ProductData extends Characteristic {
+
+  static readonly UUID: string = '00000220-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Product Data', ProductData.UUID);
+    this.setProps({
+      format: Formats.DATA,
+      perms: [Perms.READ, Perms.NOTIFY]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.ProductData = ProductData;
+
+/**
  * Characteristic "Active"
  */
 
@@ -3486,6 +3506,7 @@ export class AccessoryInformation extends Service {
     this.addCharacteristic(Characteristic.Name);
     this.addCharacteristic(Characteristic.SerialNumber);
     this.addCharacteristic(Characteristic.FirmwareRevision);
+    this.addCharacteristic(Characteristic.ProductData);
 
     // Optional Characteristics
     this.addOptionalCharacteristic(Characteristic.HardwareRevision);
