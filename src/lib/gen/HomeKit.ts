@@ -3592,8 +3592,6 @@ export class AirQualitySensor extends Service {
     this.addOptionalCharacteristic(Characteristic.PM2_5Density);
     this.addOptionalCharacteristic(Characteristic.PM10Density);
     this.addOptionalCharacteristic(Characteristic.VOCDensity);
-    this.addOptionalCharacteristic(Characteristic.CarbonMonoxideLevel);
-    this.addOptionalCharacteristic(Characteristic.CarbonDioxideLevel);
   }
 }
 
