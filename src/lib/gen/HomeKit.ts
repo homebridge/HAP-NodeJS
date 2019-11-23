@@ -3403,7 +3403,7 @@ Characteristic.SupportedRouterConfiguration = SupportedRouterConfiguration;
  * Characteristic "WAN Configuration List"
  */
 
-export class `WANConfigurationList` extends Characteristic {
+export class WANConfigurationList extends Characteristic {
 
   static readonly UUID: string = '00000211-0000-1000-8000-0026BB765291';
 
