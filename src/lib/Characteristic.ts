@@ -330,6 +330,7 @@ export class Characteristic extends EventEmitter<Events> {
   static SupportedAudioRecordingConfiguration: typeof HomeKitTypes.Generated.SupportedAudioRecordingConfiguration;
   static SelectedCameraRecordingConfiguration: typeof HomeKitTypes.Generated.SelectedCameraRecordingConfiguration;
   static CameraOperatingModeIndicator: typeof HomeKitTypes.Generated.CameraOperatingModeIndicator;
+  static DiagonalFieldOfView: typeof HomeKitTypes.Generated.DiagonalFieldOfView;
   static NetworkClientProfileControl: typeof HomeKitTypes.Generated.NetworkClientProfileControl;
   static NetworkClientStatusControl: typeof HomeKitTypes.Generated.NetworkClientStatusControl;
   static RouterStatus: typeof HomeKitTypes.Generated.RouterStatus;

@@ -3198,6 +3198,30 @@ export class EventSnapshotsActive extends Characteristic {
 Characteristic.EventSnapshotsActive = EventSnapshotsActive;
 
 /**
+ * Characteristic "Diagonal Field Of View"
+ */
+
+export class DiagonalFieldOfView extends Characteristic {
+
+  static readonly UUID: string = '00000224-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Diagonal Field Of View', DiagonalFieldOfView.UUID);
+    this.setProps({
+      format: Formats.FLOAT,
+      unit: Units.ARC_DEGREE,
+      maxValue: 360,
+      minValue: 0,
+      minStep: 1,
+      perms: [Perms.READ, Perms.NOTIFY]
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.DiagonalFieldOfView = DiagonalFieldOfView;
+
+/**
  * Characteristic "HomeKit Camera Active"
  */
 
@@ -4512,14 +4536,15 @@ export class CameraOperatingMode extends Service {
     // Required Characteristics
     this.addCharacteristic(Characteristic.EventSnapshotsActive);
     this.addCharacteristic(Characteristic.HomeKitCameraActive);
+    this.addCharacteristic(Characteristic.PeriodicSnapshotsActive);
 
     // Optional Characteristics
     this.addOptionalCharacteristic(Characteristic.Name);
+    this.addOptionalCharacteristic(Characteristic.CameraOperatingModeIndicator);
+    this.addOptionalCharacteristic(Characteristic.DiagonalFieldOfView);
     this.addOptionalCharacteristic(Characteristic.ManuallyDisabled);
     this.addOptionalCharacteristic(Characteristic.NightVision);
     this.addOptionalCharacteristic(Characteristic.ThirdPartyCameraActive);
-    this.addOptionalCharacteristic(Characteristic.CameraOperatingModeIndicator);
-    this.addOptionalCharacteristic(Characteristic.PeriodicSnapshotsActive);
   }
 }
 
