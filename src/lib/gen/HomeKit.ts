@@ -3270,15 +3270,15 @@ export class PeriodicSnapshotsActive extends Characteristic {
 Characteristic.PeriodicSnapshotsActive = PeriodicSnapshotsActive;
 
 /**
- * Characteristic "Network Client Control"
+ * Characteristic "Network Client Profile Control"
  */
 
-export class NetworkClientControl extends Characteristic {
+export class NetworkClientProfileControl extends Characteristic {
 
   static readonly UUID: string = '0000020C-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Network Client Control', NetworkClientControl.UUID);
+    super('Network Client Profile Control', NetworkClientProfileControl.UUID);
     this.setProps({
       format: Formats.TLV8,
       perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE, Perms.WRITE_RESPONSE]
@@ -3287,7 +3287,7 @@ export class NetworkClientControl extends Characteristic {
   }
 }
 
-Characteristic.NetworkClientControl = NetworkClientControl;
+Characteristic.NetworkClientProfileControl = NetworkClientProfileControl;
 
 /**
  * Characteristic "Network Client Status Control"
@@ -3314,6 +3314,9 @@ Characteristic.NetworkClientStatusControl = NetworkClientStatusControl;
  */
 
 export class RouterStatus extends Characteristic {
+
+  static readonly READY = 0;
+  static readonly NOT_READY = 1;
 
   static readonly UUID: string = '0000020E-0000-1000-8000-0026BB765291';
 
@@ -3356,7 +3359,7 @@ Characteristic.SupportedRouterConfiguration = SupportedRouterConfiguration;
  * Characteristic "WAN Configuration List"
  */
 
-export class WANConfigurationList extends Characteristic {
+export class `WANConfigurationList` extends Characteristic {
 
   static readonly UUID: string = '00000211-0000-1000-8000-0026BB765291';
 
@@ -3397,6 +3400,9 @@ Characteristic.WANStatusList = WANStatusList;
  */
 
 export class ManagedNetworkEnable extends Characteristic {
+  static readonly DISABLED = 0;
+  static readonly ENABLED = 1;
+  static readonly UNKNOWN = 2;
 
   static readonly UUID: string = '00000215-0000-1000-8000-0026BB765291';
 
@@ -3426,7 +3432,7 @@ export class NetworkAccessViolationControl extends Characteristic {
   constructor() {
     super('Network Access Violation Control', NetworkAccessViolationControl.UUID);
     this.setProps({
-      format: Formats.UINT8,
+      format: Formats.TLV8,
       perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE, Perms.WRITE_RESPONSE]
     });
     this.value = this.getDefaultValue();
@@ -3454,7 +3460,7 @@ export class WiFiSatelliteStatus extends Characteristic {
       maxValue: 2,
       minValue: 0,
       validValues: [0,1,2],
-      perms: [Perms.PAIRED_READ, Perms.EVENTS]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -4536,17 +4542,19 @@ export class WiFiRouter extends Service {
     super(displayName, WiFiRouter.UUID, subtype);
 
     // Required Characteristics
-    this.addCharacteristic(Characteristic.NetworkClientControl);
+    this.addCharacteristic(Characteristic.Version);
+    this.addCharacteristic(Characteristic.ConfiguredName);
+    this.addCharacteristic(Characteristic.NetworkClientProfileControl);
     this.addCharacteristic(Characteristic.NetworkClientStatusControl);
     this.addCharacteristic(Characteristic.RouterStatus);
     this.addCharacteristic(Characteristic.SupportedRouterConfiguration);
     this.addCharacteristic(Characteristic.WANConfigurationList);
     this.addCharacteristic(Characteristic.WANStatusList);
     this.addCharacteristic(Characteristic.ManagedNetworkEnable);
+    this.addCharacteristic(Characteristic.NetworkAccessViolationControl);
 
     // Optional Characteristics
     this.addOptionalCharacteristic(Characteristic.Name);
-    this.addOptionalCharacteristic(Characteristic.NetworkAccessViolationControl);
   }
 }
 
