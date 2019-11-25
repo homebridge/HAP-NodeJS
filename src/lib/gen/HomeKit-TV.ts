@@ -15,7 +15,7 @@ export class ActiveIdentifier extends Characteristic {
     super('Active Identifier', ActiveIdentifier.UUID);
     this.setProps({
       format: Formats.UINT32,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
