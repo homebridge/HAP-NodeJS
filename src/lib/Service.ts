@@ -122,7 +122,7 @@ export class Service extends EventEmitter<Events> {
   static Window: typeof HomeKitTypes.Generated.Window;
   static WindowCovering: typeof HomeKitTypes.Generated.WindowCovering;
   static CameraOperatingMode: typeof HomeKitTypes.Generated.CameraOperatingMode;
-  static CameraRecordingManagement: typeof HomeKitTypes.Generated.CameraRecordingManagement;
+  static CameraEventRecordingManagement: typeof HomeKitTypes.Generated.CameraEventRecordingManagement;
   static WiFiRouter: typeof HomeKitTypes.Generated.WiFiRouter;
   static WiFiSatellite: typeof HomeKitTypes.Generated.WiFiSatellite;
 
