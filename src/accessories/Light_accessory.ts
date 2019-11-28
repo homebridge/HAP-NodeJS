@@ -1,6 +1,7 @@
 import {
   Accessory,
   AccessoryEventTypes,
+  Categories,
   Characteristic,
   CharacteristicEventTypes, CharacteristicSetCallback,
   CharacteristicValue,
@@ -86,6 +87,8 @@ var lightAccessory = exports.accessory = new Accessory(LightController.name as s
 lightAccessory.username = LightController.username;
 // @ts-ignore
 lightAccessory.pincode = LightController.pincode;
+// @ts-ignore
+lightAccessory.category = Categories.LIGHTBULB;
 
 // set some basic properties (these values are arbitrary and setting them is optional)
 lightAccessory

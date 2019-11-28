@@ -139,6 +139,7 @@ export class Characteristic extends EventEmitter<Events> {
   static Perms = Perms;
 
   static AccessoryFlags: typeof HomeKitTypes.Generated.AccessoryFlags;
+  static ProductData: typeof HomeKitTypes.Generated.ProductData;
   static AccessoryIdentifier: typeof HomeKitTypes.Bridged.AccessoryIdentifier;
   static Active: typeof HomeKitTypes.Generated.Active;
   static ActiveIdentifier: typeof HomeKitTypes.TV.ActiveIdentifier;
@@ -320,7 +321,7 @@ export class Characteristic extends EventEmitter<Events> {
   static VolumeControlType: typeof HomeKitTypes.TV.VolumeControlType;
   static VolumeSelector: typeof HomeKitTypes.TV.VolumeSelector;
   static WaterLevel: typeof HomeKitTypes.Generated.WaterLevel;
-  static ManuallyDisabled: typeof HomeKitTypes.Generated.HomeKitCameraActive;
+  static ManuallyDisabled: typeof HomeKitTypes.Generated.ManuallyDisabled;
   static ThirdPartyCameraActive: typeof HomeKitTypes.Generated.ThirdPartyCameraActive;
   static PeriodicSnapshotsActive: typeof HomeKitTypes.Generated.PeriodicSnapshotsActive;
   static EventSnapshotsActive: typeof HomeKitTypes.Generated.EventSnapshotsActive;
@@ -331,7 +332,8 @@ export class Characteristic extends EventEmitter<Events> {
   static SupportedAudioRecordingConfiguration: typeof HomeKitTypes.Generated.SupportedAudioRecordingConfiguration;
   static SelectedCameraRecordingConfiguration: typeof HomeKitTypes.Generated.SelectedCameraRecordingConfiguration;
   static CameraOperatingModeIndicator: typeof HomeKitTypes.Generated.CameraOperatingModeIndicator;
-  static NetworkClientControl: typeof HomeKitTypes.Generated.NetworkClientControl;
+  static DiagonalFieldOfView: typeof HomeKitTypes.Generated.DiagonalFieldOfView;
+  static NetworkClientProfileControl: typeof HomeKitTypes.Generated.NetworkClientProfileControl;
   static NetworkClientStatusControl: typeof HomeKitTypes.Generated.NetworkClientStatusControl;
   static RouterStatus: typeof HomeKitTypes.Generated.RouterStatus;
   static SupportedRouterConfiguration: typeof HomeKitTypes.Generated.SupportedRouterConfiguration;
@@ -339,6 +341,7 @@ export class Characteristic extends EventEmitter<Events> {
   static WANStatusList: typeof HomeKitTypes.Generated.WANStatusList;
   static ManagedNetworkEnable: typeof HomeKitTypes.Generated.ManagedNetworkEnable;
   static NetworkAccessViolationControl: typeof HomeKitTypes.Generated.NetworkAccessViolationControl;
+  static WiFiSatelliteStatus: typeof HomeKitTypes.Generated.WiFiSatelliteStatus;
 
   iid: Nullable<number> = null;
   value: Nullable<CharacteristicValue> = null;

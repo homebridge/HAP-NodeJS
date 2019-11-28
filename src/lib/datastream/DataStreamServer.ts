@@ -65,7 +65,7 @@ export enum DataSendCloseReason {
     NORMAL = 0,
     NOT_ALLOWED = 1,
     BUSY = 2,
-    CANCELLED = 4,
+    CANCELLED = 3,
     UNSUPPORTED = 4,
     UNEXPECTED_FAILURE = 5,
     TIMEOUT = 6,

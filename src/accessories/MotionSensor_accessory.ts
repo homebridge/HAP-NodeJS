@@ -2,6 +2,7 @@
 import {
   Accessory,
   AccessoryEventTypes,
+  Categories,
   Characteristic,
   CharacteristicEventTypes,
   CharacteristicValue,
@@ -35,6 +36,8 @@ var motionSensor = exports.accessory = new Accessory('Motion Sensor', motionSens
 motionSensor.username = "1A:2B:3D:4D:2E:AF";
 // @ts-ignore
 motionSensor.pincode = "031-45-154";
+// @ts-ignore
+motionSensor.category = Categories.SENSOR;
 
 // set some basic properties (these values are arbitrary and setting them is optional)
 motionSensor

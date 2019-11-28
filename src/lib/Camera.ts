@@ -235,8 +235,8 @@ export class Camera {
     var myCameraOperatingMode = new Service.CameraOperatingMode('','');
     this.services.push(myCameraOperatingMode);
 
-    var myCameraRecordingManagement = new Service.CameraRecordingManagement('','');
-    this.services.push(myCameraRecordingManagement);
+    var myCameraEventRecordingManagement = new Service.CameraEventRecordingManagement('','');
+    this.services.push(myCameraEventRecordingManagement);
   }
 
 // Private
