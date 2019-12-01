@@ -101,6 +101,9 @@ export class EventedHTTPServer extends EventEmitter<Events> {
 
   stop = () => {
     this._tcpServer.close();
+    this._connections.forEach((connection) => {
+      connection.close();
+    });
     this._connections = [];
   }
 
@@ -339,6 +342,10 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
       this._pendingEventData = Buffer.concat([this._pendingEventData, data]);
     else
       this._clientSocket.write(data);
+  }
+
+  close = () => {
+    this._clientSocket.end();
   }
 
   _sendPendingEvents = () => {
