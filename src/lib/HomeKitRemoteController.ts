@@ -21,7 +21,7 @@ import {
     DataStreamProtocolHandler,
     DataStreamServerEvents,
     EventHandler,
-    Float32,
+    Float32, HDSStatus,
     Int64,
     Protocols,
     RequestHandler,
@@ -1244,7 +1244,7 @@ export class SiriAudioSession extends EventEmitter<SiriAudioSessionEventMap> {
                 if (error) { // errors get produced by hap-nodejs
                     debug("Error occurred trying to start siri audio stream: %s", error.message);
                 } else if (status) { // status codes are those returned by the hds response
-                    debug("Controller responded with non-zero status code: %d", status);
+                    debug("Controller responded with non-zero status code: %s", HDSStatus[status]);
                 }
                 this.closed();
             } else {

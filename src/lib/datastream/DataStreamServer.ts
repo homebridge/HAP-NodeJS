@@ -30,7 +30,7 @@ export type PreparedDataStreamSession = {
 
 export type EventHandler = (message: Record<any, any>) => void;
 export type RequestHandler = (id: number, message: Record<any, any>) => void;
-export type ResponseHandler = (error: Error | undefined, status: number | undefined, message: Record<any, any>) => void;
+export type ResponseHandler = (error: Error | undefined, status: HDSStatus | undefined, message: Record<any, any>) => void;
 export type GlobalEventHandler = (connection: DataStreamConnection, message: Record<any, any>) => void;
 export type GlobalRequestHandler = (connection: DataStreamConnection, id: number, message: Record<any, any>) => void;
 
@@ -61,7 +61,17 @@ export enum Topics { // a collection of currently known topics grouped by their 
     CLOSE = "close",
 }
 
-export enum DataSendCloseReason {
+export enum HDSStatus {
+    SUCCESS = 0,
+    OUT_OF_MEMORY = 1,
+    TIMEOUT = 2,
+    HEADER_ERROR = 3,
+    PAYLOAD_ERROR = 4,
+    MISSING_PROTOCOL = 5,
+    PROTOCOL_SPECIFIC_ERROR = 6,
+}
+
+export enum DataSendCloseReason { // close reason used in the dataSend protocol
     NORMAL = 0,
     NOT_ALLOWED = 1,
     BUSY = 2,
@@ -108,7 +118,7 @@ type DataStreamMessage = {
     protocol: string,
     topic: string,
     id?: number, // for requests and responses
-    status?: number, // for responses
+    status?: HDSStatus, // for responses
 
     message: Record<any, any>,
 }
@@ -573,10 +583,10 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
      * @param protocol {string | Protocols} - name of the protocol
      * @param response {string | Topics} - name of the response (also referred to as topic. See {Topics} for some known ones)
      * @param id {number} - id from the request, to associate the response to the request
-     * @param status {number} - status indication if the request was successful. A status of zero indicates success.
+     * @param status {HDSStatus} - status indication if the request was successful. A status of zero indicates success.
      * @param message {Record<any, any>} - message dictionary which gets sent along the response
      */
-    sendResponse(protocol: string | Protocols, response: string | Topics, id: number, status: number = 0, message: Record<any, any> = {}) {
+    sendResponse(protocol: string | Protocols, response: string | Topics, id: number, status: HDSStatus = HDSStatus.SUCCESS, message: Record<any, any> = {}) {
         const header: Record<any, any> = {};
         header["protocol"] = protocol;
         header["response"] = response;
@@ -815,7 +825,7 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
             const protocol: string = headerDictionary["protocol"];
             let topic: string;
             let id: number | undefined = undefined;
-            let status: number | undefined = undefined;
+            let status: HDSStatus | undefined = undefined;
 
             if (headerDictionary["event"] !== undefined) {
                 type = MessageType.EVENT;
@@ -834,7 +844,7 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
                 return;
             }
 
-            const message = {
+            const message: DataStreamMessage = {
                 type: type,
                 protocol: protocol,
                 topic: topic,
