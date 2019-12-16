@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import { BinaryLike } from './uuid';
 
 export function HKDF(hashAlg: string, salt: BinaryLike, ikm: BinaryLike, info: Buffer, size: number) {

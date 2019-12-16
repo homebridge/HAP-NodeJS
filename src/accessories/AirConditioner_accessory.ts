@@ -13,7 +13,7 @@ import {
   Service,
   uuid,
 } from '..';
-import { NodeCallback, VoidCallback } from '../types';
+import { VoidCallback } from '../types';
 
 var ACTest_data: Record<string, CharacteristicValue> = {
   fanPowerOn: false,

@@ -1,6 +1,6 @@
 import { Accessory, ButtonState, ButtonType, Categories, HomeKitRemoteController, uuid } from '..';
 import * as http from "http";
-import url, { UrlWithParsedQuery } from "url";
+import * as url from "url";
 import { GStreamerAudioProducer, GStreamerOptions } from "./gstreamer-audioProducer";
 
 const remoteUUID = uuid.generate('hap-nodejs:accessories:remote');
@@ -46,7 +46,7 @@ http.createServer((request, response) => {
         return;
     }
 
-    const parsedPath: UrlWithParsedQuery = url.parse(request.url!, true);
+    const parsedPath: url.UrlWithParsedQuery = url.parse(request.url!, true);
     const pathname = parsedPath.pathname!.substring(1, parsedPath.pathname!.length);
     const query = parsedPath.query;
 

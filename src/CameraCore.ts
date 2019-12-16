@@ -1,4 +1,4 @@
-import storage from 'node-persist';
+import * as storage from 'node-persist';
 
 import { Accessory, AccessoryEventTypes, Camera, Categories, uuid, VoidCallback } from './';
 

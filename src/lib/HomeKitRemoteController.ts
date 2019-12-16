@@ -1,6 +1,6 @@
 import * as tlv from './util/tlv';
 import createDebug from 'debug';
-import assert from 'assert';
+import * as assert from 'assert';
 
 import {Service} from "./Service";
 import {

@@ -1,6 +1,6 @@
-import path from 'path';
+import * as path from 'path';
 
-import storage from 'node-persist';
+import * as storage from 'node-persist';
 
 import { Accessory, AccessoryEventTypes, AccessoryLoader, Bridge, Categories, uuid, VoidCallback } from './';
 

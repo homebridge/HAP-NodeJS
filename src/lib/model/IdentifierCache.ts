@@ -1,7 +1,7 @@
-import crypto from 'crypto';
-import util from 'util';
+import * as crypto from 'crypto';
+import * as util from 'util';
 
-import storage from 'node-persist';
+import * as storage from 'node-persist';
 
 /**
  * IdentifierCache is a model class that manages a system of associating HAP "Accessory IDs" and "Instance IDs"
@@ -117,16 +117,3 @@ export class IdentifierCache {
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -5,8 +5,8 @@
 // Implementation derived from chacha-ref.c version 20080118
 // See for details: http://cr.yp.to/chacha/chacha-20080128.pdf
 
-var Chacha20KeySize   = 32;
-var Chacha20NonceSize =  8;
+export const Chacha20KeySize   = 32;
+export const Chacha20NonceSize =  8;
 
 export class Chacha20Ctx {
   input: any[];
@@ -172,7 +172,6 @@ export function chacha20_keystream(ctx: Chacha20Ctx, dst: Buffer, len: number) {
 // Implementation derived from poly1305-donna-16.h
 // See for details: https://github.com/floodyberry/poly1305-donna
 
-var Poly1305KeySize = 32;
 var Poly1305TagSize = 16;
 
 export class Poly1305Ctx {

@@ -1,4 +1,4 @@
-import storage from 'node-persist';
+import * as storage from 'node-persist';
 
 import './lib/gen';
 import * as accessoryLoader from './lib/AccessoryLoader';

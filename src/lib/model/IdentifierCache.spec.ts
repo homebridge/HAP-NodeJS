@@ -1,5 +1,4 @@
-// @ts-ignore
-import storage from 'node-persist';
+import * as storage from 'node-persist';
 
 import { IdentifierCache } from './IdentifierCache';
 

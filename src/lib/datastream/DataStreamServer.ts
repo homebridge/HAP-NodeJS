@@ -1,11 +1,11 @@
 import createDebug from 'debug';
-import assert from 'assert';
+import * as assert from 'assert';
 
 import * as encryption from '../util/encryption';
 import * as hkdf from '../util/hkdf';
 import {DataStreamParser, DataStreamReader, DataStreamWriter, Int64} from './DataStreamParser';
-import crypto from 'crypto';
-import net, {Socket} from 'net';
+import * as crypto from 'crypto';
+import * as net from 'net';
 import {HAPSessionEvents, Session} from "../util/eventedhttp";
 import {EventEmitter as NodeEventEmitter} from "events";
 import {EventEmitter} from "../EventEmitter";
@@ -289,7 +289,7 @@ export class DataStreamServer extends EventEmitter<DataStreamServerEventMap> {
         }
     }
 
-    private onConnection(socket: Socket) {
+    private onConnection(socket: net.Socket) {
         debug("[%s] New DataStream connection was established", socket.remoteAddress);
         const connection = new DataStreamConnection(socket);
 
@@ -424,7 +424,7 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
 
     private static readonly MAX_PAYLOAD_LENGTH = 0b11111111111111111111;
 
-    private socket: Socket;
+    private socket: net.Socket;
     private session?: Session; // reference to the hap session. is present when state > UNIDENTIFIED
     readonly _remoteAddress: string;
     /*
@@ -452,7 +452,7 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
 
     private helloTimer?: Timeout;
 
-    constructor(socket: Socket) {
+    constructor(socket: net.Socket) {
         super();
         this.socket = socket;
         this._remoteAddress = socket.remoteAddress!;

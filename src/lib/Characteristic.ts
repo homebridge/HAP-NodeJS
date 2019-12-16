@@ -55,14 +55,14 @@ export enum Perms {
 }
 
 export interface CharacteristicProps {
-  format: Formats;
-  unit?: Units;
-  perms: Perms[];
+  format: Nullable<Formats>;
+  unit?:Nullable<Units>;
+  perms: Nullable<Perms[]>;
   ev?: boolean;
   description?: string;
-  minValue?: number;
-  maxValue?: number;
-  minStep?: number;
+  minValue?:Nullable<number>;
+  maxValue?:Nullable<number>;
+  minStep?:Nullable<number>;
   maxLen?: number;
   maxDataLen?: number;
   validValues?: number[];
@@ -364,7 +364,6 @@ export class Characteristic extends EventEmitter<Events> {
 
   constructor(public displayName?: string, public UUID?: string, props?: CharacteristicProps) {
     super();
-    // @ts-ignore
     this.props = props || {
       format: null,
       unit: null,
@@ -599,7 +598,7 @@ export class Characteristic extends EventEmitter<Events> {
           if (callback)
             callback(err);
         } else {
-          if (writeResponse !== undefined && this.props.perms.includes(Perms.WRITE_RESPONSE))
+          if (writeResponse !== undefined && this.props.perms?.includes(Perms.WRITE_RESPONSE))
             newValue = writeResponse; // support write response simply by letting the implementor pass the response as second argument to the callback
 
           if (newValue === undefined || newValue === null)
@@ -741,7 +740,7 @@ export class Characteristic extends EventEmitter<Events> {
       }
     }
     // if we're not readable, omit the "value" property - otherwise iOS will complain about non-compliance
-    if (this.props.perms.indexOf(Perms.READ) == -1)
+    if (this.props.perms?.indexOf(Perms.READ) == -1)
       delete hap.value;
     // delete the "value" property anyway if we were asked to
     if (opt && opt.omitValues)

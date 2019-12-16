@@ -1,11 +1,11 @@
-import net, { AddressInfo, Socket } from 'net';
-import http, { IncomingMessage, OutgoingMessage, ServerResponse } from 'http';
+import * as net from 'net';
+import * as http from 'http';
 
 import createDebug from 'debug';
-import srp from 'fast-srp-hap';
+import * as srp from 'fast-srp-hap';
 
 import * as uuid from './uuid';
-import { Nullable, SessionIdentifier } from '../../types';
+import { Nullable } from '../../types';
 import { EventEmitter } from '../EventEmitter';
 import { HAPEncryption } from '../HAPServer';
 
@@ -22,8 +22,8 @@ export enum EventedHTTPServerEvents {
 
 export type Events = {
   [EventedHTTPServerEvents.LISTENING]: (port: number) => void;
-  [EventedHTTPServerEvents.REQUEST]: (request: IncomingMessage, response: ServerResponse, session: Session, events: any) => void;
-  [EventedHTTPServerEvents.DECRYPT]: (data: Buffer, decrypted: { data: Buffer; error: Error | null }, session: Session) => void;
+  [EventedHTTPServerEvents.REQUEST]: (request: http.IncomingMessage, response: http.ServerResponse, session: Session, events: any) => void;
+  [EventedHTTPServerEvents.DECRYPT]: (data: Buffer, decrypted: { data: number | Buffer; error: Error | null }, session: Session) => void;
   [EventedHTTPServerEvents.ENCRYPT]: (data: Buffer, encrypted: { data: number | Buffer; }, session: Session) => void;
   [EventedHTTPServerEvents.CLOSE]: (events: any) => void;
   [EventedHTTPServerEvents.SESSION_CLOSE]: (sessionID: string, events: any) => void;
@@ -120,12 +120,12 @@ export class EventedHTTPServer extends EventEmitter<Events> {
 
 // Called by net.Server when a new client connects. We will set up a new EventedHTTPServerConnection to manage the
 // lifetime of this connection.
-  _onConnection = (socket: Socket) => {
+  _onConnection = (socket: net.Socket) => {
     var connection = new EventedHTTPServerConnection(this, socket);
 
     // pass on session events to our listeners directly
-    connection.on(EventedHTTPServerEvents.REQUEST, (request: IncomingMessage, response: ServerResponse, session: Session, events: any) => { this.emit(EventedHTTPServerEvents.REQUEST, request, response, session, events); });
-    connection.on(EventedHTTPServerEvents.ENCRYPT, (data: Buffer, encrypted: { data: Buffer; }, session: Session) => { this.emit(EventedHTTPServerEvents.ENCRYPT, data, encrypted, session); });
+    connection.on(EventedHTTPServerEvents.REQUEST, (request: http.IncomingMessage, response: http.ServerResponse, session: Session, events: any) => { this.emit(EventedHTTPServerEvents.REQUEST, request, response, session, events); });
+    connection.on(EventedHTTPServerEvents.ENCRYPT, (data: Buffer, encrypted: { data: number | Buffer; error: Error | null }, session: Session) => { this.emit(EventedHTTPServerEvents.ENCRYPT, data, encrypted, session); });
     connection.on(EventedHTTPServerEvents.DECRYPT, (data: Buffer, decrypted: { data: number | Buffer; }, session: Session) => { this.emit(EventedHTTPServerEvents.DECRYPT, data, decrypted, session); });
     connection.on(EventedHTTPServerEvents.CLOSE, (events: any) => { this._handleConnectionClose(connection, events); });
     this._connections.push(connection);
@@ -264,14 +264,14 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
   _writingResponse: boolean;
   _killSocketAfterWrite: boolean;
   _pendingEventData: Buffer[];
-  _clientSocket: Socket;
+  _clientSocket: net.Socket;
   _httpServer: http.Server;
-  _serverSocket: Nullable<Socket>;
+  _serverSocket: Nullable<net.Socket>;
   _session: Session;
   _events: Record<string, boolean>;
   _httpPort?: number;
 
-  constructor(server: EventedHTTPServer, clientSocket: Socket) {
+  constructor(server: EventedHTTPServer, clientSocket: net.Socket) {
     super();
 
     this.server = server;
@@ -328,14 +328,19 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
       linebreak,
       data
     ]);
-
+    // give listeners an opportunity to encrypt this data before sending it to the client
+    var encrypted: { data: Buffer | null } = {data: null};
+    this.emit(EventedHTTPServerEvents.ENCRYPT, data, encrypted, this._session);
+    if (encrypted.data) {
+      data = encrypted.data;
+    }
     // if we're in the middle of writing an HTTP response already, put this event in the queue for when
     // we're done. otherwise send it immediately.
     if (this._writingResponse) {
       this._pendingEventData.push(data);
     } else {
       // give listeners an opportunity to encrypt this data before sending it to the client
-      var encrypted = {data: null};
+      encrypted = {data: null};
       this.emit(EventedHTTPServerEvents.ENCRYPT, data, encrypted, this._session);
       if (encrypted.data) {
         // @ts-ignore
@@ -374,7 +379,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
 
   // Called only once right after constructor finishes
   _onHttpServerListening = () => {
-    this._httpPort = (this._httpServer.address() as AddressInfo).port;
+    this._httpPort = (this._httpServer.address() as net.AddressInfo).port;
     debug("[%s] HTTP server listening on port %s", this._remoteAddress, this._httpPort);
     // closes before this are due to retrying listening, which don't need to be handled
     this._httpServer.on('close', this._onHttpServerClose);
@@ -461,7 +466,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     // _onServerSocketClose will be called next
   }
 
-  _onHttpServerRequest = (request: IncomingMessage, response: OutgoingMessage) => {
+  _onHttpServerRequest = (request: http.IncomingMessage, response: http.OutgoingMessage) => {
     debug("[%s] HTTP request: %s", this._remoteAddress, request.url);
 
     // sign up to know when the response is ended, so we can safely send EVENT responses

@@ -1,6 +1,6 @@
 import * as uuid from '../util/uuid'
 import * as encryption from "../util/encryption"
-import assert from 'assert';
+import * as assert from 'assert';
 import createDebug from 'debug';
 
 // welcome to hell :)

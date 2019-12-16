@@ -21,12 +21,13 @@
     "@types/ip": "^1.1.0",
     "@types/jest": "^24.0.15",
     "@types/node": "^10.17.13",
+    "@types/node-persist": "0.0.33",
     "jest": "^24.8.0",
     "rimraf": "^2.7.1",
     "simple-plist": "0.0.4",
     "ts-jest": "^24.0.2",
     "ts-node": "^8.3.0",
-    "typescript": "^3.5.3"
+    "typescript": "^3.7.3"
   },
   "scripts": {
     "build": "rimraf dist/ && tsc",

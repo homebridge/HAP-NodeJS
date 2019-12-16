@@ -1,7 +1,7 @@
-import storage from 'node-persist';
-import util from 'util';
-import assert from 'assert';
-import tweetnacl from 'tweetnacl';
+import * as storage from 'node-persist';
+import * as util from 'util';
+import * as assert from 'assert';
+import * as tweetnacl from 'tweetnacl';
 
 import { Categories } from '../Accessory';
 import { Session } from "../util/eventedhttp";
@@ -43,7 +43,7 @@ export class AccessoryInfo {
   relayPairedControllers: Record<string, string>;
   accessoryBagURL: string;
 
-  private constructor(username: string) {
+  constructor(username: string) {
     this.username = username;
     this.displayName = "";
     // @ts-ignore
@@ -306,4 +306,3 @@ export class AccessoryInfo {
   };
 
 }
-

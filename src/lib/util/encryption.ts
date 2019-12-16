@@ -1,14 +1,13 @@
-import assert from 'assert';
-import crypto from 'crypto';
+import * as assert from 'assert';
 
 import createDebug from 'debug';
-import tweetnacl from 'tweetnacl';
+import * as tweetnacl from 'tweetnacl';
 
 import * as chacha20poly1305 from './chacha20poly1305';
 
 const debug = createDebug('encryption');
 
-function fromHex(h: string) {
+export function fromHex(h: string) {
   h.replace(/([^0-9a-f])/g, '');
   var out = [], len = h.length, w = '';
   for (var i = 0; i < len; i += 2) {
@@ -210,7 +209,7 @@ function uintHighLow(number: number) {
   return [high, low]
 }
 
-function intHighLow(number: number) {
+export function intHighLow(number: number) {
   if (number > -1) {
     return uintHighLow(number)
   }
@@ -227,7 +226,7 @@ function intHighLow(number: number) {
   return [high, low]
 }
 
-function writeUInt64BE(number: number, buffer: Buffer, offset: number = 0) {
+export function writeUInt64BE(number: number, buffer: Buffer, offset: number = 0) {
   var hl = uintHighLow(number)
   buffer.writeUInt32BE(hl[0], offset)
   buffer.writeUInt32BE(hl[1], offset + 4)

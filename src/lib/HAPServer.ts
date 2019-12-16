@@ -1,9 +1,9 @@
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 
 import createDebug from 'debug';
-import srp from 'fast-srp-hap';
-import tweetnacl from 'tweetnacl';
-import url from 'url';
+import * as srp from 'fast-srp-hap';
+import * as tweetnacl from 'tweetnacl';
+import * as url from 'url';
 
 import * as encryption from './util/encryption';
 import * as hkdf from './util/hkdf';
@@ -11,7 +11,6 @@ import * as tlv from './util/tlv';
 import { EventedHTTPServer, EventedHTTPServerEvents, Session } from './util/eventedhttp';
 import { once } from './util/once';
 import { IncomingMessage, ServerResponse } from "http";
-import { Characteristic } from './Characteristic';
 import { Accessory, CharacteristicEvents, Resource } from './Accessory';
 import { CharacteristicData, NodeCallback, PairingsCallback, SessionIdentifier, VoidCallback } from '../types';
 import { EventEmitter } from './EventEmitter';
@@ -340,8 +339,7 @@ export class HAPServer extends EventEmitter<Events> {
         depth: null
       }));
   }
-
-  _onEncrypt = (data: Buffer, encrypted: { data: Buffer; }, session: Session) => {
+  _onEncrypt = (data: Buffer, encrypted: { data: Buffer | number; error: Error | null }, session: Session) => {
     // instance of HAPEncryption (created in handlePairVerifyStepOne)
     var enc = session.encryption;
     // if accessoryToControllerKey is not empty, then encryption is enabled for this connection. However, we'll
@@ -879,10 +877,6 @@ export class HAPServer extends EventEmitter<Events> {
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
       return;
     }
-
-    type Characteristics = Pick<CharacteristicData, 'aid' | 'iid'> & {
-      status?: any;
-    };
 
     if (request.method == "GET") {
       // Extract the query params from the URL which looks like: /characteristics?id=1.9,2.14,...

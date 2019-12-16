@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 
 import createDebug from 'debug';
 
@@ -11,7 +11,7 @@ import {
   CharacteristicSetCallback
 } from './Characteristic';
 import * as uuid from './util/uuid';
-import { CharacteristicValue, NodeCallback, Nullable } from '../types';
+import { CharacteristicValue, Nullable } from '../types';
 
 const debug = createDebug('AccessoryLoader');
 

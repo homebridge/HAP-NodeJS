@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 
 type Binary = Buffer | NodeJS.TypedArray | DataView;
 export type BinaryLike = string | Binary;

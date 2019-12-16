@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 
 import bonjour, { BonjourHap, MulticastOptions, Service } from 'bonjour-hap';
 
@@ -114,4 +114,3 @@ export class Advertiser {
     return setupHash;
   }
 }
-

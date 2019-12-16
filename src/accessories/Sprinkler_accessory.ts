@@ -46,7 +46,7 @@ sprinkler.category = Categories.SPRINKLER;
 
 // Add the actual Valve Service and listen for change events from iOS.
 // We can see the complete list of Services and Characteristics in `lib/gen/HomeKit.ts`
-var sprinklerService = sprinkler.addService(Service.Valve, "💦 Sprinkler")
+sprinkler.addService(Service.Valve, "💦 Sprinkler")
 
 
 // set some basic properties (these values are arbitrary and setting them is optional)
@@ -162,7 +162,6 @@ sprinkler
   .on(CharacteristicEventTypes.SET, (newValue: CharacteristicValue, callback: CharacteristicSetCallback) => {
     console.log("SetDuration => NewValue: " + newValue);
 
-    var err = null; // in case there were any problems
     SPRINKLER.defaultDuration = newValue;
     callback();
   });

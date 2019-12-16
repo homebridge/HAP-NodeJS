@@ -1,4 +1,4 @@
-import assert from 'assert';
+import * as assert from 'assert';
 import createDebug from 'debug';
 import {ChildProcess, spawn} from 'child_process';
 import {AudioCodecConfiguration, ErrorHandler, FrameHandler, SiriAudioStreamProducer} from "../lib/HomeKitRemoteController";
@@ -42,9 +42,7 @@ export type GStreamerOptions = {
  */
 export class GStreamerAudioProducer implements SiriAudioStreamProducer {
 
-    private readonly options: GStreamerOptions = {
-        alsaSrc: "plughw:1"
-    };
+    private readonly options: GStreamerOptions;
 
     private readonly frameHandler: FrameHandler;
     private readonly errorHandler: ErrorHandler;
@@ -55,11 +53,7 @@ export class GStreamerAudioProducer implements SiriAudioStreamProducer {
     constructor(frameHandler: FrameHandler, errorHandler: ErrorHandler, options?: Partial<GStreamerOptions>) {
         this.frameHandler = frameHandler;
         this.errorHandler = errorHandler;
-
-        for (const key in options) {
-            // @ts-ignore
-            GStreamerAudioProducer.options[key] = options[key];
-        }
+        this.options = { alsaSrc: "plughw:1", ...options };
     }
 
     startAudioProduction(selectedAudioConfiguration: AudioCodecConfiguration): void {

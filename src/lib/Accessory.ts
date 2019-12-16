@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import createDebug from 'debug';
 
 import * as uuid from './util/uuid';
@@ -919,7 +919,7 @@ export class Accessory extends EventEmitter<Events> {
         return;
       }
 
-      if (!characteristic.props.perms.includes(Perms.PAIRED_READ)) { // check if we are allowed to read from this characteristic
+      if (!characteristic.props.perms?.includes(Perms.PAIRED_READ)) { // check if we are allowed to read from this characteristic
         debug('[%s] Tried reading from Characteristic which does not allow reading (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid);
         const response: any = {
           aid: aid,
@@ -1082,7 +1082,7 @@ export class Accessory extends EventEmitter<Events> {
       // if "ev" is present, that means we need to register or unregister this client for change events for
       // this characteristic.
       if (typeof ev !== 'undefined') {
-        if (!characteristic.props.perms.includes(Perms.NOTIFY)) { // check if notify is allowed for this characteristic
+        if (!characteristic.props.perms?.includes(Perms.NOTIFY)) { // check if notify is allowed for this characteristic
           debug('[%s] Tried enabling notifications for Characteristic which does not allow notify (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid);
           const response: any = {
             aid: aid,
@@ -1137,7 +1137,7 @@ export class Accessory extends EventEmitter<Events> {
 
       // Found the characteristic - set the value if there is one
       if (typeof value !== 'undefined') {
-        if (!characteristic.props.perms.includes(Perms.PAIRED_WRITE)) { // check if write is allowed for this characteristic
+        if (!characteristic.props.perms?.includes(Perms.PAIRED_WRITE)) { // check if write is allowed for this characteristic
           debug('[%s] Tried writing to Characteristic which does not allow writing (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid);
           const response: any = {
             aid: aid,

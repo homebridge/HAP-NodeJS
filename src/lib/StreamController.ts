@@ -1,6 +1,5 @@
-import crypto from 'crypto';
-
-import ip from 'ip';
+import * as crypto from 'crypto';
+import * as ip from 'ip';
 import createDebug from 'debug';
 
 import * as tlv from './util/tlv';
@@ -12,7 +11,6 @@ import {
   CharacteristicSetCallback
 } from './Characteristic';
 import RTPProxy from './camera/RTPProxy';
-import { EventEmitter } from './EventEmitter';
 import { Camera } from './Camera';
 import {
   Address,
@@ -343,8 +341,7 @@ export class StreamController {
     }
   }
 
-// Private
-  _createService = () => {
+  private _createService = () => {
     var managementService = new Service.CameraRTPStreamManagement('', this.identifier.toString());
 
     managementService
@@ -502,7 +499,7 @@ export class StreamController {
       var codec = audio[AudioTypes.CODEC];
       var audioCodecParamsTLV = tlv.decode(audio[AudioTypes.CODEC_PARAM]);
       var audioRTPParamsTLV = tlv.decode(audio[AudioTypes.RTP_PARAM]);
-      var comfortNoise = tlv.decode(audio[AudioTypes.COMFORT_NOISE]);
+      // var comfortNoise = tlv.decode(audio[AudioTypes.COMFORT_NOISE]);
 
       let audioCodec = codec.readUInt8(0);
       if (audioCodec !== undefined) {
@@ -597,7 +594,7 @@ export class StreamController {
     // Address
     var targetAddressPayload = objects[SetupTypes.ADDRESS];
     var processedAddressInfo = tlv.decode(targetAddressPayload) as any;
-    var isIPv6 = processedAddressInfo[SetupAddressInfo.ADDRESS_VER][0];
+    // var isIPv6 = processedAddressInfo[SetupAddressInfo.ADDRESS_VER][0];
     var targetAddress = processedAddressInfo[SetupAddressInfo.ADDRESS].toString('utf8');
     var targetVideoPort = processedAddressInfo[SetupAddressInfo.VIDEO_RTP_PORT].readUInt16LE(0);
     var targetAudioPort = processedAddressInfo[SetupAddressInfo.AUDIO_RTP_PORT].readUInt16LE(0);
@@ -985,7 +982,6 @@ export class StreamController {
 
       var codec = AudioCodecTypes.OPUS;
       var bitrate = AudioCodecParamBitRateTypes.VARIABLE;
-      var samplerate = AudioCodecParamSampleRateTypes.KHZ_24;
 
       var audioParamTLV = tlv.encode(
         AudioCodecParamTypes.CHANNEL, 1,
@@ -1007,4 +1003,3 @@ export class StreamController {
     return Buffer.concat([audioConfigurationsBuffer, tlv.encode(0x02, comfortNoiseValue)]).toString('base64');
   }
 }
-

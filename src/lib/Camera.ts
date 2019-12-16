@@ -1,6 +1,6 @@
-import crypto from 'crypto';
-import fs from 'fs';
-import ip from 'ip';
+import * as crypto from 'crypto';
+import * as fs from 'fs';
+import * as ip from 'ip';
 import { ChildProcess, spawn } from 'child_process';
 
 import { Service } from './Service';
@@ -239,8 +239,7 @@ export class Camera {
     this.services.push(myCameraEventRecordingManagement);
   }
 
-// Private
-  _createStreamControllers = (maxStreams: number, options: StreamControllerOptions) => {
+  private _createStreamControllers = (maxStreams: number, options: StreamControllerOptions) => {
 
     for (let i = 0; i < maxStreams; i++) {
       const streamController = new StreamController(i, options, this);

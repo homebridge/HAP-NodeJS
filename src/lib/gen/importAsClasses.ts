@@ -1,9 +1,9 @@
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 
-import plist from 'simple-plist';
+import * as plist from 'simple-plist';
 
-import { Characteristic, Formats, Units } from "../Characteristic";
+import { Formats, Units } from "../Characteristic";
 
 /**
  * This module is intended to be run from the command line. It is a script that extracts Apple's Service
