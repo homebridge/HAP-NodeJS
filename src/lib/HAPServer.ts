@@ -265,8 +265,8 @@ export class HAPServer extends EventEmitter<Events> {
     this._keepAliveTimerID = setInterval(this._onKeepAliveTimerTick, 1000 * 60 * 10); // send keepalive every 10 minutes
   }
 
-  listen = (port: number) => {
-    this._httpServer.listen(port);
+  listen = (port: number, host?: string) => {
+    this._httpServer.listen(port, host);
   }
 
   stop = () => {

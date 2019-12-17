@@ -106,6 +106,7 @@ export interface PublishInfo {
   category?: Categories;
   setupID?: string;
   port?: number;
+  host?: string;
   mdns?: any;
 }
 
@@ -717,7 +718,8 @@ export class Accessory extends EventEmitter<Events> {
     this._server.on(HAPServerEventTypes.REQUEST_RESOURCE, this._handleResource);
 
     const targetPort = info.port || 0;
-    this._server.listen(targetPort);
+    const targetHost = info.host || "0.0.0.0";
+    this._server.listen(targetPort, targetHost);
   }
 
   /**
