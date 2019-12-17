@@ -7,6 +7,10 @@
   "engines": {
     "node": ">=10.17.0"
   },
+  "prettier": {
+    "printWidth": 120,
+    "trailingComma": "es5"
+  },
   "dependencies": {
     "bonjour-hap": "^3.5.1",
     "debug": "^2.2.0",
@@ -22,6 +26,7 @@
     "@types/jest": "^24.0.15",
     "@types/node": "^10.17.13",
     "jest": "^24.8.0",
+    "prettier": "^1.19.1",
     "rimraf": "^2.7.1",
     "simple-plist": "0.0.4",
     "ts-jest": "^24.0.2",
@@ -30,6 +35,8 @@
   },
   "scripts": {
     "build": "rimraf dist/ && tsc",
+    "format": "prettier --write \"src/**/*.{js,ts,tsx,json}\"",
+    "format-check": "prettier --check \"src/**/*.{js,ts,tsx,json}\"",
     "prepublishOnly": "npm run build",
     "test": "jest",
     "start": "node dist/BridgedCore.js"

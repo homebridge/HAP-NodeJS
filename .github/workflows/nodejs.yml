@@ -21,7 +21,8 @@ jobs:
       - name: npm install, build and test
         run: |
           npm ci
-          npm run build --if-present
+          npm run format-check
+          npm run build
           npm test
         env:
           CI: true
