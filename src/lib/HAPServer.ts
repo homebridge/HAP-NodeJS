@@ -132,7 +132,7 @@ export enum HAPServerEventTypes {
 
 export type Events = {
   [HAPServerEventTypes.IDENTIFY]: (cb: VoidCallback) => void;
-  [HAPServerEventTypes.LISTENING]: (port: number) => void;
+  [HAPServerEventTypes.LISTENING]: (port: number, host: string) => void;
   [HAPServerEventTypes.PAIR]: (clientUsername: string, clientLTPK: Buffer, cb: VoidCallback) => void;
   [HAPServerEventTypes.ADD_PAIRING]: (controller: Session, username: string, publicKey: Buffer, permission: number, callback: PairingsCallback<void>) => void;
   [HAPServerEventTypes.REMOVE_PAIRING]: (controller: Session, username: string, callback: PairingsCallback<void>) => void;
@@ -296,8 +296,8 @@ export class HAPServer extends EventEmitter<Events> {
     }
   }
 
-  _onListening = (port: number) => {
-    this.emit(HAPServerEventTypes.LISTENING, port);
+  _onListening = (port: number, host: string) => {
+    this.emit(HAPServerEventTypes.LISTENING, port, host);
   }
 
   // Called when an HTTP request was detected.

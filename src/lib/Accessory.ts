@@ -86,7 +86,7 @@ export enum AccessoryEventTypes {
 
 type Events = {
   identify: (paired:boolean, cb: VoidCallback) => void;
-  listening: (port: number) => void;
+  listening: (port: number, host: string) => void;
   "service-configurationChange": VoidCallback;
   "service-characteristic-change": (change: ServiceCharacteristicChange) => void;
   [AccessoryEventTypes.PAIRED]: () => void;
@@ -775,10 +775,10 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
-  _onListening = (port: number) => {
+  _onListening = (port: number, host: string) => {
     // the HAP server is listening, so we can now start advertising our presence.
     this._advertiser && this._advertiser.startAdvertising(port);
-    this.emit(AccessoryEventTypes.LISTENING, port);
+    this.emit(AccessoryEventTypes.LISTENING, port, host);
   }
 
 // Called when an unpaired client wishes for us to identify ourself
