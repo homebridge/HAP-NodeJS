@@ -267,6 +267,16 @@ export class Accessory extends EventEmitter<Events> {
       if (!this.bridged)
         this._handleCharacteristicChange(clone(change, {accessory:this, service:service as Service}));
 
+      // if the characteristic is configured to cause a config update, then
+      // the configuration of the bridge will be updated which will inform the
+      // clients about the change
+      if (change.characteristic.props.configUpdate) {
+        if (this.bridge) {
+          this.bridge._updateConfiguration();
+        } else {
+          this._updateConfiguration();
+        }
+      }
     });
 
     return service;

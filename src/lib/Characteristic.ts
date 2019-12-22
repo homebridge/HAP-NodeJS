@@ -67,6 +67,7 @@ export interface CharacteristicProps {
   maxDataLen?: number;
   validValues?: number[];
   validValueRanges?: [number, number];
+  configUpdate?: boolean;
 }
 
 export enum Access {
@@ -361,6 +362,7 @@ export class Characteristic extends EventEmitter<Events> {
       minValue: null,
       maxValue: null,
       minStep: null,
+      configUpdate: false, // default to no update
       perms: []
     };
   }
@@ -382,6 +384,7 @@ export class Characteristic extends EventEmitter<Events> {
    *   maxDataLen: <max length of data>, (Optional default: 2097152)
    *   valid-values: <array of numbers>, (Optional)
    *   valid-values-range: <array of two numbers for start and end range> (Optional)
+   *   configUpdate: <if set to true a change will update the config> (Optional)
    * }
    */
   setProps = (props: CharacteristicProps) => {
@@ -733,8 +736,9 @@ export class Characteristic extends EventEmitter<Events> {
     // if we're not readable, omit the "value" property - otherwise iOS will complain about non-compliance
     if (this.props.perms.indexOf(Perms.READ) == -1)
       delete hap.value;
-    // delete the "value" property anyway if we were asked to
-    if (opt && opt.omitValues)
+    // delete the "value" property anyway if we were asked to and if the
+    // characteristic is not supposed to cause an update of the configuration
+    if (opt && opt.omitValues && !this.props.configUpdate)
       delete hap.value;
     return hap as HapCharacteristic;
   }

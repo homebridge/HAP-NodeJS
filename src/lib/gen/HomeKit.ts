@@ -934,6 +934,7 @@ export class FirmwareRevision extends Characteristic {
     super('Firmware Revision', FirmwareRevision.UUID);
     this.setProps({
       format: Formats.STRING,
+      configUpdate: true,
       perms: [Perms.READ]
     });
     this.value = this.getDefaultValue();
@@ -1365,6 +1366,7 @@ export class Manufacturer extends Characteristic {
     super('Manufacturer', Manufacturer.UUID);
     this.setProps({
       format: Formats.STRING,
+      configUpdate: true,
       perms: [Perms.READ]
     });
     this.value = this.getDefaultValue();
@@ -1385,6 +1387,7 @@ export class Model extends Characteristic {
     super('Model', Model.UUID);
     this.setProps({
       format: Formats.STRING,
+      configUpdate: true,
       perms: [Perms.READ]
     });
     this.value = this.getDefaultValue();
@@ -1445,6 +1448,7 @@ export class Name extends Characteristic {
     super('Name', Name.UUID);
     this.setProps({
       format: Formats.STRING,
+      configUpdate: true,
       perms: [Perms.READ]
     });
     this.value = this.getDefaultValue();
@@ -2119,6 +2123,7 @@ export class SerialNumber extends Characteristic {
     super('Serial Number', SerialNumber.UUID);
     this.setProps({
       format: Formats.STRING,
+      configUpdate: true,
       perms: [Perms.READ]
     });
     this.value = this.getDefaultValue();
