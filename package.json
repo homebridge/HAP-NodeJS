@@ -31,7 +31,7 @@
   },
   "scripts": {
     "build": "rimraf dist/ && tsc",
-    "prepublishOnly": "yarn build",
+    "prepublishOnly": "npm run build",
     "test": "jest",
     "start": "node dist/BridgedCore.js"
   },
