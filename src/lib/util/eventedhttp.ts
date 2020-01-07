@@ -264,7 +264,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
   _fullySetup: boolean;
   _writingResponse: boolean;
   _killSocketAfterWrite: boolean;
-  _pendingEventData: Buffer;
+  _pendingEventData: Buffer[];
   _clientSocket: Socket;
   _httpServer: http.Server;
   _serverSocket: Nullable<Socket>;
@@ -282,7 +282,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     this._fullySetup = false; // true when we are finished establishing connections
     this._writingResponse = false; // true while we are composing an HTTP response (so events can wait)
     this._killSocketAfterWrite = false;
-    this._pendingEventData = bufferShim.alloc(0); // event data waiting to be sent until after an in-progress HTTP response is being written
+    this._pendingEventData = []; // queue of unencrypted event data waiting to be sent until after an in-progress HTTP response is being written
     // clientSocket is the socket connected to the actual iOS device
     this._clientSocket = clientSocket;
     this._clientSocket.on('data', this._onClientSocketData);
@@ -329,19 +329,22 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
       linebreak,
       data
     ]);
-    // give listeners an opportunity to encrypt this data before sending it to the client
-    var encrypted = {data: null};
-    this.emit(EventedHTTPServerEvents.ENCRYPT, data, encrypted, this._session);
-    if (encrypted.data) {
-      // @ts-ignore
-      data = encrypted.data as Buffer;
-    }
+
     // if we're in the middle of writing an HTTP response already, put this event in the queue for when
     // we're done. otherwise send it immediately.
-    if (this._writingResponse)
-      this._pendingEventData = Buffer.concat([this._pendingEventData, data]);
-    else
+    if (this._writingResponse) {
+      this._pendingEventData.push(data);
+    } else {
+      // give listeners an opportunity to encrypt this data before sending it to the client
+      var encrypted = {data: null};
+      this.emit(EventedHTTPServerEvents.ENCRYPT, data, encrypted, this._session);
+      if (encrypted.data) {
+        // @ts-ignore
+        data = encrypted.data as Buffer;
+      }
+
       this._clientSocket.write(data);
+    }
   }
 
   close = () => {
@@ -349,13 +352,25 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
   }
 
   _sendPendingEvents = () => {
-    // an existing HTTP response was finished, so let's flush our pending event buffer if necessary!
-    if (this._pendingEventData.length > 0) {
-      debug("[%s] Writing pending HTTP event data", this._remoteAddress);
-      this._clientSocket.write(this._pendingEventData);
+    if (this._pendingEventData.length === 0) {
+      return;
     }
-    // clear the buffer
-    this._pendingEventData = bufferShim.alloc(0);
+
+    // an existing HTTP response was finished, so let's flush our pending event buffer if necessary!
+    debug("[%s] Writing pending HTTP event data", this._remoteAddress);
+    this._pendingEventData.forEach(event => {
+      const encrypted = {data: null};
+      this.emit(EventedHTTPServerEvents.ENCRYPT, event, encrypted, this._session);
+      if (encrypted.data) {
+        // @ts-ignore
+        event = encrypted.data as Buffer;
+      }
+
+      this._clientSocket.write(event);
+    });
+
+    // clear the queue
+    this._pendingEventData = [];
   }
 
   // Called only once right after constructor finishes
@@ -388,6 +403,9 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
 
   // Received data from client (iOS)
   _onClientSocketData = (data: Buffer) => {
+    // _writingResponse is reverted to false in _onHttpServerRequest(...) after response was written
+    this._writingResponse = true;
+
     // give listeners an opportunity to decrypt this data before processing it as HTTP
     var decrypted = {data: null};
     this.emit(EventedHTTPServerEvents.DECRYPT, data, decrypted, this._session);
@@ -437,7 +455,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
 
   _onHttpServerRequest = (request: IncomingMessage, response: OutgoingMessage) => {
     debug("[%s] HTTP request: %s", this._remoteAddress, request.url);
-    this._writingResponse = true;
+
     // sign up to know when the response is ended, so we can safely send EVENT responses
     response.on('finish', () => {
       debug("[%s] HTTP Response is finished", this._remoteAddress);
