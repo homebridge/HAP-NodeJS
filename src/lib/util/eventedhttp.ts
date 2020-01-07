@@ -24,7 +24,7 @@ export enum EventedHTTPServerEvents {
 export type Events = {
   [EventedHTTPServerEvents.LISTENING]: (port: number) => void;
   [EventedHTTPServerEvents.REQUEST]: (request: IncomingMessage, response: ServerResponse, session: Session, events: any) => void;
-  [EventedHTTPServerEvents.DECRYPT]: (data: Buffer, decrypted: { data: Buffer; }, session: Session) => void;
+  [EventedHTTPServerEvents.DECRYPT]: (data: Buffer, decrypted: { data: Buffer; error: Error | null }, session: Session) => void;
   [EventedHTTPServerEvents.ENCRYPT]: (data: Buffer, encrypted: { data: number | Buffer; }, session: Session) => void;
   [EventedHTTPServerEvents.CLOSE]: (events: any) => void;
   [EventedHTTPServerEvents.SESSION_CLOSE]: (sessionID: string, events: any) => void;
@@ -407,16 +407,25 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     this._writingResponse = true;
 
     // give listeners an opportunity to decrypt this data before processing it as HTTP
-    var decrypted = {data: null};
+    var decrypted: {data: Buffer | null, error: Error | null} = {data: null, error: null};
     this.emit(EventedHTTPServerEvents.DECRYPT, data, decrypted, this._session);
-    if (decrypted.data)
-      data = decrypted.data as unknown as Buffer;
-    if (this._fullySetup) {
-      // proxy it along to the HTTP server
-      this._serverSocket && this._serverSocket.write(data);
+
+    if (decrypted.error) {
+      // decryption and/or verification failed, disconnect the client
+      debug("[%s] Error occurred trying to decrypt incoming packet: %s", this._remoteAddress, decrypted.error.message);
+      this.close();
     } else {
-      // we're not setup yet, so add this data to our buffer
-      this._pendingClientSocketData = Buffer.concat([this._pendingClientSocketData!, data]);
+      if (decrypted.data) {
+        data = decrypted.data;
+      }
+
+      if (this._fullySetup) {
+        // proxy it along to the HTTP server
+        this._serverSocket && this._serverSocket.write(data);
+      } else {
+        // we're not setup yet, so add this data to our buffer
+        this._pendingClientSocketData = Buffer.concat([this._pendingClientSocketData!, data]);
+      }
     }
   }
 

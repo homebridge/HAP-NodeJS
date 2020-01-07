@@ -95,7 +95,7 @@ export function layerDecrypt(packet: Buffer, count: Count, key: Buffer, extraInf
       } else {
         debug('Layer Decrypt fail!');
         debug('Packet: %s', packet.toString('hex'));
-        return 0;
+        throw new Error("Layer verification failed!");
       }
   }
 

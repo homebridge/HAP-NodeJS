@@ -355,12 +355,16 @@ export class HAPServer extends EventEmitter<Events> {
     }
   }
 
-  _onDecrypt = (data: Buffer, decrypted: { data: number | Buffer; }, session: Session) => {
+  _onDecrypt = (data: Buffer, decrypted: { data: number | Buffer; error: Error | null }, session: Session) => {
     // possibly an instance of HAPEncryption (created in handlePairVerifyStepOne)
     var enc = session.encryption;
     // if controllerToAccessoryKey is not empty, then encryption is enabled for this connection.
     if (enc && enc.controllerToAccessoryKey.length > 0) {
-      decrypted.data = encryption.layerDecrypt(data, enc.controllerToAccessoryCount, enc.controllerToAccessoryKey, enc.extraInfo);
+      try {
+        decrypted.data = encryption.layerDecrypt(data, enc.controllerToAccessoryCount, enc.controllerToAccessoryKey, enc.extraInfo);
+      } catch (error) {
+        decrypted.error = error;
+      }
     }
   }
 
@@ -448,7 +452,7 @@ export class HAPServer extends EventEmitter<Events> {
       // most likely the client supplied an incorrect pincode.
       debug("[%s] Error while checking pincode: %s", this.accessoryInfo.username, err.message);
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M4, TLVValues.ERROR_CODE, Codes.INVALID_REQUEST));
+      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
       session._pairSetupState = undefined;
       return;
     }
@@ -474,7 +478,13 @@ export class HAPServer extends EventEmitter<Events> {
     var encInfo = bufferShim.from("Pair-Setup-Encrypt-Info");
     var outputKey = hkdf.HKDF("sha512", encSalt, S_private, encInfo, 32);
     var plaintextBuffer = bufferShim.alloc(messageData.length);
-    encryption.verifyAndDecrypt(outputKey, bufferShim.from("PS-Msg05"), messageData, authTagData, null, plaintextBuffer);
+    if (!encryption.verifyAndDecrypt(outputKey, bufferShim.from("PS-Msg05"), messageData, authTagData, null, plaintextBuffer)) {
+      debug("[%s] Error while decrypting and verifying M5 subTlv: %s", this.accessoryInfo.username);
+      response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
+      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
+      session._pairSetupState = undefined;
+      return;
+    }
     // decode the client payload and pass it on to the next step
     var M5Packet = tlv.decode(plaintextBuffer);
     var clientUsername = M5Packet[TLVValues.USERNAME];
@@ -495,7 +505,7 @@ export class HAPServer extends EventEmitter<Events> {
     if (!tweetnacl.sign.detached.verify(completeData, clientProof, clientLTPK)) {
       debug("[%s] Invalid signature", this.accessoryInfo.username);
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M6, TLVValues.ERROR_CODE, Codes.INVALID_REQUEST));
+      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M6, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
       session._pairSetupState = undefined;
       return;
     }
