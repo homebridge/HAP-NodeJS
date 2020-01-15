@@ -1,5 +1,6 @@
-import crypto, { BinaryLike } from 'crypto';
+import crypto from 'crypto';
 import bufferShim from 'buffer-shims';
+import { BinaryLike } from './uuid';
 
 export function HKDF(hashAlg: string, salt: BinaryLike, ikm: BinaryLike, info: Buffer, size: number) {
   // create the hash alg to see if it exists and get its length

@@ -1,6 +1,6 @@
 import assert from 'assert';
 import createDebug from 'debug';
-import {ChildProcessWithoutNullStreams, spawn} from 'child_process';
+import {ChildProcess, spawn} from 'child_process';
 import {AudioCodecConfiguration, ErrorHandler, FrameHandler, SiriAudioStreamProducer} from "../lib/HomeKitRemoteController";
 import {AudioCodecParamBitRateTypes, AudioCodecParamSampleRateTypes, AudioCodecTypes} from "../lib/StreamController";
 import {DataSendCloseReason} from "../index";
@@ -49,7 +49,7 @@ export class GStreamerAudioProducer implements SiriAudioStreamProducer {
     private readonly frameHandler: FrameHandler;
     private readonly errorHandler: ErrorHandler;
 
-    private process?: ChildProcessWithoutNullStreams;
+    private process?: ChildProcess;
     private running: boolean = false;
 
     constructor(frameHandler: FrameHandler, errorHandler: ErrorHandler, options?: Partial<GStreamerOptions>) {
