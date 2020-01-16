@@ -1,4 +1,7 @@
-import crypto, { BinaryLike } from 'crypto';
+import crypto from 'crypto';
+
+type Binary = Buffer | NodeJS.TypedArray | DataView;
+export type BinaryLike = string | Binary;
 
 // http://stackoverflow.com/a/25951500/66673
 export function generate(data: BinaryLike) {
@@ -42,6 +45,6 @@ export function write(uuid: string, buf: Buffer, offset: number = 0) {
 
   for (let i = 0; i < uuid.length; i += 2) {
     const octet = uuid.substring(i, i + 2);
-    buf.write(octet, offset++, "hex");
+    buf.write(octet, offset++, undefined, "hex");
   }
 }

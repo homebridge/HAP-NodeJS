@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "engines": {
-    "node": ">=4.3.2"
+    "node": ">=10.17.0"
   },
   "dependencies": {
     "bonjour-hap": "^3.5.1",
@@ -21,7 +21,7 @@
     "@types/debug": "^4.1.4",
     "@types/ip": "^1.1.0",
     "@types/jest": "^24.0.15",
-    "@types/node": "^12.6.8",
+    "@types/node": "^10.17.13",
     "jest": "^24.8.0",
     "rimraf": "^2.7.1",
     "simple-plist": "0.0.4",
