@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "bonjour-hap": "^3.5.1",
-    "buffer-shims": "^1.0.0",
     "debug": "^2.2.0",
     "decimal.js": "^7.2.3",
     "fast-srp-hap": "^1.0.1",

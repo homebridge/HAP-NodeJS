@@ -1,7 +1,6 @@
 import crypto from 'crypto';
 
 import ip from 'ip';
-import bufferShim from 'buffer-shims';
 import createDebug from 'debug';
 
 import * as tlv from './util/tlv';
@@ -399,7 +398,7 @@ export class StreamController {
   _handleSelectedStreamConfigurationWrite = (value: any, callback: any, connectionID: string) => {
     this.selectedConfiguration = value;
 
-    var data = bufferShim.from(value, 'base64');
+    var data = Buffer.from(value, 'base64');
     var objects = tlv.decode(data);
 
     var session;
@@ -590,7 +589,7 @@ export class StreamController {
 
   _handleSetupWrite = (value: CharacteristicValue, callback: HandleSetupWriteCallback) => {
 
-    var data = bufferShim.from(`${value}`, 'base64');
+    var data = Buffer.from(`${value}`, 'base64');
     var objects = tlv.decode(data) as any;
 
     this.sessionIdentifier = objects[SetupTypes.SESSION_ID];
@@ -711,14 +710,14 @@ export class StreamController {
 
     let ipVer = 0;
     let ipAddress = null;
-    const videoPort = bufferShim.alloc(2);
-    const audioPort = bufferShim.alloc(2);
+    const videoPort = Buffer.alloc(2);
+    const audioPort = Buffer.alloc(2);
 
-    const videoSSRC = bufferShim.alloc(4);
-    const audioSSRC = bufferShim.alloc(4);
+    const videoSSRC = Buffer.alloc(4);
+    const audioSSRC = Buffer.alloc(4);
 
-    let videoSRTP = bufferShim.from([0x01, 0x01, 0x02, 0x02, 0x00, 0x03, 0x00]);
-    let audioSRTP = bufferShim.from([0x01, 0x01, 0x02, 0x02, 0x00, 0x03, 0x00]);
+    let videoSRTP = Buffer.from([0x01, 0x01, 0x02, 0x02, 0x00, 0x03, 0x00]);
+    let audioSRTP = Buffer.from([0x01, 0x01, 0x02, 0x02, 0x00, 0x03, 0x00]);
 
     if (this.requireProxy) {
       let currentAddress = ip.address();
@@ -729,7 +728,7 @@ export class StreamController {
         ipVer = 0;
       }
 
-      ipAddress = bufferShim.from(currentAddress);
+      ipAddress = Buffer.from(currentAddress);
       videoPort.writeUInt16LE(this.videoProxy.outgoingLocalPort(), 0);
 
       if (!this.disableAudioProxy) {
@@ -885,17 +884,17 @@ export class StreamController {
       throw new Error('Video resolutions cannot be undefined');
     }
 
-    var videoAttrsTLV = bufferShim.alloc(0);
+    var videoAttrsTLV = Buffer.alloc(0);
     resolutions.forEach(function(resolution) {
       if (resolution.length != 3) {
         throw new Error('Unexpected video resolution');
       }
 
-      var imageWidth = bufferShim.alloc(2);
+      var imageWidth = Buffer.alloc(2);
       imageWidth.writeUInt16LE(resolution[0], 0);
-      var imageHeight = bufferShim.alloc(2);
+      var imageHeight = Buffer.alloc(2);
       imageHeight.writeUInt16LE(resolution[1], 0);
-      var frameRate = bufferShim.alloc(1);
+      var frameRate = Buffer.alloc(1);
       frameRate.writeUInt8(resolution[2], 0);
 
       var videoAttrTLV = tlv.encode(
@@ -932,7 +931,7 @@ export class StreamController {
       throw new Error('Audio codecs cannot be undefined');
     }
 
-    var audioConfigurationsBuffer = bufferShim.alloc(0);
+    var audioConfigurationsBuffer = Buffer.alloc(0);
     var hasSupportedCodec = false;
 
     codecs.forEach(function(codecParam){

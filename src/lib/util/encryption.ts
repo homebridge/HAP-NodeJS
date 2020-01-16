@@ -1,7 +1,6 @@
 import assert from 'assert';
 import crypto from 'crypto';
 
-import bufferShim from 'buffer-shims';
 import createDebug from 'debug';
 import tweetnacl from 'tweetnacl';
 
@@ -39,18 +38,18 @@ type Count = {
 }
 
 export function layerEncrypt(data: Buffer, count: Count, key: Buffer) {
-  var result = bufferShim.alloc(0);
+  var result = Buffer.alloc(0);
   var total = data.length;
   for (var offset = 0; offset < total; ) {
     var length = Math.min(total - offset, 0x400);
-    var leLength = bufferShim.alloc(2);
+    var leLength = Buffer.alloc(2);
     leLength.writeUInt16LE(length,0);
 
-    var nonce = bufferShim.alloc(8);
+    var nonce = Buffer.alloc(8);
     writeUInt64LE(count.value++, nonce, 0);
 
-    var result_Buffer = bufferShim.alloc(length);
-    var result_mac = bufferShim.alloc(16);
+    var result_Buffer = Buffer.alloc(length);
+    var result_mac = Buffer.alloc(16);
     encryptAndSeal(key, nonce, data.slice(offset, offset + length),
       leLength,result_Buffer, result_mac);
 
@@ -67,7 +66,7 @@ export function layerDecrypt(packet: Buffer, count: Count, key: Buffer, extraInf
     packet = Buffer.concat([extraInfo.leftoverData, packet]);
   }
 
-  var result = bufferShim.alloc(0);
+  var result = Buffer.alloc(0);
   var total = packet.length;
 
   for (var offset = 0; offset < total;) {
@@ -82,10 +81,10 @@ export function layerDecrypt(packet: Buffer, count: Count, key: Buffer, extraInf
       extraInfo.leftoverData = undefined;
     }
 
-    var nonce = bufferShim.alloc(8);
+    var nonce = Buffer.alloc(8);
     writeUInt64LE(count.value++, nonce, 0);
 
-    var result_Buffer = bufferShim.alloc(realDataLength);
+    var result_Buffer = Buffer.alloc(realDataLength);
 
     if (verifyAndDecrypt(key, nonce, packet.slice(offset + 2, offset + 2 + realDataLength),
       packet.slice(offset + 2 + realDataLength, offset + 2 + realDataLength + 16),
@@ -107,8 +106,8 @@ export function verifyAndDecrypt(key: Buffer, nonce: Buffer, ciphertext: Buffer,
   var ctx = new chacha20poly1305.Chacha20Ctx();
   chacha20poly1305.chacha20_keysetup(ctx, key);
   chacha20poly1305.chacha20_ivsetup(ctx, nonce);
-  var poly1305key = bufferShim.alloc(64);
-  var zeros = bufferShim.alloc(64);
+  var poly1305key = Buffer.alloc(64);
+  var zeros = Buffer.alloc(64);
   chacha20poly1305.chacha20_update(ctx,poly1305key,zeros,zeros.length);
 
   var poly1305_contxt = new chacha20poly1305.Poly1305Ctx();
@@ -119,20 +118,20 @@ export function verifyAndDecrypt(key: Buffer, nonce: Buffer, ciphertext: Buffer,
     addDataLength = addData.length;
     chacha20poly1305.poly1305_update(poly1305_contxt, addData, addData.length);
     if ((addData.length % 16) != 0) {
-      chacha20poly1305.poly1305_update(poly1305_contxt, bufferShim.alloc(16-(addData.length%16)), 16-(addData.length%16));
+      chacha20poly1305.poly1305_update(poly1305_contxt, Buffer.alloc(16-(addData.length%16)), 16-(addData.length%16));
     }
   }
 
   chacha20poly1305.poly1305_update(poly1305_contxt, ciphertext, ciphertext.length);
   if ((ciphertext.length % 16) != 0) {
-    chacha20poly1305.poly1305_update(poly1305_contxt, bufferShim.alloc(16-(ciphertext.length%16)), 16-(ciphertext.length%16));
+    chacha20poly1305.poly1305_update(poly1305_contxt, Buffer.alloc(16-(ciphertext.length%16)), 16-(ciphertext.length%16));
   }
 
-  var leAddDataLen = bufferShim.alloc(8);
+  var leAddDataLen = Buffer.alloc(8);
   writeUInt64LE(addDataLength, leAddDataLen, 0);
   chacha20poly1305.poly1305_update(poly1305_contxt, leAddDataLen, 8);
 
-  var leTextDataLen = bufferShim.alloc(8);
+  var leTextDataLen = Buffer.alloc(8);
   writeUInt64LE(ciphertext.length, leTextDataLen, 0);
   chacha20poly1305.poly1305_update(poly1305_contxt, leTextDataLen, 8);
 
@@ -153,8 +152,8 @@ export function encryptAndSeal(key: Buffer, nonce: Buffer, plaintext: Buffer, ad
   var ctx = new chacha20poly1305.Chacha20Ctx();
   chacha20poly1305.chacha20_keysetup(ctx, key);
   chacha20poly1305.chacha20_ivsetup(ctx, nonce);
-  var poly1305key = bufferShim.alloc(64);
-  var zeros = bufferShim.alloc(64);
+  var poly1305key = Buffer.alloc(64);
+  var zeros = Buffer.alloc(64);
   chacha20poly1305.chacha20_update(ctx,poly1305key,zeros,zeros.length);
 
   var written = chacha20poly1305.chacha20_update(ctx,ciphertext,plaintext,plaintext.length);
@@ -168,20 +167,20 @@ export function encryptAndSeal(key: Buffer, nonce: Buffer, plaintext: Buffer, ad
     addDataLength = addData.length;
     chacha20poly1305.poly1305_update(poly1305_contxt, addData, addData.length);
     if ((addData.length % 16) != 0) {
-      chacha20poly1305.poly1305_update(poly1305_contxt, bufferShim.alloc(16-(addData.length%16)), 16-(addData.length%16));
+      chacha20poly1305.poly1305_update(poly1305_contxt, Buffer.alloc(16-(addData.length%16)), 16-(addData.length%16));
     }
   }
 
   chacha20poly1305.poly1305_update(poly1305_contxt, ciphertext, ciphertext.length);
   if ((ciphertext.length % 16) != 0) {
-    chacha20poly1305.poly1305_update(poly1305_contxt, bufferShim.alloc(16-(ciphertext.length%16)), 16-(ciphertext.length%16));
+    chacha20poly1305.poly1305_update(poly1305_contxt, Buffer.alloc(16-(ciphertext.length%16)), 16-(ciphertext.length%16));
   }
 
-  var leAddDataLen = bufferShim.alloc(8);
+  var leAddDataLen = Buffer.alloc(8);
   writeUInt64LE(addDataLength, leAddDataLen, 0);
   chacha20poly1305.poly1305_update(poly1305_contxt, leAddDataLen, 8);
 
-  var leTextDataLen = bufferShim.alloc(8);
+  var leTextDataLen = Buffer.alloc(8);
   writeUInt64LE(ciphertext.length, leTextDataLen, 0);
   chacha20poly1305.poly1305_update(poly1305_contxt, leTextDataLen, 8);
 

@@ -1,5 +1,4 @@
 import crypto from 'crypto';
-import bufferShim from 'buffer-shims';
 import { BinaryLike } from './uuid';
 
 export function HKDF(hashAlg: string, salt: BinaryLike, ikm: BinaryLike, info: Buffer, size: number) {
@@ -14,10 +13,10 @@ export function HKDF(hashAlg: string, salt: BinaryLike, ikm: BinaryLike, info: B
 
   const buffers = [];
   const num_blocks = Math.ceil(size / hashLength);
-  let prev = bufferShim.alloc(0);
+  let prev = Buffer.alloc(0);
   let output;
 
-  info = bufferShim.from(info);
+  info = Buffer.from(info);
 
   for (var i=0; i<num_blocks; i++) {
     var blockHmac = crypto.createHmac(hashAlg, prk);
@@ -25,7 +24,7 @@ export function HKDF(hashAlg: string, salt: BinaryLike, ikm: BinaryLike, info: B
     var input = Buffer.concat([
       prev,
       info,
-      bufferShim.from(String.fromCharCode(i + 1))
+      Buffer.from(String.fromCharCode(i + 1))
     ]);
     blockHmac.update(input);
     prev = blockHmac.digest();

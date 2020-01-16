@@ -1,5 +1,3 @@
-import bufferShim from 'buffer-shims';
-
 /**
  * Type Length Value encoding/decoding, used by HAP as a wire format.
  * https://en.wikipedia.org/wiki/Type-length-value
@@ -7,28 +5,28 @@ import bufferShim from 'buffer-shims';
 
 export function encode(type: number, data: Buffer | number | string, ...args: any[]) {
 
-    var encodedTLVBuffer = bufferShim.alloc(0);
+    var encodedTLVBuffer = Buffer.alloc(0);
 
     // coerce data to Buffer if needed
     if (typeof data === 'number')
-      data = bufferShim.from([data]) as Buffer;
+      data = Buffer.from([data]) as Buffer;
     else if (typeof data === 'string')
-      data = bufferShim.from(data) as Buffer;
+      data = Buffer.from(data) as Buffer;
 
     if (data.length <= 255) {
-        encodedTLVBuffer = Buffer.concat([bufferShim.from([type,data.length]),data]);
+        encodedTLVBuffer = Buffer.concat([Buffer.from([type,data.length]),data]);
     } else {
         var leftLength = data.length;
-        var tempBuffer = bufferShim.alloc(0);
+        var tempBuffer = Buffer.alloc(0);
         var currentStart = 0;
 
         for (; leftLength > 0;) {
             if (leftLength >= 255) {
-                tempBuffer = Buffer.concat([tempBuffer,bufferShim.from([type,0xFF]),data.slice(currentStart, currentStart + 255)]);
+                tempBuffer = Buffer.concat([tempBuffer,Buffer.from([type,0xFF]),data.slice(currentStart, currentStart + 255)]);
                 leftLength -= 255;
                 currentStart = currentStart + 255;
             } else {
-                tempBuffer = Buffer.concat([tempBuffer,bufferShim.from([type,leftLength]),data.slice(currentStart, currentStart + leftLength)]);
+                tempBuffer = Buffer.concat([tempBuffer,Buffer.from([type,leftLength]),data.slice(currentStart, currentStart + leftLength)]);
                 leftLength -= leftLength;
             }
         }
@@ -137,7 +135,7 @@ export function readUInt64(buffer: Buffer) {
 }
 
 export function writeUInt32(value: number) {
-    const buffer = bufferShim.alloc(4);
+    const buffer = Buffer.alloc(4);
 
     buffer.writeUInt32LE(value, 0);
 
@@ -149,7 +147,7 @@ export function readUInt32(buffer: Buffer) {
 }
 
 export function writeUInt16(value: number) {
-    const buffer = bufferShim.alloc(2);
+    const buffer = Buffer.alloc(2);
 
     buffer.writeUInt16LE(value, 0);
 

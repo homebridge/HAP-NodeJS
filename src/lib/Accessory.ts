@@ -1,4 +1,3 @@
-import bufferShim from 'buffer-shims';
 import crypto from 'crypto';
 import createDebug from 'debug';
 
@@ -478,7 +477,7 @@ export class Accessory extends EventEmitter<Events> {
       return this._setupURI;
     }
 
-    var buffer = bufferShim.alloc(8);
+    var buffer = Buffer.alloc(8);
     var setupCode = this._accessoryInfo && parseInt(this._accessoryInfo.pincode.replace(/-/g, ''), 10);
 
     var value_low = setupCode!;

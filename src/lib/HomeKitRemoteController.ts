@@ -1,5 +1,4 @@
 import * as tlv from './util/tlv';
-import bufferShim from "buffer-shims";
 import createDebug from 'debug';
 import assert from 'assert';
 
@@ -548,7 +547,7 @@ export class HomeKitRemoteController extends EventEmitter<RemoteControllerEventM
     // --------------------------------- TARGET CONTROL ----------------------------------
 
     private handleTargetControlWrite = (value: any, callback: CharacteristicSetCallback) => {
-        const data = bufferShim.from(value, 'base64');
+        const data = Buffer.from(value, 'base64');
         const objects = tlv.decode(data);
 
         const operation = objects[TargetControlList.OPERATION][0] as Operation;
@@ -1049,7 +1048,7 @@ export class HomeKitRemoteController extends EventEmitter<RemoteControllerEventM
     // ------------------------------- AUDIO CONFIGURATION -------------------------------
 
     private handleSelectedAudioConfigurationWrite = (value: any, callback: CharacteristicSetCallback) => {
-        const data = bufferShim.from(value, 'base64');
+        const data = Buffer.from(value, 'base64');
         const objects = tlv.decode(data);
 
         const selectedAudioStreamConfiguration = tlv.decode(

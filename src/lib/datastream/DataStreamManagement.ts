@@ -1,5 +1,4 @@
 import * as tlv from '../util/tlv';
-import bufferShim from "buffer-shims";
 import createDebug from "debug";
 import {Service} from "../Service";
 import {
@@ -146,7 +145,7 @@ export class DataStreamManagement {
     }
 
     private handleSetupDataStreamTransportWrite(value: any, callback: CharacteristicSetCallback, connectionID?: string) {
-        const data = bufferShim.from(value, 'base64');
+        const data = Buffer.from(value, 'base64');
         const objects = tlv.decode(data);
 
         const sessionCommandType = objects[SetupDataStreamSessionTypes.SESSION_COMMAND_TYPE][0];

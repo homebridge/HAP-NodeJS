@@ -1,5 +1,4 @@
 import createDebug from 'debug';
-import bufferShim from "buffer-shims";
 import assert from 'assert';
 
 import * as encryption from '../util/encryption';
@@ -149,8 +148,8 @@ export class DataStreamServer extends EventEmitter<DataStreamServerEventMap> {
 
     private state: ServerState = ServerState.UNINITIALIZED;
 
-    private static accessoryToControllerInfo = bufferShim.from("HDS-Read-Encryption-Key");
-    private static controllerToAccessoryInfo = bufferShim.from("HDS-Write-Encryption-Key");
+    private static accessoryToControllerInfo = Buffer.from("HDS-Read-Encryption-Key");
+    private static controllerToAccessoryInfo = Buffer.from("HDS-Write-Encryption-Key");
 
     private tcpServer?: net.Server;
     private tcpPort?: number;
@@ -753,7 +752,7 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
 
             const header = data.slice(frameBegin, payloadBegin); // header is also authenticated using authTag
             const cipheredPayload = data.slice(payloadBegin, authTagBegin);
-            const plaintextPayload = bufferShim.alloc(payloadLength);
+            const plaintextPayload = Buffer.alloc(payloadLength);
             const authTag = data.slice(authTagBegin, authTagBegin + 16);
 
             frameBegin = authTagBegin + 16; // move to next frame
