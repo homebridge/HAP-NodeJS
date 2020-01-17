@@ -1,5 +1,4 @@
 import Decimal from 'decimal.js';
-import bufferShim from 'buffer-shims';
 
 import { once } from './util/once';
 import { IdentifierCache } from './model/IdentifierCache';
@@ -722,7 +721,7 @@ export class Characteristic extends EventEmitter<Events> {
       hap.minStep = this.props.minStep;
     // add maxLen if string length is > 64 bytes and trim to max 256 bytes
     if (this.props.format === Formats.STRING) {
-      var str = bufferShim.from(value as string, 'utf8'), len = str.byteLength;
+      var str = Buffer.from(value as string, 'utf8'), len = str.byteLength;
       if (len > 256) { // 256 bytes is the max allowed length
         hap.value = str.toString('utf8', 0, 256);
         hap.maxLen = 256;

@@ -2,7 +2,6 @@ import net, { AddressInfo, Socket } from 'net';
 import http, { IncomingMessage, OutgoingMessage, ServerResponse } from 'http';
 
 import createDebug from 'debug';
-import bufferShim from 'buffer-shims';
 import srp from 'fast-srp-hap';
 
 import * as uuid from './uuid';
@@ -278,7 +277,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     this.server = server;
     this.sessionID = uuid.generate(clientSocket.remoteAddress + ':' + clientSocket.remotePort);
     this._remoteAddress = clientSocket.remoteAddress!; // cache because it becomes undefined in 'onClientSocketClose'
-    this._pendingClientSocketData = bufferShim.alloc(0); // data received from client before HTTP proxy is fully setup
+    this._pendingClientSocketData = Buffer.alloc(0); // data received from client before HTTP proxy is fully setup
     this._fullySetup = false; // true when we are finished establishing connections
     this._writingResponse = false; // true while we are composing an HTTP response (so events can wait)
     this._killSocketAfterWrite = false;
@@ -318,14 +317,14 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     debug("[%s] Sending HTTP event '%s' with data: %s", this._remoteAddress, event, data.toString('utf8'));
     // ensure data is a Buffer
     if (typeof data === 'string') {
-      data = bufferShim.from(data);
+      data = Buffer.from(data);
     }
     // format this payload as an HTTP response
-    var linebreak = bufferShim.from("0D0A", "hex");
+    var linebreak = Buffer.from("0D0A", "hex");
     data = Buffer.concat([
-      bufferShim.from('EVENT/1.0 200 OK'), linebreak,
-      bufferShim.from('Content-Type: ' + contentType), linebreak,
-      bufferShim.from('Content-Length: ' + data.length), linebreak,
+      Buffer.from('EVENT/1.0 200 OK'), linebreak,
+      Buffer.from('Content-Type: ' + contentType), linebreak,
+      Buffer.from('Content-Length: ' + data.length), linebreak,
       linebreak,
       data
     ]);
