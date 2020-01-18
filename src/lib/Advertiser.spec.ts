@@ -3,7 +3,7 @@ import { AccessoryInfo } from './model/AccessoryInfo';
 import './gen';
 
 const createAdvertiser = () => {
-  return new Advertiser(new AccessoryInfo('displayName'), {
+  return new Advertiser(AccessoryInfo.create('00:00:00:00:00:00'), {
     multicast: false,
     interface: 'ipv6',
     port: 80,
