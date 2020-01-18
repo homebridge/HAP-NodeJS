@@ -3,7 +3,7 @@ import createDebug from 'debug';
 
 import * as uuid from './util/uuid';
 import { clone } from './util/clone';
-import { Service, ServiceConfigurationChange, ServiceEventTypes } from './Service';
+import { SerializedService, Service, ServiceConfigurationChange, ServiceEventTypes } from './Service';
 import {
   Access,
   Characteristic,
@@ -72,6 +72,15 @@ export enum Categories {
   TELEVISION = 31,
   TARGET_CONTROLLER = 32, // Remote Control
   ROUTER = 33 // HomeKit enabled router
+}
+
+export interface SerializedAccessory {
+  displayName: string,
+  UUID: string,
+  category: Categories,
+
+  services: SerializedService[],
+  linkedServices?: Record<string, string[]>,
 }
 
 export enum AccessoryEventTypes {
@@ -163,6 +172,7 @@ export class Accessory extends EventEmitter<Events> {
 
   static Categories = Categories;
 
+  // NOTICE: when adding/changing properties, remember to possibly adjust the serialize/deserialize functions
   aid: Nullable<number> = null; // assigned by us in assignIDs() or by a Bridge
   _isBridge: boolean = false; // true if we are a Bridge (creating a new instance of the Bridge subclass sets this to true)
   bridged: boolean = false; // true if we are hosted "behind" a Bridge Accessory
@@ -1362,6 +1372,79 @@ export class Accessory extends EventEmitter<Events> {
 
     return setupID;
   }
+
+  // serialization and deserialization functions, mainly designed for homebridge to create a json copy to store on disk
+  static serialize = (accessory: Accessory): SerializedAccessory => {
+    const json: SerializedAccessory = {
+      displayName: accessory.displayName,
+      UUID: accessory.UUID,
+      category: accessory.category,
+
+      services: [],
+    };
+
+    const linkedServices: Record<string, string[]> = {};
+    let hasLinkedServices = false;
+
+    accessory.services.forEach(service => {
+      json.services.push(Service.serialize(service));
+
+      const linkedServicesPresentation: string[] = [];
+      service.linkedServices.forEach(linkedService => {
+        linkedServicesPresentation.push(linkedService.UUID + (linkedService.subtype || ""));
+      });
+      if (linkedServicesPresentation.length > 0) {
+        linkedServices[service.UUID + (service.subtype || "")] = linkedServicesPresentation;
+        hasLinkedServices = true;
+      }
+    });
+
+    if (hasLinkedServices) {
+      json.linkedServices = linkedServices;
+    }
+
+    return json;
+  };
+
+  static deserialize = (json: SerializedAccessory): Accessory => {
+    const accessory = new Accessory(json.displayName, json.UUID);
+
+    accessory.category = json.category;
+
+    const services: Service[] = [];
+    const servicesMap: Record<string, Service> = {};
+
+    json.services.forEach(serialized => {
+      const service = Service.deserialize(serialized);
+
+      services.push(service);
+      servicesMap[service.UUID + (service.subtype || "")] = service;
+    });
+
+    if (json.linkedServices) {
+      for (let serviceId in json.linkedServices) {
+        const primaryService = servicesMap[serviceId];
+        const linkedServicesKeys = json.linkedServices[serviceId];
+
+        if (!primaryService) {
+          continue
+        }
+
+        linkedServicesKeys.forEach(linkedServiceKey => {
+          const linkedService = servicesMap[linkedServiceKey];
+
+          if (linkedService) {
+            primaryService.addLinkedService(linkedService);
+          }
+        });
+      }
+    }
+
+    accessory._sideloadServices(services);
+
+    return accessory;
+  }
+
 }
 
 function hapStatus(err: Error) {

@@ -1,6 +1,7 @@
 import {
   Characteristic,
-  CharacteristicEventTypes
+  CharacteristicEventTypes,
+  SerializedCharacteristic
 } from './Characteristic';
 import { clone } from './util/clone';
 import { EventEmitter } from './EventEmitter';
@@ -8,13 +9,24 @@ import { IdentifierCache } from './model/IdentifierCache';
 import {
   CharacteristicChange,
   CharacteristicValue,
-  HapCharacteristic,
   HapService,
   Nullable,
   ToHAPOptions,
   WithUUID,
 } from '../types';
 import * as HomeKitTypes from './gen';
+
+export interface SerializedService {
+  displayName: string,
+  UUID: string,
+  subtype: string,
+
+  hiddenService?: boolean,
+  primaryService?: boolean,
+
+  characteristics: SerializedCharacteristic[],
+  optionalCharacteristics?: SerializedCharacteristic[],
+}
 
 export enum ServiceEventTypes {
   CHARACTERISTIC_CHANGE = "characteristic-change",
@@ -126,11 +138,12 @@ export class Service extends EventEmitter<Events> {
   static WiFiRouter: typeof HomeKitTypes.Generated.WiFiRouter;
   static WiFiSatellite: typeof HomeKitTypes.Generated.WiFiSatellite;
 
+  // NOTICE: when adding/changing properties, remember to possibly adjust the serialize/deserialize functions
   iid: Nullable<number> = null; // assigned later by our containing Accessory
   name: Nullable<string> = null;
   characteristics: Characteristic[] = [];
   optionalCharacteristics: Characteristic[] = [];
-  isHiddenService?: boolean = false;
+  isHiddenService: boolean = false;
   isPrimaryService: boolean = false;
   linkedServices: Service[] = [];
 
@@ -329,11 +342,11 @@ export class Service extends EventEmitter<Events> {
       characteristics: characteristicsHAP
     };
 
-    if (this.isPrimaryService !== undefined) {
+    if (this.isPrimaryService) {
       hap['primary'] = this.isPrimaryService;
     }
 
-    if (this.isHiddenService !== undefined) {
+    if (this.isHiddenService) {
       hap['hidden'] = this.isHiddenService;
     }
 
@@ -364,4 +377,35 @@ export class Service extends EventEmitter<Events> {
 
     this.characteristics = targetCharacteristics.slice();
   }
+
+  static serialize = (service: Service): SerializedService => {
+    return {
+      displayName: service.displayName,
+      UUID: service.UUID,
+      subtype: service.subtype,
+
+      hiddenService: service.isHiddenService,
+      primaryService: service.isPrimaryService,
+
+      characteristics: service.characteristics.map(characteristic => Characteristic.serialize(characteristic)),
+      optionalCharacteristics: service.optionalCharacteristics.map(characteristic => Characteristic.serialize(characteristic)),
+    };
+  };
+
+  static deserialize = (json: SerializedService): Service => {
+    const service = new Service(json.displayName, json.UUID, json.subtype);
+
+    service.isHiddenService = !!json.hiddenService;
+    service.isPrimaryService = !!json.primaryService;
+
+    const characteristics = json.characteristics.map(serialized => Characteristic.deserialize(serialized));
+    service._sideloadCharacteristics(characteristics);
+
+    if (json.optionalCharacteristics) {
+      service.optionalCharacteristics = json.optionalCharacteristics.map(serialized => Characteristic.deserialize(serialized));
+    }
+
+    return service;
+  };
+
 }
