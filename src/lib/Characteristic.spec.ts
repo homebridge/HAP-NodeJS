@@ -1,4 +1,13 @@
-import { Characteristic, CharacteristicEventTypes, CharacteristicProps, Formats } from './Characteristic';
+import {
+  Access,
+  Characteristic,
+  CharacteristicEventTypes,
+  CharacteristicProps,
+  Formats,
+  Perms,
+  SerializedCharacteristic,
+  Units
+} from './Characteristic';
 import { generate } from './util/uuid';
 import './gen';
 
@@ -353,6 +362,77 @@ describe('Characteristic', () => {
       characteristic.unsubscribe();
 
       expect(cb).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('#serialize', () => {
+    it('should serialize characteristic', () => {
+      const props: CharacteristicProps = {
+        format: Formats.STRING,
+        perms: [Perms.TIMED_WRITE, Perms.READ],
+        unit: Units.LUX,
+        maxValue: 1234,
+        minValue: 123,
+        validValueRanges: [123, 1234],
+      };
+
+      const characteristic = createCharacteristicWithProps(props);
+      characteristic.value = "TestValue";
+      characteristic.accessRestrictedToAdmins = [Access.WRITE];
+      characteristic.eventOnlyCharacteristic = true;
+
+      const json = Characteristic.serialize(characteristic);
+      expect(json).toEqual({
+        displayName: characteristic.displayName,
+        UUID: characteristic.UUID,
+        props: props,
+        value: "TestValue",
+        accessRestrictedToAdmins: [Access.WRITE],
+        eventOnlyCharacteristic: true,
+      })
+    });
+  });
+
+  describe('#deserialize', () => {
+    it('should deserialize legacy json from homebridge', () => {
+      const json = JSON.parse('{"displayName": "On", "UUID": "00000025-0000-1000-8000-0026BB765291", ' +
+          '"props": {"format": "bool", "unit": null, "minValue": null, "maxValue": null, "minStep": null, "perms": ["pr", "pw", "ev"]}, ' +
+          '"value": false, "eventOnlyCharacteristic": false}');
+      const characteristic = Characteristic.deserialize(json);
+
+      expect(characteristic.displayName).toEqual(json.displayName);
+      expect(characteristic.UUID).toEqual(json.UUID);
+      expect(characteristic.props).toEqual(json.props);
+      expect(characteristic.value).toEqual(json.value);
+      expect(characteristic.eventOnlyCharacteristic).toEqual(json.eventOnlyCharacteristic);
+      expect(characteristic.accessRestrictedToAdmins).toEqual([]);
+    });
+
+    it('should deserialize complete json', () => {
+      const json: SerializedCharacteristic = {
+        displayName: "MyName",
+        UUID: "00000001-0000-1000-8000-0026BB765291",
+        props: {
+          format: Formats.STRING,
+          perms: [Perms.TIMED_WRITE, Perms.READ],
+          unit: Units.LUX,
+          maxValue: 1234,
+          minValue: 123,
+          validValueRanges: [123, 1234],
+        },
+        value: "testValue",
+        eventOnlyCharacteristic: true,
+        accessRestrictedToAdmins: [Access.WRITE, Access.READ],
+      };
+
+      const characteristic = Characteristic.deserialize(json);
+
+      expect(characteristic.displayName).toEqual(json.displayName);
+      expect(characteristic.UUID).toEqual(json.UUID);
+      expect(characteristic.props).toEqual(json.props);
+      expect(characteristic.value).toEqual(json.value);
+      expect(characteristic.eventOnlyCharacteristic).toEqual(json.eventOnlyCharacteristic);
+      expect(characteristic.accessRestrictedToAdmins).toEqual(json.accessRestrictedToAdmins);
     });
   });
 });

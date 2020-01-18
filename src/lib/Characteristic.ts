@@ -1,6 +1,7 @@
 import Decimal from 'decimal.js';
 
 import { once } from './util/once';
+import { clone } from "./util/clone";
 import { IdentifierCache } from './model/IdentifierCache';
 import {
   CharacteristicChange,
@@ -72,6 +73,15 @@ export enum Access {
   READ = 0x00,
   WRITE = 0x01,
   NOTIFY = 0x02
+}
+
+export interface SerializedCharacteristic {
+  displayName?: string,
+  UUID?: string,
+  props: CharacteristicProps,
+  value: Nullable<CharacteristicValue>,
+  accessRestrictedToAdmins: Access[],
+  eventOnlyCharacteristic: boolean,
 }
 
 export enum CharacteristicEventTypes {
@@ -340,6 +350,7 @@ export class Characteristic extends EventEmitter<Events> {
   static NetworkAccessViolationControl: typeof HomeKitTypes.Generated.NetworkAccessViolationControl;
   static WiFiSatelliteStatus: typeof HomeKitTypes.Generated.WiFiSatelliteStatus;
 
+  // NOTICE: when adding/changing properties, remember to possibly adjust the serialize/deserialize functions
   iid: Nullable<number> = null;
   value: Nullable<CharacteristicValue> = null;
   status: Nullable<Error> = null;
@@ -737,8 +748,29 @@ export class Characteristic extends EventEmitter<Events> {
       delete hap.value;
     return hap as HapCharacteristic;
   }
-}
 
+  static serialize = (characteristic: Characteristic): SerializedCharacteristic => {
+    return {
+      displayName: characteristic.displayName,
+      UUID: characteristic.UUID,
+      props: clone({}, characteristic.props),
+      value: characteristic.value,
+      accessRestrictedToAdmins: characteristic.accessRestrictedToAdmins,
+      eventOnlyCharacteristic: characteristic.eventOnlyCharacteristic,
+    }
+  };
+
+  static deserialize = (json: SerializedCharacteristic): Characteristic => {
+    const characteristic = new Characteristic(json.displayName, json.UUID, json.props);
+
+    characteristic.value = json.value;
+    characteristic.accessRestrictedToAdmins = json.accessRestrictedToAdmins || [];
+    characteristic.eventOnlyCharacteristic = json.eventOnlyCharacteristic;
+
+    return characteristic;
+  };
+
+}
 
 // Mike Samuel
 // http://stackoverflow.com/questions/10454518/javascript-how-to-retrieve-the-number-of-decimals-of-a-string-number
