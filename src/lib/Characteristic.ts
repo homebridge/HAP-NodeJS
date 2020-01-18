@@ -383,7 +383,7 @@ export class Characteristic extends EventEmitter<Events> {
    *   valid-values-range: <array of two numbers for start and end range> (Optional)
    * }
    */
-  setProps = (props: CharacteristicProps) => {
+  setProps = (props: Partial<CharacteristicProps>) => {
     for (var key in (props || {}))
       if (Object.prototype.hasOwnProperty.call(props, key)) {
         // @ts-ignore
