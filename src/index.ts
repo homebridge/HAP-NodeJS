@@ -3,6 +3,7 @@ import storage from 'node-persist';
 import './lib/gen';
 import * as accessoryLoader from './lib/AccessoryLoader';
 import * as uuidFunctions from './lib/util/uuid';
+import * as legacyTypes from './accessories/types';
 
 export const AccessoryLoader = accessoryLoader;
 export const uuid = uuidFunctions;
@@ -27,6 +28,7 @@ export * from './lib/util/once';
 export * from './lib/util/tlv';
 
 export * from './types';
+export const LegacyTypes = legacyTypes;
 
 export function init(storagePath?: string) {
   // initialize our underlying storage system, passing on the directory if needed
