@@ -29,7 +29,8 @@
     "typescript": "^3.5.3"
   },
   "scripts": {
-    "build": "rimraf dist/ && tsc",
+    "clean": "rimraf dist/",
+    "build": "npm run clean && tsc",
     "prepublishOnly": "npm run build",
     "test": "jest",
     "start": "node dist/BridgedCore.js"
