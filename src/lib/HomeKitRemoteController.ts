@@ -480,7 +480,6 @@ export class HomeKitRemoteController extends EventEmitter<RemoteControllerEventM
         }
 
         accessory.addService(this.targetControlManagementService);
-        accessory.setPrimaryService(this.targetControlManagementService);
         accessory.addService(this.targetControlService);
 
         if (this.audioSupported) {
@@ -1132,6 +1131,7 @@ export class HomeKitRemoteController extends EventEmitter<RemoteControllerEventM
             .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
                 this.handleTargetControlWrite(value, callback);
             }).getValue();
+        this.targetControlManagementService.setPrimaryService();
 
         // you can also expose multiple TargetControl services to control multiple apple tvs simultaneously.
         // should we extend this class to support multiple TargetControl services or should users just create a second accessory?

@@ -92,6 +92,7 @@ FanService.addCharacteristic(Characteristic.RotationSpeed)
 
 var ThermostatService = ACTest.addService(Service.Thermostat,"Thermostat");
 ThermostatService.addLinkedService(FanService);
+ThermostatService.setPrimaryService();
 
 ThermostatService.getCharacteristic(Characteristic.CurrentHeatingCoolingState)!
 
@@ -156,5 +157,4 @@ LightService.getCharacteristic(Characteristic.On)!
       console.log( "Characteristic Light On changed to %s",value);
       callback();
     });
-LightService.setHiddenService(true);
-ACTest.setPrimaryService(ThermostatService);
+LightService.setHiddenService();
