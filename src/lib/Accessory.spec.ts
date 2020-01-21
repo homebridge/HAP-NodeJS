@@ -1,46 +1,45 @@
-import { Accessory, Categories } from './Accessory';
-import { Service } from './Service';
-import { Characteristic, CharacteristicEventTypes } from './Characteristic';
-import { generate } from './util/uuid';
-import './gen';
+import { Accessory, Categories } from "./Accessory";
+import { Service } from "./Service";
+import { Characteristic, CharacteristicEventTypes } from "./Characteristic";
+import { generate } from "./util/uuid";
+import "./gen";
 
-describe('Accessory', () => {
-
-  describe('#constructor()', () => {
-
-    it('should identify itself with a valid UUID', () => {
-      const accessory = new Accessory('Test', generate('Foo'));
+describe("Accessory", () => {
+  describe("#constructor()", () => {
+    it("should identify itself with a valid UUID", () => {
+      const accessory = new Accessory("Test", generate("Foo"));
 
       const VALUE = true;
 
-      accessory.getService(Service.AccessoryInformation)!
+      accessory
+        .getService(Service.AccessoryInformation)!
         .getCharacteristic(Characteristic.Identify)!
         .on(CharacteristicEventTypes.SET, (value: any, callback: any) => {
           expect(value).toEqual(VALUE);
         });
     });
 
-    it('should fail to load with no display name', () => {
+    it("should fail to load with no display name", () => {
       expect(() => {
-        new Accessory('', '');
-      }).toThrow('non-empty displayName');
+        new Accessory("", "");
+      }).toThrow("non-empty displayName");
     });
 
-    it('should fail to load with no UUID', () => {
+    it("should fail to load with no UUID", () => {
       expect(() => {
-        new Accessory('Test', '');
-      }).toThrow('valid UUID');
+        new Accessory("Test", "");
+      }).toThrow("valid UUID");
     });
 
-    it('should fail to load with an invalid UUID', () => {
+    it("should fail to load with an invalid UUID", () => {
       expect(() => {
-        new Accessory('Test', 'test');
-      }).toThrow('not a valid UUID');
+        new Accessory("Test", "test");
+      }).toThrow("not a valid UUID");
     });
   });
 
-  describe('#serialize', () => {
-    it('should serialize accessory', () => {
+  describe("#serialize", () => {
+    it("should serialize accessory", () => {
       const accessory = new Accessory("TestAccessory", generate("foo"));
       accessory.category = Categories.LIGHTBULB;
 
@@ -64,9 +63,10 @@ describe('Accessory', () => {
     });
   });
 
-  describe('#deserialize', () => {
-    it('should deserialize legacy json from homebridge', () => {
-      const json = JSON.parse('{"plugin":"homebridge-samplePlatform","platform":"SamplePlatform",' +
+  describe("#deserialize", () => {
+    it("should deserialize legacy json from homebridge", () => {
+      const json = JSON.parse(
+        '{"plugin":"homebridge-samplePlatform","platform":"SamplePlatform",' +
           '"displayName":"2020-01-17T18:45:41.049Z","UUID":"dc3951d8-662e-46f7-b6fe-d1b5b5e1a995","category":1,' +
           '"context":{},"linkedServices":{"0000003E-0000-1000-8000-0026BB765291":[],"00000043-0000-1000-8000-0026BB765291":[]},' +
           '"services":[{"UUID":"0000003E-0000-1000-8000-0026BB765291","characteristics":[' +
@@ -91,7 +91,8 @@ describe('Accessory', () => {
           '"props":{"format":"string","unit":null,"minValue":null,"maxValue":null,"minStep":null,"perms":["pr"]},' +
           '"value":"Test Light","eventOnlyCharacteristic":false},{"displayName":"On",' +
           '"UUID":"00000025-0000-1000-8000-0026BB765291","props":{"format":"bool","unit":null,"minValue":null,' +
-          '"maxValue":null,"minStep":null,"perms":["pr","pw","ev"]},"value":false,"eventOnlyCharacteristic":false}]}]}');
+          '"maxValue":null,"minStep":null,"perms":["pr","pw","ev"]},"value":false,"eventOnlyCharacteristic":false}]}]}'
+      );
 
       const accessory = Accessory.deserialize(json);
 
@@ -103,9 +104,10 @@ describe('Accessory', () => {
       expect(accessory.services.length).toEqual(2);
     });
 
-    it('should deserialize complete json', () => {
+    it("should deserialize complete json", () => {
       // json for a light accessory
-      const json = JSON.parse('{"displayName":"TestAccessory","UUID":"0beec7b5-ea3f-40fd-bc95-d0dd47f3c5bc",' +
+      const json = JSON.parse(
+        '{"displayName":"TestAccessory","UUID":"0beec7b5-ea3f-40fd-bc95-d0dd47f3c5bc",' +
           '"category":5,"services":[{"UUID":"0000003E-0000-1000-8000-0026BB765291","hiddenService":false,' +
           '"primaryService":false,"characteristics":[{"displayName":"Identify","UUID":"00000014-0000-1000-8000-0026BB765291",' +
           '"props":{"format":"bool","unit":null,"minValue":null,"maxValue":null,"minStep":null,"perms":["pw"]},' +
@@ -166,7 +168,8 @@ describe('Accessory', () => {
           '"optionalCharacteristics":[{"displayName":"Name","UUID":"00000023-0000-1000-8000-0026BB765291",' +
           '"props":{"format":"string","unit":null,"minValue":null,"maxValue":null,"minStep":null,"perms":["pr"]},' +
           '"value":"","accessRestrictedToAdmins":[],"eventOnlyCharacteristic":false}]}],' +
-          '"linkedServices":{"00000043-0000-1000-8000-0026BB765291subtype":["00000049-0000-1000-8000-0026BB765291subtype"]}}');
+          '"linkedServices":{"00000043-0000-1000-8000-0026BB765291subtype":["00000049-0000-1000-8000-0026BB765291subtype"]}}'
+      );
 
       const accessory = Accessory.deserialize(json);
 

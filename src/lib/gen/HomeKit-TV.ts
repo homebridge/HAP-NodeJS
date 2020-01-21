@@ -1,21 +1,20 @@
 // Manually created from metadata in HomeKitDaemon
 
-import { Characteristic, Perms, Formats } from '../Characteristic';
-import { Service } from '../Service';
+import { Characteristic, Perms, Formats } from "../Characteristic";
+import { Service } from "../Service";
 
 /**
  * Characteristic "Active Identifier"
  */
 
 export class ActiveIdentifier extends Characteristic {
-
-  static readonly UUID: string = '000000E7-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000E7-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Active Identifier', ActiveIdentifier.UUID);
+    super("Active Identifier", ActiveIdentifier.UUID);
     this.setProps({
       format: Formats.UINT32,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -28,14 +27,13 @@ Characteristic.ActiveIdentifier = ActiveIdentifier;
  */
 
 export class ConfiguredName extends Characteristic {
-
-  static readonly UUID: string = '000000E3-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000E3-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Configured Name', ConfiguredName.UUID);
+    super("Configured Name", ConfiguredName.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -48,21 +46,20 @@ Characteristic.ConfiguredName = ConfiguredName;
  */
 
 export class SleepDiscoveryMode extends Characteristic {
-
-// The value property of SleepDiscoveryMode must be one of the following:
+  // The value property of SleepDiscoveryMode must be one of the following:
   static readonly NOT_DISCOVERABLE = 0;
   static readonly ALWAYS_DISCOVERABLE = 1;
 
-  static readonly UUID: string = '000000E8-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000E8-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Sleep Discovery Mode', SleepDiscoveryMode.UUID);
+    super("Sleep Discovery Mode", SleepDiscoveryMode.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
-      validValues: [0,1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      validValues: [0, 1],
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -75,21 +72,20 @@ Characteristic.SleepDiscoveryMode = SleepDiscoveryMode;
  */
 
 export class ClosedCaptions extends Characteristic {
-
   // The value property of ClosedCaptions must be one of the following:
   static readonly DISABLED = 0;
   static readonly ENABLED = 1;
 
-  static readonly UUID: string = '000000DD-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000DD-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Closed Captions', ClosedCaptions.UUID);
+    super("Closed Captions", ClosedCaptions.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
-      validValues: [0,1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      validValues: [0, 1],
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -102,14 +98,13 @@ Characteristic.ClosedCaptions = ClosedCaptions;
  */
 
 export class DisplayOrder extends Characteristic {
-
-  static readonly UUID: string = '00000136-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000136-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Display Order', DisplayOrder.UUID);
+    super("Display Order", DisplayOrder.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -122,17 +117,16 @@ Characteristic.DisplayOrder = DisplayOrder;
  */
 
 export class CurrentMediaState extends Characteristic {
-
-  static readonly UUID: string = '000000E0-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000E0-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Current Media State', CurrentMediaState.UUID);
+    super("Current Media State", CurrentMediaState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 3,
       minValue: 0,
-      validValues: [0,1,2,3],
-      perms: [Perms.READ, Perms.NOTIFY]
+      validValues: [0, 1, 2, 3],
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -145,22 +139,21 @@ Characteristic.CurrentMediaState = CurrentMediaState;
  */
 
 export class TargetMediaState extends Characteristic {
-
-// The value property of TargetMediaState must be one of the following:
+  // The value property of TargetMediaState must be one of the following:
   static readonly PLAY = 0;
   static readonly PAUSE = 1;
   static readonly STOP = 2;
 
-  static readonly UUID: string = '00000137-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000137-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Target Media State', TargetMediaState.UUID);
+    super("Target Media State", TargetMediaState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
-      validValues: [0,1,2,3],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      validValues: [0, 1, 2, 3],
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -173,8 +166,7 @@ Characteristic.TargetMediaState = TargetMediaState;
  */
 
 export class PictureMode extends Characteristic {
-
-// The value property of PictureMode must be one of the following:
+  // The value property of PictureMode must be one of the following:
   static readonly OTHER = 0;
   static readonly STANDARD = 1;
   static readonly CALIBRATED = 2;
@@ -184,16 +176,16 @@ export class PictureMode extends Characteristic {
   static readonly COMPUTER = 6;
   static readonly CUSTOM = 7;
 
-  static readonly UUID: string = '000000E2-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000E2-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Picture Mode', PictureMode.UUID);
+    super("Picture Mode", PictureMode.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 13,
       minValue: 0,
-      validValues: [0,1,2,3,4,5,6,7,8,9,10,11,12,13],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      validValues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -206,21 +198,20 @@ Characteristic.PictureMode = PictureMode;
  */
 
 export class PowerModeSelection extends Characteristic {
-
   // The value property of PowerModeSelection must be one of the following:
   static readonly SHOW = 0;
   static readonly HIDE = 1;
 
-  static readonly UUID: string = '000000DF-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000DF-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Power Mode Selection', PowerModeSelection.UUID);
+    super("Power Mode Selection", PowerModeSelection.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
-      validValues: [0,1],
-      perms: [Perms.WRITE]
+      validValues: [0, 1],
+      perms: [Perms.WRITE],
     });
     this.value = this.getDefaultValue();
   }
@@ -233,8 +224,7 @@ Characteristic.PowerModeSelection = PowerModeSelection;
  */
 
 export class RemoteKey extends Characteristic {
-
-// The value property of RemoteKey must be one of the following:
+  // The value property of RemoteKey must be one of the following:
   static readonly REWIND = 0;
   static readonly FAST_FORWARD = 1;
   static readonly NEXT_TRACK = 2;
@@ -249,16 +239,16 @@ export class RemoteKey extends Characteristic {
   static readonly PLAY_PAUSE = 11;
   static readonly INFORMATION = 15;
 
-  static readonly UUID: string = '000000E1-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000E1-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Remote Key', RemoteKey.UUID);
+    super("Remote Key", RemoteKey.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 16,
       minValue: 0,
-      validValues: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
-      perms: [Perms.WRITE]
+      validValues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+      perms: [Perms.WRITE],
     });
     this.value = this.getDefaultValue();
   }
@@ -271,8 +261,7 @@ Characteristic.RemoteKey = RemoteKey;
  */
 
 export class InputSourceType extends Characteristic {
-
-// The value property of InputSourceType must be one of the following:
+  // The value property of InputSourceType must be one of the following:
   static readonly OTHER = 0;
   static readonly HOME_SCREEN = 1;
   static readonly TUNER = 2;
@@ -285,16 +274,16 @@ export class InputSourceType extends Characteristic {
   static readonly USB = 9;
   static readonly APPLICATION = 10;
 
-  static readonly UUID: string = '000000DB-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000DB-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Input Source Type', InputSourceType.UUID);
+    super("Input Source Type", InputSourceType.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 10,
       minValue: 0,
-      validValues: [0,1,2,3,4,5,6,7,8,9,10],
-      perms: [Perms.READ, Perms.NOTIFY]
+      validValues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -307,7 +296,6 @@ Characteristic.InputSourceType = InputSourceType;
  */
 
 export class InputDeviceType extends Characteristic {
-
   // The value property of InputDeviceType must be one of the following:
   static readonly OTHER = 0;
   static readonly TV = 1;
@@ -316,16 +304,16 @@ export class InputDeviceType extends Characteristic {
   static readonly PLAYBACK = 4;
   static readonly AUDIO_SYSTEM = 5;
 
-  static readonly UUID: string = '000000DC-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000DC-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Input Device Type', InputDeviceType.UUID);
+    super("Input Device Type", InputDeviceType.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 5,
       minValue: 0,
-      validValues: [0,1,2,3,4,5],
-      perms: [Perms.READ, Perms.NOTIFY]
+      validValues: [0, 1, 2, 3, 4, 5],
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -338,16 +326,15 @@ Characteristic.InputDeviceType = InputDeviceType;
  */
 
 export class Identifier extends Characteristic {
-
-  static readonly UUID: string = '000000E6-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000E6-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Identifier', Identifier.UUID);
+    super("Identifier", Identifier.UUID);
     this.setProps({
       format: Formats.UINT32,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ]
+      perms: [Perms.READ],
     });
     this.value = this.getDefaultValue();
   }
@@ -360,21 +347,20 @@ Characteristic.Identifier = Identifier;
  */
 
 export class CurrentVisibilityState extends Characteristic {
-
-// The value property of CurrentVisibilityState must be one of the following:
+  // The value property of CurrentVisibilityState must be one of the following:
   static readonly SHOWN = 0;
   static readonly HIDDEN = 1;
 
-  static readonly UUID: string = '00000135-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000135-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Current Visibility State', CurrentVisibilityState.UUID);
+    super("Current Visibility State", CurrentVisibilityState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 3,
       minValue: 0,
-      validValues: [0,1,2,3],
-      perms: [Perms.READ, Perms.NOTIFY]
+      validValues: [0, 1, 2, 3],
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -387,21 +373,20 @@ Characteristic.CurrentVisibilityState = CurrentVisibilityState;
  */
 
 export class TargetVisibilityState extends Characteristic {
-
-// The value property of TargetVisibilityState must be one of the following:
+  // The value property of TargetVisibilityState must be one of the following:
   static readonly SHOWN = 0;
   static readonly HIDDEN = 1;
 
-  static readonly UUID: string = '00000134-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000134-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Target Visibility State', TargetVisibilityState.UUID);
+    super("Target Visibility State", TargetVisibilityState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
-      validValues: [0,1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      validValues: [0, 1],
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -414,23 +399,22 @@ Characteristic.TargetVisibilityState = TargetVisibilityState;
  */
 
 export class VolumeControlType extends Characteristic {
-
-// The value property of VolumeControlType must be one of the following:
+  // The value property of VolumeControlType must be one of the following:
   static readonly NONE = 0;
   static readonly RELATIVE = 1;
   static readonly RELATIVE_WITH_CURRENT = 2;
   static readonly ABSOLUTE = 3;
 
-  static readonly UUID: string = '000000E9-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000E9-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Volume Control Type', VolumeControlType.UUID);
+    super("Volume Control Type", VolumeControlType.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 3,
       minValue: 0,
-      validValues: [0,1,2,3],
-      perms: [Perms.READ, Perms.NOTIFY]
+      validValues: [0, 1, 2, 3],
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -443,21 +427,20 @@ Characteristic.VolumeControlType = VolumeControlType;
  */
 
 export class VolumeSelector extends Characteristic {
-
-// The value property of VolumeSelector must be one of the following:
+  // The value property of VolumeSelector must be one of the following:
   static readonly INCREMENT = 0;
   static readonly DECREMENT = 1;
 
-  static readonly UUID: string = '000000EA-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000EA-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Volume Selector', VolumeSelector.UUID);
+    super("Volume Selector", VolumeSelector.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
-      validValues: [0,1],
-      perms: [Perms.WRITE]
+      validValues: [0, 1],
+      perms: [Perms.WRITE],
     });
     this.value = this.getDefaultValue();
   }
@@ -465,14 +448,12 @@ export class VolumeSelector extends Characteristic {
 
 Characteristic.VolumeSelector = VolumeSelector;
 
-
 /**
  * Service "Television"
  */
 
 export class Television extends Service {
-
-  static readonly UUID: string = '000000D8-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000D8-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, Television.UUID, subtype);
@@ -502,8 +483,7 @@ Service.Television = Television;
  */
 
 export class InputSource extends Service {
-
-  static readonly UUID: string = '000000D9-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000D9-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, InputSource.UUID, subtype);
@@ -529,8 +509,7 @@ Service.InputSource = InputSource;
  */
 
 export class TelevisionSpeaker extends Service {
-
-  static readonly UUID: string = '00000113-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000113-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, TelevisionSpeaker.UUID, subtype);

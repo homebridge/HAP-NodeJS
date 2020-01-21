@@ -1,9 +1,9 @@
-'use strict';
+"use strict";
 
-var path = require('path');
-var fs = require('fs');
-var plist = require('simple-plist');
-var Characteristic = require('../Characteristic').Characteristic;
+var path = require("path");
+var fs = require("fs");
+var plist = require("simple-plist");
+var Characteristic = require("../Characteristic").Characteristic;
 
 /**
  * This module is intended to be run from the command line. It is a script that extracts Apple's Service
@@ -11,11 +11,12 @@ var Characteristic = require('../Characteristic').Characteristic;
  */
 
 // assumed location of the plist we need (might want to make this a command-line argument at some point)
-var plistPath = '/Applications/HomeKit Accessory Simulator.app/Contents/Frameworks/HAPAccessoryKit.framework/Versions/A/Resources/default.metadata.plist';
+var plistPath =
+  "/Applications/HomeKit Accessory Simulator.app/Contents/Frameworks/HAPAccessoryKit.framework/Versions/A/Resources/default.metadata.plist";
 var metadata = plist.readFileSync(plistPath);
 
 // begin writing the output file
-var outputPath = path.join(__dirname, 'HomeKitTypes.js');
+var outputPath = path.join(__dirname, "HomeKitTypes.js");
 var output = fs.createWriteStream(outputPath);
 
 output.write("// THIS FILE IS AUTO-GENERATED - DO NOT MODIFY\n");
@@ -40,7 +41,7 @@ for (var index in metadata.Characteristics) {
   // index classyName for when we want to declare these in Services below
   characteristics[characteristic.UUID] = classyName;
 
-  output.write("/**\n * Characteristic \"" + characteristic.Name + "\"\n */\n\n");
+  output.write('/**\n * Characteristic "' + characteristic.Name + '"\n */\n\n');
   output.write("Characteristic." + classyName + " = function() {\n");
   output.write("  Characteristic.call(this, '" + characteristic.Name + "', '" + characteristic.UUID + "');\n");
 
@@ -53,22 +54,22 @@ for (var index in metadata.Characteristics) {
     output.write(",\n    unit: Characteristic.Units." + getCharacteristicUnitsKey(characteristic.Unit));
 
   // apply any basic constraints if present
-  if (characteristic.Constraints && typeof characteristic.Constraints.MaximumValue !== 'undefined')
+  if (characteristic.Constraints && typeof characteristic.Constraints.MaximumValue !== "undefined")
     output.write(",\n    maxValue: " + characteristic.Constraints.MaximumValue);
 
-  if (characteristic.Constraints && typeof characteristic.Constraints.MinimumValue !== 'undefined')
+  if (characteristic.Constraints && typeof characteristic.Constraints.MinimumValue !== "undefined")
     output.write(",\n    minValue: " + characteristic.Constraints.MinimumValue);
 
-  if (characteristic.Constraints && typeof characteristic.Constraints.StepValue !== 'undefined')
+  if (characteristic.Constraints && typeof characteristic.Constraints.StepValue !== "undefined")
     output.write(",\n    minStep: " + characteristic.Constraints.StepValue);
 
   output.write(",\n    perms: [");
-  var sep = ""
+  var sep = "";
   for (var i in characteristic.Properties) {
     var perms = getCharacteristicPermsKey(characteristic.Properties[i]);
     if (perms) {
-        output.write(sep + "Characteristic.Perms." + getCharacteristicPermsKey(characteristic.Properties[i]));
-        sep = ", "
+      output.write(sep + "Characteristic.Perms." + getCharacteristicPermsKey(characteristic.Properties[i]));
+      sep = ", ";
     }
   }
   output.write("]");
@@ -90,15 +91,14 @@ for (var index in metadata.Characteristics) {
     for (var value in characteristic.Constraints.ValidValues) {
       var name = characteristic.Constraints.ValidValues[value];
 
-      var constName = name.toUpperCase().replace(/[^\w]+/g, '_');
-      if ((/^[1-9]/).test(constName)) constName = "_" + constName; // variables can't start with a number
+      var constName = name.toUpperCase().replace(/[^\w]+/g, "_");
+      if (/^[1-9]/.test(constName)) constName = "_" + constName; // variables can't start with a number
       output.write("Characteristic." + classyName + "." + constName + " = " + value + ";\n");
     }
 
     output.write("\n");
   }
 }
-
 
 /**
  * Services
@@ -108,7 +108,7 @@ for (var index in metadata.Services) {
   var service = metadata.Services[index];
   var classyName = service.Name.replace(/[\s\-]/g, ""); // "Smoke Sensor" -> "SmokeSensor"
 
-  output.write("/**\n * Service \"" + service.Name + "\"\n */\n\n");
+  output.write('/**\n * Service "' + service.Name + '"\n */\n\n');
   output.write("Service." + classyName + " = function(displayName, subtype) {\n");
   // call superclass constructor
   output.write("  Service.call(this, displayName, '" + service.UUID + "', subtype);\n");
@@ -160,31 +160,32 @@ output.end();
 
 function getCharacteristicFormatsKey(format) {
   // coerce 'int32' to 'int'
-  if (format == 'int32') format = 'int';
+  if (format == "int32") format = "int";
 
   // look up the key in our known-formats dict
-  for (var key in Characteristic.Formats)
-    if (Characteristic.Formats[key] == format)
-      return key;
+  for (var key in Characteristic.Formats) if (Characteristic.Formats[key] == format) return key;
 
   throw new Error("Unknown characteristic format '" + format + "'");
 }
 
 function getCharacteristicUnitsKey(units) {
   // look up the key in our known-units dict
-  for (var key in Characteristic.Units)
-    if (Characteristic.Units[key] == units)
-      return key;
+  for (var key in Characteristic.Units) if (Characteristic.Units[key] == units) return key;
 
   throw new Error("Unknown characteristic units '" + units + "'");
 }
 
 function getCharacteristicPermsKey(perm) {
   switch (perm) {
-    case "read": return "READ";
-    case "write": return "WRITE";
-    case "cnotify": return "NOTIFY";
-    case "uncnotify": return undefined;
-    default: throw new Error("Unknown characteristic permission '" + perm + "'");
+    case "read":
+      return "READ";
+    case "write":
+      return "WRITE";
+    case "cnotify":
+      return "NOTIFY";
+    case "uncnotify":
+      return undefined;
+    default:
+      throw new Error("Unknown characteristic permission '" + perm + "'");
   }
 }

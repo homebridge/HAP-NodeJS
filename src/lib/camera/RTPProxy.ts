@@ -1,7 +1,7 @@
 import { Socket, SocketType } from "dgram";
 
-const dgram = require('dgram');
-const EventEmitter = require('events').EventEmitter;
+const dgram = require("dgram");
+const EventEmitter = require("events").EventEmitter;
 
 export interface RTPProxyOptions {
   disabled: boolean;
@@ -12,7 +12,6 @@ export interface RTPProxyOptions {
 }
 
 export default class RTPProxy extends EventEmitter {
-
   startingPort: number = 10000;
   type: SocketType;
   outgoingAddress: string;
@@ -33,7 +32,7 @@ export default class RTPProxy extends EventEmitter {
   constructor(public options: RTPProxyOptions) {
     super();
 
-    this.type = options.isIPV6 ? 'udp6' : 'udp4';
+    this.type = options.isIPV6 ? "udp6" : "udp4";
 
     this.startingPort = 10000;
 
@@ -48,16 +47,17 @@ export default class RTPProxy extends EventEmitter {
 
   setup = () => {
     return this.createSocketPair(this.type)
-      .then((sockets) => {
+      .then(sockets => {
         this.incomingRTPSocket = sockets[0];
         this.incomingRTCPSocket = sockets[1];
 
-      return this.createSocket(this.type);
-    }).then((socket) => {
+        return this.createSocket(this.type);
+      })
+      .then(socket => {
         this.outgoingSocket = socket;
         this.onBound();
-    });
-  }
+      });
+  };
 
   destroy = () => {
     if (this.incomingRTPSocket) {
@@ -71,153 +71,139 @@ export default class RTPProxy extends EventEmitter {
     if (this.outgoingSocket) {
       this.outgoingSocket.close();
     }
-  }
+  };
 
   incomingRTPPort = () => {
     const address = this.incomingRTPSocket.address();
 
-    if (typeof address !== 'string') {
+    if (typeof address !== "string") {
       return address.port;
     }
-  }
+  };
 
   incomingRTCPPort = () => {
     const address = this.incomingRTCPSocket.address();
 
-    if (typeof address !== 'string') {
+    if (typeof address !== "string") {
       return address.port;
     }
-  }
+  };
 
   outgoingLocalPort = () => {
     const address = this.outgoingSocket.address();
 
-    if (typeof address !== 'string') {
+    if (typeof address !== "string") {
       return address.port;
     }
-  }
+  };
 
   setServerAddress = (address: string) => {
     this.serverAddress = address;
-  }
+  };
 
   setServerRTPPort = (port: number) => {
     this.serverRTPPort = port;
-  }
+  };
 
   setServerRTCPPort = (port: number) => {
     this.serverRTCPPort = port;
-  }
+  };
 
   setIncomingPayloadType = (pt: number) => {
     this.incomingPayloadType = pt;
-  }
+  };
 
   setOutgoingPayloadType = (pt: number) => {
     this.outgoingPayloadType = pt;
-  }
+  };
 
   sendOut = (msg: Buffer) => {
     // Just drop it if we're not setup yet, I guess.
-    if(!this.outgoingAddress || !this.outgoingPort)
-      return;
+    if (!this.outgoingAddress || !this.outgoingPort) return;
 
     this.outgoingSocket.send(msg, this.outgoingPort, this.outgoingAddress);
-  }
+  };
 
   sendBack = (msg: Buffer) => {
     // Just drop it if we're not setup yet, I guess.
-    if(!this.serverAddress || !this.serverRTCPPort)
-      return;
+    if (!this.serverAddress || !this.serverRTCPPort) return;
 
     this.outgoingSocket.send(msg, this.serverRTCPPort, this.serverAddress);
-  }
+  };
 
   onBound = () => {
-    if(this.disabled)
-      return;
+    if (this.disabled) return;
 
-    this.incomingRTPSocket.on('message', (msg, rinfo) => {
-        this.rtpMessage(msg);
-        });
+    this.incomingRTPSocket.on("message", (msg, rinfo) => {
+      this.rtpMessage(msg);
+    });
 
-    this.incomingRTCPSocket.on('message', (msg, rinfo) => {
-        this.rtcpMessage(msg);
-        });
+    this.incomingRTCPSocket.on("message", (msg, rinfo) => {
+      this.rtcpMessage(msg);
+    });
 
-    this.outgoingSocket.on('message', (msg, rinfo) => {
-        this.rtcpReply(msg);
-        });
-  }
+    this.outgoingSocket.on("message", (msg, rinfo) => {
+      this.rtcpReply(msg);
+    });
+  };
 
   rtpMessage = (msg: Buffer) => {
-
-    if(msg.length < 12) {
+    if (msg.length < 12) {
       // Not a proper RTP packet. Just forward it.
       this.sendOut(msg);
       return;
     }
 
     let mpt = msg.readUInt8(1);
-    let pt = mpt & 0x7F;
-    if(pt == this.incomingPayloadType) {
+    let pt = mpt & 0x7f;
+    if (pt == this.incomingPayloadType) {
       // @ts-ignore
       mpt = (mpt & 0x80) | this.outgoingPayloadType;
       msg.writeUInt8(mpt, 1);
     }
 
-    if(this.incomingSSRC === null)
-      this.incomingSSRC = msg.readUInt32BE(4);
+    if (this.incomingSSRC === null) this.incomingSSRC = msg.readUInt32BE(4);
 
     msg.writeUInt32BE(this.outgoingSSRC, 8);
     this.sendOut(msg);
-  }
+  };
 
   processRTCPMessage = (msg: Buffer, transform: (pt: number, packet: Buffer) => Buffer) => {
     let rtcpPackets = [];
     let offset = 0;
-    while((offset + 4) <= msg.length) {
+    while (offset + 4 <= msg.length) {
       let pt = msg.readUInt8(offset + 1);
       let len = msg.readUInt16BE(offset + 2) * 4;
-      if((offset + 4 + len) > msg.length)
-        break;
+      if (offset + 4 + len > msg.length) break;
       let packet = msg.slice(offset, offset + 4 + len);
 
       packet = transform(pt, packet);
 
-      if(packet)
-        rtcpPackets.push(packet);
+      if (packet) rtcpPackets.push(packet);
 
       offset += 4 + len;
     }
 
-    if(rtcpPackets.length > 0)
-      return Buffer.concat(rtcpPackets);
+    if (rtcpPackets.length > 0) return Buffer.concat(rtcpPackets);
 
     return null;
-  }
+  };
 
   rtcpMessage = (msg: Buffer) => {
-
     let processed = this.processRTCPMessage(msg, (pt, packet) => {
-      if(pt != 200 || packet.length < 8)
-        return packet;
+      if (pt != 200 || packet.length < 8) return packet;
 
-      if(this.incomingSSRC === null)
-        this.incomingSSRC = packet.readUInt32BE(4);
+      if (this.incomingSSRC === null) this.incomingSSRC = packet.readUInt32BE(4);
       packet.writeUInt32BE(this.outgoingSSRC, 4);
       return packet;
     });
 
-    if(processed)
-      this.sendOut(processed);
-  }
+    if (processed) this.sendOut(processed);
+  };
 
   rtcpReply = (msg: Buffer) => {
-
     let processed = this.processRTCPMessage(msg, (pt, packet) => {
-      if(pt != 201 || packet.length < 12)
-        return packet;
+      if (pt != 201 || packet.length < 12) return packet;
 
       // Assume source 1 is the one we want to edit.
       // @ts-ignore
@@ -225,10 +211,8 @@ export default class RTPProxy extends EventEmitter {
       return packet;
     });
 
-
-    if(processed)
-      this.sendOut(processed);
-  }
+    if (processed) this.sendOut(processed);
+  };
 
   createSocket = (type: SocketType): Promise<Socket> => {
     return new Promise((resolve, reject) => {
@@ -236,18 +220,16 @@ export default class RTPProxy extends EventEmitter {
         const socket = dgram.createSocket(type);
 
         const bindErrorHandler = () => {
-          if(this.startingPort == 65535)
-            this.startingPort = 10000;
-          else
-            ++this.startingPort;
+          if (this.startingPort == 65535) this.startingPort = 10000;
+          else ++this.startingPort;
 
           socket.close();
           retry();
         };
 
-        socket.once('error', bindErrorHandler);
+        socket.once("error", bindErrorHandler);
 
-        socket.on('listening', () => {
+        socket.on("listening", () => {
           resolve(socket);
         });
 
@@ -256,60 +238,57 @@ export default class RTPProxy extends EventEmitter {
 
       retry();
     });
-  }
+  };
 
   createSocketPair = (type: SocketType): Promise<Socket[]> => {
     return new Promise((resolve, reject) => {
       const retry = () => {
         let socket1 = dgram.createSocket(type);
         let socket2 = dgram.createSocket(type);
-        let state = {socket1: 0, socket2: 0};
+        let state = { socket1: 0, socket2: 0 };
 
         const recheck = () => {
-          if(state.socket1 == 0 || state.socket2 == 0)
-            return;
+          if (state.socket1 == 0 || state.socket2 == 0) return;
 
-          if(state.socket1 == 2 && state.socket2 == 2) {
+          if (state.socket1 == 2 && state.socket2 == 2) {
             resolve([socket1, socket2]);
             return;
           }
 
-          if(this.startingPort == 65534)
-            this.startingPort = 10000;
-          else
-            ++this.startingPort;
+          if (this.startingPort == 65534) this.startingPort = 10000;
+          else ++this.startingPort;
 
           socket1.close();
           socket2.close();
 
           retry();
-        }
+        };
 
-        socket1.once('error', function() {
+        socket1.once("error", function() {
           state.socket1 = 1;
           recheck();
         });
 
-        socket2.once('error', function() {
+        socket2.once("error", function() {
           state.socket2 = 1;
           recheck();
         });
 
-        socket1.once('listening', function() {
+        socket1.once("listening", function() {
           state.socket1 = 2;
           recheck();
         });
 
-        socket2.once('listening', function() {
+        socket2.once("listening", function() {
           state.socket2 = 2;
           recheck();
         });
 
         socket1.bind(this.startingPort);
         socket2.bind(this.startingPort + 1);
-      }
+      };
 
       retry();
     });
-  }
+  };
 }

@@ -1,6 +1,6 @@
-import storage from 'node-persist';
+import storage from "node-persist";
 
-import { Accessory, AccessoryEventTypes, Camera, Categories, uuid, VoidCallback } from './';
+import { Accessory, AccessoryEventTypes, Camera, Categories, uuid, VoidCallback } from "./";
 
 console.log("HAP-NodeJS starting...");
 
@@ -8,7 +8,7 @@ console.log("HAP-NodeJS starting...");
 storage.initSync();
 
 // Start by creating our Bridge which will host all loaded Accessories
-var cameraAccessory = new Accessory('Node Camera', uuid.generate("Node Camera"));
+var cameraAccessory = new Accessory("Node Camera", uuid.generate("Node Camera"));
 
 var cameraSource = new Camera();
 
@@ -20,19 +20,22 @@ cameraAccessory.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: Voi
 });
 
 // Publish the camera on the local network.
-cameraAccessory.publish({
-  username: "EC:22:3D:D3:CE:CE",
-  port: 51062,
-  pincode: "031-45-154",
-  category: Categories.CAMERA
-}, true);
+cameraAccessory.publish(
+  {
+    username: "EC:22:3D:D3:CE:CE",
+    port: 51062,
+    pincode: "031-45-154",
+    category: Categories.CAMERA,
+  },
+  true
+);
 
-var signals = { 'SIGINT': 2, 'SIGTERM': 15 } as Record<string, number>;
+var signals = { SIGINT: 2, SIGTERM: 15 } as Record<string, number>;
 Object.keys(signals).forEach((signal: any) => {
   process.on(signal, () => {
     cameraAccessory.unpublish();
     setTimeout(() => {
-        process.exit(128 + signals[signal]);
-    }, 1000)
+      process.exit(128 + signals[signal]);
+    }, 1000);
   });
 });

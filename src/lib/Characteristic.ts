@@ -1,8 +1,8 @@
-import Decimal from 'decimal.js';
+import Decimal from "decimal.js";
 
-import { once } from './util/once';
+import { once } from "./util/once";
 import { clone } from "./util/clone";
-import { IdentifierCache } from './model/IdentifierCache';
+import { IdentifierCache } from "./model/IdentifierCache";
 import {
   CharacteristicChange,
   CharacteristicValue,
@@ -10,48 +10,48 @@ import {
   Nullable,
   ToHAPOptions,
   VoidCallback,
-} from '../types';
-import { EventEmitter } from './EventEmitter';
-import * as HomeKitTypes from './gen';
+} from "../types";
+import { EventEmitter } from "./EventEmitter";
+import * as HomeKitTypes from "./gen";
 
 // Known HomeKit formats
 export enum Formats {
-  BOOL = 'bool',
-  INT = 'int',
-  FLOAT = 'float',
-  STRING = 'string',
-  UINT8 = 'uint8',
-  UINT16 = 'uint16',
-  UINT32 = 'uint32',
-  UINT64 = 'uint64',
-  DATA = 'data',
-  TLV8 = 'tlv8',
-  ARRAY = 'array', //Not in HAP Spec
-  DICTIONARY = 'dict' //Not in HAP Spec
+  BOOL = "bool",
+  INT = "int",
+  FLOAT = "float",
+  STRING = "string",
+  UINT8 = "uint8",
+  UINT16 = "uint16",
+  UINT32 = "uint32",
+  UINT64 = "uint64",
+  DATA = "data",
+  TLV8 = "tlv8",
+  ARRAY = "array", //Not in HAP Spec
+  DICTIONARY = "dict", //Not in HAP Spec
 }
 
 // Known HomeKit unit types
 export enum Units {
   // HomeKit only defines Celsius, for Fahrenheit, it requires iOS app to do the conversion.
-  CELSIUS = 'celsius',
-  PERCENTAGE = 'percentage',
-  ARC_DEGREE = 'arcdegrees',
-  LUX = 'lux',
-  SECONDS = 'seconds'
+  CELSIUS = "celsius",
+  PERCENTAGE = "percentage",
+  ARC_DEGREE = "arcdegrees",
+  LUX = "lux",
+  SECONDS = "seconds",
 }
 
 // Known HomeKit permission types
 export enum Perms {
-  READ = 'pr', //Kept for backwards compatability
-  PAIRED_READ = 'pr', //Added to match HAP's terminology
-  WRITE = 'pw', //Kept for backwards compatability
-  PAIRED_WRITE = 'pw', //Added to match HAP's terminology
-  NOTIFY = 'ev', //Kept for backwards compatability
-  EVENTS = 'ev', //Added to match HAP's terminology
-  ADDITIONAL_AUTHORIZATION = 'aa',
-  TIMED_WRITE = 'tw', //Not currently supported by IP
-  HIDDEN = 'hd',
-  WRITE_RESPONSE = 'wr'
+  READ = "pr", //Kept for backwards compatability
+  PAIRED_READ = "pr", //Added to match HAP's terminology
+  WRITE = "pw", //Kept for backwards compatability
+  PAIRED_WRITE = "pw", //Added to match HAP's terminology
+  NOTIFY = "ev", //Kept for backwards compatability
+  EVENTS = "ev", //Added to match HAP's terminology
+  ADDITIONAL_AUTHORIZATION = "aa",
+  TIMED_WRITE = "tw", //Not currently supported by IP
+  HIDDEN = "hd",
+  WRITE_RESPONSE = "wr",
 }
 
 export interface CharacteristicProps {
@@ -72,16 +72,16 @@ export interface CharacteristicProps {
 export enum Access {
   READ = 0x00,
   WRITE = 0x01,
-  NOTIFY = 0x02
+  NOTIFY = 0x02,
 }
 
 export interface SerializedCharacteristic {
-  displayName?: string,
-  UUID?: string,
-  props: CharacteristicProps,
-  value: Nullable<CharacteristicValue>,
-  accessRestrictedToAdmins: Access[],
-  eventOnlyCharacteristic: boolean,
+  displayName?: string;
+  UUID?: string;
+  props: CharacteristicProps;
+  value: Nullable<CharacteristicValue>;
+  accessRestrictedToAdmins: Access[];
+  eventOnlyCharacteristic: boolean;
 }
 
 export enum CharacteristicEventTypes {
@@ -92,21 +92,31 @@ export enum CharacteristicEventTypes {
   CHANGE = "change",
 }
 
-export type CharacteristicGetCallback<T = Nullable<CharacteristicValue>> = (error?: Error | null , value?: T) => void
-export type CharacteristicSetCallback = (error?: Error | null, value?: CharacteristicValue) => void
+export type CharacteristicGetCallback<T = Nullable<CharacteristicValue>> = (error?: Error | null, value?: T) => void;
+export type CharacteristicSetCallback = (error?: Error | null, value?: CharacteristicValue) => void;
 
 type Events = {
   [CharacteristicEventTypes.CHANGE]: (change: CharacteristicChange) => void;
   [CharacteristicEventTypes.GET]: (cb: CharacteristicGetCallback, context?: any, connectionID?: string) => void;
-  [CharacteristicEventTypes.SET]: (value: CharacteristicValue, cb: CharacteristicSetCallback, context?: any, connectionID?: string) => void;
+  [CharacteristicEventTypes.SET]: (
+    value: CharacteristicValue,
+    cb: CharacteristicSetCallback,
+    context?: any,
+    connectionID?: string
+  ) => void;
   [CharacteristicEventTypes.SUBSCRIBE]: VoidCallback;
   [CharacteristicEventTypes.UNSUBSCRIBE]: VoidCallback;
-}
+};
 
 /**
  * @deprecated Use CharacteristicEventTypes instead
  */
-export type EventCharacteristic = CharacteristicEventTypes.GET | CharacteristicEventTypes.SET | CharacteristicEventTypes.SUBSCRIBE | CharacteristicEventTypes.UNSUBSCRIBE | CharacteristicEventTypes.CHANGE;
+export type EventCharacteristic =
+  | CharacteristicEventTypes.GET
+  | CharacteristicEventTypes.SET
+  | CharacteristicEventTypes.SUBSCRIBE
+  | CharacteristicEventTypes.UNSUBSCRIBE
+  | CharacteristicEventTypes.CHANGE;
 
 /**
  * Characteristic represents a particular typed variable that can be assigned to a Service. For instance, a
@@ -140,7 +150,6 @@ export type EventCharacteristic = CharacteristicEventTypes.GET | CharacteristicE
  *        passed in by the initiator of this change (if known).
  */
 export class Characteristic extends EventEmitter<Events> {
-
   static Formats = Formats;
   static Units = Units;
   static Perms = Perms;
@@ -359,8 +368,8 @@ export class Characteristic extends EventEmitter<Events> {
   props: CharacteristicProps;
   subscriptions: number = 0;
 
-  'valid-values': number[];
-  'valid-values-range': [number, number];
+  "valid-values": number[];
+  "valid-values-range": [number, number];
 
   constructor(public displayName?: string, public UUID?: string, props?: CharacteristicProps) {
     super();
@@ -371,7 +380,7 @@ export class Characteristic extends EventEmitter<Events> {
       minValue: null,
       maxValue: null,
       minStep: null,
-      perms: []
+      perms: [],
     };
   }
 
@@ -395,20 +404,20 @@ export class Characteristic extends EventEmitter<Events> {
    * }
    */
   setProps = (props: Partial<CharacteristicProps>) => {
-    for (var key in (props || {}))
+    for (var key in props || {})
       if (Object.prototype.hasOwnProperty.call(props, key)) {
         // @ts-ignore
         this.props[key] = props[key];
       }
     return this;
-  }
+  };
 
   subscribe = () => {
     if (this.subscriptions === 0) {
       this.emit(CharacteristicEventTypes.SUBSCRIBE);
     }
     this.subscriptions++;
-  }
+  };
 
   unsubscribe = () => {
     var wasOne = this.subscriptions === 1;
@@ -417,7 +426,7 @@ export class Characteristic extends EventEmitter<Events> {
     if (wasOne) {
       this.emit(CharacteristicEventTypes.UNSUBSCRIBE);
     }
-  }
+  };
 
   getValue = (callback?: CharacteristicGetCallback, context?: any, connectionID?: string) => {
     // Handle special event only characteristics.
@@ -429,32 +438,33 @@ export class Characteristic extends EventEmitter<Events> {
     }
     if (this.listeners(CharacteristicEventTypes.GET).length > 0) {
       // allow a listener to handle the fetching of this value, and wait for completion
-      this.emit(CharacteristicEventTypes.GET, once((err: Error, newValue: Nullable<CharacteristicValue>) => {
-        this.status = err;
-        if (err) {
-          // pass the error along to our callback
-          if (callback)
-            callback(err);
-        } else {
-          newValue = this.validateValue(newValue); //validateValue returns a value that has be cooerced into a valid value.
-          if (newValue === undefined || newValue === null)
-            newValue = this.getDefaultValue();
-          // getting the value was a success; we can pass it along and also update our cached value
-          var oldValue = this.value;
-          this.value = newValue;
-          if (callback)
-            callback(null, newValue);
-          // emit a change event if necessary
-          if (oldValue !== newValue)
-            this.emit(CharacteristicEventTypes.CHANGE, {oldValue: oldValue, newValue: newValue, context: context});
-        }
-      }), context, connectionID);
+      this.emit(
+        CharacteristicEventTypes.GET,
+        once((err: Error, newValue: Nullable<CharacteristicValue>) => {
+          this.status = err;
+          if (err) {
+            // pass the error along to our callback
+            if (callback) callback(err);
+          } else {
+            newValue = this.validateValue(newValue); //validateValue returns a value that has be cooerced into a valid value.
+            if (newValue === undefined || newValue === null) newValue = this.getDefaultValue();
+            // getting the value was a success; we can pass it along and also update our cached value
+            var oldValue = this.value;
+            this.value = newValue;
+            if (callback) callback(null, newValue);
+            // emit a change event if necessary
+            if (oldValue !== newValue)
+              this.emit(CharacteristicEventTypes.CHANGE, { oldValue: oldValue, newValue: newValue, context: context });
+          }
+        }),
+        context,
+        connectionID
+      );
     } else {
       // no one is listening to the 'get' event, so just return the cached value
-      if (callback)
-        callback(this.status, this.value);
+      if (callback) callback(this.status, this.value);
     }
-  }
+  };
 
   validateValue = (newValue: Nullable<CharacteristicValue>): Nullable<CharacteristicValue> => {
     let isNumericType = false;
@@ -502,22 +512,19 @@ export class Characteristic extends EventEmitter<Events> {
       //All of the following datatypes return from this switch.
       case Formats.BOOL:
         // @ts-ignore
-        return (newValue == true); //We don't need to make sure this returns true or false
+        return newValue == true; //We don't need to make sure this returns true or false
         break;
       case Formats.STRING:
-        let myString = newValue as string || ''; //If null or undefined or anything odd, make it a blank string
+        let myString = (newValue as string) || ""; //If null or undefined or anything odd, make it a blank string
         myString = String(myString);
         var maxLength = this.props.maxLen;
-        if (maxLength === undefined)
-          maxLength = 64; //Default Max Length is 64.
-        if (myString.length > maxLength)
-          myString = myString.substring(0, maxLength); //Truncate strings that are too long
+        if (maxLength === undefined) maxLength = 64; //Default Max Length is 64.
+        if (myString.length > maxLength) myString = myString.substring(0, maxLength); //Truncate strings that are too long
         return myString; //We don't need to do any validation after having truncated the string
         break;
       case Formats.DATA:
         var maxLength = this.props.maxDataLen;
-        if (maxLength === undefined)
-          maxLength = 2097152; //Default Max Length is 2097152.
+        if (maxLength === undefined) maxLength = 2097152; //Default Max Length is 2097152.
         //if (newValue.length>maxLength) //I don't know the best way to handle this since it's unknown binary data.
         //I suspect that it will crash HomeKit for this bridge if the length is too long.
         return newValue;
@@ -525,9 +532,10 @@ export class Characteristic extends EventEmitter<Events> {
       case Formats.TLV8:
         //Should we parse this to make sure the tlv8 is valid?
         break;
-      default: //Datatype out of HAP Spec encountered. We'll assume the developer knows what they're doing.
+      default:
+        //Datatype out of HAP Spec encountered. We'll assume the developer knows what they're doing.
         return newValue;
-    };
+    }
 
     if (isNumericType) {
       if (newValue === false) {
@@ -539,22 +547,18 @@ export class Characteristic extends EventEmitter<Events> {
       if (isNaN(Number.parseInt(newValue as string, 10))) {
         return this.value!;
       } //This is not a number so we'll just pass out the last value.
-      if ((this.props.maxValue && !isNaN(this.props.maxValue)) && (this.props.maxValue !== null))
+      if (this.props.maxValue && !isNaN(this.props.maxValue) && this.props.maxValue !== null)
         maxValue_resolved = this.props.maxValue;
-      if ((this.props.minValue && !isNaN(this.props.minValue)) && (this.props.minValue !== null))
+      if (this.props.minValue && !isNaN(this.props.minValue) && this.props.minValue !== null)
         minValue_resolved = this.props.minValue;
-      if ((this.props.minStep && !isNaN(this.props.minStep)) && (this.props.minStep !== null))
+      if (this.props.minStep && !isNaN(this.props.minStep) && this.props.minStep !== null)
         minStep_resolved = this.props.minStep;
-      if (newValue! < minValue_resolved!)
-        newValue = minValue_resolved!; //Fails Minimum Value Test
-      if (newValue! > maxValue_resolved!)
-        newValue = maxValue_resolved!; //Fails Maximum Value Test
+      if (newValue! < minValue_resolved!) newValue = minValue_resolved!; //Fails Minimum Value Test
+      if (newValue! > maxValue_resolved!) newValue = maxValue_resolved!; //Fails Maximum Value Test
       if (minStep_resolved !== undefined) {
         //Determine how many decimals we need to display
-        if (Math.floor(minStep_resolved) === minStep_resolved)
-          stepDecimals = 0;
-        else
-          stepDecimals = minStep_resolved.toString().split(".")[1].length || 0;
+        if (Math.floor(minStep_resolved) === minStep_resolved) stepDecimals = 0;
+        else stepDecimals = minStep_resolved.toString().split(".")[1].length || 0;
         //Use Decimal to detemine the lowest value within the step.
         try {
           var decimalVal = new Decimal(parseFloat(newValue as string));
@@ -569,20 +573,23 @@ export class Characteristic extends EventEmitter<Events> {
           return this.value!; //If we had an error, return the current value.
         }
       }
-      if (this['valid-values'] !== undefined)
-        if (!this['valid-values'].includes(newValue as number))
-          return this.value!; //Fails Valid Values Test
-      if (this['valid-values-range'] !== undefined) { //This is another way Apple has to handle min/max
-        if (newValue! < this['valid-values-range'][0])
-          newValue = this['valid-values-range'][0];
-        if (newValue! > this['valid-values-range'][1])
-          newValue = this['valid-values-range'][1];
+      if (this["valid-values"] !== undefined)
+        if (!this["valid-values"].includes(newValue as number)) return this.value!; //Fails Valid Values Test
+      if (this["valid-values-range"] !== undefined) {
+        //This is another way Apple has to handle min/max
+        if (newValue! < this["valid-values-range"][0]) newValue = this["valid-values-range"][0];
+        if (newValue! > this["valid-values-range"][1]) newValue = this["valid-values-range"][1];
       }
     }
     return newValue;
-  }
+  };
 
-  setValue = (newValue: Nullable<CharacteristicValue | Error>, callback?: CharacteristicSetCallback, context?: any, connectionID?: string): Characteristic => {
+  setValue = (
+    newValue: Nullable<CharacteristicValue | Error>,
+    callback?: CharacteristicSetCallback,
+    context?: any,
+    connectionID?: string
+  ): Characteristic => {
     if (newValue instanceof Error) {
       this.status = newValue;
     } else {
@@ -592,57 +599,60 @@ export class Characteristic extends EventEmitter<Events> {
     var oldValue = this.value;
     if (this.listeners(CharacteristicEventTypes.SET).length > 0) {
       // allow a listener to handle the setting of this value, and wait for completion
-      this.emit(CharacteristicEventTypes.SET, newValue, once((err: Error, writeResponse?: CharacteristicValue) => {
-        this.status = err;
-        if (err) {
-          // pass the error along to our callback
-          if (callback)
-            callback(err);
-        } else {
-          if (writeResponse !== undefined && this.props.perms.includes(Perms.WRITE_RESPONSE))
-            newValue = writeResponse; // support write response simply by letting the implementor pass the response as second argument to the callback
+      this.emit(
+        CharacteristicEventTypes.SET,
+        newValue,
+        once((err: Error, writeResponse?: CharacteristicValue) => {
+          this.status = err;
+          if (err) {
+            // pass the error along to our callback
+            if (callback) callback(err);
+          } else {
+            if (writeResponse !== undefined && this.props.perms.includes(Perms.WRITE_RESPONSE))
+              newValue = writeResponse; // support write response simply by letting the implementor pass the response as second argument to the callback
 
-          if (newValue === undefined || newValue === null)
-            newValue = this.getDefaultValue() as CharacteristicValue;
-          // setting the value was a success; so we can cache it now
-          this.value = newValue as CharacteristicValue;
-          if (callback)
-            callback();
-          if (this.eventOnlyCharacteristic === true || oldValue !== newValue)
-            this.emit(CharacteristicEventTypes.CHANGE, {oldValue: oldValue, newValue: newValue, context: context});
-        }
-      }), context, connectionID);
+            if (newValue === undefined || newValue === null) newValue = this.getDefaultValue() as CharacteristicValue;
+            // setting the value was a success; so we can cache it now
+            this.value = newValue as CharacteristicValue;
+            if (callback) callback();
+            if (this.eventOnlyCharacteristic === true || oldValue !== newValue)
+              this.emit(CharacteristicEventTypes.CHANGE, { oldValue: oldValue, newValue: newValue, context: context });
+          }
+        }),
+        context,
+        connectionID
+      );
     } else {
-      if (newValue === undefined || newValue === null)
-        newValue = this.getDefaultValue() as CharacteristicValue;
+      if (newValue === undefined || newValue === null) newValue = this.getDefaultValue() as CharacteristicValue;
       // no one is listening to the 'set' event, so just assign the value blindly
       this.value = newValue as string | number;
-      if (callback)
-        callback();
+      if (callback) callback();
       if (this.eventOnlyCharacteristic === true || oldValue !== newValue)
-        this.emit(CharacteristicEventTypes.CHANGE, {oldValue: oldValue, newValue: newValue, context: context});
+        this.emit(CharacteristicEventTypes.CHANGE, { oldValue: oldValue, newValue: newValue, context: context });
     }
     return this; // for chaining
-  }
+  };
 
-  updateValue = (newValue: Nullable<CharacteristicValue | Error>, callback?: () => void, context?: any): Characteristic => {
+  updateValue = (
+    newValue: Nullable<CharacteristicValue | Error>,
+    callback?: () => void,
+    context?: any
+  ): Characteristic => {
     if (newValue instanceof Error) {
       this.status = newValue;
     } else {
       this.status = null;
     }
     newValue = this.validateValue(newValue as Nullable<CharacteristicValue>); //validateValue returns a value that has be cooerced into a valid value.
-    if (newValue === undefined || newValue === null)
-      newValue = this.getDefaultValue() as CharacteristicValue;
+    if (newValue === undefined || newValue === null) newValue = this.getDefaultValue() as CharacteristicValue;
     // no one is listening to the 'set' event, so just assign the value blindly
     var oldValue = this.value;
     this.value = newValue;
-    if (callback)
-      callback();
+    if (callback) callback();
     if (this.eventOnlyCharacteristic === true || oldValue !== newValue)
-      this.emit(CharacteristicEventTypes.CHANGE, {oldValue: oldValue, newValue: newValue, context: context});
+      this.emit(CharacteristicEventTypes.CHANGE, { oldValue: oldValue, newValue: newValue, context: context });
     return this; // for chaining
-  }
+  };
 
   getDefaultValue = (): Nullable<CharacteristicValue> => {
     switch (this.props.format) {
@@ -661,12 +671,17 @@ export class Characteristic extends EventEmitter<Events> {
       default:
         return this.props.minValue || 0;
     }
-  }
+  };
 
-  _assignID = (identifierCache: IdentifierCache, accessoryName: string, serviceUUID: string, serviceSubtype: string) => {
+  _assignID = (
+    identifierCache: IdentifierCache,
+    accessoryName: string,
+    serviceUUID: string,
+    serviceSubtype: string
+  ) => {
     // generate our IID based on our UUID
     this.iid = identifierCache.getIID(accessoryName, serviceUUID, serviceSubtype, this.UUID);
-  }
+  };
 
   /**
    * Returns a JSON representation of this Accessory suitable for delivering to HAP clients.
@@ -675,21 +690,14 @@ export class Characteristic extends EventEmitter<Events> {
     // ensure our value fits within our constraints if present
     var value = this.value;
 
-    if (this.props.minValue != null && value! < this.props.minValue)
-      value = this.props.minValue;
-    if (this.props.maxValue != null && value! > this.props.maxValue)
-      value = this.props.maxValue;
+    if (this.props.minValue != null && value! < this.props.minValue) value = this.props.minValue;
+    if (this.props.maxValue != null && value! > this.props.maxValue) value = this.props.maxValue;
     if (this.props.format != null) {
-      if (this.props.format === Formats.INT)
-        value = parseInt(value as string);
-      else if (this.props.format === Formats.UINT8)
-        value = parseInt(value as string);
-      else if (this.props.format === Formats.UINT16)
-        value = parseInt(value as string);
-      else if (this.props.format === Formats.UINT32)
-        value = parseInt(value as string);
-      else if (this.props.format === Formats.UINT64)
-        value = parseInt(value as string);
+      if (this.props.format === Formats.INT) value = parseInt(value as string);
+      else if (this.props.format === Formats.UINT8) value = parseInt(value as string);
+      else if (this.props.format === Formats.UINT16) value = parseInt(value as string);
+      else if (this.props.format === Formats.UINT32) value = parseInt(value as string);
+      else if (this.props.format === Formats.UINT64) value = parseInt(value as string);
       else if (this.props.format === Formats.FLOAT) {
         value = parseFloat(value as string);
         if (this.props.minStep != null) {
@@ -716,38 +724,39 @@ export class Characteristic extends EventEmitter<Events> {
       // bonjour: false
     };
     if (this.props.validValues != null && this.props.validValues.length > 0) {
-      hap['valid-values'] = this.props.validValues;
+      hap["valid-values"] = this.props.validValues;
     }
-    if (this.props.validValueRanges != null && this.props.validValueRanges.length > 0 && !(this.props.validValueRanges.length & 1)) {
-      hap['valid-values-range'] = this.props.validValueRanges;
+    if (
+      this.props.validValueRanges != null &&
+      this.props.validValueRanges.length > 0 &&
+      !(this.props.validValueRanges.length & 1)
+    ) {
+      hap["valid-values-range"] = this.props.validValueRanges;
     }
     // extra properties
-    if (this.props.unit != null)
-      hap.unit = this.props.unit;
-    if (this.props.maxValue != null)
-      hap.maxValue = this.props.maxValue;
-    if (this.props.minValue != null)
-      hap.minValue = this.props.minValue;
-    if (this.props.minStep != null)
-      hap.minStep = this.props.minStep;
+    if (this.props.unit != null) hap.unit = this.props.unit;
+    if (this.props.maxValue != null) hap.maxValue = this.props.maxValue;
+    if (this.props.minValue != null) hap.minValue = this.props.minValue;
+    if (this.props.minStep != null) hap.minStep = this.props.minStep;
     // add maxLen if string length is > 64 bytes and trim to max 256 bytes
     if (this.props.format === Formats.STRING) {
-      var str = Buffer.from(value as string, 'utf8'), len = str.byteLength;
-      if (len > 256) { // 256 bytes is the max allowed length
-        hap.value = str.toString('utf8', 0, 256);
+      var str = Buffer.from(value as string, "utf8"),
+        len = str.byteLength;
+      if (len > 256) {
+        // 256 bytes is the max allowed length
+        hap.value = str.toString("utf8", 0, 256);
         hap.maxLen = 256;
-      } else if (len > 64) { // values below can be ommited
+      } else if (len > 64) {
+        // values below can be ommited
         hap.maxLen = len;
       }
     }
     // if we're not readable, omit the "value" property - otherwise iOS will complain about non-compliance
-    if (this.props.perms.indexOf(Perms.READ) == -1)
-      delete hap.value;
+    if (this.props.perms.indexOf(Perms.READ) == -1) delete hap.value;
     // delete the "value" property anyway if we were asked to
-    if (opt && opt.omitValues)
-      delete hap.value;
+    if (opt && opt.omitValues) delete hap.value;
     return hap as HapCharacteristic;
-  }
+  };
 
   static serialize = (characteristic: Characteristic): SerializedCharacteristic => {
     return {
@@ -757,7 +766,7 @@ export class Characteristic extends EventEmitter<Events> {
       value: characteristic.value,
       accessRestrictedToAdmins: characteristic.accessRestrictedToAdmins,
       eventOnlyCharacteristic: characteristic.eventOnlyCharacteristic,
-    }
+    };
   };
 
   static deserialize = (json: SerializedCharacteristic): Characteristic => {
@@ -769,18 +778,20 @@ export class Characteristic extends EventEmitter<Events> {
 
     return characteristic;
   };
-
 }
 
 // Mike Samuel
 // http://stackoverflow.com/questions/10454518/javascript-how-to-retrieve-the-number-of-decimals-of-a-string-number
 function decimalPlaces(num: number) {
-  var match = (''+num).match(/(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/);
-  if (!match) { return 0; }
+  var match = ("" + num).match(/(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/);
+  if (!match) {
+    return 0;
+  }
   return Math.max(
-       0,
-       // Number of digits right of decimal point.
-       (match[1] ? match[1].length : 0)
-       // Adjust for scientific notation.
-       - (match[2] ? +match[2] : 0));
+    0,
+    // Number of digits right of decimal point.
+    (match[1] ? match[1].length : 0) -
+      // Adjust for scientific notation.
+      (match[2] ? +match[2] : 0)
+  );
 }

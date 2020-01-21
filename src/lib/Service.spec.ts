@@ -1,85 +1,56 @@
-import { Service, ServiceEventTypes } from './Service';
-import { generate } from './util/uuid';
-import './gen';
-import { Characteristic } from './Characteristic';
+import { Service, ServiceEventTypes } from "./Service";
+import { generate } from "./util/uuid";
+import "./gen";
+import { Characteristic } from "./Characteristic";
 
 const createService = () => {
-  return new Service('Test', generate('Foo'), 'subtype');
-}
+  return new Service("Test", generate("Foo"), "subtype");
+};
 
-describe('Service', () => {
-
-  describe('#constructor()', () => {
-    it('should set the name characteristic to the display name', () => {
+describe("Service", () => {
+  describe("#constructor()", () => {
+    it("should set the name characteristic to the display name", () => {
       const service = createService();
-      expect(service.getCharacteristic(Characteristic.Name)!.value).toEqual('Test');
+      expect(service.getCharacteristic(Characteristic.Name)!.value).toEqual("Test");
     });
 
-    it('should fail to load with no UUID', () => {
+    it("should fail to load with no UUID", () => {
       expect(() => {
-        new Service('Test', '', 'subtype');
-      }).toThrow('valid UUID');
+        new Service("Test", "", "subtype");
+      }).toThrow("valid UUID");
     });
   });
 
-  describe('#addCharacteristic()', () => {
+  describe("#addCharacteristic()", () => {});
 
-  });
+  describe("#setHiddenService()", () => {});
 
-  describe('#setHiddenService()', () => {
+  describe("#addLinkedService()", () => {});
 
-  });
+  describe("#removeLinkedService()", () => {});
 
-  describe('#addLinkedService()', () => {
+  describe("#removeCharacteristic()", () => {});
 
-  });
+  describe("#getCharacteristic()", () => {});
 
-  describe('#removeLinkedService()', () => {
+  describe("#testCharacteristic()", () => {});
 
-  });
+  describe("#setCharacteristic()", () => {});
 
-  describe('#removeCharacteristic()', () => {
+  describe("#updateCharacteristic()", () => {});
 
-  });
+  describe("#addOptionalCharacteristic()", () => {});
 
-  describe('#getCharacteristic()', () => {
+  describe("#getCharacteristicByIID()", () => {});
 
-  });
+  describe("#toHAP()", () => {});
 
-  describe('#testCharacteristic()', () => {
+  describe(`@${ServiceEventTypes.CHARACTERISTIC_CHANGE}`, () => {});
 
-  });
+  describe(`@${ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE}`, () => {});
 
-  describe('#setCharacteristic()', () => {
-
-  });
-
-  describe('#updateCharacteristic()', () => {
-
-  });
-
-  describe('#addOptionalCharacteristic()', () => {
-
-  });
-
-  describe('#getCharacteristicByIID()', () => {
-
-  });
-
-  describe('#toHAP()', () => {
-
-  });
-
-  describe(`@${ServiceEventTypes.CHARACTERISTIC_CHANGE}`, () => {
-
-  });
-
-  describe(`@${ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE}`, () => {
-
-  });
-
-  describe('#serialize', () => {
-    it('should serialize service', () => {
+  describe("#serialize", () => {
+    it("should serialize service", () => {
       const service = new Service.Lightbulb("TestLight", "subTypeLight");
       service.isHiddenService = true;
       service.isPrimaryService = true;
@@ -99,15 +70,17 @@ describe('Service', () => {
     });
   });
 
-  describe('#deserialize', () => {
-    it('should deserialize legacy json from homebridge', () => {
-      const json = JSON.parse('{"displayName":"Test Light","UUID":"00000043-0000-1000-8000-0026BB765291",' +
+  describe("#deserialize", () => {
+    it("should deserialize legacy json from homebridge", () => {
+      const json = JSON.parse(
+        '{"displayName":"Test Light","UUID":"00000043-0000-1000-8000-0026BB765291",' +
           '"characteristics":[{"displayName":"Name","UUID":"00000023-0000-1000-8000-0026BB765291",' +
           '"props":{"format":"string","unit":null,"minValue":null,"maxValue":null,"minStep":null,"perms":["pr"]},' +
           '"value":"Test Light","eventOnlyCharacteristic":false},' +
           '{"displayName":"On","UUID":"00000025-0000-1000-8000-0026BB765291",' +
           '"props":{"format":"bool","unit":null,"minValue":null,"maxValue":null,"minStep":null,"perms":["pr","pw","ev"]},' +
-          '"value":false,"eventOnlyCharacteristic":false}]}');
+          '"value":false,"eventOnlyCharacteristic":false}]}'
+      );
       const service = Service.deserialize(json);
 
       expect(service.displayName).toEqual(json.displayName);
@@ -123,9 +96,10 @@ describe('Service', () => {
       expect(service.optionalCharacteristics!.length).toEqual(0); // homebridge didn't save those
     });
 
-    it('should deserialize complete json', () => {
+    it("should deserialize complete json", () => {
       // json for a light accessory
-      const json = JSON.parse('{"displayName":"TestLight","UUID":"00000043-0000-1000-8000-0026BB765291",' +
+      const json = JSON.parse(
+        '{"displayName":"TestLight","UUID":"00000043-0000-1000-8000-0026BB765291",' +
           '"subtype":"subTypeLight","hiddenService":true,"primaryService":true,' +
           '"characteristics":[{"displayName":"Name","UUID":"00000023-0000-1000-8000-0026BB765291",' +
           '"props":{"format":"string","unit":null,"minValue":null,"maxValue":null,"minStep":null,"perms":["pr"]},' +
@@ -147,7 +121,8 @@ describe('Service', () => {
           '"value":"","accessRestrictedToAdmins":[],"eventOnlyCharacteristic":false},' +
           '{"displayName":"Color Temperature","UUID":"000000CE-0000-1000-8000-0026BB765291",' +
           '"props":{"format":"uint32","unit":null,"minValue":140,"maxValue":500,"minStep":1,"perms":["pr","pw","ev"]},' +
-          '"value":140,"accessRestrictedToAdmins":[],"eventOnlyCharacteristic":false}]}');
+          '"value":140,"accessRestrictedToAdmins":[],"eventOnlyCharacteristic":false}]}'
+      );
 
       const service = Service.deserialize(json);
 

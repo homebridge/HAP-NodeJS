@@ -1,21 +1,20 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
 
-import { Characteristic, Formats, Perms, Units } from '../Characteristic';
-import { Service } from '../Service';
+import { Characteristic, Formats, Perms, Units } from "../Characteristic";
+import { Service } from "../Service";
 
 /**
  * Characteristic "Accessory Flags"
  */
 
 export class AccessoryFlags extends Characteristic {
-
-  static readonly UUID: string = '000000A6-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000A6-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Accessory Flags', AccessoryFlags.UUID);
+    super("Accessory Flags", AccessoryFlags.UUID);
     this.setProps({
       format: Formats.UINT32,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -28,14 +27,13 @@ Characteristic.AccessoryFlags = AccessoryFlags;
  */
 
 export class ProductData extends Characteristic {
-
-  static readonly UUID: string = '00000220-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000220-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Product Data', ProductData.UUID);
+    super("Product Data", ProductData.UUID);
     this.setProps({
       format: Formats.DATA,
-      perms: [Perms.READ]
+      perms: [Perms.READ],
     });
     this.value = this.getDefaultValue();
   }
@@ -48,21 +46,20 @@ Characteristic.ProductData = ProductData;
  */
 
 export class Active extends Characteristic {
-
   // The value property of Active must be one of the following:
   static readonly INACTIVE = 0;
   static readonly ACTIVE = 1;
 
-  static readonly UUID: string = '000000B0-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000B0-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Active', Active.UUID);
+    super("Active", Active.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -75,14 +72,13 @@ Characteristic.Active = Active;
  */
 
 export class AdministratorOnlyAccess extends Characteristic {
-
-  static readonly UUID: string = '00000001-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000001-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Administrator Only Access', AdministratorOnlyAccess.UUID);
+    super("Administrator Only Access", AdministratorOnlyAccess.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -95,17 +91,16 @@ Characteristic.AdministratorOnlyAccess = AdministratorOnlyAccess;
  */
 
 export class AirParticulateDensity extends Characteristic {
-
-  static readonly UUID: string = '00000064-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000064-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Air Particulate Density', AirParticulateDensity.UUID);
+    super("Air Particulate Density", AirParticulateDensity.UUID);
     this.setProps({
       format: Formats.FLOAT,
       maxValue: 1000,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -118,21 +113,20 @@ Characteristic.AirParticulateDensity = AirParticulateDensity;
  */
 
 export class AirParticulateSize extends Characteristic {
-
   // The value property of AirParticulateSize must be one of the following:
   static readonly _2_5_M = 0;
   static readonly _10_M = 1;
 
-  static readonly UUID: string = '00000065-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000065-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Air Particulate Size', AirParticulateSize.UUID);
+    super("Air Particulate Size", AirParticulateSize.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -140,13 +134,11 @@ export class AirParticulateSize extends Characteristic {
 
 Characteristic.AirParticulateSize = AirParticulateSize;
 
-
 /**
  * Characteristic "Air Quality"
  */
 
 export class AirQuality extends Characteristic {
-
   // The value property of AirQuality must be one of the following:
   static readonly UNKNOWN = 0;
   static readonly EXCELLENT = 1;
@@ -155,16 +147,16 @@ export class AirQuality extends Characteristic {
   static readonly INFERIOR = 4;
   static readonly POOR = 5;
 
-  static readonly UUID: string = '00000095-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000095-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Air Quality', AirQuality.UUID);
+    super("Air Quality", AirQuality.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 5,
       minValue: 0,
       validValues: [0, 1, 2, 3, 4, 5],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -172,20 +164,18 @@ export class AirQuality extends Characteristic {
 
 Characteristic.AirQuality = AirQuality;
 
-
 /**
  * Characteristic "Audio Feedback"
  */
 
 export class AudioFeedback extends Characteristic {
-
-  static readonly UUID: string = '00000005-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000005-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Audio Feedback', AudioFeedback.UUID);
+    super("Audio Feedback", AudioFeedback.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -198,18 +188,17 @@ Characteristic.AudioFeedback = AudioFeedback;
  */
 
 export class BatteryLevel extends Characteristic {
-
-  static readonly UUID: string = '00000068-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000068-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Battery Level', BatteryLevel.UUID);
+    super("Battery Level", BatteryLevel.UUID);
     this.setProps({
       format: Formats.UINT8,
       unit: Units.PERCENTAGE,
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -222,18 +211,17 @@ Characteristic.BatteryLevel = BatteryLevel;
  */
 
 export class Brightness extends Characteristic {
-
-  static readonly UUID: string = '00000008-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000008-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Brightness', Brightness.UUID);
+    super("Brightness", Brightness.UUID);
     this.setProps({
       format: Formats.INT,
       unit: Units.PERCENTAGE,
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -246,21 +234,20 @@ Characteristic.Brightness = Brightness;
  */
 
 export class CarbonDioxideDetected extends Characteristic {
-
   // The value property of CarbonDioxideDetected must be one of the following:
   static readonly CO2_LEVELS_NORMAL = 0;
   static readonly CO2_LEVELS_ABNORMAL = 1;
 
-  static readonly UUID: string = '00000092-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000092-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Carbon Dioxide Detected', CarbonDioxideDetected.UUID);
+    super("Carbon Dioxide Detected", CarbonDioxideDetected.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -273,16 +260,15 @@ Characteristic.CarbonDioxideDetected = CarbonDioxideDetected;
  */
 
 export class CarbonDioxideLevel extends Characteristic {
-
-  static readonly UUID: string = '00000093-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000093-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Carbon Dioxide Level', CarbonDioxideLevel.UUID);
+    super("Carbon Dioxide Level", CarbonDioxideLevel.UUID);
     this.setProps({
       format: Formats.FLOAT,
       maxValue: 100000,
       minValue: 0,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -295,16 +281,15 @@ Characteristic.CarbonDioxideLevel = CarbonDioxideLevel;
  */
 
 export class CarbonDioxidePeakLevel extends Characteristic {
-
-  static readonly UUID: string = '00000094-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000094-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Carbon Dioxide Peak Level', CarbonDioxidePeakLevel.UUID);
+    super("Carbon Dioxide Peak Level", CarbonDioxidePeakLevel.UUID);
     this.setProps({
       format: Formats.FLOAT,
       maxValue: 100000,
       minValue: 0,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -317,21 +302,20 @@ Characteristic.CarbonDioxidePeakLevel = CarbonDioxidePeakLevel;
  */
 
 export class CarbonMonoxideDetected extends Characteristic {
-
   // The value property of CarbonMonoxideDetected must be one of the following:
   static readonly CO_LEVELS_NORMAL = 0;
   static readonly CO_LEVELS_ABNORMAL = 1;
 
-  static readonly UUID: string = '00000069-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000069-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Carbon Monoxide Detected', CarbonMonoxideDetected.UUID);
+    super("Carbon Monoxide Detected", CarbonMonoxideDetected.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -344,16 +328,15 @@ Characteristic.CarbonMonoxideDetected = CarbonMonoxideDetected;
  */
 
 export class CarbonMonoxideLevel extends Characteristic {
-
-  static readonly UUID: string = '00000090-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000090-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Carbon Monoxide Level', CarbonMonoxideLevel.UUID);
+    super("Carbon Monoxide Level", CarbonMonoxideLevel.UUID);
     this.setProps({
       format: Formats.FLOAT,
       maxValue: 100,
       minValue: 0,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -366,16 +349,15 @@ Characteristic.CarbonMonoxideLevel = CarbonMonoxideLevel;
  */
 
 export class CarbonMonoxidePeakLevel extends Characteristic {
-
-  static readonly UUID: string = '00000091-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000091-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Carbon Monoxide Peak Level', CarbonMonoxidePeakLevel.UUID);
+    super("Carbon Monoxide Peak Level", CarbonMonoxidePeakLevel.UUID);
     this.setProps({
       format: Formats.FLOAT,
       maxValue: 100,
       minValue: 0,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -388,22 +370,21 @@ Characteristic.CarbonMonoxidePeakLevel = CarbonMonoxidePeakLevel;
  */
 
 export class ChargingState extends Characteristic {
-
   // The value property of ChargingState must be one of the following:
   static readonly NOT_CHARGING = 0;
   static readonly CHARGING = 1;
   static readonly NOT_CHARGEABLE = 2;
 
-  static readonly UUID: string = '0000008F-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000008F-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Charging State', ChargingState.UUID);
+    super("Charging State", ChargingState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -416,17 +397,16 @@ Characteristic.ChargingState = ChargingState;
  */
 
 export class ColorTemperature extends Characteristic {
-
-  static readonly UUID: string = '000000CE-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000CE-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Color Temperature', ColorTemperature.UUID);
+    super("Color Temperature", ColorTemperature.UUID);
     this.setProps({
       format: Formats.UINT32,
       maxValue: 500,
       minValue: 140,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -439,21 +419,20 @@ Characteristic.ColorTemperature = ColorTemperature;
  */
 
 export class ContactSensorState extends Characteristic {
-
   // The value property of ContactSensorState must be one of the following:
   static readonly CONTACT_DETECTED = 0;
   static readonly CONTACT_NOT_DETECTED = 1;
 
-  static readonly UUID: string = '0000006A-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000006A-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Contact Sensor State', ContactSensorState.UUID);
+    super("Contact Sensor State", ContactSensorState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -466,18 +445,17 @@ Characteristic.ContactSensorState = ContactSensorState;
  */
 
 export class CoolingThresholdTemperature extends Characteristic {
-
-  static readonly UUID: string = '0000000D-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000000D-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Cooling Threshold Temperature', CoolingThresholdTemperature.UUID);
+    super("Cooling Threshold Temperature", CoolingThresholdTemperature.UUID);
     this.setProps({
       format: Formats.FLOAT,
       unit: Units.CELSIUS,
       maxValue: 35,
       minValue: 10,
       minStep: 0.1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -490,22 +468,21 @@ Characteristic.CoolingThresholdTemperature = CoolingThresholdTemperature;
  */
 
 export class CurrentAirPurifierState extends Characteristic {
-
   // The value property of CurrentAirPurifierState must be one of the following:
   static readonly INACTIVE = 0;
   static readonly IDLE = 1;
   static readonly PURIFYING_AIR = 2;
 
-  static readonly UUID: string = '000000A9-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000A9-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Current Air Purifier State', CurrentAirPurifierState.UUID);
+    super("Current Air Purifier State", CurrentAirPurifierState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -513,23 +490,21 @@ export class CurrentAirPurifierState extends Characteristic {
 
 Characteristic.CurrentAirPurifierState = CurrentAirPurifierState;
 
-
 /**
  * Characteristic "Current Ambient Light Level"
  */
 
 export class CurrentAmbientLightLevel extends Characteristic {
-
-  static readonly UUID: string = '0000006B-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000006B-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Current Ambient Light Level', CurrentAmbientLightLevel.UUID);
+    super("Current Ambient Light Level", CurrentAmbientLightLevel.UUID);
     this.setProps({
       format: Formats.FLOAT,
       unit: Units.LUX,
       maxValue: 100000,
       minValue: 0.0001,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -542,7 +517,6 @@ Characteristic.CurrentAmbientLightLevel = CurrentAmbientLightLevel;
  */
 
 export class CurrentDoorState extends Characteristic {
-
   // The value property of CurrentDoorState must be one of the following:
   static readonly OPEN = 0;
   static readonly CLOSED = 1;
@@ -550,16 +524,16 @@ export class CurrentDoorState extends Characteristic {
   static readonly CLOSING = 3;
   static readonly STOPPED = 4;
 
-  static readonly UUID: string = '0000000E-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000000E-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Current Door State', CurrentDoorState.UUID);
+    super("Current Door State", CurrentDoorState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 4,
       minValue: 0,
       validValues: [0, 1, 2, 3, 4],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -572,22 +546,21 @@ Characteristic.CurrentDoorState = CurrentDoorState;
  */
 
 export class CurrentFanState extends Characteristic {
-
   // The value property of CurrentFanState must be one of the following:
   static readonly INACTIVE = 0;
   static readonly IDLE = 1;
   static readonly BLOWING_AIR = 2;
 
-  static readonly UUID: string = '000000AF-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000AF-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Current Fan State', CurrentFanState.UUID);
+    super("Current Fan State", CurrentFanState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -600,23 +573,22 @@ Characteristic.CurrentFanState = CurrentFanState;
  */
 
 export class CurrentHeaterCoolerState extends Characteristic {
-
   // The value property of CurrentHeaterCoolerState must be one of the following:
   static readonly INACTIVE = 0;
   static readonly IDLE = 1;
   static readonly HEATING = 2;
   static readonly COOLING = 3;
 
-  static readonly UUID: string = '000000B1-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000B1-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Current Heater Cooler State', CurrentHeaterCoolerState.UUID);
+    super("Current Heater Cooler State", CurrentHeaterCoolerState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 3,
       minValue: 0,
       validValues: [0, 1, 2, 3],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -629,22 +601,21 @@ Characteristic.CurrentHeaterCoolerState = CurrentHeaterCoolerState;
  */
 
 export class CurrentHeatingCoolingState extends Characteristic {
-
   // The value property of CurrentHeatingCoolingState must be one of the following:
   static readonly OFF = 0;
   static readonly HEAT = 1;
   static readonly COOL = 2;
 
-  static readonly UUID: string = '0000000F-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000000F-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Current Heating Cooling State', CurrentHeatingCoolingState.UUID);
+    super("Current Heating Cooling State", CurrentHeatingCoolingState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -657,18 +628,17 @@ Characteristic.CurrentHeatingCoolingState = CurrentHeatingCoolingState;
  */
 
 export class CurrentHorizontalTiltAngle extends Characteristic {
-
-  static readonly UUID: string = '0000006C-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000006C-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Current Horizontal Tilt Angle', CurrentHorizontalTiltAngle.UUID);
+    super("Current Horizontal Tilt Angle", CurrentHorizontalTiltAngle.UUID);
     this.setProps({
       format: Formats.INT,
       unit: Units.ARC_DEGREE,
       maxValue: 90,
       minValue: -90,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -681,23 +651,22 @@ Characteristic.CurrentHorizontalTiltAngle = CurrentHorizontalTiltAngle;
  */
 
 export class CurrentHumidifierDehumidifierState extends Characteristic {
-
   // The value property of CurrentHumidifierDehumidifierState must be one of the following:
   static readonly INACTIVE = 0;
   static readonly IDLE = 1;
   static readonly HUMIDIFYING = 2;
   static readonly DEHUMIDIFYING = 3;
 
-  static readonly UUID: string = '000000B3-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000B3-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Current Humidifier Dehumidifier State', CurrentHumidifierDehumidifierState.UUID);
+    super("Current Humidifier Dehumidifier State", CurrentHumidifierDehumidifierState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 3,
       minValue: 0,
       validValues: [0, 1, 2, 3],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -710,18 +679,17 @@ Characteristic.CurrentHumidifierDehumidifierState = CurrentHumidifierDehumidifie
  */
 
 export class CurrentPosition extends Characteristic {
-
-  static readonly UUID: string = '0000006D-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000006D-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Current Position', CurrentPosition.UUID);
+    super("Current Position", CurrentPosition.UUID);
     this.setProps({
       format: Formats.UINT8,
       unit: Units.PERCENTAGE,
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -734,18 +702,17 @@ Characteristic.CurrentPosition = CurrentPosition;
  */
 
 export class CurrentRelativeHumidity extends Characteristic {
-
-  static readonly UUID: string = '00000010-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000010-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Current Relative Humidity', CurrentRelativeHumidity.UUID);
+    super("Current Relative Humidity", CurrentRelativeHumidity.UUID);
     this.setProps({
       format: Formats.FLOAT,
       unit: Units.PERCENTAGE,
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -758,22 +725,21 @@ Characteristic.CurrentRelativeHumidity = CurrentRelativeHumidity;
  */
 
 export class CurrentSlatState extends Characteristic {
-
   // The value property of CurrentSlatState must be one of the following:
   static readonly FIXED = 0;
   static readonly JAMMED = 1;
   static readonly SWINGING = 2;
 
-  static readonly UUID: string = '000000AA-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000AA-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Current Slat State', CurrentSlatState.UUID);
+    super("Current Slat State", CurrentSlatState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -786,18 +752,17 @@ Characteristic.CurrentSlatState = CurrentSlatState;
  */
 
 export class CurrentTemperature extends Characteristic {
-
-  static readonly UUID: string = '00000011-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000011-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Current Temperature', CurrentTemperature.UUID);
+    super("Current Temperature", CurrentTemperature.UUID);
     this.setProps({
       format: Formats.FLOAT,
       unit: Units.CELSIUS,
       maxValue: 100,
       minValue: 0,
       minStep: 0.1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -810,18 +775,17 @@ Characteristic.CurrentTemperature = CurrentTemperature;
  */
 
 export class CurrentTiltAngle extends Characteristic {
-
-  static readonly UUID: string = '000000C1-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000C1-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Current Tilt Angle', CurrentTiltAngle.UUID);
+    super("Current Tilt Angle", CurrentTiltAngle.UUID);
     this.setProps({
       format: Formats.INT,
       unit: Units.ARC_DEGREE,
       maxValue: 90,
       minValue: -90,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -834,18 +798,17 @@ Characteristic.CurrentTiltAngle = CurrentTiltAngle;
  */
 
 export class CurrentVerticalTiltAngle extends Characteristic {
-
-  static readonly UUID: string = '0000006E-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000006E-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Current Vertical Tilt Angle', CurrentVerticalTiltAngle.UUID);
+    super("Current Vertical Tilt Angle", CurrentVerticalTiltAngle.UUID);
     this.setProps({
       format: Formats.INT,
       unit: Units.ARC_DEGREE,
       maxValue: 90,
       minValue: -90,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -858,14 +821,13 @@ Characteristic.CurrentVerticalTiltAngle = CurrentVerticalTiltAngle;
  */
 
 export class DigitalZoom extends Characteristic {
-
-  static readonly UUID: string = '0000011D-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000011D-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Digital Zoom', DigitalZoom.UUID);
+    super("Digital Zoom", DigitalZoom.UUID);
     this.setProps({
       format: Formats.FLOAT,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -878,21 +840,20 @@ Characteristic.DigitalZoom = DigitalZoom;
  */
 
 export class FilterChangeIndication extends Characteristic {
-
   // The value property of FilterChangeIndication must be one of the following:
   static readonly FILTER_OK = 0;
   static readonly CHANGE_FILTER = 1;
 
-  static readonly UUID: string = '000000AC-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000AC-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Filter Change Indication', FilterChangeIndication.UUID);
+    super("Filter Change Indication", FilterChangeIndication.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -905,16 +866,15 @@ Characteristic.FilterChangeIndication = FilterChangeIndication;
  */
 
 export class FilterLifeLevel extends Characteristic {
-
-  static readonly UUID: string = '000000AB-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000AB-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Filter Life Level', FilterLifeLevel.UUID);
+    super("Filter Life Level", FilterLifeLevel.UUID);
     this.setProps({
       format: Formats.FLOAT,
       maxValue: 100,
       minValue: 0,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -927,14 +887,13 @@ Characteristic.FilterLifeLevel = FilterLifeLevel;
  */
 
 export class FirmwareRevision extends Characteristic {
-
-  static readonly UUID: string = '00000052-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000052-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Firmware Revision', FirmwareRevision.UUID);
+    super("Firmware Revision", FirmwareRevision.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.READ]
+      perms: [Perms.READ],
     });
     this.value = this.getDefaultValue();
   }
@@ -947,14 +906,13 @@ Characteristic.FirmwareRevision = FirmwareRevision;
  */
 
 export class HardwareRevision extends Characteristic {
-
-  static readonly UUID: string = '00000053-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000053-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Hardware Revision', HardwareRevision.UUID);
+    super("Hardware Revision", HardwareRevision.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.READ]
+      perms: [Perms.READ],
     });
     this.value = this.getDefaultValue();
   }
@@ -967,18 +925,17 @@ Characteristic.HardwareRevision = HardwareRevision;
  */
 
 export class HeatingThresholdTemperature extends Characteristic {
-
-  static readonly UUID: string = '00000012-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000012-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Heating Threshold Temperature', HeatingThresholdTemperature.UUID);
+    super("Heating Threshold Temperature", HeatingThresholdTemperature.UUID);
     this.setProps({
       format: Formats.FLOAT,
       unit: Units.CELSIUS,
       maxValue: 25,
       minValue: 0,
       minStep: 0.1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -991,14 +948,13 @@ Characteristic.HeatingThresholdTemperature = HeatingThresholdTemperature;
  */
 
 export class HoldPosition extends Characteristic {
-
-  static readonly UUID: string = '0000006F-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000006F-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Hold Position', HoldPosition.UUID);
+    super("Hold Position", HoldPosition.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.WRITE]
+      perms: [Perms.WRITE],
     });
     this.value = this.getDefaultValue();
   }
@@ -1011,18 +967,17 @@ Characteristic.HoldPosition = HoldPosition;
  */
 
 export class Hue extends Characteristic {
-
-  static readonly UUID: string = '00000013-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000013-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Hue', Hue.UUID);
+    super("Hue", Hue.UUID);
     this.setProps({
       format: Formats.FLOAT,
       unit: Units.ARC_DEGREE,
       maxValue: 360,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1035,14 +990,13 @@ Characteristic.Hue = Hue;
  */
 
 export class Identify extends Characteristic {
-
-  static readonly UUID: string = '00000014-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000014-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Identify', Identify.UUID);
+    super("Identify", Identify.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.WRITE]
+      perms: [Perms.WRITE],
     });
     this.value = this.getDefaultValue();
   }
@@ -1055,14 +1009,13 @@ Characteristic.Identify = Identify;
  */
 
 export class ImageMirroring extends Characteristic {
-
-  static readonly UUID: string = '0000011F-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000011F-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Image Mirroring', ImageMirroring.UUID);
+    super("Image Mirroring", ImageMirroring.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1075,18 +1028,17 @@ Characteristic.ImageMirroring = ImageMirroring;
  */
 
 export class ImageRotation extends Characteristic {
-
-  static readonly UUID: string = '0000011E-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000011E-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Image Rotation', ImageRotation.UUID);
+    super("Image Rotation", ImageRotation.UUID);
     this.setProps({
       format: Formats.FLOAT,
       unit: Units.ARC_DEGREE,
       maxValue: 270,
       minValue: 0,
       minStep: 90,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1099,21 +1051,20 @@ Characteristic.ImageRotation = ImageRotation;
  */
 
 export class InUse extends Characteristic {
-
   // The value property of InUse must be one of the following:
   static readonly NOT_IN_USE = 0;
   static readonly IN_USE = 1;
 
-  static readonly UUID: string = '000000D2-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000D2-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('In Use', InUse.UUID);
+    super("In Use", InUse.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1126,21 +1077,20 @@ Characteristic.InUse = InUse;
  */
 
 export class IsConfigured extends Characteristic {
-
   // The value property of IsConfigured must be one of the following:
   static readonly NOT_CONFIGURED = 0;
   static readonly CONFIGURED = 1;
 
-  static readonly UUID: string = '000000D6-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000D6-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Is Configured', IsConfigured.UUID);
+    super("Is Configured", IsConfigured.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1153,21 +1103,20 @@ Characteristic.IsConfigured = IsConfigured;
  */
 
 export class LeakDetected extends Characteristic {
-
   // The value property of LeakDetected must be one of the following:
   static readonly LEAK_NOT_DETECTED = 0;
   static readonly LEAK_DETECTED = 1;
 
-  static readonly UUID: string = '00000070-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000070-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Leak Detected', LeakDetected.UUID);
+    super("Leak Detected", LeakDetected.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1180,14 +1129,13 @@ Characteristic.LeakDetected = LeakDetected;
  */
 
 export class LockControlPoint extends Characteristic {
-
-  static readonly UUID: string = '00000019-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000019-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Lock Control Point', LockControlPoint.UUID);
+    super("Lock Control Point", LockControlPoint.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.WRITE]
+      perms: [Perms.WRITE],
     });
     this.value = this.getDefaultValue();
   }
@@ -1200,23 +1148,22 @@ Characteristic.LockControlPoint = LockControlPoint;
  */
 
 export class LockCurrentState extends Characteristic {
-
   // The value property of LockCurrentState must be one of the following:
   static readonly UNSECURED = 0;
   static readonly SECURED = 1;
   static readonly JAMMED = 2;
   static readonly UNKNOWN = 3;
 
-  static readonly UUID: string = '0000001D-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000001D-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Lock Current State', LockCurrentState.UUID);
+    super("Lock Current State", LockCurrentState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 3,
       minValue: 0,
       validValues: [0, 1, 2, 3],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1229,7 +1176,6 @@ Characteristic.LockCurrentState = LockCurrentState;
  */
 
 export class LockLastKnownAction extends Characteristic {
-
   // The value property of LockLastKnownAction must be one of the following:
   static readonly SECURED_PHYSICALLY_INTERIOR = 0;
   static readonly UNSECURED_PHYSICALLY_INTERIOR = 1;
@@ -1241,16 +1187,16 @@ export class LockLastKnownAction extends Characteristic {
   static readonly UNSECURED_REMOTELY = 7;
   static readonly SECURED_BY_AUTO_SECURE_TIMEOUT = 8;
 
-  static readonly UUID: string = '0000001C-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000001C-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Lock Last Known Action', LockLastKnownAction.UUID);
+    super("Lock Last Known Action", LockLastKnownAction.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 8,
       minValue: 0,
       validValues: [0, 1, 2, 3, 4, 5, 6, 7, 8],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1263,15 +1209,14 @@ Characteristic.LockLastKnownAction = LockLastKnownAction;
  */
 
 export class LockManagementAutoSecurityTimeout extends Characteristic {
-
-  static readonly UUID: string = '0000001A-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000001A-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Lock Management Auto Security Timeout', LockManagementAutoSecurityTimeout.UUID);
+    super("Lock Management Auto Security Timeout", LockManagementAutoSecurityTimeout.UUID);
     this.setProps({
       format: Formats.UINT32,
       unit: Units.SECONDS,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1284,21 +1229,20 @@ Characteristic.LockManagementAutoSecurityTimeout = LockManagementAutoSecurityTim
  */
 
 export class LockPhysicalControls extends Characteristic {
-
   // The value property of LockPhysicalControls must be one of the following:
   static readonly CONTROL_LOCK_DISABLED = 0;
   static readonly CONTROL_LOCK_ENABLED = 1;
 
-  static readonly UUID: string = '000000A7-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000A7-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Lock Physical Controls', LockPhysicalControls.UUID);
+    super("Lock Physical Controls", LockPhysicalControls.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1311,21 +1255,20 @@ Characteristic.LockPhysicalControls = LockPhysicalControls;
  */
 
 export class LockTargetState extends Characteristic {
-
   // The value property of LockTargetState must be one of the following:
   static readonly UNSECURED = 0;
   static readonly SECURED = 1;
 
-  static readonly UUID: string = '0000001E-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000001E-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Lock Target State', LockTargetState.UUID);
+    super("Lock Target State", LockTargetState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1338,14 +1281,13 @@ Characteristic.LockTargetState = LockTargetState;
  */
 
 export class Logs extends Characteristic {
-
-  static readonly UUID: string = '0000001F-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000001F-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Logs', Logs.UUID);
+    super("Logs", Logs.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1358,14 +1300,13 @@ Characteristic.Logs = Logs;
  */
 
 export class Manufacturer extends Characteristic {
-
-  static readonly UUID: string = '00000020-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000020-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Manufacturer', Manufacturer.UUID);
+    super("Manufacturer", Manufacturer.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.READ]
+      perms: [Perms.READ],
     });
     this.value = this.getDefaultValue();
   }
@@ -1378,14 +1319,13 @@ Characteristic.Manufacturer = Manufacturer;
  */
 
 export class Model extends Characteristic {
-
-  static readonly UUID: string = '00000021-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000021-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Model', Model.UUID);
+    super("Model", Model.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.READ]
+      perms: [Perms.READ],
     });
     this.value = this.getDefaultValue();
   }
@@ -1398,14 +1338,13 @@ Characteristic.Model = Model;
  */
 
 export class MotionDetected extends Characteristic {
-
-  static readonly UUID: string = '00000022-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000022-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Motion Detected', MotionDetected.UUID);
+    super("Motion Detected", MotionDetected.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1418,14 +1357,13 @@ Characteristic.MotionDetected = MotionDetected;
  */
 
 export class Mute extends Characteristic {
-
-  static readonly UUID: string = '0000011A-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000011A-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Mute', Mute.UUID);
+    super("Mute", Mute.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1438,14 +1376,13 @@ Characteristic.Mute = Mute;
  */
 
 export class Name extends Characteristic {
-
-  static readonly UUID: string = '00000023-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000023-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Name', Name.UUID);
+    super("Name", Name.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.READ]
+      perms: [Perms.READ],
     });
     this.value = this.getDefaultValue();
   }
@@ -1458,14 +1395,13 @@ Characteristic.Name = Name;
  */
 
 export class NightVision extends Characteristic {
-
-  static readonly UUID: string = '0000011B-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000011B-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Night Vision', NightVision.UUID);
+    super("Night Vision", NightVision.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1478,17 +1414,16 @@ Characteristic.NightVision = NightVision;
  */
 
 export class NitrogenDioxideDensity extends Characteristic {
-
-  static readonly UUID: string = '000000C4-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000C4-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Nitrogen Dioxide Density', NitrogenDioxideDensity.UUID);
+    super("Nitrogen Dioxide Density", NitrogenDioxideDensity.UUID);
     this.setProps({
       format: Formats.FLOAT,
       maxValue: 1000,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1501,14 +1436,13 @@ Characteristic.NitrogenDioxideDensity = NitrogenDioxideDensity;
  */
 
 export class ObstructionDetected extends Characteristic {
-
-  static readonly UUID: string = '00000024-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000024-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Obstruction Detected', ObstructionDetected.UUID);
+    super("Obstruction Detected", ObstructionDetected.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1521,21 +1455,20 @@ Characteristic.ObstructionDetected = ObstructionDetected;
  */
 
 export class OccupancyDetected extends Characteristic {
-
   // The value property of OccupancyDetected must be one of the following:
   static readonly OCCUPANCY_NOT_DETECTED = 0;
   static readonly OCCUPANCY_DETECTED = 1;
 
-  static readonly UUID: string = '00000071-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000071-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Occupancy Detected', OccupancyDetected.UUID);
+    super("Occupancy Detected", OccupancyDetected.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1548,14 +1481,13 @@ Characteristic.OccupancyDetected = OccupancyDetected;
  */
 
 export class On extends Characteristic {
-
-  static readonly UUID: string = '00000025-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000025-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('On', On.UUID);
+    super("On", On.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1568,14 +1500,13 @@ Characteristic.On = On;
  */
 
 export class OpticalZoom extends Characteristic {
-
-  static readonly UUID: string = '0000011C-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000011C-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Optical Zoom', OpticalZoom.UUID);
+    super("Optical Zoom", OpticalZoom.UUID);
     this.setProps({
       format: Formats.FLOAT,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1588,14 +1519,13 @@ Characteristic.OpticalZoom = OpticalZoom;
  */
 
 export class OutletInUse extends Characteristic {
-
-  static readonly UUID: string = '00000026-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000026-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Outlet In Use', OutletInUse.UUID);
+    super("Outlet In Use", OutletInUse.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1608,17 +1538,16 @@ Characteristic.OutletInUse = OutletInUse;
  */
 
 export class OzoneDensity extends Characteristic {
-
-  static readonly UUID: string = '000000C3-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000C3-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Ozone Density', OzoneDensity.UUID);
+    super("Ozone Density", OzoneDensity.UUID);
     this.setProps({
       format: Formats.FLOAT,
       maxValue: 1000,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1631,14 +1560,13 @@ Characteristic.OzoneDensity = OzoneDensity;
  */
 
 export class PairSetup extends Characteristic {
-
-  static readonly UUID: string = '0000004C-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000004C-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Pair Setup', PairSetup.UUID);
+    super("Pair Setup", PairSetup.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.WRITE]
+      perms: [Perms.READ, Perms.WRITE],
     });
     this.value = this.getDefaultValue();
   }
@@ -1651,14 +1579,13 @@ Characteristic.PairSetup = PairSetup;
  */
 
 export class PairVerify extends Characteristic {
-
-  static readonly UUID: string = '0000004E-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000004E-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Pair Verify', PairVerify.UUID);
+    super("Pair Verify", PairVerify.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.WRITE]
+      perms: [Perms.READ, Perms.WRITE],
     });
     this.value = this.getDefaultValue();
   }
@@ -1671,14 +1598,13 @@ Characteristic.PairVerify = PairVerify;
  */
 
 export class PairingFeatures extends Characteristic {
-
-  static readonly UUID: string = '0000004F-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000004F-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Pairing Features', PairingFeatures.UUID);
+    super("Pairing Features", PairingFeatures.UUID);
     this.setProps({
       format: Formats.UINT8,
-      perms: [Perms.READ]
+      perms: [Perms.READ],
     });
     this.value = this.getDefaultValue();
   }
@@ -1691,14 +1617,13 @@ Characteristic.PairingFeatures = PairingFeatures;
  */
 
 export class PairingPairings extends Characteristic {
-
-  static readonly UUID: string = '00000050-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000050-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Pairing Pairings', PairingPairings.UUID);
+    super("Pairing Pairings", PairingPairings.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.WRITE]
+      perms: [Perms.READ, Perms.WRITE],
     });
     this.value = this.getDefaultValue();
   }
@@ -1711,17 +1636,16 @@ Characteristic.PairingPairings = PairingPairings;
  */
 
 export class PM10Density extends Characteristic {
-
-  static readonly UUID: string = '000000C7-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000C7-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('PM10 Density', PM10Density.UUID);
+    super("PM10 Density", PM10Density.UUID);
     this.setProps({
       format: Formats.FLOAT,
       maxValue: 1000,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1734,17 +1658,16 @@ Characteristic.PM10Density = PM10Density;
  */
 
 export class PM2_5Density extends Characteristic {
-
-  static readonly UUID: string = '000000C6-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000C6-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('PM2.5 Density', PM2_5Density.UUID);
+    super("PM2.5 Density", PM2_5Density.UUID);
     this.setProps({
       format: Formats.FLOAT,
       maxValue: 1000,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1757,22 +1680,21 @@ Characteristic.PM2_5Density = PM2_5Density;
  */
 
 export class PositionState extends Characteristic {
-
   // The value property of PositionState must be one of the following:
   static readonly DECREASING = 0;
   static readonly INCREASING = 1;
   static readonly STOPPED = 2;
 
-  static readonly UUID: string = '00000072-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000072-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Position State', PositionState.UUID);
+    super("Position State", PositionState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1785,22 +1707,21 @@ Characteristic.PositionState = PositionState;
  */
 
 export class ProgramMode extends Characteristic {
-
   // The value property of ProgramMode must be one of the following:
   static readonly NO_PROGRAM_SCHEDULED = 0;
   static readonly PROGRAM_SCHEDULED = 1;
   static readonly PROGRAM_SCHEDULED_MANUAL_MODE_ = 2;
 
-  static readonly UUID: string = '000000D1-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000D1-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Program Mode', ProgramMode.UUID);
+    super("Program Mode", ProgramMode.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1813,22 +1734,21 @@ Characteristic.ProgramMode = ProgramMode;
  */
 
 export class ProgrammableSwitchEvent extends Characteristic {
-
   // The value property of ProgrammableSwitchEvent must be one of the following:
   static readonly SINGLE_PRESS = 0;
   static readonly DOUBLE_PRESS = 1;
   static readonly LONG_PRESS = 2;
 
-  static readonly UUID: string = '00000073-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000073-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Programmable Switch Event', ProgrammableSwitchEvent.UUID);
+    super("Programmable Switch Event", ProgrammableSwitchEvent.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.eventOnlyCharacteristic = true; //Manual addition.
     this.value = this.getDefaultValue();
@@ -1842,17 +1762,16 @@ Characteristic.ProgrammableSwitchEvent = ProgrammableSwitchEvent;
  */
 
 export class RelativeHumidityDehumidifierThreshold extends Characteristic {
-
-  static readonly UUID: string = '000000C9-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000C9-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Relative Humidity Dehumidifier Threshold', RelativeHumidityDehumidifierThreshold.UUID);
+    super("Relative Humidity Dehumidifier Threshold", RelativeHumidityDehumidifierThreshold.UUID);
     this.setProps({
       format: Formats.FLOAT,
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1865,18 +1784,17 @@ Characteristic.RelativeHumidityDehumidifierThreshold = RelativeHumidityDehumidif
  */
 
 export class RelativeHumidityHumidifierThreshold extends Characteristic {
-
-  static readonly UUID: string = '000000CA-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000CA-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Relative Humidity Humidifier Threshold', RelativeHumidityHumidifierThreshold.UUID);
+    super("Relative Humidity Humidifier Threshold", RelativeHumidityHumidifierThreshold.UUID);
     this.setProps({
       format: Formats.FLOAT,
       unit: Units.PERCENTAGE,
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1889,17 +1807,16 @@ Characteristic.RelativeHumidityHumidifierThreshold = RelativeHumidityHumidifierT
  */
 
 export class RemainingDuration extends Characteristic {
-
-  static readonly UUID: string = '000000D4-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000D4-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Remaining Duration', RemainingDuration.UUID);
+    super("Remaining Duration", RemainingDuration.UUID);
     this.setProps({
       format: Formats.UINT32,
       maxValue: 3600,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1912,17 +1829,16 @@ Characteristic.RemainingDuration = RemainingDuration;
  */
 
 export class ResetFilterIndication extends Characteristic {
-
-  static readonly UUID: string = '000000AD-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000AD-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Reset Filter Indication', ResetFilterIndication.UUID);
+    super("Reset Filter Indication", ResetFilterIndication.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 1,
       minStep: 1,
-      perms: [Perms.WRITE]
+      perms: [Perms.WRITE],
     });
     this.value = this.getDefaultValue();
   }
@@ -1935,21 +1851,20 @@ Characteristic.ResetFilterIndication = ResetFilterIndication;
  */
 
 export class RotationDirection extends Characteristic {
-
   // The value property of RotationDirection must be one of the following:
   static readonly CLOCKWISE = 0;
   static readonly COUNTER_CLOCKWISE = 1;
 
-  static readonly UUID: string = '00000028-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000028-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Rotation Direction', RotationDirection.UUID);
+    super("Rotation Direction", RotationDirection.UUID);
     this.setProps({
       format: Formats.INT,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1962,18 +1877,17 @@ Characteristic.RotationDirection = RotationDirection;
  */
 
 export class RotationSpeed extends Characteristic {
-
-  static readonly UUID: string = '00000029-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000029-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Rotation Speed', RotationSpeed.UUID);
+    super("Rotation Speed", RotationSpeed.UUID);
     this.setProps({
       format: Formats.FLOAT,
       unit: Units.PERCENTAGE,
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -1986,18 +1900,17 @@ Characteristic.RotationSpeed = RotationSpeed;
  */
 
 export class Saturation extends Characteristic {
-
-  static readonly UUID: string = '0000002F-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000002F-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Saturation', Saturation.UUID);
+    super("Saturation", Saturation.UUID);
     this.setProps({
       format: Formats.FLOAT,
       unit: Units.PERCENTAGE,
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2010,17 +1923,16 @@ Characteristic.Saturation = Saturation;
  */
 
 export class SecuritySystemAlarmType extends Characteristic {
-
-  static readonly UUID: string = '0000008E-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000008E-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Security System Alarm Type', SecuritySystemAlarmType.UUID);
+    super("Security System Alarm Type", SecuritySystemAlarmType.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2033,7 +1945,6 @@ Characteristic.SecuritySystemAlarmType = SecuritySystemAlarmType;
  */
 
 export class SecuritySystemCurrentState extends Characteristic {
-
   // The value property of SecuritySystemCurrentState must be one of the following:
   static readonly STAY_ARM = 0;
   static readonly AWAY_ARM = 1;
@@ -2041,16 +1952,16 @@ export class SecuritySystemCurrentState extends Characteristic {
   static readonly DISARMED = 3;
   static readonly ALARM_TRIGGERED = 4;
 
-  static readonly UUID: string = '00000066-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000066-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Security System Current State', SecuritySystemCurrentState.UUID);
+    super("Security System Current State", SecuritySystemCurrentState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 4,
       minValue: 0,
       validValues: [0, 1, 2, 3, 4],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2063,23 +1974,22 @@ Characteristic.SecuritySystemCurrentState = SecuritySystemCurrentState;
  */
 
 export class SecuritySystemTargetState extends Characteristic {
-
   // The value property of SecuritySystemTargetState must be one of the following:
   static readonly STAY_ARM = 0;
   static readonly AWAY_ARM = 1;
   static readonly NIGHT_ARM = 2;
   static readonly DISARM = 3;
 
-  static readonly UUID: string = '00000067-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000067-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Security System Target State', SecuritySystemTargetState.UUID);
+    super("Security System Target State", SecuritySystemTargetState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 3,
       minValue: 0,
       validValues: [0, 1, 2, 3],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2092,14 +2002,13 @@ Characteristic.SecuritySystemTargetState = SecuritySystemTargetState;
  */
 
 export class SelectedRTPStreamConfiguration extends Characteristic {
-
-  static readonly UUID: string = '00000117-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000117-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Selected RTP Stream Configuration', SelectedRTPStreamConfiguration.UUID);
+    super("Selected RTP Stream Configuration", SelectedRTPStreamConfiguration.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.WRITE]
+      perms: [Perms.READ, Perms.WRITE],
     });
     this.value = this.getDefaultValue();
   }
@@ -2112,14 +2021,13 @@ Characteristic.SelectedRTPStreamConfiguration = SelectedRTPStreamConfiguration;
  */
 
 export class SerialNumber extends Characteristic {
-
-  static readonly UUID: string = '00000030-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000030-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Serial Number', SerialNumber.UUID);
+    super("Serial Number", SerialNumber.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.READ]
+      perms: [Perms.READ],
     });
     this.value = this.getDefaultValue();
   }
@@ -2132,17 +2040,16 @@ Characteristic.SerialNumber = SerialNumber;
  */
 
 export class ServiceLabelIndex extends Characteristic {
-
-  static readonly UUID: string = '000000CB-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000CB-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Service Label Index', ServiceLabelIndex.UUID);
+    super("Service Label Index", ServiceLabelIndex.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 255,
       minValue: 1,
       minStep: 1,
-      perms: [Perms.READ]
+      perms: [Perms.READ],
     });
     this.value = this.getDefaultValue();
   }
@@ -2155,21 +2062,20 @@ Characteristic.ServiceLabelIndex = ServiceLabelIndex;
  */
 
 export class ServiceLabelNamespace extends Characteristic {
-
   // The value property of ServiceLabelNamespace must be one of the following:
   static readonly DOTS = 0;
   static readonly ARABIC_NUMERALS = 1;
 
-  static readonly UUID: string = '000000CD-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000CD-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Service Label Namespace', ServiceLabelNamespace.UUID);
+    super("Service Label Namespace", ServiceLabelNamespace.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ]
+      perms: [Perms.READ],
     });
     this.value = this.getDefaultValue();
   }
@@ -2182,17 +2088,16 @@ Characteristic.ServiceLabelNamespace = ServiceLabelNamespace;
  */
 
 export class SetDuration extends Characteristic {
-
-  static readonly UUID: string = '000000D3-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000D3-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Set Duration', SetDuration.UUID);
+    super("Set Duration", SetDuration.UUID);
     this.setProps({
       format: Formats.UINT32,
       maxValue: 3600,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2205,14 +2110,13 @@ Characteristic.SetDuration = SetDuration;
  */
 
 export class SetupEndpoints extends Characteristic {
-
-  static readonly UUID: string = '00000118-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000118-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Setup Endpoints', SetupEndpoints.UUID);
+    super("Setup Endpoints", SetupEndpoints.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.WRITE]
+      perms: [Perms.READ, Perms.WRITE],
     });
     this.value = this.getDefaultValue();
   }
@@ -2225,21 +2129,20 @@ Characteristic.SetupEndpoints = SetupEndpoints;
  */
 
 export class SlatType extends Characteristic {
-
   // The value property of SlatType must be one of the following:
   static readonly HORIZONTAL = 0;
   static readonly VERTICAL = 1;
 
-  static readonly UUID: string = '000000C0-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000C0-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Slat Type', SlatType.UUID);
+    super("Slat Type", SlatType.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ]
+      perms: [Perms.READ],
     });
     this.value = this.getDefaultValue();
   }
@@ -2252,21 +2155,20 @@ Characteristic.SlatType = SlatType;
  */
 
 export class SmokeDetected extends Characteristic {
-
   // The value property of SmokeDetected must be one of the following:
   static readonly SMOKE_NOT_DETECTED = 0;
   static readonly SMOKE_DETECTED = 1;
 
-  static readonly UUID: string = '00000076-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000076-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Smoke Detected', SmokeDetected.UUID);
+    super("Smoke Detected", SmokeDetected.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2279,14 +2181,13 @@ Characteristic.SmokeDetected = SmokeDetected;
  */
 
 export class StatusActive extends Characteristic {
-
-  static readonly UUID: string = '00000075-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000075-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Status Active', StatusActive.UUID);
+    super("Status Active", StatusActive.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2299,21 +2200,20 @@ Characteristic.StatusActive = StatusActive;
  */
 
 export class StatusFault extends Characteristic {
-
   // The value property of StatusFault must be one of the following:
   static readonly NO_FAULT = 0;
   static readonly GENERAL_FAULT = 1;
 
-  static readonly UUID: string = '00000077-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000077-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Status Fault', StatusFault.UUID);
+    super("Status Fault", StatusFault.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2326,21 +2226,20 @@ Characteristic.StatusFault = StatusFault;
  */
 
 export class StatusJammed extends Characteristic {
-
   // The value property of StatusJammed must be one of the following:
   static readonly NOT_JAMMED = 0;
   static readonly JAMMED = 1;
 
-  static readonly UUID: string = '00000078-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000078-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Status Jammed', StatusJammed.UUID);
+    super("Status Jammed", StatusJammed.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2353,21 +2252,20 @@ Characteristic.StatusJammed = StatusJammed;
  */
 
 export class StatusLowBattery extends Characteristic {
-
   // The value property of StatusLowBattery must be one of the following:
   static readonly BATTERY_LEVEL_NORMAL = 0;
   static readonly BATTERY_LEVEL_LOW = 1;
 
-  static readonly UUID: string = '00000079-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000079-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Status Low Battery', StatusLowBattery.UUID);
+    super("Status Low Battery", StatusLowBattery.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2375,27 +2273,25 @@ export class StatusLowBattery extends Characteristic {
 
 Characteristic.StatusLowBattery = StatusLowBattery;
 
-
 /**
  * Characteristic "Status Tampered"
  */
 
 export class StatusTampered extends Characteristic {
-
   // The value property of StatusTampered must be one of the following:
   static readonly NOT_TAMPERED = 0;
   static readonly TAMPERED = 1;
 
-  static readonly UUID: string = '0000007A-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000007A-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Status Tampered', StatusTampered.UUID);
+    super("Status Tampered", StatusTampered.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2408,14 +2304,13 @@ Characteristic.StatusTampered = StatusTampered;
  */
 
 export class StreamingStatus extends Characteristic {
-
-  static readonly UUID: string = '00000120-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000120-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Streaming Status', StreamingStatus.UUID);
+    super("Streaming Status", StreamingStatus.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2428,17 +2323,16 @@ Characteristic.StreamingStatus = StreamingStatus;
  */
 
 export class SulphurDioxideDensity extends Characteristic {
-
-  static readonly UUID: string = '000000C5-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000C5-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Sulphur Dioxide Density', SulphurDioxideDensity.UUID);
+    super("Sulphur Dioxide Density", SulphurDioxideDensity.UUID);
     this.setProps({
       format: Formats.FLOAT,
       maxValue: 1000,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2451,14 +2345,13 @@ Characteristic.SulphurDioxideDensity = SulphurDioxideDensity;
  */
 
 export class SupportedAudioStreamConfiguration extends Characteristic {
-
-  static readonly UUID: string = '00000115-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000115-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Supported Audio Stream Configuration', SupportedAudioStreamConfiguration.UUID);
+    super("Supported Audio Stream Configuration", SupportedAudioStreamConfiguration.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ]
+      perms: [Perms.READ],
     });
     this.value = this.getDefaultValue();
   }
@@ -2471,14 +2364,13 @@ Characteristic.SupportedAudioStreamConfiguration = SupportedAudioStreamConfigura
  */
 
 export class SupportedRTPConfiguration extends Characteristic {
-
-  static readonly UUID: string = '00000116-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000116-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Supported RTP Configuration', SupportedRTPConfiguration.UUID);
+    super("Supported RTP Configuration", SupportedRTPConfiguration.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ]
+      perms: [Perms.READ],
     });
     this.value = this.getDefaultValue();
   }
@@ -2491,14 +2383,13 @@ Characteristic.SupportedRTPConfiguration = SupportedRTPConfiguration;
  */
 
 export class SupportedVideoStreamConfiguration extends Characteristic {
-
-  static readonly UUID: string = '00000114-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000114-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Supported Video Stream Configuration', SupportedVideoStreamConfiguration.UUID);
+    super("Supported Video Stream Configuration", SupportedVideoStreamConfiguration.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ]
+      perms: [Perms.READ],
     });
     this.value = this.getDefaultValue();
   }
@@ -2511,21 +2402,20 @@ Characteristic.SupportedVideoStreamConfiguration = SupportedVideoStreamConfigura
  */
 
 export class SwingMode extends Characteristic {
-
   // The value property of SwingMode must be one of the following:
   static readonly SWING_DISABLED = 0;
   static readonly SWING_ENABLED = 1;
 
-  static readonly UUID: string = '000000B6-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000B6-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Swing Mode', SwingMode.UUID);
+    super("Swing Mode", SwingMode.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2538,21 +2428,20 @@ Characteristic.SwingMode = SwingMode;
  */
 
 export class TargetAirPurifierState extends Characteristic {
-
   // The value property of TargetAirPurifierState must be one of the following:
   static readonly MANUAL = 0;
   static readonly AUTO = 1;
 
-  static readonly UUID: string = '000000A8-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000A8-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Target Air Purifier State', TargetAirPurifierState.UUID);
+    super("Target Air Purifier State", TargetAirPurifierState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2565,22 +2454,21 @@ Characteristic.TargetAirPurifierState = TargetAirPurifierState;
  */
 
 export class TargetAirQuality extends Characteristic {
-
   // The value property of TargetAirQuality must be one of the following:
   static readonly EXCELLENT = 0;
   static readonly GOOD = 1;
   static readonly FAIR = 2;
 
-  static readonly UUID: string = '000000AE-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000AE-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Target Air Quality', TargetAirQuality.UUID);
+    super("Target Air Quality", TargetAirQuality.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2593,21 +2481,20 @@ Characteristic.TargetAirQuality = TargetAirQuality;
  */
 
 export class TargetDoorState extends Characteristic {
-
   // The value property of TargetDoorState must be one of the following:
   static readonly OPEN = 0;
   static readonly CLOSED = 1;
 
-  static readonly UUID: string = '00000032-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000032-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Target Door State', TargetDoorState.UUID);
+    super("Target Door State", TargetDoorState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2620,21 +2507,20 @@ Characteristic.TargetDoorState = TargetDoorState;
  */
 
 export class TargetFanState extends Characteristic {
-
   // The value property of TargetFanState must be one of the following:
   static readonly MANUAL = 0;
   static readonly AUTO = 1;
 
-  static readonly UUID: string = '000000BF-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000BF-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Target Fan State', TargetFanState.UUID);
+    super("Target Fan State", TargetFanState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2647,22 +2533,21 @@ Characteristic.TargetFanState = TargetFanState;
  */
 
 export class TargetHeaterCoolerState extends Characteristic {
-
   // The value property of TargetHeaterCoolerState must be one of the following:
   static readonly AUTO = 0;
   static readonly HEAT = 1;
   static readonly COOL = 2;
 
-  static readonly UUID: string = '000000B2-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000B2-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Target Heater Cooler State', TargetHeaterCoolerState.UUID);
+    super("Target Heater Cooler State", TargetHeaterCoolerState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2675,23 +2560,22 @@ Characteristic.TargetHeaterCoolerState = TargetHeaterCoolerState;
  */
 
 export class TargetHeatingCoolingState extends Characteristic {
-
   // The value property of TargetHeatingCoolingState must be one of the following:
   static readonly OFF = 0;
   static readonly HEAT = 1;
   static readonly COOL = 2;
   static readonly AUTO = 3;
 
-  static readonly UUID: string = '00000033-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000033-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Target Heating Cooling State', TargetHeatingCoolingState.UUID);
+    super("Target Heating Cooling State", TargetHeatingCoolingState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 3,
       minValue: 0,
       validValues: [0, 1, 2, 3],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2704,18 +2588,17 @@ Characteristic.TargetHeatingCoolingState = TargetHeatingCoolingState;
  */
 
 export class TargetHorizontalTiltAngle extends Characteristic {
-
-  static readonly UUID: string = '0000007B-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000007B-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Target Horizontal Tilt Angle', TargetHorizontalTiltAngle.UUID);
+    super("Target Horizontal Tilt Angle", TargetHorizontalTiltAngle.UUID);
     this.setProps({
       format: Formats.INT,
       unit: Units.ARC_DEGREE,
       maxValue: 90,
       minValue: -90,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2728,7 +2611,6 @@ Characteristic.TargetHorizontalTiltAngle = TargetHorizontalTiltAngle;
  */
 
 export class TargetHumidifierDehumidifierState extends Characteristic {
-
   /**
    * @deprecated Removed in iOS 11. Use HUMIDIFIER_OR_DEHUMIDIFIER instead.
    */
@@ -2739,16 +2621,16 @@ export class TargetHumidifierDehumidifierState extends Characteristic {
   static readonly HUMIDIFIER = 1;
   static readonly DEHUMIDIFIER = 2;
 
-  static readonly UUID: string = '000000B4-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000B4-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Target Humidifier Dehumidifier State', TargetHumidifierDehumidifierState.UUID);
+    super("Target Humidifier Dehumidifier State", TargetHumidifierDehumidifierState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2761,18 +2643,17 @@ Characteristic.TargetHumidifierDehumidifierState = TargetHumidifierDehumidifierS
  */
 
 export class TargetPosition extends Characteristic {
-
-  static readonly UUID: string = '0000007C-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000007C-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Target Position', TargetPosition.UUID);
+    super("Target Position", TargetPosition.UUID);
     this.setProps({
       format: Formats.UINT8,
       unit: Units.PERCENTAGE,
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2785,18 +2666,17 @@ Characteristic.TargetPosition = TargetPosition;
  */
 
 export class TargetRelativeHumidity extends Characteristic {
-
-  static readonly UUID: string = '00000034-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000034-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Target Relative Humidity', TargetRelativeHumidity.UUID);
+    super("Target Relative Humidity", TargetRelativeHumidity.UUID);
     this.setProps({
       format: Formats.FLOAT,
       unit: Units.PERCENTAGE,
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2809,21 +2689,20 @@ Characteristic.TargetRelativeHumidity = TargetRelativeHumidity;
  */
 
 export class TargetSlatState extends Characteristic {
-
   // The value property of TargetSlatState must be one of the following:
   static readonly MANUAL = 0;
   static readonly AUTO = 1;
 
-  static readonly UUID: string = '000000BE-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000BE-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Target Slat State', TargetSlatState.UUID);
+    super("Target Slat State", TargetSlatState.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2836,18 +2715,17 @@ Characteristic.TargetSlatState = TargetSlatState;
  */
 
 export class TargetTemperature extends Characteristic {
-
-  static readonly UUID: string = '00000035-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000035-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Target Temperature', TargetTemperature.UUID);
+    super("Target Temperature", TargetTemperature.UUID);
     this.setProps({
       format: Formats.FLOAT,
       unit: Units.CELSIUS,
       maxValue: 38,
       minValue: 10,
       minStep: 0.1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2860,18 +2738,17 @@ Characteristic.TargetTemperature = TargetTemperature;
  */
 
 export class TargetTiltAngle extends Characteristic {
-
-  static readonly UUID: string = '000000C2-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000C2-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Target Tilt Angle', TargetTiltAngle.UUID);
+    super("Target Tilt Angle", TargetTiltAngle.UUID);
     this.setProps({
       format: Formats.INT,
       unit: Units.ARC_DEGREE,
       maxValue: 90,
       minValue: -90,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2884,18 +2761,17 @@ Characteristic.TargetTiltAngle = TargetTiltAngle;
  */
 
 export class TargetVerticalTiltAngle extends Characteristic {
-
-  static readonly UUID: string = '0000007D-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000007D-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Target Vertical Tilt Angle', TargetVerticalTiltAngle.UUID);
+    super("Target Vertical Tilt Angle", TargetVerticalTiltAngle.UUID);
     this.setProps({
       format: Formats.INT,
       unit: Units.ARC_DEGREE,
       maxValue: 90,
       minValue: -90,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2908,21 +2784,20 @@ Characteristic.TargetVerticalTiltAngle = TargetVerticalTiltAngle;
  */
 
 export class TemperatureDisplayUnits extends Characteristic {
-
   // The value property of TemperatureDisplayUnits must be one of the following:
   static readonly CELSIUS = 0;
   static readonly FAHRENHEIT = 1;
 
-  static readonly UUID: string = '00000036-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000036-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Temperature Display Units', TemperatureDisplayUnits.UUID);
+    super("Temperature Display Units", TemperatureDisplayUnits.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2935,23 +2810,22 @@ Characteristic.TemperatureDisplayUnits = TemperatureDisplayUnits;
  */
 
 export class ValveType extends Characteristic {
-
   // The value property of ValveType must be one of the following:
   static readonly GENERIC_VALVE = 0;
   static readonly IRRIGATION = 1;
   static readonly SHOWER_HEAD = 2;
   static readonly WATER_FAUCET = 3;
 
-  static readonly UUID: string = '000000D5-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000D5-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Valve Type', ValveType.UUID);
+    super("Valve Type", ValveType.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 3,
       minValue: 0,
       validValues: [0, 1, 2, 3],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2964,14 +2838,13 @@ Characteristic.ValveType = ValveType;
  */
 
 export class Version extends Characteristic {
-
-  static readonly UUID: string = '00000037-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000037-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Version', Version.UUID);
+    super("Version", Version.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -2984,17 +2857,16 @@ Characteristic.Version = Version;
  */
 
 export class VOCDensity extends Characteristic {
-
-  static readonly UUID: string = '000000C8-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000C8-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('VOC Density', VOCDensity.UUID);
+    super("VOC Density", VOCDensity.UUID);
     this.setProps({
       format: Formats.FLOAT,
       maxValue: 1000,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -3007,18 +2879,17 @@ Characteristic.VOCDensity = VOCDensity;
  */
 
 export class Volume extends Characteristic {
-
-  static readonly UUID: string = '00000119-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000119-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Volume', Volume.UUID);
+    super("Volume", Volume.UUID);
     this.setProps({
       format: Formats.UINT8,
       unit: Units.PERCENTAGE,
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -3031,16 +2902,15 @@ Characteristic.Volume = Volume;
  */
 
 export class WaterLevel extends Characteristic {
-
-  static readonly UUID: string = '000000B5-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "000000B5-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Water Level', WaterLevel.UUID);
+    super("Water Level", WaterLevel.UUID);
     this.setProps({
       format: Formats.FLOAT,
       maxValue: 100,
       minValue: 0,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -3053,17 +2923,16 @@ Characteristic.WaterLevel = WaterLevel;
  */
 
 export class RecordingAudioActive extends Characteristic {
-
   static readonly DISABLE = 0;
   static readonly ENABLE = 1;
 
-  static readonly UUID: string = '00000226-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000226-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Recording Audio Active', RecordingAudioActive.UUID);
+    super("Recording Audio Active", RecordingAudioActive.UUID);
     this.setProps({
-        format: Formats.UINT8,
-        perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      format: Formats.UINT8,
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -3076,14 +2945,13 @@ Characteristic.RecordingAudioActive = RecordingAudioActive;
  */
 
 export class SupportedCameraRecordingConfiguration extends Characteristic {
-
-  static readonly UUID: string = '00000205-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000205-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Supported Camera Recording Configuration', SupportedCameraRecordingConfiguration.UUID);
+    super("Supported Camera Recording Configuration", SupportedCameraRecordingConfiguration.UUID);
     this.setProps({
-        format: Formats.TLV8,
-        perms: [Perms.READ, Perms.NOTIFY]
+      format: Formats.TLV8,
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -3096,14 +2964,13 @@ Characteristic.SupportedCameraRecordingConfiguration = SupportedCameraRecordingC
  */
 
 export class SupportedVideoRecordingConfiguration extends Characteristic {
-
-  static readonly UUID: string = '00000206-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000206-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Supported Video Recording Configuration', SupportedVideoRecordingConfiguration.UUID);
+    super("Supported Video Recording Configuration", SupportedVideoRecordingConfiguration.UUID);
     this.setProps({
-        format: Formats.TLV8,
-        perms: [Perms.READ, Perms.NOTIFY]
+      format: Formats.TLV8,
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -3116,14 +2983,13 @@ Characteristic.SupportedVideoRecordingConfiguration = SupportedVideoRecordingCon
  */
 
 export class SupportedAudioRecordingConfiguration extends Characteristic {
-
-  static readonly UUID: string = '00000207-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000207-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Supported Audio Recording Configuration', SupportedAudioRecordingConfiguration.UUID);
+    super("Supported Audio Recording Configuration", SupportedAudioRecordingConfiguration.UUID);
     this.setProps({
-        format: Formats.TLV8,
-        perms: [Perms.READ, Perms.NOTIFY]
+      format: Formats.TLV8,
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -3136,14 +3002,13 @@ Characteristic.SupportedAudioRecordingConfiguration = SupportedAudioRecordingCon
  */
 
 export class SelectedCameraRecordingConfiguration extends Characteristic {
-
-  static readonly UUID: string = '00000209-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000209-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Selected Camera Recording Configuration', SelectedCameraRecordingConfiguration.UUID);
+    super("Selected Camera Recording Configuration", SelectedCameraRecordingConfiguration.UUID);
     this.setProps({
-        format: Formats.TLV8,
-        perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      format: Formats.TLV8,
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -3156,17 +3021,16 @@ Characteristic.SelectedCameraRecordingConfiguration = SelectedCameraRecordingCon
  */
 
 export class CameraOperatingModeIndicator extends Characteristic {
-
   static readonly DISABLE = 0;
   static readonly ENABLE = 1;
 
-  static readonly UUID: string = '0000021D-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000021D-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Camera Operating Mode Indicator', CameraOperatingModeIndicator.UUID);
+    super("Camera Operating Mode Indicator", CameraOperatingModeIndicator.UUID);
     this.setProps({
-        format: Formats.UINT8,
-        perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
+      format: Formats.UINT8,
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE],
     });
     this.value = this.getDefaultValue();
   }
@@ -3179,17 +3043,16 @@ Characteristic.CameraOperatingModeIndicator = CameraOperatingModeIndicator;
  */
 
 export class EventSnapshotsActive extends Characteristic {
-
   static readonly DISABLE = 0;
   static readonly ENABLE = 1;
 
-  static readonly UUID: string = '00000223-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000223-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Event Snapshots Active', EventSnapshotsActive.UUID);
+    super("Event Snapshots Active", EventSnapshotsActive.UUID);
     this.setProps({
       format: Formats.UINT8,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -3202,18 +3065,17 @@ Characteristic.EventSnapshotsActive = EventSnapshotsActive;
  */
 
 export class DiagonalFieldOfView extends Characteristic {
-
-  static readonly UUID: string = '00000224-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000224-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Diagonal Field Of View', DiagonalFieldOfView.UUID);
+    super("Diagonal Field Of View", DiagonalFieldOfView.UUID);
     this.setProps({
       format: Formats.FLOAT,
       unit: Units.ARC_DEGREE,
       maxValue: 360,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -3226,17 +3088,16 @@ Characteristic.DiagonalFieldOfView = DiagonalFieldOfView;
  */
 
 export class HomeKitCameraActive extends Characteristic {
-
   static readonly OFF = 0;
   static readonly ON = 1;
 
-  static readonly UUID: string = '0000021B-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000021B-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('HomeKit Camera Active', HomeKitCameraActive.UUID);
+    super("HomeKit Camera Active", HomeKitCameraActive.UUID);
     this.setProps({
       format: Formats.UINT8,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE],
     });
     this.value = this.getDefaultValue();
   }
@@ -3249,17 +3110,16 @@ Characteristic.HomeKitCameraActive = HomeKitCameraActive;
  */
 
 export class ManuallyDisabled extends Characteristic {
-
   static readonly ENABLED = 0;
   static readonly DISABLED = 1;
 
-  static readonly UUID: string = '00000227-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000227-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Manually disabled', ManuallyDisabled.UUID);
+    super("Manually disabled", ManuallyDisabled.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -3272,17 +3132,16 @@ Characteristic.ManuallyDisabled = ManuallyDisabled;
  */
 
 export class ThirdPartyCameraActive extends Characteristic {
-
   static readonly OFF = 0;
   static readonly ON = 1;
 
-  static readonly UUID: string = '0000021C-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000021C-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Third Party Camera Active', ThirdPartyCameraActive.UUID);
+    super("Third Party Camera Active", ThirdPartyCameraActive.UUID);
     this.setProps({
       format: Formats.UINT8,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -3295,17 +3154,16 @@ Characteristic.ThirdPartyCameraActive = ThirdPartyCameraActive;
  */
 
 export class PeriodicSnapshotsActive extends Characteristic {
-
   static readonly DISABLE = 0;
   static readonly ENABLE = 1;
 
-  static readonly UUID: string = '00000225-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000225-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Periodic Snapshots Active', PeriodicSnapshotsActive.UUID);
+    super("Periodic Snapshots Active", PeriodicSnapshotsActive.UUID);
     this.setProps({
       format: Formats.UINT8,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -3318,14 +3176,13 @@ Characteristic.PeriodicSnapshotsActive = PeriodicSnapshotsActive;
  */
 
 export class NetworkClientProfileControl extends Characteristic {
-
-  static readonly UUID: string = '0000020C-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000020C-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Network Client Profile Control', NetworkClientProfileControl.UUID);
+    super("Network Client Profile Control", NetworkClientProfileControl.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE, Perms.WRITE_RESPONSE]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE, Perms.WRITE_RESPONSE],
     });
     this.value = this.getDefaultValue();
   }
@@ -3338,14 +3195,13 @@ Characteristic.NetworkClientProfileControl = NetworkClientProfileControl;
  */
 
 export class NetworkClientStatusControl extends Characteristic {
-
-  static readonly UUID: string = '0000020D-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000020D-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Network Client Status Control', NetworkClientStatusControl.UUID);
+    super("Network Client Status Control", NetworkClientStatusControl.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.WRITE, Perms.WRITE_RESPONSE]
+      perms: [Perms.READ, Perms.WRITE, Perms.WRITE_RESPONSE],
     });
     this.value = this.getDefaultValue();
   }
@@ -3358,20 +3214,19 @@ Characteristic.NetworkClientStatusControl = NetworkClientStatusControl;
  */
 
 export class RouterStatus extends Characteristic {
-
   static readonly READY = 0;
   static readonly NOT_READY = 1;
 
-  static readonly UUID: string = '0000020E-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000020E-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Router Status', RouterStatus.UUID);
+    super("Router Status", RouterStatus.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
-      validValues: [0,1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      validValues: [0, 1],
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -3384,14 +3239,13 @@ Characteristic.RouterStatus = RouterStatus;
  */
 
 export class SupportedRouterConfiguration extends Characteristic {
-
-  static readonly UUID: string = '00000210-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000210-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Supported Router Configuration', SupportedRouterConfiguration.UUID);
+    super("Supported Router Configuration", SupportedRouterConfiguration.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ]
+      perms: [Perms.READ],
     });
     this.value = this.getDefaultValue();
   }
@@ -3404,14 +3258,13 @@ Characteristic.SupportedRouterConfiguration = SupportedRouterConfiguration;
  */
 
 export class WANConfigurationList extends Characteristic {
-
-  static readonly UUID: string = '00000211-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000211-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('WAN Configuration List', WANConfigurationList.UUID);
+    super("WAN Configuration List", WANConfigurationList.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -3424,14 +3277,13 @@ Characteristic.WANConfigurationList = WANConfigurationList;
  */
 
 export class WANStatusList extends Characteristic {
-
-  static readonly UUID: string = '00000212-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000212-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('WAN Status List', WANStatusList.UUID);
+    super("WAN Status List", WANStatusList.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -3448,16 +3300,16 @@ export class ManagedNetworkEnable extends Characteristic {
   static readonly ENABLED = 1;
   static readonly UNKNOWN = 2;
 
-  static readonly UUID: string = '00000215-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "00000215-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Managed Network Enable', ManagedNetworkEnable.UUID);
+    super("Managed Network Enable", ManagedNetworkEnable.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
-      validValues: [0,1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
+      validValues: [0, 1],
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE],
     });
     this.value = this.getDefaultValue();
   }
@@ -3470,14 +3322,13 @@ Characteristic.ManagedNetworkEnable = ManagedNetworkEnable;
  */
 
 export class NetworkAccessViolationControl extends Characteristic {
-
-  static readonly UUID: string = '0000021F-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000021F-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Network Access Violation Control', NetworkAccessViolationControl.UUID);
+    super("Network Access Violation Control", NetworkAccessViolationControl.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE, Perms.WRITE_RESPONSE]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE, Perms.WRITE_RESPONSE],
     });
     this.value = this.getDefaultValue();
   }
@@ -3495,16 +3346,16 @@ export class WiFiSatelliteStatus extends Characteristic {
   static readonly CONNECTED = 1;
   static readonly NOT_CONNECTED = 2;
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000021E-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super('Wi-Fi Satellite Status', WiFiSatelliteStatus.UUID);
+    super("Wi-Fi Satellite Status", WiFiSatelliteStatus.UUID);
     this.setProps({
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
-      validValues: [0,1,2],
-      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
+      validValues: [0, 1, 2],
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -3517,8 +3368,7 @@ Characteristic.WiFiSatelliteStatus = WiFiSatelliteStatus;
  */
 
 export class AccessoryInformation extends Service {
-
-  static UUID: string = '0000003E-0000-1000-8000-0026BB765291';
+  static UUID: string = "0000003E-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, AccessoryInformation.UUID, subtype);
@@ -3545,8 +3395,7 @@ Service.AccessoryInformation = AccessoryInformation;
  */
 
 export class AirPurifier extends Service {
-
-  static UUID: string = '000000BB-0000-1000-8000-0026BB765291';
+  static UUID: string = "000000BB-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, AirPurifier.UUID, subtype);
@@ -3571,8 +3420,7 @@ Service.AirPurifier = AirPurifier;
  */
 
 export class AirQualitySensor extends Service {
-
-  static UUID: string = '0000008D-0000-1000-8000-0026BB765291';
+  static UUID: string = "0000008D-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, AirQualitySensor.UUID, subtype);
@@ -3602,8 +3450,7 @@ Service.AirQualitySensor = AirQualitySensor;
  */
 
 export class BatteryService extends Service {
-
-  static UUID: string = '00000096-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000096-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, BatteryService.UUID, subtype);
@@ -3625,8 +3472,7 @@ Service.BatteryService = BatteryService;
  */
 
 export class CameraRTPStreamManagement extends Service {
-
-  static UUID: string = '00000110-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000110-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, CameraRTPStreamManagement.UUID, subtype);
@@ -3651,8 +3497,7 @@ Service.CameraRTPStreamManagement = CameraRTPStreamManagement;
  */
 
 export class CarbonDioxideSensor extends Service {
-
-  static UUID: string = '00000097-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000097-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, CarbonDioxideSensor.UUID, subtype);
@@ -3678,8 +3523,7 @@ Service.CarbonDioxideSensor = CarbonDioxideSensor;
  */
 
 export class CarbonMonoxideSensor extends Service {
-
-  static UUID: string = '0000007F-0000-1000-8000-0026BB765291';
+  static UUID: string = "0000007F-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, CarbonMonoxideSensor.UUID, subtype);
@@ -3705,8 +3549,7 @@ Service.CarbonMonoxideSensor = CarbonMonoxideSensor;
  */
 
 export class ContactSensor extends Service {
-
-  static UUID: string = '00000080-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000080-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, ContactSensor.UUID, subtype);
@@ -3730,8 +3573,7 @@ Service.ContactSensor = ContactSensor;
  */
 
 export class Door extends Service {
-
-  static UUID: string = '00000081-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000081-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, Door.UUID, subtype);
@@ -3755,8 +3597,7 @@ Service.Door = Door;
  */
 
 export class Doorbell extends Service {
-
-  static UUID: string = '00000121-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000121-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, Doorbell.UUID, subtype);
@@ -3778,8 +3619,7 @@ Service.Doorbell = Doorbell;
  */
 
 export class Fan extends Service {
-
-  static UUID: string = '00000040-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000040-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, Fan.UUID, subtype);
@@ -3801,8 +3641,7 @@ Service.Fan = Fan;
  */
 
 export class Fanv2 extends Service {
-
-  static UUID: string = '000000B7-0000-1000-8000-0026BB765291';
+  static UUID: string = "000000B7-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, Fanv2.UUID, subtype);
@@ -3828,8 +3667,7 @@ Service.Fanv2 = Fanv2;
  */
 
 export class FilterMaintenance extends Service {
-
-  static UUID: string = '000000BA-0000-1000-8000-0026BB765291';
+  static UUID: string = "000000BA-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, FilterMaintenance.UUID, subtype);
@@ -3851,8 +3689,7 @@ Service.FilterMaintenance = FilterMaintenance;
  */
 
 export class Faucet extends Service {
-
-  static UUID: string = '000000D7-0000-1000-8000-0026BB765291';
+  static UUID: string = "000000D7-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, Faucet.UUID, subtype);
@@ -3873,8 +3710,7 @@ Service.Faucet = Faucet;
  */
 
 export class GarageDoorOpener extends Service {
-
-  static UUID: string = '00000041-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000041-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, GarageDoorOpener.UUID, subtype);
@@ -3898,8 +3734,7 @@ Service.GarageDoorOpener = GarageDoorOpener;
  */
 
 export class HeaterCooler extends Service {
-
-  static UUID: string = '000000BC-0000-1000-8000-0026BB765291';
+  static UUID: string = "000000BC-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, HeaterCooler.UUID, subtype);
@@ -3928,8 +3763,7 @@ Service.HeaterCooler = HeaterCooler;
  */
 
 export class HumidifierDehumidifier extends Service {
-
-  static UUID: string = '000000BD-0000-1000-8000-0026BB765291';
+  static UUID: string = "000000BD-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, HumidifierDehumidifier.UUID, subtype);
@@ -3958,8 +3792,7 @@ Service.HumidifierDehumidifier = HumidifierDehumidifier;
  */
 
 export class HumiditySensor extends Service {
-
-  static UUID: string = '00000082-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000082-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, HumiditySensor.UUID, subtype);
@@ -3983,8 +3816,7 @@ Service.HumiditySensor = HumiditySensor;
  */
 
 export class IrrigationSystem extends Service {
-
-  static UUID: string = '000000CF-0000-1000-8000-0026BB765291';
+  static UUID: string = "000000CF-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, IrrigationSystem.UUID, subtype);
@@ -4008,8 +3840,7 @@ Service.IrrigationSystem = IrrigationSystem;
  */
 
 export class LeakSensor extends Service {
-
-  static UUID: string = '00000083-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000083-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, LeakSensor.UUID, subtype);
@@ -4033,8 +3864,7 @@ Service.LeakSensor = LeakSensor;
  */
 
 export class LightSensor extends Service {
-
-  static UUID: string = '00000084-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000084-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, LightSensor.UUID, subtype);
@@ -4058,8 +3888,7 @@ Service.LightSensor = LightSensor;
  */
 
 export class Lightbulb extends Service {
-
-  static UUID: string = '00000043-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000043-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, Lightbulb.UUID, subtype);
@@ -4083,8 +3912,7 @@ Service.Lightbulb = Lightbulb;
  */
 
 export class LockManagement extends Service {
-
-  static UUID: string = '00000044-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000044-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, LockManagement.UUID, subtype);
@@ -4112,8 +3940,7 @@ Service.LockManagement = LockManagement;
  */
 
 export class LockMechanism extends Service {
-
-  static UUID: string = '00000045-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000045-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, LockMechanism.UUID, subtype);
@@ -4134,8 +3961,7 @@ Service.LockMechanism = LockMechanism;
  */
 
 export class Microphone extends Service {
-
-  static UUID: string = '00000112-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000112-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, Microphone.UUID, subtype);
@@ -4156,8 +3982,7 @@ Service.Microphone = Microphone;
  */
 
 export class MotionSensor extends Service {
-
-  static UUID: string = '00000085-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000085-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, MotionSensor.UUID, subtype);
@@ -4181,8 +4006,7 @@ Service.MotionSensor = MotionSensor;
  */
 
 export class OccupancySensor extends Service {
-
-  static UUID: string = '00000086-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000086-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, OccupancySensor.UUID, subtype);
@@ -4206,8 +4030,7 @@ Service.OccupancySensor = OccupancySensor;
  */
 
 export class Outlet extends Service {
-
-  static UUID: string = '00000047-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000047-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, Outlet.UUID, subtype);
@@ -4228,8 +4051,7 @@ Service.Outlet = Outlet;
  */
 
 export class SecuritySystem extends Service {
-
-  static UUID: string = '0000007E-0000-1000-8000-0026BB765291';
+  static UUID: string = "0000007E-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, SecuritySystem.UUID, subtype);
@@ -4253,8 +4075,7 @@ Service.SecuritySystem = SecuritySystem;
  */
 
 export class ServiceLabel extends Service {
-
-  static UUID: string = '000000CC-0000-1000-8000-0026BB765291';
+  static UUID: string = "000000CC-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, ServiceLabel.UUID, subtype);
@@ -4274,8 +4095,7 @@ Service.ServiceLabel = ServiceLabel;
  */
 
 export class Slat extends Service {
-
-  static UUID: string = '000000B9-0000-1000-8000-0026BB765291';
+  static UUID: string = "000000B9-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, Slat.UUID, subtype);
@@ -4299,8 +4119,7 @@ Service.Slat = Slat;
  */
 
 export class SmokeSensor extends Service {
-
-  static UUID: string = '00000087-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000087-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, SmokeSensor.UUID, subtype);
@@ -4324,8 +4143,7 @@ Service.SmokeSensor = SmokeSensor;
  */
 
 export class Speaker extends Service {
-
-  static UUID: string = '00000113-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000113-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, Speaker.UUID, subtype);
@@ -4346,8 +4164,7 @@ Service.Speaker = Speaker;
  */
 
 export class StatelessProgrammableSwitch extends Service {
-
-  static UUID: string = '00000089-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000089-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, StatelessProgrammableSwitch.UUID, subtype);
@@ -4368,8 +4185,7 @@ Service.StatelessProgrammableSwitch = StatelessProgrammableSwitch;
  */
 
 export class Switch extends Service {
-
-  static UUID: string = '00000049-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000049-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, Switch.UUID, subtype);
@@ -4389,8 +4205,7 @@ Service.Switch = Switch;
  */
 
 export class TemperatureSensor extends Service {
-
-  static UUID: string = '0000008A-0000-1000-8000-0026BB765291';
+  static UUID: string = "0000008A-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, TemperatureSensor.UUID, subtype);
@@ -4414,8 +4229,7 @@ Service.TemperatureSensor = TemperatureSensor;
  */
 
 export class Thermostat extends Service {
-
-  static UUID: string = '0000004A-0000-1000-8000-0026BB765291';
+  static UUID: string = "0000004A-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, Thermostat.UUID, subtype);
@@ -4443,8 +4257,7 @@ Service.Thermostat = Thermostat;
  */
 
 export class Valve extends Service {
-
-  static UUID: string = '000000D0-0000-1000-8000-0026BB765291';
+  static UUID: string = "000000D0-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, Valve.UUID, subtype);
@@ -4471,8 +4284,7 @@ Service.Valve = Valve;
  */
 
 export class Window extends Service {
-
-  static UUID: string = '0000008B-0000-1000-8000-0026BB765291';
+  static UUID: string = "0000008B-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, Window.UUID, subtype);
@@ -4496,8 +4308,7 @@ Service.Window = Window;
  */
 
 export class WindowCovering extends Service {
-
-  static UUID: string = '0000008C-0000-1000-8000-0026BB765291';
+  static UUID: string = "0000008C-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, WindowCovering.UUID, subtype);
@@ -4525,8 +4336,7 @@ Service.WindowCovering = WindowCovering;
  */
 
 export class CameraOperatingMode extends Service {
-
-  static UUID: string = '0000021A-0000-1000-8000-0026BB765291';
+  static UUID: string = "0000021A-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, CameraOperatingMode.UUID, subtype);
@@ -4553,8 +4363,7 @@ Service.CameraOperatingMode = CameraOperatingMode;
  */
 
 export class CameraEventRecordingManagement extends Service {
-
-  static UUID: string = '00000204-0000-1000-8000-0026BB765291';
+  static UUID: string = "00000204-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, CameraEventRecordingManagement.UUID, subtype);
@@ -4579,8 +4388,7 @@ Service.CameraEventRecordingManagement = CameraEventRecordingManagement;
  */
 
 export class WiFiRouter extends Service {
-
-  static UUID: string = '0000020A-0000-1000-8000-0026BB765291';
+  static UUID: string = "0000020A-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, WiFiRouter.UUID, subtype);
@@ -4609,7 +4417,7 @@ Service.WiFiRouter = WiFiRouter;
  */
 
 export class WiFiSatellite extends Service {
-  static readonly UUID: string = '0000020F-0000-1000-8000-0026BB765291';
+  static readonly UUID: string = "0000020F-0000-1000-8000-0026BB765291";
 
   constructor(displayName: string, subtype: string) {
     super(displayName, WiFiSatellite.UUID, subtype);

@@ -1,5 +1,5 @@
-import crypto from 'crypto';
-import { BinaryLike } from './uuid';
+import crypto from "crypto";
+import { BinaryLike } from "./uuid";
 
 export function HKDF(hashAlg: string, salt: BinaryLike, ikm: BinaryLike, info: Buffer, size: number) {
   // create the hash alg to see if it exists and get its length
@@ -18,18 +18,14 @@ export function HKDF(hashAlg: string, salt: BinaryLike, ikm: BinaryLike, info: B
 
   info = Buffer.from(info);
 
-  for (var i=0; i<num_blocks; i++) {
+  for (var i = 0; i < num_blocks; i++) {
     var blockHmac = crypto.createHmac(hashAlg, prk);
 
-    var input = Buffer.concat([
-      prev,
-      info,
-      Buffer.from(String.fromCharCode(i + 1))
-    ]);
+    var input = Buffer.concat([prev, info, Buffer.from(String.fromCharCode(i + 1))]);
     blockHmac.update(input);
     prev = blockHmac.digest();
     buffers.push(prev);
   }
   output = Buffer.concat(buffers, size);
-  return output.slice(0,size);
+  return output.slice(0, size);
 }

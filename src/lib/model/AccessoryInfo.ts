@@ -1,9 +1,9 @@
-import storage from 'node-persist';
-import util from 'util';
-import assert from 'assert';
-import tweetnacl from 'tweetnacl';
+import storage from "node-persist";
+import util from "util";
+import assert from "assert";
+import tweetnacl from "tweetnacl";
 
-import { Categories } from '../Accessory';
+import { Categories } from "../Accessory";
 import { Session } from "../util/eventedhttp";
 
 export enum PermissionTypes {
@@ -12,17 +12,16 @@ export enum PermissionTypes {
 }
 
 export type PairingInformation = {
-  username: string,
-  publicKey: Buffer,
-  permission: PermissionTypes,
-}
+  username: string;
+  publicKey: Buffer;
+  permission: PermissionTypes;
+};
 
 /**
  * AccessoryInfo is a model class containing a subset of Accessory data relevant to the internal HAP server,
  * such as encryption keys and username. It is persisted to disk.
  */
 export class AccessoryInfo {
-
   static readonly deviceIdPattern: RegExp = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
 
   username: string;
@@ -76,11 +75,10 @@ export class AccessoryInfo {
     this.pairedClients[username] = {
       username: username,
       publicKey: publicKey,
-      permission: permission
+      permission: permission,
     };
 
-    if (permission === PermissionTypes.ADMIN)
-      this.pairedAdminClients++;
+    if (permission === PermissionTypes.ADMIN) this.pairedAdminClients++;
   };
 
   updatePermission = (username: string, permission: PermissionTypes) => {
@@ -117,7 +115,8 @@ export class AccessoryInfo {
   removePairedClient = (controller: Session, username: string) => {
     this._removePairedClient0(controller, username);
 
-    if (this.pairedAdminClients === 0) { // if we don't have any admin clients left paired it is required to kill all normal clients
+    if (this.pairedAdminClients === 0) {
+      // if we don't have any admin clients left paired it is required to kill all normal clients
       for (const username0 in this.pairedClients) {
         this._removePairedClient0(controller, username0);
       }
@@ -155,7 +154,7 @@ export class AccessoryInfo {
     return !!pairingInformation && pairingInformation.permission === PermissionTypes.ADMIN;
   };
 
-// Gets the public key for a paired client as a Buffer, or falsey value if not paired.
+  // Gets the public key for a paired client as a Buffer, or falsey value if not paired.
   getClientPublicKey = (username: string) => {
     const pairingInformation = this.pairedClients[username];
     if (pairingInformation) {
@@ -165,34 +164,34 @@ export class AccessoryInfo {
     }
   };
 
-// Returns a boolean indicating whether this accessory has been paired with a client.
+  // Returns a boolean indicating whether this accessory has been paired with a client.
   paired = (): boolean => {
     return Object.keys(this.pairedClients).length > 0; // if we have any paired clients, we're paired.
-  }
+  };
 
   updateRelayEnableState = (state: boolean) => {
     this.relayEnabled = state;
-  }
+  };
 
   updateRelayState = (newState: number) => {
     this.relayState = newState;
-  }
+  };
 
   addPairedRelayClient = (username: string, accessToken: string) => {
     this.relayPairedControllers[username] = accessToken;
-  }
+  };
 
   removePairedRelayClient = (username: string) => {
     delete this.relayPairedControllers[username];
-  }
+  };
 
   save = () => {
     var saved = {
       displayName: this.displayName,
       category: this.category,
       pincode: this.pincode,
-      signSk: this.signSk.toString('hex'),
-      signPk: this.signPk.toString('hex'),
+      signSk: this.signSk.toString("hex"),
+      signPk: this.signPk.toString("hex"),
       pairedClients: {},
       // moving permissions into an extra object, so there is nothing to migrate from old files.
       // if the legac node-persist storage should be upgraded some time, it would be reasonable to combine the storage
@@ -206,13 +205,13 @@ export class AccessoryInfo {
       relayAccessoryID: this.relayAccessoryID,
       relayAdminID: this.relayAdminID,
       relayPairedControllers: this.relayPairedControllers,
-      accessoryBagURL: this.accessoryBagURL
+      accessoryBagURL: this.accessoryBagURL,
     };
 
     for (var username in this.pairedClients) {
       const pairingInformation = this.pairedClients[username];
       //@ts-ignore
-      saved.pairedClients[username] = pairingInformation.publicKey.toString('hex');
+      saved.pairedClients[username] = pairingInformation.publicKey.toString("hex");
       // @ts-ignore
       saved.pairedClientsPermission[username] = pairingInformation.permission;
     }
@@ -221,18 +220,18 @@ export class AccessoryInfo {
 
     storage.setItemSync(key, saved);
     storage.persistSync();
-  }
+  };
 
   remove = () => {
     var key = AccessoryInfo.persistKey(this.username);
 
     storage.removeItemSync(key);
-  }
+  };
 
-// Gets a key for storing this AccessoryInfo in the filesystem, like "AccessoryInfo.CC223DE3CEF3.json"
+  // Gets a key for storing this AccessoryInfo in the filesystem, like "AccessoryInfo.CC223DE3CEF3.json"
   static persistKey = (username: string) => {
     return util.format("AccessoryInfo.%s.json", username.replace(/:/g, "").toUpperCase());
-  }
+  };
 
   static create = (username: string) => {
     AccessoryInfo.assertValidUsername(username);
@@ -245,7 +244,7 @@ export class AccessoryInfo {
     accessoryInfo.signPk = Buffer.from(keyPair.publicKey);
 
     return accessoryInfo;
-  }
+  };
 
   static load = (username: string) => {
     AccessoryInfo.assertValidUsername(username);
@@ -258,23 +257,21 @@ export class AccessoryInfo {
       info.displayName = saved.displayName || "";
       info.category = saved.category || "";
       info.pincode = saved.pincode || "";
-      info.signSk = Buffer.from(saved.signSk || '', 'hex');
-      info.signPk = Buffer.from(saved.signPk || '', 'hex');
+      info.signSk = Buffer.from(saved.signSk || "", "hex");
+      info.signPk = Buffer.from(saved.signPk || "", "hex");
 
       info.pairedClients = {};
       for (var username in saved.pairedClients || {}) {
         var publicKey = saved.pairedClients[username];
-        let permission = saved.pairedClientsPermission? saved.pairedClientsPermission[username]: undefined;
-        if (permission === undefined)
-          permission = PermissionTypes.ADMIN; // defaulting to admin permissions is the only suitable solution, there is no way to recover permissions
+        let permission = saved.pairedClientsPermission ? saved.pairedClientsPermission[username] : undefined;
+        if (permission === undefined) permission = PermissionTypes.ADMIN; // defaulting to admin permissions is the only suitable solution, there is no way to recover permissions
 
         info.pairedClients[username] = {
           username: username,
-          publicKey: Buffer.from(publicKey, 'hex'),
-          permission: permission
+          publicKey: Buffer.from(publicKey, "hex"),
+          permission: permission,
         };
-        if (permission === PermissionTypes.ADMIN)
-          info.pairedAdminClients++;
+        if (permission === PermissionTypes.ADMIN) info.pairedAdminClients++;
       }
 
       info.configVersion = saved.configVersion || 1;
@@ -290,20 +287,21 @@ export class AccessoryInfo {
       info.accessoryBagURL = saved.accessoryBagURL || "";
 
       return info;
-    }
-    else {
+    } else {
       return null;
     }
-  }
+  };
 
   static assertValidUsername = (username: string) => {
-    assert.ok(AccessoryInfo.deviceIdPattern.test(username),
-        "The supplied username (" + username + ") is not valid " +
+    assert.ok(
+      AccessoryInfo.deviceIdPattern.test(username),
+      "The supplied username (" +
+        username +
+        ") is not valid " +
         "(expected a format like 'XX:XX:XX:XX:XX:XX' with XX being a valid hexadecimal string). " +
         "Note that, if you had this accessory already paired with the invalid username, you will need to repair " +
         "the accessory and reconfigure your services in the Home app. " +
-        "Using an invalid username will lead to unexpected behaviour.")
+        "Using an invalid username will lead to unexpected behaviour."
+    );
   };
-
 }
-

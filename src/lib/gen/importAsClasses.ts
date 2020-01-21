@@ -1,7 +1,7 @@
-import fs from 'fs';
-import path from 'path';
+import fs from "fs";
+import path from "path";
 
-import plist from 'simple-plist';
+import plist from "simple-plist";
 
 import { Characteristic, Formats, Units } from "../Characteristic";
 
@@ -11,11 +11,12 @@ import { Characteristic, Formats, Units } from "../Characteristic";
  */
 
 // assumed location of the plist we need (might want to make this a command-line argument at some point)
-var plistPath = '/Applications/HomeKit Accessory Simulator.app/Contents/Frameworks/HAPAccessoryKit.framework/Versions/A/Resources/default.metadata.plist';
+var plistPath =
+  "/Applications/HomeKit Accessory Simulator.app/Contents/Frameworks/HAPAccessoryKit.framework/Versions/A/Resources/default.metadata.plist";
 var metadata = plist.readFileSync(plistPath);
 
 // begin writing the output file
-var outputPath = path.join(__dirname, '..', '..', '..', 'src', 'lib', 'gen', 'HomeKitTypes.generated.ts');
+var outputPath = path.join(__dirname, "..", "..", "..", "src", "lib", "gen", "HomeKitTypes.generated.ts");
 var output = fs.createWriteStream(outputPath);
 
 output.write("// THIS FILE IS AUTO-GENERATED - DO NOT MODIFY\n");
@@ -58,16 +59,16 @@ for (var index in metadata.Characteristics) {
     for (var value in characteristic.Constraints.ValidValues) {
       var name = characteristic.Constraints.ValidValues[value];
 
-      var constName = name.toUpperCase().replace(/[^\w]+/g, '_');
-      if ((/^[1-9]/).test(constName)) constName = "_" + constName; // variables can't start with a number
+      var constName = name.toUpperCase().replace(/[^\w]+/g, "_");
+      if (/^[1-9]/.test(constName)) constName = "_" + constName; // variables can't start with a number
       output.write(`  static readonly ${constName} = ${value};\n`);
     }
-    output.write('\n');
+    output.write("\n");
   }
 
   // constructor
   output.write("  constructor(\n");
-  output.write("    displayName = \"\",\n");
+  output.write('    displayName = "",\n');
   output.write("    props?: CharacteristicProps,\n");
   output.write("  ) {\n");
   output.write("    props = props || {\n");
@@ -77,26 +78,25 @@ for (var index in metadata.Characteristics) {
   output.write("      format: Formats." + getCharacteristicFormatsKey(characteristic.Format));
 
   // special unit type?
-  if (characteristic.Unit)
-    output.write(",\n      unit: Units." + getCharacteristicUnitsKey(characteristic.Unit));
+  if (characteristic.Unit) output.write(",\n      unit: Units." + getCharacteristicUnitsKey(characteristic.Unit));
 
   // apply any basic constraints if present
-  if (characteristic.Constraints && typeof characteristic.Constraints.MaximumValue !== 'undefined')
+  if (characteristic.Constraints && typeof characteristic.Constraints.MaximumValue !== "undefined")
     output.write(",\n      maxValue: " + characteristic.Constraints.MaximumValue);
 
-  if (characteristic.Constraints && typeof characteristic.Constraints.MinimumValue !== 'undefined')
+  if (characteristic.Constraints && typeof characteristic.Constraints.MinimumValue !== "undefined")
     output.write(",\n      minValue: " + characteristic.Constraints.MinimumValue);
 
-  if (characteristic.Constraints && typeof characteristic.Constraints.StepValue !== 'undefined')
+  if (characteristic.Constraints && typeof characteristic.Constraints.StepValue !== "undefined")
     output.write(",\n      minStep: " + characteristic.Constraints.StepValue);
 
   output.write(",\n      perms: [");
-  var sep = ""
+  var sep = "";
   for (var i in characteristic.Properties) {
     var perms = getCharacteristicPermsKey(characteristic.Properties[i]);
     if (perms) {
-        output.write(sep + "Perms." + getCharacteristicPermsKey(characteristic.Properties[i]));
-        sep = ", "
+      output.write(sep + "Perms." + getCharacteristicPermsKey(characteristic.Properties[i]));
+      sep = ", ";
     }
   }
   output.write("]");
@@ -175,31 +175,32 @@ output.end();
 
 function getCharacteristicFormatsKey(format: string) {
   // coerce 'int32' to 'int'
-  if (format == 'int32') format = 'int';
+  if (format == "int32") format = "int";
 
   // look up the key in our known-formats dict
-  for (var key in Formats)
-    if (Formats[key as keyof typeof Formats] == format)
-      return key;
+  for (var key in Formats) if (Formats[key as keyof typeof Formats] == format) return key;
 
   throw new Error("Unknown characteristic format '" + format + "'");
 }
 
 function getCharacteristicUnitsKey(units: string) {
   // look up the key in our known-units dict
-  for (var key in Units)
-    if (Units[key as keyof typeof Units] == units)
-      return key;
+  for (var key in Units) if (Units[key as keyof typeof Units] == units) return key;
 
   throw new Error("Unknown characteristic units '" + units + "'");
 }
 
 function getCharacteristicPermsKey(perm: string) {
   switch (perm) {
-    case "read": return "READ";
-    case "write": return "WRITE";
-    case "cnotify": return "NOTIFY";
-    case "uncnotify": return undefined;
-    default: throw new Error("Unknown characteristic permission '" + perm + "'");
+    case "read":
+      return "READ";
+    case "write":
+      return "WRITE";
+    case "cnotify":
+      return "NOTIFY";
+    case "uncnotify":
+      return undefined;
+    default:
+      throw new Error("Unknown characteristic permission '" + perm + "'");
   }
 }

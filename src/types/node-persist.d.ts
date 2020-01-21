@@ -1,4 +1,4 @@
-declare module 'node-persist' {
+declare module "node-persist" {
   export function create(): any;
 
   export function initSync(opts?: { dir: string }): void;

@@ -1,5 +1,5 @@
-import { Status } from './lib/HAPServer';
-import { Characteristic, CharacteristicProps } from './lib/Characteristic';
+import { Status } from "./lib/HAPServer";
+import { Characteristic, CharacteristicProps } from "./lib/Characteristic";
 
 export type Nullable<T> = T | null;
 
@@ -15,14 +15,16 @@ export type VoidCallback = (err?: Nullable<Error>) => void;
 export type PairingsCallback<T> = (err: number, data?: T) => void;
 export type PrimitiveTypes = string | number | boolean;
 
-type HAPProps =
-  Pick<CharacteristicProps, 'perms' | 'format' | 'description' | 'unit' | 'maxValue' | 'minValue' | 'minStep' | 'maxLen'>
-  & Pick<Characteristic, 'valid-values' | 'valid-values-range'>
+type HAPProps = Pick<
+  CharacteristicProps,
+  "perms" | "format" | "description" | "unit" | "maxValue" | "minValue" | "minStep" | "maxLen"
+> &
+  Pick<Characteristic, "valid-values" | "valid-values-range">;
 export type HapCharacteristic = HAPProps & {
   iid: number;
   type: string;
   value: string | number | {} | null;
-}
+};
 export type CharacteristicValue = PrimitiveTypes | PrimitiveTypes[] | { [key: string]: PrimitiveTypes };
 export type CharacteristicChange = {
   newValue: CharacteristicValue;
@@ -38,7 +40,7 @@ export type HapService = {
   primary: boolean;
   hidden: boolean;
   linked: number[];
-}
+};
 
 export type CharacteristicData = {
   aid: number;
@@ -50,15 +52,15 @@ export type CharacteristicData = {
   e?: string;
   ev?: boolean;
   r?: boolean;
-}
+};
 export type AudioCodec = {
   samplerate: number;
   type: string;
-}
+};
 export type VideoCodec = {
   levels: number[];
   profiles: number[];
-}
+};
 export type Source = {
   port: number;
   srtp_key: Buffer;
@@ -69,8 +71,8 @@ export type Source = {
 };
 export type Address = {
   address: string;
-  type: 'v4' | 'v6';
-}
+  type: "v4" | "v6";
+};
 export type AudioInfo = {
   codec: string | number;
   channel: number;

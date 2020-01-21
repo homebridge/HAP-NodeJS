@@ -1,20 +1,20 @@
-import crypto from 'crypto';
+import crypto from "crypto";
 
 type Binary = Buffer | NodeJS.TypedArray | DataView;
 export type BinaryLike = string | Binary;
 
 // http://stackoverflow.com/a/25951500/66673
 export function generate(data: BinaryLike) {
-  const sha1sum = crypto.createHash('sha1');
+  const sha1sum = crypto.createHash("sha1");
   sha1sum.update(data);
-  const s = sha1sum.digest('hex');
+  const s = sha1sum.digest("hex");
   let i = -1;
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c: string) => {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c: string) => {
     i += 1;
     switch (c) {
-      case 'y':
-        return ((parseInt('0x' + s[i], 16) & 0x3) | 0x8).toString(16);
-      case 'x':
+      case "y":
+        return ((parseInt("0x" + s[i], 16) & 0x3) | 0x8).toString(16);
+      case "x":
       default:
         return s[i];
     }
@@ -30,14 +30,28 @@ export function isValid(UUID: string) {
 // https://github.com/defunctzombie/node-uuid/blob/master/uuid.js
 export function unparse(buf: Buffer | string, offset: number = 0) {
   let i = offset;
-  return buf[i++].toString(16) + buf[i++].toString(16) +
-         buf[i++].toString(16) + buf[i++].toString(16) + '-' +
-         buf[i++].toString(16) + buf[i++].toString(16) + '-' +
-         buf[i++].toString(16) + buf[i++].toString(16) + '-' +
-         buf[i++].toString(16) + buf[i++].toString(16) + '-' +
-         buf[i++].toString(16) + buf[i++].toString(16) +
-         buf[i++].toString(16) + buf[i++].toString(16) +
-         buf[i++].toString(16) + buf[i++].toString(16);
+  return (
+    buf[i++].toString(16) +
+    buf[i++].toString(16) +
+    buf[i++].toString(16) +
+    buf[i++].toString(16) +
+    "-" +
+    buf[i++].toString(16) +
+    buf[i++].toString(16) +
+    "-" +
+    buf[i++].toString(16) +
+    buf[i++].toString(16) +
+    "-" +
+    buf[i++].toString(16) +
+    buf[i++].toString(16) +
+    "-" +
+    buf[i++].toString(16) +
+    buf[i++].toString(16) +
+    buf[i++].toString(16) +
+    buf[i++].toString(16) +
+    buf[i++].toString(16) +
+    buf[i++].toString(16)
+  );
 }
 
 export function write(uuid: string, buf: Buffer, offset: number = 0) {
