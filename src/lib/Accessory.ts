@@ -90,6 +90,7 @@ export enum AccessoryEventTypes {
   SERVICE_CHARACTERISTIC_CHANGE = "service-characteristic-change",
   PAIRED = "paired",
   UNPAIRED = "unpaired",
+  ADDRESS_IN_USE = "address-in-use"
 }
 
 type Events = {
@@ -99,6 +100,7 @@ type Events = {
   "service-characteristic-change": (change: ServiceCharacteristicChange) => void;
   [AccessoryEventTypes.PAIRED]: () => void;
   [AccessoryEventTypes.UNPAIRED]: () => void;
+  [AccessoryEventTypes.ADDRESS_IN_USE]: (port: number) => void;
 }
 
 /**
@@ -724,6 +726,7 @@ export class Accessory extends EventEmitter<Events> {
     this._server.on(HAPServerEventTypes.SET_CHARACTERISTICS, this._handleSetCharacteristics);
     this._server.on(HAPServerEventTypes.SESSION_CLOSE, this._handleSessionClose);
     this._server.on(HAPServerEventTypes.REQUEST_RESOURCE, this._handleResource);
+    this._server.on(HAPServerEventTypes.ADDRESS_IN_USE, this._handleAddInUse);
 
     const targetPort = info.port || 0;
     this._server.listen(targetPort);
@@ -786,6 +789,11 @@ export class Accessory extends EventEmitter<Events> {
     // the HAP server is listening, so we can now start advertising our presence.
     this._advertiser && this._advertiser.startAdvertising(port);
     this.emit(AccessoryEventTypes.LISTENING, port);
+  }
+                                   
+  _handleAddInUse = (port: number) => {
+      // Network port is already in use
+      this.emit(AccessoryEventTypes.ADDRESS_IN_USE, port);
   }
 
 // Called when an unpaired client wishes for us to identify ourself
