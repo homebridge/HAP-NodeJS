@@ -18,6 +18,7 @@ export enum EventedHTTPServerEvents {
   ENCRYPT = 'encrypt',
   CLOSE = 'close',
   SESSION_CLOSE = 'session-close',
+  ADDRESS_IN_USE = 'address-in-use',
 }
 
 export type Events = {
@@ -27,6 +28,7 @@ export type Events = {
   [EventedHTTPServerEvents.ENCRYPT]: (data: Buffer, encrypted: { data: number | Buffer; }, session: Session) => void;
   [EventedHTTPServerEvents.CLOSE]: (events: any) => void;
   [EventedHTTPServerEvents.SESSION_CLOSE]: (sessionID: string, events: any) => void;
+  [EventedHTTPServerEvents.ADDRESS_IN_USE]: (port: number) => void;
 };
 
 /**
@@ -82,8 +84,15 @@ export class EventedHTTPServer extends EventEmitter<Events> {
   }
 
   listen = (targetPort: number) => {
+    
     this._tcpServer.listen(targetPort);
-
+    
+    this._tcpServer.on('error', (err: NodeJS.ErrnoException) => {
+          if (err.code === 'EADDRINUSE') {
+              this.emit(EventedHTTPServerEvents.ADDRESS_IN_USE, targetPort);
+          }
+      });
+    
     this._tcpServer.on('listening', () => {
       const address = this._tcpServer.address();
 
