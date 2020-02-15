@@ -126,7 +126,8 @@ export enum HAPServerEventTypes {
   GET_CHARACTERISTICS = 'get-characteristics',
   SET_CHARACTERISTICS = 'set-characteristics',
   SESSION_CLOSE = "session-close",
-  REQUEST_RESOURCE = 'request-resource'
+  REQUEST_RESOURCE = 'request-resource',
+  ADDRESS_IN_USE = 'address-in-use'
 }
 
 export type Events = {
@@ -137,6 +138,7 @@ export type Events = {
   [HAPServerEventTypes.REMOVE_PAIRING]: (controller: Session, username: string, callback: PairingsCallback<void>) => void;
   [HAPServerEventTypes.LIST_PAIRINGS]: (controller: Session, callback: PairingsCallback<PairingInformation[]>) => void;
   [HAPServerEventTypes.ACCESSORIES]: (cb: NodeCallback<Accessory[]>) => void;
+  [HAPServerEventTypes.ADDRESS_IN_USE]: (port: number) => void;
   [HAPServerEventTypes.GET_CHARACTERISTICS]: (
     data: CharacteristicData[],
     events: CharacteristicEvents,
@@ -247,6 +249,7 @@ export class HAPServer extends EventEmitter<Events> {
     this._httpServer.on(EventedHTTPServerEvents.ENCRYPT, this._onEncrypt);
     this._httpServer.on(EventedHTTPServerEvents.DECRYPT, this._onDecrypt);
     this._httpServer.on(EventedHTTPServerEvents.SESSION_CLOSE, this._onSessionClose);
+    this._httpServer.on(EventedHTTPServerEvents.ADDRESS_IN_USE, this._onAddInUseError);
     if (relayServer) {
       this._relayServer = relayServer;
       this._relayServer.on('request', this._onRemoteRequest);
@@ -297,6 +300,10 @@ export class HAPServer extends EventEmitter<Events> {
 
   _onListening = (port: number) => {
     this.emit(HAPServerEventTypes.LISTENING, port);
+  }
+  
+  _onAddInUseError = (port: number) => {
+      this.emit(HAPServerEventTypes.ADDRESS_IN_USE, port);
   }
 
   // Called when an HTTP request was detected.
