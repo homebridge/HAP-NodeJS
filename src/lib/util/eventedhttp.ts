@@ -18,7 +18,7 @@ export enum EventedHTTPServerEvents {
   ENCRYPT = 'encrypt',
   CLOSE = 'close',
   SESSION_CLOSE = 'session-close',
-  ADDRESS_IN_USE = 'address-in-use',
+  ADDRESS_IN_USE = 'address-in-use'
 }
 
 export type Events = {
