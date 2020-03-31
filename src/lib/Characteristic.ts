@@ -145,8 +145,8 @@ export class Characteristic extends EventEmitter<Events> {
   static Units = Units;
   static Perms = Perms;
 
+  static AccessControlLevel: typeof HomeKitTypes.Generated.AccessControlLevel;
   static AccessoryFlags: typeof HomeKitTypes.Generated.AccessoryFlags;
-  static ProductData: typeof HomeKitTypes.Generated.ProductData;
   static AccessoryIdentifier: typeof HomeKitTypes.Bridged.AccessoryIdentifier;
   static Active: typeof HomeKitTypes.Generated.Active;
   static ActiveIdentifier: typeof HomeKitTypes.TV.ActiveIdentifier;
@@ -247,11 +247,13 @@ export class Characteristic extends EventEmitter<Events> {
   static PairVerify: typeof HomeKitTypes.Generated.PairVerify;
   static PairingFeatures: typeof HomeKitTypes.Generated.PairingFeatures;
   static PairingPairings: typeof HomeKitTypes.Generated.PairingPairings;
+  static PasswordSetting: typeof HomeKitTypes.Generated.PasswordSetting;
   static PictureMode: typeof HomeKitTypes.TV.PictureMode;
   static PositionState: typeof HomeKitTypes.Generated.PositionState;
   static PowerModeSelection: typeof HomeKitTypes.TV.PowerModeSelection;
   static ProgramMode: typeof HomeKitTypes.Generated.ProgramMode;
   static ProgrammableSwitchEvent: typeof HomeKitTypes.Generated.ProgrammableSwitchEvent;
+  static ProductData: typeof HomeKitTypes.Generated.ProductData;
   static ProgrammableSwitchOutputState: typeof HomeKitTypes.Bridged.ProgrammableSwitchOutputState;
   static Reachable: typeof HomeKitTypes.Bridged.Reachable;
   static RelativeHumidityDehumidifierThreshold: typeof HomeKitTypes.Generated.RelativeHumidityDehumidifierThreshold;
@@ -339,6 +341,9 @@ export class Characteristic extends EventEmitter<Events> {
   static SupportedAudioRecordingConfiguration: typeof HomeKitTypes.Generated.SupportedAudioRecordingConfiguration;
   static SelectedCameraRecordingConfiguration: typeof HomeKitTypes.Generated.SelectedCameraRecordingConfiguration;
   static CameraOperatingModeIndicator: typeof HomeKitTypes.Generated.CameraOperatingModeIndicator;
+  /**
+   * @deprecated Removed in iOS 13.4
+   */
   static DiagonalFieldOfView: typeof HomeKitTypes.Generated.DiagonalFieldOfView;
   static NetworkClientProfileControl: typeof HomeKitTypes.Generated.NetworkClientProfileControl;
   static NetworkClientStatusControl: typeof HomeKitTypes.Generated.NetworkClientStatusControl;
@@ -349,6 +354,9 @@ export class Characteristic extends EventEmitter<Events> {
   static ManagedNetworkEnable: typeof HomeKitTypes.Generated.ManagedNetworkEnable;
   static NetworkAccessViolationControl: typeof HomeKitTypes.Generated.NetworkAccessViolationControl;
   static WiFiSatelliteStatus: typeof HomeKitTypes.Generated.WiFiSatelliteStatus;
+  static WakeConfiguration: typeof HomeKitTypes.Generated.WakeConfiguration;
+  static SupportedTransferTransportConfiguration: typeof HomeKitTypes.Generated.SupportedTransferTransportConfiguration;
+  static SetupTransferTransport: typeof HomeKitTypes.Generated.SetupTransferTransport;
 
   // NOTICE: when adding/changing properties, remember to possibly adjust the serialize/deserialize functions
   iid: Nullable<number> = null;

@@ -488,6 +488,7 @@ export class Television extends Service {
     this.addCharacteristic(Characteristic.Active);
     this.addCharacteristic(Characteristic.ActiveIdentifier);
     this.addCharacteristic(Characteristic.ConfiguredName);
+    this.addCharacteristic(Characteristic.RemoteKey);
     this.addCharacteristic(Characteristic.SleepDiscoveryMode);
 
     // Optional Characteristics
@@ -498,7 +499,6 @@ export class Television extends Service {
     this.addOptionalCharacteristic(Characteristic.TargetMediaState);
     this.addOptionalCharacteristic(Characteristic.PictureMode);
     this.addOptionalCharacteristic(Characteristic.PowerModeSelection);
-    this.addOptionalCharacteristic(Characteristic.RemoteKey);
   }
 }
 
@@ -519,13 +519,13 @@ export class InputSource extends Service {
     this.addCharacteristic(Characteristic.ConfiguredName);
     this.addCharacteristic(Characteristic.InputSourceType);
     this.addCharacteristic(Characteristic.IsConfigured);
+    this.addCharacteristic(Characteristic.Name);
     this.addCharacteristic(Characteristic.CurrentVisibilityState);
 
     // Optional Characteristics
     this.addOptionalCharacteristic(Characteristic.Identifier);
     this.addOptionalCharacteristic(Characteristic.InputDeviceType);
     this.addOptionalCharacteristic(Characteristic.TargetVisibilityState);
-    this.addOptionalCharacteristic(Characteristic.Name);
   }
 }
 
@@ -550,7 +550,6 @@ export class TelevisionSpeaker extends Service {
     this.addOptionalCharacteristic(Characteristic.Volume);
     this.addOptionalCharacteristic(Characteristic.VolumeControlType);
     this.addOptionalCharacteristic(Characteristic.VolumeSelector);
-    this.addOptionalCharacteristic(Characteristic.Name);
   }
 }
 

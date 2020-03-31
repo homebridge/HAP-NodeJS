@@ -72,6 +72,7 @@ export type EventService = ServiceEventTypes.CHARACTERISTIC_CHANGE | ServiceEven
  */
 export class Service extends EventEmitter<Events> {
 
+  static AccessControl: typeof HomeKitTypes.Generated.AccessControl;
   static AccessoryInformation: typeof HomeKitTypes.Generated.AccessoryInformation;
   static AirPurifier: typeof HomeKitTypes.Generated.AirPurifier;
   static AirQualitySensor: typeof HomeKitTypes.Generated.AirQualitySensor;
@@ -138,6 +139,8 @@ export class Service extends EventEmitter<Events> {
   static CameraEventRecordingManagement: typeof HomeKitTypes.Generated.CameraEventRecordingManagement;
   static WiFiRouter: typeof HomeKitTypes.Generated.WiFiRouter;
   static WiFiSatellite: typeof HomeKitTypes.Generated.WiFiSatellite;
+  static PowerManagement: typeof HomeKitTypes.Generated.PowerManagement;
+  static TransferTransportManagement: typeof HomeKitTypes.Generated.TransferTransportManagement;
 
   // NOTICE: when adding/changing properties, remember to possibly adjust the serialize/deserialize functions
   iid: Nullable<number> = null; // assigned later by our containing Accessory
