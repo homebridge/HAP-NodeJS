@@ -123,15 +123,22 @@ Characteristic.DisplayOrder = DisplayOrder;
 
 export class CurrentMediaState extends Characteristic {
 
+  static readonly PLAY = 0;
+  static readonly PAUSE = 1;
+  static readonly STOP = 2;
+  // 3 is unknown (maybe some Television specific value)
+  static readonly LOADING = 4; // seems to be SmartSpeaker specific
+  static readonly INTERRUPTED = 5; // seems to be SmartSpeaker specific
+
   static readonly UUID: string = '000000E0-0000-1000-8000-0026BB765291';
 
   constructor() {
     super('Current Media State', CurrentMediaState.UUID);
     this.setProps({
       format: Formats.UINT8,
-      maxValue: 3,
+      maxValue: 5,
       minValue: 0,
-      validValues: [0,1,2,3],
+      validValues: [0,1,2,3,4,5],
       perms: [Perms.READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();

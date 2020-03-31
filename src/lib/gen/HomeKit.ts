@@ -4320,6 +4320,31 @@ export class SmokeSensor extends Service {
 Service.SmokeSensor = SmokeSensor;
 
 /**
+ * Service "Smart Speaker"
+ */
+
+export class SmartSpeaker extends Service {
+
+  static UUID: string = '00000228-0000-1000-8000-0026BB765291';
+
+  constructor(displayName: string, subtype: string) {
+    super(displayName, SmartSpeaker.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.CurrentMediaState);
+    this.addCharacteristic(Characteristic.TargetMediaState);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.Name);
+    this.addOptionalCharacteristic(Characteristic.ConfiguredName);
+    this.addOptionalCharacteristic(Characteristic.Volume);
+    this.addOptionalCharacteristic(Characteristic.Mute);
+  }
+}
+
+Service.SmartSpeaker = SmartSpeaker;
+
+/**
  * Service "Speaker"
  */
 

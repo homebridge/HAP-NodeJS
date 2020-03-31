@@ -118,6 +118,7 @@ export class Service extends EventEmitter<Events> {
   static Siri: typeof HomeKitTypes.Remote.Siri;
   static Slat: typeof HomeKitTypes.Generated.Slat;
   static SmokeSensor: typeof HomeKitTypes.Generated.SmokeSensor;
+  static SmartSpeaker: typeof HomeKitTypes.Generated.SmartSpeaker;
   static Speaker: typeof HomeKitTypes.Generated.Speaker;
   static StatefulProgrammableSwitch: typeof HomeKitTypes.Bridged.StatefulProgrammableSwitch;
   static StatelessProgrammableSwitch: typeof HomeKitTypes.Generated.StatelessProgrammableSwitch;
