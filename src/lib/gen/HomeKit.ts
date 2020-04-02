@@ -4,6 +4,29 @@ import { Characteristic, Formats, Perms, Units } from '../Characteristic';
 import { Service } from '../Service';
 
 /**
+ * Characteristic "Access Control Level"
+ */
+
+export class AccessControlLevel extends Characteristic {
+
+  static readonly UUID: string = '000000E5-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Access Control Level', AccessControlLevel.UUID);
+    this.setProps({
+      format: Formats.UINT16,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      maxValue: 2,
+      minValue: 0,
+      minStep: 1,
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.AccessControlLevel = AccessControlLevel;
+
+/**
  * Characteristic "Accessory Flags"
  */
 
@@ -1465,7 +1488,7 @@ export class NightVision extends Characteristic {
     super('Night Vision', NightVision.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -1705,6 +1728,26 @@ export class PairingPairings extends Characteristic {
 }
 
 Characteristic.PairingPairings = PairingPairings;
+
+/**
+ * Characteristic "Password Setting"
+ */
+
+export class PasswordSetting extends Characteristic {
+
+  static readonly UUID: string = '000000E4-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Password Setting', PasswordSetting.UUID);
+    this.setProps({
+      format: Formats.TLV8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.PasswordSetting = PasswordSetting;
 
 /**
  * Characteristic "PM10 Density"
@@ -3199,6 +3242,8 @@ Characteristic.EventSnapshotsActive = EventSnapshotsActive;
 
 /**
  * Characteristic "Diagonal Field Of View"
+ *
+ * @deprecated was removed again
  */
 
 export class DiagonalFieldOfView extends Characteristic {
@@ -3513,6 +3558,85 @@ export class WiFiSatelliteStatus extends Characteristic {
 Characteristic.WiFiSatelliteStatus = WiFiSatelliteStatus;
 
 /**
+ * Characteristic "Wake Configuration"
+ */
+
+export class WakeConfiguration extends Characteristic {
+
+  static readonly UUID: string = '00000222-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Wake Configuration', WakeConfiguration.UUID);
+    this.setProps({
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.WakeConfiguration = WakeConfiguration;
+
+/**
+ * Characteristic "Supported Transfer Transport Configuration"
+ */
+
+export class SupportedTransferTransportConfiguration extends Characteristic {
+
+  static readonly UUID: string = '00000202-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Supported Transfer Transport Configuration', SupportedTransferTransportConfiguration.UUID);
+    this.setProps({
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.SupportedTransferTransportConfiguration = SupportedTransferTransportConfiguration;
+
+/**
+ * Characteristic "Setup Transfer Transport"
+ */
+
+export class SetupTransferTransport extends Characteristic {
+
+  static readonly UUID: string = '00000201-0000-1000-8000-0026BB765291';
+
+  constructor() {
+    super('Setup Transfer Transport', SetupTransferTransport.UUID);
+    this.setProps({
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+
+Characteristic.SetupTransferTransport = SetupTransferTransport;
+
+/**
+ * Service "Access Control"
+ */
+
+export class AccessControl extends Service {
+
+  static UUID: string = '000000DA-0000-1000-8000-0026BB765291';
+
+  constructor(displayName: string, subtype: string) {
+    super(displayName, AccessControl.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.AccessControlLevel);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.PasswordSetting);
+  }
+}
+
+/**
  * Service "Accessory Information"
  */
 
@@ -3529,12 +3653,15 @@ export class AccessoryInformation extends Service {
     this.addCharacteristic(Characteristic.Model);
     this.addCharacteristic(Characteristic.Name);
     this.addCharacteristic(Characteristic.SerialNumber);
-    this.addCharacteristic(Characteristic.FirmwareRevision);
-    this.addCharacteristic(Characteristic.ProductData);
 
     // Optional Characteristics
-    this.addOptionalCharacteristic(Characteristic.HardwareRevision);
     this.addOptionalCharacteristic(Characteristic.AccessoryFlags);
+    this.addOptionalCharacteristic(Characteristic.AppMatchingIdentifier);
+    this.addOptionalCharacteristic(Characteristic.ConfiguredName);
+    this.addOptionalCharacteristic(Characteristic.FirmwareRevision);
+    this.addOptionalCharacteristic(Characteristic.HardwareRevision);
+    this.addOptionalCharacteristic(Characteristic.SoftwareRevision);
+    this.addOptionalCharacteristic(Characteristic.ProductData);
   }
 }
 
@@ -3640,7 +3767,7 @@ export class CameraRTPStreamManagement extends Service {
     this.addCharacteristic(Characteristic.SetupEndpoints);
 
     // Optional Characteristics
-    this.addOptionalCharacteristic(Characteristic.Name);
+    this.addOptionalCharacteristic(Characteristic.Active);
   }
 }
 
@@ -4145,7 +4272,6 @@ export class Microphone extends Service {
 
     // Optional Characteristics
     this.addOptionalCharacteristic(Characteristic.Volume);
-    this.addOptionalCharacteristic(Characteristic.Name);
   }
 }
 
@@ -4320,7 +4446,35 @@ export class SmokeSensor extends Service {
 Service.SmokeSensor = SmokeSensor;
 
 /**
+ * Service "Smart Speaker"
+ */
+
+export class SmartSpeaker extends Service {
+
+  static UUID: string = '00000228-0000-1000-8000-0026BB765291';
+
+  constructor(displayName: string, subtype: string) {
+    super(displayName, SmartSpeaker.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.CurrentMediaState);
+    this.addCharacteristic(Characteristic.TargetMediaState);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.Name);
+    this.addOptionalCharacteristic(Characteristic.ConfiguredName);
+    this.addOptionalCharacteristic(Characteristic.Volume);
+    this.addOptionalCharacteristic(Characteristic.Mute);
+  }
+}
+
+Service.SmartSpeaker = SmartSpeaker;
+
+/**
  * Service "Speaker"
+ *
+ * {@see TelevisionSpeaker} for the same Service defined with {@link VolumeControlType},
+ * {@link VolumeSelector} and {@link Active} characteristics.
  */
 
 export class Speaker extends Service {
@@ -4335,7 +4489,6 @@ export class Speaker extends Service {
 
     // Optional Characteristics
     this.addOptionalCharacteristic(Characteristic.Volume);
-    this.addOptionalCharacteristic(Characteristic.Name);
   }
 }
 
@@ -4534,15 +4687,13 @@ export class CameraOperatingMode extends Service {
     // Required Characteristics
     this.addCharacteristic(Characteristic.EventSnapshotsActive);
     this.addCharacteristic(Characteristic.HomeKitCameraActive);
-    this.addCharacteristic(Characteristic.PeriodicSnapshotsActive);
 
     // Optional Characteristics
-    this.addOptionalCharacteristic(Characteristic.Name);
-    this.addOptionalCharacteristic(Characteristic.CameraOperatingModeIndicator);
-    this.addOptionalCharacteristic(Characteristic.DiagonalFieldOfView);
     this.addOptionalCharacteristic(Characteristic.ManuallyDisabled);
     this.addOptionalCharacteristic(Characteristic.NightVision);
     this.addOptionalCharacteristic(Characteristic.ThirdPartyCameraActive);
+    this.addOptionalCharacteristic(Characteristic.CameraOperatingModeIndicator);
+    this.addOptionalCharacteristic(Characteristic.PeriodicSnapshotsActive);
   }
 }
 
@@ -4565,10 +4716,9 @@ export class CameraEventRecordingManagement extends Service {
     this.addCharacteristic(Characteristic.SupportedVideoRecordingConfiguration);
     this.addCharacteristic(Characteristic.SupportedAudioRecordingConfiguration);
     this.addCharacteristic(Characteristic.SelectedCameraRecordingConfiguration);
-    this.addCharacteristic(Characteristic.RecordingAudioActive);
 
     // Optional Characteristics
-    this.addOptionalCharacteristic(Characteristic.Name);
+    this.addOptionalCharacteristic(Characteristic.RecordingAudioActive);
   }
 }
 
@@ -4586,8 +4736,6 @@ export class WiFiRouter extends Service {
     super(displayName, WiFiRouter.UUID, subtype);
 
     // Required Characteristics
-    this.addCharacteristic(Characteristic.Version);
-    this.addCharacteristic(Characteristic.ConfiguredName);
     this.addCharacteristic(Characteristic.NetworkClientProfileControl);
     this.addCharacteristic(Characteristic.NetworkClientStatusControl);
     this.addCharacteristic(Characteristic.RouterStatus);
@@ -4595,10 +4743,9 @@ export class WiFiRouter extends Service {
     this.addCharacteristic(Characteristic.WANConfigurationList);
     this.addCharacteristic(Characteristic.WANStatusList);
     this.addCharacteristic(Characteristic.ManagedNetworkEnable);
-    this.addCharacteristic(Characteristic.NetworkAccessViolationControl);
 
     // Optional Characteristics
-    this.addOptionalCharacteristic(Characteristic.Name);
+    this.addOptionalCharacteristic(Characteristic.NetworkAccessViolationControl);
   }
 }
 
@@ -4609,6 +4756,7 @@ Service.WiFiRouter = WiFiRouter;
  */
 
 export class WiFiSatellite extends Service {
+
   static readonly UUID: string = '0000020F-0000-1000-8000-0026BB765291';
 
   constructor(displayName: string, subtype: string) {
@@ -4620,3 +4768,40 @@ export class WiFiSatellite extends Service {
 }
 
 Service.WiFiSatellite = WiFiSatellite;
+
+/**
+ * Service "Power Management"
+ */
+
+export class PowerManagement extends Service {
+
+  static readonly UUID: string = '00000221-0000-1000-8000-0026BB765291';
+
+  constructor(displayName: string, subtype: string) {
+    super(displayName, PowerManagement.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.WakeConfiguration);
+  }
+}
+
+Service.PowerManagement = PowerManagement;
+
+/**
+ * Service "Transfer Transport Management"
+ */
+
+export class TransferTransportManagement extends Service {
+
+  static readonly UUID: string = '00000203-0000-1000-8000-0026BB765291';
+
+  constructor(displayName: string, subtype: string) {
+    super(displayName, TransferTransportManagement.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.SupportedTransferTransportConfiguration);
+    this.addCharacteristic(Characteristic.SetupTransferTransport);
+  }
+}
+
+Service.TransferTransportManagement = TransferTransportManagement;
