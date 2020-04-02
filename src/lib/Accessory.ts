@@ -71,7 +71,8 @@ export enum Categories {
   SHOWER_HEAD = 30,
   TELEVISION = 31,
   TARGET_CONTROLLER = 32, // Remote Control
-  ROUTER = 33 // HomeKit enabled router
+  ROUTER = 33, // HomeKit enabled router
+  AMPLIFIER = 34 //
 }
 
 export interface SerializedAccessory {
