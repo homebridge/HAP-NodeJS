@@ -11,9 +11,14 @@ import * as tlv from './util/tlv';
 import { EventedHTTPServer, EventedHTTPServerEvents, Session } from './util/eventedhttp';
 import { once } from './util/once';
 import { IncomingMessage, ServerResponse } from "http";
-import { Characteristic } from './Characteristic';
 import { Accessory, CharacteristicEvents, Resource } from './Accessory';
-import { CharacteristicData, NodeCallback, PairingsCallback, SessionIdentifier, VoidCallback } from '../types';
+import {
+  CharacteristicData,
+  SessionIdentifier,
+  NodeCallback,
+  PairingsCallback,
+  VoidCallback
+} from '../types';
 import { EventEmitter } from './EventEmitter';
 import { PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
 
@@ -151,7 +156,7 @@ export type Events = {
     remote: boolean,
     session: Session,
   ) => void;
-  [HAPServerEventTypes.SESSION_CLOSE]: (sessionID: string, events: CharacteristicEvents) => void;
+  [HAPServerEventTypes.SESSION_CLOSE]: (sessionID: SessionIdentifier, events: CharacteristicEvents) => void;
   [HAPServerEventTypes.REQUEST_RESOURCE]: (data: Resource, cb: NodeCallback<Buffer>) => void;
 }
 
@@ -1050,7 +1055,7 @@ export class HAPServer extends EventEmitter<Events> {
       this.emit(HAPServerEventTypes.REQUEST_RESOURCE, data, once((err: Error, resource: any) => {
         if (err) {
           debug("[%s] Error getting snapshot: %s", this.accessoryInfo.username, err.message);
-          response.writeHead(405);
+          response.writeHead(404);
           response.end();
         } else {
           response.writeHead(200, {"Content-Type": "image/jpeg"});

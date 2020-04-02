@@ -21,7 +21,7 @@ export function generate(data: BinaryLike) {
   });
 }
 
-const VALID_UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const VALID_UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function isValid(UUID: string) {
   return VALID_UUID_REGEX.test(UUID);
@@ -29,6 +29,21 @@ export function isValid(UUID: string) {
 
 // https://github.com/defunctzombie/node-uuid/blob/master/uuid.js
 export function unparse(buf: Buffer | string, offset: number = 0) {
+  if (typeof buf === "string" && isValid(buf)) {
+    /*
+      This check was added to fix backwards compatibility with the old style CameraSource API.
+      The old StreamController implementation would not unparse the HAP provided sessionId for the current streaming session.
+      This was changed when the new Controller API was introduced, which now turns the sessionId Buffer into a string
+      and passes it to the implementor of the Camera.
+      Old style CameraSource implementations would use this unparse function to turn the Buffer into a string.
+      As the sessionId is already a string we just return it here.
+
+      The buf attribute being a also type of "string" as actually an error. Also I don't know who decided to
+      not unparse the sessionId. I'm only here to fix things.
+     */
+    return buf;
+  }
+
   let i = offset;
   return buf[i++].toString(16) + buf[i++].toString(16) +
          buf[i++].toString(16) + buf[i++].toString(16) + '-' +
@@ -40,11 +55,13 @@ export function unparse(buf: Buffer | string, offset: number = 0) {
          buf[i++].toString(16) + buf[i++].toString(16);
 }
 
-export function write(uuid: string, buf: Buffer, offset: number = 0) {
+export function write(uuid: string, buf: Buffer = Buffer.alloc(16), offset: number = 0): Buffer {
   uuid = uuid.replace(/-/g, "");
 
   for (let i = 0; i < uuid.length; i += 2) {
     const octet = uuid.substring(i, i + 2);
     buf.write(octet, offset++, undefined, "hex");
   }
+
+  return buf;
 }

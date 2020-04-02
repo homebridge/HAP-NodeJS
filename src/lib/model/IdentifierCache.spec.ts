@@ -114,7 +114,7 @@ describe('IdentifierCache', () => {
   describe('#remove()', () => {
     it('removes the cache from file storage', () => {
       const identifierCache = createIdentifierCache();
-      identifierCache.remove();
+      IdentifierCache.remove(identifierCache.username);
 
       expect(storage.removeItemSync).toHaveBeenCalledTimes(1);
     });

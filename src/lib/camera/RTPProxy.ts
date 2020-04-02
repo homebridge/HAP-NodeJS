@@ -11,6 +11,14 @@ export interface RTPProxyOptions {
   outgoingSSRC: number;
 }
 
+/**
+ * RTPProxy to proxy unencrypted RTP and RTCP
+ *
+ * At early days of HomeKit camera support, HomeKit allowed for unencrypted RTP stream.
+ * The proxy was created to deal with RTCP and SSRC related stuff from external streams back in that days.
+ * Later HomeKit removed support for unencrypted stream so it’s mostly no longer useful anymore, only really for testing
+ * with a custom HAP controller.
+ */
 export default class RTPProxy extends EventEmitter {
 
   startingPort: number = 10000;
@@ -95,6 +103,8 @@ export default class RTPProxy extends EventEmitter {
     if (typeof address !== 'string') {
       return address.port;
     }
+
+    return 0; // won't happen
   }
 
   setServerAddress = (address: string) => {

@@ -17,6 +17,8 @@ export interface SerializedService {
   optionalCharacteristics?: SerializedCharacteristic[],
 }
 
+export type ServiceId = string; // string with the format: UUID + (subtype | "")
+
 export enum ServiceEventTypes {
   CHARACTERISTIC_CHANGE = "characteristic-change",
   SERVICE_CONFIGURATION_CHANGE = "service-configurationChange",
@@ -155,6 +157,17 @@ export class Service extends EventEmitter<Events> {
 
       nameCharacteristic.setValue(displayName);
     }
+  }
+
+  /**
+   * Returns an id which uniquely identifies an service on the associated accessory.
+   * The serviceId is a concatenation of the UUID for the service (defined by HAP) and the subtype (could be empty)
+   * which is programmatically defined by the programmer.
+   *
+   * @returns the serviceId
+   */
+  getServiceId(): ServiceId {
+    return this.UUID + (this.subtype || "");
   }
 
   addCharacteristic = (characteristic: typeof Characteristic | Characteristic, ...constructorArgs: any[]) => {
@@ -296,7 +309,7 @@ export class Service extends EventEmitter<Events> {
   }
 
 // A function to only updating the remote value, but not firing the 'set' event.
-  updateCharacteristic = (name: string, value: CharacteristicValue) => {
+  updateCharacteristic = <T extends WithUUID<typeof Characteristic>>(name: string | T, value: CharacteristicValue) => {
     this.getCharacteristic(name)!.updateValue(value);
     return this;
   }
