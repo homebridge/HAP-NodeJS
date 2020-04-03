@@ -519,7 +519,9 @@ export class InputSource extends Service {
     this.addCharacteristic(Characteristic.ConfiguredName);
     this.addCharacteristic(Characteristic.InputSourceType);
     this.addCharacteristic(Characteristic.IsConfigured);
-    this.addCharacteristic(Characteristic.Name);
+    if (!this.testCharacteristic(Characteristic.Name)) { // workaround for name characteristic collision in constructor
+      this.addCharacteristic(Characteristic.Name).updateValue("Unnamed InputSource");
+    }
     this.addCharacteristic(Characteristic.CurrentVisibilityState);
 
     // Optional Characteristics

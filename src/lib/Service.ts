@@ -270,14 +270,14 @@ export class Service extends EventEmitter<Events> {
     }
   }
 
-  testCharacteristic = (name: string | Characteristic) => {
+  testCharacteristic = <T extends WithUUID<typeof Characteristic>>(name: string | T) => {
     // checks for the existence of a characteristic object in the service
     var index, characteristic;
     for (index in this.characteristics) {
       characteristic = this.characteristics[index];
       if (typeof name === 'string' && characteristic.displayName === name) {
         return true;
-      } else if (typeof name === 'function' && ((characteristic instanceof name) || ((name as Characteristic).UUID === characteristic.UUID))) {
+      } else if (typeof name === 'function' && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
         return true;
       }
     }

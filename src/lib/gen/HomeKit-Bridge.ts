@@ -669,7 +669,9 @@ export class TunneledBTLEAccessoryService extends Service {
     super(displayName, TunneledBTLEAccessoryService.UUID, subtype);
 
     // Required Characteristics
-    this.addCharacteristic(Characteristic.Name);
+    if (!this.testCharacteristic(Characteristic.Name)) { // workaround for name characteristic collision in constructor
+      this.addCharacteristic(Characteristic.Name);
+    }
     this.addCharacteristic(Characteristic.AccessoryIdentifier);
     this.addCharacteristic(Characteristic.TunneledAccessoryStateNumber);
     this.addCharacteristic(Characteristic.TunneledAccessoryConnected);
