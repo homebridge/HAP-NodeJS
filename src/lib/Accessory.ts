@@ -346,6 +346,20 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
+  getServiceById<T extends WithUUID<typeof Service>>(uuid: string | T, subType: string): Service | undefined {
+    for (const index in this.services) {
+      const service = this.services[index];
+
+      if (typeof uuid === "string" && (service.displayName === uuid || service.name === uuid) && service.subtype === subType) {
+        return service;
+      } else if (typeof uuid === "function" && ((service instanceof uuid) || (uuid.UUID === service.UUID)) && service.subtype === subType) {
+        return service;
+      }
+    }
+
+    return undefined;
+  }
+
   /**
    * Returns the bridging accessory if this accessory is bridged.
    * Otherwise returns itself.
