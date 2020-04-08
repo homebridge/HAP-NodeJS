@@ -137,7 +137,7 @@ export class Service extends EventEmitter<Events> {
   characteristics: Characteristic[] = [];
   optionalCharacteristics: Characteristic[] = [];
   isHiddenService: boolean = false;
-  isPrimaryService: boolean = false;
+  isPrimaryService: boolean = false; // do not write to this directly
   linkedServices: Service[] = [];
 
   constructor(public displayName: string = "", public UUID: string, public subtype: string = "") {
@@ -188,8 +188,25 @@ export class Service extends EventEmitter<Events> {
     return characteristic;
   }
 
-//Defines this service as hidden
-  setHiddenService = (isHidden: boolean) => {
+  /**
+   * Sets this service as the new primary service.
+   * Any currently active primary service will be reset to be not primary.
+   * This will happen immediately, if the service was already added to an accessory, or later
+   * when the service gets added to an accessory.
+   *
+   * @param isPrimary {boolean} - optional boolean (default true) if the service should be the primary service
+   */
+  setPrimaryService = (isPrimary: boolean = true) => {
+    this.isPrimaryService = isPrimary;
+    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
+  };
+
+  /**
+   * Marks the service as hidden
+   *
+   * @param isHidden {boolean} - optional boolean (default true) if the service should be marked hidden
+   */
+  setHiddenService = (isHidden: boolean = true) => {
     this.isHiddenService = isHidden;
     this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
   }

@@ -183,6 +183,7 @@ export class Accessory extends EventEmitter<Events> {
   cameraSource: Nullable<Camera> = null;
   category: Categories = Categories.OTHER;
   services: Service[] = [];
+  private primaryService?: Service;
   shouldPurgeUnusedIDs: boolean = true; // Purge unused ids by default
 
   _accessoryInfo?: Nullable<AccessoryInfo>;
@@ -233,12 +234,12 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
-  addService = (service: Service | typeof Service, ...constructorArgs: any[]) => {
+  addService = (serviceParam: Service | typeof Service, ...constructorArgs: any[]) => {
     // service might be a constructor like `Service.AccessoryInformation` instead of an instance
     // of Service. Coerce if necessary.
-    if (typeof service === 'function')
-      service = new service(constructorArgs[0], constructorArgs[1], constructorArgs[2]) as Service;
-      // service = new (Function.prototype.bind.apply(service, arguments));
+    const service: Service = typeof serviceParam === 'function'
+        ? new serviceParam(constructorArgs[0], constructorArgs[1], constructorArgs[2])
+        : serviceParam;
 
     // check for UUID+subtype conflict
     for (var index in this.services) {
@@ -255,6 +256,14 @@ export class Accessory extends EventEmitter<Events> {
 
     this.services.push(service);
 
+    if (service.isPrimaryService) { // check if a primary service was added
+      if (this.primaryService !== undefined) {
+        this.primaryService.isPrimaryService = false;
+      }
+
+      this.primaryService = service;
+    }
+
     if (!this.bridged) {
       this._updateConfiguration();
     } else {
@@ -262,6 +271,18 @@ export class Accessory extends EventEmitter<Events> {
     }
 
     service.on(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, (change: ServiceConfigurationChange) => {
+      if (!service.isPrimaryService && service === this.primaryService) {
+        // service changed form primary to non primary service
+        this.primaryService = undefined;
+      } else if (service.isPrimaryService && service !== this.primaryService) {
+        // service changed from non primary to primary service
+        if (this.primaryService !== undefined) {
+          this.primaryService.isPrimaryService = false;
+        }
+
+        this.primaryService = service;
+      }
+
       if (!this.bridged) {
         this._updateConfiguration();
       } else {
@@ -282,48 +303,22 @@ export class Accessory extends EventEmitter<Events> {
     return service;
   }
 
+  /**
+   * @deprecated use {@link Service.setPrimaryService} directly
+   */
   setPrimaryService = (service: Service) => {
-      //find this service in the services list
-      let targetServiceIndex, existingService: Service;
-      for (let index in this.services) {
-        existingService = this.services[index];
-
-        if (existingService === service) {
-          targetServiceIndex = index;
-          break;
-        }
-      }
-
-      if (targetServiceIndex) {
-        //If the service is found, set isPrimaryService to false for everything.
-        for (let index in this.services)
-          this.services[index].isPrimaryService = false;
-
-        //Make this service the primary
-        existingService!.isPrimaryService = true
-
-        if (!this.bridged) {
-          this._updateConfiguration();
-        } else {
-          this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ accessory: this, service: service }));
-        }
-      }
-  }
+    service.setPrimaryService();
+  };
 
   removeService = (service: Service) => {
-    let targetServiceIndex: number | undefined = undefined;
+    const index = this.services.indexOf(service);
 
-    for (let index in this.services) {
-      var existingService = this.services[index];
+    if (index >= 0) {
+      this.services.splice(index, 1);
 
-      if (existingService === service) {
-        targetServiceIndex = Number.parseInt(index);
-        break;
+      if (this.primaryService === service) { // check if we are removing out primary service
+        this.primaryService = undefined;
       }
-    }
-
-    if (targetServiceIndex) {
-      this.services.splice(targetServiceIndex, 1);
 
       if (!this.bridged) {
         this._updateConfiguration();
