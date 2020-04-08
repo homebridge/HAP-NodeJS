@@ -22,6 +22,8 @@ jobs:
           CI: true
 
   publish-npm:
+    if: github.repository == 'homebridge/HAP-NodeJS'
+
     needs: build
 
     runs-on: ubuntu-latest
