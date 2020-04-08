@@ -1,6 +1,6 @@
 ---
 name: Support Request
-about: Need help installing Homebridge?
+about: Need help with HAP-NodeJS?
 title: ''
 labels: question
 assignees: ''
