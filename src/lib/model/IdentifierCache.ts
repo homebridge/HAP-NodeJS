@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import util from 'util';
 
 import storage from 'node-persist';
+import { MacAddress } from "../../types";
 
 /**
  * IdentifierCache is a model class that manages a system of associating HAP "Accessory IDs" and "Instance IDs"
@@ -18,7 +19,7 @@ export class IdentifierCache {
   _usedCache: Record<string, number> | null = null; // for usage tracking and expiring old keys
   _savedCacheHash: string = ""; // for checking if new cache neeed to be saved
 
-  constructor(public username: string) {
+  constructor(public username: MacAddress) {
   }
 
   startTrackingUsage = () => {
@@ -91,20 +92,15 @@ export class IdentifierCache {
     }
   }
 
-  remove = () =>  {
-    var key = IdentifierCache.persistKey(this.username);
-    storage.removeItemSync(key);
-  }
-
   /**
    * Persisting to File System
    */
   // Gets a key for storing this IdentifierCache in the filesystem, like "IdentifierCache.CC223DE3CEF3.json"
-  static persistKey = (username: string) => {
+  static persistKey = (username: MacAddress) => {
     return util.format("IdentifierCache.%s.json", username.replace(/:/g, "").toUpperCase());
   }
 
-  static load = (username: string) => {
+  static load = (username: MacAddress) => {
     var key = IdentifierCache.persistKey(username);
     var saved = storage.getItem(key);
     if (saved) {
@@ -116,6 +112,12 @@ export class IdentifierCache {
       return null;
     }
   }
+
+  static remove(username: MacAddress) {
+    const key = this.persistKey(username);
+    storage.removeItemSync(key);
+  }
+
 }
 
 

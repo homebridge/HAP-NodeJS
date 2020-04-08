@@ -1,10 +1,9 @@
-import { Service, ServiceEventTypes } from './Service';
-import { generate } from './util/uuid';
-import './gen';
-import { Characteristic } from './Characteristic';
+import { Service, ServiceEventTypes } from '..';
+import { uuid } from '..';
+import { Characteristic } from '..';
 
 const createService = () => {
-  return new Service('Test', generate('Foo'), 'subtype');
+  return new Service('Test', uuid.generate('Foo'), 'subtype');
 }
 
 describe('Service', () => {

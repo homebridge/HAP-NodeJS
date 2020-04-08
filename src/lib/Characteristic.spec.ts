@@ -7,16 +7,15 @@ import {
   Perms,
   SerializedCharacteristic,
   Units
-} from './Characteristic';
-import { generate } from './util/uuid';
-import './gen';
+} from '..';
+import { uuid } from '..';
 
 const createCharacteristic = (type: Formats) => {
-  return new Characteristic('Test', generate('Foo'), { format: type, perms: [] });
+  return new Characteristic('Test', uuid.generate('Foo'), { format: type, perms: [] });
 };
 
 const createCharacteristicWithProps = (props: CharacteristicProps) => {
-  return new Characteristic('Test', generate('Foo'), props);
+  return new Characteristic('Test', uuid.generate('Foo'), props);
 };
 
 describe('Characteristic', () => {

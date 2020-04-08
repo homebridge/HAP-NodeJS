@@ -3,6 +3,8 @@
  * https://en.wikipedia.org/wiki/Type-length-value
  */
 
+export const EMPTY_TLV_TYPE = 0x00; // and empty tlv with id 0 is usually used as delimiter for tlv lists
+
 export function encode(type: number, data: Buffer | number | string, ...args: any[]) {
 
     var encodedTLVBuffer = Buffer.alloc(0);

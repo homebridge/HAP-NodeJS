@@ -1,17 +1,17 @@
-import * as tlv from './util/tlv';
+import * as tlv from '../util/tlv';
 import createDebug from 'debug';
 import assert from 'assert';
 
-import {Service} from "./Service";
+import {Service} from "../Service";
 import {
     Characteristic,
     CharacteristicEventTypes,
     CharacteristicGetCallback,
     CharacteristicSetCallback
-} from "./Characteristic";
-import {CharacteristicValue} from "../types";
-import {Status} from "./HAPServer";
-import {Accessory, AccessoryEventTypes} from "./Accessory";
+} from "../Characteristic";
+import {CharacteristicValue, SessionIdentifier} from "../../types";
+import {Status} from "../HAPServer";
+import {Accessory} from "../Accessory";
 import {
     DataSendCloseReason,
     DataStreamConnection,
@@ -20,21 +20,26 @@ import {
     DataStreamProtocolHandler,
     DataStreamServerEvents,
     EventHandler,
-    Float32, HDSStatus,
+    Float32,
+    HDSStatus,
     Int64,
     Protocols,
     RequestHandler,
     Topics
-} from "./datastream";
+} from "../datastream";
 import {
-    AudioCodecParamBitRateTypes,
-    AudioCodecParamSampleRateTypes,
-    AudioCodecParamTypes,
+    AudioBitrate,
+    AudioCodecConfigurationTypes,
+    AudioCodecParametersTypes,
     AudioCodecTypes,
-    AudioTypes
-} from "./StreamController";
-import {EventEmitter} from "./EventEmitter";
-import {HAPSessionEvents, Session} from "./util/eventedhttp";
+    AudioSamplerate,
+    SupportedAudioStreamConfigurationTypes
+} from "../camera";
+import {EventEmitter} from "../EventEmitter";
+import {HAPSessionEvents, Session} from "../util/eventedhttp";
+import {ControllerServiceMap, DefaultControllerType, SerializableController, StateChangeDelegate} from "./Controller";
+import {AudioStreamManagement, Siri, TargetControl, TargetControlManagement} from "../gen/HomeKit-Remote";
+import {DataStreamTransportManagement} from "../gen/HomeKit-DataStream";
 import Timeout = NodeJS.Timeout;
 
 const debug = createDebug('Remote:Controller');
@@ -145,11 +150,6 @@ export enum SiriInputType {
 }
 
 
-export enum SupportedAudioStreamConfigurationTypes {
-    AUDIO_CODEC_CONFIGURATION = 0x01,
-    COMFORT_NOISE_SUPPORT = 0x02,
-}
-
 export enum SelectedAudioInputStreamConfigurationTypes {
     SELECTED_AUDIO_INPUT_STREAM_CONFIGURATION = 0x01,
 }
@@ -169,8 +169,8 @@ export type AudioCodecConfiguration = {
 
 export type AudioCodecParameters = {
     channels: number, // number of audio channels, default is 1
-    bitrate: AudioCodecParamBitRateTypes,
-    samplerate: AudioCodecParamSampleRateTypes,
+    bitrate: AudioBitrate,
+    samplerate: AudioSamplerate,
     rtpTime?: RTPTime, // only present in SelectedAudioCodecParameters TLV
 }
 
@@ -255,8 +255,22 @@ export type RemoteControllerEventMap = {
     [RemoteControllerEvents.TARGETS_RESET]: () => void;
 }
 
+export interface RemoteControllerServiceMap extends ControllerServiceMap {
+    targetControlManagement: TargetControlManagement,
+    targetControl: TargetControl,
+
+    siri?: Siri,
+    audioStreamManagement?: AudioStreamManagement,
+    dataStreamTransportManagement?: DataStreamTransportManagement
+}
+
+export interface SerializedControllerState {
+    activeIdentifier: number,
+    targetConfigurations: Record<number, TargetConfiguration>;
+}
+
 /**
- * Handles everything need to implement a fully working HomeKit remote controller.
+ * Handles everything needed to implement a fully working HomeKit remote controller.
  *
  * @event 'active-change': (active: boolean) => void
  *        This event is emitted when the active state of the remote has changed.
@@ -285,28 +299,25 @@ export type RemoteControllerEventMap = {
  *        With this event every configuration made should be reset. This event is also called
  *        when the accessory gets unpaired.
  */
-export class HomeKitRemoteController extends EventEmitter<RemoteControllerEventMap> implements DataStreamProtocolHandler {
+export class RemoteController extends EventEmitter<RemoteControllerEventMap>
+    implements SerializableController<RemoteControllerServiceMap, SerializedControllerState>, DataStreamProtocolHandler {
+
+    readonly controllerType = DefaultControllerType.REMOTE;
+    stateChangeDelegate?: StateChangeDelegate;
 
     audioSupported: boolean;
     audioProducerConstructor?: SiriAudioStreamProducerConstructor;
     audioProducerOptions?: any;
 
-    accessoryConfigured: boolean = false;
-    targetControlManagementService?: Service;
-    targetControlService?: Service;
+    targetControlManagementService?: TargetControlManagement;
+    targetControlService?: TargetControl;
 
-    siriService?: Service;
-    audioStreamManagementService?: Service;
+    siriService?: Siri;
+    audioStreamManagementService?: AudioStreamManagement;
     dataStreamManagement?: DataStreamManagement;
 
     private buttons: Record<number, number> = {}; // internal mapping of buttonId to buttonType for supported buttons
     private readonly supportedConfiguration: string;
-    /*
-        It is advice to persistently store this configuration below, but HomeKit seems to just reconfigure itself
-        after an reboot of the accessory.
-        If someone has the time to implement persistent storage 'activeIdentifier' and 'active'
-        should probably be included as well. Also a check at startup if we are still paired could be useful :thinking:
-     */
     targetConfigurations: Record<number, TargetConfiguration> = {};
     private  targetConfigurationsString: string = "";
 
@@ -328,7 +339,7 @@ export class HomeKitRemoteController extends EventEmitter<RemoteControllerEventM
     requestHandler?: Record<string, RequestHandler>;
 
     /**
-     * Creates a new HomeKitRemoteController.
+     * Creates a new RemoteController.
      * If siri voice input is supported the constructor to an SiriAudioStreamProducer needs to be supplied.
      * Otherwise a remote without voice support will be created.
      *
@@ -354,27 +365,14 @@ export class HomeKitRemoteController extends EventEmitter<RemoteControllerEventM
             codecType: AudioCodecTypes.OPUS,
             parameters: {
                 channels: 1,
-                bitrate: AudioCodecParamBitRateTypes.VARIABLE,
-                samplerate: AudioCodecParamSampleRateTypes.KHZ_16,
+                bitrate: AudioBitrate.VARIABLE,
+                samplerate: AudioSamplerate.KHZ_16,
                 rtpTime: 20,
             }
         };
         this.selectedAudioConfigurationString = this.buildSelectedAudioConfigurationTLV({
             audioCodecConfiguration: this.selectedAudioConfiguration,
         });
-
-        this._createServices();
-
-        if (this.audioSupported) { // subscribe to necessary events if siri is enabled
-            this.dataStreamManagement!
-                .onEventMessage(Protocols.TARGET_CONTROL, Topics.WHOAMI, this.handleTargetControlWhoAmI.bind(this))
-                .onServerEvent(DataStreamServerEvents.CONNECTION_CLOSED, this.handleDataStreamConnectionClosed.bind(this));
-
-            this.eventHandler = {
-                [Topics.ACK]: this.handleDataSendAckEvent.bind(this),
-                [Topics.CLOSE]: this.handleDataSendCloseEvent.bind(this),
-            };
-        }
     }
 
     /**
@@ -470,31 +468,10 @@ export class HomeKitRemoteController extends EventEmitter<RemoteControllerEventM
      * This method adds and configures the remote services for a give accessory.
      *
      * @param accessory {Accessory} - the give accessory this remote should be added to
+     * @deprecated - use {@link Accessory.configureController} instead
      */
     addServicesToAccessory = (accessory: Accessory) => {
-        if (!this.targetControlManagementService || !this.targetControlService) {
-            throw new Error("Unexpected state: Services not configured!"); // playing it save
-        }
-        if (this.accessoryConfigured) {
-            throw new Error("Remote was already added to an accessory");
-        }
-
-        accessory.addService(this.targetControlManagementService);
-        accessory.addService(this.targetControlService);
-
-        if (this.audioSupported) {
-            accessory.addService(this.siriService!);
-            accessory.addService(this.audioStreamManagementService!);
-            accessory.addService(this.dataStreamManagement!.getService());
-        }
-
-        const primaryAccessory = accessory.getPrimaryAccessory();
-        primaryAccessory.on(AccessoryEventTypes.UNPAIRED, () => {
-            debug("Accessory was unpaired. Resetting targets...");
-            this.handleResetTargets(undefined);
-        });
-
-        this.accessoryConfigured = true;
+        accessory.configureController(this);
     };
 
     // ---------------------------------- CONFIGURATION ----------------------------------
@@ -536,8 +513,8 @@ export class HomeKitRemoteController extends EventEmitter<RemoteControllerEventM
                 codecType: AudioCodecTypes.OPUS,
                 parameters: {
                     channels: 1,
-                    bitrate: AudioCodecParamBitRateTypes.VARIABLE,
-                    samplerate: AudioCodecParamSampleRateTypes.KHZ_16,
+                    bitrate: AudioBitrate.VARIABLE,
+                    samplerate: AudioSamplerate.KHZ_16,
                 }
             },
         }
@@ -603,7 +580,7 @@ export class HomeKitRemoteController extends EventEmitter<RemoteControllerEventM
 
         setTimeout(() => this.emit(RemoteControllerEvents.TARGET_ADDED, targetConfiguration), 0);
 
-        this.targetConfigurationsString = this.buildTargetConfigurationsTLV(this.targetConfigurations); // set response
+        this.updatedTargetConfiguration(); // set response
         return Status.SUCCESS;
     };
 
@@ -647,7 +624,7 @@ export class HomeKitRemoteController extends EventEmitter<RemoteControllerEventM
 
         setTimeout(() => this.emit(RemoteControllerEvents.TARGET_UPDATED, targetConfiguration, updates), 0);
 
-        this.targetConfigurationsString = this.buildTargetConfigurationsTLV(this.targetConfigurations); // set response
+        this.updatedTargetConfiguration(); // set response
         return Status.SUCCESS;
     };
 
@@ -679,7 +656,7 @@ export class HomeKitRemoteController extends EventEmitter<RemoteControllerEventM
             this.setActiveIdentifier(keys.length === 0? 0: parseInt(keys[0])); // switch to next available remote
         }
 
-        this.targetConfigurationsString = this.buildTargetConfigurationsTLV(this.targetConfigurations); // set response
+        this.updatedTargetConfiguration(); // set response
         return Status.SUCCESS;
     };
 
@@ -690,11 +667,11 @@ export class HomeKitRemoteController extends EventEmitter<RemoteControllerEventM
 
         debug("Resetting all target configurations");
         this.targetConfigurations = {};
+        this.updatedTargetConfiguration(); // set response
 
         setTimeout(() => this.emit(RemoteControllerEvents.TARGETS_RESET), 0);
         this.setActiveIdentifier(0); // resetting active identifier (also sets active to false)
 
-        this.targetConfigurationsString = ""; // set response
         return Status.SUCCESS;
     };
 
@@ -859,11 +836,11 @@ export class HomeKitRemoteController extends EventEmitter<RemoteControllerEventM
         };
     };
 
-    private buildTargetConfigurationsTLV = (configurations: Record<number, TargetConfiguration>) => {
+    private updatedTargetConfiguration = () => {
         const bufferList = [];
-        for (const key in configurations) {
+        for (const key in this.targetConfigurations) {
             // noinspection JSUnfilteredForInLoop
-            const configuration = configurations[key];
+            const configuration = this.targetConfigurations[key];
 
             const targetIdentifier = tlv.encode(
                 TargetConfigurationTypes.TARGET_IDENTIFIER, tlv.writeUInt32(configuration.targetIdentifier)
@@ -907,7 +884,8 @@ export class HomeKitRemoteController extends EventEmitter<RemoteControllerEventM
             bufferList.push(tlv.encode(TargetControlList.TARGET_CONFIGURATION, targetConfiguration));
         }
 
-        return Buffer.concat(bufferList).toString('base64');
+        this.targetConfigurationsString = Buffer.concat(bufferList).toString('base64');
+        this.stateChangeDelegate && this.stateChangeDelegate();
     };
 
     private buildTargetControlSupportedConfigurationTLV = (configuration: SupportedConfiguration) => {
@@ -1054,12 +1032,12 @@ export class HomeKitRemoteController extends EventEmitter<RemoteControllerEventM
             objects[SelectedAudioInputStreamConfigurationTypes.SELECTED_AUDIO_INPUT_STREAM_CONFIGURATION]
         );
 
-        const codec = selectedAudioStreamConfiguration[AudioTypes.CODEC][0];
-        const parameters = tlv.decode(selectedAudioStreamConfiguration[AudioTypes.CODEC_PARAM]);
+        const codec = selectedAudioStreamConfiguration[AudioCodecConfigurationTypes.CODEC_TYPE][0];
+        const parameters = tlv.decode(selectedAudioStreamConfiguration[AudioCodecConfigurationTypes.CODEC_PARAMETERS]);
 
-        const channels = parameters[AudioCodecParamTypes.CHANNEL][0];
-        const bitrate = parameters[AudioCodecParamTypes.BIT_RATE][0];
-        const samplerate = parameters[AudioCodecParamTypes.SAMPLE_RATE][0];
+        const channels = parameters[AudioCodecParametersTypes.CHANNEL][0];
+        const bitrate = parameters[AudioCodecParametersTypes.BIT_RATE][0];
+        const samplerate = parameters[AudioCodecParametersTypes.SAMPLE_RATE][0];
 
         this.selectedAudioConfiguration = {
             codecType: codec,
@@ -1099,72 +1077,102 @@ export class HomeKitRemoteController extends EventEmitter<RemoteControllerEventM
         const parameters = codecConfiguration.parameters;
 
         let parametersTLV = tlv.encode(
-            AudioCodecParamTypes.CHANNEL, parameters.channels,
-            AudioCodecParamTypes.BIT_RATE, parameters.bitrate,
-            AudioCodecParamTypes.SAMPLE_RATE, parameters.samplerate,
+            AudioCodecParametersTypes.CHANNEL, parameters.channels,
+            AudioCodecParametersTypes.BIT_RATE, parameters.bitrate,
+            AudioCodecParametersTypes.SAMPLE_RATE, parameters.samplerate,
         );
         if (parameters.rtpTime) {
             parametersTLV = Buffer.concat([
                 parametersTLV,
-                tlv.encode(AudioCodecParamTypes.PACKET_TIME, parameters.rtpTime)
+                tlv.encode(AudioCodecParametersTypes.PACKET_TIME, parameters.rtpTime)
             ]);
         }
 
         return tlv.encode(
-            AudioTypes.CODEC, codecConfiguration.codecType,
-            AudioTypes.CODEC_PARAM, parametersTLV
+            AudioCodecConfigurationTypes.CODEC_TYPE, codecConfiguration.codecType,
+            AudioCodecConfigurationTypes.CODEC_PARAMETERS, parametersTLV
         );
     };
 
     // -----------------------------------------------------------------------------------
 
-    _createServices = () => {
+    constructServices(): RemoteControllerServiceMap {
         this.targetControlManagementService = new Service.TargetControlManagement('', '');
-        this.targetControlManagementService.getCharacteristic(Characteristic.TargetControlSupportedConfiguration)!
-            .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-                callback(null, this.supportedConfiguration);
-            }).getValue();
+        this.targetControlManagementService.setCharacteristic(Characteristic.TargetControlSupportedConfiguration, this.supportedConfiguration);
+        this.targetControlManagementService.setCharacteristic(Characteristic.TargetControlList, this.targetConfigurationsString);
+        this.targetControlManagementService.setPrimaryService();
+
+        // you can also expose multiple TargetControl services to control multiple apple tvs simultaneously.
+        // should we extend this class to support multiple TargetControl services or should users just create a second accessory?
+        this.targetControlService = new Service.TargetControl('', '');
+        this.targetControlService.setCharacteristic(Characteristic.ActiveIdentifier, 0);
+        this.targetControlService.setCharacteristic(Characteristic.Active, false);
+        this.targetControlService.setCharacteristic(Characteristic.ButtonEvent, this.lastButtonEvent);
+
+        if (this.audioSupported) {
+            this.siriService = new Service.Siri('', '');
+            this.siriService.setCharacteristic(Characteristic.SiriInputType, SiriInputType.PUSH_BUTTON_TRIGGERED_APPLE_TV);
+
+            this.audioStreamManagementService = new Service.AudioStreamManagement('', '');
+            this.audioStreamManagementService.setCharacteristic(Characteristic.SupportedAudioStreamConfiguration, this.supportedAudioConfiguration);
+            this.audioStreamManagementService.setCharacteristic(Characteristic.SelectedAudioStreamConfiguration, this.selectedAudioConfigurationString);
+
+            this.dataStreamManagement = new DataStreamManagement();
+
+            this.siriService.addLinkedService(this.dataStreamManagement!.getService());
+            this.siriService.addLinkedService(this.audioStreamManagementService!);
+        }
+
+        return {
+            targetControlManagement: this.targetControlManagementService,
+            targetControl: this.targetControlService,
+
+            siri: this.siriService,
+            audioStreamManagement: this.audioStreamManagementService,
+            dataStreamTransportManagement: this.dataStreamManagement && this.dataStreamManagement.getService()
+        };
+    }
+
+    initWithServices(serviceMap: RemoteControllerServiceMap): void | RemoteControllerServiceMap {
+        this.targetControlManagementService = serviceMap.targetControlManagement;
+        this.targetControlService = serviceMap.targetControl;
+
+        this.siriService = serviceMap.siri;
+        this.audioStreamManagementService = serviceMap.audioStreamManagement;
+        this.dataStreamManagement = new DataStreamManagement(serviceMap.dataStreamTransportManagement);
+    }
+
+    configureServices(): void {
+        if (!this.targetControlManagementService || !this.targetControlService) {
+            throw new Error("Unexpected state: Services not configured!"); // playing it save
+        }
+
         this.targetControlManagementService.getCharacteristic(Characteristic.TargetControlList)!
             .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
                 callback(null, this.targetConfigurationsString);
             })
             .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
                 this.handleTargetControlWrite(value, callback);
-            }).getValue();
-        this.targetControlManagementService.setPrimaryService();
+            });
 
-        // you can also expose multiple TargetControl services to control multiple apple tvs simultaneously.
-        // should we extend this class to support multiple TargetControl services or should users just create a second accessory?
-        this.targetControlService = new Service.TargetControl('', '');
         this.targetControlService.getCharacteristic(Characteristic.ActiveIdentifier)!
             .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
                 callback(undefined, this.activeIdentifier);
-            }).getValue();
+            });
         this.targetControlService.getCharacteristic(Characteristic.Active)!
             .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
                 callback(undefined, this.isActive());
             })
-            .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context?: any, connectionID?: string) => {
+            .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context?: any, connectionID?: SessionIdentifier) => {
                 this.handleActiveWrite(value, callback, connectionID);
-            }).getValue();
+            });
         this.targetControlService.getCharacteristic(Characteristic.ButtonEvent)!
             .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
                 callback(undefined, this.lastButtonEvent);
-            }).getValue();
+            });
 
         if (this.audioSupported) {
-            this.siriService = new Service.Siri('', '');
-            this.siriService.getCharacteristic(Characteristic.SiriInputType)!
-                .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-                    callback(undefined, SiriInputType.PUSH_BUTTON_TRIGGERED_APPLE_TV);
-                });
-
-            this.audioStreamManagementService = new Service.AudioStreamManagement('', '');
-            this.audioStreamManagementService.getCharacteristic(Characteristic.SupportedAudioStreamConfiguration)!
-                .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-                    callback(undefined, this.supportedAudioConfiguration);
-                }).getValue();
-            this.audioStreamManagementService.getCharacteristic(Characteristic.SelectedAudioStreamConfiguration)!
+            this.audioStreamManagementService!.getCharacteristic(Characteristic.SelectedAudioStreamConfiguration)!
                 .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
                     callback(null, this.selectedAudioConfigurationString);
                 })
@@ -1172,13 +1180,47 @@ export class HomeKitRemoteController extends EventEmitter<RemoteControllerEventM
                     this.handleSelectedAudioConfigurationWrite(value, callback);
                 }).getValue();
 
-            this.dataStreamManagement = new DataStreamManagement();
+            this.dataStreamManagement!
+                .onEventMessage(Protocols.TARGET_CONTROL, Topics.WHOAMI, this.handleTargetControlWhoAmI.bind(this))
+                .onServerEvent(DataStreamServerEvents.CONNECTION_CLOSED, this.handleDataStreamConnectionClosed.bind(this));
 
-            this.siriService.addLinkedService(this.dataStreamManagement.getService());
-            this.siriService.addLinkedService(this.audioStreamManagementService);
+            this.eventHandler = { // eventHandlers which gets subscribed to on open connections on whoami
+                [Topics.ACK]: this.handleDataSendAckEvent.bind(this),
+                [Topics.CLOSE]: this.handleDataSendCloseEvent.bind(this),
+            };
         }
     }
+
+    handleFactoryReset(): void {
+        debug("Accessory was unpaired. Resetting targets...");
+        this.handleResetTargets(undefined);
+    }
+
+    serialize(): SerializedControllerState | undefined {
+        if (!this.activeIdentifier && Object.keys(this.targetConfigurations).length === 0) {
+            return undefined;
+        }
+
+        return {
+            activeIdentifier: this.activeIdentifier,
+            targetConfigurations: this.targetConfigurations,
+        };
+    }
+    deserialize(serialized: SerializedControllerState): void {
+        this.activeIdentifier = serialized.activeIdentifier;
+        this.targetConfigurations = serialized.targetConfigurations;
+        this.updatedTargetConfiguration();
+    }
+    setupStateChangeDelegate(delegate: StateChangeDelegate): void {
+        this.stateChangeDelegate = delegate;
+    }
+
 }
+// noinspection JSUnusedGlobalSymbols
+/**
+ * @deprecated - only there for backwards compatibility, please use {@see RemoteController} directly
+ */
+export class HomeKitRemoteController extends RemoteController {} // backwards compatibility
 
 export enum SiriAudioSessionEvents {
     CLOSE = "close",

@@ -7,7 +7,7 @@ import {
     CharacteristicGetCallback,
     CharacteristicSetCallback
 } from "../Characteristic";
-import {CharacteristicValue} from "../../types";
+import {CharacteristicValue, SessionIdentifier} from "../../types";
 import {DataStreamTransportManagement} from "../gen/HomeKit-DataStream";
 import {DataStreamServer, DataStreamServerEventMap, GlobalEventHandler, GlobalRequestHandler} from "./DataStreamServer";
 import {Session} from "../util/eventedhttp";
@@ -61,17 +61,17 @@ export class DataStreamManagement {
     // one server per accessory is probably the best practice
     private readonly dataStreamServer: DataStreamServer = new DataStreamServer();
 
-    dataStreamTransportManagementService: DataStreamTransportManagement;
+    private dataStreamTransportManagementService: DataStreamTransportManagement;
 
-    supportedDataStreamTransportConfiguration: string;
+    readonly supportedDataStreamTransportConfiguration: string;
     lastSetupDataStreamTransportResponse: string = ""; // stripped. excludes ACCESSORY_KEY_SALT
 
-    constructor() {
+    constructor(service?: DataStreamTransportManagement) {
         const supportedConfiguration: TransportType[] = [TransportType.HOMEKIT_DATA_STREAM];
         this.supportedDataStreamTransportConfiguration = this.buildSupportedDataStreamTransportConfigurationTLV(supportedConfiguration);
 
-
-        this.dataStreamTransportManagementService = this.setupService();
+        this.dataStreamTransportManagementService = service || this.constructService();
+        this.setupServiceHandlers();
     }
 
     /**
@@ -208,22 +208,23 @@ export class DataStreamManagement {
         return Buffer.concat(buffers).toString('base64');
     }
 
-    private setupService(): DataStreamTransportManagement {
+    private constructService(): DataStreamTransportManagement {
         const dataStreamTransportManagement = new Service.DataStreamTransportManagement('', '');
-        dataStreamTransportManagement.getCharacteristic(Characteristic.SupportedDataStreamTransportConfiguration)!
-            .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-                callback(undefined, this.supportedDataStreamTransportConfiguration);
-            }).getValue();
-        dataStreamTransportManagement.getCharacteristic(Characteristic.SetupDataStreamTransport)!
-            .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-                callback(null, this.lastSetupDataStreamTransportResponse);
-            })
-            .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context?: any, connectionID?: string) => {
-                this.handleSetupDataStreamTransportWrite(value, callback, connectionID);
-            }).getValue();
+
+        dataStreamTransportManagement.setCharacteristic(Characteristic.SupportedDataStreamTransportConfiguration, this.supportedDataStreamTransportConfiguration);
         dataStreamTransportManagement.setCharacteristic(Characteristic.Version, DataStreamServer.version);
 
         return dataStreamTransportManagement;
+    }
+
+    private setupServiceHandlers() {
+        this.dataStreamTransportManagementService.getCharacteristic(Characteristic.SetupDataStreamTransport)!
+            .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+                callback(null, this.lastSetupDataStreamTransportResponse);
+            })
+            .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context?: any, connectionID?: SessionIdentifier) => {
+                this.handleSetupDataStreamTransportWrite(value, callback, connectionID);
+            }).getValue();
     }
 
 }

@@ -7,6 +7,7 @@ import {
   CharacteristicChange,
   CharacteristicValue,
   HapCharacteristic,
+  SessionIdentifier,
   Nullable,
   ToHAPOptions,
   VoidCallback,
@@ -97,8 +98,8 @@ export type CharacteristicSetCallback = (error?: Error | null, value?: Character
 
 type Events = {
   [CharacteristicEventTypes.CHANGE]: (change: CharacteristicChange) => void;
-  [CharacteristicEventTypes.GET]: (cb: CharacteristicGetCallback, context?: any, connectionID?: string) => void;
-  [CharacteristicEventTypes.SET]: (value: CharacteristicValue, cb: CharacteristicSetCallback, context?: any, connectionID?: string) => void;
+  [CharacteristicEventTypes.GET]: (cb: CharacteristicGetCallback, context?: any, connectionID?: SessionIdentifier) => void;
+  [CharacteristicEventTypes.SET]: (value: CharacteristicValue, cb: CharacteristicSetCallback, context?: any, connectionID?: SessionIdentifier) => void;
   [CharacteristicEventTypes.SUBSCRIBE]: VoidCallback;
   [CharacteristicEventTypes.UNSUBSCRIBE]: VoidCallback;
 }
@@ -427,7 +428,7 @@ export class Characteristic extends EventEmitter<Events> {
     }
   }
 
-  getValue = (callback?: CharacteristicGetCallback, context?: any, connectionID?: string) => {
+  getValue = (callback?: CharacteristicGetCallback, context?: any, connectionID?: SessionIdentifier) => {
     // Handle special event only characteristics.
     if (this.eventOnlyCharacteristic === true) {
       if (callback) {
@@ -590,7 +591,7 @@ export class Characteristic extends EventEmitter<Events> {
     return newValue;
   }
 
-  setValue = (newValue: Nullable<CharacteristicValue | Error>, callback?: CharacteristicSetCallback, context?: any, connectionID?: string): Characteristic => {
+  setValue = (newValue: Nullable<CharacteristicValue | Error>, callback?: CharacteristicSetCallback, context?: any, connectionID?: SessionIdentifier): Characteristic => {
     if (newValue instanceof Error) {
       this.status = newValue;
     } else {

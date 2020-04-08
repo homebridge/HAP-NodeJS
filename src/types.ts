@@ -9,6 +9,9 @@ export interface ToHAPOptions {
   omitValues: boolean;
 }
 
+export type SessionIdentifier = string; // uuid string uniquely identifying every HAP connection
+export type MacAddress = string; // format like 'XX:XX:XX:XX:XX:XX' with XX being a valid hexadecimal string
+
 export type Callback = (...args: any[]) => void;
 export type NodeCallback<T> = (err: Nullable<Error> | undefined, data?: T) => void;
 export type VoidCallback = (err?: Nullable<Error>) => void;
@@ -51,57 +54,31 @@ export type CharacteristicData = {
   ev?: boolean;
   r?: boolean;
 }
+/**
+ * @deprecated replaced by {@link AudioStreamingCodec}
+ */
 export type AudioCodec = {
   samplerate: number;
   type: string;
 }
+/**
+ * @deprecated replaced by {@link H264CodecParameters}
+ */
 export type VideoCodec = {
   levels: number[];
   profiles: number[];
 }
-export type Source = {
-  port: number;
-  srtp_key: Buffer;
-  srtp_salt: Buffer;
-  targetAddress?: string;
-  proxy_rtp?: number;
-  proxy_rtcp?: number;
-};
-export type Address = {
-  address: string;
-  type: 'v4' | 'v6';
-}
-export type AudioInfo = {
-  codec: string | number;
-  channel: number;
-  bit_rate: number;
-  sample_rate: number;
-  packet_time: number;
-  pt: number;
-  ssrc: number;
-  max_bit_rate: number;
-  rtcp_interval: number;
-  comfort_pt: number;
-};
-export type VideoInfo = {
-  profile: number;
-  level: number;
-  width: number;
-  height: number;
-  fps: number;
-  ssrc: number;
-  pt: number;
-  max_bit_rate: number;
-  rtcp_interval: number;
-  mtu: number;
-};
-export type SessionIdentifier = Buffer | string;
+/**
+ * @deprecated replaced by {@link AudioStreamingOptions}
+ */
 export type StreamAudioParams = {
   comfort_noise: boolean;
   codecs: AudioCodec[];
 };
-export type Resolution = [number, number, number];
+/**
+ * @deprecated replaced by {@link VideoStreamingOptions}
+ */
 export type StreamVideoParams = {
   codec?: VideoCodec;
-  resolutions: Resolution[];
+  resolutions: [number, number, number][]; // width, height, framerate
 };

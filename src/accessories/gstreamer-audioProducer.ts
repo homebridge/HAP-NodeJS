@@ -1,9 +1,15 @@
 import assert from 'assert';
 import createDebug from 'debug';
 import {ChildProcess, spawn} from 'child_process';
-import {AudioCodecConfiguration, ErrorHandler, FrameHandler, SiriAudioStreamProducer} from "../lib/HomeKitRemoteController";
-import {AudioCodecParamBitRateTypes, AudioCodecParamSampleRateTypes, AudioCodecTypes} from "../lib/StreamController";
-import {DataSendCloseReason} from "../index";
+import {
+    AudioBitrate,
+    AudioSamplerate,
+    AudioCodecTypes,
+    DataSendCloseReason,
+    ErrorHandler,
+    FrameHandler,
+    SiriAudioStreamProducer, AudioCodecConfiguration
+} from "..";
 
 const debug = createDebug("Remote:GStreamer");
 
@@ -72,23 +78,23 @@ export class GStreamerAudioProducer implements SiriAudioStreamProducer {
 
         let bitrateType = BitrateType.VARIABLE;
         switch (codecParameters.bitrate) {
-            case AudioCodecParamBitRateTypes.CONSTANT:
+            case AudioBitrate.CONSTANT:
                 bitrateType = BitrateType.CONSTANT;
                 break;
-            case AudioCodecParamBitRateTypes.VARIABLE:
+            case AudioBitrate.VARIABLE:
                 bitrateType = BitrateType.VARIABLE;
                 break;
         }
 
         let bandwidth = Bandwidth.SUPER_WIDE_BAND;
         switch (codecParameters.samplerate) {
-            case AudioCodecParamSampleRateTypes.KHZ_8:
+            case AudioSamplerate.KHZ_8:
                 bandwidth = Bandwidth.NARROW_BAND;
                 break;
-            case AudioCodecParamSampleRateTypes.KHZ_16:
+            case AudioSamplerate.KHZ_16:
                 bandwidth = Bandwidth.WIDE_BAND;
                 break;
-            case AudioCodecParamSampleRateTypes.KHZ_24:
+            case AudioSamplerate.KHZ_24:
                 bandwidth = Bandwidth.SUPER_WIDE_BAND;
                 break;
         }

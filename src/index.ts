@@ -13,15 +13,14 @@ export const uuid = uuidFunctions;
 
 export * from './lib/Accessory';
 export * from './lib/Bridge';
-export * from './lib/Camera';
 export * from './lib/Service';
 export * from './lib/Characteristic';
 export * from './lib/AccessoryLoader';
-export * from './lib/StreamController';
+export * from './lib/camera';
 export * from './lib/HAPServer';
 export * from './lib/gen';
 export * from './lib/datastream';
-export * from './lib/HomeKitRemoteController';
+export * from './lib/controller';
 
 export * from './lib/util/chacha20poly1305';
 export * from './lib/util/clone';
