@@ -1,10 +1,14 @@
-HAP-NodeJS
-==========
-[![npm](https://img.shields.io/npm/v/hap-nodejs?style=for-the-badge)](https://www.npmjs.com/package/hap-nodejs)
-[![npm](https://img.shields.io/npm/dt/hap-nodejs?style=for-the-badge)](https://www.npmjs.com/package/hap-nodejs)
-[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/KhaosT/HAP-NodeJS/Node-CI?style=for-the-badge)](https://github.com/KhaosT/HAP-NodeJS/actions?query=workflow%3A%22Node-CI%22)
-[![GitHub issues](https://img.shields.io/github/issues/KhaosT/HAP-NodeJS?style=for-the-badge)](https://github.com/KhaosT/HAP-NodeJS/issues)
-[![GitHub pull requests](https://img.shields.io/github/issues-pr/KhaosT/HAP-NodeJS?style=for-the-badge)](https://github.com/KhaosT/HAP-NodeJS/pulls)
+<span align="center">
+
+# HAP-NodeJS
+
+<a href="https://www.npmjs.com/package/hap-nodejs"><img title="npm version" src="https://badgen.net/npm/v/hap-nodejs" ></a>
+<a href="https://www.npmjs.com/package/hap-nodejs"><img title="npm downloads" src="https://badgen.net/npm/dt/hap-nodejs" ></a>
+<a href="https://github.com/KhaosT/HAP-NodeJS/actions?query=workflow%3A%22Node-CI%22"><img title="npm downloads" src="https://github.com/homebridge/HAP-NodeJS/workflows/Node-CI/badge.svg" ></a>
+
+</p>
+
+</span>
 
 HAP-NodeJS is a Node.js implementation of the HomeKit Accessory Server.
 
