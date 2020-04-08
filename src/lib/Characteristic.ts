@@ -76,8 +76,8 @@ export enum Access {
 }
 
 export interface SerializedCharacteristic {
-  displayName?: string,
-  UUID?: string,
+  displayName: string,
+  UUID: string,
   props: CharacteristicProps,
   value: Nullable<CharacteristicValue>,
   accessRestrictedToAdmins: Access[],
@@ -370,7 +370,7 @@ export class Characteristic extends EventEmitter<Events> {
   'valid-values': number[];
   'valid-values-range': [number, number];
 
-  constructor(public displayName?: string, public UUID?: string, props?: CharacteristicProps) {
+  constructor(public displayName: string, public UUID: string, props?: CharacteristicProps) {
     super();
     // @ts-ignore
     this.props = props || {

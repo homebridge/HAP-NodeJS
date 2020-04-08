@@ -1,19 +1,8 @@
-import {
-  Characteristic,
-  CharacteristicEventTypes,
-  SerializedCharacteristic
-} from './Characteristic';
-import { clone } from './util/clone';
-import { EventEmitter } from './EventEmitter';
-import { IdentifierCache } from './model/IdentifierCache';
-import {
-  CharacteristicChange,
-  CharacteristicValue,
-  HapService,
-  Nullable,
-  ToHAPOptions,
-  WithUUID,
-} from '../types';
+import {Characteristic, CharacteristicEventTypes, SerializedCharacteristic} from './Characteristic';
+import {clone} from './util/clone';
+import {EventEmitter} from './EventEmitter';
+import {IdentifierCache} from './model/IdentifierCache';
+import {CharacteristicChange, CharacteristicValue, HapService, Nullable, ToHAPOptions, WithUUID,} from '../types';
 import * as HomeKitTypes from './gen';
 
 export interface SerializedService {
@@ -263,7 +252,7 @@ export class Service extends EventEmitter<Events> {
         }
       }
       //Not found in optional Characteristics. Adding anyway, but warning about it if it isn't the Name.
-      if (name !== Characteristic.Name) {
+      if (name.UUID !== Characteristic.Name.UUID) {
         console.warn("HAP Warning: Characteristic %s not in required or optional characteristics for service %s. Adding anyway.", name.UUID, this.UUID);
         return this.addCharacteristic(name);
       }
@@ -298,10 +287,41 @@ export class Service extends EventEmitter<Events> {
   addOptionalCharacteristic = (characteristic: Characteristic | typeof Characteristic) => {
     // characteristic might be a constructor like `Characteristic.Brightness` instead of an instance
     // of Characteristic. Coerce if necessary.
-    if (typeof characteristic === 'function')
+    if (typeof characteristic === 'function') {
+      // @ts-ignore we are dealing with predefined characteristics here
       characteristic = new characteristic() as Characteristic;
+    }
 
     this.optionalCharacteristics.push(characteristic);
+  }
+
+  replaceCharacteristicsFromService(service: Service) {
+    if (this.UUID !== service.UUID) {
+      throw new Error(`Incompatible services. Tried replacing characteristics of ${this.UUID} with characteristics from ${service.UUID}`);
+    }
+
+    const foreignCharacteristics: Record<string, Characteristic> = {}; // index foreign characteristics by UUID
+    service.characteristics.forEach(characteristic => foreignCharacteristics[characteristic.UUID] = characteristic);
+
+    this.characteristics.forEach(characteristic => {
+      const foreignCharacteristic = foreignCharacteristics[characteristic.UUID];
+      if (foreignCharacteristic) {
+        delete foreignCharacteristics[characteristic.UUID];
+
+        characteristic.props = foreignCharacteristic.props;
+        characteristic.accessRestrictedToAdmins = foreignCharacteristic.accessRestrictedToAdmins;
+        characteristic.updateValue(foreignCharacteristic.value);
+
+        const getListeners = foreignCharacteristic.listeners(CharacteristicEventTypes.GET);
+        getListeners.forEach(listener => characteristic.addListener(CharacteristicEventTypes.GET, listener));
+
+        const setListeners = foreignCharacteristic.listeners(CharacteristicEventTypes.SET);
+        setListeners.forEach(listener => characteristic.addListener(CharacteristicEventTypes.SET, listener));
+      }
+    });
+
+    // add all additional characteristics which where not present already
+    Object.values(foreignCharacteristics).forEach(characteristic => this.addCharacteristic(characteristic));
   }
 
   getCharacteristicByIID = (iid: number) => {
