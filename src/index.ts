@@ -1,3 +1,6 @@
+/// <reference path="../@types/bonjour-hap.d.ts" />
+/// <reference path="../@types/fast-srp-hap.d.ts" />
+/// <reference path="../@types/node-persist.d.ts" />
 import storage from 'node-persist';
 
 import './lib/gen';

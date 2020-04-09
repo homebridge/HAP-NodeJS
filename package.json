@@ -10,7 +10,8 @@
   "files": [
     "README.md",
     "LICENSE",
-    "dist"
+    "dist",
+    "@types"
   ],
   "dependencies": {
     "bonjour-hap": "^3.5.1",

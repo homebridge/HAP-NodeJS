@@ -1,3 +1,4 @@
+/// <reference path="../../../@types/simple-plist.d.ts" />
 import fs from 'fs';
 import path from 'path';
 
