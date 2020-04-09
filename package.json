@@ -7,6 +7,11 @@
   "engines": {
     "node": ">=10.17.0"
   },
+  "files": [
+    "README.md",
+    "LICENSE",
+    "dist"
+  ],
   "dependencies": {
     "bonjour-hap": "^3.5.1",
     "debug": "^4.1.1",
@@ -29,8 +34,10 @@
     "typescript": "^3.8.3"
   },
   "scripts": {
-    "build": "rimraf dist/ && tsc",
+    "clean": "rimraf dist/",
+    "build": "npm run clean && tsc",
     "prepublishOnly": "npm run build",
+    "postpublish": "npm run clean",
     "test": "jest",
     "start": "node dist/BridgedCore.js"
   },
