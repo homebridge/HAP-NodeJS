@@ -3625,7 +3625,7 @@ export class AccessControl extends Service {
 
   static UUID: string = '000000DA-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, AccessControl.UUID, subtype);
 
     // Required Characteristics
@@ -3644,7 +3644,7 @@ export class AccessoryInformation extends Service {
 
   static UUID: string = '0000003E-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, AccessoryInformation.UUID, subtype);
 
     // Required Characteristics
@@ -3675,7 +3675,7 @@ export class AirPurifier extends Service {
 
   static UUID: string = '000000BB-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, AirPurifier.UUID, subtype);
 
     // Required Characteristics
@@ -3701,7 +3701,7 @@ export class AirQualitySensor extends Service {
 
   static UUID: string = '0000008D-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, AirQualitySensor.UUID, subtype);
 
     // Required Characteristics
@@ -3732,7 +3732,7 @@ export class BatteryService extends Service {
 
   static UUID: string = '00000096-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, BatteryService.UUID, subtype);
 
     // Required Characteristics
@@ -3755,7 +3755,7 @@ export class CameraRTPStreamManagement extends Service {
 
   static UUID: string = '00000110-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, CameraRTPStreamManagement.UUID, subtype);
 
     // Required Characteristics
@@ -3781,7 +3781,7 @@ export class CarbonDioxideSensor extends Service {
 
   static UUID: string = '00000097-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, CarbonDioxideSensor.UUID, subtype);
 
     // Required Characteristics
@@ -3808,7 +3808,7 @@ export class CarbonMonoxideSensor extends Service {
 
   static UUID: string = '0000007F-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, CarbonMonoxideSensor.UUID, subtype);
 
     // Required Characteristics
@@ -3835,7 +3835,7 @@ export class ContactSensor extends Service {
 
   static UUID: string = '00000080-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, ContactSensor.UUID, subtype);
 
     // Required Characteristics
@@ -3860,7 +3860,7 @@ export class Door extends Service {
 
   static UUID: string = '00000081-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, Door.UUID, subtype);
 
     // Required Characteristics
@@ -3885,7 +3885,7 @@ export class Doorbell extends Service {
 
   static UUID: string = '00000121-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, Doorbell.UUID, subtype);
 
     // Required Characteristics
@@ -3908,7 +3908,7 @@ export class Fan extends Service {
 
   static UUID: string = '00000040-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, Fan.UUID, subtype);
 
     // Required Characteristics
@@ -3931,7 +3931,7 @@ export class Fanv2 extends Service {
 
   static UUID: string = '000000B7-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, Fanv2.UUID, subtype);
 
     // Required Characteristics
@@ -3958,7 +3958,7 @@ export class FilterMaintenance extends Service {
 
   static UUID: string = '000000BA-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, FilterMaintenance.UUID, subtype);
 
     // Required Characteristics
@@ -3981,7 +3981,7 @@ export class Faucet extends Service {
 
   static UUID: string = '000000D7-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, Faucet.UUID, subtype);
 
     // Required Characteristics
@@ -4003,7 +4003,7 @@ export class GarageDoorOpener extends Service {
 
   static UUID: string = '00000041-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, GarageDoorOpener.UUID, subtype);
 
     // Required Characteristics
@@ -4028,7 +4028,7 @@ export class HeaterCooler extends Service {
 
   static UUID: string = '000000BC-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, HeaterCooler.UUID, subtype);
 
     // Required Characteristics
@@ -4058,7 +4058,7 @@ export class HumidifierDehumidifier extends Service {
 
   static UUID: string = '000000BD-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, HumidifierDehumidifier.UUID, subtype);
 
     // Required Characteristics
@@ -4088,7 +4088,7 @@ export class HumiditySensor extends Service {
 
   static UUID: string = '00000082-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, HumiditySensor.UUID, subtype);
 
     // Required Characteristics
@@ -4113,7 +4113,7 @@ export class IrrigationSystem extends Service {
 
   static UUID: string = '000000CF-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, IrrigationSystem.UUID, subtype);
 
     // Required Characteristics
@@ -4138,7 +4138,7 @@ export class LeakSensor extends Service {
 
   static UUID: string = '00000083-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, LeakSensor.UUID, subtype);
 
     // Required Characteristics
@@ -4163,7 +4163,7 @@ export class LightSensor extends Service {
 
   static UUID: string = '00000084-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, LightSensor.UUID, subtype);
 
     // Required Characteristics
@@ -4188,7 +4188,7 @@ export class Lightbulb extends Service {
 
   static UUID: string = '00000043-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, Lightbulb.UUID, subtype);
 
     // Required Characteristics
@@ -4213,7 +4213,7 @@ export class LockManagement extends Service {
 
   static UUID: string = '00000044-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, LockManagement.UUID, subtype);
 
     // Required Characteristics
@@ -4242,7 +4242,7 @@ export class LockMechanism extends Service {
 
   static UUID: string = '00000045-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, LockMechanism.UUID, subtype);
 
     // Required Characteristics
@@ -4264,7 +4264,7 @@ export class Microphone extends Service {
 
   static UUID: string = '00000112-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, Microphone.UUID, subtype);
 
     // Required Characteristics
@@ -4285,7 +4285,7 @@ export class MotionSensor extends Service {
 
   static UUID: string = '00000085-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, MotionSensor.UUID, subtype);
 
     // Required Characteristics
@@ -4310,7 +4310,7 @@ export class OccupancySensor extends Service {
 
   static UUID: string = '00000086-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, OccupancySensor.UUID, subtype);
 
     // Required Characteristics
@@ -4335,7 +4335,7 @@ export class Outlet extends Service {
 
   static UUID: string = '00000047-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, Outlet.UUID, subtype);
 
     // Required Characteristics
@@ -4357,7 +4357,7 @@ export class SecuritySystem extends Service {
 
   static UUID: string = '0000007E-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, SecuritySystem.UUID, subtype);
 
     // Required Characteristics
@@ -4382,7 +4382,7 @@ export class ServiceLabel extends Service {
 
   static UUID: string = '000000CC-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, ServiceLabel.UUID, subtype);
 
     // Required Characteristics
@@ -4403,7 +4403,7 @@ export class Slat extends Service {
 
   static UUID: string = '000000B9-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, Slat.UUID, subtype);
 
     // Required Characteristics
@@ -4428,7 +4428,7 @@ export class SmokeSensor extends Service {
 
   static UUID: string = '00000087-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, SmokeSensor.UUID, subtype);
 
     // Required Characteristics
@@ -4453,7 +4453,7 @@ export class SmartSpeaker extends Service {
 
   static UUID: string = '00000228-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, SmartSpeaker.UUID, subtype);
 
     // Required Characteristics
@@ -4481,7 +4481,7 @@ export class Speaker extends Service {
 
   static UUID: string = '00000113-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, Speaker.UUID, subtype);
 
     // Required Characteristics
@@ -4502,7 +4502,7 @@ export class StatelessProgrammableSwitch extends Service {
 
   static UUID: string = '00000089-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, StatelessProgrammableSwitch.UUID, subtype);
 
     // Required Characteristics
@@ -4524,7 +4524,7 @@ export class Switch extends Service {
 
   static UUID: string = '00000049-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, Switch.UUID, subtype);
 
     // Required Characteristics
@@ -4545,7 +4545,7 @@ export class TemperatureSensor extends Service {
 
   static UUID: string = '0000008A-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, TemperatureSensor.UUID, subtype);
 
     // Required Characteristics
@@ -4570,7 +4570,7 @@ export class Thermostat extends Service {
 
   static UUID: string = '0000004A-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, Thermostat.UUID, subtype);
 
     // Required Characteristics
@@ -4599,7 +4599,7 @@ export class Valve extends Service {
 
   static UUID: string = '000000D0-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, Valve.UUID, subtype);
 
     // Required Characteristics
@@ -4627,7 +4627,7 @@ export class Window extends Service {
 
   static UUID: string = '0000008B-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, Window.UUID, subtype);
 
     // Required Characteristics
@@ -4652,7 +4652,7 @@ export class WindowCovering extends Service {
 
   static UUID: string = '0000008C-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, WindowCovering.UUID, subtype);
 
     // Required Characteristics
@@ -4681,7 +4681,7 @@ export class CameraOperatingMode extends Service {
 
   static UUID: string = '0000021A-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, CameraOperatingMode.UUID, subtype);
 
     // Required Characteristics
@@ -4707,7 +4707,7 @@ export class CameraEventRecordingManagement extends Service {
 
   static UUID: string = '00000204-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, CameraEventRecordingManagement.UUID, subtype);
 
     // Required Characteristics
@@ -4732,7 +4732,7 @@ export class WiFiRouter extends Service {
 
   static UUID: string = '0000020A-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, WiFiRouter.UUID, subtype);
 
     // Required Characteristics
@@ -4759,7 +4759,7 @@ export class WiFiSatellite extends Service {
 
   static readonly UUID: string = '0000020F-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, WiFiSatellite.UUID, subtype);
 
     // Required Characteristics
@@ -4777,7 +4777,7 @@ export class PowerManagement extends Service {
 
   static readonly UUID: string = '00000221-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, PowerManagement.UUID, subtype);
 
     // Required Characteristics
@@ -4795,7 +4795,7 @@ export class TransferTransportManagement extends Service {
 
   static readonly UUID: string = '00000203-0000-1000-8000-0026BB765291';
 
-  constructor(displayName: string, subtype: string) {
+  constructor(displayName?: string, subtype?: string) {
     super(displayName, TransferTransportManagement.UUID, subtype);
 
     // Required Characteristics

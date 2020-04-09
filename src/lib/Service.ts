@@ -140,7 +140,7 @@ export class Service extends EventEmitter<Events> {
   isPrimaryService: boolean = false;
   linkedServices: Service[] = [];
 
-  constructor(public displayName: string, public UUID: string, public subtype: string) {
+  constructor(public displayName: string = "", public UUID: string, public subtype: string = "") {
     super();
     if (!UUID) throw new Error("Services must be created with a valid UUID.");
 
