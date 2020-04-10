@@ -82,8 +82,21 @@ export class ControllerStorage {
     }
 
     private handleStateChange(controller: SerializableController) {
-        const controllerData = this.controllerData[controller.controllerType];
-        controllerData.data = controller.serialize(); // can be undefined when controller wishes to delete data
+        const serialized = controller.serialize();
+
+        if (!serialized) { // can be undefined when controller wishes to delete data
+            delete this.controllerData[controller.controllerType];
+        } else {
+            let controllerData = this.controllerData[controller.controllerType];
+
+            if (!controllerData) {
+                this.controllerData[controller.controllerType] = {
+                    data: serialized,
+                };
+            } else {
+                controllerData.data = serialized;
+            }
+        }
 
         if (this.initialized) { // only save if data was loaded
             // run save data "async", as handleStateChange call will probably always be caused by a http request
@@ -92,6 +105,7 @@ export class ControllerStorage {
         }
     }
 
+
     private restoreController(controller: SerializableController) {
         if (!this.initialized) {
             throw new Error("Illegal state. Controller data wasn't loaded yet!");
@@ -99,19 +113,25 @@ export class ControllerStorage {
 
         const controllerData = this.controllerData[controller.controllerType];
         if (controllerData) {
-            controller.deserialize(controllerData);
+            controller.deserialize(controllerData.data);
             controllerData.purgeOnNextLoad = false;
         }
     }
 
+    /**
+     * Called when this particular Storage object is feed with data loaded from disk.
+     * This method is only called once.
+     *
+     * @param data - array of {@link StoredControllerData}. undefined if nothing was stored on disk for this particular storage object
+     */
     private init(data?: StoredControllerData[]) {
+        if (this.initialized) {
+            throw new Error(`ControllerStorage for accessory ${this.accessoryUUID} was already initialized!`);
+        }
         this.initialized = true;
 
-        if (data) {
-            data.forEach(saved => {
-                this.controllerData[saved.type] = saved.controllerData;
-            });
-        }
+        // storing data into our local controllerData Record
+        data && data.forEach(saved => this.controllerData[saved.type] = saved.controllerData);
 
         const restoredControllers: ControllerType[] = [];
         this.trackedControllers.forEach(controller => {
@@ -218,7 +238,7 @@ export class ControllerStorage {
     }
 
     static persistKey(username: MacAddress) {
-        return util.format("ControllerStates.%s.json", username.replace(/:/g, "").toUpperCase());
+        return util.format("ControllerStorage.%s.json", username.replace(/:/g, "").toUpperCase());
     }
 
     static remove(username: MacAddress) {

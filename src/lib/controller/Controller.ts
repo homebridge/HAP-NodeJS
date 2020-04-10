@@ -143,5 +143,5 @@ export interface SerializableController<M extends ControllerServiceMap = Control
 }
 
 export function isSerializableController(controller: Controller): controller is SerializableController {
-    return "serialize" in controller && "deserialize" in controller && "signalDelegate" in controller;
+    return "serialize" in controller && "deserialize" in controller && "setupStateChangeDelegate" in controller;
 }

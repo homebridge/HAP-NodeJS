@@ -1206,11 +1206,13 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
             targetConfigurations: this.targetConfigurations,
         };
     }
+
     deserialize(serialized: SerializedControllerState): void {
         this.activeIdentifier = serialized.activeIdentifier;
         this.targetConfigurations = serialized.targetConfigurations;
         this.updatedTargetConfiguration();
     }
+
     setupStateChangeDelegate(delegate: StateChangeDelegate): void {
         this.stateChangeDelegate = delegate;
     }

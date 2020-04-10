@@ -598,10 +598,6 @@ export class Accessory extends EventEmitter<Events> {
     let serviceMap: ControllerServiceMap;
 
     if (savedServiceMap) { // we found data to restore from
-      if (isSerializableController(controller) && savedServiceMap) {
-        controller.deserialize(savedServiceMap);
-      }
-
       const clonedServiceMap = clone(savedServiceMap);
       const updatedServiceMap = controller.initWithServices(savedServiceMap); // init controller with existing services
       serviceMap = updatedServiceMap || savedServiceMap; // initWithServices could return a updated serviceMap, otherwise just use the existing one
@@ -644,7 +640,7 @@ export class Accessory extends EventEmitter<Events> {
       this.getPrimaryAccessory().on(AccessoryEventTypes.UNPAIRED, () => {
         controller.handleFactoryReset!();
 
-        if (isSerializableController(controller)) {
+        if (isSerializableController(controller)) { // we force a purge here
           this.controllerStorage.purgeControllerData(controller);
         }
       });
