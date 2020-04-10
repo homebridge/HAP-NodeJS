@@ -672,7 +672,7 @@ export class Characteristic extends EventEmitter<Events> {
     }
   }
 
-  _assignID = (identifierCache: IdentifierCache, accessoryName: string, serviceUUID: string, serviceSubtype: string) => {
+  _assignID = (identifierCache: IdentifierCache, accessoryName: string, serviceUUID: string, serviceSubtype?: string) => {
     // generate our IID based on our UUID
     this.iid = identifierCache.getIID(accessoryName, serviceUUID, serviceSubtype, this.UUID);
   }

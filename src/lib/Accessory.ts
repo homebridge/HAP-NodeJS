@@ -279,7 +279,7 @@ export class Accessory extends EventEmitter<Events> {
         if (!service.subtype)
           throw new Error("Cannot add a Service with the same UUID '" + existing.UUID + "' as another Service in this Accessory without also defining a unique 'subtype' property.");
 
-        if (service.subtype.toString() === existing.subtype.toString())
+        if (service.subtype === existing.subtype)
           throw new Error("Cannot add a Service with the same UUID '" + existing.UUID + "' and subtype '" + existing.subtype + "' as another Service in this Accessory.");
       }
     }

@@ -111,7 +111,7 @@ describe('Service', () => {
 
       expect(service.displayName).toEqual(json.displayName);
       expect(service.UUID).toEqual(json.UUID);
-      expect(service.subtype).toEqual("");
+      expect(service.subtype).toBeUndefined();
       expect(service.isHiddenService).toEqual(false);
       expect(service.isPrimaryService).toEqual(false);
 

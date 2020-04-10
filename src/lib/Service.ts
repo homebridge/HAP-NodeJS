@@ -8,7 +8,7 @@ import * as HomeKitTypes from './gen';
 export interface SerializedService {
   displayName: string,
   UUID: string,
-  subtype: string,
+  subtype?: string,
 
   hiddenService?: boolean,
   primaryService?: boolean,
@@ -142,7 +142,7 @@ export class Service extends EventEmitter<Events> {
   isPrimaryService: boolean = false; // do not write to this directly
   linkedServices: Service[] = [];
 
-  constructor(public displayName: string = "", public UUID: string, public subtype: string = "") {
+  constructor(public displayName: string = "", public UUID: string, public subtype?: string) {
     super();
     if (!UUID) throw new Error("Services must be created with a valid UUID.");
 
