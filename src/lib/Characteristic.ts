@@ -109,6 +109,13 @@ type Events = {
  */
 export type EventCharacteristic = CharacteristicEventTypes.GET | CharacteristicEventTypes.SET | CharacteristicEventTypes.SUBSCRIBE | CharacteristicEventTypes.UNSUBSCRIBE | CharacteristicEventTypes.CHANGE;
 
+export type CharacteristicGetHandler = (context?: any, connectionID?: string) =>
+  PromiseLike<CharacteristicValue> | CharacteristicValue;
+export type CharacteristicSetHandler = (value: CharacteristicValue, context?: any, connectionID?: string) =>
+  PromiseLike<CharacteristicValue | undefined | void> | CharacteristicValue | undefined | void;
+const GetCharacteristicValueHandlerSymbol = Symbol('GetCharacteristicValueHandler');
+const SetCharacteristicValueHandlerSymbol = Symbol('SetCharacteristicValueHandler');
+
 /**
  * Characteristic represents a particular typed variable that can be assigned to a Service. For instance, a
  * "Hue" Characteristic might store a 'float' value of type 'arcdegrees'. You could add the Hue Characteristic
@@ -145,6 +152,9 @@ export class Characteristic extends EventEmitter<Events> {
   static Formats = Formats;
   static Units = Units;
   static Perms = Perms;
+
+  static readonly GetValueHandler: typeof GetCharacteristicValueHandlerSymbol = GetCharacteristicValueHandlerSymbol;
+  static readonly SetValueHandler: typeof SetCharacteristicValueHandlerSymbol = SetCharacteristicValueHandlerSymbol;
 
   static AccessControlLevel: typeof HomeKitTypes.Generated.AccessControlLevel;
   static AccessoryFlags: typeof HomeKitTypes.Generated.AccessoryFlags;
@@ -382,7 +392,81 @@ export class Characteristic extends EventEmitter<Events> {
       minStep: null,
       perms: []
     };
+
+    if (this[GetCharacteristicValueHandlerSymbol]) this.get_handler = this[GetCharacteristicValueHandlerSymbol]!;
+    if (this[SetCharacteristicValueHandlerSymbol]) this.set_handler = this[SetCharacteristicValueHandlerSymbol]!;
   }
+
+  private _getHandler: {
+    handler: CharacteristicGetHandler;
+    listener: Events[CharacteristicEventTypes.GET];
+  } | null = null;
+
+  get get_handler() {
+    return this._getHandler && this._getHandler.handler;
+  }
+  set get_handler(handler: CharacteristicGetHandler | null) {
+    if (this._getHandler) {
+      this.removeListener(CharacteristicEventTypes.GET, this._getHandler.listener);
+      this._getHandler = null;
+    }
+
+    if (handler) {
+      const listener: Events[CharacteristicEventTypes.GET] = async (callback, context?, connectionID?) => {
+        try {
+          const value = await handler.call(this);
+          callback(null, value as CharacteristicValue);
+        } catch (err) {
+          callback(err);
+        }
+      };
+
+      this._getHandler = {handler, listener};
+      this.on(CharacteristicEventTypes.GET, listener);
+    }
+  }
+
+  getHandler(handler: CharacteristicGetHandler | null) {
+    this.get_handler = handler;
+    return this;
+  }
+
+  private _setHandler: {
+    handler: CharacteristicSetHandler;
+    listener: Events[CharacteristicEventTypes.SET];
+  } | null = null;
+
+  get set_handler() {
+    return this._setHandler && this._setHandler.handler;
+  }
+  set set_handler(handler: CharacteristicSetHandler | null) {
+    if (this._setHandler) {
+      this.removeListener(CharacteristicEventTypes.SET, this._setHandler.listener);
+      this._setHandler = null;
+    }
+
+    if (handler) {
+      const listener: Events[CharacteristicEventTypes.SET] = async (value, callback, context?, connectionID?) => {
+        try {
+          const writeResponse = await handler.call(this, value);
+          callback(null, writeResponse as CharacteristicValue);
+        } catch (err) {
+          callback(err);
+        }
+      };
+
+      this._setHandler = {handler, listener};
+      this.on(CharacteristicEventTypes.SET, listener);
+    }
+  }
+
+  setHandler(handler: CharacteristicSetHandler | null) {
+    this.set_handler = handler;
+    return this;
+  }
+
+  protected [GetCharacteristicValueHandlerSymbol]?(): PromiseLike<CharacteristicValue> | CharacteristicValue;
+  protected [SetCharacteristicValueHandlerSymbol]?(value: CharacteristicValue): PromiseLike<CharacteristicValue | undefined | void> | CharacteristicValue | undefined | void;
 
   /**
    * Copies the given properties to our props member variable,

@@ -60,47 +60,47 @@ lock.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback) 
 lock
   .addService(Service.LockMechanism, "Fake Lock") // services exposed to the user should have "names" like "Fake Light" for us
   .getCharacteristic(Characteristic.LockTargetState)!
-  .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+  .set_handler = (value: CharacteristicValue) => {
+    console.log('Called set handler', value);
 
     if (value == Characteristic.LockTargetState.UNSECURED) {
       FAKE_LOCK.unlock();
-      callback(); // Our fake Lock is synchronous - this value has been successfully set
 
       // now we want to set our lock's "actual state" to be unsecured so it shows as unlocked in iOS apps
       lock
         .getService(Service.LockMechanism)!
-        .setCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.UNSECURED);
-    }
-    else if (value == Characteristic.LockTargetState.SECURED) {
+        .getCharacteristic(Characteristic.LockCurrentState)!.updateValue(Characteristic.LockCurrentState.UNSECURED);
+    } else if (value == Characteristic.LockTargetState.SECURED) {
       FAKE_LOCK.lock();
-      callback(); // Our fake Lock is synchronous - this value has been successfully set
 
       // now we want to set our lock's "actual state" to be locked so it shows as open in iOS apps
       lock
         .getService(Service.LockMechanism)!
-        .setCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.SECURED);
+        .getCharacteristic(Characteristic.LockCurrentState)!.updateValue(Characteristic.LockCurrentState.SECURED);
     }
-  });
+  };
 
 // We want to intercept requests for our current state so we can query the hardware itself instead of
 // allowing HAP-NodeJS to return the cached Characteristic.value.
 lock
   .getService(Service.LockMechanism)!
   .getCharacteristic(Characteristic.LockCurrentState)!
-  .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
+  .get_handler = () => {
+    console.log('Called get handler');
 
     // this event is emitted when you ask Siri directly whether your lock is locked or not. you might query
     // the lock hardware itself to find this out, then call the callback. But if you take longer than a
     // few seconds to respond, Siri will give up.
 
     var err = null; // in case there were any problems
+    if (err) throw err;
 
     if (FAKE_LOCK.locked) {
       console.log("Are we locked? Yes.");
-      callback(err, Characteristic.LockCurrentState.SECURED);
+      return Characteristic.LockCurrentState.SECURED;
     }
     else {
       console.log("Are we locked? No.");
-      callback(err, Characteristic.LockCurrentState.UNSECURED);
+      return Characteristic.LockCurrentState.UNSECURED;
     }
-  });
+  };
