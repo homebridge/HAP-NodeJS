@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import fs from 'fs';
 import ip from 'ip';
-import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
+import { ChildProcess, spawn } from 'child_process';
 
 import { Service } from './Service';
 import {
@@ -34,7 +34,7 @@ export class Camera {
   services: Service[] = [];
   streamControllers: StreamController[] = [];
   pendingSessions: Record<string, SessionInfo> = {};
-  ongoingSessions: Record<string, ChildProcessWithoutNullStreams> = {};
+  ongoingSessions: Record<string, ChildProcess> = {};
 
   constructor() {
 
@@ -235,8 +235,8 @@ export class Camera {
     var myCameraOperatingMode = new Service.CameraOperatingMode('','');
     this.services.push(myCameraOperatingMode);
 
-    var myCameraRecordingManagement = new Service.CameraRecordingManagement('','');
-    this.services.push(myCameraRecordingManagement);
+    var myCameraEventRecordingManagement = new Service.CameraEventRecordingManagement('','');
+    this.services.push(myCameraEventRecordingManagement);
   }
 
 // Private

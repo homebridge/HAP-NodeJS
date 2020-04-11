@@ -2,7 +2,6 @@ import net, { AddressInfo, Socket } from 'net';
 import http, { IncomingMessage, OutgoingMessage, ServerResponse } from 'http';
 
 import createDebug from 'debug';
-import bufferShim from 'buffer-shims';
 import srp from 'fast-srp-hap';
 
 import * as uuid from './uuid';
@@ -24,7 +23,7 @@ export enum EventedHTTPServerEvents {
 export type Events = {
   [EventedHTTPServerEvents.LISTENING]: (port: number) => void;
   [EventedHTTPServerEvents.REQUEST]: (request: IncomingMessage, response: ServerResponse, session: Session, events: any) => void;
-  [EventedHTTPServerEvents.DECRYPT]: (data: Buffer, decrypted: { data: Buffer; }, session: Session) => void;
+  [EventedHTTPServerEvents.DECRYPT]: (data: Buffer, decrypted: { data: Buffer; error: Error | null }, session: Session) => void;
   [EventedHTTPServerEvents.ENCRYPT]: (data: Buffer, encrypted: { data: number | Buffer; }, session: Session) => void;
   [EventedHTTPServerEvents.CLOSE]: (events: any) => void;
   [EventedHTTPServerEvents.SESSION_CLOSE]: (sessionID: string, events: any) => void;
@@ -101,6 +100,9 @@ export class EventedHTTPServer extends EventEmitter<Events> {
 
   stop = () => {
     this._tcpServer.close();
+    this._connections.forEach((connection) => {
+      connection.close();
+    });
     this._connections = [];
   }
 
@@ -261,7 +263,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
   _fullySetup: boolean;
   _writingResponse: boolean;
   _killSocketAfterWrite: boolean;
-  _pendingEventData: Buffer;
+  _pendingEventData: Buffer[];
   _clientSocket: Socket;
   _httpServer: http.Server;
   _serverSocket: Nullable<Socket>;
@@ -275,11 +277,11 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     this.server = server;
     this.sessionID = uuid.generate(clientSocket.remoteAddress + ':' + clientSocket.remotePort);
     this._remoteAddress = clientSocket.remoteAddress!; // cache because it becomes undefined in 'onClientSocketClose'
-    this._pendingClientSocketData = bufferShim.alloc(0); // data received from client before HTTP proxy is fully setup
+    this._pendingClientSocketData = Buffer.alloc(0); // data received from client before HTTP proxy is fully setup
     this._fullySetup = false; // true when we are finished establishing connections
     this._writingResponse = false; // true while we are composing an HTTP response (so events can wait)
     this._killSocketAfterWrite = false;
-    this._pendingEventData = bufferShim.alloc(0); // event data waiting to be sent until after an in-progress HTTP response is being written
+    this._pendingEventData = []; // queue of unencrypted event data waiting to be sent until after an in-progress HTTP response is being written
     // clientSocket is the socket connected to the actual iOS device
     this._clientSocket = clientSocket;
     this._clientSocket.on('data', this._onClientSocketData);
@@ -315,40 +317,59 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     debug("[%s] Sending HTTP event '%s' with data: %s", this._remoteAddress, event, data.toString('utf8'));
     // ensure data is a Buffer
     if (typeof data === 'string') {
-      data = bufferShim.from(data);
+      data = Buffer.from(data);
     }
     // format this payload as an HTTP response
-    var linebreak = bufferShim.from("0D0A", "hex");
+    var linebreak = Buffer.from("0D0A", "hex");
     data = Buffer.concat([
-      bufferShim.from('EVENT/1.0 200 OK'), linebreak,
-      bufferShim.from('Content-Type: ' + contentType), linebreak,
-      bufferShim.from('Content-Length: ' + data.length), linebreak,
+      Buffer.from('EVENT/1.0 200 OK'), linebreak,
+      Buffer.from('Content-Type: ' + contentType), linebreak,
+      Buffer.from('Content-Length: ' + data.length), linebreak,
       linebreak,
       data
     ]);
-    // give listeners an opportunity to encrypt this data before sending it to the client
-    var encrypted = {data: null};
-    this.emit(EventedHTTPServerEvents.ENCRYPT, data, encrypted, this._session);
-    if (encrypted.data) {
-      // @ts-ignore
-      data = encrypted.data as Buffer;
-    }
+
     // if we're in the middle of writing an HTTP response already, put this event in the queue for when
     // we're done. otherwise send it immediately.
-    if (this._writingResponse)
-      this._pendingEventData = Buffer.concat([this._pendingEventData, data]);
-    else
+    if (this._writingResponse) {
+      this._pendingEventData.push(data);
+    } else {
+      // give listeners an opportunity to encrypt this data before sending it to the client
+      var encrypted = {data: null};
+      this.emit(EventedHTTPServerEvents.ENCRYPT, data, encrypted, this._session);
+      if (encrypted.data) {
+        // @ts-ignore
+        data = encrypted.data as Buffer;
+      }
+
       this._clientSocket.write(data);
+    }
+  }
+
+  close = () => {
+    this._clientSocket.end();
   }
 
   _sendPendingEvents = () => {
-    // an existing HTTP response was finished, so let's flush our pending event buffer if necessary!
-    if (this._pendingEventData.length > 0) {
-      debug("[%s] Writing pending HTTP event data", this._remoteAddress);
-      this._clientSocket.write(this._pendingEventData);
+    if (this._pendingEventData.length === 0) {
+      return;
     }
-    // clear the buffer
-    this._pendingEventData = bufferShim.alloc(0);
+
+    // an existing HTTP response was finished, so let's flush our pending event buffer if necessary!
+    debug("[%s] Writing pending HTTP event data", this._remoteAddress);
+    this._pendingEventData.forEach(event => {
+      const encrypted = {data: null};
+      this.emit(EventedHTTPServerEvents.ENCRYPT, event, encrypted, this._session);
+      if (encrypted.data) {
+        // @ts-ignore
+        event = encrypted.data as Buffer;
+      }
+
+      this._clientSocket.write(event);
+    });
+
+    // clear the queue
+    this._pendingEventData = [];
   }
 
   // Called only once right after constructor finishes
@@ -381,17 +402,29 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
 
   // Received data from client (iOS)
   _onClientSocketData = (data: Buffer) => {
+    // _writingResponse is reverted to false in _onHttpServerRequest(...) after response was written
+    this._writingResponse = true;
+
     // give listeners an opportunity to decrypt this data before processing it as HTTP
-    var decrypted = {data: null};
+    var decrypted: {data: Buffer | null, error: Error | null} = {data: null, error: null};
     this.emit(EventedHTTPServerEvents.DECRYPT, data, decrypted, this._session);
-    if (decrypted.data)
-      data = decrypted.data as unknown as Buffer;
-    if (this._fullySetup) {
-      // proxy it along to the HTTP server
-      this._serverSocket && this._serverSocket.write(data);
+
+    if (decrypted.error) {
+      // decryption and/or verification failed, disconnect the client
+      debug("[%s] Error occurred trying to decrypt incoming packet: %s", this._remoteAddress, decrypted.error.message);
+      this.close();
     } else {
-      // we're not setup yet, so add this data to our buffer
-      this._pendingClientSocketData = Buffer.concat([this._pendingClientSocketData!, data]);
+      if (decrypted.data) {
+        data = decrypted.data;
+      }
+
+      if (this._fullySetup) {
+        // proxy it along to the HTTP server
+        this._serverSocket && this._serverSocket.write(data);
+      } else {
+        // we're not setup yet, so add this data to our buffer
+        this._pendingClientSocketData = Buffer.concat([this._pendingClientSocketData!, data]);
+      }
     }
   }
 
@@ -430,7 +463,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
 
   _onHttpServerRequest = (request: IncomingMessage, response: OutgoingMessage) => {
     debug("[%s] HTTP request: %s", this._remoteAddress, request.url);
-    this._writingResponse = true;
+
     // sign up to know when the response is ended, so we can safely send EVENT responses
     response.on('finish', () => {
       debug("[%s] HTTP Response is finished", this._remoteAddress);

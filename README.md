@@ -1,7 +1,14 @@
-HAP-NodeJS
-==========
+<span align="center">
 
-[![NPM version](https://badge.fury.io/js/hap-nodejs.svg)](http://badge.fury.io/js/hap-nodejs)
+# HAP-NodeJS
+
+<a href="https://www.npmjs.com/package/hap-nodejs"><img title="npm version" src="https://badgen.net/npm/v/hap-nodejs" ></a>
+<a href="https://www.npmjs.com/package/hap-nodejs"><img title="npm downloads" src="https://badgen.net/npm/dt/hap-nodejs" ></a>
+<a href="https://github.com/KhaosT/HAP-NodeJS/actions?query=workflow%3A%22Node-CI%22"><img title="npm downloads" src="https://github.com/homebridge/HAP-NodeJS/workflows/Node-CI/badge.svg" ></a>
+
+</p>
+
+</span>
 
 HAP-NodeJS is a Node.js implementation of the HomeKit Accessory Server.
 

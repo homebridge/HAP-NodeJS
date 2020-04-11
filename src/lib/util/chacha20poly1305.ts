@@ -5,8 +5,6 @@
 // Implementation derived from chacha-ref.c version 20080118
 // See for details: http://cr.yp.to/chacha/chacha-20080128.pdf
 
-import bufferShim from 'buffer-shims';
-
 var Chacha20KeySize   = 32;
 var Chacha20NonceSize =  8;
 
@@ -18,7 +16,7 @@ export class Chacha20Ctx {
   constructor() {
     this.input = new Array(16);
     this.leftover = 0;
-    this.buffer = bufferShim.alloc(64);
+    this.buffer = Buffer.alloc(64);
   }
 }
 
@@ -145,7 +143,7 @@ export function chacha20_update(ctx: Chacha20Ctx, dst: Buffer, src: Buffer, inle
         if (src.length > 0) {
             src.copy(ctx.buffer,ctx.leftover,0,src.length);
         } else {
-            var zeros = bufferShim.alloc(inlen);
+            var zeros = Buffer.alloc(inlen);
             zeros.copy(ctx.buffer,ctx.leftover,0,inlen);
         }
         ctx.leftover += inlen;

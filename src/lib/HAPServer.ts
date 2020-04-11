@@ -1,6 +1,5 @@
 import crypto from 'crypto';
 
-import bufferShim from 'buffer-shims';
 import createDebug from 'debug';
 import srp from 'fast-srp-hap';
 import tweetnacl from 'tweetnacl';
@@ -304,7 +303,7 @@ export class HAPServer extends EventEmitter<Events> {
   _onRequest = (request: IncomingMessage, response: ServerResponse, session: Session, events: any) => {
     debug("[%s] HAP Request: %s %s", this.accessoryInfo.username, request.method, request.url);
     // collect request data, if any
-    var requestData = bufferShim.alloc(0);
+    var requestData = Buffer.alloc(0);
     request.on('data', (data) => {
       requestData = Buffer.concat([requestData, data]);
     });
@@ -355,12 +354,16 @@ export class HAPServer extends EventEmitter<Events> {
     }
   }
 
-  _onDecrypt = (data: Buffer, decrypted: { data: number | Buffer; }, session: Session) => {
+  _onDecrypt = (data: Buffer, decrypted: { data: number | Buffer; error: Error | null }, session: Session) => {
     // possibly an instance of HAPEncryption (created in handlePairVerifyStepOne)
     var enc = session.encryption;
     // if controllerToAccessoryKey is not empty, then encryption is enabled for this connection.
     if (enc && enc.controllerToAccessoryKey.length > 0) {
-      decrypted.data = encryption.layerDecrypt(data, enc.controllerToAccessoryCount, enc.controllerToAccessoryKey, enc.extraInfo);
+      try {
+        decrypted.data = encryption.layerDecrypt(data, enc.controllerToAccessoryCount, enc.controllerToAccessoryKey, enc.extraInfo);
+      } catch (error) {
+        decrypted.error = error;
+      }
     }
   }
 
@@ -424,7 +427,7 @@ export class HAPServer extends EventEmitter<Events> {
     var srpParams = srp.params["3072"];
     srp.genKey(32, (error: Error, key: Buffer) => {
       // create a new SRP server
-      var srpServer = new srp.Server(srpParams, bufferShim.from(salt), bufferShim.from("Pair-Setup"), bufferShim.from(this.accessoryInfo.pincode), key);
+      var srpServer = new srp.Server(srpParams, Buffer.from(salt), Buffer.from("Pair-Setup"), Buffer.from(this.accessoryInfo.pincode), key);
       var srpB = srpServer.computeB();
       // attach it to the current TCP session
       session.srpServer = srpServer;
@@ -448,7 +451,7 @@ export class HAPServer extends EventEmitter<Events> {
       // most likely the client supplied an incorrect pincode.
       debug("[%s] Error while checking pincode: %s", this.accessoryInfo.username, err.message);
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M4, TLVValues.ERROR_CODE, Codes.INVALID_REQUEST));
+      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
       session._pairSetupState = undefined;
       return;
     }
@@ -465,16 +468,22 @@ export class HAPServer extends EventEmitter<Events> {
     // pull the SRP server we created in stepOne out of the current session
     var srpServer = session.srpServer!;
     var encryptedData = objects[TLVValues.ENCRYPTED_DATA];
-    var messageData = bufferShim.alloc(encryptedData.length - 16);
-    var authTagData = bufferShim.alloc(16);
+    var messageData = Buffer.alloc(encryptedData.length - 16);
+    var authTagData = Buffer.alloc(16);
     encryptedData.copy(messageData, 0, 0, encryptedData.length - 16);
     encryptedData.copy(authTagData, 0, encryptedData.length - 16, encryptedData.length);
     var S_private = srpServer.computeK();
-    var encSalt = bufferShim.from("Pair-Setup-Encrypt-Salt");
-    var encInfo = bufferShim.from("Pair-Setup-Encrypt-Info");
+    var encSalt = Buffer.from("Pair-Setup-Encrypt-Salt");
+    var encInfo = Buffer.from("Pair-Setup-Encrypt-Info");
     var outputKey = hkdf.HKDF("sha512", encSalt, S_private, encInfo, 32);
-    var plaintextBuffer = bufferShim.alloc(messageData.length);
-    encryption.verifyAndDecrypt(outputKey, bufferShim.from("PS-Msg05"), messageData, authTagData, null, plaintextBuffer);
+    var plaintextBuffer = Buffer.alloc(messageData.length);
+    if (!encryption.verifyAndDecrypt(outputKey, Buffer.from("PS-Msg05"), messageData, authTagData, null, plaintextBuffer)) {
+      debug("[%s] Error while decrypting and verifying M5 subTlv: %s", this.accessoryInfo.username);
+      response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
+      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
+      session._pairSetupState = undefined;
+      return;
+    }
     // decode the client payload and pass it on to the next step
     var M5Packet = tlv.decode(plaintextBuffer);
     var clientUsername = M5Packet[TLVValues.USERNAME];
@@ -488,14 +497,14 @@ export class HAPServer extends EventEmitter<Events> {
   _handlePairStepFour = (request: IncomingMessage, response: ServerResponse, session: Session, clientUsername: Buffer, clientLTPK: Buffer, clientProof: Buffer, hkdfEncKey: Buffer) => {
     debug("[%s] Pair step 4/5", this.accessoryInfo.username);
     var S_private = session.srpServer!.computeK();
-    var controllerSalt = bufferShim.from("Pair-Setup-Controller-Sign-Salt");
-    var controllerInfo = bufferShim.from("Pair-Setup-Controller-Sign-Info");
+    var controllerSalt = Buffer.from("Pair-Setup-Controller-Sign-Salt");
+    var controllerInfo = Buffer.from("Pair-Setup-Controller-Sign-Info");
     var outputKey = hkdf.HKDF("sha512", controllerSalt, S_private, controllerInfo, 32);
     var completeData = Buffer.concat([outputKey, clientUsername, clientLTPK]);
     if (!tweetnacl.sign.detached.verify(completeData, clientProof, clientLTPK)) {
       debug("[%s] Invalid signature", this.accessoryInfo.username);
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M6, TLVValues.ERROR_CODE, Codes.INVALID_REQUEST));
+      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M6, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
       session._pairSetupState = undefined;
       return;
     }
@@ -506,18 +515,18 @@ export class HAPServer extends EventEmitter<Events> {
   _handlePairStepFive = (request: IncomingMessage, response: ServerResponse, session: Session, clientUsername: Buffer, clientLTPK: Buffer, hkdfEncKey: Buffer) => {
     debug("[%s] Pair step 5/5", this.accessoryInfo.username);
     var S_private = session.srpServer!.computeK();
-    var accessorySalt = bufferShim.from("Pair-Setup-Accessory-Sign-Salt");
-    var accessoryInfo = bufferShim.from("Pair-Setup-Accessory-Sign-Info");
+    var accessorySalt = Buffer.from("Pair-Setup-Accessory-Sign-Salt");
+    var accessoryInfo = Buffer.from("Pair-Setup-Accessory-Sign-Info");
     var outputKey = hkdf.HKDF("sha512", accessorySalt, S_private, accessoryInfo, 32);
     var serverLTPK = this.accessoryInfo.signPk;
-    var usernameData = bufferShim.from(this.accessoryInfo.username);
+    var usernameData = Buffer.from(this.accessoryInfo.username);
     var material = Buffer.concat([outputKey, usernameData, serverLTPK]);
-    var privateKey = bufferShim.from(this.accessoryInfo.signSk);
+    var privateKey = Buffer.from(this.accessoryInfo.signSk);
     var serverProof = tweetnacl.sign.detached(material, privateKey);
     var message = tlv.encode(TLVValues.USERNAME, usernameData, TLVValues.PUBLIC_KEY, serverLTPK, TLVValues.PROOF, serverProof);
-    var ciphertextBuffer = bufferShim.alloc(message.length);
-    var macBuffer = bufferShim.alloc(16);
-    encryption.encryptAndSeal(hkdfEncKey, bufferShim.from("PS-Msg06"), message, null, ciphertextBuffer, macBuffer);
+    var ciphertextBuffer = Buffer.alloc(message.length);
+    var macBuffer = Buffer.alloc(16);
+    encryption.encryptAndSeal(hkdfEncKey, Buffer.from("PS-Msg06"), message, null, ciphertextBuffer, macBuffer);
     // finally, notify listeners that we have been paired with a client
     this.emit(HAPServerEventTypes.PAIR, clientUsername.toString(), clientLTPK, once((err?: Error) => {
       if (err) {
@@ -557,15 +566,15 @@ export class HAPServer extends EventEmitter<Events> {
     var clientPublicKey = objects[TLVValues.PUBLIC_KEY]; // Buffer
     // generate new encryption keys for this session
     var keyPair = encryption.generateCurve25519KeyPair();
-    var secretKey = bufferShim.from(keyPair.secretKey);
-    var publicKey = bufferShim.from(keyPair.publicKey);
-    var sharedSec = bufferShim.from(encryption.generateCurve25519SharedSecKey(secretKey, clientPublicKey));
-    var usernameData = bufferShim.from(this.accessoryInfo.username);
+    var secretKey = Buffer.from(keyPair.secretKey);
+    var publicKey = Buffer.from(keyPair.publicKey);
+    var sharedSec = Buffer.from(encryption.generateCurve25519SharedSecKey(secretKey, clientPublicKey));
+    var usernameData = Buffer.from(this.accessoryInfo.username);
     var material = Buffer.concat([publicKey, usernameData, clientPublicKey]);
-    var privateKey = bufferShim.from(this.accessoryInfo.signSk);
+    var privateKey = Buffer.from(this.accessoryInfo.signSk);
     var serverProof = tweetnacl.sign.detached(material, privateKey);
-    var encSalt = bufferShim.from("Pair-Verify-Encrypt-Salt");
-    var encInfo = bufferShim.from("Pair-Verify-Encrypt-Info");
+    var encSalt = Buffer.from("Pair-Verify-Encrypt-Salt");
+    var encInfo = Buffer.from("Pair-Verify-Encrypt-Info");
     var outputKey = hkdf.HKDF("sha512", encSalt, sharedSec, encInfo, 32).slice(0, 32);
     // store keys in a new instance of HAPEncryption
     var enc = new HAPEncryption();
@@ -579,9 +588,9 @@ export class HAPServer extends EventEmitter<Events> {
     // compose the response data in TLV format
     var message = tlv.encode(TLVValues.USERNAME, usernameData, TLVValues.PROOF, serverProof);
     // encrypt the response
-    var ciphertextBuffer = bufferShim.alloc(message.length);
-    var macBuffer = bufferShim.alloc(16);
-    encryption.encryptAndSeal(outputKey, bufferShim.from("PV-Msg02"), message, null, ciphertextBuffer, macBuffer);
+    var ciphertextBuffer = Buffer.alloc(message.length);
+    var macBuffer = Buffer.alloc(16);
+    encryption.encryptAndSeal(outputKey, Buffer.from("PV-Msg02"), message, null, ciphertextBuffer, macBuffer);
     response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
     response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M2, TLVValues.ENCRYPTED_DATA, Buffer.concat([ciphertextBuffer, macBuffer]), TLVValues.PUBLIC_KEY, publicKey));
     session._pairVerifyState = States.M2;
@@ -590,14 +599,14 @@ export class HAPServer extends EventEmitter<Events> {
   _handlePairVerifyStepTwo = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, objects: Record<number, Buffer>) => {
     debug("[%s] Pair verify step 2/2", this.accessoryInfo.username);
     var encryptedData = objects[TLVValues.ENCRYPTED_DATA];
-    var messageData = bufferShim.alloc(encryptedData.length - 16);
-    var authTagData = bufferShim.alloc(16);
+    var messageData = Buffer.alloc(encryptedData.length - 16);
+    var authTagData = Buffer.alloc(16);
     encryptedData.copy(messageData, 0, 0, encryptedData.length - 16);
     encryptedData.copy(authTagData, 0, encryptedData.length - 16, encryptedData.length);
-    var plaintextBuffer = bufferShim.alloc(messageData.length);
+    var plaintextBuffer = Buffer.alloc(messageData.length);
     // instance of HAPEncryption (created in handlePairVerifyStepOne)
     var enc = session.encryption!;
-    if (!encryption.verifyAndDecrypt(enc.hkdfPairEncKey, bufferShim.from("PV-Msg03"), messageData, authTagData, null, plaintextBuffer)) {
+    if (!encryption.verifyAndDecrypt(enc.hkdfPairEncKey, Buffer.from("PV-Msg03"), messageData, authTagData, null, plaintextBuffer)) {
       debug("[%s] M3: Invalid signature", this.accessoryInfo.username);
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
       response.end(tlv.encode(TLVValues.STATE, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
@@ -632,9 +641,9 @@ export class HAPServer extends EventEmitter<Events> {
     // now that the client has been verified, we must "upgrade" our pesudo-HTTP connection to include
     // TCP-level encryption. We'll do this by adding some more encryption vars to the session, and using them
     // in future calls to onEncrypt, onDecrypt.
-    var encSalt = bufferShim.from("Control-Salt");
-    var infoRead = bufferShim.from("Control-Read-Encryption-Key");
-    var infoWrite = bufferShim.from("Control-Write-Encryption-Key");
+    var encSalt = Buffer.from("Control-Salt");
+    var infoRead = Buffer.from("Control-Read-Encryption-Key");
+    var infoWrite = Buffer.from("Control-Write-Encryption-Key");
     enc.accessoryToControllerKey = hkdf.HKDF("sha512", encSalt, enc.sharedSec, infoRead, 32);
     enc.controllerToAccessoryKey = hkdf.HKDF("sha512", encSalt, enc.sharedSec, infoWrite, 32);
     // Our connection is now completely setup. We now want to subscribe this connection to special
@@ -658,15 +667,15 @@ export class HAPServer extends EventEmitter<Events> {
     var clientPublicKey = objects[TLVValues.PUBLIC_KEY]; // Buffer
     // generate new encryption keys for this session
     var keyPair = encryption.generateCurve25519KeyPair();
-    var secretKey = bufferShim.from(keyPair.secretKey);
-    var publicKey = bufferShim.from(keyPair.publicKey);
-    var sharedSec = bufferShim.from(encryption.generateCurve25519SharedSecKey(secretKey, clientPublicKey));
-    var usernameData = bufferShim.from(this.accessoryInfo.username);
+    var secretKey = Buffer.from(keyPair.secretKey);
+    var publicKey = Buffer.from(keyPair.publicKey);
+    var sharedSec = Buffer.from(encryption.generateCurve25519SharedSecKey(secretKey, clientPublicKey));
+    var usernameData = Buffer.from(this.accessoryInfo.username);
     var material = Buffer.concat([publicKey, usernameData, clientPublicKey]);
-    var privateKey = bufferShim.from(this.accessoryInfo.signSk);
+    var privateKey = Buffer.from(this.accessoryInfo.signSk);
     var serverProof = tweetnacl.sign.detached(material, privateKey);
-    var encSalt = bufferShim.from("Pair-Verify-Encrypt-Salt");
-    var encInfo = bufferShim.from("Pair-Verify-Encrypt-Info");
+    var encSalt = Buffer.from("Pair-Verify-Encrypt-Salt");
+    var encInfo = Buffer.from("Pair-Verify-Encrypt-Info");
     var outputKey = hkdf.HKDF("sha512", encSalt, sharedSec, encInfo, 32).slice(0, 32);
     // store keys in a new instance of HAPEncryption
     var enc = new HAPEncryption();
@@ -680,9 +689,9 @@ export class HAPServer extends EventEmitter<Events> {
     // compose the response data in TLV format
     var message = tlv.encode(TLVValues.USERNAME, usernameData, TLVValues.PROOF, serverProof);
     // encrypt the response
-    var ciphertextBuffer = bufferShim.alloc(message.length);
-    var macBuffer = bufferShim.alloc(16);
-    encryption.encryptAndSeal(outputKey, bufferShim.from("PV-Msg02"), message, null, ciphertextBuffer, macBuffer);
+    var ciphertextBuffer = Buffer.alloc(message.length);
+    var macBuffer = Buffer.alloc(16);
+    encryption.encryptAndSeal(outputKey, Buffer.from("PV-Msg02"), message, null, ciphertextBuffer, macBuffer);
     var response = tlv.encode(TLVValues.SEQUENCE_NUM, 0x02, TLVValues.ENCRYPTED_DATA, Buffer.concat([ciphertextBuffer, macBuffer]), TLVValues.PUBLIC_KEY, publicKey);
     remoteSession.responseMessage(request, response);
   }
@@ -690,14 +699,14 @@ export class HAPServer extends EventEmitter<Events> {
   _handleRemotePairVerifyStepTwo = (request: HapRequest, remoteSession: RemoteSession, session: Session, objects: Record<number, Buffer>) => {
     debug("[%s] Remote Pair verify step 2/2", this.accessoryInfo.username);
     var encryptedData = objects[TLVValues.ENCRYPTED_DATA];
-    var messageData = bufferShim.alloc(encryptedData.length - 16);
-    var authTagData = bufferShim.alloc(16);
+    var messageData = Buffer.alloc(encryptedData.length - 16);
+    var authTagData = Buffer.alloc(16);
     encryptedData.copy(messageData, 0, 0, encryptedData.length - 16);
     encryptedData.copy(authTagData, 0, encryptedData.length - 16, encryptedData.length);
-    var plaintextBuffer = bufferShim.alloc(messageData.length);
+    var plaintextBuffer = Buffer.alloc(messageData.length);
     // instance of HAPEncryption (created in handlePairVerifyStepOne)
     var enc = session.encryption!;
-    if (!encryption.verifyAndDecrypt(enc.hkdfPairEncKey, bufferShim.from("PV-Msg03"), messageData, authTagData, null, plaintextBuffer)) {
+    if (!encryption.verifyAndDecrypt(enc.hkdfPairEncKey, Buffer.from("PV-Msg03"), messageData, authTagData, null, plaintextBuffer)) {
       debug("[%s] M3: Invalid signature", this.accessoryInfo.username);
       var response = tlv.encode(TLVValues.STATE, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION);
       remoteSession.responseMessage(request, response);
@@ -724,9 +733,9 @@ export class HAPServer extends EventEmitter<Events> {
       return;
     }
     debug("[%s] Client %s verification complete", this.accessoryInfo.username, clientUsername);
-    var encSalt = bufferShim.from("Control-Salt");
-    var infoRead = bufferShim.from("Control-Read-Encryption-Key");
-    var infoWrite = bufferShim.from("Control-Write-Encryption-Key");
+    var encSalt = Buffer.from("Control-Salt");
+    var infoRead = Buffer.from("Control-Read-Encryption-Key");
+    var infoWrite = Buffer.from("Control-Write-Encryption-Key");
     enc.accessoryToControllerKey = hkdf.HKDF("sha512", encSalt, enc.sharedSec, infoRead, 32);
     enc.controllerToAccessoryKey = hkdf.HKDF("sha512", encSalt, enc.sharedSec, infoWrite, 32);
     var response = tlv.encode(TLVValues.SEQUENCE_NUM, 0x04);
@@ -845,7 +854,7 @@ export class HAPServer extends EventEmitter<Events> {
       var response = {
         'configuration-number': this.accessoryInfo.configVersion
       };
-      remoteSession.responseMessage(request, bufferShim.from(JSON.stringify(response)));
+      remoteSession.responseMessage(request, Buffer.from(JSON.stringify(response)));
     } else {
       var self = this;
       // call out to listeners to retrieve the latest accessories JSON
@@ -858,7 +867,7 @@ export class HAPServer extends EventEmitter<Events> {
           'configuration-number': self.accessoryInfo.configVersion,
           'attribute-database': accessories
         };
-        remoteSession.responseMessage(request, bufferShim.from(JSON.stringify(response)));
+        remoteSession.responseMessage(request, Buffer.from(JSON.stringify(response)));
       }));
     }
   }
@@ -1070,7 +1079,7 @@ export class HAPServer extends EventEmitter<Events> {
           } as any);
         }
       }
-      remoteSession.responseMessage(request, bufferShim.from(JSON.stringify(characteristics)));
+      remoteSession.responseMessage(request, Buffer.from(JSON.stringify(characteristics)));
     }), true);
   }
 
@@ -1091,7 +1100,7 @@ export class HAPServer extends EventEmitter<Events> {
           } as any);
         }
       }
-      remoteSession.responseMessage(request, bufferShim.from(JSON.stringify(characteristics)));
+      remoteSession.responseMessage(request, Buffer.from(JSON.stringify(characteristics)));
     }, true);
   }
 }
@@ -1116,15 +1125,15 @@ export class HAPEncryption {
 
   constructor() {
     // initialize member vars with null-object values
-    this.clientPublicKey = bufferShim.alloc(0);
-    this.secretKey = bufferShim.alloc(0);
-    this.publicKey = bufferShim.alloc(0);
-    this.sharedSec = bufferShim.alloc(0);
-    this.hkdfPairEncKey = bufferShim.alloc(0);
+    this.clientPublicKey = Buffer.alloc(0);
+    this.secretKey = Buffer.alloc(0);
+    this.publicKey = Buffer.alloc(0);
+    this.sharedSec = Buffer.alloc(0);
+    this.hkdfPairEncKey = Buffer.alloc(0);
     this.accessoryToControllerCount = { value: 0 };
     this.controllerToAccessoryCount = { value: 0 };
-    this.accessoryToControllerKey = bufferShim.alloc(0);
-    this.controllerToAccessoryKey = bufferShim.alloc(0);
+    this.accessoryToControllerKey = Buffer.alloc(0);
+    this.controllerToAccessoryKey = Buffer.alloc(0);
     this.extraInfo = {};
   }
 }

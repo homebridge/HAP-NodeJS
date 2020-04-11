@@ -1,6 +1,6 @@
 // HomeKit types required
 import * as types from "./types";
-import { CharacteristicValue } from '..';
+import { Categories, CharacteristicValue } from '..';
 
 const execute = (accessory: string, characteristic: string, value: CharacteristicValue) => {
   console.log("executed accessory: " + accessory + ", and characteristic: " + characteristic + ", with value: " +  value + ".");
@@ -10,6 +10,7 @@ export const accessory = {
   displayName: "Thermostat 1",
   username: "CA:3E:BC:4D:5E:FF",
   pincode: "031-45-154",
+  category: Categories.THERMOSTAT,
   services: [{
     sType: types.ACCESSORY_INFORMATION_STYPE,
     characteristics: [{
@@ -102,7 +103,7 @@ export const accessory = {
       cType: types.TARGETHEATINGCOOLING_CTYPE,
       onUpdate: (value: CharacteristicValue) => { console.log("Change:",value); execute("Thermostat", "Target HC", value); },
       perms: ["pw","pr","ev"],
-      format: "int",
+      format: "uint8",
       initialValue: 0,
       supportEvents: false,
       supportBonjour: false,
@@ -114,7 +115,7 @@ export const accessory = {
       cType: types.CURRENT_TEMPERATURE_CTYPE,
       onUpdate: (value: CharacteristicValue) => { console.log("Change:",value); execute("Thermostat", "Current Temperature", value); },
       perms: ["pr","ev"],
-      format: "int",
+      format: "float",
       initialValue: 20,
       supportEvents: false,
       supportBonjour: false,
@@ -124,7 +125,7 @@ export const accessory = {
       cType: types.TARGET_TEMPERATURE_CTYPE,
       onUpdate: (value: CharacteristicValue) => { console.log("Change:",value); execute("Thermostat", "Target Temperature", value); },
       perms: ["pw","pr","ev"],
-      format: "int",
+      format: "float",
       initialValue: 20,
       supportEvents: false,
       supportBonjour: false,
@@ -136,8 +137,8 @@ export const accessory = {
     },{
       cType: types.TEMPERATURE_UNITS_CTYPE,
       onUpdate: (value: CharacteristicValue) => { console.log("Change:",value); execute("Thermostat", "Unit", value); },
-      perms: ["pr","ev"],
-      format: "int",
+      perms: ["pw","pr","ev"],
+      format: "uint8",
       initialValue: 0,
       supportEvents: false,
       supportBonjour: false,

@@ -2,7 +2,6 @@ import storage from 'node-persist';
 import util from 'util';
 import assert from 'assert';
 import tweetnacl from 'tweetnacl';
-import bufferShim from 'buffer-shims';
 
 import { Categories } from '../Accessory';
 import { Session } from "../util/eventedhttp";
@@ -50,8 +49,8 @@ export class AccessoryInfo {
     // @ts-ignore
     this.category = "";
     this.pincode = "";
-    this.signSk = bufferShim.alloc(0);
-    this.signPk = bufferShim.alloc(0);
+    this.signSk = Buffer.alloc(0);
+    this.signPk = Buffer.alloc(0);
     this.pairedClients = {};
     this.pairedAdminClients = 0;
     this.configVersion = 1;
@@ -242,8 +241,8 @@ export class AccessoryInfo {
     // Create a new unique key pair for this accessory.
     var keyPair = tweetnacl.sign.keyPair();
 
-    accessoryInfo.signSk = bufferShim.from(keyPair.secretKey);
-    accessoryInfo.signPk = bufferShim.from(keyPair.publicKey);
+    accessoryInfo.signSk = Buffer.from(keyPair.secretKey);
+    accessoryInfo.signPk = Buffer.from(keyPair.publicKey);
 
     return accessoryInfo;
   }
@@ -259,8 +258,8 @@ export class AccessoryInfo {
       info.displayName = saved.displayName || "";
       info.category = saved.category || "";
       info.pincode = saved.pincode || "";
-      info.signSk = bufferShim.from(saved.signSk || '', 'hex');
-      info.signPk = bufferShim.from(saved.signPk || '', 'hex');
+      info.signSk = Buffer.from(saved.signSk || '', 'hex');
+      info.signPk = Buffer.from(saved.signPk || '', 'hex');
 
       info.pairedClients = {};
       for (var username in saved.pairedClients || {}) {
@@ -271,7 +270,7 @@ export class AccessoryInfo {
 
         info.pairedClients[username] = {
           username: username,
-          publicKey: bufferShim.from(publicKey, 'hex'),
+          publicKey: Buffer.from(publicKey, 'hex'),
           permission: permission
         };
         if (permission === PermissionTypes.ADMIN)

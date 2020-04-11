@@ -1,10 +1,9 @@
-import bufferShim from 'buffer-shims';
 import crypto from 'crypto';
 import createDebug from 'debug';
 
 import * as uuid from './util/uuid';
 import { clone } from './util/clone';
-import { Service, ServiceConfigurationChange, ServiceEventTypes } from './Service';
+import { SerializedService, Service, ServiceConfigurationChange, ServiceEventTypes } from './Service';
 import {
   Access,
   Characteristic,
@@ -72,7 +71,17 @@ export enum Categories {
   SHOWER_HEAD = 30,
   TELEVISION = 31,
   TARGET_CONTROLLER = 32, // Remote Control
-  ROUTER = 33 // HomeKit enabled router
+  ROUTER = 33, // HomeKit enabled router
+  AUDIO_RECEIVER = 34,
+}
+
+export interface SerializedAccessory {
+  displayName: string,
+  UUID: string,
+  category: Categories,
+
+  services: SerializedService[],
+  linkedServices?: Record<string, string[]>,
 }
 
 export enum AccessoryEventTypes {
@@ -80,6 +89,8 @@ export enum AccessoryEventTypes {
   LISTENING = "listening",
   SERVICE_CONFIGURATION_CHANGE = "service-configurationChange",
   SERVICE_CHARACTERISTIC_CHANGE = "service-characteristic-change",
+  PAIRED = "paired",
+  UNPAIRED = "unpaired",
 }
 
 type Events = {
@@ -87,6 +98,8 @@ type Events = {
   listening: (port: number) => void;
   "service-configurationChange": VoidCallback;
   "service-characteristic-change": (change: ServiceCharacteristicChange) => void;
+  [AccessoryEventTypes.PAIRED]: () => void;
+  [AccessoryEventTypes.UNPAIRED]: () => void;
 }
 
 /**
@@ -160,9 +173,11 @@ export class Accessory extends EventEmitter<Events> {
 
   static Categories = Categories;
 
+  // NOTICE: when adding/changing properties, remember to possibly adjust the serialize/deserialize functions
   aid: Nullable<number> = null; // assigned by us in assignIDs() or by a Bridge
   _isBridge: boolean = false; // true if we are a Bridge (creating a new instance of the Bridge subclass sets this to true)
   bridged: boolean = false; // true if we are hosted "behind" a Bridge Accessory
+  bridge?: Accessory; // if accessory is bridged, this property points to the bridge which bridges this accessory
   bridgedAccessories: Accessory[] = []; // If we are a Bridge, these are the Accessories we are bridging
   reachable: boolean = true;
   cameraSource: Nullable<Camera> = null;
@@ -331,6 +346,30 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
+  getServiceById<T extends WithUUID<typeof Service>>(uuid: string | T, subType: string): Service | undefined {
+    for (const index in this.services) {
+      const service = this.services[index];
+
+      if (typeof uuid === "string" && (service.displayName === uuid || service.name === uuid) && service.subtype === subType) {
+        return service;
+      } else if (typeof uuid === "function" && ((service instanceof uuid) || (uuid.UUID === service.UUID)) && service.subtype === subType) {
+        return service;
+      }
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Returns the bridging accessory if this accessory is bridged.
+   * Otherwise returns itself.
+   *
+   * @returns the primary accessory
+   */
+  getPrimaryAccessory = (): Accessory => {
+    return this.bridged? this.bridge!: this;
+  }
+
   updateReachability = (reachable: boolean) => {
     if (!this.bridged)
       throw new Error("Cannot update reachability on non-bridged accessory!");
@@ -365,6 +404,7 @@ export class Accessory extends EventEmitter<Events> {
     });
 
     accessory.bridged = true;
+    accessory.bridge = this;
 
     this.bridgedAccessories.push(accessory);
 
@@ -462,7 +502,7 @@ export class Accessory extends EventEmitter<Events> {
       return this._setupURI;
     }
 
-    var buffer = bufferShim.alloc(8);
+    var buffer = Buffer.alloc(8);
     var setupCode = this._accessoryInfo && parseInt(this._accessoryInfo.pincode.replace(/-/g, ''), 10);
 
     var value_low = setupCode!;
@@ -607,8 +647,13 @@ export class Accessory extends EventEmitter<Events> {
    *                                new Accessory.
    */
   publish = (info: PublishInfo, allowInsecureRequest?: boolean) => {
-    this.addService(Service.ProtocolInformation) // add the protocol information service to the primary accessory
-        .setCharacteristic(Characteristic.Version, Advertiser.protocolVersionService);
+    let service: Service | undefined;
+
+    service = this.getService(Service.ProtocolInformation);
+    if (!service) {
+      service = this.addService(Service.ProtocolInformation) // add the protocol information service to the primary accessory
+    }
+    service.setCharacteristic(Characteristic.Version, Advertiser.protocolVersionService);
 
     // attempt to load existing AccessoryInfo from disk
     this._accessoryInfo = AccessoryInfo.load(info.username);
@@ -776,6 +821,8 @@ export class Accessory extends EventEmitter<Events> {
     this._advertiser && this._advertiser.updateAdvertisement();
 
     callback();
+
+    this.emit(AccessoryEventTypes.PAIRED);
   }
 
 // called when a controller adds an additional pairing
@@ -823,6 +870,7 @@ export class Accessory extends EventEmitter<Events> {
 
     if (!this._accessoryInfo.paired()) {
       this._advertiser && this._advertiser.updateAdvertisement();
+      this.emit(AccessoryEventTypes.UNPAIRED);
     }
 
     callback(0);
@@ -1339,6 +1387,79 @@ export class Accessory extends EventEmitter<Events> {
 
     return setupID;
   }
+
+  // serialization and deserialization functions, mainly designed for homebridge to create a json copy to store on disk
+  static serialize = (accessory: Accessory): SerializedAccessory => {
+    const json: SerializedAccessory = {
+      displayName: accessory.displayName,
+      UUID: accessory.UUID,
+      category: accessory.category,
+
+      services: [],
+    };
+
+    const linkedServices: Record<string, string[]> = {};
+    let hasLinkedServices = false;
+
+    accessory.services.forEach(service => {
+      json.services.push(Service.serialize(service));
+
+      const linkedServicesPresentation: string[] = [];
+      service.linkedServices.forEach(linkedService => {
+        linkedServicesPresentation.push(linkedService.UUID + (linkedService.subtype || ""));
+      });
+      if (linkedServicesPresentation.length > 0) {
+        linkedServices[service.UUID + (service.subtype || "")] = linkedServicesPresentation;
+        hasLinkedServices = true;
+      }
+    });
+
+    if (hasLinkedServices) {
+      json.linkedServices = linkedServices;
+    }
+
+    return json;
+  };
+
+  static deserialize = (json: SerializedAccessory): Accessory => {
+    const accessory = new Accessory(json.displayName, json.UUID);
+
+    accessory.category = json.category;
+
+    const services: Service[] = [];
+    const servicesMap: Record<string, Service> = {};
+
+    json.services.forEach(serialized => {
+      const service = Service.deserialize(serialized);
+
+      services.push(service);
+      servicesMap[service.UUID + (service.subtype || "")] = service;
+    });
+
+    if (json.linkedServices) {
+      for (let serviceId in json.linkedServices) {
+        const primaryService = servicesMap[serviceId];
+        const linkedServicesKeys = json.linkedServices[serviceId];
+
+        if (!primaryService) {
+          continue
+        }
+
+        linkedServicesKeys.forEach(linkedServiceKey => {
+          const linkedService = servicesMap[linkedServiceKey];
+
+          if (linkedService) {
+            primaryService.addLinkedService(linkedService);
+          }
+        });
+      }
+    }
+
+    accessory._sideloadServices(services);
+
+    return accessory;
+  }
+
 }
 
 function hapStatus(err: Error) {
