@@ -1,7 +1,7 @@
-import { Service, ServiceEventTypes } from './Service';
-import { generate } from './util/uuid';
 import './gen';
+import { Service, ServiceEventTypes } from './Service';
 import { Characteristic } from './Characteristic';
+import { generate } from './util/uuid';
 
 const createService = () => {
   return new Service('Test', generate('Foo'), 'subtype');

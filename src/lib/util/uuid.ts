@@ -48,3 +48,23 @@ export function write(uuid: string, buf: Buffer, offset: number = 0) {
     buf.write(octet, offset++, undefined, "hex");
   }
 }
+
+const SHORT_FORM_REGEX = /^0*([0-9a-f]{1,8})-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
+
+export function toShortForm(uuid: string, base?: string) {
+  if (!isValid(uuid)) throw new TypeError('uuid was not a valid UUID or short form UUID');
+  if (base && !isValid('00000000' + base)) throw new TypeError('base was not a valid base UUID');
+  if (base && !uuid.endsWith(base)) return uuid.toUpperCase();
+
+  return uuid.replace(SHORT_FORM_REGEX, '$1').toUpperCase();
+}
+
+const VALID_SHORT_REGEX = /^[0-9a-f]{1,8}$/i;
+
+export function toLongForm(uuid: string, base: string) {
+  if (isValid(uuid)) return uuid.toUpperCase();
+  if (!VALID_SHORT_REGEX.test(uuid)) throw new TypeError('uuid was not a valid UUID or short form UUID');
+  if (!isValid('00000000' + base)) throw new TypeError('base was not a valid base UUID');
+
+  return (('00000000' + uuid).substr(-8) + base).toUpperCase();
+}

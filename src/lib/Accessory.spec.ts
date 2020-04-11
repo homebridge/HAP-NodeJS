@@ -1,8 +1,8 @@
+import './gen';
 import { Accessory, Categories } from './Accessory';
 import { Service } from './Service';
 import { Characteristic, CharacteristicEventTypes } from './Characteristic';
 import { generate } from './util/uuid';
-import './gen';
 
 describe('Accessory', () => {
 

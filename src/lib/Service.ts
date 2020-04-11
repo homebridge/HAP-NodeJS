@@ -4,6 +4,7 @@ import {EventEmitter} from './EventEmitter';
 import {IdentifierCache} from './model/IdentifierCache';
 import {CharacteristicChange, CharacteristicValue, HapService, Nullable, ToHAPOptions, WithUUID,} from '../types';
 import * as HomeKitTypes from './gen';
+import { toShortForm } from './util/uuid';
 
 export interface SerializedService {
   displayName: string,
@@ -157,11 +158,11 @@ export class Service extends EventEmitter<Events> {
     }
   }
 
-  addCharacteristic = (characteristic: typeof Characteristic | Characteristic, ...constructorArgs: any[]) => {
+  addCharacteristic = (characteristic: Characteristic | {new (...args: any[]): Characteristic}, ...constructorArgs: any[]) => {
     // characteristic might be a constructor like `Characteristic.Brightness` instead of an instance
     // of Characteristic. Coerce if necessary.
     if (typeof characteristic === 'function') {
-      characteristic = new characteristic(constructorArgs[0], constructorArgs[1], constructorArgs[2]) as Characteristic;
+      characteristic = new characteristic(...constructorArgs) as Characteristic;
     }
     // check for UUID conflict
     for (var index in this.characteristics) {
@@ -229,8 +230,12 @@ export class Service extends EventEmitter<Events> {
     }
   }
 
-  getCharacteristic = <T extends WithUUID<typeof Characteristic>>(name: string | T) => {
-
+  // If a Characteristic constructor is passed a Characteristic object will always be returned
+  getCharacteristic(constructor: WithUUID<{new (): Characteristic}>): Characteristic
+  // Still support using a Characteristic constructor or a name so "passing though" a value still works
+  // https://www.typescriptlang.org/docs/handbook/declaration-files/do-s-and-don-ts.html#use-union-types
+  getCharacteristic(name: string | WithUUID<{new (): Characteristic}>): Characteristic | undefined
+  getCharacteristic(name: string | WithUUID<{new (): Characteristic}>) {
     // returns a characteristic object from the service
     // If  Service.prototype.getCharacteristic(Characteristic.Type)  does not find the characteristic,
     // but the type is in optionalCharacteristics, it adds the characteristic.type to the service and returns it.
@@ -251,11 +256,11 @@ export class Service extends EventEmitter<Events> {
           return this.addCharacteristic(name);
         }
       }
-      //Not found in optional Characteristics. Adding anyway, but warning about it if it isn't the Name.
+      // Not found in optional Characteristics. Adding anyway, but warning about it if it isn't the Name.
       if (name.UUID !== Characteristic.Name.UUID) {
         console.warn("HAP Warning: Characteristic %s not in required or optional characteristics for service %s. Adding anyway.", name.UUID, this.UUID);
-        return this.addCharacteristic(name);
       }
+      return this.addCharacteristic(name);
     }
   }
 
@@ -273,7 +278,7 @@ export class Service extends EventEmitter<Events> {
     return false;
   }
 
-  setCharacteristic = <T extends WithUUID<typeof Characteristic>>(name: string | T, value: CharacteristicValue) => {
+  setCharacteristic = <T extends WithUUID<{new (): Characteristic}>>(name: string | T, value: CharacteristicValue) => {
     this.getCharacteristic(name)!.setValue(value);
     return this; // for chaining
   }
@@ -284,7 +289,7 @@ export class Service extends EventEmitter<Events> {
     return this;
   }
 
-  addOptionalCharacteristic = (characteristic: Characteristic | typeof Characteristic) => {
+  addOptionalCharacteristic = (characteristic: Characteristic | {new (): Characteristic}) => {
     // characteristic might be a constructor like `Characteristic.Brightness` instead of an instance
     // of Characteristic. Coerce if necessary.
     if (typeof characteristic === 'function') {
@@ -352,7 +357,6 @@ export class Service extends EventEmitter<Events> {
    * Returns a JSON representation of this Accessory suitable for delivering to HAP clients.
    */
   toHAP = (opt?: ToHAPOptions) => {
-
     var characteristicsHAP = [];
 
     for (var index in this.characteristics) {
@@ -362,7 +366,7 @@ export class Service extends EventEmitter<Events> {
 
     const hap: Partial<HapService> = {
       iid: this.iid!,
-      type: this.UUID,
+      type: toShortForm(this.UUID, HomeKitTypes.BASE_UUID),
       characteristics: characteristicsHAP
     };
 

@@ -13,6 +13,7 @@ import {
 } from '../types';
 import { EventEmitter } from './EventEmitter';
 import * as HomeKitTypes from './gen';
+import { toShortForm } from './util/uuid';
 
 // Known HomeKit formats
 export enum Formats {
@@ -713,7 +714,7 @@ export class Characteristic extends EventEmitter<Events> {
 
     const hap: Partial<HapCharacteristic> = {
       iid: this.iid!,
-      type: this.UUID,
+      type: toShortForm(this.UUID, HomeKitTypes.BASE_UUID),
       perms: this.props.perms,
       format: this.props.format,
       value: value,
