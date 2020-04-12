@@ -231,13 +231,8 @@ export class Accessory extends EventEmitter<Events> {
     if (!uuid.isValid(UUID)) throw new Error("UUID '" + UUID + "' is not a valid UUID. Try using the provided 'generateUUID' function to create a valid UUID from any arbitrary string, like a serial number.");
 
     // create our initial "Accessory Information" Service that all Accessories are expected to have
-    this
-      .addService(Service.AccessoryInformation)
-      .setCharacteristic(Characteristic.Name, displayName)
-      .setCharacteristic(Characteristic.Manufacturer, "Default-Manufacturer")
-      .setCharacteristic(Characteristic.Model, "Default-Model")
-      .setCharacteristic(Characteristic.SerialNumber, "Default-SerialNumber")
-      .setCharacteristic(Characteristic.FirmwareRevision, "1.0");
+    this.addService(Service.AccessoryInformation)
+      .setCharacteristic(Characteristic.Name, displayName);
 
     // sign up for when iOS attempts to "set" the Identify characteristic - this means a paired device wishes
     // for us to identify ourselves (as opposed to an unpaired device - that case is handled by HAPServer 'identify' event)
