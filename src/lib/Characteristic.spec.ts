@@ -6,9 +6,9 @@ import {
   Formats,
   Perms,
   SerializedCharacteristic,
-  Units
+  Units,
+  uuid
 } from '..';
-import { uuid } from '..';
 
 const createCharacteristic = (type: Formats) => {
   return new Characteristic('Test', uuid.generate('Foo'), { format: type, perms: [] });
@@ -28,6 +28,15 @@ describe('Characteristic', () => {
       characteristic.setProps(NEW_PROPS);
 
       expect(characteristic.props).toEqual(NEW_PROPS);
+    });
+
+    it('should provide proper backwards compatibility for accessRestrictedToAdmins', function () {
+      const characteristic = createCharacteristic(Formats.BOOL);
+
+      characteristic.accessRestrictedToAdmins = [Access.READ, Access.NOTIFY];
+      expect(characteristic.props.adminOnlyAccess).toStrictEqual([Access.READ, Access.NOTIFY]);
+      characteristic.accessRestrictedToAdmins.push(Access.WRITE);
+      expect(characteristic.props.adminOnlyAccess).toStrictEqual([Access.READ, Access.NOTIFY, Access.WRITE]);
     });
   });
 
@@ -373,11 +382,11 @@ describe('Characteristic', () => {
         maxValue: 1234,
         minValue: 123,
         validValueRanges: [123, 1234],
+        adminOnlyAccess: [Access.WRITE],
       };
 
       const characteristic = createCharacteristicWithProps(props);
       characteristic.value = "TestValue";
-      characteristic.accessRestrictedToAdmins = [Access.WRITE];
       characteristic.eventOnlyCharacteristic = true;
 
       const json = Characteristic.serialize(characteristic);
@@ -386,7 +395,6 @@ describe('Characteristic', () => {
         UUID: characteristic.UUID,
         props: props,
         value: "TestValue",
-        accessRestrictedToAdmins: [Access.WRITE],
         eventOnlyCharacteristic: true,
       })
     });
@@ -404,7 +412,6 @@ describe('Characteristic', () => {
       expect(characteristic.props).toEqual(json.props);
       expect(characteristic.value).toEqual(json.value);
       expect(characteristic.eventOnlyCharacteristic).toEqual(json.eventOnlyCharacteristic);
-      expect(characteristic.accessRestrictedToAdmins).toEqual([]);
     });
 
     it('should deserialize complete json', () => {
@@ -418,10 +425,10 @@ describe('Characteristic', () => {
           maxValue: 1234,
           minValue: 123,
           validValueRanges: [123, 1234],
+          adminOnlyAccess: [Access.NOTIFY, Access.READ],
         },
         value: "testValue",
         eventOnlyCharacteristic: true,
-        accessRestrictedToAdmins: [Access.WRITE, Access.READ],
       };
 
       const characteristic = Characteristic.deserialize(json);
@@ -431,7 +438,6 @@ describe('Characteristic', () => {
       expect(characteristic.props).toEqual(json.props);
       expect(characteristic.value).toEqual(json.value);
       expect(characteristic.eventOnlyCharacteristic).toEqual(json.eventOnlyCharacteristic);
-      expect(characteristic.accessRestrictedToAdmins).toEqual(json.accessRestrictedToAdmins);
     });
   });
 });

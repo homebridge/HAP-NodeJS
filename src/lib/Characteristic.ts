@@ -68,6 +68,7 @@ export interface CharacteristicProps {
   maxDataLen?: number;
   validValues?: number[];
   validValueRanges?: [number, number];
+  adminOnlyAccess?: Access[];
 }
 
 export enum Access {
@@ -81,7 +82,6 @@ export interface SerializedCharacteristic {
   UUID: string,
   props: CharacteristicProps,
   value: Nullable<CharacteristicValue>,
-  accessRestrictedToAdmins: Access[],
   eventOnlyCharacteristic: boolean,
 }
 
@@ -364,7 +364,6 @@ export class Characteristic extends EventEmitter<Events> {
   value: Nullable<CharacteristicValue> = null;
   status: Nullable<Error> = null;
   eventOnlyCharacteristic: boolean = false;
-  accessRestrictedToAdmins: Access[] = [];
   props: CharacteristicProps;
   subscriptions: number = 0;
 
@@ -410,6 +409,28 @@ export class Characteristic extends EventEmitter<Events> {
         this.props[key] = props[key];
       }
     return this;
+  }
+
+  /**
+   * @param {Access[]} access
+   * @deprecated scheduled to be removed in 2020-06
+   */
+  set accessRestrictedToAdmins(access: Access[]) {
+    this.setProps({
+      adminOnlyAccess: access,
+    });
+  }
+
+  /**
+   * @returns {Access[]} adminOnlyAccess
+   * @deprecated scheduled to be removed in 2020-06
+   */
+  get accessRestrictedToAdmins(): Access[] {
+    if (!this.props.adminOnlyAccess) {
+      this.props.adminOnlyAccess = [];
+    }
+
+    return this.props.adminOnlyAccess!;
   }
 
   subscribe = () => {
@@ -764,7 +785,6 @@ export class Characteristic extends EventEmitter<Events> {
       UUID: characteristic.UUID,
       props: clone({}, characteristic.props),
       value: characteristic.value,
-      accessRestrictedToAdmins: characteristic.accessRestrictedToAdmins,
       eventOnlyCharacteristic: characteristic.eventOnlyCharacteristic,
     }
   };
@@ -773,7 +793,6 @@ export class Characteristic extends EventEmitter<Events> {
     const characteristic = new Characteristic(json.displayName, json.UUID, json.props);
 
     characteristic.value = json.value;
-    characteristic.accessRestrictedToAdmins = json.accessRestrictedToAdmins || [];
     characteristic.eventOnlyCharacteristic = json.eventOnlyCharacteristic;
 
     return characteristic;

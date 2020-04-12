@@ -1140,7 +1140,7 @@ export class Accessory extends EventEmitter<Events> {
         return;
       }
 
-      if (characteristic.accessRestrictedToAdmins.includes(Access.READ)) {
+      if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.READ)) {
         let verifiable = true;
         if (!session || !session.username || !this._accessoryInfo) {
           verifiable = false;
@@ -1303,7 +1303,7 @@ export class Accessory extends EventEmitter<Events> {
           return;
         }
 
-        if (characteristic.accessRestrictedToAdmins.includes(Access.NOTIFY)) {
+        if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.NOTIFY)) {
           let verifiable = true;
           if (!session || !session.username || !this._accessoryInfo) {
             verifiable = false;
@@ -1358,7 +1358,7 @@ export class Accessory extends EventEmitter<Events> {
           return;
         }
 
-        if (characteristic.accessRestrictedToAdmins.includes(Access.WRITE)) {
+        if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.WRITE)) {
           let verifiable = true;
           if (!session || !session.username || !this._accessoryInfo) {
             verifiable = false;
