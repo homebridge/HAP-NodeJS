@@ -1,7 +1,6 @@
 import crypto from 'crypto';
 
 import createDebug from 'debug';
-import srp from 'fast-srp-hap';
 import tweetnacl from 'tweetnacl';
 import url from 'url';
 
@@ -12,15 +11,10 @@ import { EventedHTTPServer, EventedHTTPServerEvents, Session } from './util/even
 import { once } from './util/once';
 import { IncomingMessage, ServerResponse } from "http";
 import { Accessory, CharacteristicEvents, Resource } from './Accessory';
-import {
-  CharacteristicData,
-  SessionIdentifier,
-  NodeCallback,
-  PairingsCallback,
-  VoidCallback
-} from '../types';
+import { CharacteristicData, NodeCallback, PairingsCallback, SessionIdentifier, VoidCallback } from '../types';
 import { EventEmitter } from './EventEmitter';
 import { PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
+import { SRP, SrpServer } from "fast-srp-hap";
 
 const debug = createDebug('HAPServer');
 
@@ -428,17 +422,23 @@ export class HAPServer extends EventEmitter<Events> {
   // M1 + M2
   _handlePairStepOne = (request: IncomingMessage, response: ServerResponse, session: Session) => {
     debug("[%s] Pair step 1/5", this.accessoryInfo.username);
-    var salt = crypto.randomBytes(16);
-    var srpParams = srp.params["3072"];
-    srp.genKey(32, (error: Error, key: Buffer) => {
+    const salt = crypto.randomBytes(16, );
+
+    const srpParams = SRP.params.hap;
+    SRP.genKey(32).then(key => {
       // create a new SRP server
-      var srpServer = new srp.Server(srpParams, Buffer.from(salt), Buffer.from("Pair-Setup"), Buffer.from(this.accessoryInfo.pincode), key);
-      var srpB = srpServer.computeB();
+      const srpServer = new SrpServer(srpParams, salt, Buffer.from("Pair-Setup"), Buffer.from(this.accessoryInfo.pincode), key)
+      const srpB = srpServer.computeB();
       // attach it to the current TCP session
       session.srpServer = srpServer;
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
       response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M2, TLVValues.SALT, salt, TLVValues.PUBLIC_KEY, srpB));
       session._pairSetupState = States.M2;
+    }).catch(error => {
+      debug("[%s] Error occurred when generating srp key: %s", this.accessoryInfo.username, error.message);
+      response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
+      response.end(tlv.encode(TLVValues.STATE, States.M2, TLVValues.ERROR_CODE, Codes.UNKNOWN));
+      return;
     });
   }
 

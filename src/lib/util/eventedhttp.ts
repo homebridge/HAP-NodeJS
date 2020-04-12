@@ -2,12 +2,12 @@ import net, { AddressInfo, Socket } from 'net';
 import http, { IncomingMessage, OutgoingMessage, ServerResponse } from 'http';
 
 import createDebug from 'debug';
-import srp from 'fast-srp-hap';
 
 import * as uuid from './uuid';
 import { SessionIdentifier, Nullable } from '../../types';
 import { EventEmitter } from '../EventEmitter';
 import { HAPEncryption } from '../HAPServer';
+import { SrpServer } from "fast-srp-hap";
 
 const debug = createDebug('EventedHTTPServer');
 
@@ -163,7 +163,7 @@ export class Session extends EventEmitter<HAPSessionEventMap> {
 
   sessionID: SessionIdentifier; // uuid unique to every HAP connection
   _pairSetupState?: number;
-  srpServer?: srp.Server;
+  srpServer?: SrpServer;
   _pairVerifyState?: number;
   encryption?: HAPEncryption;
   authenticated = false;
