@@ -426,6 +426,9 @@ export class Characteristic extends EventEmitter<Events> {
    * @deprecated scheduled to be removed in 2020-06
    */
   get accessRestrictedToAdmins(): Access[] {
+    if (!this.props) { // mitigation for malformed characteristic instances (meeh)
+      return [];
+    }
     if (!this.props.adminOnlyAccess) {
       this.props.adminOnlyAccess = [];
     }
