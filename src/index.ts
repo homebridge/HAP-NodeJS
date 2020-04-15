@@ -10,6 +10,7 @@ import { HAPStorage } from "./lib/model/HAPStorage";
 export const AccessoryLoader = accessoryLoader;
 export const uuid = uuidFunctions;
 
+export * from './lib/model/HAPStorage';
 export * from './lib/Accessory';
 export * from './lib/Bridge';
 export * from './lib/Service';
