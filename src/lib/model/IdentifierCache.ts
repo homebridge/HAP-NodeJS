@@ -1,8 +1,7 @@
 import crypto from 'crypto';
 import util from 'util';
-
-import storage from 'node-persist';
 import { MacAddress } from "../../types";
+import { HAPStorage } from "./HAPStorage";
 
 /**
  * IdentifierCache is a model class that manages a system of associating HAP "Accessory IDs" and "Instance IDs"
@@ -86,8 +85,7 @@ export class IdentifierCache {
         cache: this._cache
       };
       var key = IdentifierCache.persistKey(this.username);
-      storage.setItemSync(key, saved);
-      storage.persistSync();
+      HAPStorage.storage().setItemSync(key, saved);
       this._savedCacheHash = newCacheHash; //update hash of saved cache for future use
     }
   }
@@ -102,7 +100,7 @@ export class IdentifierCache {
 
   static load = (username: MacAddress) => {
     var key = IdentifierCache.persistKey(username);
-    var saved = storage.getItem(key);
+    var saved = HAPStorage.storage().getItem(key);
     if (saved) {
       var info = new IdentifierCache(username);
       info._cache = saved.cache;
@@ -115,7 +113,7 @@ export class IdentifierCache {
 
   static remove(username: MacAddress) {
     const key = this.persistKey(username);
-    storage.removeItemSync(key);
+    HAPStorage.storage().removeItemSync(key);
   }
 
 }

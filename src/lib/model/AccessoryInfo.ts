@@ -1,4 +1,3 @@
-import storage from 'node-persist';
 import util from 'util';
 import assert from 'assert';
 import tweetnacl from 'tweetnacl';
@@ -6,6 +5,7 @@ import tweetnacl from 'tweetnacl';
 import { Categories } from '../Accessory';
 import { Session } from "../util/eventedhttp";
 import { MacAddress } from "../../types";
+import { HAPStorage } from "./HAPStorage";
 
 export enum PermissionTypes {
   USER = 0x00,
@@ -220,8 +220,7 @@ export class AccessoryInfo {
 
     var key = AccessoryInfo.persistKey(this.username);
 
-    storage.setItemSync(key, saved);
-    storage.persistSync();
+    HAPStorage.storage().setItemSync(key, saved);
   }
 
 // Gets a key for storing this AccessoryInfo in the filesystem, like "AccessoryInfo.CC223DE3CEF3.json"
@@ -246,7 +245,7 @@ export class AccessoryInfo {
     AccessoryInfo.assertValidUsername(username);
 
     var key = AccessoryInfo.persistKey(username);
-    var saved = storage.getItem(key);
+    var saved = HAPStorage.storage().getItem(key);
 
     if (saved) {
       var info = new AccessoryInfo(username);
@@ -293,7 +292,7 @@ export class AccessoryInfo {
 
   static remove(username: MacAddress) {
     const key = AccessoryInfo.persistKey(username);
-    storage.removeItemSync(key);
+    HAPStorage.storage().removeItemSync(key);
   }
 
   static assertValidUsername = (username: MacAddress) => {

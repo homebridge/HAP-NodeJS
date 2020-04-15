@@ -1,9 +1,9 @@
-import storage from 'node-persist';
 import {MacAddress} from "../../types";
 import util from "util";
 import createDebug from "debug";
 import {ControllerType, SerializableController} from "../controller";
 import {Accessory} from "../Accessory";
+import { HAPStorage } from "./HAPStorage";
 
 const debug = createDebug("ControllerStorage");
 
@@ -159,7 +159,7 @@ export class ControllerStorage {
         this.username = username;
 
         const key = ControllerStorage.persistKey(username);
-        const saved: StorageLayout | undefined = storage.getItem(key);
+        const saved: StorageLayout | undefined = HAPStorage.storage().getItem(key);
 
         let ownData;
         if (saved) {
@@ -230,10 +230,10 @@ export class ControllerStorage {
             };
 
             this.fileCreated = true;
-            storage.setItemSync(key, saved);
+            HAPStorage.storage().setItemSync(key, saved);
         } else if (this.fileCreated) {
             this.fileCreated = false;
-            storage.removeItemSync(key);
+            HAPStorage.storage().removeItemSync(key);
         }
     }
 
@@ -243,7 +243,7 @@ export class ControllerStorage {
 
     static remove(username: MacAddress) {
         const key = ControllerStorage.persistKey(username);
-        storage.removeItemSync(key);
+        HAPStorage.storage().removeItemSync(key);
     }
 
 }
