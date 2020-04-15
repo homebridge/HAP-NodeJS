@@ -339,7 +339,6 @@ export class Service extends EventEmitter<Events> {
         delete foreignCharacteristics[characteristic.UUID];
 
         characteristic.props = foreignCharacteristic.props;
-        characteristic.accessRestrictedToAdmins = foreignCharacteristic.accessRestrictedToAdmins;
         characteristic.updateValue(foreignCharacteristic.value);
 
         const getListeners = foreignCharacteristic.listeners(CharacteristicEventTypes.GET);

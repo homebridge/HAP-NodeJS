@@ -29,15 +29,6 @@ describe('Characteristic', () => {
 
       expect(characteristic.props).toEqual(NEW_PROPS);
     });
-
-    it('should provide proper backwards compatibility for accessRestrictedToAdmins', function () {
-      const characteristic = createCharacteristic(Formats.BOOL);
-
-      characteristic.accessRestrictedToAdmins = [Access.READ, Access.NOTIFY];
-      expect(characteristic.props.adminOnlyAccess).toStrictEqual([Access.READ, Access.NOTIFY]);
-      characteristic.accessRestrictedToAdmins.push(Access.WRITE);
-      expect(characteristic.props.adminOnlyAccess).toStrictEqual([Access.READ, Access.NOTIFY, Access.WRITE]);
-    });
   });
 
   describe('#subscribe()', () => {

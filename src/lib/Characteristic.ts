@@ -411,31 +411,6 @@ export class Characteristic extends EventEmitter<Events> {
     return this;
   }
 
-  /**
-   * @param {Access[]} access
-   * @deprecated scheduled to be removed in 2020-06
-   */
-  set accessRestrictedToAdmins(access: Access[]) {
-    this.setProps({
-      adminOnlyAccess: access,
-    });
-  }
-
-  /**
-   * @returns {Access[]} adminOnlyAccess
-   * @deprecated scheduled to be removed in 2020-06
-   */
-  get accessRestrictedToAdmins(): Access[] {
-    if (!this.props) { // mitigation for malformed characteristic instances (meeh)
-      return [];
-    }
-    if (!this.props.adminOnlyAccess) {
-      this.props.adminOnlyAccess = [];
-    }
-
-    return this.props.adminOnlyAccess!;
-  }
-
   subscribe = () => {
     if (this.subscriptions === 0) {
       this.emit(CharacteristicEventTypes.SUBSCRIBE);
