@@ -50,7 +50,7 @@ export enum Perms {
   NOTIFY = 'ev', //Kept for backwards compatability
   EVENTS = 'ev', //Added to match HAP's terminology
   ADDITIONAL_AUTHORIZATION = 'aa',
-  TIMED_WRITE = 'tw', //Not currently supported by IP
+  TIMED_WRITE = 'tw',
   HIDDEN = 'hd',
   WRITE_RESPONSE = 'wr'
 }
