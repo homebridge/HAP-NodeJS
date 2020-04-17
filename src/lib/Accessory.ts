@@ -1174,9 +1174,6 @@ export class Accessory extends EventEmitter<Events> {
 
       // set the value and wait for success
       characteristic.getValue((err, value) => {
-
-        debug('[%s] Got Characteristic "%s" value: %s', this.displayName, characteristic!.displayName, value);
-
         if (err) {
           debug('[%s] Error getting value for Characteristic "%s": %s', this.displayName, characteristic!.displayName, err.message);
           var response: any = {
@@ -1186,6 +1183,8 @@ export class Accessory extends EventEmitter<Events> {
           response[statusKey] = hapStatus(err);
           characteristics.push(response);
         } else {
+          debug('[%s] Got Characteristic "%s" value: %s', this.displayName, characteristic!.displayName, value);
+
           var response: any = {
             aid: aid,
             iid: iid

@@ -922,13 +922,22 @@ export class HAPServer extends EventEmitter<Events> {
           }
         }
 
-        let errorOccurred = false;
+        let errorOccurred = false; // determine if we send a 207 Multi-Status
         for (let i = 0; i < characteristics.length; i++) {
           const value = characteristics[i];
           if ((value.status !== undefined && value.status !== 0)
               || (value.s !== undefined && value.s !== 0)) {
             errorOccurred = true;
             break;
+          }
+        }
+
+        if (errorOccurred) { // on a 207 Multi-Status EVERY characteristic MUST include a status property
+          for (let i = 0; i < characteristics.length; i++) {
+            const value = characteristics[i];
+            if (value.status === undefined) { // a status is undefined if the request was successful
+              value.status = 0; // a value of zero indicates success
+            }
           }
         }
 
@@ -980,6 +989,13 @@ export class HAPServer extends EventEmitter<Events> {
         }
 
         if (multiStatus) {
+          for (let i = 0; i < characteristics.length; i++) { // on a 207 Multi-Status EVERY characteristic MUST include a status property
+            const value = characteristics[i];
+            if (value.status === undefined) { // a status is undefined if the request was successful
+              value.status = 0; // a value of zero indicates success
+            }
+          }
+
           // 207 is "multi-status" since HomeKit may be setting multiple things and any one can fail independently
           response.writeHead(207, {"Content-Type": "application/hap+json"});
           response.end(JSON.stringify({characteristics: characteristics}));
