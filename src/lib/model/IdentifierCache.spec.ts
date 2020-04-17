@@ -1,5 +1,7 @@
-import { IdentifierCache } from './IdentifierCache';
+// @ts-ignore
+
 import { LocalStorage } from "node-persist";
+import { IdentifierCache } from './IdentifierCache';
 import { HAPStorage } from "./HAPStorage";
 
 function pullOutLocalStore(): LocalStorage {

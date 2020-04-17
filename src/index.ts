@@ -1,5 +1,4 @@
 /// <reference path="../@types/bonjour-hap.d.ts" />
-/// <reference path="../@types/node-persist.d.ts" />
 
 import './lib/gen';
 import * as accessoryLoader from './lib/AccessoryLoader';
