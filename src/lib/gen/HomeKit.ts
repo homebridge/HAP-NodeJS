@@ -3636,6 +3636,8 @@ export class AccessControl extends Service {
   }
 }
 
+Service.AccessControl = AccessControl;
+
 /**
  * Service "Accessory Information"
  */
