@@ -9,7 +9,7 @@ import { toShortForm } from './util/uuid';
 export interface SerializedService {
   displayName: string,
   UUID: string,
-  subtype: string,
+  subtype?: string,
 
   hiddenService?: boolean,
   primaryService?: boolean,
@@ -17,6 +17,8 @@ export interface SerializedService {
   characteristics: SerializedCharacteristic[],
   optionalCharacteristics?: SerializedCharacteristic[],
 }
+
+export type ServiceId = string; // string with the format: UUID + (subtype | "")
 
 export enum ServiceEventTypes {
   CHARACTERISTIC_CHANGE = "characteristic-change",
@@ -138,10 +140,10 @@ export class Service extends EventEmitter<Events> {
   characteristics: Characteristic[] = [];
   optionalCharacteristics: Characteristic[] = [];
   isHiddenService: boolean = false;
-  isPrimaryService: boolean = false;
+  isPrimaryService: boolean = false; // do not write to this directly
   linkedServices: Service[] = [];
 
-  constructor(public displayName: string = "", public UUID: string, public subtype: string = "") {
+  constructor(public displayName: string = "", public UUID: string, public subtype?: string) {
     super();
     if (!UUID) throw new Error("Services must be created with a valid UUID.");
 
@@ -156,6 +158,17 @@ export class Service extends EventEmitter<Events> {
 
       nameCharacteristic.setValue(displayName);
     }
+  }
+
+  /**
+   * Returns an id which uniquely identifies an service on the associated accessory.
+   * The serviceId is a concatenation of the UUID for the service (defined by HAP) and the subtype (could be empty)
+   * which is programmatically defined by the programmer.
+   *
+   * @returns the serviceId
+   */
+  getServiceId(): ServiceId {
+    return this.UUID + (this.subtype || "");
   }
 
   addCharacteristic = (characteristic: Characteristic | {new (...args: any[]): Characteristic}, ...constructorArgs: any[]) => {
@@ -189,8 +202,25 @@ export class Service extends EventEmitter<Events> {
     return characteristic;
   }
 
-//Defines this service as hidden
-  setHiddenService = (isHidden: boolean) => {
+  /**
+   * Sets this service as the new primary service.
+   * Any currently active primary service will be reset to be not primary.
+   * This will happen immediately, if the service was already added to an accessory, or later
+   * when the service gets added to an accessory.
+   *
+   * @param isPrimary {boolean} - optional boolean (default true) if the service should be the primary service
+   */
+  setPrimaryService = (isPrimary: boolean = true) => {
+    this.isPrimaryService = isPrimary;
+    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
+  };
+
+  /**
+   * Marks the service as hidden
+   *
+   * @param isHidden {boolean} - optional boolean (default true) if the service should be marked hidden
+   */
+  setHiddenService = (isHidden: boolean = true) => {
     this.isHiddenService = isHidden;
     this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
   }
@@ -283,8 +313,8 @@ export class Service extends EventEmitter<Events> {
     return this; // for chaining
   }
 
-// A function to only updating the remote value, but not firing the 'set' event.
-  updateCharacteristic = (name: string, value: CharacteristicValue) => {
+  // A function to only updating the remote value, but not firing the 'set' event.
+  updateCharacteristic = <T extends WithUUID<{new (): Characteristic}>>(name: string | T, value: CharacteristicValue) => {
     this.getCharacteristic(name)!.updateValue(value);
     return this;
   }
@@ -314,7 +344,6 @@ export class Service extends EventEmitter<Events> {
         delete foreignCharacteristics[characteristic.UUID];
 
         characteristic.props = foreignCharacteristic.props;
-        characteristic.accessRestrictedToAdmins = foreignCharacteristic.accessRestrictedToAdmins;
         characteristic.updateValue(foreignCharacteristic.value);
 
         const getListeners = foreignCharacteristic.listeners(CharacteristicEventTypes.GET);

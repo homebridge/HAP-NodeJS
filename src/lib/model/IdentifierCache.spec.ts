@@ -1,7 +1,11 @@
-// @ts-ignore
-import storage from 'node-persist';
-
 import { IdentifierCache } from './IdentifierCache';
+import { LocalStorage } from "node-persist";
+import { HAPStorage } from "./HAPStorage";
+
+function pullOutLocalStore(): LocalStorage {
+  // @ts-ignore
+  return HAPStorage.INSTANCE.localStore
+}
 
 const createIdentifierCache = (username = 'username') => {
   return new IdentifierCache(username);
@@ -106,17 +110,16 @@ describe('IdentifierCache', () => {
       const identifierCache = createIdentifierCache();
       identifierCache.save();
 
-      expect(storage.setItemSync).toHaveBeenCalledTimes(1);
-      expect(storage.persistSync).toHaveBeenCalledTimes(1);
+      expect(pullOutLocalStore().setItemSync).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('#remove()', () => {
     it('removes the cache from file storage', () => {
       const identifierCache = createIdentifierCache();
-      identifierCache.remove();
+      IdentifierCache.remove(identifierCache.username);
 
-      expect(storage.removeItemSync).toHaveBeenCalledTimes(1);
+      expect(pullOutLocalStore().removeItemSync).toHaveBeenCalledTimes(1);
     });
   });
 

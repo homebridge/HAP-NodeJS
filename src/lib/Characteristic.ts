@@ -7,6 +7,7 @@ import {
   CharacteristicChange,
   CharacteristicValue,
   HapCharacteristic,
+  SessionIdentifier,
   Nullable,
   ToHAPOptions,
   VoidCallback,
@@ -50,7 +51,7 @@ export enum Perms {
   NOTIFY = 'ev', //Kept for backwards compatability
   EVENTS = 'ev', //Added to match HAP's terminology
   ADDITIONAL_AUTHORIZATION = 'aa',
-  TIMED_WRITE = 'tw', //Not currently supported by IP
+  TIMED_WRITE = 'tw',
   HIDDEN = 'hd',
   WRITE_RESPONSE = 'wr'
 }
@@ -68,6 +69,7 @@ export interface CharacteristicProps {
   maxDataLen?: number;
   validValues?: number[];
   validValueRanges?: [number, number];
+  adminOnlyAccess?: Access[];
 }
 
 export enum Access {
@@ -81,7 +83,6 @@ export interface SerializedCharacteristic {
   UUID: string,
   props: CharacteristicProps,
   value: Nullable<CharacteristicValue>,
-  accessRestrictedToAdmins: Access[],
   eventOnlyCharacteristic: boolean,
 }
 
@@ -98,8 +99,8 @@ export type CharacteristicSetCallback = (error?: Error | null, value?: Character
 
 type Events = {
   [CharacteristicEventTypes.CHANGE]: (change: CharacteristicChange) => void;
-  [CharacteristicEventTypes.GET]: (cb: CharacteristicGetCallback, context?: any, connectionID?: string) => void;
-  [CharacteristicEventTypes.SET]: (value: CharacteristicValue, cb: CharacteristicSetCallback, context?: any, connectionID?: string) => void;
+  [CharacteristicEventTypes.GET]: (cb: CharacteristicGetCallback, context?: any, connectionID?: SessionIdentifier) => void;
+  [CharacteristicEventTypes.SET]: (value: CharacteristicValue, cb: CharacteristicSetCallback, context?: any, connectionID?: SessionIdentifier) => void;
   [CharacteristicEventTypes.SUBSCRIBE]: VoidCallback;
   [CharacteristicEventTypes.UNSUBSCRIBE]: VoidCallback;
 }
@@ -364,7 +365,6 @@ export class Characteristic extends EventEmitter<Events> {
   value: Nullable<CharacteristicValue> = null;
   status: Nullable<Error> = null;
   eventOnlyCharacteristic: boolean = false;
-  accessRestrictedToAdmins: Access[] = [];
   props: CharacteristicProps;
   subscriptions: number = 0;
 
@@ -428,7 +428,7 @@ export class Characteristic extends EventEmitter<Events> {
     }
   }
 
-  getValue = (callback?: CharacteristicGetCallback, context?: any, connectionID?: string) => {
+  getValue = (callback?: CharacteristicGetCallback, context?: any, connectionID?: SessionIdentifier) => {
     // Handle special event only characteristics.
     if (this.eventOnlyCharacteristic === true) {
       if (callback) {
@@ -591,7 +591,7 @@ export class Characteristic extends EventEmitter<Events> {
     return newValue;
   }
 
-  setValue = (newValue: Nullable<CharacteristicValue | Error>, callback?: CharacteristicSetCallback, context?: any, connectionID?: string): Characteristic => {
+  setValue = (newValue: Nullable<CharacteristicValue | Error>, callback?: CharacteristicSetCallback, context?: any, connectionID?: SessionIdentifier): Characteristic => {
     if (newValue instanceof Error) {
       this.status = newValue;
     } else {
@@ -672,7 +672,7 @@ export class Characteristic extends EventEmitter<Events> {
     }
   }
 
-  _assignID = (identifierCache: IdentifierCache, accessoryName: string, serviceUUID: string, serviceSubtype: string) => {
+  _assignID = (identifierCache: IdentifierCache, accessoryName: string, serviceUUID: string, serviceSubtype?: string) => {
     // generate our IID based on our UUID
     this.iid = identifierCache.getIID(accessoryName, serviceUUID, serviceSubtype, this.UUID);
   }
@@ -764,7 +764,6 @@ export class Characteristic extends EventEmitter<Events> {
       UUID: characteristic.UUID,
       props: clone({}, characteristic.props),
       value: characteristic.value,
-      accessRestrictedToAdmins: characteristic.accessRestrictedToAdmins,
       eventOnlyCharacteristic: characteristic.eventOnlyCharacteristic,
     }
   };
@@ -773,7 +772,6 @@ export class Characteristic extends EventEmitter<Events> {
     const characteristic = new Characteristic(json.displayName, json.UUID, json.props);
 
     characteristic.value = json.value;
-    characteristic.accessRestrictedToAdmins = json.accessRestrictedToAdmins || [];
     characteristic.eventOnlyCharacteristic = json.eventOnlyCharacteristic;
 
     return characteristic;

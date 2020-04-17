@@ -1,10 +1,8 @@
 import './gen';
-import { Service, ServiceEventTypes } from './Service';
-import { Characteristic } from './Characteristic';
-import { generate } from './util/uuid';
+import { Characteristic, Service, ServiceEventTypes, uuid } from '..';
 
 const createService = () => {
-  return new Service('Test', generate('Foo'), 'subtype');
+  return new Service('Test', uuid.generate('Foo'), 'subtype');
 }
 
 describe('Service', () => {
@@ -112,7 +110,7 @@ describe('Service', () => {
 
       expect(service.displayName).toEqual(json.displayName);
       expect(service.UUID).toEqual(json.UUID);
-      expect(service.subtype).toEqual("");
+      expect(service.subtype).toBeUndefined();
       expect(service.isHiddenService).toEqual(false);
       expect(service.isPrimaryService).toEqual(false);
 

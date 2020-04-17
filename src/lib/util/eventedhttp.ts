@@ -2,12 +2,12 @@ import net, { AddressInfo, Socket } from 'net';
 import http, { IncomingMessage, OutgoingMessage, ServerResponse } from 'http';
 
 import createDebug from 'debug';
-import srp from 'fast-srp-hap';
 
 import * as uuid from './uuid';
-import { Nullable, SessionIdentifier } from '../../types';
+import { SessionIdentifier, Nullable } from '../../types';
 import { EventEmitter } from '../EventEmitter';
 import { HAPEncryption } from '../HAPServer';
+import { SrpServer } from "fast-srp-hap";
 
 const debug = createDebug('EventedHTTPServer');
 
@@ -26,7 +26,7 @@ export type Events = {
   [EventedHTTPServerEvents.DECRYPT]: (data: Buffer, decrypted: { data: Buffer; error: Error | null }, session: Session) => void;
   [EventedHTTPServerEvents.ENCRYPT]: (data: Buffer, encrypted: { data: number | Buffer; }, session: Session) => void;
   [EventedHTTPServerEvents.CLOSE]: (events: any) => void;
-  [EventedHTTPServerEvents.SESSION_CLOSE]: (sessionID: string, events: any) => void;
+  [EventedHTTPServerEvents.SESSION_CLOSE]: (sessionID: SessionIdentifier, events: any) => void;
 };
 
 /**
@@ -159,11 +159,11 @@ export class Session extends EventEmitter<HAPSessionEventMap> {
     SessionID gets passed to get/set handlers for characteristics. We mainly need this dictionary in order
     to access the sharedSecret in the HAPEncryption object from the SetupDataStreamTransport characteristic set handler.
    */
-  private static sessionsBySessionID: Record<string, Session> = {};
+  private static sessionsBySessionID: Record<SessionIdentifier, Session> = {};
 
-  sessionID: string;
+  sessionID: SessionIdentifier; // uuid unique to every HAP connection
   _pairSetupState?: number;
-  srpServer?: srp.Server;
+  srpServer?: SrpServer;
   _pairVerifyState?: number;
   encryption?: HAPEncryption;
   authenticated = false;
@@ -257,7 +257,7 @@ export class Session extends EventEmitter<HAPSessionEventMap> {
 class EventedHTTPServerConnection extends EventEmitter<Events> {
 
   readonly server: EventedHTTPServer;
-  sessionID: string;
+  sessionID: SessionIdentifier;
   _remoteAddress: string;
   _pendingClientSocketData: Nullable<Buffer>;
   _fullySetup: boolean;

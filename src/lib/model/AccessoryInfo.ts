@@ -1,10 +1,11 @@
-import storage from 'node-persist';
 import util from 'util';
 import assert from 'assert';
 import tweetnacl from 'tweetnacl';
 
 import { Categories } from '../Accessory';
 import { Session } from "../util/eventedhttp";
+import { MacAddress } from "../../types";
+import { HAPStorage } from "./HAPStorage";
 
 export enum PermissionTypes {
   USER = 0x00,
@@ -25,7 +26,7 @@ export class AccessoryInfo {
 
   static readonly deviceIdPattern: RegExp = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
 
-  username: string;
+  username: MacAddress;
   displayName: string;
   category: Categories;
   pincode: string;
@@ -43,7 +44,7 @@ export class AccessoryInfo {
   relayPairedControllers: Record<string, string>;
   accessoryBagURL: string;
 
-  private constructor(username: string) {
+  private constructor(username: MacAddress) {
     this.username = username;
     this.displayName = "";
     // @ts-ignore
@@ -195,7 +196,7 @@ export class AccessoryInfo {
       signPk: this.signPk.toString('hex'),
       pairedClients: {},
       // moving permissions into an extra object, so there is nothing to migrate from old files.
-      // if the legac node-persist storage should be upgraded some time, it would be reasonable to combine the storage
+      // if the legacy node-persist storage should be upgraded some time, it would be reasonable to combine the storage
       // of public keys (pairedClients object) and permissions.
       pairedClientsPermission: {},
       configVersion: this.configVersion,
@@ -219,22 +220,15 @@ export class AccessoryInfo {
 
     var key = AccessoryInfo.persistKey(this.username);
 
-    storage.setItemSync(key, saved);
-    storage.persistSync();
-  }
-
-  remove = () => {
-    var key = AccessoryInfo.persistKey(this.username);
-
-    storage.removeItemSync(key);
+    HAPStorage.storage().setItemSync(key, saved);
   }
 
 // Gets a key for storing this AccessoryInfo in the filesystem, like "AccessoryInfo.CC223DE3CEF3.json"
-  static persistKey = (username: string) => {
+  static persistKey = (username: MacAddress) => {
     return util.format("AccessoryInfo.%s.json", username.replace(/:/g, "").toUpperCase());
   }
 
-  static create = (username: string) => {
+  static create = (username: MacAddress) => {
     AccessoryInfo.assertValidUsername(username);
     var accessoryInfo = new AccessoryInfo(username);
 
@@ -247,11 +241,11 @@ export class AccessoryInfo {
     return accessoryInfo;
   }
 
-  static load = (username: string) => {
+  static load = (username: MacAddress) => {
     AccessoryInfo.assertValidUsername(username);
 
     var key = AccessoryInfo.persistKey(username);
-    var saved = storage.getItem(key);
+    var saved = HAPStorage.storage().getItem(key);
 
     if (saved) {
       var info = new AccessoryInfo(username);
@@ -296,7 +290,12 @@ export class AccessoryInfo {
     }
   }
 
-  static assertValidUsername = (username: string) => {
+  static remove(username: MacAddress) {
+    const key = AccessoryInfo.persistKey(username);
+    HAPStorage.storage().removeItemSync(key);
+  }
+
+  static assertValidUsername = (username: MacAddress) => {
     assert.ok(AccessoryInfo.deviceIdPattern.test(username),
         "The supplied username (" + username + ") is not valid " +
         "(expected a format like 'XX:XX:XX:XX:XX:XX' with XX being a valid hexadecimal string). " +

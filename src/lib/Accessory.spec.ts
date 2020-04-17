@@ -1,15 +1,49 @@
 import './gen';
-import { Accessory, Categories } from './Accessory';
-import { Service } from './Service';
-import { Characteristic, CharacteristicEventTypes } from './Characteristic';
-import { generate } from './util/uuid';
+import {
+  Accessory,
+  Categories,
+  Characteristic,
+  CharacteristicEventTypes,
+  Controller, ControllerServiceMap,
+  ControllerType,
+  Service,
+  uuid
+} from '..';
+
+
+class TestController implements Controller {
+
+  readonly controllerType: ControllerType = "test-type";
+
+  constructServices(): ControllerServiceMap {
+    const lightService = new Service.Lightbulb('', '');
+    const switchService = new Service.Switch('', '');
+
+    return {
+      light: lightService,
+      switch: switchService,
+    };
+  }
+
+  initWithServices(serviceMap: ControllerServiceMap): void | ControllerServiceMap {
+    // serviceMap will be altered here to test update procedure
+    delete serviceMap["switch"];
+    serviceMap.light = new Service.LightSensor('', '');
+    serviceMap.outlet = new Service.Outlet('', '');
+
+    return serviceMap;
+  }
+
+  configureServices(): void {}
+
+}
 
 describe('Accessory', () => {
 
   describe('#constructor()', () => {
 
     it('should identify itself with a valid UUID', () => {
-      const accessory = new Accessory('Test', generate('Foo'));
+      const accessory = new Accessory('Test', uuid.generate('Foo'));
 
       const VALUE = true;
 
@@ -41,7 +75,7 @@ describe('Accessory', () => {
 
   describe('#serialize', () => {
     it('should serialize accessory', () => {
-      const accessory = new Accessory("TestAccessory", generate("foo"));
+      const accessory = new Accessory("TestAccessory", uuid.generate("foo"));
       accessory.category = Categories.LIGHTBULB;
 
       const lightService = new Service.Lightbulb("TestLight", "subtype");
@@ -180,5 +214,25 @@ describe('Accessory', () => {
       expect(accessory.getService(Service.Lightbulb)!.linkedServices.length).toEqual(1);
       expect(accessory.getService(Service.Lightbulb)!.linkedServices[0].UUID).toEqual(Service.Switch.UUID);
     });
+
+    it('should deserialize controllers and remove/add/replace services correctly', function () {
+      const accessory = new Accessory('TestAccessory', uuid.generate("test-controller-accessory"));
+
+      accessory.configureController(new TestController());
+
+      const serialized = Accessory.serialize(accessory);
+
+      const restoredAccessory = Accessory.deserialize(serialized);
+      restoredAccessory.configureController(new TestController()); // restore Controller;
+
+      expect(restoredAccessory.services).toBeDefined();
+      expect(restoredAccessory.services.length).toEqual(3); // accessory information, light sensor, outlet
+
+      expect(restoredAccessory.getService(Service.Lightbulb)).toBeUndefined();
+      expect(restoredAccessory.getService(Service.LightSensor)).toBeDefined();
+      expect(restoredAccessory.getService(Service.Outlet)).toBeDefined();
+      expect(restoredAccessory.getService(Service.Switch)).toBeUndefined();
+    });
+
   });
 });

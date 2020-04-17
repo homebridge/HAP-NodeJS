@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import util from 'util';
-
-import storage from 'node-persist';
+import { MacAddress } from "../../types";
+import { HAPStorage } from "./HAPStorage";
 
 /**
  * IdentifierCache is a model class that manages a system of associating HAP "Accessory IDs" and "Instance IDs"
@@ -18,7 +18,7 @@ export class IdentifierCache {
   _usedCache: Record<string, number> | null = null; // for usage tracking and expiring old keys
   _savedCacheHash: string = ""; // for checking if new cache neeed to be saved
 
-  constructor(public username: string) {
+  constructor(public username: MacAddress) {
   }
 
   startTrackingUsage = () => {
@@ -85,28 +85,22 @@ export class IdentifierCache {
         cache: this._cache
       };
       var key = IdentifierCache.persistKey(this.username);
-      storage.setItemSync(key, saved);
-      storage.persistSync();
+      HAPStorage.storage().setItemSync(key, saved);
       this._savedCacheHash = newCacheHash; //update hash of saved cache for future use
     }
-  }
-
-  remove = () =>  {
-    var key = IdentifierCache.persistKey(this.username);
-    storage.removeItemSync(key);
   }
 
   /**
    * Persisting to File System
    */
   // Gets a key for storing this IdentifierCache in the filesystem, like "IdentifierCache.CC223DE3CEF3.json"
-  static persistKey = (username: string) => {
+  static persistKey = (username: MacAddress) => {
     return util.format("IdentifierCache.%s.json", username.replace(/:/g, "").toUpperCase());
   }
 
-  static load = (username: string) => {
+  static load = (username: MacAddress) => {
     var key = IdentifierCache.persistKey(username);
-    var saved = storage.getItem(key);
+    var saved = HAPStorage.storage().getItem(key);
     if (saved) {
       var info = new IdentifierCache(username);
       info._cache = saved.cache;
@@ -116,6 +110,12 @@ export class IdentifierCache {
       return null;
     }
   }
+
+  static remove(username: MacAddress) {
+    const key = this.persistKey(username);
+    HAPStorage.storage().removeItemSync(key);
+  }
+
 }
 
 

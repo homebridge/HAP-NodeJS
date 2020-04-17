@@ -3636,6 +3636,8 @@ export class AccessControl extends Service {
   }
 }
 
+Service.AccessControl = AccessControl;
+
 /**
  * Service "Accessory Information"
  */
@@ -3649,10 +3651,10 @@ export class AccessoryInformation extends Service {
 
     // Required Characteristics
     this.addCharacteristic(Characteristic.Identify);
-    this.addCharacteristic(Characteristic.Manufacturer);
-    this.addCharacteristic(Characteristic.Model);
+    this.addCharacteristic(Characteristic.Manufacturer).updateValue("Default-Manufacturer");
+    this.addCharacteristic(Characteristic.Model).updateValue("Default-Model");
     this.addCharacteristic(Characteristic.Name);
-    this.addCharacteristic(Characteristic.SerialNumber);
+    this.addCharacteristic(Characteristic.SerialNumber).updateValue("Default-SerialNumber");
 
     // Optional Characteristics
     this.addOptionalCharacteristic(Characteristic.AccessoryFlags);

@@ -3,31 +3,42 @@ import createDebug from 'debug';
 
 import * as uuid from './util/uuid';
 import { clone } from './util/clone';
-import { SerializedService, Service, ServiceConfigurationChange, ServiceEventTypes } from './Service';
-import {
-  Access,
-  Characteristic,
-  CharacteristicEventTypes,
-  CharacteristicSetCallback,
-  Perms
-} from './Characteristic';
+import { SerializedService, Service, ServiceConfigurationChange, ServiceEventTypes, ServiceId } from './Service';
+import { Access, Characteristic, CharacteristicEventTypes, CharacteristicSetCallback, Perms } from './Characteristic';
 import { Advertiser } from './Advertiser';
 import { CharacteristicsWriteRequest, Codes, HAPServer, HAPServerEventTypes, Status } from './HAPServer';
 import { AccessoryInfo, PairingInformation, PermissionTypes } from './model/AccessoryInfo';
 import { IdentifierCache } from './model/IdentifierCache';
 import {
   CharacteristicChange,
-  CharacteristicData, CharacteristicValue,
+  CharacteristicData,
+  CharacteristicValue, MacAddress,
   NodeCallback,
   Nullable,
   PairingsCallback,
+  SessionIdentifier,
   ToHAPOptions,
   VoidCallback,
   WithUUID,
 } from '../types';
-import { Camera } from './Camera';
+// noinspection JSDeprecatedSymbols
+import { LegacyCameraSource, LegacyCameraSourceAdapter, StreamController } from './camera';
 import { EventEmitter } from './EventEmitter';
 import { Session } from "./util/eventedhttp";
+import {
+  CameraController,
+  CameraControllerOptions,
+  Controller,
+  ControllerConstructor,
+  ControllerServiceMap, ControllerType,
+  isSerializableController,
+} from "./controller";
+import {
+  CameraEventRecordingManagement,
+  CameraOperatingMode,
+  CameraRTPStreamManagement,
+} from "./gen/HomeKit";
+import { ControllerStorage } from "./model/ControllerStorage";
 
 // var HomeKitTypes = require('./gen/HomeKitTypes');
 // var RelayServer = require("./util/relayserver").RelayServer;
@@ -78,11 +89,26 @@ export enum Categories {
 export interface SerializedAccessory {
   displayName: string,
   UUID: string,
+  lastKnownUsername?: MacAddress,
   category: Categories,
 
   services: SerializedService[],
-  linkedServices?: Record<string, string[]>,
+  linkedServices?: Record<ServiceId, ServiceId[]>,
+  controllers?: SerializedControllerContext[],
 }
+
+export interface SerializedControllerContext {
+  type: ControllerType,
+  services: SerializedServiceMap,
+}
+
+export type SerializedServiceMap = Record<string, ServiceId>; // maps controller defined name (from the ControllerServiceMap) to serviceId
+
+export interface ControllerContext {
+  controller: Controller
+  serviceMap: ControllerServiceMap,
+}
+
 
 export enum AccessoryEventTypes {
   IDENTIFY = "identify",
@@ -110,7 +136,7 @@ export type EventAccessory = "identify" | "listening" | "service-configurationCh
 export type CharacteristicEvents = Record<string, any>;
 
 export interface PublishInfo {
-  username: string;
+  username: MacAddress;
   pincode: string;
   category?: Categories;
   setupID?: string;
@@ -180,14 +206,19 @@ export class Accessory extends EventEmitter<Events> {
   bridge?: Accessory; // if accessory is bridged, this property points to the bridge which bridges this accessory
   bridgedAccessories: Accessory[] = []; // If we are a Bridge, these are the Accessories we are bridging
   reachable: boolean = true;
-  cameraSource: Nullable<Camera> = null;
+  lastKnownUsername?: MacAddress;
   category: Categories = Categories.OTHER;
   services: Service[] = [];
+  private primaryService?: Service;
   shouldPurgeUnusedIDs: boolean = true; // Purge unused ids by default
+  private controllers: Record<ControllerType, ControllerContext> = {};
+  private serializedControllers?: Record<ControllerType, ControllerServiceMap>; // store uninitialized controller data after a Accessory.deserialize call
+  private activeCameraController?: CameraController;
 
   _accessoryInfo?: Nullable<AccessoryInfo>;
   _setupID: Nullable<string> = null;
   _identifierCache?: Nullable<IdentifierCache>;
+  controllerStorage: ControllerStorage = new ControllerStorage(this);
   _advertiser?: Advertiser;
   _server?: HAPServer;
   _setupURI?: string;
@@ -200,13 +231,8 @@ export class Accessory extends EventEmitter<Events> {
     if (!uuid.isValid(UUID)) throw new Error("UUID '" + UUID + "' is not a valid UUID. Try using the provided 'generateUUID' function to create a valid UUID from any arbitrary string, like a serial number.");
 
     // create our initial "Accessory Information" Service that all Accessories are expected to have
-    this
-      .addService(Service.AccessoryInformation)
-      .setCharacteristic(Characteristic.Name, displayName)
-      .setCharacteristic(Characteristic.Manufacturer, "Default-Manufacturer")
-      .setCharacteristic(Characteristic.Model, "Default-Model")
-      .setCharacteristic(Characteristic.SerialNumber, "Default-SerialNumber")
-      .setCharacteristic(Characteristic.FirmwareRevision, "1.0");
+    this.addService(Service.AccessoryInformation)
+      .setCharacteristic(Characteristic.Name, displayName);
 
     // sign up for when iOS attempts to "set" the Identify characteristic - this means a paired device wishes
     // for us to identify ourselves (as opposed to an unpaired device - that case is handled by HAPServer 'identify' event)
@@ -233,12 +259,12 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
-  addService = (service: Service | typeof Service, ...constructorArgs: any[]) => {
+  addService = (serviceParam: Service | typeof Service, ...constructorArgs: any[]) => {
     // service might be a constructor like `Service.AccessoryInformation` instead of an instance
     // of Service. Coerce if necessary.
-    if (typeof service === 'function')
-      service = new service(constructorArgs[0], constructorArgs[1], constructorArgs[2]) as Service;
-      // service = new (Function.prototype.bind.apply(service, arguments));
+    const service: Service = typeof serviceParam === 'function'
+        ? new serviceParam(constructorArgs[0], constructorArgs[1], constructorArgs[2])
+        : serviceParam;
 
     // check for UUID+subtype conflict
     for (var index in this.services) {
@@ -248,12 +274,20 @@ export class Accessory extends EventEmitter<Events> {
         if (!service.subtype)
           throw new Error("Cannot add a Service with the same UUID '" + existing.UUID + "' as another Service in this Accessory without also defining a unique 'subtype' property.");
 
-        if (service.subtype.toString() === existing.subtype.toString())
+        if (service.subtype === existing.subtype)
           throw new Error("Cannot add a Service with the same UUID '" + existing.UUID + "' and subtype '" + existing.subtype + "' as another Service in this Accessory.");
       }
     }
 
     this.services.push(service);
+
+    if (service.isPrimaryService) { // check if a primary service was added
+      if (this.primaryService !== undefined) {
+        this.primaryService.isPrimaryService = false;
+      }
+
+      this.primaryService = service;
+    }
 
     if (!this.bridged) {
       this._updateConfiguration();
@@ -262,6 +296,18 @@ export class Accessory extends EventEmitter<Events> {
     }
 
     service.on(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, (change: ServiceConfigurationChange) => {
+      if (!service.isPrimaryService && service === this.primaryService) {
+        // service changed form primary to non primary service
+        this.primaryService = undefined;
+      } else if (service.isPrimaryService && service !== this.primaryService) {
+        // service changed from non primary to primary service
+        if (this.primaryService !== undefined) {
+          this.primaryService.isPrimaryService = false;
+        }
+
+        this.primaryService = service;
+      }
+
       if (!this.bridged) {
         this._updateConfiguration();
       } else {
@@ -282,48 +328,22 @@ export class Accessory extends EventEmitter<Events> {
     return service;
   }
 
+  /**
+   * @deprecated use {@link Service.setPrimaryService} directly
+   */
   setPrimaryService = (service: Service) => {
-      //find this service in the services list
-      let targetServiceIndex, existingService: Service;
-      for (let index in this.services) {
-        existingService = this.services[index];
-
-        if (existingService === service) {
-          targetServiceIndex = index;
-          break;
-        }
-      }
-
-      if (targetServiceIndex) {
-        //If the service is found, set isPrimaryService to false for everything.
-        for (let index in this.services)
-          this.services[index].isPrimaryService = false;
-
-        //Make this service the primary
-        existingService!.isPrimaryService = true
-
-        if (!this.bridged) {
-          this._updateConfiguration();
-        } else {
-          this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ accessory: this, service: service }));
-        }
-      }
-  }
+    service.setPrimaryService();
+  };
 
   removeService = (service: Service) => {
-    let targetServiceIndex: number | undefined = undefined;
+    const index = this.services.indexOf(service);
 
-    for (let index in this.services) {
-      var existingService = this.services[index];
+    if (index >= 0) {
+      this.services.splice(index, 1);
 
-      if (existingService === service) {
-        targetServiceIndex = Number.parseInt(index);
-        break;
+      if (this.primaryService === service) { // check if we are removing out primary service
+        this.primaryService = undefined;
       }
-    }
-
-    if (targetServiceIndex) {
-      this.services.splice(targetServiceIndex, 1);
 
       if (!this.bridged) {
         this._updateConfiguration();
@@ -408,6 +428,8 @@ export class Accessory extends EventEmitter<Events> {
 
     this.bridgedAccessories.push(accessory);
 
+    this.controllerStorage.linkAccessory(accessory); // init controllers of bridged accessory
+
     if(!deferUpdate) {
       this._updateConfiguration();
     }
@@ -489,12 +511,173 @@ export class Accessory extends EventEmitter<Events> {
     return accessory && accessory.getCharacteristicByIID(iid);
   }
 
-  configureCameraSource = (cameraSource: Camera) => {
-    this.cameraSource = cameraSource;
-    for (var index in cameraSource.services) {
-      var service = cameraSource.services[index];
-      this.addService(service);
+  /**
+   * Method is used to configure an old style CameraSource.
+   * The CameraSource API was fully replaced by the new Controller API used by {@link CameraController}.
+   * The {@link CameraStreamingDelegate} used by the CameraController is the equivalent to the old CameraSource.
+   *
+   * The new Controller API is much more refined and robust way of "grouping" services together.
+   * It especially is intended to fully support serialization/deserialization to/from persistent storage.
+   * This feature is also gained when using the old style CameraSource API.
+   * The {@link CameraStreamingDelegate} improves on the overall camera API though and provides some reworked
+   * type definitions and a refined callback interface to better signal errors to the requesting HomeKit device.
+   * It is advised to update to it.
+   *
+   * Full backwards compatibility is currently maintained. A legacy CameraSource will be wrapped into an Adapter.
+   * All legacy StreamControllers in the "streamControllers" property will be replaced by CameraRTPManagement instances.
+   * Any services in the "services" property which are one of the following are ignored:
+   *     - CameraRTPStreamManagement
+   *     - CameraOperatingMode
+   *     - CameraEventRecordingManagement
+   *
+   * @param cameraSource {LegacyCameraSource}
+   * @deprecated please refer to the new {@see CameraController} API and {@link configureController}
+   */
+  configureCameraSource(cameraSource: LegacyCameraSource): CameraController {
+    if (cameraSource.streamControllers.length === 0) {
+      throw new Error("Malformed legacy CameraSource. Did not expose any StreamControllers!");
     }
+
+    const options = cameraSource.streamControllers[0].options; // grab options from one of the StreamControllers
+    const cameraControllerOptions: CameraControllerOptions = { // build new options set
+      cameraStreamCount: cameraSource.streamControllers.length,
+      streamingOptions: options,
+      delegate: new LegacyCameraSourceAdapter(cameraSource),
+    };
+
+    const cameraController = new CameraController(cameraControllerOptions, true); // create CameraController in legacy mode
+    this.configureController(cameraController);
+
+    // we try here to be as good as possibly of keeping current behaviour
+    cameraSource.services.forEach(service => {
+      if (service.UUID === CameraRTPStreamManagement.UUID || service.UUID === CameraOperatingMode.UUID
+          || service.UUID === CameraEventRecordingManagement.UUID) {
+        return; // ignore those services, as they get replaced by the RTPStreamManagement
+      }
+
+      // all other services get added. We can't really control possibly linking to any of those ignored services
+      // so this is really only half baked stuff.
+      this.addService(service);
+    });
+
+    // replace stream controllers; basically only to still support the "forceStop" call
+    cameraSource.streamControllers = cameraController.streamManagements as StreamController[];
+
+    return cameraController; // return the reference for the controller (maybe this could be useful?)
+  }
+
+  /**
+   * This method is used to setup a new Controller for this accessory. See {@see Controller} for a more detailed
+   * explanation what a Controller is and what it is capable of.
+   *
+   * The controller can be passed as an instance of the class or as a constructor (without any necessary parameters)
+   * for a new Controller.
+   * Only one Controller of a given {@link ControllerType} can be configured for a given Accessory.
+   *
+   * When called, it will be checked if there are any services and persistent data the Controller (for the given
+   * {@link ControllerType}) can be restored from. Otherwise the Controller will be created with new services.
+   *
+   *
+   * @param controllerConstructor {Controller | ControllerConstructor}
+   */
+  configureController(controllerConstructor: Controller | ControllerConstructor) {
+    const controller = typeof controllerConstructor === "function"
+        ? new controllerConstructor() // any custom constructor arguments should be passed before using .bind(...)
+        : controllerConstructor;
+
+    if (this.controllers[controller.controllerType]) {
+      throw new Error(`A Controller with the type '${controller.controllerType}' was already added to the accessory ${this.displayName}`);
+    }
+
+    const savedServiceMap = this.serializedControllers && this.serializedControllers[controller.controllerType];
+    let serviceMap: ControllerServiceMap;
+
+    if (savedServiceMap) { // we found data to restore from
+      const clonedServiceMap = clone(savedServiceMap);
+      const updatedServiceMap = controller.initWithServices(savedServiceMap); // init controller with existing services
+      serviceMap = updatedServiceMap || savedServiceMap; // initWithServices could return a updated serviceMap, otherwise just use the existing one
+
+      if (updatedServiceMap) { // controller returned a ServiceMap and thus signaled a updated set of services
+        // clonedServiceMap is altered by this method, should not be touched again after this call (for the future people)
+        this.handleUpdatedControllerServiceMap(clonedServiceMap, updatedServiceMap);
+      }
+
+      controller.configureServices(); // let the controller setup all its handlers
+
+      // remove serialized data from our dictionary:
+      delete this.serializedControllers![controller.controllerType];
+      if (Object.entries(this.serializedControllers!).length === 0) {
+        this.serializedControllers = undefined;
+      }
+    } else {
+      serviceMap = controller.constructServices(); // let the controller create his services
+      controller.configureServices(); // let the controller setup all its handlers
+
+      Object.values(serviceMap).forEach(service => {
+        if (service) {
+          this.addService(service);
+        }
+      });
+    }
+
+
+    // --- init handlers and setup context ---
+    const context: ControllerContext = {
+      controller: controller,
+      serviceMap: serviceMap,
+    };
+
+    if (isSerializableController(controller)) {
+      this.controllerStorage.trackController(controller);
+    }
+
+    if (controller.handleFactoryReset) { // if the controller implements handleFactoryReset, setup event handlers for this controller
+      this.getPrimaryAccessory().on(AccessoryEventTypes.UNPAIRED, () => {
+        controller.handleFactoryReset!();
+
+        if (isSerializableController(controller)) { // we force a purge here
+          this.controllerStorage.purgeControllerData(controller);
+        }
+      });
+    }
+
+    this.controllers[controller.controllerType] = context;
+
+    if (controller instanceof CameraController) { // save CameraController for Snapshot handling
+      this.activeCameraController = controller;
+    }
+  }
+
+  private handleUpdatedControllerServiceMap(originalServiceMap: ControllerServiceMap, updatedServiceMap: ControllerServiceMap) {
+    updatedServiceMap = clone(updatedServiceMap); // clone it so we can alter it
+
+    Object.keys(originalServiceMap).forEach(name => { // this loop removed any services contained in both ServiceMaps
+      const service = originalServiceMap[name];
+      const updatedService = updatedServiceMap[name];
+
+      if (service && updatedService) { // we check all names contained in both ServiceMaps for changes
+        delete originalServiceMap[name]; // delete from original ServiceMap so it will only contain deleted services at the end
+        delete updatedServiceMap[name]; // delete from updated ServiceMap so it will only contain added services at the end
+
+        if (service !== updatedService) {
+          this.removeService(service);
+          this.addService(updatedService);
+        }
+      }
+    });
+
+    // now originalServiceMap contains only deleted services and updateServiceMap only added services
+
+    Object.values(originalServiceMap).forEach(service => {
+      if (service) {
+        this.removeService(service);
+      }
+    });
+    Object.values(updatedServiceMap).forEach(service => {
+      if (service) {
+        this.addService(service);
+      }
+    });
   }
 
   setupURI = () => {
@@ -655,6 +838,10 @@ export class Accessory extends EventEmitter<Events> {
     }
     service.setCharacteristic(Characteristic.Version, Advertiser.protocolVersionService);
 
+    if (this.lastKnownUsername && this.lastKnownUsername !== info.username) { // username changed since last publish
+      Accessory.cleanupAccessoryData(this.lastKnownUsername); // delete old Accessory data
+    }
+
     // attempt to load existing AccessoryInfo from disk
     this._accessoryInfo = AccessoryInfo.load(info.username);
 
@@ -698,11 +885,15 @@ export class Accessory extends EventEmitter<Events> {
     //probably purge is not needed since it's going to delete all the ids
     //of accessories that might be added later. Usefull when dynamically adding
     //accessories.
-    if (this._isBridge && this.bridgedAccessories.length == 0)
+    if (this._isBridge && this.bridgedAccessories.length == 0) {
       this.disableUnusedIDPurge();
+      this.controllerStorage.purgeUnidentifiedAccessoryData = false;
+    }
 
     // assign aid/iid
     this._assignIDs(this._identifierCache);
+
+    this.controllerStorage.load(info.username); // initializing controller data
 
     // get our accessory information in HAP format and determine if our configuration (that is, our
     // Accessories/Services/Characteristics) has changed since the last time we were published. make
@@ -727,18 +918,18 @@ export class Accessory extends EventEmitter<Events> {
 
     // create our HAP server which handles all communication between iOS devices and us
     this._server = new HAPServer(this._accessoryInfo, this.relayServer);
-    this._server.allowInsecureRequest = !!allowInsecureRequest
-    this._server.on(HAPServerEventTypes.LISTENING, this._onListening);
-    this._server.on(HAPServerEventTypes.IDENTIFY, this._handleIdentify);
-    this._server.on(HAPServerEventTypes.PAIR, this._handlePair);
-    this._server.on(HAPServerEventTypes.ADD_PAIRING, this._handleAddPairing);
-    this._server.on(HAPServerEventTypes.REMOVE_PAIRING, this._handleRemovePairing);
-    this._server.on(HAPServerEventTypes.LIST_PAIRINGS, this._handleListPairings);
-    this._server.on(HAPServerEventTypes.ACCESSORIES, this._handleAccessories);
-    this._server.on(HAPServerEventTypes.GET_CHARACTERISTICS, this._handleGetCharacteristics);
-    this._server.on(HAPServerEventTypes.SET_CHARACTERISTICS, this._handleSetCharacteristics);
-    this._server.on(HAPServerEventTypes.SESSION_CLOSE, this._handleSessionClose);
-    this._server.on(HAPServerEventTypes.REQUEST_RESOURCE, this._handleResource);
+    this._server.allowInsecureRequest = !!allowInsecureRequest;
+    this._server.on(HAPServerEventTypes.LISTENING, this._onListening.bind(this));
+    this._server.on(HAPServerEventTypes.IDENTIFY, this._handleIdentify.bind(this));
+    this._server.on(HAPServerEventTypes.PAIR, this._handlePair.bind(this));
+    this._server.on(HAPServerEventTypes.ADD_PAIRING, this._handleAddPairing.bind(this));
+    this._server.on(HAPServerEventTypes.REMOVE_PAIRING, this._handleRemovePairing.bind(this));
+    this._server.on(HAPServerEventTypes.LIST_PAIRINGS, this._handleListPairings.bind(this));
+    this._server.on(HAPServerEventTypes.ACCESSORIES, this._handleAccessories.bind(this));
+    this._server.on(HAPServerEventTypes.GET_CHARACTERISTICS, this._handleGetCharacteristics.bind(this));
+    this._server.on(HAPServerEventTypes.SET_CHARACTERISTICS, this._handleSetCharacteristics.bind(this));
+    this._server.on(HAPServerEventTypes.SESSION_CLOSE, this._handleSessionClose.bind(this));
+    this._server.on(HAPServerEventTypes.REQUEST_RESOURCE, this._handleResource.bind(this));
 
     const targetPort = info.port || 0;
     this._server.listen(targetPort);
@@ -746,18 +937,18 @@ export class Accessory extends EventEmitter<Events> {
 
   /**
    * Removes this Accessory from the local network
-   * Accessory object will no longer vaild after invoking this method
+   * Accessory object will no longer valid after invoking this method
    * Trying to invoke publish() on the object will result undefined behavior
    */
   destroy = () => {
     this.unpublish();
+
     if (this._accessoryInfo) {
-        this._accessoryInfo.remove();
-        this._accessoryInfo = undefined;
-    }
-    if (this._identifierCache) {
-        this._identifierCache.remove();
-        this._identifierCache = undefined;
+      Accessory.cleanupAccessoryData(this._accessoryInfo.username);
+
+      this._accessoryInfo = undefined;
+      this._identifierCache = undefined;
+      this.controllerStorage = new ControllerStorage(this);
     }
   }
 
@@ -949,7 +1140,7 @@ export class Accessory extends EventEmitter<Events> {
         return;
       }
 
-      if (characteristic.accessRestrictedToAdmins.includes(Access.READ)) {
+      if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.READ)) {
         let verifiable = true;
         if (!session || !session.username || !this._accessoryInfo) {
           verifiable = false;
@@ -1014,7 +1205,7 @@ export class Accessory extends EventEmitter<Events> {
         if (characteristics.length === data.length)
           callback(null, characteristics);
 
-      }, context, session? session.sessionID as string: undefined);
+      }, context, session? session.sessionID: undefined);
 
     });
   }
@@ -1112,7 +1303,7 @@ export class Accessory extends EventEmitter<Events> {
           return;
         }
 
-        if (characteristic.accessRestrictedToAdmins.includes(Access.NOTIFY)) {
+        if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.NOTIFY)) {
           let verifiable = true;
           if (!session || !session.username || !this._accessoryInfo) {
             verifiable = false;
@@ -1167,7 +1358,7 @@ export class Accessory extends EventEmitter<Events> {
           return;
         }
 
-        if (characteristic.accessRestrictedToAdmins.includes(Access.WRITE)) {
+        if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.WRITE)) {
           let verifiable = true;
           if (!session || !session.username || !this._accessoryInfo) {
             verifiable = false;
@@ -1233,7 +1424,7 @@ export class Accessory extends EventEmitter<Events> {
           if (characteristics.length === data.length)
             callback(null, characteristics);
 
-        }, context, session? session.sessionID as string: undefined);
+        }, context, session? session.sessionID: undefined);
 
       } else {
         // no value to set, so we're done (success)
@@ -1252,42 +1443,39 @@ export class Accessory extends EventEmitter<Events> {
     });
   }
 
-  _handleResource = (data: Resource, callback: NodeCallback<Buffer>) => {
-    if (data["resource-type"] == ResourceTypes.IMAGE) {
-      const aid = data["aid"]; // aid is optionally supplied by HomeKit (for example when camera is bridged, multiple cams, etc)
+  _handleResource(data: Resource, callback: NodeCallback<Buffer>): void {
+    if (data["resource-type"] === ResourceTypes.IMAGE) {
+      const aid = data.aid; // aid is optionally supplied by HomeKit (for example when camera is bridged, multiple cams, etc)
 
-      let cameraSource;
+      let controller: CameraController | undefined = undefined;
       if (aid) {
-        if (this.aid === aid && this.cameraSource) { // bridge is probably not a camera but it is theoretically possible
-          cameraSource = this.cameraSource;
+        if (this.aid === aid && this.activeCameraController) { // bridge is probably not a camera but it is possible in theory
+          controller = this.activeCameraController;
         } else {
           const accessory = this.getBridgedAccessoryByAID(aid);
-          if (accessory && accessory.cameraSource) {
-            cameraSource = accessory.cameraSource;
+          if (accessory && accessory.activeCameraController) {
+            controller = accessory.activeCameraController;
           }
         }
-      } else if (this.cameraSource) { // aid was not supplied, check if this accessory is a camera
-        cameraSource = this.cameraSource;
+      } else if (this.activeCameraController) { // aid was not supplied, check if this accessory is a camera
+        controller = this.activeCameraController;
       }
 
-      if (!cameraSource) {
+      if (!controller) {
         callback(new Error("resource not found"));
         return;
       }
 
-      cameraSource.handleSnapshotRequest({
-        width: data["image-width"],
-        height: data["image-height"]
-      }, callback);
+      controller.handleSnapshotRequest(data["image-height"], data["image-width"], callback);
       return;
     }
 
     callback(new Error('unsupported image type: ' + data["resource-type"]));
   }
 
-  _handleSessionClose = (sessionID: string, events: CharacteristicEvents) => {
-    if (this.cameraSource && this.cameraSource.handleCloseConnection) {
-        this.cameraSource.handleCloseConnection(sessionID);
+  _handleSessionClose = (sessionID: SessionIdentifier, events: CharacteristicEvents) => {
+    if (this.activeCameraController) {
+      this.activeCameraController.handleCloseConnection(sessionID);
     }
 
     this._unsubscribeEvents(events);
@@ -1389,27 +1577,28 @@ export class Accessory extends EventEmitter<Events> {
   }
 
   // serialization and deserialization functions, mainly designed for homebridge to create a json copy to store on disk
-  static serialize = (accessory: Accessory): SerializedAccessory => {
+  public static serialize(accessory: Accessory): SerializedAccessory {
     const json: SerializedAccessory = {
       displayName: accessory.displayName,
       UUID: accessory.UUID,
+      lastKnownUsername: accessory._accessoryInfo? accessory._accessoryInfo.username: undefined,
       category: accessory.category,
 
       services: [],
     };
 
-    const linkedServices: Record<string, string[]> = {};
+    const linkedServices: Record<ServiceId, ServiceId[]> = {};
     let hasLinkedServices = false;
 
     accessory.services.forEach(service => {
       json.services.push(Service.serialize(service));
 
-      const linkedServicesPresentation: string[] = [];
+      const linkedServicesPresentation: ServiceId[] = [];
       service.linkedServices.forEach(linkedService => {
-        linkedServicesPresentation.push(linkedService.UUID + (linkedService.subtype || ""));
+        linkedServicesPresentation.push(linkedService.getServiceId());
       });
       if (linkedServicesPresentation.length > 0) {
-        linkedServices[service.UUID + (service.subtype || "")] = linkedServicesPresentation;
+        linkedServices[service.getServiceId()] = linkedServicesPresentation;
         hasLinkedServices = true;
       }
     });
@@ -1418,22 +1607,45 @@ export class Accessory extends EventEmitter<Events> {
       json.linkedServices = linkedServices;
     }
 
-    return json;
-  };
+    const controllers: SerializedControllerContext[] = [];
 
-  static deserialize = (json: SerializedAccessory): Accessory => {
+    // save controllers
+    Object.entries(accessory.controllers).forEach(([key, context]: [string, ControllerContext])  => {
+      controllers.push({
+        type: context.controller.controllerType,
+        services: Accessory.serializeServiceMap(context.serviceMap),
+      });
+    });
+
+    // also save controller which didn't get initialized (could lead to service duplication if we throw that data away)
+    accessory.serializedControllers && Object.entries(accessory.serializedControllers).forEach(([type, serviceMap]) => {
+      controllers.push({
+        type: type,
+        services: Accessory.serializeServiceMap(serviceMap),
+      });
+    });
+
+    if (controllers.length > 0) {
+      json.controllers = controllers;
+    }
+
+    return json;
+  }
+
+  public static deserialize(json: SerializedAccessory): Accessory {
     const accessory = new Accessory(json.displayName, json.UUID);
 
+    accessory.lastKnownUsername = json.lastKnownUsername;
     accessory.category = json.category;
 
     const services: Service[] = [];
-    const servicesMap: Record<string, Service> = {};
+    const servicesMap: Record<ServiceId, Service> = {};
 
     json.services.forEach(serialized => {
       const service = Service.deserialize(serialized);
 
       services.push(service);
-      servicesMap[service.UUID + (service.subtype || "")] = service;
+      servicesMap[service.getServiceId()] = service;
     });
 
     if (json.linkedServices) {
@@ -1455,9 +1667,50 @@ export class Accessory extends EventEmitter<Events> {
       }
     }
 
+    if (json.controllers) { // just save it for later if it exists {@see configureController}
+      accessory.serializedControllers = {};
+
+      json.controllers.forEach(serializedController => {
+        accessory.serializedControllers![serializedController.type] = Accessory.deserializeServiceMap(serializedController.services, servicesMap)
+      });
+    }
+
     accessory._sideloadServices(services);
 
     return accessory;
+  }
+
+  public static cleanupAccessoryData(username: MacAddress) {
+    IdentifierCache.remove(username);
+    AccessoryInfo.remove(username);
+    ControllerStorage.remove(username);
+  }
+
+  private static serializeServiceMap(serviceMap: ControllerServiceMap): SerializedServiceMap {
+    const serialized: SerializedServiceMap = {};
+
+    Object.entries(serviceMap).forEach(([name, service]) => {
+      if (!service) {
+        return;
+      }
+
+      serialized[name] = service.getServiceId();
+    });
+
+    return serialized;
+  }
+
+  private static deserializeServiceMap(serializedServiceMap: SerializedServiceMap, servicesMap: Record<ServiceId, Service>): ControllerServiceMap {
+    const controllerServiceMap: ControllerServiceMap = {};
+
+    Object.entries(serializedServiceMap).forEach(([name, serviceId]) => {
+      const service = servicesMap[serviceId];
+      if (service) {
+        controllerServiceMap[name] = service;
+      }
+    });
+
+    return controllerServiceMap;
   }
 
 }

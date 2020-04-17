@@ -7,16 +7,16 @@ import {
   Formats,
   Perms,
   SerializedCharacteristic,
-  Units
-} from './Characteristic';
-import { generate } from './util/uuid';
+  Units,
+  uuid
+} from '..';
 
 const createCharacteristic = (type: Formats) => {
-  return new Characteristic('Test', generate('Foo'), { format: type, perms: [] });
+  return new Characteristic('Test', uuid.generate('Foo'), { format: type, perms: [] });
 };
 
 const createCharacteristicWithProps = (props: CharacteristicProps) => {
-  return new Characteristic('Test', generate('Foo'), props);
+  return new Characteristic('Test', uuid.generate('Foo'), props);
 };
 
 describe('Characteristic', () => {
@@ -374,11 +374,11 @@ describe('Characteristic', () => {
         maxValue: 1234,
         minValue: 123,
         validValueRanges: [123, 1234],
+        adminOnlyAccess: [Access.WRITE],
       };
 
       const characteristic = createCharacteristicWithProps(props);
       characteristic.value = "TestValue";
-      characteristic.accessRestrictedToAdmins = [Access.WRITE];
       characteristic.eventOnlyCharacteristic = true;
 
       const json = Characteristic.serialize(characteristic);
@@ -387,7 +387,6 @@ describe('Characteristic', () => {
         UUID: characteristic.UUID,
         props: props,
         value: "TestValue",
-        accessRestrictedToAdmins: [Access.WRITE],
         eventOnlyCharacteristic: true,
       })
     });
@@ -405,7 +404,6 @@ describe('Characteristic', () => {
       expect(characteristic.props).toEqual(json.props);
       expect(characteristic.value).toEqual(json.value);
       expect(characteristic.eventOnlyCharacteristic).toEqual(json.eventOnlyCharacteristic);
-      expect(characteristic.accessRestrictedToAdmins).toEqual([]);
     });
 
     it('should deserialize complete json', () => {
@@ -419,10 +417,10 @@ describe('Characteristic', () => {
           maxValue: 1234,
           minValue: 123,
           validValueRanges: [123, 1234],
+          adminOnlyAccess: [Access.NOTIFY, Access.READ],
         },
         value: "testValue",
         eventOnlyCharacteristic: true,
-        accessRestrictedToAdmins: [Access.WRITE, Access.READ],
       };
 
       const characteristic = Characteristic.deserialize(json);
@@ -432,7 +430,6 @@ describe('Characteristic', () => {
       expect(characteristic.props).toEqual(json.props);
       expect(characteristic.value).toEqual(json.value);
       expect(characteristic.eventOnlyCharacteristic).toEqual(json.eventOnlyCharacteristic);
-      expect(characteristic.accessRestrictedToAdmins).toEqual(json.accessRestrictedToAdmins);
     });
   });
 });

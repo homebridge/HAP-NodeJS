@@ -1,4 +1,4 @@
-import { Accessory, ButtonState, ButtonType, Categories, HomeKitRemoteController, uuid } from '..';
+import { Accessory, ButtonState, ButtonType, Categories, RemoteController, uuid } from '..';
 import * as http from "http";
 import url, { UrlWithParsedQuery } from "url";
 import { GStreamerAudioProducer, GStreamerOptions } from "./gstreamer-audioProducer";
@@ -20,9 +20,9 @@ const gstreamerOptions: Partial<GStreamerOptions> = { // any configuration regar
 // ----------------------------------------------------
 
 const controller = siriSupport
-    ? new HomeKitRemoteController(GStreamerAudioProducer, gstreamerOptions)
-    : new HomeKitRemoteController();
-controller.addServicesToAccessory(remote);
+    ? new RemoteController(GStreamerAudioProducer, gstreamerOptions)
+    : new RemoteController();
+remote.configureController(controller);
 
 /*
     This example plugin exposes an simple http api to interact with the remote and play around.

@@ -36,10 +36,10 @@ export class TargetControlList extends Characteristic {
         super('Target Control List', TargetControlList.UUID);
         this.setProps({
             format: Formats.TLV8,
-            perms: [Perms.PAIRED_WRITE, Perms.PAIRED_READ, Perms.WRITE_RESPONSE]
+            perms: [Perms.PAIRED_WRITE, Perms.PAIRED_READ, Perms.WRITE_RESPONSE],
+            adminOnlyAccess: [Access.READ, Access.WRITE],
         });
         this.value = this.getDefaultValue();
-        this.accessRestrictedToAdmins = [Access.READ, Access.WRITE]
     }
 
 }
@@ -58,10 +58,10 @@ export class ButtonEvent extends Characteristic {
         super('Button Event', ButtonEvent.UUID);
         this.setProps({
             format: Formats.TLV8,
-            perms: [Perms.PAIRED_READ, Perms.NOTIFY]
+            perms: [Perms.PAIRED_READ, Perms.NOTIFY],
+            adminOnlyAccess: [Access.NOTIFY],
         });
         this.value = this.getDefaultValue();
-        this.accessRestrictedToAdmins = [Access.NOTIFY];
     }
 
 }

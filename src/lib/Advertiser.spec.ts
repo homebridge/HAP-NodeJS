@@ -1,6 +1,5 @@
 import { Advertiser } from './Advertiser';
 import { AccessoryInfo } from './model/AccessoryInfo';
-import './gen';
 
 const createAdvertiser = () => {
   return new Advertiser(AccessoryInfo.create('00:00:00:00:00:00'), {
