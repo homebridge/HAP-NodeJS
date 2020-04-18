@@ -42,7 +42,7 @@ export class UUID extends ValueWrapper<string> {
 
 }
 
-export enum DataFormatTags {
+export const enum DataFormatTags {
     INVALID = 0x00,
 
     TRUE = 0x01,

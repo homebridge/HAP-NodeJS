@@ -15,41 +15,41 @@ import {Event} from "../EventEmitter";
 
 const debug = createDebug('DataStream:Management');
 
-export enum TransferTransportConfigurationTypes {
+const enum TransferTransportConfigurationTypes {
     TRANSFER_TRANSPORT_CONFIGURATION = 1,
 }
 
-export enum TransportTypeTypes {
+const enum TransportTypeTypes {
     TRANSPORT_TYPE = 1,
 }
 
 
-export enum SetupDataStreamSessionTypes {
+const enum SetupDataStreamSessionTypes {
     SESSION_COMMAND_TYPE = 1,
     TRANSPORT_TYPE = 2,
     CONTROLLER_KEY_SALT = 3,
 }
 
-export enum SetupDataStreamWriteResponseTypes {
+const enum SetupDataStreamWriteResponseTypes {
     STATUS = 1,
     TRANSPORT_TYPE_SESSION_PARAMETERS = 2,
     ACCESSORY_KEY_SALT = 3,
 }
 
-export enum TransportSessionConfiguration {
+const enum TransportSessionConfiguration {
     TCP_LISTENING_PORT = 1,
 }
 
 
-export enum TransportType {
+enum TransportType {
     HOMEKIT_DATA_STREAM = 0,
 }
 
-export enum SessionCommandType {
+enum SessionCommandType {
     START_SESSION = 0,
 }
 
-export enum DataStreamStatus {
+export const enum DataStreamStatus {
     SUCCESS = 0,
     GENERIC_ERROR = 1,
     BUSY = 2, // maximum numbers of sessions

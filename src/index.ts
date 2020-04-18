@@ -21,10 +21,7 @@ export * from './lib/gen';
 export * from './lib/datastream';
 export * from './lib/controller';
 
-export * from './lib/util/chacha20poly1305';
 export * from './lib/util/clone';
-export * from './lib/util/encryption';
-export * from './lib/util/hkdf';
 export * from './lib/util/once';
 export * from './lib/util/tlv';
 

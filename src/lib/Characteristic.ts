@@ -16,8 +16,7 @@ import { EventEmitter } from './EventEmitter';
 import * as HomeKitTypes from './gen';
 import { toShortForm } from './util/uuid';
 
-// Known HomeKit formats
-export enum Formats {
+export const enum Formats {
   BOOL = 'bool',
   INT = 'int',
   FLOAT = 'float',
@@ -29,31 +28,35 @@ export enum Formats {
   DATA = 'data',
   TLV8 = 'tlv8',
   ARRAY = 'array', //Not in HAP Spec
-  DICTIONARY = 'dict' //Not in HAP Spec
+  DICTIONARY = 'dict', //Not in HAP Spec
 }
 
-// Known HomeKit unit types
-export enum Units {
-  // HomeKit only defines Celsius, for Fahrenheit, it requires iOS app to do the conversion.
-  CELSIUS = 'celsius',
+export const enum Units {
+  CELSIUS = 'celsius', // celsius is the only temperature unit, conversion to fahrenheit is done on the iOS device
   PERCENTAGE = 'percentage',
   ARC_DEGREE = 'arcdegrees',
   LUX = 'lux',
-  SECONDS = 'seconds'
+  SECONDS = 'seconds',
 }
 
 // Known HomeKit permission types
-export enum Perms {
-  READ = 'pr', //Kept for backwards compatability
-  PAIRED_READ = 'pr', //Added to match HAP's terminology
-  WRITE = 'pw', //Kept for backwards compatability
-  PAIRED_WRITE = 'pw', //Added to match HAP's terminology
-  NOTIFY = 'ev', //Kept for backwards compatability
-  EVENTS = 'ev', //Added to match HAP's terminology
+export const enum Perms {
+  /**
+   * @deprecated replaced by {@link PAIRED_READ}. Kept for backwards compatibility.
+   */
+  READ = 'pr',
+  /**
+   * @deprecated replaced by {@link PAIRED_WRITE}. Kept for backwards compatibility.
+   */
+  WRITE = 'pw',
+  PAIRED_READ = 'pr',
+  PAIRED_WRITE = 'pw',
+  NOTIFY = 'ev', // both terms are used in hap spec
+  EVENTS = 'ev',
   ADDITIONAL_AUTHORIZATION = 'aa',
   TIMED_WRITE = 'tw',
   HIDDEN = 'hd',
-  WRITE_RESPONSE = 'wr'
+  WRITE_RESPONSE = 'wr',
 }
 
 export interface CharacteristicProps {
@@ -72,7 +75,7 @@ export interface CharacteristicProps {
   adminOnlyAccess?: Access[];
 }
 
-export enum Access {
+export const enum Access {
   READ = 0x00,
   WRITE = 0x01,
   NOTIFY = 0x02
@@ -86,7 +89,7 @@ export interface SerializedCharacteristic {
   eventOnlyCharacteristic: boolean,
 }
 
-export enum CharacteristicEventTypes {
+export const enum CharacteristicEventTypes {
   GET = "get",
   SET = "set",
   SUBSCRIBE = "subscribe",
@@ -104,11 +107,6 @@ type Events = {
   [CharacteristicEventTypes.SUBSCRIBE]: VoidCallback;
   [CharacteristicEventTypes.UNSUBSCRIBE]: VoidCallback;
 }
-
-/**
- * @deprecated Use CharacteristicEventTypes instead
- */
-export type EventCharacteristic = CharacteristicEventTypes.GET | CharacteristicEventTypes.SET | CharacteristicEventTypes.SUBSCRIBE | CharacteristicEventTypes.UNSUBSCRIBE | CharacteristicEventTypes.CHANGE;
 
 /**
  * Characteristic represents a particular typed variable that can be assigned to a Service. For instance, a
@@ -143,9 +141,54 @@ export type EventCharacteristic = CharacteristicEventTypes.GET | CharacteristicE
  */
 export class Characteristic extends EventEmitter<Events> {
 
-  static Formats = Formats;
-  static Units = Units;
-  static Perms = Perms;
+  /**
+   * @deprecated won't be updated anymore. Please use the Formats const enum above. Scheduled to be removed in 2021-06.
+   */
+  static Formats = Object.freeze({
+    BOOL: 'bool',
+    INT: 'int',
+    FLOAT: 'float',
+    STRING: 'string',
+    UINT8: 'uint8',
+    UINT16: 'uint16',
+    UINT32: 'uint32',
+    UINT64: 'uint64',
+    DATA: 'data',
+    TLV8: 'tlv8',
+    ARRAY: 'array', //Not in HAP Spec
+    DICTIONARY: 'dict' //Not in HAP Spec
+  });
+  /**
+   * @deprecated won't be updated anymore. Please use the Units const enum above. Scheduled to be removed in 2021-06.
+   */
+  static Units = Object.freeze({
+    CELSIUS: "celsius",
+    PERCENTAGE: "percentage",
+    ARC_DEGREE: "arcdegrees",
+    LUX: "lux",
+    SECONDS: "seconds",
+  });
+  /**
+   * @deprecated won't be updated anymore. Please use the Perms const enum above. Scheduled to be removed in 2021-06.
+   */
+  static Perms = Object.freeze({
+    /**
+     * @deprecated replaced by {@link PAIRED_READ}. Kept for backwards compatibility.
+     */
+    READ: 'pr',
+    /**
+     * @deprecated replaced by {@link PAIRED_WRITE}. Kept for backwards compatibility.
+     */
+    WRITE: 'pw',
+    PAIRED_READ: 'pr',
+    PAIRED_WRITE: 'pw',
+    NOTIFY: 'ev',
+    EVENTS: 'ev',
+    ADDITIONAL_AUTHORIZATION: 'aa',
+    TIMED_WRITE: 'tw',
+    HIDDEN: 'hd',
+    WRITE_RESPONSE: 'wr'
+  });
 
   static AccessControlLevel: typeof HomeKitTypes.Generated.AccessControlLevel;
   static AccessoryFlags: typeof HomeKitTypes.Generated.AccessoryFlags;

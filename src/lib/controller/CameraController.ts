@@ -14,7 +14,6 @@ import {
     StreamingRequest
 } from "../..";
 import {NodeCallback, SessionIdentifier} from "../../types";
-// noinspection JSDeprecatedSymbols
 import {Doorbell, Microphone, Speaker} from "../gen/HomeKit";
 import {EventEmitter} from "../EventEmitter";
 import crypto from 'crypto';
@@ -70,7 +69,7 @@ export interface CameraControllerServiceMap extends ControllerServiceMap {
     doorbell?: Doorbell;
 }
 
-export enum CameraControllerEvents {
+export const enum CameraControllerEvents {
     MICROPHONE_PROPERTIES_CHANGED = "microphone-change",
     SPEAKER_PROPERTIES_CHANGED = "speaker-change",
 }

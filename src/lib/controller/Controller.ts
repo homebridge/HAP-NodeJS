@@ -16,7 +16,7 @@ export interface ControllerServiceMap {
  * You can define custom ControllerTypes if you wish to, but be careful that it does not collide with any known definitions.
  */
 export type ControllerType = string | DefaultControllerType;
-export enum DefaultControllerType {
+export const enum DefaultControllerType {
     CAMERA = "camera", // or doorbell
     REMOTE = "remote",
     TV = "tv",

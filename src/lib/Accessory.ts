@@ -47,7 +47,7 @@ const debug = createDebug('Accessory');
 const MAX_ACCESSORIES = 149; // Maximum number of bridged accessories per bridge.
 
 // Known category values. Category is a hint to iOS clients about what "type" of Accessory this represents, for UI only.
-export enum Categories {
+export const enum Categories {
   OTHER = 1,
   BRIDGE = 2,
   FAN = 3,
@@ -69,12 +69,12 @@ export enum Categories {
   IP_CAMERA = 17, //Added to conform to HAP naming
   VIDEO_DOORBELL = 18,
   AIR_PURIFIER = 19,
-  AIR_HEATER = 20, //Not in HAP Spec
-  AIR_CONDITIONER = 21, //Not in HAP Spec
-  AIR_HUMIDIFIER = 22, //Not in HAP Spec
-  AIR_DEHUMIDIFIER = 23, // Not in HAP Spec
+  AIR_HEATER = 20,
+  AIR_CONDITIONER = 21,
+  AIR_HUMIDIFIER = 22,
+  AIR_DEHUMIDIFIER = 23,
   APPLE_TV = 24,
-  HOMEPOD = 25, // HomePod
+  HOMEPOD = 25,
   SPEAKER = 26,
   AIRPORT = 27,
   SPRINKLER = 28,
@@ -82,7 +82,7 @@ export enum Categories {
   SHOWER_HEAD = 30,
   TELEVISION = 31,
   TARGET_CONTROLLER = 32, // Remote Control
-  ROUTER = 33, // HomeKit enabled router
+  ROUTER = 33,
   AUDIO_RECEIVER = 34,
 }
 
@@ -110,7 +110,7 @@ export interface ControllerContext {
 }
 
 
-export enum AccessoryEventTypes {
+export const enum AccessoryEventTypes {
   IDENTIFY = "identify",
   LISTENING = "listening",
   SERVICE_CONFIGURATION_CHANGE = "service-configurationChange",
@@ -149,7 +149,7 @@ export type ServiceCharacteristicChange = CharacteristicChange &  {
   service: Service;
 };
 
-export enum ResourceTypes {
+export const enum ResourceTypes {
   IMAGE = 'image',
 }
 
@@ -160,7 +160,7 @@ export type Resource = {
   'resource-type': ResourceTypes;
 }
 
-enum WriteRequestState {
+const enum WriteRequestState {
   REGULAR_REQUEST,
   TIMED_WRITE_AUTHENTICATED,
   TIMED_WRITE_REJECTED
@@ -197,7 +197,16 @@ type HandleSetCharacteristicsCallback = NodeCallback<CharacteristicData[]>;
  */
 export class Accessory extends EventEmitter<Events> {
 
-  static Categories = Categories;
+  /**
+   * @deprecated won't be updated anymore. Please use the Categories const enum above. Scheduled to be removed in 2021-06.
+   */
+  static Categories = Object.freeze({
+    OTHER: 1, BRIDGE: 2, FAN: 3, GARAGE_DOOR_OPENER: 4, LIGHTBULB: 5, DOOR_LOCK: 6, OUTLET: 7, SWITCH: 8, THERMOSTAT: 9, SENSOR: 10,
+    ALARM_SYSTEM: 11, SECURITY_SYSTEM: 11, DOOR: 12, WINDOW: 13, WINDOW_COVERING: 14, PROGRAMMABLE_SWITCH: 15, RANGE_EXTENDER: 16,
+    CAMERA: 17, IP_CAMERA: 17, VIDEO_DOORBELL: 18, AIR_PURIFIER: 19, AIR_HEATER: 20, AIR_CONDITIONER: 21, AIR_HUMIDIFIER: 22,
+    AIR_DEHUMIDIFIER: 23, APPLE_TV: 24, HOMEPOD: 25, SPEAKER: 26, AIRPORT: 27, SPRINKLER: 28, FAUCET: 29, SHOWER_HEAD: 30,
+    TELEVISION: 31, TARGET_CONTROLLER: 32, ROUTER: 33, AUDIO_RECEIVER: 34,
+  });
 
   // NOTICE: when adding/changing properties, remember to possibly adjust the serialize/deserialize functions
   aid: Nullable<number> = null; // assigned by us in assignIDs() or by a Bridge
@@ -1714,21 +1723,18 @@ export class Accessory extends EventEmitter<Events> {
 
 }
 
+const numberPattern = /^-?\d+$/;
+
 function hapStatus(err: Error) {
+  let errorValue = Status.SERVICE_COMMUNICATION_FAILURE;
 
-  // Validate that the message is a valid HAPServer.Status
-  let value: number | string = 0;  // default if not found or
+  if (numberPattern.test(err.message)) {
+    const value = parseInt(err.message);
 
-  for( const k in Status ) {
-    if (Status[k] == err.message)
-    {
-      value = err.message;
-      break;
+    if (value >= Status.INSUFFICIENT_PRIVILEGES && value <= Status.INSUFFICIENT_AUTHORIZATION) {
+      errorValue = value;
     }
   }
 
-  if ( value == 0 )
-    value = Status.SERVICE_COMMUNICATION_FAILURE;  // default if not found or 0
-
-  return(parseInt(`${value}`));
+  return errorValue;
 }

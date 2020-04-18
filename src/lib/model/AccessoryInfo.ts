@@ -7,7 +7,7 @@ import { Session } from "../util/eventedhttp";
 import { MacAddress } from "../../types";
 import { HAPStorage } from "./HAPStorage";
 
-export enum PermissionTypes {
+export const enum PermissionTypes {
   USER = 0x00,
   ADMIN = 0x01, // admins are the only ones who can add/remove/list pairings (also some characteristics are restricted)
 }

@@ -27,14 +27,6 @@ import {
     RequestHandler,
     Topics
 } from "../datastream";
-import {
-    AudioBitrate,
-    AudioCodecConfigurationTypes,
-    AudioCodecParametersTypes,
-    AudioCodecTypes,
-    AudioSamplerate,
-    SupportedAudioStreamConfigurationTypes
-} from "../camera";
 import {EventEmitter} from "../EventEmitter";
 import {HAPSessionEvents, Session} from "../util/eventedhttp";
 import {ControllerServiceMap, DefaultControllerType, SerializableController, StateChangeDelegate} from "./Controller";
@@ -44,14 +36,14 @@ import Timeout = NodeJS.Timeout;
 
 const debug = createDebug('Remote:Controller');
 
-export enum TargetControlCommands {
+const enum TargetControlCommands {
     MAXIMUM_TARGETS = 0x01,
     TICKS_PER_SECOND = 0x02,
     SUPPORTED_BUTTON_CONFIGURATION = 0x03,
     TYPE = 0x04
 }
 
-export enum SupportedButtonConfigurationTypes {
+const enum SupportedButtonConfigurationTypes {
     BUTTON_ID = 0x01,
     BUTTON_TYPE = 0x02
 }
@@ -74,12 +66,12 @@ export enum ButtonType {
 }
 
 
-export enum TargetControlList {
+const enum TargetControlList {
     OPERATION = 0x01,
     TARGET_CONFIGURATION = 0x02
 }
 
-export enum Operation {
+enum Operation {
     UNDEFINED = 0x00,
     LIST = 0x01,
     ADD = 0x02,
@@ -88,25 +80,25 @@ export enum Operation {
     UPDATE = 0x05
 }
 
-export enum TargetConfigurationTypes {
+const enum TargetConfigurationTypes {
     TARGET_IDENTIFIER = 0x01,
     TARGET_NAME = 0x02,
     TARGET_CATEGORY = 0x03,
     BUTTON_CONFIGURATION = 0x04
 }
 
-export enum TargetCategory {
+export const enum TargetCategory {
     UNDEFINED = 0x00,
     APPLE_TV = 0x18
 }
 
-export enum ButtonConfigurationTypes {
+const enum ButtonConfigurationTypes {
     BUTTON_ID = 0x01,
     BUTTON_TYPE = 0x02,
     BUTTON_NAME = 0x03,
 }
 
-export enum ButtonEvent {
+const enum ButtonEvent {
     BUTTON_ID = 0x01,
     BUTTON_STATE = 0x02,
     TIMESTAMP = 0x03,
@@ -145,20 +137,64 @@ export type ButtonConfiguration = {
 }
 
 
-export enum SiriInputType {
+export const enum SiriInputType {
     PUSH_BUTTON_TRIGGERED_APPLE_TV = 0,
 }
 
 
-export enum SelectedAudioInputStreamConfigurationTypes {
+const enum SelectedAudioInputStreamConfigurationTypes {
     SELECTED_AUDIO_INPUT_STREAM_CONFIGURATION = 0x01,
 }
 
-export type SupportedAudioStreamConfiguration = {
+// ----------
+
+const enum SupportedAudioStreamConfigurationTypes {
+    AUDIO_CODEC_CONFIGURATION = 0x01,
+    COMFORT_NOISE_SUPPORT = 0x02,
+}
+
+const enum AudioCodecConfigurationTypes {
+    CODEC_TYPE = 0x01,
+    CODEC_PARAMETERS = 0x02,
+}
+
+export const enum AudioCodecTypes { // only really by HAP supported codecs are AAC-ELD and OPUS
+    PCMU = 0x00,
+    PCMA = 0x01,
+    AAC_ELD = 0x02,
+    OPUS = 0x03,
+    MSBC = 0x04, // mSBC is a bluetooth codec (lol)
+    AMR = 0x05,
+    AMR_WB = 0x06,
+}
+
+const enum AudioCodecParametersTypes {
+    CHANNEL = 0x01,
+    BIT_RATE = 0x02,
+    SAMPLE_RATE = 0x03,
+    PACKET_TIME = 0x04 // only present in selected audio codec parameters tlv
+}
+
+export const enum AudioBitrate {
+    VARIABLE = 0x00,
+    CONSTANT = 0x01
+}
+
+export const enum AudioSamplerate {
+    KHZ_8 = 0x00,
+    KHZ_16 = 0x01,
+    KHZ_24 = 0x02
+    // 3, 4, 5 are theoretically defined, but no idea to what kHz value they correspond to
+    // probably KHZ_32, KHZ_44_1, KHZ_48 (as supported by Secure Video recordings)
+}
+
+// ----------
+
+type SupportedAudioStreamConfiguration = {
     audioCodecConfiguration: AudioCodecConfiguration,
 }
 
-export type SelectedAudioStreamConfiguration = {
+type SelectedAudioStreamConfiguration = {
     audioCodecConfiguration: AudioCodecConfiguration,
 }
 
@@ -177,14 +213,14 @@ export type AudioCodecParameters = {
 export type RTPTime = 20 | 30 | 40 | 60;
 
 
-export enum SiriAudioSessionState {
+const enum SiriAudioSessionState {
     STARTING = 0, // we are currently waiting for a response for the start request
     SENDING = 1, // we are sending data
     CLOSING = 2, // we are currently waiting for the acknowledgment event
     CLOSED = 3, // the close event was sent
 }
 
-export type DataSendMessageData = {
+type DataSendMessageData = {
     packets: AudioFramePacket[],
     streamId: Int64,
     endOfStream: boolean,
@@ -195,7 +231,7 @@ export type AudioFrame = {
     rms: number, // root mean square
 }
 
-export type AudioFramePacket = {
+type AudioFramePacket = {
     data: Buffer,
     metadata: {
         rms: Float32, // root mean square
@@ -228,7 +264,7 @@ export interface SiriAudioStreamProducerConstructor {
 
 }
 
-export enum RemoteControllerEvents {
+export const enum RemoteControllerEvents {
     ACTIVE_CHANGE = "active-change",
     ACTIVE_IDENTIFIER_CHANGE = "active-identifier-change",
 
@@ -238,7 +274,7 @@ export enum RemoteControllerEvents {
     TARGETS_RESET = "targets-reset",
 }
 
-export enum TargetUpdates {
+export const enum TargetUpdates {
     NAME,
     CATEGORY,
     UPDATED_BUTTONS,
@@ -1224,7 +1260,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
  */
 export class HomeKitRemoteController extends RemoteController {} // backwards compatibility
 
-export enum SiriAudioSessionEvents {
+export const enum SiriAudioSessionEvents {
     CLOSE = "close",
 }
 

@@ -13,12 +13,12 @@ import {
 
 const debug = createDebug("Remote:GStreamer");
 
-enum AudioType {
+const enum AudioType {
     GENERIC = 2049,
     VOICE = 2048
 }
 
-enum Bandwidth {
+const enum Bandwidth {
     NARROW_BAND = 1101,
     MEDIUM_BAND = 1102,
     WIDE_BAND = 1103,
@@ -27,7 +27,7 @@ enum Bandwidth {
     AUTO = -1000
 }
 
-enum BitrateType {
+const enum BitrateType {
     CONSTANT = 0,
     VARIABLE = 1,
 }

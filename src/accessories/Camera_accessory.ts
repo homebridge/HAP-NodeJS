@@ -18,7 +18,7 @@ import {
     uuid,
     VideoInfo
 } from "..";
-import {ChildProcess, spawn} from "child_process";
+import { ChildProcess, spawn } from "child_process";
 import ip from "ip";
 
 const cameraUUID = uuid.generate('hap-nodejs:accessories:ip-camera');
@@ -167,8 +167,18 @@ class ExampleCamera implements CameraStreamingDelegate {
                     `-c:v libx264 -pix_fmt yuv420p -r ${fps} -an -sn -dn -b:v ${maxBitrate}k -bufsize ${2*maxBitrate}k -maxrate ${maxBitrate}k ` +
                     `-payload_type ${payloadType} -ssrc ${ssrc} -f rtp `; // -profile:v ${profile} -level:v ${level}
 
-                if (cryptoSuite !== SRTPCryptoSuites.NONE) { // actually ffmpeg just supports AES_CM_128_HMAC_SHA1_80
-                    videoffmpegCommand += `-srtp_out_suite ${SRTPCryptoSuites[cryptoSuite]} -srtp_out_params ${videoSRTP} s`;
+                if (cryptoSuite !== SRTPCryptoSuites.NONE) {
+                    let suite: string;
+                    switch (cryptoSuite) {
+                        case SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80: // actually ffmpeg just supports AES_CM_128_HMAC_SHA1_80
+                            suite = "AES_CM_128_HMAC_SHA1_80";
+                            break;
+                        case SRTPCryptoSuites.AES_CM_256_HMAC_SHA1_80:
+                            suite = "AES_CM_256_HMAC_SHA1_80";
+                            break;
+                    }
+
+                    videoffmpegCommand += `-srtp_out_suite ${suite} -srtp_out_params ${videoSRTP} s`;
                 }
 
                 videoffmpegCommand += `rtp://${address}:${videoPort}?rtcpport=${videoPort}&localrtcpport=${videoPort}&pkt_size=${mtu}`;

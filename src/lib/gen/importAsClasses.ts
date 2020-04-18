@@ -179,8 +179,8 @@ function getCharacteristicFormatsKey(format: string) {
   if (format == 'int32') format = 'int';
 
   // look up the key in our known-formats dict
-  for (var key in Formats)
-    if (Formats[key as keyof typeof Formats] == format)
+  for (var key in Characteristic.Formats)
+    if (Characteristic.Formats[key as keyof typeof Characteristic.Formats] == format)
       return key;
 
   throw new Error("Unknown characteristic format '" + format + "'");
@@ -188,8 +188,8 @@ function getCharacteristicFormatsKey(format: string) {
 
 function getCharacteristicUnitsKey(units: string) {
   // look up the key in our known-units dict
-  for (var key in Units)
-    if (Units[key as keyof typeof Units] == units)
+  for (var key in Characteristic.Units)
+    if (Characteristic.Units[key as keyof typeof Characteristic.Units] == units)
       return key;
 
   throw new Error("Unknown characteristic units '" + units + "'");

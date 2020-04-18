@@ -20,7 +20,7 @@ export interface SerializedService {
 
 export type ServiceId = string; // string with the format: UUID + (subtype | "")
 
-export enum ServiceEventTypes {
+export const enum ServiceEventTypes {
   CHARACTERISTIC_CHANGE = "characteristic-change",
   SERVICE_CONFIGURATION_CHANGE = "service-configurationChange",
 }

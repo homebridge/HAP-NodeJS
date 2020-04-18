@@ -40,13 +40,13 @@ export interface DataStreamProtocolHandler {
 
 }
 
-export enum Protocols { // a collection of currently known protocols
+export const enum Protocols { // a collection of currently known protocols
     CONTROL = "control",
     TARGET_CONTROL = "targetControl",
     DATA_SEND = "dataSend",
 }
 
-export enum Topics { // a collection of currently known topics grouped by their protocol
+export const enum Topics { // a collection of currently known topics grouped by their protocol
     // control
     HELLO = "hello",
 
@@ -81,14 +81,14 @@ export enum DataSendCloseReason { // close reason used in the dataSend protocol
 }
 
 
-enum ServerState {
+const enum ServerState {
     UNINITIALIZED, // server socket hasn't been created
     BINDING, // server is created and is currently trying to bind
     LISTENING, // server is created and currently listening for new connections
     CLOSING,
 }
 
-enum ConnectionState {
+const enum ConnectionState {
     UNIDENTIFIED,
     EXPECTING_HELLO,
     READY,
@@ -105,7 +105,7 @@ type HDSFrame = {
 
 }
 
-enum MessageType {
+const enum MessageType {
     EVENT = 1,
     REQUEST = 2,
     RESPONSE = 3,
@@ -122,7 +122,7 @@ type DataStreamMessage = {
     message: Record<any, any>,
 }
 
-export enum DataStreamServerEvents {
+export const enum DataStreamServerEvents {
     CONNECTION_OPENED = "connection-opened",
     CONNECTION_CLOSED = "connection-closed",
 }
@@ -390,7 +390,7 @@ export class DataStreamServer extends EventEmitter<DataStreamServerEventMap> {
 
 }
 
-export enum DataStreamConnectionEvents {
+export const enum DataStreamConnectionEvents {
     IDENTIFICATION = "identification",
     HANDLE_MESSAGE_GLOBALLY = "handle-message-globally",
     CLOSED = "closed",

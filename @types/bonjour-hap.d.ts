@@ -1,6 +1,6 @@
 declare module 'bonjour-hap' {
 
-  export enum Protocols {
+  export const enum Protocols {
     TCP = 'tcp',
     UDP = 'udp',
   }

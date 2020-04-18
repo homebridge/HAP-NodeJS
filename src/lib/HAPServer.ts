@@ -18,9 +18,7 @@ import { SRP, SrpServer } from "fast-srp-hap";
 
 const debug = createDebug('HAPServer');
 
-// Various "type" constants for HAP's TLV encoding.
-export type Types = TLVValues; // backwards compatibility
-export enum TLVValues {
+const enum TLVValues {
   REQUEST_TYPE = 0x00,
   METHOD = 0x00, // (match the terminology of the spec sheet but keep backwards compatibility with entry above)
   USERNAME = 0x01,
@@ -42,7 +40,7 @@ export enum TLVValues {
   SEPARATOR = 0x0FF // Zero-length TLV that separates different TLVs in a list.
 }
 
-export enum Methods {
+const enum Methods {
   PAIR_SETUP = 0x00,
   PAIR_SETUP_WITH_AUTH = 0x01,
   PAIR_VERIFY = 0x02,
@@ -51,7 +49,7 @@ export enum Methods {
   LIST_PAIRINGS = 0x05
 }
 
-export enum States {
+const enum States {
   M1 = 0x01,
   M2 = 0x02,
   M3 = 0x03,
@@ -60,8 +58,7 @@ export enum States {
   M6 = 0x06
 }
 
-// Error codes and the like, guessed by packet inspection
-export enum Codes {
+export const enum Codes {
   UNKNOWN = 0x01,
   INVALID_REQUEST = 0x02,
   AUTHENTICATION = 0x02, // setup code or signature verification failed
@@ -72,8 +69,7 @@ export enum Codes {
   BUSY = 0x07 // cannot accept pairing request at this time
 }
 
-// Status codes for underlying HAP calls
-export enum Status {
+export const enum Status {
   SUCCESS = 0,
   INSUFFICIENT_PRIVILEGES = -70401,
   SERVICE_COMMUNICATION_FAILURE = -70402,
@@ -88,18 +84,18 @@ export enum Status {
   INSUFFICIENT_AUTHORIZATION = -70411
 }
 
-export enum HapRequestMessageTypes {
+const enum HapRequestMessageTypes {
   PAIR_VERIFY = 'pair-verify',
   DISCOVERY = 'discovery',
   WRITE_CHARACTERISTICS = 'write-characteristics',
   READ_CHARACTERISTICS = 'read-characteristics'
 }
 
-export type RemoteSession = {
+type RemoteSession = {
   responseMessage(request: HapRequest, data: Buffer): void;
 }
 
-export type HapRequest = {
+type HapRequest = {
   messageType: HapRequestMessageTypes
   requestBody: any;
 }
@@ -114,7 +110,7 @@ export type PrepareWriteRequest = {
   pid: number
 }
 
-export enum HAPServerEventTypes {
+export const enum HAPServerEventTypes {
   IDENTIFY = "identify",
   LISTENING = "listening",
   PAIR = 'pair',
@@ -212,11 +208,6 @@ export type Events = {
  *        the provided callback when the request has been processed.
  */
 export class HAPServer extends EventEmitter<Events> {
-
-  static Types = TLVValues; // backwards compatibility
-  static TLVValues = TLVValues;
-  static Codes = Codes;
-  static Status = Status;
 
   static handlers: Record<string, string> = {
     '/identify': '_handleIdentify',

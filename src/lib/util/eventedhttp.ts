@@ -11,7 +11,7 @@ import { SrpServer } from "fast-srp-hap";
 
 const debug = createDebug('EventedHTTPServer');
 
-export enum EventedHTTPServerEvents {
+export const enum EventedHTTPServerEvents {
   LISTENING = 'listening',
   REQUEST = 'request',
   DECRYPT = 'decrypt',
@@ -142,7 +142,7 @@ export class EventedHTTPServer extends EventEmitter<Events> {
   }
 }
 
-export enum HAPSessionEvents {
+export const enum HAPSessionEvents {
   CLOSED = "closed",
 }
 

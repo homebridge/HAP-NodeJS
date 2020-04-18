@@ -21,11 +21,11 @@ import {LegacyCameraSource, LegacyCameraSourceAdapter, once, uuid} from "../../i
 const debug = createDebug('StreamController');
 // ---------------------------------- TLV DEFINITIONS START ----------------------------------
 
-export enum StreamingStatusTypes {
+const enum StreamingStatusTypes {
   STATUS = 0x01,
 }
 
-export enum StreamingStatus {
+const enum StreamingStatus {
   AVAILABLE = 0x00,
   IN_USE = 0x01, // Session is marked IN_USE after the first setup request
   UNAVAILABLE = 0x02, // other reasons
@@ -33,17 +33,17 @@ export enum StreamingStatus {
 
 // ----------
 
-export enum SupportedVideoStreamConfigurationTypes {
+const enum SupportedVideoStreamConfigurationTypes {
   VIDEO_CODEC_CONFIGURATION = 0x01,
 }
 
-export enum VideoCodecConfigurationTypes {
+const enum VideoCodecConfigurationTypes {
   CODEC_TYPE = 0x01,
   CODEC_PARAMETERS = 0x02,
   ATTRIBUTES = 0x03,
 }
 
-export enum VideoCodecParametersTypes {
+const enum VideoCodecParametersTypes {
   PROFILE_ID = 0x01,
   LEVEL = 0x02,
   PACKETIZATION_MODE = 0x03,
@@ -51,50 +51,50 @@ export enum VideoCodecParametersTypes {
   CVO_ID = 0x05, // ID for CVO RTP extension, value in range from 1 to 14
 }
 
-export enum VideoAttributesTypes {
+const enum VideoAttributesTypes {
   IMAGE_WIDTH = 0x01,
   IMAGE_HEIGHT = 0x02,
   FRAME_RATE = 0x03
 }
 
-export enum VideoCodecType {
+const enum VideoCodecType {
   H264 = 0x00
 }
 
-export enum H264Profile {
+export const enum H264Profile {
   BASELINE = 0x00,
   MAIN = 0x01,
   HIGH = 0x02,
 }
 
-export enum H264Level {
+export const enum H264Level {
   LEVEL3_1 = 0x00,
   LEVEL3_2 = 0x01,
   LEVEL4_0 = 0x02,
 }
 
-export enum VideoCodecPacketizationMode {
+const enum VideoCodecPacketizationMode {
   NON_INTERLEAVED = 0x00
 }
 
-export enum VideoCodecCVO { // Coordination of Video Orientation
+const enum VideoCodecCVO { // Coordination of Video Orientation
   UNSUPPORTED = 0x01,
   SUPPORTED = 0x02
 }
 
 // ----------
 
-export enum SupportedAudioStreamConfigurationTypes {
+const enum SupportedAudioStreamConfigurationTypes {
   AUDIO_CODEC_CONFIGURATION = 0x01,
   COMFORT_NOISE_SUPPORT = 0x02,
 }
 
-export enum AudioCodecConfigurationTypes {
+const enum AudioCodecConfigurationTypes {
   CODEC_TYPE = 0x01,
   CODEC_PARAMETERS = 0x02,
 }
 
-export enum AudioCodecTypes { // only really by HAP supported codecs are AAC-ELD and OPUS
+const enum AudioCodecTypes { // only really by HAP supported codecs are AAC-ELD and OPUS
   PCMU = 0x00,
   PCMA = 0x01,
   AAC_ELD = 0x02,
@@ -104,19 +104,19 @@ export enum AudioCodecTypes { // only really by HAP supported codecs are AAC-ELD
   AMR_WB = 0x06,
 }
 
-export enum AudioCodecParametersTypes {
+const enum AudioCodecParametersTypes {
   CHANNEL = 0x01,
   BIT_RATE = 0x02,
   SAMPLE_RATE = 0x03,
   PACKET_TIME = 0x04 // only present in selected audio codec parameters tlv
 }
 
-export enum AudioBitrate {
+const enum AudioBitrate {
   VARIABLE = 0x00,
   CONSTANT = 0x01
 }
 
-export enum AudioSamplerate {
+const enum AudioSamplerate {
   KHZ_8 = 0x00,
   KHZ_16 = 0x01,
   KHZ_24 = 0x02
@@ -126,11 +126,11 @@ export enum AudioSamplerate {
 
 // ----------
 
-export enum SupportedRTPConfigurationTypes {
+const enum SupportedRTPConfigurationTypes {
   SRTP_CRYPTO_SUITE = 0x02,
 }
 
-export enum SRTPCryptoSuites {
+export const enum SRTPCryptoSuites { // public API
   AES_CM_128_HMAC_SHA1_80 = 0x00,
   AES_CM_256_HMAC_SHA1_80 = 0x01,
   NONE = 0x02
@@ -140,33 +140,33 @@ export enum SRTPCryptoSuites {
 // ----------
 
 
-export enum SetupEndpointsTypes {
+const enum SetupEndpointsTypes {
   SESSION_ID = 0x01,
   CONTROLLER_ADDRESS = 0x03,
   VIDEO_SRTP_PARAMETERS = 0x04,
   AUDIO_SRTP_PARAMETERS = 0x05,
 }
 
-export enum AddressTypes {
+const enum AddressTypes {
   ADDRESS_VERSION = 0x01,
   ADDRESS = 0x02,
   VIDEO_RTP_PORT = 0x03,
   AUDIO_RTP_PORT = 0x04,
 }
 
-export enum IPAddressVersion {
+const enum IPAddressVersion {
   IPV4 = 0x00,
   IPV6 = 0x01
 }
 
 
-export enum SRTPParametersTypes {
+const enum SRTPParametersTypes {
   SRTP_CRYPTO_SUITE = 0x01,
   MASTER_KEY = 0x02, // 16 bytes for AES_CM_128_HMAC_SHA1_80; 32 bytes for AES_256_CM_HMAC_SHA1_80
   MASTER_SALT = 0x03 // 14 bytes
 }
 
-export enum SetupEndpointsResponseTypes {
+const enum SetupEndpointsResponseTypes {
   SESSION_ID = 0x01,
   STATUS = 0x02,
   ACCESSORY_ADDRESS = 0x03,
@@ -176,7 +176,7 @@ export enum SetupEndpointsResponseTypes {
   AUDIO_SSRC = 0x07,
 }
 
-export enum SetupEndpointsStatus {
+const enum SetupEndpointsStatus {
   SUCCESS = 0x00,
   BUSY = 0x01,
   ERROR = 0x02
@@ -186,18 +186,18 @@ export enum SetupEndpointsStatus {
 // ----------
 
 
-export enum SelectedRTPStreamConfigurationTypes {
+const enum SelectedRTPStreamConfigurationTypes {
   SESSION_CONTROL = 0x01,
   SELECTED_VIDEO_PARAMETERS = 0x02,
   SELECTED_AUDIO_PARAMETERS = 0x03
 }
 
-export enum SessionControlTypes {
+const enum SessionControlTypes {
   SESSION_IDENTIFIER = 0x01, // uuid, 16 bytes
   COMMAND = 0x02,
 }
 
-export enum SessionControlCommand {
+enum SessionControlCommand {
   END_SESSION = 0x00,
   START_SESSION = 0x01,
   SUSPEND_SESSION = 0x02,
@@ -205,14 +205,14 @@ export enum SessionControlCommand {
   RECONFIGURE_SESSION = 0x04,
 }
 
-export enum SelectedVideoParametersTypes {
+const enum SelectedVideoParametersTypes {
   CODEC_TYPE = 0x01,
   CODEC_PARAMETERS = 0x02,
   ATTRIBUTES = 0x03,
   RTP_PARAMETERS = 0x04,
 }
 
-export enum VideoRTPParametersTypes {
+const enum VideoRTPParametersTypes {
   PAYLOAD_TYPE = 0x01,
   SYNCHRONIZATION_SOURCE = 0x02,
   MAX_BIT_RATE = 0x03,
@@ -220,14 +220,14 @@ export enum VideoRTPParametersTypes {
   MAX_MTU = 0x05, // only there if value is not default value; default values: ipv4 1378; ipv6 1228 bytes
 }
 
-export enum SelectedAudioParametersTypes {
+const enum SelectedAudioParametersTypes {
   CODEC_TYPE = 0x01,
   CODEC_PARAMETERS = 0x02,
   RTP_PARAMETERS = 0x03,
   COMFORT_NOISE = 0x04,
 }
 
-export enum AudioRTPParametersTypes {
+const enum AudioRTPParametersTypes {
   PAYLOAD_TYPE = 0x01,
   SYNCHRONIZATION_SOURCE = 0x02,
   MAX_BIT_RATE = 0x03,
@@ -292,7 +292,7 @@ export type AudioStreamingCodec = {
   samplerate: AudioStreamingSamplerate[] | AudioStreamingSamplerate, // OPUS or AAC-ELD must support samplerate at 16k and 25k
 }
 
-export enum AudioStreamingCodecType { // codecs as defined by the HAP spec; only AAC-ELD and OPUS seem to work
+export const enum AudioStreamingCodecType { // codecs as defined by the HAP spec; only AAC-ELD and OPUS seem to work
   PCMU = "PCMU",
   PCMA = "PCMA",
   AAC_ELD = "AAC-eld",
@@ -302,7 +302,7 @@ export enum AudioStreamingCodecType { // codecs as defined by the HAP spec; only
   AMR_WB = "AMR-WB",
 }
 
-export enum AudioStreamingSamplerate {
+export const enum AudioStreamingSamplerate {
   KHZ_8 = 8,
   KHZ_16 = 16,
   KHZ_24 = 24,
@@ -366,7 +366,7 @@ export interface ProxiedSourceResponse {
   proxy_server_rtcp: number, // RTCP port
 }
 
-export enum StreamRequestTypes {
+export const enum StreamRequestTypes {
   RECONFIGURE = 'reconfigure',
   START = 'start',
   STOP = 'stop',
@@ -446,29 +446,18 @@ export type ReconfiguredVideoInfo = {
 
 export class RTPStreamManagement {
 
-  static SetupTypes = SetupEndpointsResponseTypes;
-  static SetupStatus = SetupEndpointsStatus;
-  static SetupAddressVer = IPAddressVersion;
-  static SetupAddressInfo = AddressTypes;
-  static SetupSRTP_PARAM = SRTPParametersTypes;
-  static StreamingStatus = StreamingStatus;
-  static RTPConfigTypes = SupportedRTPConfigurationTypes;
-  static SRTPCryptoSuites = SRTPCryptoSuites;
-  static VideoTypes = SelectedVideoParametersTypes;
-  static VideoCodecTypes = VideoCodecType;
-  static VideoCodecParamTypes = VideoCodecParametersTypes;
-  static VideoCodecParamCVOTypes = VideoCodecCVO;
-  static VideoCodecParamProfileIDTypes = H264Profile;
-  static VideoCodecParamLevelTypes = H264Level;
-  static VideoCodecParamPacketizationModeTypes = VideoCodecPacketizationMode;
-  static VideoAttributesTypes = VideoAttributesTypes;
-  static SelectedStreamConfigurationTypes = SelectedRTPStreamConfigurationTypes;
-  static RTPParamTypes = AudioRTPParametersTypes;
-  static AudioTypes = AudioCodecConfigurationTypes;
-  static AudioCodecTypes = AudioCodecTypes;
-  static AudioCodecParamTypes = AudioCodecParametersTypes;
-  static AudioCodecParamBitRateTypes = AudioBitrate;
-  static AudioCodecParamSampleRateTypes = AudioSamplerate;
+  /**
+   * @deprecated won't be updated anymore. Please use the SRTPCryptoSuites const enum above. Scheduled to be removed in 2021-06.
+   */
+  static SRTPCryptoSuites = Object.freeze({ AES_CM_128_HMAC_SHA1_80: 0x00, AES_CM_256_HMAC_SHA1_80: 0x01, NONE: 0x02 });
+  /**
+   * @deprecated won't be updated anymore. Please use the H264Profile const enum above. Scheduled to be removed in 2021-06.
+   */
+  static VideoCodecParamProfileIDTypes = Object.freeze({ BASELINE: 0x00, MAIN: 0x01, HIGH: 0x02 });
+  /**
+   * @deprecated won't be updated anymore. Please use the H264Level const enum above. Scheduled to be removed in 2021-06.
+   */
+  static VideoCodecParamLevelTypes = Object.freeze({ LEVEL3_1: 0x00, LEVEL3_2: 0x01, LEVEL4_0: 0x02 });
 
   private readonly delegate: CameraStreamingDelegate;
   readonly service: CameraRTPStreamManagement; // must be public for backwards compatibility
@@ -890,10 +879,10 @@ export class RTPStreamManagement {
       '\nControllerAddress: ', controllerAddress,
       '\nVideoPort: ', targetVideoPort,
       '\nAudioPort: ', targetAudioPort,
-      '\nVideo Crypto: ', SRTPCryptoSuites[videoCryptoSuite],
+      '\nVideo Crypto: ', videoCryptoSuite,
       '\nVideo Master Key: ', videoMasterKey,
       '\nVideo Master Salt: ', videoMasterSalt,
-      '\nAudio Crypto: ', SRTPCryptoSuites[audioCryptoSuite],
+      '\nAudio Crypto: ', audioCryptoSuite,
       '\nAudio Master Key: ', audioMasterKey,
       '\nAudio Master Salt: ', audioMasterSalt
     );
