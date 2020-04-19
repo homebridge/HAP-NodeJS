@@ -84,22 +84,6 @@ export const enum Status {
   INSUFFICIENT_AUTHORIZATION = -70411
 }
 
-const enum HapRequestMessageTypes {
-  PAIR_VERIFY = 'pair-verify',
-  DISCOVERY = 'discovery',
-  WRITE_CHARACTERISTICS = 'write-characteristics',
-  READ_CHARACTERISTICS = 'read-characteristics'
-}
-
-type RemoteSession = {
-  responseMessage(request: HapRequest, data: Buffer): void;
-}
-
-type HapRequest = {
-  messageType: HapRequestMessageTypes
-  requestBody: any;
-}
-
 export type CharacteristicsWriteRequest = {
   characteristics: CharacteristicData[],
   pid?: number
@@ -221,12 +205,11 @@ export class HAPServer extends EventEmitter<Events> {
   };
 
   _httpServer: EventedHTTPServer;
-  _relayServer?: any;
 
   allowInsecureRequest: boolean;
   _keepAliveTimerID: NodeJS.Timeout;
 
-  constructor(public accessoryInfo: any, public relayServer?: any) {
+  constructor(public accessoryInfo: any) {
     super();
     this.accessoryInfo = accessoryInfo;
     this.allowInsecureRequest = false;
@@ -237,12 +220,7 @@ export class HAPServer extends EventEmitter<Events> {
     this._httpServer.on(EventedHTTPServerEvents.ENCRYPT, this._onEncrypt);
     this._httpServer.on(EventedHTTPServerEvents.DECRYPT, this._onDecrypt);
     this._httpServer.on(EventedHTTPServerEvents.SESSION_CLOSE, this._onSessionClose);
-    if (relayServer) {
-      this._relayServer = relayServer;
-      this._relayServer.on('request', this._onRemoteRequest);
-      this._relayServer.on('encrypt', this._onEncrypt);
-      this._relayServer.on('decrypt', this._onDecrypt);
-    }
+
     // so iOS is very reluctant to actually disconnect HAP connections (as in, sending a FIN packet).
     // For instance, if you turn off wifi on your phone, it will not close the connection, instead
     // it will leave it open and hope that it's still valid when it returns to the network. And Node,
@@ -278,11 +256,6 @@ export class HAPServer extends EventEmitter<Events> {
   notifyClients = (event: string, data: any, excludeEvents?: Record<string, boolean>) => {
     // encode notification data as JSON, set content-type, and hand it off to the server.
     this._httpServer.sendEvent(event, JSON.stringify(data), "application/hap+json", excludeEvents);
-    if (this._relayServer) {
-      if (event !== 'keepalive') {
-        this._relayServer.sendEvent(event, data, excludeEvents);
-      }
-    }
   }
 
   _onListening = (port: number) => {
@@ -312,23 +285,6 @@ export class HAPServer extends EventEmitter<Events> {
       response.writeHead(404, "Not found", {'Content-Type': 'text/html'});
       response.end();
     });
-  }
-
-  _onRemoteRequest = (request: HapRequest, remoteSession: RemoteSession, session: Session, events: any) => {
-    debug('[%s] Remote Request: %s', this.accessoryInfo.username, request.messageType);
-    if (request.messageType === HapRequestMessageTypes.PAIR_VERIFY)
-      this._handleRemotePairVerify(request, remoteSession, session);
-    else if (request.messageType === HapRequestMessageTypes.DISCOVERY)
-      this._handleRemoteAccessories(request, remoteSession, session);
-    else if (request.messageType === HapRequestMessageTypes.WRITE_CHARACTERISTICS)
-      this._handleRemoteCharacteristicsWrite(request, remoteSession, session, events);
-    else if (request.messageType === HapRequestMessageTypes.READ_CHARACTERISTICS)
-      this._handleRemoteCharacteristicsRead(request, remoteSession, session, events);
-    else
-      debug('[%s] Remote Request Detail: %s', this.accessoryInfo.username, require('util').inspect(request, {
-        showHidden: false,
-        depth: null
-      }));
   }
 
   _onEncrypt = (data: Buffer, encrypted: { data: Buffer; }, session: Session) => {
@@ -649,96 +605,6 @@ export class HAPServer extends EventEmitter<Events> {
     session._pairVerifyState = undefined;
   }
 
-  _handleRemotePairVerify = (request: HapRequest, remoteSession: RemoteSession, session: Session) => {
-    var objects = tlv.decode(request.requestBody);
-    var sequence = objects[TLVValues.SEQUENCE_NUM][0]; // value is single byte with sequence number
-    if (sequence == 0x01)
-      this._handleRemotePairVerifyStepOne(request, remoteSession, session, objects);
-    else if (sequence == 0x03)
-      this._handleRemotePairVerifyStepTwo(request, remoteSession, session, objects);
-  }
-
-  _handleRemotePairVerifyStepOne = (request: HapRequest, remoteSession: RemoteSession, session: Session, objects: Record<number, Buffer>) => {
-    debug("[%s] Remote Pair verify step 1/2", this.accessoryInfo.username);
-    var clientPublicKey = objects[TLVValues.PUBLIC_KEY]; // Buffer
-    // generate new encryption keys for this session
-    var keyPair = encryption.generateCurve25519KeyPair();
-    var secretKey = Buffer.from(keyPair.secretKey);
-    var publicKey = Buffer.from(keyPair.publicKey);
-    var sharedSec = Buffer.from(encryption.generateCurve25519SharedSecKey(secretKey, clientPublicKey));
-    var usernameData = Buffer.from(this.accessoryInfo.username);
-    var material = Buffer.concat([publicKey, usernameData, clientPublicKey]);
-    var privateKey = Buffer.from(this.accessoryInfo.signSk);
-    var serverProof = tweetnacl.sign.detached(material, privateKey);
-    var encSalt = Buffer.from("Pair-Verify-Encrypt-Salt");
-    var encInfo = Buffer.from("Pair-Verify-Encrypt-Info");
-    var outputKey = hkdf.HKDF("sha512", encSalt, sharedSec, encInfo, 32).slice(0, 32);
-    // store keys in a new instance of HAPEncryption
-    var enc = new HAPEncryption();
-    enc.clientPublicKey = clientPublicKey;
-    enc.secretKey = secretKey;
-    enc.publicKey = publicKey;
-    enc.sharedSec = sharedSec;
-    enc.hkdfPairEncKey = outputKey;
-    // store this in the current TCP session
-    session.encryption = enc;
-    // compose the response data in TLV format
-    var message = tlv.encode(TLVValues.USERNAME, usernameData, TLVValues.PROOF, serverProof);
-    // encrypt the response
-    var ciphertextBuffer = Buffer.alloc(message.length);
-    var macBuffer = Buffer.alloc(16);
-    encryption.encryptAndSeal(outputKey, Buffer.from("PV-Msg02"), message, null, ciphertextBuffer, macBuffer);
-    var response = tlv.encode(TLVValues.SEQUENCE_NUM, 0x02, TLVValues.ENCRYPTED_DATA, Buffer.concat([ciphertextBuffer, macBuffer]), TLVValues.PUBLIC_KEY, publicKey);
-    remoteSession.responseMessage(request, response);
-  }
-
-  _handleRemotePairVerifyStepTwo = (request: HapRequest, remoteSession: RemoteSession, session: Session, objects: Record<number, Buffer>) => {
-    debug("[%s] Remote Pair verify step 2/2", this.accessoryInfo.username);
-    var encryptedData = objects[TLVValues.ENCRYPTED_DATA];
-    var messageData = Buffer.alloc(encryptedData.length - 16);
-    var authTagData = Buffer.alloc(16);
-    encryptedData.copy(messageData, 0, 0, encryptedData.length - 16);
-    encryptedData.copy(authTagData, 0, encryptedData.length - 16, encryptedData.length);
-    var plaintextBuffer = Buffer.alloc(messageData.length);
-    // instance of HAPEncryption (created in handlePairVerifyStepOne)
-    var enc = session.encryption!;
-    if (!encryption.verifyAndDecrypt(enc.hkdfPairEncKey, Buffer.from("PV-Msg03"), messageData, authTagData, null, plaintextBuffer)) {
-      debug("[%s] M3: Invalid signature", this.accessoryInfo.username);
-      var response = tlv.encode(TLVValues.STATE, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION);
-      remoteSession.responseMessage(request, response);
-      return;
-    }
-    var decoded = tlv.decode(plaintextBuffer);
-    var clientUsername = decoded[TLVValues.USERNAME];
-    var proof = decoded[TLVValues.PROOF];
-    var material = Buffer.concat([enc.clientPublicKey, clientUsername, enc.publicKey]);
-    // since we're paired, we should have the public key stored for this client
-    var clientPublicKey = this.accessoryInfo.getClientPublicKey(clientUsername.toString());
-    // if we're not actually paired, then there's nothing to verify - this client thinks it's paired with us but we
-    // disagree. Respond with invalid request (seems to match HomeKit Accessory Simulator behavior)
-    if (!clientPublicKey) {
-      debug("[%s] Client %s attempting to verify, but we are not paired; rejecting client", this.accessoryInfo.username, clientUsername);
-      var response = tlv.encode(TLVValues.STATE, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION);
-      remoteSession.responseMessage(request, response);
-      return;
-    }
-    if (!tweetnacl.sign.detached.verify(material, proof, clientPublicKey)) {
-      debug("[%s] Client %s provided an invalid signature", this.accessoryInfo.username, clientUsername);
-      var response = tlv.encode(TLVValues.STATE, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION);
-      remoteSession.responseMessage(request, response);
-      return;
-    }
-    debug("[%s] Client %s verification complete", this.accessoryInfo.username, clientUsername);
-    var encSalt = Buffer.from("Control-Salt");
-    var infoRead = Buffer.from("Control-Read-Encryption-Key");
-    var infoWrite = Buffer.from("Control-Write-Encryption-Key");
-    enc.accessoryToControllerKey = hkdf.HKDF("sha512", encSalt, enc.sharedSec, infoRead, 32);
-    enc.controllerToAccessoryKey = hkdf.HKDF("sha512", encSalt, enc.sharedSec, infoWrite, 32);
-    var response = tlv.encode(TLVValues.SEQUENCE_NUM, 0x04);
-    remoteSession.responseMessage(request, response);
-    session.establishSession(clientUsername.toString());
-  }
-
   /**
    * Pair add/remove/list
    */
@@ -842,30 +708,6 @@ export class HAPServer extends EventEmitter<Events> {
       response.writeHead(200, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify(accessories));
     }));
-  }
-
-  _handleRemoteAccessories = (request: HapRequest, remoteSession: RemoteSession, session: Session) => {
-    var deserializedRequest = JSON.parse(request.requestBody);
-    if (!deserializedRequest['attribute-database']) {
-      var response = {
-        'configuration-number': this.accessoryInfo.configVersion
-      };
-      remoteSession.responseMessage(request, Buffer.from(JSON.stringify(response)));
-    } else {
-      var self = this;
-      // call out to listeners to retrieve the latest accessories JSON
-      this.emit(HAPServerEventTypes.ACCESSORIES, once((err: Error, accessories: Accessory[]) => {
-        if (err) {
-          debug("[%s] Error getting accessories: %s", this.accessoryInfo.username, err.message);
-          return;
-        }
-        var response = {
-          'configuration-number': self.accessoryInfo.configVersion,
-          'attribute-database': accessories
-        };
-        remoteSession.responseMessage(request, Buffer.from(JSON.stringify(response)));
-      }));
-    }
   }
 
   // Called when the client wishes to get or set particular characteristics
@@ -1075,46 +917,6 @@ export class HAPServer extends EventEmitter<Events> {
     }
   }
 
-  _handleRemoteCharacteristicsWrite = (request: HapRequest, remoteSession: RemoteSession, session: Session, events: any) => {
-    var data = JSON.parse(request.requestBody.toString());
-    // call out to listeners to retrieve the latest accessories JSON
-    this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, data, events, once((err: Error, characteristics: CharacteristicData[]) => {
-      if (err) {
-        debug("[%s] Error setting characteristics: %s", this.accessoryInfo.username, err.message);
-        // rewrite characteristics array to include error status for each characteristic requested
-        characteristics = [];
-        for (var i in data) {
-          characteristics.push({
-            aid: data[i].aid,
-            iid: data[i].iid,
-            s: Status.SERVICE_COMMUNICATION_FAILURE
-          } as any);
-        }
-      }
-      remoteSession.responseMessage(request, Buffer.from(JSON.stringify(characteristics)));
-    }), true);
-  }
-
-  _handleRemoteCharacteristicsRead = (request: HapRequest, remoteSession: RemoteSession, session: Session, events: any) => {
-    var data = JSON.parse(request.requestBody.toString());
-    this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, data, events, (err: Error, characteristics: CharacteristicData[]) => {
-      if (!characteristics && !err)
-        err = new Error("characteristics not supplied by the get-characteristics event callback");
-      if (err) {
-        debug("[%s] Error getting characteristics: %s", this.accessoryInfo.username, err.stack);
-        // rewrite characteristics array to include error status for each characteristic requested
-        characteristics = [];
-        for (var i in data) {
-          characteristics.push({
-            aid: data[i].aid,
-            iid: data[i].iid,
-            s: Status.SERVICE_COMMUNICATION_FAILURE
-          } as any);
-        }
-      }
-      remoteSession.responseMessage(request, Buffer.from(JSON.stringify(characteristics)));
-    }, true);
-  }
 }
 
 

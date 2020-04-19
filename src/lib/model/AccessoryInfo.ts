@@ -30,19 +30,13 @@ export class AccessoryInfo {
   displayName: string;
   category: Categories;
   pincode: string;
-  signSk: any;
-  signPk: any;
+  signSk: Buffer;
+  signPk: Buffer;
   pairedClients: Record<string, PairingInformation>;
   pairedAdminClients: number;
   configVersion: number;
   configHash: string;
   setupID: string;
-  relayEnabled: boolean;
-  relayState: number;
-  relayAccessoryID: string;
-  relayAdminID: string;
-  relayPairedControllers: Record<string, string>;
-  accessoryBagURL: string;
 
   private constructor(username: MacAddress) {
     this.username = username;
@@ -58,13 +52,6 @@ export class AccessoryInfo {
     this.configHash = "";
 
     this.setupID = "";
-
-    this.relayEnabled = false;
-    this.relayState = 2;
-    this.relayAccessoryID = "";
-    this.relayAdminID = "";
-    this.relayPairedControllers = {};
-    this.accessoryBagURL = "";
   }
 
   /**
@@ -130,15 +117,6 @@ export class AccessoryInfo {
       this.pairedAdminClients--;
     delete this.pairedClients[username];
 
-    if (Object.keys(this.pairedClients).length == 0) {
-      this.relayEnabled = false;
-      this.relayState = 2;
-      this.relayAccessoryID = "";
-      this.relayAdminID = "";
-      this.relayPairedControllers = {};
-      this.accessoryBagURL = "";
-    }
-
     Session.destroyExistingConnectionsAfterUnpair(controller, username);
   };
 
@@ -156,7 +134,7 @@ export class AccessoryInfo {
     return !!pairingInformation && pairingInformation.permission === PermissionTypes.ADMIN;
   };
 
-// Gets the public key for a paired client as a Buffer, or falsey value if not paired.
+  // Gets the public key for a paired client as a Buffer, or falsey value if not paired.
   getClientPublicKey = (username: string) => {
     const pairingInformation = this.pairedClients[username];
     if (pairingInformation) {
@@ -166,25 +144,9 @@ export class AccessoryInfo {
     }
   };
 
-// Returns a boolean indicating whether this accessory has been paired with a client.
+  // Returns a boolean indicating whether this accessory has been paired with a client.
   paired = (): boolean => {
     return Object.keys(this.pairedClients).length > 0; // if we have any paired clients, we're paired.
-  }
-
-  updateRelayEnableState = (state: boolean) => {
-    this.relayEnabled = state;
-  }
-
-  updateRelayState = (newState: number) => {
-    this.relayState = newState;
-  }
-
-  addPairedRelayClient = (username: string, accessToken: string) => {
-    this.relayPairedControllers[username] = accessToken;
-  }
-
-  removePairedRelayClient = (username: string) => {
-    delete this.relayPairedControllers[username];
   }
 
   save = () => {
@@ -202,12 +164,6 @@ export class AccessoryInfo {
       configVersion: this.configVersion,
       configHash: this.configHash,
       setupID: this.setupID,
-      relayEnabled: this.relayEnabled,
-      relayState: this.relayState,
-      relayAccessoryID: this.relayAccessoryID,
-      relayAdminID: this.relayAdminID,
-      relayPairedControllers: this.relayPairedControllers,
-      accessoryBagURL: this.accessoryBagURL
     };
 
     for (var username in this.pairedClients) {
@@ -275,13 +231,6 @@ export class AccessoryInfo {
       info.configHash = saved.configHash || "";
 
       info.setupID = saved.setupID || "";
-
-      info.relayEnabled = saved.relayEnabled || false;
-      info.relayState = saved.relayState || 2;
-      info.relayAccessoryID = saved.relayAccessoryID || "";
-      info.relayAdminID = saved.relayAdminID || "";
-      info.relayPairedControllers = saved.relayPairedControllers || {};
-      info.accessoryBagURL = saved.accessoryBagURL || "";
 
       return info;
     }

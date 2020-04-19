@@ -40,9 +40,6 @@ import {
 } from "./gen/HomeKit";
 import { ControllerStorage } from "./model/ControllerStorage";
 
-// var HomeKitTypes = require('./gen/HomeKitTypes');
-// var RelayServer = require("./util/relayserver").RelayServer;
-
 const debug = createDebug('HAP-NodeJS:Accessory');
 const MAX_ACCESSORIES = 149; // Maximum number of bridged accessories per bridge.
 
@@ -226,7 +223,6 @@ export class Accessory extends EventEmitter<Events> {
   _advertiser?: Advertiser;
   _server?: HAPServer;
   _setupURI?: string;
-  relayServer: any;
 
   constructor(public displayName: string, public UUID: string) {
     super();
@@ -908,11 +904,6 @@ export class Accessory extends EventEmitter<Events> {
     this._accessoryInfo.pincode = info.pincode;
     this._accessoryInfo.save();
 
-    // if (this._isBridge) {
-    //   this.relayServer = new RelayServer(this._accessoryInfo);
-    //   this.addService(this.relayServer.relayService());
-    // }
-
     // create our IdentifierCache so we can provide clients with stable aid/iid's
     this._identifierCache = IdentifierCache.load(info.username);
 
@@ -960,7 +951,7 @@ export class Accessory extends EventEmitter<Events> {
     this._advertiser = new Advertiser(this._accessoryInfo, info.mdns);
 
     // create our HAP server which handles all communication between iOS devices and us
-    this._server = new HAPServer(this._accessoryInfo, this.relayServer);
+    this._server = new HAPServer(this._accessoryInfo);
     this._server.allowInsecureRequest = !!allowInsecureRequest;
     this._server.on(HAPServerEventTypes.LISTENING, this._onListening.bind(this));
     this._server.on(HAPServerEventTypes.IDENTIFY, this._handleIdentify.bind(this));
