@@ -30,6 +30,21 @@ describe('Characteristic', () => {
 
       expect(characteristic.props).toEqual(NEW_PROPS);
     });
+
+    it('should fail when setting invalid value range', function () {
+      const characteristic = createCharacteristic(Formats.INT);
+
+      const setProps = (min: number, max: number) => characteristic.setProps({
+        minValue: min,
+        maxValue: max,
+      })
+
+      expect(() => setProps(-256, -512)).toThrow(Error);
+      expect(() => setProps(0, 0)).toThrow(Error);
+      expect(() => setProps(0, -3)).toThrow(Error);
+      expect(() => setProps(6, 0)).toThrow(Error);
+      expect(() => setProps(678, 234)).toThrow(Error);
+    });
   });
 
   describe('#subscribe()', () => {

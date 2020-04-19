@@ -392,6 +392,8 @@ export class Characteristic extends EventEmitter<Events> {
       minStep: null,
       perms: []
     };
+
+    this.setProps({}); // ensure sanity checks are called
   }
 
   /**
@@ -419,6 +421,15 @@ export class Characteristic extends EventEmitter<Events> {
         // @ts-ignore
         this.props[key] = props[key];
       }
+
+    if (this.props.minValue != null && this.props.maxValue != null) { // the eqeq instead of eqeqeq is important here
+      if (this.props.minValue >= this.props.maxValue) { // preventing DOS attack, see https://github.com/homebridge/HAP-NodeJS/issues/690
+        this.props.minValue = undefined;
+        this.props.maxValue = undefined;
+        throw new Error("Error setting CharacteristicsProps for '" + this.displayName + "': 'minValue' cannot be greater or equal the 'maxValue'!");
+      }
+    }
+
     return this;
   }
 
