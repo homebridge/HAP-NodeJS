@@ -11,7 +11,7 @@ import {
     SiriAudioStreamProducer, AudioCodecConfiguration
 } from "..";
 
-const debug = createDebug("Remote:GStreamer");
+const debug = createDebug("HAP-NodeJS:Remote:GStreamer");
 
 const enum AudioType {
     GENERIC = 2049,

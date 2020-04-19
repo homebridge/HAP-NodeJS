@@ -11,7 +11,7 @@ import {EventEmitter as NodeEventEmitter} from "events";
 import {EventEmitter} from "../EventEmitter";
 import Timeout = NodeJS.Timeout;
 
-const debug = createDebug('DataStream:Server');
+const debug = createDebug('HAP-NodeJS:DataStream:Server');
 
 export type PreparedDataStreamSession = {
 

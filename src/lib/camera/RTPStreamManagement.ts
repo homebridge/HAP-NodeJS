@@ -18,7 +18,7 @@ import {CameraController, CameraStreamingDelegate} from "../controller";
 import {Status} from "../HAPServer";
 import {LegacyCameraSource, LegacyCameraSourceAdapter, once, uuid} from "../../index";
 
-const debug = createDebug('StreamController');
+const debug = createDebug('HAP-NodeJS:Camera:RTPStreamManagement');
 // ---------------------------------- TLV DEFINITIONS START ----------------------------------
 
 const enum StreamingStatusTypes {

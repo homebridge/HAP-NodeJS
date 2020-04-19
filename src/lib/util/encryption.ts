@@ -6,7 +6,7 @@ import tweetnacl from 'tweetnacl';
 
 import * as chacha20poly1305 from './chacha20poly1305';
 
-const debug = createDebug('encryption');
+const debug = createDebug('HAP-NodeJS:encryption');
 
 function fromHex(h: string) {
   h.replace(/([^0-9a-f])/g, '');

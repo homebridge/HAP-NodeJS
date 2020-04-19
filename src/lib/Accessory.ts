@@ -43,7 +43,7 @@ import { ControllerStorage } from "./model/ControllerStorage";
 // var HomeKitTypes = require('./gen/HomeKitTypes');
 // var RelayServer = require("./util/relayserver").RelayServer;
 
-const debug = createDebug('Accessory');
+const debug = createDebug('HAP-NodeJS:Accessory');
 const MAX_ACCESSORIES = 149; // Maximum number of bridged accessories per bridge.
 
 // Known category values. Category is a hint to iOS clients about what "type" of Accessory this represents, for UI only.

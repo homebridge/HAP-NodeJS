@@ -6,7 +6,7 @@ import createDebug from 'debug';
 // welcome to hell :)
 // in this file lies madness and frustration. and its not only about HDS. also JavaScript is hell
 
-const debug = createDebug("DataStream:Parser");
+const debug = createDebug("HAP-NodeJS:DataStream:Parser");
 
 class Magics {
     static readonly TERMINATOR = { type: "terminator" };

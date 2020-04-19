@@ -16,7 +16,7 @@ import { EventEmitter } from './EventEmitter';
 import { PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
 import { SRP, SrpServer } from "fast-srp-hap";
 
-const debug = createDebug('HAPServer');
+const debug = createDebug('HAP-NodeJS:HAPServer');
 
 const enum TLVValues {
   REQUEST_TYPE = 0x00,

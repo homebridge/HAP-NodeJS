@@ -13,7 +13,7 @@ import {
 import * as uuid from './util/uuid';
 import { CharacteristicValue, NodeCallback, Nullable } from '../types';
 
-const debug = createDebug('AccessoryLoader');
+const debug = createDebug('HAP-NodeJS:AccessoryLoader');
 
 /**
  * Loads all accessories from the given folder. Handles object-literal-style accessories, "accessory factories",

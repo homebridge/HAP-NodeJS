@@ -5,7 +5,7 @@ import {ControllerType, SerializableController} from "../controller";
 import {Accessory} from "../Accessory";
 import { HAPStorage } from "./HAPStorage";
 
-const debug = createDebug("ControllerStorage");
+const debug = createDebug("HAP-NodeJS:ControllerStorage");
 
 interface StorageLayout {
     accessories: Record<string, StoredControllerData[]>, // indexed by accessory UUID

@@ -34,7 +34,7 @@ import {AudioStreamManagement, Siri, TargetControl, TargetControlManagement} fro
 import {DataStreamTransportManagement} from "../gen/HomeKit-DataStream";
 import Timeout = NodeJS.Timeout;
 
-const debug = createDebug('Remote:Controller');
+const debug = createDebug('HAP-NodeJS:Remote:Controller');
 
 const enum TargetControlCommands {
     MAXIMUM_TARGETS = 0x01,

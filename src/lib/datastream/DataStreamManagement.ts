@@ -13,7 +13,7 @@ import {DataStreamServer, DataStreamServerEventMap, GlobalEventHandler, GlobalRe
 import {Session} from "../util/eventedhttp";
 import {Event} from "../EventEmitter";
 
-const debug = createDebug('DataStream:Management');
+const debug = createDebug('HAP-NodeJS:DataStream:Management');
 
 const enum TransferTransportConfigurationTypes {
     TRANSFER_TRANSPORT_CONFIGURATION = 1,

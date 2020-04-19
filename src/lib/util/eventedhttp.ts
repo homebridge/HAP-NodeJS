@@ -9,7 +9,7 @@ import { EventEmitter } from '../EventEmitter';
 import { HAPEncryption } from '../HAPServer';
 import { SrpServer } from "fast-srp-hap";
 
-const debug = createDebug('EventedHTTPServer');
+const debug = createDebug('HAP-NodeJS:EventedHTTPServer');
 
 export const enum EventedHTTPServerEvents {
   LISTENING = 'listening',
