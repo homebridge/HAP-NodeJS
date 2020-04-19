@@ -48,7 +48,7 @@ const enum SupportedButtonConfigurationTypes {
     BUTTON_TYPE = 0x02
 }
 
-export enum ButtonType {
+export const enum ButtonType {
     UNDEFINED = 0x00,
     MENU = 0x01,
     PLAY_PAUSE = 0x02,
@@ -105,7 +105,7 @@ const enum ButtonEvent {
     ACTIVE_IDENTIFIER = 0x04,
 }
 
-export enum ButtonState {
+export const enum ButtonState {
     UP = 0x00,
     DOWN = 0x01
 }
@@ -475,7 +475,6 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
      * @param button {ButtonType} - button to be pressed
      */
     pushButton = (button: ButtonType) => {
-        debug("Pressing button %s", ButtonType[button]);
         this.sendButtonEvent(button, ButtonState.DOWN);
     };
 
@@ -485,7 +484,6 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
      * @param button {ButtonType} - button which was released
      */
     releaseButton = (button: ButtonType) => {
-        debug("Released button %s", ButtonType[button]);
         this.sendButtonEvent(button, ButtonState.UP);
     };
 
@@ -853,6 +851,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
                 if (entry[ButtonConfigurationTypes.BUTTON_NAME]) {
                     buttonName = entry[ButtonConfigurationTypes.BUTTON_NAME].toString();
                 } else {
+                    // @ts-ignore
                     buttonName = ButtonType[buttonType as ButtonType];
                 }
 

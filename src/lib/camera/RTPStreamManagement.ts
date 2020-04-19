@@ -447,17 +447,20 @@ export type ReconfiguredVideoInfo = {
 export class RTPStreamManagement {
 
   /**
-   * @deprecated won't be updated anymore. Please use the SRTPCryptoSuites const enum above. Scheduled to be removed in 2021-06.
+   * @deprecated Please use the SRTPCryptoSuites const enum above. Scheduled to be removed in 2021-06.
    */
-  static SRTPCryptoSuites = Object.freeze({ AES_CM_128_HMAC_SHA1_80: 0x00, AES_CM_256_HMAC_SHA1_80: 0x01, NONE: 0x02 });
+  // @ts-ignore
+  static SRTPCryptoSuites = SRTPCryptoSuites;
   /**
-   * @deprecated won't be updated anymore. Please use the H264Profile const enum above. Scheduled to be removed in 2021-06.
+   * @deprecated Please use the H264Profile const enum above. Scheduled to be removed in 2021-06.
    */
-  static VideoCodecParamProfileIDTypes = Object.freeze({ BASELINE: 0x00, MAIN: 0x01, HIGH: 0x02 });
+  // @ts-ignore
+  static VideoCodecParamProfileIDTypes = H264Profile;
   /**
    * @deprecated won't be updated anymore. Please use the H264Level const enum above. Scheduled to be removed in 2021-06.
    */
-  static VideoCodecParamLevelTypes = Object.freeze({ LEVEL3_1: 0x00, LEVEL3_2: 0x01, LEVEL4_0: 0x02 });
+  // @ts-ignore
+  static VideoCodecParamLevelTypes = H264Level;
 
   private readonly delegate: CameraStreamingDelegate;
   readonly service: CameraRTPStreamManagement; // must be public for backwards compatibility

@@ -142,53 +142,20 @@ type Events = {
 export class Characteristic extends EventEmitter<Events> {
 
   /**
-   * @deprecated won't be updated anymore. Please use the Formats const enum above. Scheduled to be removed in 2021-06.
+   * @deprecated Please use the Formats const enum above. Scheduled to be removed in 2021-06.
    */
-  static Formats = Object.freeze({
-    BOOL: 'bool',
-    INT: 'int',
-    FLOAT: 'float',
-    STRING: 'string',
-    UINT8: 'uint8',
-    UINT16: 'uint16',
-    UINT32: 'uint32',
-    UINT64: 'uint64',
-    DATA: 'data',
-    TLV8: 'tlv8',
-    ARRAY: 'array', //Not in HAP Spec
-    DICTIONARY: 'dict' //Not in HAP Spec
-  });
+  // @ts-ignore
+  static Formats = Formats;
   /**
-   * @deprecated won't be updated anymore. Please use the Units const enum above. Scheduled to be removed in 2021-06.
+   * @deprecated Please use the Units const enum above. Scheduled to be removed in 2021-06.
    */
-  static Units = Object.freeze({
-    CELSIUS: "celsius",
-    PERCENTAGE: "percentage",
-    ARC_DEGREE: "arcdegrees",
-    LUX: "lux",
-    SECONDS: "seconds",
-  });
+  // @ts-ignore
+  static Units = Units;
   /**
-   * @deprecated won't be updated anymore. Please use the Perms const enum above. Scheduled to be removed in 2021-06.
+   * @deprecated Please use the Perms const enum above. Scheduled to be removed in 2021-06.
    */
-  static Perms = Object.freeze({
-    /**
-     * @deprecated replaced by {@link PAIRED_READ}. Kept for backwards compatibility.
-     */
-    READ: 'pr',
-    /**
-     * @deprecated replaced by {@link PAIRED_WRITE}. Kept for backwards compatibility.
-     */
-    WRITE: 'pw',
-    PAIRED_READ: 'pr',
-    PAIRED_WRITE: 'pw',
-    NOTIFY: 'ev',
-    EVENTS: 'ev',
-    ADDITIONAL_AUTHORIZATION: 'aa',
-    TIMED_WRITE: 'tw',
-    HIDDEN: 'hd',
-    WRITE_RESPONSE: 'wr'
-  });
+  // @ts-ignore
+  static Perms = Perms;
 
   static AccessControlLevel: typeof HomeKitTypes.Generated.AccessControlLevel;
   static AccessoryFlags: typeof HomeKitTypes.Generated.AccessoryFlags;
