@@ -36,7 +36,7 @@ jobs:
           registry-url: https://registry.npmjs.org/
       - run: npm ci
       - run: node .github/workflows/prerelease.js
-      - run: npm --no-git-tag-version version prerelease --preid=beta
+      - run: npm --no-git-tag-version version pre --preid=beta
       - run: npm publish --tag=beta
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}

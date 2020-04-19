@@ -29,6 +29,7 @@
     "@types/node": "^10.17.19",
     "jest": "^25.3.0",
     "rimraf": "^3.0.2",
+    "semver": "^7.3.2",
     "simple-plist": "^1.1.0",
     "ts-jest": "^25.3.1",
     "ts-node": "^8.8.2",
