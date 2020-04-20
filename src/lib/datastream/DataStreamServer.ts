@@ -1,8 +1,7 @@
 import createDebug from 'debug';
 import assert from 'assert';
 
-import * as encryption from '../util/encryption';
-import * as hkdf from '../util/hkdf';
+import * as hapCrypto from '../util/hapCrypto';
 import {DataStreamParser, DataStreamReader, DataStreamWriter, Int64} from './DataStreamParser';
 import crypto from 'crypto';
 import net, {Socket} from 'net';
@@ -222,8 +221,8 @@ export class DataStreamServer extends EventEmitter<DataStreamServerEventMap> {
         const accessoryKeySalt = crypto.randomBytes(32);
         const salt = Buffer.concat([controllerKeySalt, accessoryKeySalt]);
 
-        const accessoryToControllerEncryptionKey = hkdf.HKDF("sha512", salt, session.encryption!.sharedSec, DataStreamServer.accessoryToControllerInfo, 32);
-        const controllerToAccessoryEncryptionKey = hkdf.HKDF("sha512", salt, session.encryption!.sharedSec, DataStreamServer.controllerToAccessoryInfo, 32);
+        const accessoryToControllerEncryptionKey = hapCrypto.HKDF("sha512", salt, session.encryption!.sharedSec, DataStreamServer.accessoryToControllerInfo, 32);
+        const controllerToAccessoryEncryptionKey = hapCrypto.HKDF("sha512", salt, session.encryption!.sharedSec, DataStreamServer.controllerToAccessoryInfo, 32);
 
         const preparedSession: PreparedDataStreamSession = {
             session: session,
@@ -773,11 +772,11 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
     }
 
     decryptHDSFrame(frame: HDSFrame, keyOverwrite?: Buffer): boolean {
-        encryption.writeUInt64LE(this.controllerToAccessoryNonce, this.controllerToAccessoryNonceBuffer, 0); // update nonce buffer
+        hapCrypto.writeUInt64LE(this.controllerToAccessoryNonce, this.controllerToAccessoryNonceBuffer, 0); // update nonce buffer
 
         const key = keyOverwrite || this.controllerToAccessoryEncryptionKey!;
         try {
-            frame.plaintextPayload = encryption.chacha20_poly1305_decryptAndVerify(key, this.controllerToAccessoryNonceBuffer,
+            frame.plaintextPayload = hapCrypto.chacha20_poly1305_decryptAndVerify(key, this.controllerToAccessoryNonceBuffer,
               frame.header, frame.cipheredPayload, frame.authTag);
             this.controllerToAccessoryNonce++; // we had a successful encryption, increment the nonce
             return true;
@@ -887,8 +886,8 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
 
         const frameHeader = Buffer.concat([frameTypeBuffer, frameLengthBuffer]);
 
-        encryption.writeUInt64LE(this.accessoryToControllerNonce++, this.accessoryToControllerNonceBuffer);
-        const encrypted = encryption.chacha20_poly1305_encryptAndSeal(this.accessoryToControllerEncryptionKey!, this.accessoryToControllerNonceBuffer, frameHeader, payloadBuffer);
+        hapCrypto.writeUInt64LE(this.accessoryToControllerNonce++, this.accessoryToControllerNonceBuffer);
+        const encrypted = hapCrypto.chacha20_poly1305_encryptAndSeal(this.accessoryToControllerEncryptionKey!, this.accessoryToControllerNonceBuffer, frameHeader, payloadBuffer);
 
         this.socket.write(Buffer.concat([frameHeader, encrypted.ciphertext, encrypted.authTag]));
 

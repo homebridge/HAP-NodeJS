@@ -4,8 +4,7 @@ import createDebug from 'debug';
 import tweetnacl from 'tweetnacl';
 import url from 'url';
 
-import * as encryption from './util/encryption';
-import * as hkdf from './util/hkdf';
+import * as hapCrypto from './util/hapCrypto';
 import * as tlv from './util/tlv';
 import { EventedHTTPServer, EventedHTTPServerEvents, Session } from './util/eventedhttp';
 import { once } from './util/once';
@@ -297,7 +296,7 @@ export class HAPServer extends EventEmitter<Events> {
     // So we want to make sure that we aren't encrypting data until we have *received* some encrypted data from the
     // client first.
     if (enc && enc.accessoryToControllerKey.length > 0 && enc.controllerToAccessoryCount.value > 0) {
-      encrypted.data = encryption.layerEncrypt(data, enc.accessoryToControllerCount, enc.accessoryToControllerKey);
+      encrypted.data = hapCrypto.layerEncrypt(data, enc.accessoryToControllerCount, enc.accessoryToControllerKey);
     }
   }
 
@@ -307,7 +306,7 @@ export class HAPServer extends EventEmitter<Events> {
     // if controllerToAccessoryKey is not empty, then encryption is enabled for this connection.
     if (enc && enc.controllerToAccessoryKey.length > 0) {
       try {
-        decrypted.data = encryption.layerDecrypt(data, enc.controllerToAccessoryCount, enc.controllerToAccessoryKey, enc.extraInfo);
+        decrypted.data = hapCrypto.layerDecrypt(data, enc.controllerToAccessoryCount, enc.controllerToAccessoryKey, enc.extraInfo);
       } catch (error) {
         decrypted.error = error;
       }
@@ -435,11 +434,11 @@ export class HAPServer extends EventEmitter<Events> {
     var S_private = srpServer.computeK();
     var encSalt = Buffer.from("Pair-Setup-Encrypt-Salt");
     var encInfo = Buffer.from("Pair-Setup-Encrypt-Info");
-    var outputKey = hkdf.HKDF("sha512", encSalt, S_private, encInfo, 32);
+    var outputKey = hapCrypto.HKDF("sha512", encSalt, S_private, encInfo, 32);
 
     let plaintext;
     try {
-      plaintext = encryption.chacha20_poly1305_decryptAndVerify(outputKey, Buffer.from("PS-Msg05"), null, messageData, authTagData);
+      plaintext = hapCrypto.chacha20_poly1305_decryptAndVerify(outputKey, Buffer.from("PS-Msg05"), null, messageData, authTagData);
     } catch (error) {
       debug("[%s] Error while decrypting and verifying M5 subTlv: %s", this.accessoryInfo.username);
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
@@ -462,7 +461,7 @@ export class HAPServer extends EventEmitter<Events> {
     var S_private = session.srpServer!.computeK();
     var controllerSalt = Buffer.from("Pair-Setup-Controller-Sign-Salt");
     var controllerInfo = Buffer.from("Pair-Setup-Controller-Sign-Info");
-    var outputKey = hkdf.HKDF("sha512", controllerSalt, S_private, controllerInfo, 32);
+    var outputKey = hapCrypto.HKDF("sha512", controllerSalt, S_private, controllerInfo, 32);
     var completeData = Buffer.concat([outputKey, clientUsername, clientLTPK]);
     if (!tweetnacl.sign.detached.verify(completeData, clientProof, clientLTPK)) {
       debug("[%s] Invalid signature", this.accessoryInfo.username);
@@ -480,7 +479,7 @@ export class HAPServer extends EventEmitter<Events> {
     var S_private = session.srpServer!.computeK();
     var accessorySalt = Buffer.from("Pair-Setup-Accessory-Sign-Salt");
     var accessoryInfo = Buffer.from("Pair-Setup-Accessory-Sign-Info");
-    var outputKey = hkdf.HKDF("sha512", accessorySalt, S_private, accessoryInfo, 32);
+    var outputKey = hapCrypto.HKDF("sha512", accessorySalt, S_private, accessoryInfo, 32);
     var serverLTPK = this.accessoryInfo.signPk;
     var usernameData = Buffer.from(this.accessoryInfo.username);
     var material = Buffer.concat([outputKey, usernameData, serverLTPK]);
@@ -488,7 +487,7 @@ export class HAPServer extends EventEmitter<Events> {
     var serverProof = tweetnacl.sign.detached(material, privateKey);
     var message = tlv.encode(TLVValues.USERNAME, usernameData, TLVValues.PUBLIC_KEY, serverLTPK, TLVValues.PROOF, serverProof);
 
-    const encrypted = encryption.chacha20_poly1305_encryptAndSeal(hkdfEncKey, Buffer.from("PS-Msg06"), null, message);
+    const encrypted = hapCrypto.chacha20_poly1305_encryptAndSeal(hkdfEncKey, Buffer.from("PS-Msg06"), null, message);
 
     // finally, notify listeners that we have been paired with a client
     this.emit(HAPServerEventTypes.PAIR, clientUsername.toString(), clientLTPK, once((err?: Error) => {
@@ -528,17 +527,17 @@ export class HAPServer extends EventEmitter<Events> {
     debug("[%s] Pair verify step 1/2", this.accessoryInfo.username);
     var clientPublicKey = objects[TLVValues.PUBLIC_KEY]; // Buffer
     // generate new encryption keys for this session
-    var keyPair = encryption.generateCurve25519KeyPair();
+    var keyPair = hapCrypto.generateCurve25519KeyPair();
     var secretKey = Buffer.from(keyPair.secretKey);
     var publicKey = Buffer.from(keyPair.publicKey);
-    var sharedSec = Buffer.from(encryption.generateCurve25519SharedSecKey(secretKey, clientPublicKey));
+    var sharedSec = Buffer.from(hapCrypto.generateCurve25519SharedSecKey(secretKey, clientPublicKey));
     var usernameData = Buffer.from(this.accessoryInfo.username);
     var material = Buffer.concat([publicKey, usernameData, clientPublicKey]);
     var privateKey = Buffer.from(this.accessoryInfo.signSk);
     var serverProof = tweetnacl.sign.detached(material, privateKey);
     var encSalt = Buffer.from("Pair-Verify-Encrypt-Salt");
     var encInfo = Buffer.from("Pair-Verify-Encrypt-Info");
-    var outputKey = hkdf.HKDF("sha512", encSalt, sharedSec, encInfo, 32).slice(0, 32);
+    var outputKey = hapCrypto.HKDF("sha512", encSalt, sharedSec, encInfo, 32).slice(0, 32);
     // store keys in a new instance of HAPEncryption
     var enc = new HAPEncryption();
     enc.clientPublicKey = clientPublicKey;
@@ -551,7 +550,7 @@ export class HAPServer extends EventEmitter<Events> {
     // compose the response data in TLV format
     var message = tlv.encode(TLVValues.USERNAME, usernameData, TLVValues.PROOF, serverProof);
 
-    const encrypted = encryption.chacha20_poly1305_encryptAndSeal(outputKey, Buffer.from("PV-Msg02"), null, message);
+    const encrypted = hapCrypto.chacha20_poly1305_encryptAndSeal(outputKey, Buffer.from("PV-Msg02"), null, message);
 
     response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
     response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M2, TLVValues.ENCRYPTED_DATA, Buffer.concat([encrypted.ciphertext, encrypted.authTag]), TLVValues.PUBLIC_KEY, publicKey));
@@ -571,7 +570,7 @@ export class HAPServer extends EventEmitter<Events> {
 
     let plaintext;
     try {
-      plaintext = encryption.chacha20_poly1305_decryptAndVerify(enc.hkdfPairEncKey, Buffer.from("PV-Msg03"), null, messageData, authTagData);
+      plaintext = hapCrypto.chacha20_poly1305_decryptAndVerify(enc.hkdfPairEncKey, Buffer.from("PV-Msg03"), null, messageData, authTagData);
     } catch (error) {
       debug("[%s] M3: Failed to decrypt and/or verify", this.accessoryInfo.username);
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
@@ -611,8 +610,8 @@ export class HAPServer extends EventEmitter<Events> {
     var encSalt = Buffer.from("Control-Salt");
     var infoRead = Buffer.from("Control-Read-Encryption-Key");
     var infoWrite = Buffer.from("Control-Write-Encryption-Key");
-    enc.accessoryToControllerKey = hkdf.HKDF("sha512", encSalt, enc.sharedSec, infoRead, 32);
-    enc.controllerToAccessoryKey = hkdf.HKDF("sha512", encSalt, enc.sharedSec, infoWrite, 32);
+    enc.accessoryToControllerKey = hapCrypto.HKDF("sha512", encSalt, enc.sharedSec, infoRead, 32);
+    enc.controllerToAccessoryKey = hapCrypto.HKDF("sha512", encSalt, enc.sharedSec, infoWrite, 32);
     // Our connection is now completely setup. We now want to subscribe this connection to special
     // "keepalive" events for detecting when connections are closed by the client.
     events['keepalive'] = true;

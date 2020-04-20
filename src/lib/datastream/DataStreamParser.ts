@@ -1,5 +1,5 @@
 import * as uuid from '../util/uuid'
-import * as encryption from "../util/encryption"
+import * as hapCrypto from "../util/hapCrypto"
 import assert from 'assert';
 import createDebug from 'debug';
 
@@ -728,7 +728,7 @@ export class DataStreamWriter {
 
     private writeLength64LE(length: number) {
         this.ensureLength(8);
-        encryption.writeUInt64LE(length, this.data, this.writerIndex);
+        hapCrypto.writeUInt64LE(length, this.data, this.writerIndex);
         this.writerIndex += 8;
     }
 

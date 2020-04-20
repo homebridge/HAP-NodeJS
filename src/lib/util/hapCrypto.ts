@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import tweetnacl from 'tweetnacl';
 import assert from 'assert';
+import hkdf from "futoin-hkdf";
 
 export function generateCurve25519KeyPair() {
   return tweetnacl.box.keyPair();
@@ -8,6 +9,10 @@ export function generateCurve25519KeyPair() {
 
 export function generateCurve25519SharedSecKey(priKey: Uint8Array, pubKey: Uint8Array) {
   return tweetnacl.scalarMult(priKey, pubKey);
+}
+
+export function HKDF(hashAlg: string, salt: Buffer, ikm: Buffer, info: Buffer, size: number) {
+  return hkdf(ikm, size, { hash: hashAlg, salt: salt, info: info });
 }
 
 //Security Layer Enc/Dec
