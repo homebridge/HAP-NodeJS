@@ -205,6 +205,7 @@ export class HAPServer extends EventEmitter<Events> {
   };
 
   _httpServer: EventedHTTPServer;
+  private unsuccessfulPairAttempts: number = 0; // after 100 unsuccessful attempts the server won't accept any further attempts. Will currently be reset on a reboot
 
   allowInsecureRequest: boolean;
   _keepAliveTimerID: NodeJS.Timeout;
@@ -350,6 +351,12 @@ export class HAPServer extends EventEmitter<Events> {
         response.end(tlv.encode(TLVValues.STATE, States.M2, TLVValues.ERROR_CODE, Codes.UNAVAILABLE));
         return;
     }
+    if (this.unsuccessfulPairAttempts > 100) {
+      response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
+      response.end(tlv.encode(TLVValues.STATE, States.M2, TLVValues.ERROR_CODE, Codes.MAX_TRIES));
+      return;
+    }
+
     var objects = tlv.decode(requestData);
     var sequence = objects[TLVValues.SEQUENCE_NUM][0]; // value is single byte with sequence number
     if (sequence == States.M1)
@@ -401,6 +408,7 @@ export class HAPServer extends EventEmitter<Events> {
       srpServer.checkM1(M1);
     } catch (err) {
       // most likely the client supplied an incorrect pincode.
+      this.unsuccessfulPairAttempts++;
       debug("[%s] Error while checking pincode: %s", this.accessoryInfo.username, err.message);
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
       response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
