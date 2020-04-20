@@ -100,8 +100,8 @@ type HDSFrame = {
 
     header: Buffer,
     cipheredPayload: Buffer,
-    plaintextPayload: Buffer,
     authTag: Buffer,
+    plaintextPayload?: Buffer,
 
 }
 
@@ -761,7 +761,6 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
                 const hdsFrame: HDSFrame = {
                     header: header,
                     cipheredPayload: cipheredPayload,
-                    plaintextPayload: plaintextPayload,
                     authTag: authTag,
                 };
                 frames.push(hdsFrame);
@@ -777,11 +776,12 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
         encryption.writeUInt64LE(this.controllerToAccessoryNonce, this.controllerToAccessoryNonceBuffer, 0); // update nonce buffer
 
         const key = keyOverwrite || this.controllerToAccessoryEncryptionKey!;
-        if (encryption.verifyAndDecrypt(key, this.controllerToAccessoryNonceBuffer,
-            frame.cipheredPayload, frame.authTag, frame.header, frame.plaintextPayload)) {
+        try {
+            frame.plaintextPayload = encryption.chacha20_poly1305_decryptAndVerify(key, this.controllerToAccessoryNonceBuffer,
+              frame.header, frame.cipheredPayload, frame.authTag);
             this.controllerToAccessoryNonce++; // we had a successful encryption, increment the nonce
             return true;
-        } else {
+        } catch (error) {
             // frame decryption or authentication failed. Could happen when our guess for a PreparedDataStreamSession is wrong
             return false;
         }
@@ -792,6 +792,9 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
 
         frames.forEach(frame => {
             const payload = frame.plaintextPayload;
+            if (!payload) {
+                throw new Error("Reached illegal state. Encountered HDSFrame with wasn't decrypted yet!");
+            }
 
             const headerLength = payload.readUInt8(0);
             const messageLength = payload.length - headerLength - 1;
@@ -883,13 +886,11 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
         frameLengthBuffer = frameLengthBuffer.slice(1, 4); // a bit hacky but the only real way to write 24-bit int in node
 
         const frameHeader = Buffer.concat([frameTypeBuffer, frameLengthBuffer]);
-        const authTag = Buffer.alloc(16);
-        const cipheredPayload = Buffer.alloc(payloadBuffer.length);
 
         encryption.writeUInt64LE(this.accessoryToControllerNonce++, this.accessoryToControllerNonceBuffer);
-        encryption.encryptAndSeal(this.accessoryToControllerEncryptionKey!, this.accessoryToControllerNonceBuffer, payloadBuffer, frameHeader, cipheredPayload, authTag);
+        const encrypted = encryption.chacha20_poly1305_encryptAndSeal(this.accessoryToControllerEncryptionKey!, this.accessoryToControllerNonceBuffer, frameHeader, payloadBuffer);
 
-        this.socket.write(Buffer.concat([frameHeader, cipheredPayload, authTag]));
+        this.socket.write(Buffer.concat([frameHeader, encrypted.ciphertext, encrypted.authTag]));
 
         /* Useful for debugging outgoing packages and detecting encoding errors
         console.log("SENT DATA: " + payloadBuffer.toString("hex"));

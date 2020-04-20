@@ -1,27 +1,6 @@
-import assert from 'assert';
 import crypto from 'crypto';
-
-import createDebug from 'debug';
 import tweetnacl from 'tweetnacl';
-
-import * as chacha20poly1305 from './chacha20poly1305';
-
-const debug = createDebug('HAP-NodeJS:encryption');
-
-function fromHex(h: string) {
-  h.replace(/([^0-9a-f])/g, '');
-  var out = [], len = h.length, w = '';
-  for (var i = 0; i < len; i += 2) {
-    w = h[i];
-    if (((i+1) >= len) || typeof h[i+1] === 'undefined') {
-        w += '0';
-    } else {
-        w += h[i+1];
-    }
-    out.push(parseInt(w, 16));
-  }
-  return out;
-}
+import assert from 'assert';
 
 export function generateCurve25519KeyPair() {
   return tweetnacl.box.keyPair();
@@ -48,14 +27,10 @@ export function layerEncrypt(data: Buffer, count: Count, key: Buffer) {
     var nonce = Buffer.alloc(8);
     writeUInt64LE(count.value++, nonce, 0);
 
-    var result_Buffer = Buffer.alloc(length);
-    var result_mac = Buffer.alloc(16);
-    encryptAndSeal(key, nonce, data.slice(offset, offset + length),
-      leLength,result_Buffer, result_mac);
-
+    const encrypted = chacha20_poly1305_encryptAndSeal(key, nonce, leLength, data.slice(offset, offset + length));
     offset += length;
 
-    result = Buffer.concat([result,leLength,result_Buffer,result_mac]);
+    result = Buffer.concat([result,leLength,encrypted.ciphertext,encrypted.authTag]);
   }
   return result;
 }
@@ -84,107 +59,43 @@ export function layerDecrypt(packet: Buffer, count: Count, key: Buffer, extraInf
     var nonce = Buffer.alloc(8);
     writeUInt64LE(count.value++, nonce, 0);
 
-    var result_Buffer = Buffer.alloc(realDataLength);
-
-    if (verifyAndDecrypt(key, nonce, packet.slice(offset + 2, offset + 2 + realDataLength),
-      packet.slice(offset + 2 + realDataLength, offset + 2 + realDataLength + 16),
-      packet.slice(offset,offset+2),result_Buffer)) {
-        result = Buffer.concat([result,result_Buffer]);
-        offset += (18 + realDataLength);
-      } else {
-        debug('Layer Decrypt fail!');
-        debug('Packet: %s', packet.toString('hex'));
-        throw new Error("Layer verification failed!");
-      }
+    const plaintext = chacha20_poly1305_decryptAndVerify(key, nonce, packet.slice(offset,offset+2), packet.slice(offset + 2, offset + 2 + realDataLength), packet.slice(offset + 2 + realDataLength, offset + 2 + realDataLength + 16));
+    result = Buffer.concat([result, plaintext]);
+    offset += (18 + realDataLength);
   }
 
   return result;
 }
 
-//General Enc/Dec
-export function verifyAndDecrypt(key: Buffer, nonce: Buffer, ciphertext: Buffer, mac: Buffer, addData: Buffer | null | undefined, plaintext: Buffer) {
-  var ctx = new chacha20poly1305.Chacha20Ctx();
-  chacha20poly1305.chacha20_keysetup(ctx, key);
-  chacha20poly1305.chacha20_ivsetup(ctx, nonce);
-  var poly1305key = Buffer.alloc(64);
-  var zeros = Buffer.alloc(64);
-  chacha20poly1305.chacha20_update(ctx,poly1305key,zeros,zeros.length);
-
-  var poly1305_contxt = new chacha20poly1305.Poly1305Ctx();
-  chacha20poly1305.poly1305_init(poly1305_contxt, poly1305key);
-
-  var addDataLength = 0;
-  if (addData != undefined) {
-    addDataLength = addData.length;
-    chacha20poly1305.poly1305_update(poly1305_contxt, addData, addData.length);
-    if ((addData.length % 16) != 0) {
-      chacha20poly1305.poly1305_update(poly1305_contxt, Buffer.alloc(16-(addData.length%16)), 16-(addData.length%16));
-    }
+export function chacha20_poly1305_decryptAndVerify(key: Buffer, nonce: Buffer, aad: Buffer | null, ciphertext: Buffer, authTag: Buffer): Buffer {
+  // @ts-ignore types for this a really broken
+  const decipher = crypto.createDecipheriv("chacha20-poly1305", key, nonce, { authTagLength:16 });
+  if (aad) {
+    decipher.setAAD(aad);
   }
+  decipher.setAuthTag(authTag);
+  const plaintext = decipher.update(ciphertext);
+  decipher.final(); // final call verifies integrity using the auth tag. Throws error if something was manipulated!
 
-  chacha20poly1305.poly1305_update(poly1305_contxt, ciphertext, ciphertext.length);
-  if ((ciphertext.length % 16) != 0) {
-    chacha20poly1305.poly1305_update(poly1305_contxt, Buffer.alloc(16-(ciphertext.length%16)), 16-(ciphertext.length%16));
-  }
-
-  var leAddDataLen = Buffer.alloc(8);
-  writeUInt64LE(addDataLength, leAddDataLen, 0);
-  chacha20poly1305.poly1305_update(poly1305_contxt, leAddDataLen, 8);
-
-  var leTextDataLen = Buffer.alloc(8);
-  writeUInt64LE(ciphertext.length, leTextDataLen, 0);
-  chacha20poly1305.poly1305_update(poly1305_contxt, leTextDataLen, 8);
-
-  var poly_out = [] as unknown as Uint8Array;
-  chacha20poly1305.poly1305_finish(poly1305_contxt, poly_out);
-
-  if (chacha20poly1305.poly1305_verify(mac, poly_out) != 1) {
-    debug('Verify Fail');
-    return false;
-  } else {
-    var written = chacha20poly1305.chacha20_update(ctx,plaintext,ciphertext,ciphertext.length);
-    chacha20poly1305.chacha20_final(ctx,plaintext.slice(written, ciphertext.length));
-    return true;
-  }
+  return plaintext;
 }
 
-export function encryptAndSeal(key: Buffer, nonce: Buffer, plaintext: Buffer, addData: Buffer | null | undefined, ciphertext: Buffer, mac: Buffer) {
-  var ctx = new chacha20poly1305.Chacha20Ctx();
-  chacha20poly1305.chacha20_keysetup(ctx, key);
-  chacha20poly1305.chacha20_ivsetup(ctx, nonce);
-  var poly1305key = Buffer.alloc(64);
-  var zeros = Buffer.alloc(64);
-  chacha20poly1305.chacha20_update(ctx,poly1305key,zeros,zeros.length);
+export function chacha20_poly1305_encryptAndSeal(key: Buffer, nonce: Buffer, aad: Buffer | null, plaintext: Buffer): { ciphertext: Buffer, authTag: Buffer } {
+  // @ts-ignore types for this a really broken
+  const cipher = crypto.createCipheriv("chacha20-poly1305", key, nonce, { authTagLength: 16 });
 
-  var written = chacha20poly1305.chacha20_update(ctx,ciphertext,plaintext,plaintext.length);
-  chacha20poly1305.chacha20_final(ctx,ciphertext.slice(written,plaintext.length));
-
-  var poly1305_contxt = new chacha20poly1305.Poly1305Ctx();
-  chacha20poly1305.poly1305_init(poly1305_contxt, poly1305key);
-
-  var addDataLength = 0;
-  if (addData != undefined) {
-    addDataLength = addData.length;
-    chacha20poly1305.poly1305_update(poly1305_contxt, addData, addData.length);
-    if ((addData.length % 16) != 0) {
-      chacha20poly1305.poly1305_update(poly1305_contxt, Buffer.alloc(16-(addData.length%16)), 16-(addData.length%16));
-    }
+  if (aad) {
+    cipher.setAAD(aad);
   }
 
-  chacha20poly1305.poly1305_update(poly1305_contxt, ciphertext, ciphertext.length);
-  if ((ciphertext.length % 16) != 0) {
-    chacha20poly1305.poly1305_update(poly1305_contxt, Buffer.alloc(16-(ciphertext.length%16)), 16-(ciphertext.length%16));
-  }
+  const ciphertext = cipher.update(plaintext);
+  cipher.final(); // final call creates the auth tag
+  const authTag = cipher.getAuthTag();
 
-  var leAddDataLen = Buffer.alloc(8);
-  writeUInt64LE(addDataLength, leAddDataLen, 0);
-  chacha20poly1305.poly1305_update(poly1305_contxt, leAddDataLen, 8);
-
-  var leTextDataLen = Buffer.alloc(8);
-  writeUInt64LE(ciphertext.length, leTextDataLen, 0);
-  chacha20poly1305.poly1305_update(poly1305_contxt, leTextDataLen, 8);
-
-  chacha20poly1305.poly1305_finish(poly1305_contxt, mac);
+  return { // return type is a bit weird, but we gonna change that on a later code cleanup
+    ciphertext: ciphertext,
+    authTag: authTag,
+  };
 }
 
 var MAX_UINT32 = 0x00000000FFFFFFFF

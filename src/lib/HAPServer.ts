@@ -428,8 +428,11 @@ export class HAPServer extends EventEmitter<Events> {
     var encSalt = Buffer.from("Pair-Setup-Encrypt-Salt");
     var encInfo = Buffer.from("Pair-Setup-Encrypt-Info");
     var outputKey = hkdf.HKDF("sha512", encSalt, S_private, encInfo, 32);
-    var plaintextBuffer = Buffer.alloc(messageData.length);
-    if (!encryption.verifyAndDecrypt(outputKey, Buffer.from("PS-Msg05"), messageData, authTagData, null, plaintextBuffer)) {
+
+    let plaintext;
+    try {
+      plaintext = encryption.chacha20_poly1305_decryptAndVerify(outputKey, Buffer.from("PS-Msg05"), null, messageData, authTagData);
+    } catch (error) {
       debug("[%s] Error while decrypting and verifying M5 subTlv: %s", this.accessoryInfo.username);
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
       response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
@@ -437,7 +440,7 @@ export class HAPServer extends EventEmitter<Events> {
       return;
     }
     // decode the client payload and pass it on to the next step
-    var M5Packet = tlv.decode(plaintextBuffer);
+    var M5Packet = tlv.decode(plaintext);
     var clientUsername = M5Packet[TLVValues.USERNAME];
     var clientLTPK = M5Packet[TLVValues.PUBLIC_KEY];
     var clientProof = M5Packet[TLVValues.PROOF];
@@ -476,9 +479,9 @@ export class HAPServer extends EventEmitter<Events> {
     var privateKey = Buffer.from(this.accessoryInfo.signSk);
     var serverProof = tweetnacl.sign.detached(material, privateKey);
     var message = tlv.encode(TLVValues.USERNAME, usernameData, TLVValues.PUBLIC_KEY, serverLTPK, TLVValues.PROOF, serverProof);
-    var ciphertextBuffer = Buffer.alloc(message.length);
-    var macBuffer = Buffer.alloc(16);
-    encryption.encryptAndSeal(hkdfEncKey, Buffer.from("PS-Msg06"), message, null, ciphertextBuffer, macBuffer);
+
+    const encrypted = encryption.chacha20_poly1305_encryptAndSeal(hkdfEncKey, Buffer.from("PS-Msg06"), null, message);
+
     // finally, notify listeners that we have been paired with a client
     this.emit(HAPServerEventTypes.PAIR, clientUsername.toString(), clientLTPK, once((err?: Error) => {
       if (err) {
@@ -490,7 +493,7 @@ export class HAPServer extends EventEmitter<Events> {
       }
       // send final pairing response to client
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, 0x06, TLVValues.ENCRYPTED_DATA, Buffer.concat([ciphertextBuffer, macBuffer])));
+      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, 0x06, TLVValues.ENCRYPTED_DATA, Buffer.concat([encrypted.ciphertext, encrypted.authTag])));
       session._pairSetupState = undefined;
     }));
   }
@@ -539,12 +542,11 @@ export class HAPServer extends EventEmitter<Events> {
     session.encryption = enc;
     // compose the response data in TLV format
     var message = tlv.encode(TLVValues.USERNAME, usernameData, TLVValues.PROOF, serverProof);
-    // encrypt the response
-    var ciphertextBuffer = Buffer.alloc(message.length);
-    var macBuffer = Buffer.alloc(16);
-    encryption.encryptAndSeal(outputKey, Buffer.from("PV-Msg02"), message, null, ciphertextBuffer, macBuffer);
+
+    const encrypted = encryption.chacha20_poly1305_encryptAndSeal(outputKey, Buffer.from("PV-Msg02"), null, message);
+
     response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
-    response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M2, TLVValues.ENCRYPTED_DATA, Buffer.concat([ciphertextBuffer, macBuffer]), TLVValues.PUBLIC_KEY, publicKey));
+    response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M2, TLVValues.ENCRYPTED_DATA, Buffer.concat([encrypted.ciphertext, encrypted.authTag]), TLVValues.PUBLIC_KEY, publicKey));
     session._pairVerifyState = States.M2;
   }
 
@@ -555,17 +557,22 @@ export class HAPServer extends EventEmitter<Events> {
     var authTagData = Buffer.alloc(16);
     encryptedData.copy(messageData, 0, 0, encryptedData.length - 16);
     encryptedData.copy(authTagData, 0, encryptedData.length - 16, encryptedData.length);
-    var plaintextBuffer = Buffer.alloc(messageData.length);
+
     // instance of HAPEncryption (created in handlePairVerifyStepOne)
     var enc = session.encryption!;
-    if (!encryption.verifyAndDecrypt(enc.hkdfPairEncKey, Buffer.from("PV-Msg03"), messageData, authTagData, null, plaintextBuffer)) {
-      debug("[%s] M3: Invalid signature", this.accessoryInfo.username);
+
+    let plaintext;
+    try {
+      plaintext = encryption.chacha20_poly1305_decryptAndVerify(enc.hkdfPairEncKey, Buffer.from("PV-Msg03"), null, messageData, authTagData);
+    } catch (error) {
+      debug("[%s] M3: Failed to decrypt and/or verify", this.accessoryInfo.username);
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
       response.end(tlv.encode(TLVValues.STATE, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
       session._pairVerifyState = undefined;
       return;
     }
-    var decoded = tlv.decode(plaintextBuffer);
+
+    var decoded = tlv.decode(plaintext);
     var clientUsername = decoded[TLVValues.USERNAME];
     var proof = decoded[TLVValues.PROOF];
     var material = Buffer.concat([enc.clientPublicKey, clientUsername, enc.publicKey]);
