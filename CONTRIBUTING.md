@@ -19,14 +19,8 @@
 * **Document any change in behaviour:** Make sure any documentation is kept up-to-date 
     (JSDoc as well as possible documentation in the [Wiki][wiki]).
 
-* **Consider our release cycle:** We try to follow [Semantic Versioning v2][link-semver].
-    Randomly breaking public APIs is not an option.
-
-* **Git workflow:** `HAP-NodeJS` has a beta phase for every `major` or `minor` release. Progress and
-    version backlog for the current ongoing beta can be viewed on the [GitHub Projects][projects] page.
-    Every commit on the `beta` branch is release in a new beta version on npm.    
-    Any pull request containing `major` or `minor` changes MUST only use the `beta` branch as base branch.
-    Only pull requests containing `patch` changes MAY use the `master` branch as base branch.
+* **Consider our release cycle:** Before doing any pull request, please read through our concept for 
+    [release cycles][release-cycle]. Especially the section regarding our [Git Workflow][git-workflow].
 
 * **One pull request per feature:** If you want to do more than one thing, send multiple pull requests.
     Otherwise, your pull request could be rejected.
@@ -63,7 +57,7 @@ After a security vulnerability has been corrected, a security hotfix release wil
 
 [link-eslint]: https://eslint.org/
 [wiki]: https://github.com/homebridge/HAP-NodeJS/wiki
-[link-semver]: http://semver.org/
-[projects]: https://github.com/homebridge/HAP-NodeJS/projects
+[release-cycle]: https://github.com/homebridge/HAP-NodeJS/wiki/Release-Cycle
+[git-workflow]: https://github.com/homebridge/HAP-NodeJS/wiki/Release-Cycle#git-workflow
 [link-git-rewrite]: http://www.git-scm.com/book/en/v2/Git-Tools-Rewriting-History#Changing-Multiple-Commit-Messages
 [link-responsible-disclosure]: http://en.wikipedia.org/wiki/Responsible_disclosure
