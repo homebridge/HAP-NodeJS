@@ -1,6 +1,6 @@
 <span align="center">
   
-  # HAP-NodeJS
+# HAP-NodeJS
   
   <a href="https://www.npmjs.com/package/hap-nodejs"><img title="npm version" src="https://badgen.net/npm/v/hap-nodejs" ></a>
   <a href="https://www.npmjs.com/package/hap-nodejs/v/beta"><img title="npm version beta" src="https://badgen.net/npm/v/hap-nodejs/beta" ></a>
