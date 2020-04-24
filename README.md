@@ -1,78 +1,80 @@
 <span align="center">
-
-# HAP-NodeJS
-
-<a href="https://www.npmjs.com/package/hap-nodejs"><img title="npm version" src="https://badgen.net/npm/v/hap-nodejs" ></a>
-<a href="https://www.npmjs.com/package/hap-nodejs"><img title="npm downloads" src="https://badgen.net/npm/dt/hap-nodejs" ></a>
-<a href="https://github.com/KhaosT/HAP-NodeJS/actions?query=workflow%3A%22Node-CI%22"><img title="npm downloads" src="https://github.com/homebridge/HAP-NodeJS/workflows/Node-CI/badge.svg" ></a>
+  
+  # HAP-NodeJS
+  <a href="https://www.npmjs.com/package/hap-nodejs"><img title="npm version" src="https://badgen.net/npm/v/hap-nodejs" ></a>
+  <a href="https://www.npmjs.com/package/hap-nodejs"><img title="npm downloads" src="https://badgen.net/npm/dt/hap-nodejs" ></a>
+  <a href="https://github.com/KhaosT/HAP-NodeJS/actions?query=workflow%3A%22Node-CI%22"><img title="node ci" src="https://github.com/homebridge/HAP-NodeJS/workflows/Node-CI/badge.svg" ></a>
 
 </span>
 
-HAP-NodeJS is a Node.js implementation of the HomeKit Accessory Server.
+HAP-NodeJS is an implementation of the HomeKit Accessory Server as specified in the HomeKit Accessory Protocol (HAP),
+which is defined by Apple as part of the HomeKit Framework.
 
-With this project, you should be able to create your own HomeKit Accessory on a Raspberry Pi, Intel Edison, or any other platform that can run Node.js :)
+HAP-NodeJS is intended to be used as a library to easily create your own HomeKit Accessory on a Raspberry Pi,
+Intel Edison, or any other platform that can run Node.js :)  
+If you are searching for a pluggable HomeKit bridge with over a thousand community driven plugins to bring HomeKit
+support to devices which do not support HomeKit out of the box, you may want to look at the 
+[homebridge][project-homebridge] project (which also uses HAP-NodeJS internally).
 
-The implementation may not 100% follow the HAP MFi Specification since the MFi program doesn't allow individual developers to join.
+The implementation tries to follow the HAP specification as close as it can, but may differ in some cases.
+HAP-NodeJS is not an Apple certified HAP implementation, as this is only available to members of the MFi program.
 
-Remember to run `npm install` and `npm install --only=dev` before actually running the server.
+## Getting started
 
-Users can define their own accessories in: accessories/[name]_accessory.ts files, where [name] is a short description of the accessory. All defined accessories get loaded on server start. You can define accessories using an object literal notation (see [Fan_accessory.ts](src/accessories/Fan_accessory.ts) for an example) or you can use the API (see below).
+You may start by having a look at our [Wiki][wiki], especially have a look at the 
+[Important HomeKit Terminology][hk-terminology] used in this project.
 
-You can use the following command to start the HAP Server in Bridged mode:
+There is also a pretty detailed guide on [how to start developing with HAP-NodeJS][dev-guide].
+Or you may just have a look at our [examples][examples-repo] repository
+(or some of the old [accessory examples][example-accessories]).
 
-```sh
-ts-node --files src/BridgedCore.ts
-```
+See the FAQ on how to enable [debug output][faq-debug] for HAP-NodeJS.
 
-Or, if you wish to host each Accessory as an independent HomeKit device:
+If you wish to do a contribution please read through our [CONTRIBUTING][contributing] guide.
 
-```sh
-ts-node --files src/Core.ts
-```
+## Projects based on HAP-NodeJS
 
-The HAP-NodeJS library uses the [debug](https://github.com/visionmedia/debug) library for log output. You can print some or all of the logs by setting the `DEBUG` environment variable. For instance, to see all debug logs while running the server:
+- [Homebridge][project-homebridge] - HomeKit support for the impatient - Pluggable HomeKit Bridge.  
+    Plugins available for  e.g. Pilight, Telldus TDtool, Savant, Netatmo, Open Pixel Control, HomeWizard, Fritz!Box, 
+    LG WebOS TV, Home Assistant, HomeMatic and many more.
+- [OpenHAB-HomeKit-Bridge][project-openhab-homekit-bridge] - OpenHAB HomeKit Bridge bridges openHAB items to 
+    Apples HomeKit Accessory Protocol.
+- [homekit2mqtt][project-homekit2mqtt] - HomeKit to MQTT bridge.
+- [pimatic-hap][project-pimatic-hap] - Pimatic homekit bridge.
+- [node-red-contrib-homekit][project-node-red-contrib-homekit] - Node-RED nodes to simulate Apple HomeKit devices.
+- [ioBroker.homekit][project-ioBroker-homekit] - connect ioBroker to HomeKit.
+- [AccessoryServer][project-accessoryserver] - HomeKit integration for IR/RF/IP-devices
 
-```sh
-DEBUG=* ts-node --files src/BridgedCore.ts
-```
+## Notes
 
-HOMEKIT PROTOCOL
-================
-
-Hint: the Homekit Application Protocol (HAP) allows that you can pair a Homekit device with one device. As soon as the Homekit device is paired, its not possible to pair with another iOS device anymore.
-
-API
-===
-
-HAP-NodeJS provides a set of classes you can use to construct Accessories programatically. For an example implementation, see [Lock_accessory.ts](src/accessories/Lock_accessory.ts).
-
-The key classes intended for use by API consumers are:
-
-  * [Accessory](src/lib/Accessory.ts): Represents a HomeKit device that can be published on your local network.
-  * [Bridge](src/lib/Bridge.ts): A kind of Accessory that can host other Accessories "behind" it while only publishing a single device.
-  * [Service](src/lib/Service.ts): Represents a set of grouped values necessary to provide a logical function. Most of the time, when you think of a supported HomeKit device like "Thermostat" or "Door Lock", you're actualy thinking of a Service. Accessories can expose multiple services.
-  * [Characteristic](src/lib/Characteristic.ts): Represents a particular typed variable assigned to a Service, for instance the `LockMechanism` Service contains a `CurrentDoorState` Characteristic describing whether the door is currently locked.
-
-All known built-in Service and Characteristic types that HomeKit supports are exposed as a separate subclass in [HomeKitTypes](src/lib/gen/HomeKit.ts).
-
-See each of the corresponding class files for more explanation and notes.
-
-Notes
-=====
-
-Special thanks to [Alex Skalozub](https://twitter.com/pieceofsummer), who reverse engineered the server side HAP. ~~You can find his research at [here](https://gist.github.com/pieceofsummer/13272bf76ac1d6b58a30).~~ (Sadly, on Nov 4, Apple sent the [DMCA](https://github.com/github/dmca/blob/master/2014/2014-11-04-Apple.md) request to Github to remove the research.)
+Special thanks to [Alex Skalozub][link-alex-skalozub], who reverse-engineeredthe server side HAP.
+~~You can find his research [here][link-homekit-research].~~
+(Sadly, on Nov 4, Apple sent the [DMCA][link-apple-dmca] request to Github to remove the research.)
 
 [There](http://instagram.com/p/t4cPlcDksQ/) is a video demo running this project on Intel Edison.
 
-If you are interested in HAP over BTLE, you might want to check [this](https://gist.github.com/KhaosT/6ff09ba71d306d4c1079).
+If you are interested in HAP over BTLE, you might want to check [this][link-hap-over-btle].
 
-Projects based on HAP-NodeJS
-============================
+<!-- links -->
 
-* [Homebridge](https://github.com/nfarina/homebridge) - HomeKit support for the impatient - Pluggable HomeKit Bridge. Plugins available for  e.g. Pilight, Telldus TDtool, Savant, Netatmo, Open Pixel Control, HomeWizard, Fritz!Box, LG WebOS TV, Home Assistant, HomeMatic and many many more.
-* [OpenHAB-HomeKit-Bridge](https://github.com/htreu/OpenHAB-HomeKit-Bridge) - OpenHAB HomeKit Bridge bridges openHAB items to Apple´s HomeKit Accessory Protocol.
-* [homekit2mqtt](https://github.com/hobbyquaker/homekit2mqtt) - HomeKit to MQTT bridge.
-* [pimatic-hap](https://github.com/michbeck100/pimatic-hap) - Pimatic homekit bridge.
-* [node-red-contrib-homekit](https://github.com/NRCHKB/node-red-contrib-homekit-bridged) - Node-RED nodes to simulate Apple HomeKit devices.
-* [ioBroker.homekit](https://github.com/ioBroker/ioBroker.homekit2) - connect ioBroker to HomeKit.
-* [AccessoryServer](https://github.com/Appyx/AccessoryServer) - HomeKit integration for IR/RF/IP-devices
+[wiki]: https://github.com/homebridge/HAP-NodeJS/wiki
+[hk-terminology]: https://github.com/homebridge/HAP-NodeJS/wiki/HomeKit-Terminology
+[dev-guide]: https://github.com/homebridge/HAP-NodeJS/wiki/Using-HAP-NodeJS-as-a-library
+[faq-debug]: https://github.com/homebridge/HAP-NodeJS/wiki/FAQ#debug-mode
+[contributing]: https://github.com/homebridge/HAP-NodeJS/blob/master/CONTRIBUTING.md
+
+[examples-repo]: https://github.com/homebridge/HAP-NodeJS-examples
+[example-accessories]: https://github.com/homebridge/HAP-NodeJS/tree/master/src/accessories
+
+[project-homebridge]: https://github.com/homebridge/homebridge
+[project-openhab-homekit-bridge]: https://github.com/htreu/OpenHAB-HomeKit-Bridge
+[project-homekit2mqtt]: https://github.com/hobbyquaker/homekit2mqtt
+[project-pimatic-hap]: https://github.com/michbeck100/pimatic-hap
+[project-node-red-contrib-homekit]: https://github.com/NRCHKB/node-red-contrib-homekit-bridged
+[project-ioBroker-homekit]: https://github.com/ioBroker/ioBroker.homekit2
+[project-accessoryserver]: https://github.com/Appyx/AccessoryServer
+
+[link-alex-skalozub]: https://twitter.com/pieceofsummer
+[link-homekit-research]: https://gist.github.com/pieceofsummer/13272bf76ac1d6b58a30
+[link-apple-dmca]: https://github.com/github/dmca/blob/master/2014/2014-11-04-Apple.md
+[link-hap-over-btle]: https://gist.github.com/KhaosT/6ff09ba71d306d4c1079
