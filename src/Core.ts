@@ -6,6 +6,9 @@ import { AccessoryLoader } from './';
 
 console.log("HAP-NodeJS starting...");
 
+console.warn("DEPRECATION NOTICE: The use of Core and BridgeCore are deprecated and are scheduled to be remove in October 2020. " +
+  "For more information and some guidance on how to migrate, have a look at https://github.com/homebridge/HAP-NodeJS/wiki/Deprecation-of-Core-and-BridgeCore");
+
 // Initialize our storage system
 storage.initSync();
 
