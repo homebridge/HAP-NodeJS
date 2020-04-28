@@ -352,7 +352,7 @@ export class Service extends EventEmitter<Events> {
       if (foreignCharacteristic) {
         delete foreignCharacteristics[characteristic.UUID];
 
-        if (!foreignCharacteristic.value && (foreignCharacteristic.value === 0 || foreignCharacteristic.value === false)) {
+        if (!foreignCharacteristic.value && foreignCharacteristic.value !== 0 && foreignCharacteristic.value !== false) {
           return; // ignore falsey values expect if its the number zero or literally false
         }
 
