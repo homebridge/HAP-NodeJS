@@ -3664,6 +3664,9 @@ export class AccessoryInformation extends Service {
     this.addOptionalCharacteristic(Characteristic.HardwareRevision);
     this.addOptionalCharacteristic(Characteristic.SoftwareRevision);
     this.addOptionalCharacteristic(Characteristic.ProductData);
+
+    // Firmware Revision is defined to be a optional characteristics but is actually REQUIRED
+    this.getCharacteristic(Characteristic.FirmwareRevision).updateValue("0.0.0");
   }
 }
 
