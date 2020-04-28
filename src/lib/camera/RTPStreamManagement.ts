@@ -460,7 +460,7 @@ export class RTPStreamManagement {
    * @deprecated won't be updated anymore. Please use the H264Level const enum above. Scheduled to be removed in 2021-06.
    */
   // @ts-ignore
-  static VideoCodecParamLevelTypes = H264Level;
+  static VideoCodecParamLevelTypes = Object.freeze({ TYPE3_1: 0, TYPE3_2: 1, TYPE4_0: 2 });
 
   private readonly delegate: CameraStreamingDelegate;
   readonly service: CameraRTPStreamManagement; // must be public for backwards compatibility
