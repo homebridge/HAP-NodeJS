@@ -330,6 +330,15 @@ export class Service extends EventEmitter<Events> {
     this.optionalCharacteristics.push(characteristic);
   }
 
+  /**
+   * This method was created to copy all characteristics from another service to this.
+   * It's only adopting is currently in homebridge to merge the AccessoryInformation service. So some things
+   * my be explicitly tailored towards this use case.
+   *
+   * It will not remove characteristics which are present currently but not added on the other characteristic.
+   * It will not replace the characteristic if the value is falsey (except of '0' or 'false')
+   * @param service
+   */
   replaceCharacteristicsFromService(service: Service) {
     if (this.UUID !== service.UUID) {
       throw new Error(`Incompatible services. Tried replacing characteristics of ${this.UUID} with characteristics from ${service.UUID}`);
@@ -342,6 +351,10 @@ export class Service extends EventEmitter<Events> {
       const foreignCharacteristic = foreignCharacteristics[characteristic.UUID];
       if (foreignCharacteristic) {
         delete foreignCharacteristics[characteristic.UUID];
+
+        if (!foreignCharacteristic.value && (foreignCharacteristic.value === 0 || foreignCharacteristic.value === false)) {
+          return; // ignore falsey values expect if its the number zero or literally false
+        }
 
         characteristic.props = foreignCharacteristic.props;
         characteristic.updateValue(foreignCharacteristic.value);

@@ -718,6 +718,43 @@ export class Accessory extends EventEmitter<Events> {
   }
 
   /**
+   * This method is called right before the accessory is published. It should be used to check for common
+   * mistakes in Accessory structured, which may lead to HomeKit rejecting the accessory when pairing.
+   * If it is called on a bridge it will call this method for all bridged accessories.
+   */
+  private validateAccessory() {
+    const service = this.getService(Service.AccessoryInformation);
+    if (!service) {
+      console.log("HAP-NodeJS WARNING: The accessory '" + this.displayName + "' is getting published without a AccessoryInformation service. " +
+        "This might prevent the accessory from being added to the Home app or leading to the accessory being unresponsive!");
+    } else {
+      const checkValue = (name: string, value?: any) => {
+        if (!value) {
+          console.log("HAP-NodeJS WARNING: The accessory '" + this.displayName + "' is getting published with the characteristic '" + name + "'" +
+            " (of the AccessoryInformation service) not having a value set. " +
+            "This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+        }
+      };
+
+      const manufacturer = service.getCharacteristic(Characteristic.Manufacturer).value;
+      const model = service.getCharacteristic(Characteristic.Model).value;
+      const serialNumber = service.getCharacteristic(Characteristic.SerialNumber).value;
+      const firmwareRevision = service.getCharacteristic(Characteristic.FirmwareRevision).value;
+      const name = service.getCharacteristic(Characteristic.Name).value;
+
+      checkValue("Manufacturer", manufacturer);
+      checkValue("Model", model);
+      checkValue("SerialNumber", serialNumber);
+      checkValue("FirmwareRevision", firmwareRevision);
+      checkValue("Name", name);
+    }
+
+    if (this.bridged) {
+      this.bridgedAccessories.forEach(accessory => accessory.validateAccessory());
+    }
+  }
+
+  /**
    * Assigns aid/iid to ourselves, any Accessories we are bridging, and all associated Services+Characteristics. Uses
    * the provided identifierCache to keep IDs stable.
    */
@@ -916,6 +953,8 @@ export class Accessory extends EventEmitter<Events> {
       this._accessoryInfo.configHash = configHash;
       this._accessoryInfo.save();
     }
+
+    this.validateAccessory();
 
     // create our Advertiser which broadcasts our presence over mdns
     this._advertiser = new Advertiser(this._accessoryInfo, info.mdns);
