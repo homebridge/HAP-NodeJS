@@ -1,8 +1,8 @@
-import {Characteristic, CharacteristicEventTypes, SerializedCharacteristic} from './Characteristic';
-import {clone} from './util/clone';
-import {EventEmitter} from './EventEmitter';
-import {IdentifierCache} from './model/IdentifierCache';
-import {CharacteristicChange, CharacteristicValue, HapService, Nullable, ToHAPOptions, WithUUID,} from '../types';
+import { Characteristic, CharacteristicEventTypes, SerializedCharacteristic } from './Characteristic';
+import { clone } from './util/clone';
+import { EventEmitter } from './EventEmitter';
+import { IdentifierCache } from './model/IdentifierCache';
+import { CharacteristicChange, CharacteristicValue, HapService, Nullable, ToHAPOptions, WithUUID, } from '../types';
 import * as HomeKitTypes from './gen';
 import { toShortForm } from './util/uuid';
 
@@ -360,10 +360,18 @@ export class Service extends EventEmitter<Events> {
         characteristic.updateValue(foreignCharacteristic.value);
 
         const getListeners = foreignCharacteristic.listeners(CharacteristicEventTypes.GET);
-        getListeners.forEach(listener => characteristic.addListener(CharacteristicEventTypes.GET, listener));
+        if (getListeners.length) {
+          // the callback can only be called once so we remove all old listeners
+          characteristic.removeAllListeners(CharacteristicEventTypes.GET);
+          getListeners.forEach(listener => characteristic.addListener(CharacteristicEventTypes.GET, listener));
+        }
 
         const setListeners = foreignCharacteristic.listeners(CharacteristicEventTypes.SET);
-        setListeners.forEach(listener => characteristic.addListener(CharacteristicEventTypes.SET, listener));
+        if (setListeners.length) {
+          // the callback can only be called once so we remove all old listeners
+          characteristic.removeAllListeners(CharacteristicEventTypes.SET);
+          setListeners.forEach(listener => characteristic.addListener(CharacteristicEventTypes.SET, listener));
+        }
       }
     });
 
