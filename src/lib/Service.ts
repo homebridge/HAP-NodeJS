@@ -6,6 +6,8 @@ import { CharacteristicChange, CharacteristicValue, HapService, Nullable, ToHAPO
 import * as HomeKitTypes from './gen';
 import { toShortForm } from './util/uuid';
 
+const MAX_CHARACTERISTICS = 100;
+
 export interface SerializedService {
   displayName: string,
   UUID: string,
@@ -187,6 +189,10 @@ export class Service extends EventEmitter<Events> {
         }
         throw new Error("Cannot add a Characteristic with the same UUID as another Characteristic in this Service: " + existing.UUID);
       }
+    }
+
+    if (this.characteristics.length >= MAX_CHARACTERISTICS) {
+      throw new Error("Cannot add more than " + MAX_CHARACTERISTICS + " characteristics to a single service!");
     }
 
     // listen for changes in characteristics and bubble them up

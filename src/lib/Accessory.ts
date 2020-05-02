@@ -42,6 +42,7 @@ import { ControllerStorage } from "./model/ControllerStorage";
 
 const debug = createDebug('HAP-NodeJS:Accessory');
 const MAX_ACCESSORIES = 149; // Maximum number of bridged accessories per bridge.
+const MAX_SERVICES = 100;
 
 // Known category values. Category is a hint to iOS clients about what "type" of Accessory this represents, for UI only.
 export const enum Categories {
@@ -277,6 +278,10 @@ export class Accessory extends EventEmitter<Events> {
         if (service.subtype === existing.subtype)
           throw new Error("Cannot add a Service with the same UUID '" + existing.UUID + "' and subtype '" + existing.subtype + "' as another Service in this Accessory.");
       }
+    }
+
+    if (this.services.length >= MAX_SERVICES) {
+      throw new Error("Cannot add more than " + MAX_SERVICES + " services to a single accessory!");
     }
 
     this.services.push(service);
