@@ -1,4 +1,7 @@
 import {
+  AccessControlEvent,
+  AccessControlManagement,
+  AccessLevel,
   Accessory,
   Categories,
   Characteristic,
@@ -123,3 +126,17 @@ inputNetflix
 televisionService.addLinkedService(inputHDMI1);
 televisionService.addLinkedService(inputHDMI2);
 televisionService.addLinkedService(inputNetflix);
+
+const accessControl = new AccessControlManagement(true);
+accessControl.on(AccessControlEvent.ACCESS_LEVEL_UPDATED, (level: AccessLevel) => {
+  console.log("New access control level of " + level);
+});
+accessControl.on(AccessControlEvent.PASSWORD_SETTING_UPDATED, (password: string | undefined, passwordRequired: boolean) => {
+  if (passwordRequired) {
+    console.log("Required password is: " + password);
+  } else {
+    console.log("No password set!");
+  }
+});
+
+tv.addService(accessControl.getService());

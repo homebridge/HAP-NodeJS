@@ -16,6 +16,7 @@ export * from './lib/Service';
 export * from './lib/Characteristic';
 export * from './lib/AccessoryLoader';
 export * from './lib/camera';
+export * from './lib/tv/AccessControlManagement';
 export * from './lib/HAPServer';
 export * from './lib/gen';
 export * from './lib/datastream';
