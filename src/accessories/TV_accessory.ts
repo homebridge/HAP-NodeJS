@@ -101,7 +101,8 @@ inputHDMI1
   .setCharacteristic(Characteristic.Identifier, 1)
   .setCharacteristic(Characteristic.ConfiguredName, "HDMI 1")
   .setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
-  .setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.HDMI);
+  .setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.HDMI)
+  .setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
 
 // HDMI 2
 
@@ -111,7 +112,8 @@ inputHDMI2
   .setCharacteristic(Characteristic.Identifier, 2)
   .setCharacteristic(Characteristic.ConfiguredName, "HDMI 2")
   .setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
-  .setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.HDMI);
+  .setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.HDMI)
+  .setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
 
 // Netflix
 
@@ -121,7 +123,8 @@ inputNetflix
   .setCharacteristic(Characteristic.Identifier, 3)
   .setCharacteristic(Characteristic.ConfiguredName, "Netflix")
   .setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
-  .setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.APPLICATION);
+  .setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.APPLICATION)
+  .setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
 
 televisionService.addLinkedService(inputHDMI1);
 televisionService.addLinkedService(inputHDMI2);
