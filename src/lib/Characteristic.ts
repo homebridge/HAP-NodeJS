@@ -101,11 +101,11 @@ export type CharacteristicGetCallback<T = Nullable<CharacteristicValue>> = (erro
 export type CharacteristicSetCallback = (error?: Error | null, value?: CharacteristicValue) => void
 
 type Events = {
-  [CharacteristicEventTypes.CHANGE]: (change: CharacteristicChange) => void;
-  [CharacteristicEventTypes.GET]: (cb: CharacteristicGetCallback, context?: any, connectionID?: SessionIdentifier) => void;
-  [CharacteristicEventTypes.SET]: (value: CharacteristicValue, cb: CharacteristicSetCallback, context?: any, connectionID?: SessionIdentifier) => void;
-  [CharacteristicEventTypes.SUBSCRIBE]: VoidCallback;
-  [CharacteristicEventTypes.UNSUBSCRIBE]: VoidCallback;
+  ["change"]: (change: CharacteristicChange) => void;
+  ["get"]: (cb: CharacteristicGetCallback, context?: any, connectionID?: SessionIdentifier) => void;
+  ["set"]: (value: CharacteristicValue, cb: CharacteristicSetCallback, context?: any, connectionID?: SessionIdentifier) => void;
+  ["subscribe"]: VoidCallback;
+  ["unsubscribe"]: VoidCallback;
 }
 
 /**
