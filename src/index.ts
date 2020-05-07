@@ -1,5 +1,3 @@
-/// <reference path="../@types/bonjour-hap.d.ts" />
-
 import './lib/gen';
 import * as accessoryLoader from './lib/AccessoryLoader';
 import * as uuidFunctions from './lib/util/uuid';

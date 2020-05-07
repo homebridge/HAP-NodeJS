@@ -1,9 +1,6 @@
 import crypto from 'crypto';
-
-import bonjour, { BonjourHap, MulticastOptions, Service } from 'bonjour-hap';
-
-import { Nullable } from '../types';
 import { AccessoryInfo } from './model/AccessoryInfo';
+import { CiaoService, createResponder, Responder, ServiceType } from "@homebridge/ciao";
 
 /**
  * Advertiser uses mdns to broadcast the presence of an Accessory to the local network.
@@ -18,20 +15,19 @@ export class Advertiser {
   static protocolVersion: string = "1.1";
   static protocolVersionService: string = "1.1.0";
 
-  _bonjourService: BonjourHap;
-  _advertisement: Nullable<Service>;
+  private readonly responder: Responder;
+  private advertisedService?: CiaoService;
+
   _setupHash: string;
 
-  constructor(public accessoryInfo: AccessoryInfo, mdnsConfig: MulticastOptions) {
-    this._bonjourService = bonjour(mdnsConfig);
-    this._advertisement = null;
+  constructor(public accessoryInfo: AccessoryInfo, mdnsConfig: any) { // TODO adjust the options
+    this.responder = createResponder(mdnsConfig);
     this._setupHash = this._computeSetupHash();
   }
 
   startAdvertising = (port: number) => {
-
     // stop advertising if necessary
-    if (this._advertisement) {
+    if (this.advertisedService) {
       this.stopAdvertising();
     }
 
@@ -44,7 +40,7 @@ export class Advertiser {
       "ff": "0",
       "ci": this.accessoryInfo.category as unknown as string,
       "sf": this.accessoryInfo.paired() ? "0" : "1", // "sf == 1" means "discoverable by HomeKit iOS clients"
-      "sh": this._setupHash
+      "sh": this._setupHash // TODO setup hash is not exposed after accessory was paired
     };
 
     /**
@@ -62,22 +58,22 @@ export class Advertiser {
       + " "
       + crypto.createHash('sha512').update(this.accessoryInfo.username, 'utf8').digest('hex').slice(0, 4).toUpperCase();
 
-    // create/recreate our advertisement
-    this._advertisement = this._bonjourService.publish({
-      name: advertiseName,
-      type: "hap",
+    this.advertisedService = this.responder.createService({
+      name: this.accessoryInfo.displayName,
+      type: ServiceType.HAP,
       port: port,
       txt: txtRecord,
-      host: host
+      // host will default now to AccessoryName.local
     });
+    this.advertisedService.advertise(); // TODO listen for returned promise?
   }
 
   isAdvertising = () => {
-    return (this._advertisement != null);
+    return !!this.advertisedService;
   }
 
   updateAdvertisement = () => {
-    if (this._advertisement) {
+    if (this.advertisedService) {
 
       var txtRecord = {
         md: this.accessoryInfo.displayName,
@@ -91,18 +87,17 @@ export class Advertiser {
         "sh": this._setupHash
       };
 
-      this._advertisement.updateTxt(txtRecord);
+      this.advertisedService.updateTxt(txtRecord);
     }
   }
 
   stopAdvertising = () => {
-    if (this._advertisement) {
-      this._advertisement.stop();
-      this._advertisement.destroy();
-      this._advertisement = null;
+    if (this.advertisedService) {
+      this.advertisedService.end();
+      this.advertisedService = undefined;
     }
 
-    this._bonjourService.destroy();
+    // TODO this._bonjourService.destroy();
   }
 
   _computeSetupHash = () => {
