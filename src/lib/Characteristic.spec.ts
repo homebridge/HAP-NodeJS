@@ -40,10 +40,13 @@ describe('Characteristic', () => {
       })
 
       expect(() => setProps(-256, -512)).toThrow(Error);
-      expect(() => setProps(0, 0)).toThrow(Error);
       expect(() => setProps(0, -3)).toThrow(Error);
       expect(() => setProps(6, 0)).toThrow(Error);
       expect(() => setProps(678, 234)).toThrow(Error);
+
+      // should allow setting equal values
+      setProps(0, 0);
+      setProps(3, 3);
     });
   });
 
