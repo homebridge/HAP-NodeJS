@@ -337,7 +337,7 @@ export class Characteristic extends EventEmitter<Events> {
   static TunneledAccessoryStateNumber: typeof HomeKitTypes.Bridged.TunneledAccessoryStateNumber;
   static VOCDensity: typeof HomeKitTypes.Generated.VOCDensity;
   static ValveType: typeof HomeKitTypes.Generated.ValveType;
-  static Version: typeof HomeKitTypes.Bridged.Version;
+  static Version: typeof HomeKitTypes.Generated.Version;
   static Volume: typeof HomeKitTypes.Generated.Volume;
   static VolumeControlType: typeof HomeKitTypes.TV.VolumeControlType;
   static VolumeSelector: typeof HomeKitTypes.TV.VolumeSelector;

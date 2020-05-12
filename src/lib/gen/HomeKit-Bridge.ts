@@ -502,26 +502,6 @@ export class TunneledAccessoryStateNumber extends Characteristic {
 Characteristic.TunneledAccessoryStateNumber = TunneledAccessoryStateNumber;
 
 /**
- * Characteristic "Version"
- */
-
-export class Version extends Characteristic {
-
-  static readonly UUID: string = '00000037-0000-1000-8000-0026BB765291';
-
-  constructor() {
-    super('Version', Version.UUID);
-    this.setProps({
-      format: Formats.STRING,
-      perms: [Perms.READ]
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-
-Characteristic.Version = Version;
-
-/**
  * Service "Bridge Configuration"
  */
 
