@@ -2,6 +2,11 @@ import crypto from 'crypto';
 import { AccessoryInfo } from './model/AccessoryInfo';
 import { CiaoService, createResponder, Responder, ServiceType } from "@homebridge/ciao";
 
+let globalResponder: Responder;
+function getResponder() { // TODO how to pass options
+  return !globalResponder? (globalResponder = createResponder()): globalResponder;
+}
+
 /**
  * Advertiser uses mdns to broadcast the presence of an Accessory to the local network.
  *
@@ -15,13 +20,11 @@ export class Advertiser {
   static protocolVersion: string = "1.1";
   static protocolVersionService: string = "1.1.0";
 
-  private readonly responder: Responder;
   private advertisedService?: CiaoService;
 
   _setupHash: string;
 
   constructor(public accessoryInfo: AccessoryInfo, mdnsConfig: any) { // TODO adjust the options
-    this.responder = createResponder(mdnsConfig);
     this._setupHash = this._computeSetupHash();
   }
 
@@ -58,7 +61,7 @@ export class Advertiser {
       + " "
       + crypto.createHash('sha512').update(this.accessoryInfo.username, 'utf8').digest('hex').slice(0, 4).toUpperCase();
 
-    this.advertisedService = this.responder.createService({
+    this.advertisedService = getResponder().createService({
       name: this.accessoryInfo.displayName,
       type: ServiceType.HAP,
       port: port,

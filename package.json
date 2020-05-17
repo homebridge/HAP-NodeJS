@@ -15,7 +15,7 @@
     "@types"
   ],
   "dependencies": {
-    "@homebridge/ciao": "^1.0.0-beta.4",
+    "@homebridge/ciao": "^1.0.0-beta.9",
     "fast-srp-hap": "2.0.1",
     "tweetnacl": "^1.0.3",
     "debug": "^4.1.1",
