@@ -877,9 +877,9 @@ export class Accessory extends EventEmitter<Events> {
    *                                new Accessory.
    */
   publish = (info: PublishInfo, allowInsecureRequest?: boolean) => {
-    let service: Service | undefined;
+    // TODO maybe directly enqueue the method call on nextTick (could solve most out of order constructions)
 
-    service = this.getService(Service.ProtocolInformation);
+    let service = this.getService(Service.ProtocolInformation);
     if (!service) {
       service = this.addService(Service.ProtocolInformation) // add the protocol information service to the primary accessory
     }
@@ -888,6 +888,12 @@ export class Accessory extends EventEmitter<Events> {
     if (this.lastKnownUsername && this.lastKnownUsername !== info.username) { // username changed since last publish
       Accessory.cleanupAccessoryData(this.lastKnownUsername); // delete old Accessory data
     }
+
+    // adding some identifying material to our displayName
+    this.displayName = this.displayName + " " + crypto.createHash('sha512')
+      .update(info.username, 'utf8')
+      .digest('hex').slice(0, 4).toUpperCase();
+    this.getService(Service.AccessoryInformation)!.updateCharacteristic(Characteristic.Name, this.displayName);
 
     // attempt to load existing AccessoryInfo from disk
     this._accessoryInfo = AccessoryInfo.load(info.username);

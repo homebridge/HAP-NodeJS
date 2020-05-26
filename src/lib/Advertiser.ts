@@ -126,7 +126,7 @@ export class Advertiser extends EventEmitter {
 
   private computeSetupHash(): string {
     const hash = crypto.createHash('sha512');
-    hash.update(this.accessoryInfo.setupID + this.accessoryInfo.username);
+    hash.update(this.accessoryInfo.setupID + this.accessoryInfo.username.toUpperCase());
     return hash.digest().slice(0, 4).toString('base64');
   }
 
