@@ -1,11 +1,12 @@
 import crypto from 'crypto';
 import createDebug from 'debug';
+import assert from "assert";
 
 import * as uuid from './util/uuid';
 import { clone } from './util/clone';
 import { SerializedService, Service, ServiceConfigurationChange, ServiceEventTypes, ServiceId } from './Service';
 import { Access, Characteristic, CharacteristicEventTypes, CharacteristicSetCallback, Perms } from './Characteristic';
-import { Advertiser } from './Advertiser';
+import { Advertiser, AdvertiserEvent } from './Advertiser';
 import { CharacteristicsWriteRequest, Codes, HAPServer, HAPServerEventTypes, Status } from './HAPServer';
 import { AccessoryInfo, PairingInformation, PermissionTypes } from './model/AccessoryInfo';
 import { IdentifierCache } from './model/IdentifierCache';
@@ -46,6 +47,7 @@ const MAX_SERVICES = 100;
 
 // Known category values. Category is a hint to iOS clients about what "type" of Accessory this represents, for UI only.
 export const enum Categories {
+  // noinspection JSUnusedGlobalSymbols
   OTHER = 1,
   BRIDGE = 2,
   FAN = 3,
@@ -229,9 +231,10 @@ export class Accessory extends EventEmitter<Events> {
 
   constructor(public displayName: string, public UUID: string) {
     super();
-    if (!displayName) throw new Error("Accessories must be created with a non-empty displayName.");
-    if (!UUID) throw new Error("Accessories must be created with a valid UUID.");
-    if (!uuid.isValid(UUID)) throw new Error("UUID '" + UUID + "' is not a valid UUID. Try using the provided 'generateUUID' function to create a valid UUID from any arbitrary string, like a serial number.");
+    assert(displayName, "Accessories must be created with a non-empty displayName.");
+    assert(Buffer.from(displayName, "utf8").length <= 63, "Accessory displayName cannot be longer than 63 bytes!");
+    assert(UUID, "Accessories must be created with a valid UUID.")
+    assert(uuid.isValid(UUID), "UUID '" + UUID + "' is not a valid UUID. Try using the provided 'generateUUID' function to create a valid UUID from any arbitrary string, like a serial number.");
 
     // create our initial "Accessory Information" Service that all Accessories are expected to have
     this.addService(Service.AccessoryInformation)
@@ -907,6 +910,7 @@ export class Accessory extends EventEmitter<Events> {
 
     // make sure we have up-to-date values in AccessoryInfo, then save it in case they changed (or if we just created it)
     this._accessoryInfo.displayName = this.displayName;
+    this._accessoryInfo.model = this.getService(Service.AccessoryInformation)!.getCharacteristic(Characteristic.Model).value as string;
     this._accessoryInfo.category = info.category || Categories.OTHER;
     this._accessoryInfo.pincode = info.pincode;
     this._accessoryInfo.save();
@@ -956,6 +960,17 @@ export class Accessory extends EventEmitter<Events> {
 
     // create our Advertiser which broadcasts our presence over mdns
     this._advertiser = new Advertiser(this._accessoryInfo, info.mdns);
+    this._advertiser.on(AdvertiserEvent.UPDATED_NAME, name => {
+      this.displayName = name;
+      if (this._accessoryInfo) {
+        this._accessoryInfo.displayName = name;
+        this._accessoryInfo.save();
+      }
+
+      // bonjour service name MUST match the name in the accessory information service
+      this.getService(Service.AccessoryInformation)!
+        .updateCharacteristic(Characteristic.Name, name);
+    });
 
     // create our HAP server which handles all communication between iOS devices and us
     this._server = new HAPServer(this._accessoryInfo);
@@ -972,8 +987,7 @@ export class Accessory extends EventEmitter<Events> {
     this._server.on(HAPServerEventTypes.SESSION_CLOSE, this._handleSessionClose.bind(this));
     this._server.on(HAPServerEventTypes.REQUEST_RESOURCE, this._handleResource.bind(this));
 
-    const targetPort = info.port || 0;
-    this._server.listen(targetPort);
+    this._server.listen(info.port || 0);
   }
 
   /**
@@ -999,13 +1013,13 @@ export class Accessory extends EventEmitter<Events> {
       this._server = undefined;
     }
     if (this._advertiser) {
-      this._advertiser.stopAdvertising();
+      this._advertiser.shutdown();
       this._advertiser = undefined;
     }
   }
 
   _updateConfiguration = () => {
-    if (this._advertiser && this._advertiser.isAdvertising()) {
+    if (this._advertiser && this._advertiser.isServiceCreated()) {
       // get our accessory information in HAP format and determine if our configuration (that is, our
       // Accessories/Services/Characteristics) has changed since the last time we were published. make
       // sure to omit actual values since these are not part of the "configuration".
@@ -1031,14 +1045,14 @@ export class Accessory extends EventEmitter<Events> {
 
   _onListening = (port: number) => {
     // the HAP server is listening, so we can now start advertising our presence.
-    this._advertiser && this._advertiser.startAdvertising(port);
+    this._advertiser!.initAdvertiser(port);
+    this._advertiser!.startAdvertising();
     this.emit(AccessoryEventTypes.LISTENING, port);
   }
 
 // Called when an unpaired client wishes for us to identify ourself
   _handleIdentify = (callback: IdentifyCallback) => {
-    var paired = false;
-    this._identificationRequest(paired, callback);
+    this._identificationRequest(false, callback);
   }
 
 // Called when HAPServer has completed the pairing process with a client

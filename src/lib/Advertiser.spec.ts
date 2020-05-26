@@ -1,105 +1,30 @@
-import { Advertiser } from './Advertiser';
+import { Advertiser, PairingFeatureFlag, StatusFlag } from './Advertiser';
 import { AccessoryInfo } from './model/AccessoryInfo';
 
-const createAdvertiser = () => {
-  return new Advertiser(AccessoryInfo.create('00:00:00:00:00:00'), {
-    multicast: false,
-    interface: 'ipv6',
-    port: 80,
-    ip: '1.1.1.1',
-    ttl: 30,
-    loopback: true,
-    reuseAddr: false,
-  });
-};
+describe(Advertiser, () => {
+  describe("ff and sf", () => {
+    it('should correctly format pairing feature flags', function () {
+      expect(Advertiser.ff()).toEqual(0);
+      expect(Advertiser.ff(PairingFeatureFlag.SUPPORTS_HARDWARE_AUTHENTICATION)).toEqual(1);
+      expect(Advertiser.ff(PairingFeatureFlag.SUPPORTS_SOFTWARE_AUTHENTICATION)).toEqual(2);
+      expect(Advertiser.ff(
+        PairingFeatureFlag.SUPPORTS_HARDWARE_AUTHENTICATION,
+        PairingFeatureFlag.SUPPORTS_SOFTWARE_AUTHENTICATION,
+      )).toEqual(3);
+    });
 
-describe("Advertiser", () => {
-  it('should test', function () {
-    // empty for now
+    it('should correctly format status flags', function () {
+      expect(Advertiser.sf()).toEqual(0);
+
+      expect(Advertiser.sf(StatusFlag.NOT_PAIRED)).toEqual(1);
+      expect(Advertiser.sf(StatusFlag.NOT_JOINED_WIFI)).toEqual(2);
+      expect(Advertiser.sf(StatusFlag.PROBLEM_DETECTED)).toEqual(4);
+
+      expect(Advertiser.sf(StatusFlag.NOT_PAIRED, StatusFlag.NOT_JOINED_WIFI)).toEqual(3);
+      expect(Advertiser.sf(StatusFlag.NOT_PAIRED, StatusFlag.PROBLEM_DETECTED)).toEqual(5);
+      expect(Advertiser.sf(StatusFlag.NOT_JOINED_WIFI, StatusFlag.PROBLEM_DETECTED)).toEqual(6);
+
+      expect(Advertiser.sf(StatusFlag.NOT_PAIRED, StatusFlag.NOT_JOINED_WIFI, StatusFlag.PROBLEM_DETECTED)).toEqual(7);
+    });
   });
 })
-
-/*
-describe('Advertiser', () => {
-  describe('#constructor()', () => {
-    it('should create a setup hash', () => {
-      const advertiser = createAdvertiser();
-
-      expect(advertiser._setupHash).toBeTruthy();
-    });
-  });
-
-  describe('#startAdvertising()', () => {
-    it('should start advertising if not currently doing so', () => {
-      const advertiser = createAdvertiser();
-
-      expect(advertiser._advertisement).toBeNull();
-      advertiser.startAdvertising(80);
-      expect(advertiser._bonjourService.publish).toHaveBeenCalledTimes(1);
-      expect(advertiser._advertisement).not.toBeNull();
-    });
-
-    it('should stop advertising if already doing so', () => {
-      const advertiser = createAdvertiser();
-
-      expect(advertiser._advertisement).toBeNull();
-      advertiser.startAdvertising(80);
-      advertiser.stopAdvertising = jest.fn();
-      advertiser.startAdvertising(80);
-      expect(advertiser.stopAdvertising).toHaveBeenCalledTimes(1);
-      expect(advertiser.isAdvertising()).toBeTruthy();
-    });
-  });
-
-  describe('#isAdvertising()', () => {
-    it('should be true if currently advertising', () => {
-      const advertiser = createAdvertiser();
-      advertiser.startAdvertising(80);
-      expect(advertiser.isAdvertising()).toBeTruthy();
-    });
-
-    it('should be false if not currently advertising', () => {
-      const advertiser = createAdvertiser();
-      expect(advertiser.isAdvertising()).toBeFalsy();
-    });
-  });
-
-  describe('#updateAdvertisement()', () => {
-    it('should send an updated TXT record if currently advertising', () => {
-      const advertiser = createAdvertiser();
-
-      expect(advertiser.isAdvertising()).toBeFalsy();
-      advertiser.startAdvertising(80);
-      expect(advertiser.isAdvertising()).toBeTruthy();
-
-      advertiser.updateAdvertisement();
-      expect(advertiser._advertisement!.updateTxt).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('#stopAdvertising()', () => {
-    it('should stop and destroy all services if currently advertising', () => {
-      const advertiser = createAdvertiser();
-
-      expect(advertiser.isAdvertising()).toBeFalsy();
-      advertiser.startAdvertising(80);
-      expect(advertiser.isAdvertising()).toBeTruthy();
-
-      const advertisement = advertiser._advertisement!;
-      advertiser.stopAdvertising();
-      expect(advertisement.stop).toHaveBeenCalledTimes(1);
-      expect(advertisement.destroy).toHaveBeenCalledTimes(1);
-      expect(advertiser.isAdvertising()).toBeFalsy();
-      expect(advertiser._bonjourService.destroy).toHaveBeenCalledTimes(1);
-    });
-
-    it('should destroy only Bonjour service  if not currently advertising', () => {
-      const advertiser = createAdvertiser();
-
-      advertiser.stopAdvertising();
-      expect(advertiser.isAdvertising()).toBeFalsy();
-      expect(advertiser._bonjourService.destroy).toHaveBeenCalledTimes(1);
-    });
-  });
-});
-*/

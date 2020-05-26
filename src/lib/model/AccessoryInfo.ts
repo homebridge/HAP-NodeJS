@@ -28,6 +28,7 @@ export class AccessoryInfo {
 
   username: MacAddress;
   displayName: string;
+  model: string; // this property is currently not saved to disk
   category: Categories;
   pincode: string;
   signSk: Buffer;
@@ -35,12 +36,13 @@ export class AccessoryInfo {
   pairedClients: Record<string, PairingInformation>;
   pairedAdminClients: number;
   configVersion: number;
-  configHash: string;
+  configHash: string; // TODO range 1-65535 wrapping around to 1
   setupID: string;
 
   private constructor(username: MacAddress) {
     this.username = username;
     this.displayName = "";
+    this.model = "";
     // @ts-ignore
     this.category = "";
     this.pincode = "";
