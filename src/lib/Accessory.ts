@@ -1120,12 +1120,12 @@ export class Accessory extends EventEmitter<Events> {
     this._accessoryInfo.removePairedClient(controller, username);
     this._accessoryInfo.save();
 
+    callback(0); // first of all ensure the pairing is removed before we advertise availability again
+
     if (!this._accessoryInfo.paired()) {
       this._advertiser && this._advertiser.updateAdvertisement();
       this.emit(AccessoryEventTypes.UNPAIRED);
     }
-
-    callback(0);
   };
 
   _handleListPairings = (controller: Session, callback: ListPairingsCallback) => {
