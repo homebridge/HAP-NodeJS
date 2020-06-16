@@ -196,7 +196,7 @@ export class CameraController extends EventEmitter<CameraControllerEventMap> imp
             this.streamManagements.push(new RTPStreamManagement(i, this.streamingOptions, this.delegate));
         }
 
-        if (this.streamingOptions.audio && !this.legacyMode) {
+        if (!this.legacyMode && this.streamingOptions.audio) {
             // In theory the Microphone Service is a necessity. In practice its not. lol. So we just add it if the user wants to support audio
             this.microphoneService = new Service.Microphone('', '');
             this.microphoneService.setCharacteristic(Characteristic.Volume, this.microphoneVolume);
@@ -244,11 +244,47 @@ export class CameraController extends EventEmitter<CameraControllerEventMap> imp
             }
         }
 
+        // MICROPHONE
+        if (!this.legacyMode && this.streamingOptions.audio) { // microphone should be present
+            if (serviceMap.microphone) {
+                this.microphoneService = serviceMap.microphone;
+            } else {
+                // microphone wasn't created yet => create a new one
+                this.microphoneService = new Service.Microphone('', '');
+                this.microphoneService.setCharacteristic(Characteristic.Volume, this.microphoneVolume);
+
+                serviceMap.microphone = this.microphoneService;
+                modifiedServiceMap = true;
+            }
+        } else if (serviceMap.microphone) { // microphone service supplied, though settings seemed to have changed
+            // we need to remove it
+            delete serviceMap.microphone;
+            modifiedServiceMap = true;
+        }
+
+        // SPEAKER
+        if (!this.legacyMode && this.streamingOptions.audio?.twoWayAudio) { // speaker should be present
+            if (serviceMap.speaker) {
+                this.speakerService = serviceMap.speaker;
+            } else {
+                // speaker wasn't created yet => create a new one
+                this.speakerService = new Service.Speaker('', '');
+                this.speakerService.setCharacteristic(Characteristic.Volume, this.speakerVolume);
+
+                serviceMap.speaker = this.speakerService;
+                modifiedServiceMap = true;
+            }
+        } else if (serviceMap.speaker) { // speaker service supplied, though settings seemed to have changed
+            // we need to remove it
+            delete serviceMap.speaker;
+            modifiedServiceMap = true;
+        }
+
         if (this.migrateFromDoorbell(serviceMap)) {
             modifiedServiceMap = true;
         }
 
-        if (modifiedServiceMap) {
+        if (modifiedServiceMap) { // serviceMap must only be returned if anything actually changed
             return serviceMap;
         }
     }
