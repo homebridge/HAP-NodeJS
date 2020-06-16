@@ -16,7 +16,7 @@
   ],
   "dependencies": {
     "@homebridge/ciao": "^1.0.0-beta.15",
-    "fast-srp-hap": "2.0.1",
+    "fast-srp-hap": "2.0.2",
     "tweetnacl": "^1.0.3",
     "debug": "^4.1.1",
     "decimal.js": "^10.2.0",
