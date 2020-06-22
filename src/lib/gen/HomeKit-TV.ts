@@ -322,6 +322,7 @@ export class InputDeviceType extends Characteristic {
   static readonly TUNER = 3;
   static readonly PLAYBACK = 4;
   static readonly AUDIO_SYSTEM = 5;
+  static readonly UNKNOWN_6 = 6; // introduce in iOS 14; "UNKNOWN_6" is not stable API, changes as soon as the type is known
 
   static readonly UUID: string = '000000DC-0000-1000-8000-0026BB765291';
 
@@ -329,7 +330,7 @@ export class InputDeviceType extends Characteristic {
     super('Input Device Type', InputDeviceType.UUID);
     this.setProps({
       format: Formats.UINT8,
-      maxValue: 5,
+      maxValue: 6,
       minValue: 0,
       validValues: [0,1,2,3,4,5],
       perms: [Perms.READ, Perms.NOTIFY]
@@ -499,6 +500,7 @@ export class Television extends Service {
     this.addOptionalCharacteristic(Characteristic.TargetMediaState);
     this.addOptionalCharacteristic(Characteristic.PictureMode);
     this.addOptionalCharacteristic(Characteristic.PowerModeSelection);
+    this.addOptionalCharacteristic(Characteristic.Name);
   }
 }
 

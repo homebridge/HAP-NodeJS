@@ -136,6 +136,10 @@ export class Service extends EventEmitter<Events> {
   static PowerManagement: typeof HomeKitTypes.Generated.PowerManagement;
   static TransferTransportManagement: typeof HomeKitTypes.Generated.TransferTransportManagement;
 
+  static AccessoryRuntimeInformation: typeof HomeKitTypes.Generated.AccessoryRuntimeInformation;
+  static Diagnostics: typeof HomeKitTypes.Generated.Diagnostics;
+  static WiFiTransport: typeof HomeKitTypes.Generated.WiFiTransport;
+
   // NOTICE: when adding/changing properties, remember to possibly adjust the serialize/deserialize functions
   iid: Nullable<number> = null; // assigned later by our containing Accessory
   name: Nullable<string> = null;

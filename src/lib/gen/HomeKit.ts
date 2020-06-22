@@ -3618,6 +3618,490 @@ export class SetupTransferTransport extends Characteristic {
 Characteristic.SetupTransferTransport = SetupTransferTransport;
 
 /**
+ * Characteristic "Activity Interval"
+ */
+export class ActivityInterval extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-0000023B';
+
+  constructor() {
+    super("Activity Interval", ActivityInterval.UUID);
+    this.setProps({
+      format: Formats.UINT32,
+      minValue: 0,
+      minStep: 1,
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.ActivityInterval = ActivityInterval;
+
+/**
+ * Characteristic "CCA Energy Detect Threshold"
+ */
+export class CCAEnergyDetectThreshold extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-00000246';
+
+  constructor() {
+    super("CCA Energy Detect Threshold", CCAEnergyDetectThreshold.UUID);
+    this.setProps({
+      format: Formats.INT,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.CCAEnergyDetectThreshold = CCAEnergyDetectThreshold;
+
+/**
+ * Characteristic "CCA Signal Detect Threshold"
+ */
+export class CCASignalDetectThreshold extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-00000245';
+
+  constructor() {
+    super("CCA Signal Detect Threshold", CCASignalDetectThreshold.UUID);
+    this.setProps({
+      format: Formats.INT,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.CCASignalDetectThreshold = CCASignalDetectThreshold;
+
+/**
+ * Characteristic "Characteristic Value Transition Control"
+ */
+export class CharacteristicValueTransitionControl extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-00000143';
+
+  constructor() {
+    super("Characteristic Value Transition Control", CharacteristicValueTransitionControl.UUID);
+    this.setProps({
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.CharacteristicValueTransitionControl = CharacteristicValueTransitionControl;
+
+/**
+ * Characteristic "Supported Characteristic Value Transition Configuration"
+ */
+export class SupportedCharacteristicValueTransitionConfiguration extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-00000144';
+
+  constructor() {
+    super("Supported Characteristic Value Transition Configuration", SupportedCharacteristicValueTransitionConfiguration.UUID);
+    this.setProps({
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.SupportedCharacteristicValueTransitionConfiguration = SupportedCharacteristicValueTransitionConfiguration;
+
+/**
+ * Characteristic "Current Transport"
+ */
+export class CurrentTransport extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-0000022B';
+
+  constructor() {
+    super("Current Transport", CurrentTransport.UUID);
+    this.setProps({
+      format: Formats.BOOL,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.CurrentTransport = CurrentTransport;
+
+/**
+ * Characteristic "Data Stream HAP Transport"
+ */
+export class DataStreamHAPTransport extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-00000138';
+
+  constructor() {
+    super("Data Stream HAP Transport", DataStreamHAPTransport.UUID);
+    this.setProps({
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.DataStreamHAPTransport = DataStreamHAPTransport;
+
+/**
+ * Characteristic "Data Stream HAP Transport Interrupt"
+ */
+export class DataStreamHAPTransportInterrupt extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-00000139';
+
+  constructor() {
+    super("Data Stream HAP Transport Interrupt", DataStreamHAPTransportInterrupt.UUID);
+    this.setProps({
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.DataStreamHAPTransportInterrupt = DataStreamHAPTransportInterrupt;
+
+/**
+ * Characteristic "Event Retransmission Maximum"
+ */
+export class EventRetransmissionMaximum extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-0000023D';
+
+  constructor() {
+    super("Event Retransmission Maximum", EventRetransmissionMaximum.UUID);
+    this.setProps({
+      format: Formats.UINT8,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.EventRetransmissionMaximum = EventRetransmissionMaximum;
+
+/**
+ * Characteristic "Event Transmission Counters"
+ */
+export class EventTransmissionCounters extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-0000023E';
+
+  constructor() {
+    super("Event Transmission Counters", EventTransmissionCounters.UUID);
+    this.setProps({
+      format: Formats.UINT32,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.EventTransmissionCounters = EventTransmissionCounters;
+
+/**
+ * Characteristic "MAC Retransmission Maximum"
+ */
+export class MACRetransmissionMaximum extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-00000247';
+
+  constructor() {
+    super("MAC Retransmission Maximum", MACRetransmissionMaximum.UUID);
+    this.setProps({
+      format: Formats.UINT8,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.MACRetransmissionMaximum = MACRetransmissionMaximum;
+
+/**
+ * Characteristic "MAC Transmission Counters"
+ */
+export class MACTransmissionCounters extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-00000248';
+
+  constructor() {
+    super("MAC Transmission Counters", MACTransmissionCounters.UUID);
+    this.setProps({
+      format: Formats.DATA,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.MACTransmissionCounters = MACTransmissionCounters;
+
+/**
+ * Characteristic "Operating State Response"
+ */
+export class OperatingStateResponse extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-00000232';
+
+  constructor() {
+    super("Operating State Response", OperatingStateResponse.UUID);
+    this.setProps({
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.OperatingStateResponse = OperatingStateResponse;
+
+/**
+ * Characteristic "Ping"
+ */
+export class Ping extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-0000023C';
+
+  constructor() {
+    super("Ping", Ping.UUID);
+    this.setProps({
+      format: Formats.DATA,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.Ping = Ping;
+
+/**
+ * Characteristic "Receiver Sensitivity"
+ */
+export class ReceiverSensitivity extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-00000244';
+
+  constructor() {
+    super("Receiver Sensitivity", ReceiverSensitivity.UUID);
+    this.setProps({
+      format: Formats.INT,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.ReceiverSensitivity = ReceiverSensitivity;
+
+/**
+ * Characteristic "Received Signal Strength Indication"
+ */
+export class ReceivedSignalStrengthIndication extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-0000023F';
+
+  constructor() {
+    super("Received Signal Strength Indication", ReceivedSignalStrengthIndication.UUID);
+    this.setProps({
+      format: Formats.INT,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.ReceivedSignalStrengthIndication = ReceivedSignalStrengthIndication;
+
+/**
+ * Characteristic "Sleep Interval"
+ */
+export class SleepInterval extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-0000023A';
+
+  constructor() {
+    super("Sleep Interval", SleepInterval.UUID);
+    this.setProps({
+      format: Formats.UINT32,
+      minValue: 0,
+      minStep: 1,
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.SleepInterval = SleepInterval;
+
+/**
+ * Characteristic "Signal-to-noise Ration"
+ */
+export class SignalToNoiseRation extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-00000241';
+
+  constructor() {
+    super("Signal-to-noise Ration", SignalToNoiseRation.UUID);
+    this.setProps({
+      format: Formats.INT,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.SignalToNoiseRation = SignalToNoiseRation;
+
+/**
+ * Characteristic "Supported Diagnostics Snapshot"
+ */
+export class SupportedDiagnosticsSnapshot extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-00000238';
+
+  constructor() {
+    super("Supported Diagnostics Snapshot", SupportedDiagnosticsSnapshot.UUID);
+    this.setProps({
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.SupportedDiagnosticsSnapshot = SupportedDiagnosticsSnapshot;
+
+/**
+ * Characteristic "Transmit Power"
+ */
+export class TransmitPower extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-00000242';
+
+  constructor() {
+    super("Transmit Power", TransmitPower.UUID);
+    this.setProps({
+      format: Formats.INT,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.TransmitPower = TransmitPower;
+
+/**
+ * Characteristic "Transmit Power Maximum"
+ */
+export class TransmitPowerMaximum extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-00000243';
+
+  constructor() {
+    super("Transmit Power Maximum", TransmitPowerMaximum.UUID);
+    this.setProps({
+      format: Formats.INT,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.TransmitPowerMaximum = TransmitPowerMaximum;
+
+/**
+ * Characteristic "Video Analysis Active"
+ */
+export class VideoAnalysisActive extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-00000229';
+
+  constructor() {
+    super("Video Analysis Active", VideoAnalysisActive.UUID);
+    this.setProps({
+      format: Formats.UINT8,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.VideoAnalysisActive = VideoAnalysisActive;
+
+/**
+ * Characteristic "Wi-Fi Capabilities"
+ */
+export class WiFiCapabilities extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-0000022C';
+
+  constructor() {
+    super("Wi-Fi Capabilities", WiFiCapabilities.UUID);
+    this.setProps({
+      format: Formats.UINT32,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.WiFiCapabilities = WiFiCapabilities;
+
+/**
+ * Characteristic "Wi-Fi Configuration Control"
+ */
+export class WiFiConfigurationControl extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-0000022D';
+
+  constructor() {
+    super("Wi-Fi Configuration Control", WiFiConfigurationControl.UUID);
+    this.setProps({
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY, Perms.TIMED_WRITE, Perms.WRITE_RESPONSE],
+    });
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.WiFiConfigurationControl = WiFiConfigurationControl;
+
+/**
  * Service "Access Control"
  */
 
@@ -3741,8 +4225,8 @@ export class BatteryService extends Service {
     super(displayName, BatteryService.UUID, subtype);
 
     // Required Characteristics
-    this.addCharacteristic(Characteristic.BatteryLevel);
-    this.addCharacteristic(Characteristic.ChargingState);
+    this.addCharacteristic(Characteristic.BatteryLevel); // this is actually optional since iOS 14
+    this.addCharacteristic(Characteristic.ChargingState); // this is actually optional since iOS 14
     this.addCharacteristic(Characteristic.StatusLowBattery);
 
     // Optional Characteristics
@@ -3898,6 +4382,8 @@ export class Doorbell extends Service {
 
     // Optional Characteristics
     this.addOptionalCharacteristic(Characteristic.Brightness);
+    this.addOptionalCharacteristic(Characteristic.Mute);
+    this.addOptionalCharacteristic(Characteristic.OperatingStateResponse);
     this.addOptionalCharacteristic(Characteristic.Volume);
     this.addOptionalCharacteristic(Characteristic.Name);
   }
@@ -4204,7 +4690,9 @@ export class Lightbulb extends Service {
     this.addOptionalCharacteristic(Characteristic.Hue);
     this.addOptionalCharacteristic(Characteristic.Saturation);
     this.addOptionalCharacteristic(Characteristic.Name);
-    this.addOptionalCharacteristic(Characteristic.ColorTemperature); //Manual fix to add temperature
+    this.addOptionalCharacteristic(Characteristic.ColorTemperature);
+    this.addOptionalCharacteristic(Characteristic.CharacteristicValueTransitionControl); // Ambient Lightning
+    this.addOptionalCharacteristic(Characteristic.SupportedCharacteristicValueTransitionConfiguration); // Ambient Lightning
   }
 }
 
@@ -4741,16 +5229,16 @@ export class WiFiRouter extends Service {
     super(displayName, WiFiRouter.UUID, subtype);
 
     // Required Characteristics
+    this.addCharacteristic(Characteristic.ConfiguredName);
+    this.addCharacteristic(Characteristic.ManagedNetworkEnable);
+    this.addCharacteristic(NetworkAccessViolationControl);
     this.addCharacteristic(Characteristic.NetworkClientProfileControl);
     this.addCharacteristic(Characteristic.NetworkClientStatusControl);
     this.addCharacteristic(Characteristic.RouterStatus);
     this.addCharacteristic(Characteristic.SupportedRouterConfiguration);
     this.addCharacteristic(Characteristic.WANConfigurationList);
     this.addCharacteristic(Characteristic.WANStatusList);
-    this.addCharacteristic(Characteristic.ManagedNetworkEnable);
 
-    // Optional Characteristics
-    this.addOptionalCharacteristic(Characteristic.NetworkAccessViolationControl);
   }
 }
 
@@ -4810,3 +5298,65 @@ export class TransferTransportManagement extends Service {
 }
 
 Service.TransferTransportManagement = TransferTransportManagement;
+
+/**
+ * Service "Accessory Runtime Information"
+ */
+export class AccessoryRuntimeInformation extends Service {
+
+  static readonly UUID: string = '00000203-0000-1000-8000-00000239';
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, AccessoryRuntimeInformation.UUID, subtype);
+
+    // Require Characteristics
+    this.addCharacteristic(Characteristic.Ping);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.ActivityInterval);
+    this.addOptionalCharacteristic(Characteristic.SleepInterval);
+  }
+
+}
+
+Service.AccessoryRuntimeInformation = AccessoryRuntimeInformation;
+
+/**
+ * Service "Diagnostics"
+ */
+export class Diagnostics extends Service {
+
+  static readonly UUID: string = '00000203-0000-1000-8000-00000237';
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, Diagnostics.UUID, subtype);
+
+    // Require Characteristics
+    this.addCharacteristic(Characteristic.SupportedDiagnosticsSnapshot);
+  }
+
+}
+
+Service.Diagnostics = Diagnostics;
+
+/**
+ * Service "Wi-Fi Transport"
+ */
+export class WiFiTransport extends Service {
+
+  static readonly UUID: string = '00000203-0000-1000-8000-0000022A';
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, WiFiTransport.UUID, subtype);
+
+    // Require Characteristics
+    this.addCharacteristic(Characteristic.CurrentTransport);
+    this.addCharacteristic(Characteristic.WiFiCapabilities);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.WiFiConfigurationControl);
+  }
+
+}
+
+Service.WiFiTransport = WiFiTransport;
