@@ -3014,7 +3014,7 @@ export class Version extends Characteristic {
     super('Version', Version.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ]
     });
     this.value = this.getDefaultValue();
   }
