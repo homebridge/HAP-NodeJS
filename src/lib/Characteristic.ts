@@ -388,7 +388,7 @@ export class Characteristic extends EventEmitter<Events> {
   static ReceiverSensitivity: typeof HomeKitTypes.Generated.ReceiverSensitivity;
   static ReceivedSignalStrengthIndication: typeof HomeKitTypes.Generated.ReceivedSignalStrengthIndication;
   static SleepInterval: typeof HomeKitTypes.Generated.SleepInterval;
-  static SignalToNoiseRation: typeof HomeKitTypes.Generated.SignalToNoiseRation;
+  static SignalToNoiseRatio: typeof HomeKitTypes.Generated.SignalToNoiseRatio;
   static SupportedDiagnosticsSnapshot: typeof HomeKitTypes.Generated.SupportedDiagnosticsSnapshot;
   static TransmitPower: typeof HomeKitTypes.Generated.TransmitPower;
   static TransmitPowerMaximum: typeof HomeKitTypes.Generated.TransmitPowerMaximum;

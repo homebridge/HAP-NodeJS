@@ -3964,12 +3964,12 @@ Characteristic.SleepInterval = SleepInterval;
 /**
  * Characteristic "Signal-to-noise Ration"
  */
-export class SignalToNoiseRation extends Characteristic {
+export class SignalToNoiseRatio extends Characteristic {
 
   static readonly UUID: string = '0000021E-0000-1000-8000-00000241';
 
   constructor() {
-    super("Signal-to-noise Ration", SignalToNoiseRation.UUID);
+    super("Signal-to-noise Ration", SignalToNoiseRatio.UUID);
     this.setProps({
       format: Formats.INT,
       perms: [Perms.PAIRED_READ],
@@ -3979,7 +3979,7 @@ export class SignalToNoiseRation extends Characteristic {
 
 }
 
-Characteristic.SignalToNoiseRation = SignalToNoiseRation;
+Characteristic.SignalToNoiseRatio = SignalToNoiseRatio;
 
 /**
  * Characteristic "Supported Diagnostics Snapshot"
@@ -5231,7 +5231,7 @@ export class WiFiRouter extends Service {
     // Required Characteristics
     this.addCharacteristic(Characteristic.ConfiguredName);
     this.addCharacteristic(Characteristic.ManagedNetworkEnable);
-    this.addCharacteristic(NetworkAccessViolationControl);
+    this.addCharacteristic(Characteristic.NetworkAccessViolationControl);
     this.addCharacteristic(Characteristic.NetworkClientProfileControl);
     this.addCharacteristic(Characteristic.NetworkClientStatusControl);
     this.addCharacteristic(Characteristic.RouterStatus);
