@@ -1,6 +1,5 @@
-import {
+import ciao, {
   CiaoService,
-  createResponder,
   MDNSServerOptions,
   Responder,
   ServiceEvent,
@@ -60,10 +59,10 @@ export class Advertiser extends EventEmitter {
 
   private advertisedService?: CiaoService;
 
-  constructor(accessoryInfo: AccessoryInfo, options: MDNSServerOptions) {
+  constructor(accessoryInfo: AccessoryInfo, options?: MDNSServerOptions) {
     super();
     this.accessoryInfo = accessoryInfo;
-    this.responder = createResponder(options); // TODO create ONE responder for every similar set of config options
+    this.responder = ciao.getResponder(options);
     this.setupHash = this.computeSetupHash();
   }
 

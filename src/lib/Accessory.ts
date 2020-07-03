@@ -1,3 +1,4 @@
+import { MDNSServerOptions } from "@homebridge/ciao";
 import crypto from 'crypto';
 import createDebug from 'debug';
 import assert from "assert";
@@ -143,7 +144,7 @@ export interface PublishInfo {
   category?: Categories;
   setupID?: string;
   port?: number;
-  mdns?: any;
+  mdns?: MDNSServerOptions;
 }
 
 export type ServiceCharacteristicChange = CharacteristicChange &  {
@@ -1050,6 +1051,7 @@ export class Accessory extends EventEmitter<Events> {
   }
 
   _onListening = (port: number) => {
+    assert(this._advertiser, "Advertiser wasn't created at onListening!");
     // the HAP server is listening, so we can now start advertising our presence.
     this._advertiser!.initAdvertiser(port);
     this._advertiser!.startAdvertising();
