@@ -1,4 +1,4 @@
 export * from './Controller';
 export * from './RemoteController';
 export * from './CameraController';
-export * from './RemoteController';
+export * from './DoorbellController';
