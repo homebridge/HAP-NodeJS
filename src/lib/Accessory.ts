@@ -958,9 +958,7 @@ export class Accessory extends EventEmitter<Events> {
     if (configHash !== this._accessoryInfo.configHash) {
 
       // our configuration has changed! we'll need to bump our config version number
-      this._accessoryInfo.configVersion++;
-      this._accessoryInfo.configHash = configHash;
-      this._accessoryInfo.save();
+      this._accessoryInfo.updateConfigHash(configHash);
     }
 
     this.validateAccessory();
@@ -1040,9 +1038,7 @@ export class Accessory extends EventEmitter<Events> {
       if (this._accessoryInfo && configHash !== this._accessoryInfo.configHash) {
 
         // our configuration has changed! we'll need to bump our config version number
-        this._accessoryInfo.configVersion++;
-        this._accessoryInfo.configHash = configHash;
-        this._accessoryInfo.save();
+        this._accessoryInfo.updateConfigHash(configHash);
       }
 
       // update our advertisement so HomeKit on iOS can pickup new accessory

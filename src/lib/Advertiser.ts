@@ -111,7 +111,7 @@ export class Advertiser extends EventEmitter {
     }
 
     return {
-      "c#": this.accessoryInfo.configVersion, // current configuration number
+      "c#": this.accessoryInfo.getConfigVersion(), // current configuration number
       ff: Advertiser.ff(), // pairing feature flags
       id: this.accessoryInfo.username, // device id
       md: this.accessoryInfo.model, // model name
