@@ -233,7 +233,6 @@ export class Accessory extends EventEmitter<Events> {
   constructor(public displayName: string, public UUID: string) {
     super();
     assert(displayName, "Accessories must be created with a non-empty displayName.");
-    assert(Buffer.from(displayName, "utf8").length <= 63, "Accessory displayName cannot be longer than 63 bytes!");
     assert(UUID, "Accessories must be created with a valid UUID.")
     assert(uuid.isValid(UUID), "UUID '" + UUID + "' is not a valid UUID. Try using the provided 'generateUUID' function to create a valid UUID from any arbitrary string, like a serial number.");
 
@@ -729,7 +728,7 @@ export class Accessory extends EventEmitter<Events> {
    * mistakes in Accessory structured, which may lead to HomeKit rejecting the accessory when pairing.
    * If it is called on a bridge it will call this method for all bridged accessories.
    */
-  private validateAccessory() {
+  private validateAccessory(mainAccessory?: boolean) {
     const service = this.getService(Service.AccessoryInformation);
     if (!service) {
       console.log("HAP-NodeJS WARNING: The accessory '" + this.displayName + "' is getting published without a AccessoryInformation service. " +
@@ -754,6 +753,11 @@ export class Accessory extends EventEmitter<Events> {
       checkValue("SerialNumber", serialNumber);
       checkValue("FirmwareRevision", firmwareRevision);
       checkValue("Name", name);
+    }
+
+    if (mainAccessory) {
+      // the main accessory which is advertised via bonjour must have a name with length <= 63 (limitation of DNS FQDN names)
+      assert(Buffer.from(this.displayName, "utf8").length <= 63, "Accessory displayName cannot be longer than 63 bytes!");
     }
 
     if (this.bridged) {
@@ -961,7 +965,7 @@ export class Accessory extends EventEmitter<Events> {
       this._accessoryInfo.updateConfigHash(configHash);
     }
 
-    this.validateAccessory();
+    this.validateAccessory(true);
 
     // create our Advertiser which broadcasts our presence over mdns
     this._advertiser = new Advertiser(this._accessoryInfo, info.mdns);
