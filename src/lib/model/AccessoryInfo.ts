@@ -165,7 +165,7 @@ export class AccessoryInfo {
   private ensureConfigVersionBounds(): void {
     // current configuration number must be in the range of 1-65535 and wrap to 1 when it overflows
 
-    this.configVersion = this.configVersion % (0xFF + 1);
+    this.configVersion = this.configVersion % (0xFFFF + 1);
     if (this.configVersion === 0) {
       this.configVersion = 1;
     }
