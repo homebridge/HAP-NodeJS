@@ -3820,6 +3820,26 @@ export class EventTransmissionCounters extends Characteristic {
 Characteristic.EventTransmissionCounters = EventTransmissionCounters;
 
 /**
+ * Characteristic "Heart Beat"
+ */
+export class HeartBeat extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-0000024A';
+
+  constructor() {
+    super("Heart Beat", HeartBeat.UUID);
+    this.setProps({
+      format: Formats.UINT32,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    })
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.HeartBeat = HeartBeat;
+
+/**
  * Characteristic "MAC Retransmission Maximum"
  */
 export class MACRetransmissionMaximum extends Characteristic {
@@ -5314,6 +5334,7 @@ export class AccessoryRuntimeInformation extends Service {
 
     // Optional Characteristics
     this.addOptionalCharacteristic(Characteristic.ActivityInterval);
+    this.addOptionalCharacteristic(Characteristic.HeartBeat);
     this.addOptionalCharacteristic(Characteristic.SleepInterval);
   }
 
