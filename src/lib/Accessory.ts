@@ -82,6 +82,8 @@ export const enum Categories {
   TARGET_CONTROLLER = 32, // Remote Control
   ROUTER = 33,
   AUDIO_RECEIVER = 34,
+  TV_SET_TOP_BOX = 35,
+  TV_STREAMING_STICK = 36,
 }
 
 export interface SerializedAccessory {
