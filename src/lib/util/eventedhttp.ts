@@ -1,13 +1,12 @@
-import net, { AddressInfo, Socket } from 'net';
-import http, { IncomingMessage, OutgoingMessage, ServerResponse } from 'http';
-
 import createDebug from 'debug';
-
-import * as uuid from './uuid';
-import { SessionIdentifier, Nullable } from '../../types';
+import { SrpServer } from "fast-srp-hap";
+import http, { IncomingMessage, OutgoingMessage, ServerResponse } from 'http';
+import net, { AddressInfo, Socket } from 'net';
+import os from "os";
+import { Nullable, SessionIdentifier } from '../../types';
 import { EventEmitter } from '../EventEmitter';
 import { HAPEncryption } from '../HAPServer';
-import { SrpServer } from "fast-srp-hap";
+import * as uuid from './uuid';
 
 const debug = createDebug('HAP-NodeJS:EventedHTTPServer');
 
@@ -88,7 +87,7 @@ export class EventedHTTPServer extends EventEmitter<Events> {
       const address = this._tcpServer.address();
 
       if (address && typeof address !== 'string') {
-        var port = address.port;
+        const port = address.port;
         debug("Server listening on port %s", port);
         this.emit(EventedHTTPServerEvents.LISTENING, port);
       }
@@ -112,8 +111,7 @@ export class EventedHTTPServer extends EventEmitter<Events> {
     contentType: string,
     exclude?: Record<string, boolean>
   ) => {
-    for (var index in this._connections) {
-      var connection = this._connections[index];
+    for (const connection of this._connections) {
       connection.sendEvent(event, data, contentType, exclude);
     }
   }
@@ -121,7 +119,7 @@ export class EventedHTTPServer extends EventEmitter<Events> {
 // Called by net.Server when a new client connects. We will set up a new EventedHTTPServerConnection to manage the
 // lifetime of this connection.
   _onConnection = (socket: Socket) => {
-    var connection = new EventedHTTPServerConnection(this, socket);
+    const connection = new EventedHTTPServerConnection(this, socket);
 
     // pass on session events to our listeners directly
     connection.on(EventedHTTPServerEvents.REQUEST, (request: IncomingMessage, response: ServerResponse, session: Session, events: any) => { this.emit(EventedHTTPServerEvents.REQUEST, request, response, session, events); });
@@ -179,6 +177,37 @@ export class Session extends EventEmitter<HAPSessionEventMap> {
     this.sessionID = connection.sessionID;
 
     Session.sessionsBySessionID[this.sessionID] = this;
+  }
+
+  public getLocalAddress(ipVersion: "ipv4" | "ipv6"): string {
+    const infos = os.networkInterfaces()[this._connection.networkInterface];
+
+    if (ipVersion === "ipv4") {
+      for (const info of infos) {
+        if (info.family === "IPv4") {
+          return info.address;
+        }
+      }
+
+      throw new Error("Could not find " + ipVersion + " address for interface " + this._connection.networkInterface);
+    } else {
+      let localUniqueAddress: string | undefined = undefined;
+
+      for (const info of infos) {
+        if (info.family === "IPv6") {
+          if (!info.scopeid) {
+            return info.address;
+          } else if (!localUniqueAddress) {
+            localUniqueAddress = info.address;
+          }
+        }
+      }
+
+      if (!localUniqueAddress) {
+        throw new Error("Could not find " + ipVersion + " address for interface " + this._connection.networkInterface);
+      }
+      return localUniqueAddress;
+    }
   }
 
   /**
@@ -240,7 +269,7 @@ export class Session extends EventEmitter<HAPSessionEventMap> {
     }
   };
 
-  static getSession(sessionID: string) {
+  static getSession(sessionID: SessionIdentifier) {
     return this.sessionsBySessionID[sessionID];
   }
 
@@ -257,8 +286,9 @@ export class Session extends EventEmitter<HAPSessionEventMap> {
 class EventedHTTPServerConnection extends EventEmitter<Events> {
 
   readonly server: EventedHTTPServer;
-  sessionID: SessionIdentifier;
-  _remoteAddress: string;
+  readonly sessionID: SessionIdentifier;
+  readonly _remoteAddress: string;
+  readonly networkInterface: string;
   _pendingClientSocketData: Nullable<Buffer>;
   _fullySetup: boolean;
   _writingResponse: boolean;
@@ -277,6 +307,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     this.server = server;
     this.sessionID = uuid.generate(clientSocket.remoteAddress + ':' + clientSocket.remotePort);
     this._remoteAddress = clientSocket.remoteAddress!; // cache because it becomes undefined in 'onClientSocketClose'
+    this.networkInterface = EventedHTTPServerConnection.getLocalNetworkInterface(clientSocket);
     this._pendingClientSocketData = Buffer.alloc(0); // data received from client before HTTP proxy is fully setup
     this._fullySetup = false; // true when we are finished establishing connections
     this._writingResponse = false; // true while we are composing an HTTP response (so events can wait)
@@ -301,7 +332,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     this._session = new Session(this);
     // a collection of event names subscribed to by this connection
     this._events = {}; // this._events[eventName] = true (value is arbitrary, but must be truthy)
-    debug("[%s] New connection from client", this._remoteAddress);
+    debug("[%s] New connection from client at interface %s", this._remoteAddress, this.networkInterface);
   }
 
   sendEvent = (event: string, data: Buffer | string, contentType: string, excludeEvents?: Record<string, boolean>) => {
@@ -320,7 +351,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
       data = Buffer.from(data);
     }
     // format this payload as an HTTP response
-    var linebreak = Buffer.from("0D0A", "hex");
+    const linebreak = Buffer.from("0D0A", "hex");
     data = Buffer.concat([
       Buffer.from('EVENT/1.0 200 OK'), linebreak,
       Buffer.from('Content-Type: ' + contentType), linebreak,
@@ -335,7 +366,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
       this._pendingEventData.push(data);
     } else {
       // give listeners an opportunity to encrypt this data before sending it to the client
-      var encrypted = {data: null};
+      const encrypted = {data: null};
       this.emit(EventedHTTPServerEvents.ENCRYPT, data, encrypted, this._session);
       if (encrypted.data) {
         // @ts-ignore
@@ -406,7 +437,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     this._writingResponse = true;
 
     // give listeners an opportunity to decrypt this data before processing it as HTTP
-    var decrypted: {data: Buffer | null, error: Error | null} = {data: null, error: null};
+    const decrypted: { data: Buffer | null, error: Error | null } = {data: null, error: null};
     this.emit(EventedHTTPServerEvents.DECRYPT, data, decrypted, this._session);
 
     if (decrypted.error) {
@@ -431,7 +462,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
   // Received data from HTTP Server
   _onServerSocketData = (data: Buffer | string) => {
     // give listeners an opportunity to encrypt this data before sending it to the client
-    var encrypted = {data: null};
+    const encrypted = {data: null};
     this.emit(EventedHTTPServerEvents.ENCRYPT, data, encrypted, this._session);
     if (encrypted.data)
       data = encrypted.data!;
@@ -499,4 +530,31 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     debug("[%s] Client connection error: %s", this._remoteAddress, err.message);
     // _onClientSocketClose will be called next
   }
+
+  private static getLocalNetworkInterface(socket: Socket): string {
+    let localAddress = socket.localAddress;
+
+    if (localAddress.startsWith("::ffff:")) { // IPv4-Mapped IPv6 Address https://tools.ietf.org/html/rfc4291#section-2.5.5.2
+      localAddress = localAddress.substring(7);
+    } else {
+      const index = localAddress.indexOf("%");
+      if (index !== -1) { // link-local ipv6
+        localAddress = localAddress.substring(0, index);
+      }
+    }
+
+    const interfaces = os.networkInterfaces();
+    for (const [name, infos] of Object.entries(interfaces)) {
+      for (const info of infos) {
+        if (info.address === localAddress) {
+          return name;
+        }
+      }
+    }
+
+    console.log(`WARNING couldn't map socket coming from ${socket.remoteAddress}:${socket.remotePort} at local address ${socket.localAddress} to a interface!`);
+
+    return Object.keys(interfaces)[1]; // just use the first interface after the loopback interface as fallback
+  }
+
 }

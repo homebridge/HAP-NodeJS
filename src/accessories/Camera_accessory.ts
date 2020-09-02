@@ -19,7 +19,6 @@ import {
     VideoInfo
 } from "..";
 import { ChildProcess, spawn } from "child_process";
-import ip from "ip";
 
 const cameraUUID = uuid.generate('hap-nodejs:accessories:ip-camera');
 const camera = exports.accessory = new Accessory('IPCamera', cameraUUID);
@@ -33,7 +32,8 @@ camera.category = Categories.IP_CAMERA;
 type SessionInfo = {
     address: string, // address of the HAP controller
 
-    videoPort: number,
+    videoPort: number, // port of the controller
+    localVideoPort: number,
     videoCryptoSuite: SRTPCryptoSuites, // should be saved if multiple suites are supported
     videoSRTP: Buffer, // key and salt concatenated
     videoSSRC: number, // rtp synchronisation source
@@ -44,6 +44,11 @@ type SessionInfo = {
     audioSRTP: Buffer,
     audioSSRC: number,
      */
+}
+
+type OngoingSession = {
+    localVideoPort: number,
+    process: ChildProcess,
 }
 
 const FFMPEGH264ProfileNames = [
@@ -57,6 +62,17 @@ const FFMPEGH264LevelNames = [
     "4.0"
 ];
 
+const ports = new Set<number>();
+
+function getPort(): number {
+    for (let i = 5011;; i++) {
+        if (!ports.has(i)) {
+            ports.add(i);
+            return i;
+        }
+    }
+}
+
 class ExampleCamera implements CameraStreamingDelegate {
 
     private ffmpegDebugOutput: boolean = false;
@@ -65,7 +81,7 @@ class ExampleCamera implements CameraStreamingDelegate {
 
     // keep track of sessions
     pendingSessions: Record<string, SessionInfo> = {};
-    ongoingSessions: Record<string, ChildProcess> = {};
+    ongoingSessions: Record<string, OngoingSession> = {};
 
     handleSnapshotRequest(request: SnapshotRequest, callback: SnapshotRequestCallback): void {
         const ffmpegCommand = `-f lavfi -i testsrc=s=${request.width}x${request.height} -vframes 1 -f mjpeg -`;
@@ -100,7 +116,6 @@ class ExampleCamera implements CameraStreamingDelegate {
         const targetAddress = request.targetAddress;
 
         const video = request.video;
-        const videoPort = video.port;
 
         const videoCryptoSuite = video.srtpCryptoSuite; // could be used to support multiple crypto suite (or support no suite for debugging)
         const videoSrtpKey = video.srtp_key;
@@ -108,20 +123,21 @@ class ExampleCamera implements CameraStreamingDelegate {
 
         const videoSSRC = CameraController.generateSynchronisationSource();
 
+        const localPort = getPort();
+
         const sessionInfo: SessionInfo = {
             address: targetAddress,
 
-            videoPort: videoPort,
+            videoPort: video.port,
+            localVideoPort: localPort,
             videoCryptoSuite: videoCryptoSuite,
             videoSRTP: Buffer.concat([videoSrtpKey, videoSrtpSalt]),
             videoSSRC: videoSSRC,
         };
 
-        const currentAddress = ip.address("public", request.addressVersion); // ipAddress version must match
         const response: PrepareStreamResponse = {
-            address: currentAddress,
             video: {
-                port: videoPort,
+                port: localPort,
                 ssrc: videoSSRC,
 
                 srtp_key: videoSrtpKey,
@@ -139,7 +155,7 @@ class ExampleCamera implements CameraStreamingDelegate {
         const sessionId = request.sessionID;
 
         switch (request.type) {
-            case StreamRequestTypes.START:
+            case StreamRequestTypes.START: {
                 const sessionInfo = this.pendingSessions[sessionId];
 
                 const video: VideoInfo = request.video;
@@ -157,15 +173,17 @@ class ExampleCamera implements CameraStreamingDelegate {
 
                 const address = sessionInfo.address;
                 const videoPort = sessionInfo.videoPort;
+                const localVideoPort = sessionInfo.localVideoPort;
                 const ssrc = sessionInfo.videoSSRC;
                 const cryptoSuite = sessionInfo.videoCryptoSuite;
                 const videoSRTP = sessionInfo.videoSRTP.toString("base64");
 
                 console.log(`Starting video stream (${width}x${height}, ${fps} fps, ${maxBitrate} kbps, ${mtu} mtu)...`);
 
-                let videoffmpegCommand = `-f lavfi -i testsrc=size=${width}x${height}:rate=${fps} -map 0:0 ` +
-                    `-c:v libx264 -pix_fmt yuv420p -r ${fps} -an -sn -dn -b:v ${maxBitrate}k -bufsize ${2*maxBitrate}k -maxrate ${maxBitrate}k ` +
-                    `-payload_type ${payloadType} -ssrc ${ssrc} -f rtp `; // -profile:v ${profile} -level:v ${level}
+                let videoffmpegCommand = `-re -f lavfi -i testsrc=s=${width}x${height}:r=${fps} -map 0:0 ` +
+                  `-c:v h264 -pix_fmt yuv420p -r ${fps} -an -sn -dn -b:v ${maxBitrate}k ` +
+                  `-profile:v ${profile} -level:v ${level} ` +
+                  `-payload_type ${payloadType} -ssrc ${ssrc} -f rtp `;
 
                 if (cryptoSuite !== SRTPCryptoSuites.NONE) {
                     let suite: string;
@@ -181,7 +199,7 @@ class ExampleCamera implements CameraStreamingDelegate {
                     videoffmpegCommand += `-srtp_out_suite ${suite} -srtp_out_params ${videoSRTP} s`;
                 }
 
-                videoffmpegCommand += `rtp://${address}:${videoPort}?rtcpport=${videoPort}&localrtcpport=${videoPort}&pkt_size=${mtu}`;
+                videoffmpegCommand += `rtp://${address}:${videoPort}?rtcpport=${videoPort}&localrtcpport=${localVideoPort}&pkt_size=${mtu}`;
 
                 if (this.ffmpegDebugOutput) {
                     console.log("FFMPEG command: ffmpeg " + videoffmpegCommand);
@@ -190,7 +208,8 @@ class ExampleCamera implements CameraStreamingDelegate {
                 const ffmpegVideo = spawn('ffmpeg', videoffmpegCommand.split(' '), {env: process.env});
 
                 let started = false;
-                ffmpegVideo.stderr.on('data', data => {
+                ffmpegVideo.stderr.on('data', (data: Buffer) => {
+                    console.log(data.toString("utf8"));
                     if (!started) {
                         started = true;
                         console.log("FFMPEG: received first frame");
@@ -222,22 +241,26 @@ class ExampleCamera implements CameraStreamingDelegate {
                     }
                 });
 
-                this.ongoingSessions[sessionId] = ffmpegVideo;
+                this.ongoingSessions[sessionId] = {
+                    localVideoPort: localVideoPort,
+                    process: ffmpegVideo,
+                };
                 delete this.pendingSessions[sessionId];
 
                 break;
+            }
             case StreamRequestTypes.RECONFIGURE:
                 // not supported by this example
                 console.log("Received (unsupported) request to reconfigure to: " + JSON.stringify(request.video));
                 callback();
                 break;
             case StreamRequestTypes.STOP:
-                const ffmpegProcess = this.ongoingSessions[sessionId];
+                const ongoingSession = this.ongoingSessions[sessionId];
+
+                ports.delete(ongoingSession.localVideoPort);
 
                 try {
-                    if (ffmpegProcess) {
-                        ffmpegProcess.kill('SIGKILL');
-                    }
+                    ongoingSession.process.kill('SIGKILL');
                 } catch (e) {
                     console.log("Error occurred terminating the video process!");
                     console.log(e);

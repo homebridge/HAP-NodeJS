@@ -1,22 +1,21 @@
 import crypto from 'crypto';
-
-import ip from 'ip';
 import createDebug from 'debug';
-
-import * as tlv from '../util/tlv';
-import {Service} from '../Service';
+import net from "net";
+import { LegacyCameraSource, LegacyCameraSourceAdapter, once, uuid } from "../../index";
+import { CharacteristicValue, Nullable, SessionIdentifier } from '../../types';
 import {
   Characteristic,
   CharacteristicEventTypes,
   CharacteristicGetCallback,
   CharacteristicSetCallback
 } from '../Characteristic';
+import { CameraController, CameraStreamingDelegate } from "../controller";
+import { CameraRTPStreamManagement } from "../gen/HomeKit";
+import { Status } from "../HAPServer";
+import { Service } from '../Service';
+import { EventedHTTPServer, Session } from "../util/eventedhttp";
+import * as tlv from '../util/tlv';
 import RTPProxy from './RTPProxy';
-import {CharacteristicValue, Nullable, SessionIdentifier} from '../../types';
-import {CameraRTPStreamManagement} from "../gen/HomeKit";
-import {CameraController, CameraStreamingDelegate} from "../controller";
-import {Status} from "../HAPServer";
-import {LegacyCameraSource, LegacyCameraSourceAdapter, once, uuid} from "../../index";
 
 const debug = createDebug('HAP-NodeJS:Camera:RTPStreamManagement');
 // ---------------------------------- TLV DEFINITIONS START ----------------------------------
@@ -336,7 +335,16 @@ export type Source = {
 };
 
 export type PrepareStreamResponse = {
-  address: string | Address;
+  /**
+   * @deprecated The local ip address will be automatically determined by HAP-NodeJS.
+   *   Any value set will be ignored. You may only still set a value to support version prior to 0.7.9
+   */
+  address?: string | Address;
+  /**
+   * Any value set to this optional property will overwrite the automatically determined local address,
+   * which is sent as RTP endpoint to the iOS device.
+   */
+  addressOverride?: string;
   // video should be instanceOf ProxiedSourceResponse if proxy is required
   video: SourceResponse | ProxiedSourceResponse;
   // needs to be only supplied if audio is required; audio should be instanceOf ProxiedSourceResponse if proxy is required and audio proxy is not disabled
@@ -855,6 +863,8 @@ export class RTPStreamManagement {
     this.sessionIdentifier = sessionIdentifier;
     this._updateStreamStatus(StreamingStatus.IN_USE);
 
+    const session: Session = Session.getSession(connectionID);
+
     // Address
     const targetAddressPayload = objects[SetupEndpointsTypes.CONTROLLER_ADDRESS];
     const processedAddressInfo = tlv.decode(targetAddressPayload);
@@ -915,7 +925,7 @@ export class RTPStreamManagement {
     const promises: Promise<void>[] = [];
 
     if (this.requireProxy) {
-      prepareRequest.targetAddress = ip.address("public", addressVersion === IPAddressVersion.IPV6? "ipv6": "ipv4"); // ip versions must be the same
+      prepareRequest.targetAddress = session.getLocalAddress(addressVersion === IPAddressVersion.IPV6? "ipv6": "ipv4"); // ip versions must be the same
 
       this.videoProxy = new RTPProxy({
         outgoingAddress: controllerAddress,
@@ -956,15 +966,15 @@ export class RTPStreamManagement {
           this.handleSessionClosed();
           callback(error);
         } else {
-          this.generateSetupEndpointResponse(sessionIdentifier, prepareRequest, response, callback);
+          this.generateSetupEndpointResponse(session, sessionIdentifier, prepareRequest, response, callback);
         }
       }));
     });
   }
 
-  private generateSetupEndpointResponse(identifier: StreamSessionIdentifier, request: PrepareStreamRequest, response: PrepareStreamResponse, callback: CharacteristicSetCallback): void {
+  private generateSetupEndpointResponse(session: Session, identifier: StreamSessionIdentifier, request: PrepareStreamRequest, response: PrepareStreamResponse, callback: CharacteristicSetCallback): void {
     let address: string;
-    let addressVersion: "ipv4" | "ipv6";
+    let addressVersion = request.addressVersion;
 
     let videoPort: number;
     let audioPort: number;
@@ -995,8 +1005,12 @@ export class RTPStreamManagement {
       const videoInfo = response.video as SourceResponse;
       const audioInfo = audio as SourceResponse;
 
-      address = typeof response.address === "string"? response.address: response.address.address;
-      addressVersion = ip.isV4Format(address)? "ipv4": "ipv6";
+      if (response.addressOverride) {
+        addressVersion = net.isIPv4(response.addressOverride)? "ipv4": "ipv6";
+        address = response.addressOverride;
+      } else {
+        address = session.getLocalAddress(addressVersion);
+      }
 
       if (request.addressVersion !== addressVersion) {
         throw new Error(`Incoming and outgoing ip address versions must match! Expected ${request.addressVersion} but got ${addressVersion}`);
@@ -1029,8 +1043,7 @@ export class RTPStreamManagement {
     } else {
       const videoInfo = response.video as ProxiedSourceResponse;
 
-      addressVersion = request.addressVersion;
-      address = ip.address("public", request.addressVersion);
+      address = session.getLocalAddress(request.addressVersion);
 
 
       videoCryptoSuite = SRTPCryptoSuites.NONE;
