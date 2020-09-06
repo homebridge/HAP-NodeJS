@@ -1151,7 +1151,7 @@ export class Accessory extends EventEmitter<Events> {
       var characteristic = this.findCharacteristic(characteristicData.aid, characteristicData.iid);
 
       if (!characteristic) {
-        debug('[%s] Could not find a Characteristic with iid of %s and aid of %s', this.displayName, characteristicData.aid, characteristicData.iid);
+        debug('[%s] Could not find a Characteristic with aid of %s and iid of %s', this.displayName, characteristicData.aid, characteristicData.iid);
         var response: any = {
           aid: aid,
           iid: iid
