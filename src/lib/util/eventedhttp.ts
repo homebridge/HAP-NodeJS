@@ -318,6 +318,9 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     this._clientSocket.on('data', this._onClientSocketData);
     this._clientSocket.on('close', this._onClientSocketClose);
     this._clientSocket.on('error', this._onClientSocketError); // we MUST register for this event, otherwise the error will bubble up to the top and crash the node process entirely.
+    this._clientSocket.setNoDelay(true); // disable Nagle algorithm
+    this._clientSocket.setKeepAlive(true);
+
     // serverSocket is our connection to our own internal httpServer
     this._serverSocket = null; // created after httpServer 'listening' event
     // create our internal HTTP server for this connection that we will proxy data to and from
@@ -415,6 +418,9 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     this._serverSocket.on('data', this._onServerSocketData);
     this._serverSocket.on('close', this._onServerSocketClose);
     this._serverSocket.on('error', this._onServerSocketError); // we MUST register for this event, otherwise the error will bubble up to the top and crash the node process entirely.
+
+    this._serverSocket.setNoDelay(true); // disable Nagle algorithm
+    this._serverSocket.setKeepAlive(true);
   }
 
   // Called only once right after onHttpServerListening
