@@ -32,4 +32,4 @@ if (semver.eq(projectBetaVersion, betaAsRelease)) { // check if we are releasing
 
 // save the package.json
 packageJSON.version = publishTag;
-fs.writeFileSync("package.json", JSON.stringify(packageJSON, null, 4));
+fs.writeFileSync("package.json", JSON.stringify(packageJSON, null, 2));
