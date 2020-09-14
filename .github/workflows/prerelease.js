@@ -1,14 +1,14 @@
 #!/bin/env node
 
-const fs = require('fs');
-const semver = require('semver');
-const child_process = require('child_process');
+const fs = require("fs");
+const semver = require("semver");
+const child_process = require("child_process");
 
-const packageJSON = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+const packageJSON = JSON.parse(fs.readFileSync("package.json", "utf8"));
 
 function getTagVersionFromNpm(tag) {
   try {
-    return child_process.execSync(`npm info ${packageJSON.name} version --tag="${tag}"`).toString('utf8').trim();
+    return child_process.execSync(`npm info ${packageJSON.name} version --tag="${tag}"`).toString("utf8").trim();
   } catch (e) {
     throw e;
   }
@@ -32,4 +32,4 @@ if (semver.eq(projectBetaVersion, betaAsRelease)) { // check if we are releasing
 
 // save the package.json
 packageJSON.version = publishTag;
-fs.writeFileSync('package.json', JSON.stringify(packageJSON, null, 4));
+fs.writeFileSync("package.json", JSON.stringify(packageJSON, null, 4));

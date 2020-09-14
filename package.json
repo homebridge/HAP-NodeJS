@@ -1,10 +1,43 @@
 {
   "name": "hap-nodejs",
   "version": "0.7.9",
-  "betaVersion": "0.8.0",
   "description": "HAP-NodeJS is a Node.js implementation of HomeKit Accessory Server.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "maintainers": [
+    "Andreas Bauer <mail@anderl-bauer.de>"
+  ],
+  "author": "Khaos Tian <khaos.tian@gmail.com> (https://tz.is/)",
+  "homepage": "https://github.com/homebridge/HAP-NodeJS",
+  "license": "Apache-2.0",
+  "scripts": {
+    "clean": "rimraf dist/",
+    "build": "rimraf dist/ && tsc && node .github/workflows/node-persist-ignore.js",
+    "prepublishOnly": "npm run build",
+    "postpublish": "npm run clean",
+    "test": "jest",
+    "start": "node dist/BridgedCore.js"
+  },
+  "keywords": [
+    "hap-nodejs",
+    "hap",
+    "homekit",
+    "homekit-accessory-protocol",
+    "homekit-server",
+    "homekit-protocol",
+    "homekit-device",
+    "homekit-accessory",
+    "hap-server",
+    "homekit-support",
+    "siri"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/homebridge/HAP-NodeJS.git"
+  },
+  "bugs": {
+    "url": "https://github.com/homebridge/HAP-NodeJS/issues"
+  },
   "engines": {
     "node": ">=10.17.0"
   },
@@ -15,7 +48,7 @@
     "@types"
   ],
   "dependencies": {
-    "@homebridge/ciao": "^1.0.0-beta.51",
+    "@homebridge/ciao": "~1.0.0",
     "fast-srp-hap": "2.0.2",
     "tweetnacl": "^1.0.3",
     "debug": "^4.1.1",
@@ -35,23 +68,5 @@
     "ts-jest": "^26.3.0",
     "ts-node": "^9.0.0",
     "typescript": "^4.0.2"
-  },
-  "scripts": {
-    "clean": "rimraf dist/",
-    "build": "rimraf dist/ && tsc && node .github/workflows/node-persist-ignore.js",
-    "prepublishOnly": "npm run build",
-    "postpublish": "npm run clean",
-    "test": "jest",
-    "start": "node dist/BridgedCore.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/homebridge/HAP-NodeJS.git"
-  },
-  "author": "Khaos Tian <khaos.tian@gmail.com> (http://tz.is/)",
-  "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://github.com/homebridge/HAP-NodeJS/issues"
-  },
-  "homepage": "https://github.com/homebridge/HAP-NodeJS"
+  }
 }
