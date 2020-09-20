@@ -88,9 +88,9 @@ export class Advertiser extends EventEmitter {
     return !!this.advertisedService;
   }
 
-  public updateAdvertisement(): Promise<void> {
+  public updateAdvertisement(): void {
     assert(this.advertisedService, "Cannot update advertisement when service wasn't yet advertised!");
-    return this.advertisedService!.updateTxt(this.createTxt());
+    this.advertisedService!.updateTxt(this.createTxt());
   }
 
   public stopAdvertising(): Promise<void> {
