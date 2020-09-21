@@ -1,3 +1,4 @@
+import { getNetAddress } from "@homebridge/ciao/lib/util/domain-formatter";
 import createDebug from 'debug';
 import { SrpServer } from "fast-srp-hap";
 import http, { IncomingMessage, OutgoingMessage, ServerResponse } from 'http';
@@ -558,7 +559,22 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
       }
     }
 
-    console.log(`WARNING couldn't map socket coming from ${socket.remoteAddress}:${socket.remotePort} at local address ${socket.localAddress} to a interface!`);
+    // we couldn't map the address from above, we try now to match subnets (see https://github.com/homebridge/HAP-NodeJS/issues/847)
+    const family = net.isIPv4(localAddress)? "IPv4": "IPv6";
+    for (const [name, infos] of Object.entries(interfaces)) {
+      for (const info of infos) {
+        if (info.family !== family) {
+          continue;
+        }
+
+        // check if the localAddress is in the same subnet
+        if (getNetAddress(localAddress, info.netmask) === getNetAddress(info.address, info.netmask)) {
+          return name;
+        }
+      }
+    }
+
+    console.log(`WARNING couldn't map socket coming from remote address ${socket.remoteAddress}:${socket.remotePort} at local address ${socket.localAddress} to a interface!`);
 
     return Object.keys(interfaces)[1]; // just use the first interface after the loopback interface as fallback
   }
