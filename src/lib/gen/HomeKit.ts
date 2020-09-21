@@ -3728,6 +3728,27 @@ export class SupportedCharacteristicValueTransitionConfiguration extends Charact
 Characteristic.SupportedCharacteristicValueTransitionConfiguration = SupportedCharacteristicValueTransitionConfiguration;
 
 /**
+ * Characteristic "Characteristic Value Active Transition Count"
+ * @since iOS 14
+ */
+export class CharacteristicValueActiveTransitionCount extends Characteristic {
+
+  static readonly UUID: string = '0000021E-0000-1000-8000-0000024B';
+
+  constructor() {
+    super("Characteristic Value Active Transition Count", CharacteristicValueActiveTransitionCount.UUID);
+    this.setProps({
+      format: Formats.UINT8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    })
+    this.value = this.getDefaultValue();
+  }
+
+}
+
+Characteristic.CharacteristicValueActiveTransitionCount = CharacteristicValueActiveTransitionCount;
+
+/**
  * Characteristic "Current Transport"
  * @since iOS 14
  */
@@ -4739,6 +4760,7 @@ export class Lightbulb extends Service {
     this.addOptionalCharacteristic(Characteristic.Saturation);
     this.addOptionalCharacteristic(Characteristic.Name);
     this.addOptionalCharacteristic(Characteristic.ColorTemperature);
+    this.addOptionalCharacteristic(Characteristic.CharacteristicValueActiveTransitionCount); // Ambient Lightning
     this.addOptionalCharacteristic(Characteristic.CharacteristicValueTransitionControl); // Ambient Lightning
     this.addOptionalCharacteristic(Characteristic.SupportedCharacteristicValueTransitionConfiguration); // Ambient Lightning
   }

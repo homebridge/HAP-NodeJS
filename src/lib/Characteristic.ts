@@ -376,6 +376,7 @@ export class Characteristic extends EventEmitter<Events> {
   static CCASignalDetectThreshold: typeof HomeKitTypes.Generated.CCASignalDetectThreshold;
   static CharacteristicValueTransitionControl: typeof HomeKitTypes.Generated.CharacteristicValueTransitionControl;
   static SupportedCharacteristicValueTransitionConfiguration: typeof HomeKitTypes.Generated.SupportedCharacteristicValueTransitionConfiguration;
+  static CharacteristicValueActiveTransitionCount: typeof HomeKitTypes.Generated.CharacteristicValueActiveTransitionCount;
   static CurrentTransport: typeof HomeKitTypes.Generated.CurrentTransport;
   static DataStreamHAPTransport: typeof HomeKitTypes.Generated.DataStreamHAPTransport;
   static DataStreamHAPTransportInterrupt: typeof HomeKitTypes.Generated.DataStreamHAPTransportInterrupt;
