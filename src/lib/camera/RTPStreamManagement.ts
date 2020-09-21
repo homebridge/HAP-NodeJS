@@ -531,8 +531,14 @@ export class RTPStreamManagement {
 
   // Private
 
-  handleCloseConnection(connectionID: SessionIdentifier) {
+  handleCloseConnection(connectionID: SessionIdentifier): void {
     if (this.connectionID && this.connectionID === connectionID) {
+      this._handleStopStream();
+    }
+  }
+
+  handleShutdown(): void {
+    if (this.connectionID) {
       this._handleStopStream();
     }
   }

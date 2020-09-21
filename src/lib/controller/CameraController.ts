@@ -362,4 +362,8 @@ export class CameraController extends EventEmitter<CameraControllerEventMap> imp
         }
     }
 
+    handleShutdown(): void {
+        this.streamManagements.forEach(management => management.handleShutdown());
+    }
+
 }
