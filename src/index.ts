@@ -35,6 +35,9 @@ export const LegacyTypes = legacyTypes;
  *  storage path location, please use {@link HAPStorage.setCustomStoragePath} directly.
  */
 export function init(storagePath?: string) {
+  console.log("DEPRECATED: The need to manually initialize HAP (by calling the init method) was removed. " +
+    "If you want to set a custom storage path location, please ust HAPStorage.setCustomStoragePath directly. " +
+    "This method will be removed in the next major update!");
   if (storagePath) {
     HAPStorage.setCustomStoragePath(storagePath);
   }
