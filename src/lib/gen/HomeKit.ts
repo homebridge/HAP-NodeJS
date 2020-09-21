@@ -3559,6 +3559,7 @@ Characteristic.WiFiSatelliteStatus = WiFiSatelliteStatus;
 
 /**
  * Characteristic "Wake Configuration"
+ * @since iOS 13.4
  */
 
 export class WakeConfiguration extends Characteristic {
@@ -3579,6 +3580,7 @@ Characteristic.WakeConfiguration = WakeConfiguration;
 
 /**
  * Characteristic "Supported Transfer Transport Configuration"
+ * @since iOS 13.4
  */
 
 export class SupportedTransferTransportConfiguration extends Characteristic {
@@ -3599,6 +3601,7 @@ Characteristic.SupportedTransferTransportConfiguration = SupportedTransferTransp
 
 /**
  * Characteristic "Setup Transfer Transport"
+ * @since iOS 13.4
  */
 
 export class SetupTransferTransport extends Characteristic {
@@ -3619,6 +3622,7 @@ Characteristic.SetupTransferTransport = SetupTransferTransport;
 
 /**
  * Characteristic "Activity Interval"
+ * @since iOS 14
  */
 export class ActivityInterval extends Characteristic {
 
@@ -3641,6 +3645,7 @@ Characteristic.ActivityInterval = ActivityInterval;
 
 /**
  * Characteristic "CCA Energy Detect Threshold"
+ * @since iOS 14
  */
 export class CCAEnergyDetectThreshold extends Characteristic {
 
@@ -3661,6 +3666,7 @@ Characteristic.CCAEnergyDetectThreshold = CCAEnergyDetectThreshold;
 
 /**
  * Characteristic "CCA Signal Detect Threshold"
+ * @since iOS 14
  */
 export class CCASignalDetectThreshold extends Characteristic {
 
@@ -3681,6 +3687,7 @@ Characteristic.CCASignalDetectThreshold = CCASignalDetectThreshold;
 
 /**
  * Characteristic "Characteristic Value Transition Control"
+ * @since iOS 14
  */
 export class CharacteristicValueTransitionControl extends Characteristic {
 
@@ -3690,7 +3697,7 @@ export class CharacteristicValueTransitionControl extends Characteristic {
     super("Characteristic Value Transition Control", CharacteristicValueTransitionControl.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY],
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
     });
     this.value = this.getDefaultValue();
   }
@@ -3701,6 +3708,7 @@ Characteristic.CharacteristicValueTransitionControl = CharacteristicValueTransit
 
 /**
  * Characteristic "Supported Characteristic Value Transition Configuration"
+ * @since iOS 14
  */
 export class SupportedCharacteristicValueTransitionConfiguration extends Characteristic {
 
@@ -3721,6 +3729,7 @@ Characteristic.SupportedCharacteristicValueTransitionConfiguration = SupportedCh
 
 /**
  * Characteristic "Current Transport"
+ * @since iOS 14
  */
 export class CurrentTransport extends Characteristic {
 
@@ -3741,6 +3750,7 @@ Characteristic.CurrentTransport = CurrentTransport;
 
 /**
  * Characteristic "Data Stream HAP Transport"
+ * @since iOS 14
  */
 export class DataStreamHAPTransport extends Characteristic {
 
@@ -3761,6 +3771,7 @@ Characteristic.DataStreamHAPTransport = DataStreamHAPTransport;
 
 /**
  * Characteristic "Data Stream HAP Transport Interrupt"
+ * @since iOS 14
  */
 export class DataStreamHAPTransportInterrupt extends Characteristic {
 
@@ -3781,6 +3792,7 @@ Characteristic.DataStreamHAPTransportInterrupt = DataStreamHAPTransportInterrupt
 
 /**
  * Characteristic "Event Retransmission Maximum"
+ * @since iOS 14
  */
 export class EventRetransmissionMaximum extends Characteristic {
 
@@ -3801,6 +3813,7 @@ Characteristic.EventRetransmissionMaximum = EventRetransmissionMaximum;
 
 /**
  * Characteristic "Event Transmission Counters"
+ * @since iOS 14
  */
 export class EventTransmissionCounters extends Characteristic {
 
@@ -3821,6 +3834,7 @@ Characteristic.EventTransmissionCounters = EventTransmissionCounters;
 
 /**
  * Characteristic "Heart Beat"
+ * @since iOS 14
  */
 export class HeartBeat extends Characteristic {
 
@@ -3841,6 +3855,7 @@ Characteristic.HeartBeat = HeartBeat;
 
 /**
  * Characteristic "MAC Retransmission Maximum"
+ * @since iOS 14
  */
 export class MACRetransmissionMaximum extends Characteristic {
 
@@ -3861,6 +3876,7 @@ Characteristic.MACRetransmissionMaximum = MACRetransmissionMaximum;
 
 /**
  * Characteristic "MAC Transmission Counters"
+ * @since iOS 14
  */
 export class MACTransmissionCounters extends Characteristic {
 
@@ -3881,6 +3897,7 @@ Characteristic.MACTransmissionCounters = MACTransmissionCounters;
 
 /**
  * Characteristic "Operating State Response"
+ * @since iOS 14
  */
 export class OperatingStateResponse extends Characteristic {
 
@@ -3901,6 +3918,7 @@ Characteristic.OperatingStateResponse = OperatingStateResponse;
 
 /**
  * Characteristic "Ping"
+ * @since iOS 14
  */
 export class Ping extends Characteristic {
 
@@ -3921,6 +3939,7 @@ Characteristic.Ping = Ping;
 
 /**
  * Characteristic "Receiver Sensitivity"
+ * @since iOS 14
  */
 export class ReceiverSensitivity extends Characteristic {
 
@@ -3941,6 +3960,7 @@ Characteristic.ReceiverSensitivity = ReceiverSensitivity;
 
 /**
  * Characteristic "Received Signal Strength Indication"
+ * @since iOS 14
  */
 export class ReceivedSignalStrengthIndication extends Characteristic {
 
@@ -3961,6 +3981,7 @@ Characteristic.ReceivedSignalStrengthIndication = ReceivedSignalStrengthIndicati
 
 /**
  * Characteristic "Sleep Interval"
+ * @since iOS 14
  */
 export class SleepInterval extends Characteristic {
 
@@ -3983,6 +4004,7 @@ Characteristic.SleepInterval = SleepInterval;
 
 /**
  * Characteristic "Signal-to-noise Ration"
+ * @since iOS 14
  */
 export class SignalToNoiseRatio extends Characteristic {
 
@@ -4003,6 +4025,7 @@ Characteristic.SignalToNoiseRatio = SignalToNoiseRatio;
 
 /**
  * Characteristic "Supported Diagnostics Snapshot"
+ * @since iOS 14
  */
 export class SupportedDiagnosticsSnapshot extends Characteristic {
 
@@ -4023,6 +4046,7 @@ Characteristic.SupportedDiagnosticsSnapshot = SupportedDiagnosticsSnapshot;
 
 /**
  * Characteristic "Transmit Power"
+ * @since iOS 14
  */
 export class TransmitPower extends Characteristic {
 
@@ -4043,6 +4067,7 @@ Characteristic.TransmitPower = TransmitPower;
 
 /**
  * Characteristic "Transmit Power Maximum"
+ * @since iOS 14
  */
 export class TransmitPowerMaximum extends Characteristic {
 
@@ -4063,6 +4088,7 @@ Characteristic.TransmitPowerMaximum = TransmitPowerMaximum;
 
 /**
  * Characteristic "Video Analysis Active"
+ * @since iOS 14
  */
 export class VideoAnalysisActive extends Characteristic {
 
@@ -4083,6 +4109,7 @@ Characteristic.VideoAnalysisActive = VideoAnalysisActive;
 
 /**
  * Characteristic "Wi-Fi Capabilities"
+ * @since iOS 14
  */
 export class WiFiCapabilities extends Characteristic {
 
@@ -4103,6 +4130,7 @@ Characteristic.WiFiCapabilities = WiFiCapabilities;
 
 /**
  * Characteristic "Wi-Fi Configuration Control"
+ * @since iOS 14
  */
 export class WiFiConfigurationControl extends Characteristic {
 
@@ -4960,6 +4988,7 @@ Service.SmokeSensor = SmokeSensor;
 
 /**
  * Service "Smart Speaker"
+ * @since iOS 13.4
  */
 
 export class SmartSpeaker extends Service {
@@ -5284,6 +5313,7 @@ Service.WiFiSatellite = WiFiSatellite;
 
 /**
  * Service "Power Management"
+ * @since iOS 13.4
  */
 
 export class PowerManagement extends Service {
@@ -5302,6 +5332,7 @@ Service.PowerManagement = PowerManagement;
 
 /**
  * Service "Transfer Transport Management"
+ * @since iOS 13.4
  */
 
 export class TransferTransportManagement extends Service {
@@ -5321,6 +5352,7 @@ Service.TransferTransportManagement = TransferTransportManagement;
 
 /**
  * Service "Accessory Runtime Information"
+ * @since iOS 14
  */
 export class AccessoryRuntimeInformation extends Service {
 
@@ -5344,6 +5376,7 @@ Service.AccessoryRuntimeInformation = AccessoryRuntimeInformation;
 
 /**
  * Service "Diagnostics"
+ * @since iOS 14
  */
 export class Diagnostics extends Service {
 
@@ -5362,6 +5395,7 @@ Service.Diagnostics = Diagnostics;
 
 /**
  * Service "Wi-Fi Transport"
+ * @since iOS 14
  */
 export class WiFiTransport extends Service {
 
