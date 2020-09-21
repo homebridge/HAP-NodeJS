@@ -1,3 +1,4 @@
+import "source-map-support/register"; // registering node-source-map-support for typescript stack traces
 import './lib/gen';
 import * as accessoryLoader from './lib/AccessoryLoader';
 import * as uuidFunctions from './lib/util/uuid';
