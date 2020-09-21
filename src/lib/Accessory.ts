@@ -1017,6 +1017,10 @@ export class Accessory extends EventEmitter<Events> {
   }
 
   unpublish = () => {
+    if (this.activeCameraController) {
+      this.activeCameraController.handleShutdown();
+    }
+
     if (this._server) {
       this._server.stop();
       this._server = undefined;
