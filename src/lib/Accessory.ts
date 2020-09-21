@@ -641,20 +641,23 @@ export class Accessory extends EventEmitter<Events> {
       this.controllerStorage.trackController(controller);
     }
 
-    if (controller.handleFactoryReset) { // if the controller implements handleFactoryReset, setup event handlers for this controller
-      this.getPrimaryAccessory().on(AccessoryEventTypes.UNPAIRED, () => {
-        controller.handleFactoryReset!();
-
-        if (isSerializableController(controller)) { // we force a purge here
-          this.controllerStorage.purgeControllerData(controller);
-        }
-      });
-    }
-
     this.controllers[controller.controllerType] = context;
 
     if (controller instanceof CameraController) { // save CameraController for Snapshot handling
       this.activeCameraController = controller;
+    }
+  }
+
+  private handleAccessoryUnpairedForControllers(): void {
+    for (const context of Object.values(this.controllers)) {
+      const controller = context.controller;
+      if (controller.handleFactoryReset) { // if the controller implements handleFactoryReset, setup event handlers for this controller
+        controller.handleFactoryReset();
+      }
+
+      if (isSerializableController(controller)) {
+        this.controllerStorage.purgeControllerData(controller);
+      }
     }
   }
 
@@ -1131,6 +1134,11 @@ export class Accessory extends EventEmitter<Events> {
     if (!this._accessoryInfo.paired()) {
       this._advertiser && this._advertiser.updateAdvertisement();
       this.emit(AccessoryEventTypes.UNPAIRED);
+
+      this.handleAccessoryUnpairedForControllers();
+      for (const accessory of this.bridgedAccessories) {
+        accessory.handleAccessoryUnpairedForControllers();
+      }
     }
   };
 
