@@ -1,19 +1,17 @@
 import crypto from 'crypto';
-
 import createDebug from 'debug';
+import { SRP, SrpServer } from "fast-srp-hap";
+import { IncomingMessage, ServerResponse } from "http";
 import tweetnacl from 'tweetnacl';
 import url from 'url';
-
-import * as hapCrypto from './util/hapCrypto';
-import * as tlv from './util/tlv';
-import { EventedHTTPServer, EventedHTTPServerEvents, Session } from './util/eventedhttp';
-import { once } from './util/once';
-import { IncomingMessage, ServerResponse } from "http";
-import { Accessory, CharacteristicEvents, Resource } from './Accessory';
 import { CharacteristicData, NodeCallback, PairingsCallback, SessionIdentifier, VoidCallback } from '../types';
+import { Accessory, CharacteristicEvents, Resource } from './Accessory';
 import { EventEmitter } from './EventEmitter';
 import { PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
-import { SRP, SrpServer } from "fast-srp-hap";
+import { EventedHTTPServer, EventedHTTPServerEvents, Session } from './util/eventedhttp';
+import * as hapCrypto from './util/hapCrypto';
+import { once } from './util/once';
+import * as tlv from './util/tlv';
 
 const debug = createDebug('HAP-NodeJS:HAPServer');
 
@@ -109,7 +107,7 @@ export const enum HAPServerEventTypes {
 
 export type Events = {
   [HAPServerEventTypes.IDENTIFY]: (cb: VoidCallback) => void;
-  [HAPServerEventTypes.LISTENING]: (port: number) => void;
+  [HAPServerEventTypes.LISTENING]: (port: number, hostname: string) => void;
   [HAPServerEventTypes.PAIR]: (clientUsername: string, clientLTPK: Buffer, cb: VoidCallback) => void;
   [HAPServerEventTypes.ADD_PAIRING]: (controller: Session, username: string, publicKey: Buffer, permission: number, callback: PairingsCallback<void>) => void;
   [HAPServerEventTypes.REMOVE_PAIRING]: (controller: Session, username: string, callback: PairingsCallback<void>) => void;
@@ -232,8 +230,8 @@ export class HAPServer extends EventEmitter<Events> {
     this._keepAliveTimerID = setInterval(this._onKeepAliveTimerTick, 1000 * 60 * 10); // send keepalive every 10 minutes
   }
 
-  listen = (port: number) => {
-    this._httpServer.listen(port);
+  listen = (port: number = 0, host?: string) => {
+    this._httpServer.listen(port, host);
   }
 
   stop = () => {
@@ -258,8 +256,8 @@ export class HAPServer extends EventEmitter<Events> {
     this._httpServer.sendEvent(event, JSON.stringify(data), "application/hap+json", excludeEvents);
   }
 
-  _onListening = (port: number) => {
-    this.emit(HAPServerEventTypes.LISTENING, port);
+  _onListening = (port: number, hostname: string) => {
+    this.emit(HAPServerEventTypes.LISTENING, port, hostname);
   }
 
   // Called when an HTTP request was detected.
