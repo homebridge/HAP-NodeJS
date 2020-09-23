@@ -426,7 +426,7 @@ export class Accessory extends EventEmitter<Events> {
         this._updateConfiguration();
       } else {
         this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({accessory:this, service:service}));
-        
+
         for (const accessory of this.bridgedAccessories) {
           accessory.removeLinkedService(service);
         }
@@ -436,9 +436,9 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
-  private removeLinkedService(service: Service) {
+  private removeLinkedService(removed: Service) {
     for (const service of this.services) {
-      service.removeLinkedService(service);
+      service.removeLinkedService(removed);
     }
   }
 
