@@ -10,7 +10,7 @@ import {
   VoidCallback
 } from '..';
 
-var FAKE_GARAGE = {
+const FAKE_GARAGE = {
   opened: false,
   open: () => {
     console.log("Opening the Garage!");
@@ -26,15 +26,15 @@ var FAKE_GARAGE = {
     //add your code here which allows the garage to be identified
     console.log("Identify the Garage");
   },
-  status: () =>{
+  status: () => {
     //use this section to get sensor values. set the boolean FAKE_GARAGE.opened with a sensor value.
     console.log("Sensor queried!");
     //FAKE_GARAGE.opened = true/false;
   }
 };
 
-var garageUUID = uuid.generate('hap-nodejs:accessories:'+'GarageDoor');
-var garage = exports.accessory = new Accessory('Garage Door', garageUUID);
+const garageUUID = uuid.generate('hap-nodejs:accessories:' + 'GarageDoor');
+const garage = exports.accessory = new Accessory('Garage Door', garageUUID);
 
 // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
 // @ts-ignore
@@ -83,7 +83,7 @@ garage
   .getCharacteristic(Characteristic.CurrentDoorState)!
   .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
 
-    var err = null;
+    const err = null;
     FAKE_GARAGE.status();
 
     if (FAKE_GARAGE.opened) {

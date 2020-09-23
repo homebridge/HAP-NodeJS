@@ -22,8 +22,8 @@ bridge.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback
 });
 
 // Load up all accessories in the /accessories folder
-var dir = path.join(__dirname, "accessories");
-var accessories = AccessoryLoader.loadDirectory(dir);
+const dir = path.join(__dirname, "accessories");
+const accessories = AccessoryLoader.loadDirectory(dir);
 
 // Add them all to the bridge
 accessories.forEach((accessory: Accessory) => {
@@ -38,7 +38,7 @@ bridge.publish({
   category: Categories.BRIDGE
 });
 
-var signals = { 'SIGINT': 2, 'SIGTERM': 15 } as Record<string, number>;
+const signals = {'SIGINT': 2, 'SIGTERM': 15} as Record<string, number>;
 Object.keys(signals).forEach((signal: any) => {
   process.on(signal, function () {
     bridge.unpublish();

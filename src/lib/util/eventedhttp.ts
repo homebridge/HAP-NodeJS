@@ -56,7 +56,7 @@ export type Events = {
  *        events that this connection has signed up for. It is initially empty and listeners are expected to manage it.
  *
  * @event 'decrypt' => function(data, {decrypted.data}, session) { }
- *        Fired when we receive data from the client device. You may detemine whether the data is encrypted, and if
+ *        Fired when we receive data from the client device. You may determine whether the data is encrypted, and if
  *        so, you can decrypt the data and store it into a new 'data' property of the 'decrypted' argument. If data is not
  *        encrypted, you can simply leave 'data' as null and the original data will be passed through as-is.
  *

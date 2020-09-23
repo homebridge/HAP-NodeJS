@@ -4,15 +4,15 @@
  */
 export function clone<T, U>(object: T, extend?: U): T & U {
 
-  var cloned = {} as Record<any, any>;
+  const cloned = {} as Record<any, any>;
 
-  for (var key in object) {
+  for (let key in object) {
     cloned[key] = object[key];
   }
 
-  for (var key2 in extend) {
+  for (let key2 in extend) {
     cloned[key2] = extend[key2];
   }
 
   return cloned;
-};
+}

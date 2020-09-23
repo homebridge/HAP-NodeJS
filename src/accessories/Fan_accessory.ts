@@ -12,15 +12,14 @@ import {
   VoidCallback
 } from '..';
 
-var FAKE_FAN: Record<string, any> = {
+const FAKE_FAN: Record<string, any> = {
   powerOn: false,
   rSpeed: 100,
   setPowerOn: (on: CharacteristicValue) => {
-    if(on){
+    if (on) {
       //put your code here to turn on the fan
       FAKE_FAN.powerOn = on;
-    }
-    else{
+    } else {
       //put your code here to turn off the fan
       FAKE_FAN.powerOn = on;
     }
@@ -34,10 +33,10 @@ var FAKE_FAN: Record<string, any> = {
     //put your code here to identify the fan
     console.log("Fan Identified!");
   }
-}
+};
 
 // This is the Accessory that we'll return to HAP-NodeJS that represents our fake fan.
-var fan = exports.accessory = new Accessory('Fan', uuid.generate('hap-nodejs:accessories:Fan'));
+const fan = exports.accessory = new Accessory('Fan', uuid.generate('hap-nodejs:accessories:Fan'));
 
 // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
 // @ts-ignore
@@ -79,7 +78,7 @@ fan
     // the fan hardware itself to find this out, then call the callback. But if you take longer than a
     // few seconds to respond, Siri will give up.
 
-    var err = null; // in case there were any problems
+    const err = null; // in case there were any problems
 
     if (FAKE_FAN.powerOn) {
       callback(err, true);

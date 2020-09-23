@@ -1,23 +1,19 @@
 /// <reference path="../../../@types/simple-plist.d.ts" />
 import fs from 'fs';
 import path from 'path';
-
 import plist from 'simple-plist';
-
-import { Characteristic, Formats, Units } from "../Characteristic";
+import { Formats, Units } from "../Characteristic";
 
 /**
  * This module is intended to be run from the command line. It is a script that extracts Apple's Service
  * and Characteristic UUIDs and structures from Apple's own HomeKit Accessory Simulator app.
  */
-
-// assumed location of the plist we need (might want to make this a command-line argument at some point)
-var plistPath = '/Applications/HomeKit Accessory Simulator.app/Contents/Frameworks/HAPAccessoryKit.framework/Versions/A/Resources/default.metadata.plist';
-var metadata = plist.readFileSync(plistPath);
+const plistPath = '/Applications/HomeKit Accessory Simulator.app/Contents/Frameworks/HAPAccessoryKit.framework/Versions/A/Resources/default.metadata.plist';
+const metadata = plist.readFileSync(plistPath);
 
 // begin writing the output file
-var outputPath = path.join(__dirname, '..', '..', '..', 'src', 'lib', 'gen', 'HomeKitTypes.generated.ts');
-var output = fs.createWriteStream(outputPath);
+const outputPath = path.join(__dirname, '..', '..', '..', 'src', 'lib', 'gen', 'HomeKitTypes.generated.ts');
+const output = fs.createWriteStream(outputPath);
 
 output.write("// THIS FILE IS AUTO-GENERATED - DO NOT MODIFY\n");
 output.write("\n");
@@ -39,9 +35,9 @@ output.write("\n");
 // index Characteristics for quick access while building Services
 const characteristics: Record<string, string> = {}; // characteristics[UUID] = classyName
 
-for (var index in metadata.Characteristics) {
-  var characteristic = metadata.Characteristics[index];
-  var classyName = characteristic.Name.replace(/[\s\-]/g, ""); // "Target Door State" -> "TargetDoorState"
+for (let index in metadata.Characteristics) {
+  const characteristic = metadata.Characteristics[index];
+  let classyName = characteristic.Name.replace(/[\s\-]/g, ""); // "Target Door State" -> "TargetDoorState"
   classyName = classyName.replace(/[.]/g, "_"); // "PM2.5" -> "PM2_5"
 
   // index classyName for when we want to declare these in Services below
@@ -56,10 +52,10 @@ for (var index in metadata.Characteristics) {
     // as static members of our subclass.
     output.write("  // The value property of " + classyName + " must be one of the following:\n");
 
-    for (var value in characteristic.Constraints.ValidValues) {
-      var name = characteristic.Constraints.ValidValues[value];
+    for (let value in characteristic.Constraints.ValidValues) {
+      const name = characteristic.Constraints.ValidValues[value];
 
-      var constName = name.toUpperCase().replace(/[^\w]+/g, '_');
+      let constName = name.toUpperCase().replace(/[^\w]+/g, '_');
       if ((/^[1-9]/).test(constName)) constName = "_" + constName; // variables can't start with a number
       output.write(`  static readonly ${constName} = ${value};\n`);
     }
@@ -92,9 +88,9 @@ for (var index in metadata.Characteristics) {
     output.write(",\n      minStep: " + characteristic.Constraints.StepValue);
 
   output.write(",\n      perms: [");
-  var sep = ""
-  for (var i in characteristic.Properties) {
-    var perms = getCharacteristicPermsKey(characteristic.Properties[i]);
+  let sep = "";
+  for (let i in characteristic.Properties) {
+    const perms = getCharacteristicPermsKey(characteristic.Properties[i]);
     if (perms) {
         output.write(sep + "Perms." + getCharacteristicPermsKey(characteristic.Properties[i]));
         sep = ", "
@@ -118,9 +114,9 @@ for (var index in metadata.Characteristics) {
  * Services
  */
 
-for (var index in metadata.Services) {
-  var service = metadata.Services[index];
-  var classyName = service.Name.replace(/[\s\-]/g, ""); // "Smoke Sensor" -> "SmokeSensor"
+for (let index in metadata.Services) {
+  const service = metadata.Services[index];
+  const classyName = service.Name.replace(/[\s\-]/g, ""); // "Smoke Sensor" -> "SmokeSensor"
 
   output.write(`/**\n * Service "${service.Name}"\n */\n\n`);
   output.write(`export class ${classyName} extends Service {\n\n`);
@@ -134,11 +130,11 @@ for (var index in metadata.Services) {
   if (service.RequiredCharacteristics) {
     output.write("\n    // Required Characteristics\n");
 
-    for (var index in service.RequiredCharacteristics) {
-      var characteristicUUID = service.RequiredCharacteristics[index];
+    for (let index in service.RequiredCharacteristics) {
+      let characteristicUUID = service.RequiredCharacteristics[index];
 
       // look up the classyName from the hash we built above
-      var characteristicClassyName = characteristics[characteristicUUID];
+      let characteristicClassyName = characteristics[characteristicUUID];
 
       output.write("    this.addCharacteristic(Characteristic." + characteristicClassyName + ");\n");
     }
@@ -148,11 +144,11 @@ for (var index in metadata.Services) {
   if (service.OptionalCharacteristics) {
     output.write("\n    // Optional Characteristics\n");
 
-    for (var index in service.OptionalCharacteristics) {
-      var characteristicUUID = service.OptionalCharacteristics[index];
+    for (let index in service.OptionalCharacteristics) {
+      let characteristicUUID = service.OptionalCharacteristics[index];
 
       // look up the classyName from the hash we built above
-      var characteristicClassyName = characteristics[characteristicUUID];
+      let characteristicClassyName = characteristics[characteristicUUID];
 
       output.write("    this.addOptionalCharacteristic(Characteristic." + characteristicClassyName + ");\n");
     }
@@ -180,9 +176,9 @@ function getCharacteristicFormatsKey(format: string) {
 
   // look up the key in our known-formats dict
   // @ts-ignore
-  for (var key in Characteristic.Formats) {
+  for (let key in Formats) {
     // @ts-ignore
-    if (Characteristic.Formats[key as keyof typeof Characteristic.Formats] == format) {
+    if (Formats[key as keyof typeof Formats] == format) {
       return key;
     }
   }
@@ -193,9 +189,9 @@ function getCharacteristicFormatsKey(format: string) {
 function getCharacteristicUnitsKey(units: string) {
   // look up the key in our known-units dict
   // @ts-ignore
-  for (var key in Characteristic.Units) {
+  for (let key in Units) {
     // @ts-ignore
-    if (Characteristic.Units[key as keyof typeof Characteristic.Units] == units) {
+    if (Units[key as keyof typeof Units] == units) {
       return key;
     }
   }

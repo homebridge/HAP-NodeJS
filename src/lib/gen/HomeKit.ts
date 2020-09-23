@@ -38,7 +38,7 @@ export class AccessoryFlags extends Characteristic {
     super('Accessory Flags', AccessoryFlags.UUID);
     this.setProps({
       format: Formats.UINT32,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -58,7 +58,7 @@ export class ProductData extends Characteristic {
     super('Product Data', ProductData.UUID);
     this.setProps({
       format: Formats.DATA,
-      perms: [Perms.READ]
+      perms: [Perms.PAIRED_READ]
     });
     this.value = this.getDefaultValue();
   }
@@ -85,7 +85,7 @@ export class Active extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -105,7 +105,7 @@ export class AdministratorOnlyAccess extends Characteristic {
     super('Administrator Only Access', AdministratorOnlyAccess.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -128,7 +128,7 @@ export class AirParticulateDensity extends Characteristic {
       maxValue: 1000,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -155,7 +155,7 @@ export class AirParticulateSize extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -187,7 +187,7 @@ export class AirQuality extends Characteristic {
       maxValue: 5,
       minValue: 0,
       validValues: [0, 1, 2, 3, 4, 5],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -208,7 +208,7 @@ export class AudioFeedback extends Characteristic {
     super('Audio Feedback', AudioFeedback.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -232,7 +232,7 @@ export class BatteryLevel extends Characteristic {
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -256,7 +256,7 @@ export class Brightness extends Characteristic {
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -283,7 +283,7 @@ export class CarbonDioxideDetected extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -305,7 +305,7 @@ export class CarbonDioxideLevel extends Characteristic {
       format: Formats.FLOAT,
       maxValue: 100000,
       minValue: 0,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -327,7 +327,7 @@ export class CarbonDioxidePeakLevel extends Characteristic {
       format: Formats.FLOAT,
       maxValue: 100000,
       minValue: 0,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -354,7 +354,7 @@ export class CarbonMonoxideDetected extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -376,7 +376,7 @@ export class CarbonMonoxideLevel extends Characteristic {
       format: Formats.FLOAT,
       maxValue: 100,
       minValue: 0,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -398,7 +398,7 @@ export class CarbonMonoxidePeakLevel extends Characteristic {
       format: Formats.FLOAT,
       maxValue: 100,
       minValue: 0,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -426,7 +426,7 @@ export class ChargingState extends Characteristic {
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -449,7 +449,7 @@ export class ColorTemperature extends Characteristic {
       maxValue: 500,
       minValue: 140,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -476,7 +476,7 @@ export class ContactSensorState extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -500,7 +500,7 @@ export class CoolingThresholdTemperature extends Characteristic {
       maxValue: 35,
       minValue: 10,
       minStep: 0.1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -528,7 +528,7 @@ export class CurrentAirPurifierState extends Characteristic {
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -552,7 +552,7 @@ export class CurrentAmbientLightLevel extends Characteristic {
       unit: Units.LUX,
       maxValue: 100000,
       minValue: 0.0001,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -582,7 +582,7 @@ export class CurrentDoorState extends Characteristic {
       maxValue: 4,
       minValue: 0,
       validValues: [0, 1, 2, 3, 4],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -610,7 +610,7 @@ export class CurrentFanState extends Characteristic {
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -639,7 +639,7 @@ export class CurrentHeaterCoolerState extends Characteristic {
       maxValue: 3,
       minValue: 0,
       validValues: [0, 1, 2, 3],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -667,7 +667,7 @@ export class CurrentHeatingCoolingState extends Characteristic {
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -691,7 +691,7 @@ export class CurrentHorizontalTiltAngle extends Characteristic {
       maxValue: 90,
       minValue: -90,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -720,7 +720,7 @@ export class CurrentHumidifierDehumidifierState extends Characteristic {
       maxValue: 3,
       minValue: 0,
       validValues: [0, 1, 2, 3],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -744,7 +744,7 @@ export class CurrentPosition extends Characteristic {
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -768,7 +768,7 @@ export class CurrentRelativeHumidity extends Characteristic {
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -796,7 +796,7 @@ export class CurrentSlatState extends Characteristic {
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -820,7 +820,7 @@ export class CurrentTemperature extends Characteristic {
       maxValue: 100,
       minValue: 0,
       minStep: 0.1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -844,7 +844,7 @@ export class CurrentTiltAngle extends Characteristic {
       maxValue: 90,
       minValue: -90,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -868,7 +868,7 @@ export class CurrentVerticalTiltAngle extends Characteristic {
       maxValue: 90,
       minValue: -90,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -888,7 +888,7 @@ export class DigitalZoom extends Characteristic {
     super('Digital Zoom', DigitalZoom.UUID);
     this.setProps({
       format: Formats.FLOAT,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -915,7 +915,7 @@ export class FilterChangeIndication extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -937,7 +937,7 @@ export class FilterLifeLevel extends Characteristic {
       format: Formats.FLOAT,
       maxValue: 100,
       minValue: 0,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -957,7 +957,7 @@ export class FirmwareRevision extends Characteristic {
     super('Firmware Revision', FirmwareRevision.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.READ]
+      perms: [Perms.PAIRED_READ]
     });
     this.value = this.getDefaultValue();
   }
@@ -977,7 +977,7 @@ export class HardwareRevision extends Characteristic {
     super('Hardware Revision', HardwareRevision.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.READ]
+      perms: [Perms.PAIRED_READ]
     });
     this.value = this.getDefaultValue();
   }
@@ -1001,7 +1001,7 @@ export class HeatingThresholdTemperature extends Characteristic {
       maxValue: 25,
       minValue: 0,
       minStep: 0.1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1021,7 +1021,7 @@ export class HoldPosition extends Characteristic {
     super('Hold Position', HoldPosition.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.WRITE]
+      perms: [Perms.PAIRED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -1045,7 +1045,7 @@ export class Hue extends Characteristic {
       maxValue: 360,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1065,7 +1065,7 @@ export class Identify extends Characteristic {
     super('Identify', Identify.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.WRITE]
+      perms: [Perms.PAIRED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -1085,7 +1085,7 @@ export class ImageMirroring extends Characteristic {
     super('Image Mirroring', ImageMirroring.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1109,7 +1109,7 @@ export class ImageRotation extends Characteristic {
       maxValue: 270,
       minValue: 0,
       minStep: 90,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1136,7 +1136,7 @@ export class InUse extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1163,7 +1163,7 @@ export class IsConfigured extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1190,7 +1190,7 @@ export class LeakDetected extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1210,7 +1210,7 @@ export class LockControlPoint extends Characteristic {
     super('Lock Control Point', LockControlPoint.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.WRITE]
+      perms: [Perms.PAIRED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -1239,7 +1239,7 @@ export class LockCurrentState extends Characteristic {
       maxValue: 3,
       minValue: 0,
       validValues: [0, 1, 2, 3],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1273,7 +1273,7 @@ export class LockLastKnownAction extends Characteristic {
       maxValue: 8,
       minValue: 0,
       validValues: [0, 1, 2, 3, 4, 5, 6, 7, 8],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1294,7 +1294,7 @@ export class LockManagementAutoSecurityTimeout extends Characteristic {
     this.setProps({
       format: Formats.UINT32,
       unit: Units.SECONDS,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1321,7 +1321,7 @@ export class LockPhysicalControls extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1348,7 +1348,7 @@ export class LockTargetState extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1368,7 +1368,7 @@ export class Logs extends Characteristic {
     super('Logs', Logs.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1388,7 +1388,7 @@ export class Manufacturer extends Characteristic {
     super('Manufacturer', Manufacturer.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.READ]
+      perms: [Perms.PAIRED_READ]
     });
     this.value = this.getDefaultValue();
   }
@@ -1408,7 +1408,7 @@ export class Model extends Characteristic {
     super('Model', Model.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.READ]
+      perms: [Perms.PAIRED_READ]
     });
     this.value = this.getDefaultValue();
   }
@@ -1428,7 +1428,7 @@ export class MotionDetected extends Characteristic {
     super('Motion Detected', MotionDetected.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1448,7 +1448,7 @@ export class Mute extends Characteristic {
     super('Mute', Mute.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1468,7 +1468,7 @@ export class Name extends Characteristic {
     super('Name', Name.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.READ]
+      perms: [Perms.PAIRED_READ]
     });
     this.value = this.getDefaultValue();
   }
@@ -1488,7 +1488,7 @@ export class NightVision extends Characteristic {
     super('Night Vision', NightVision.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -1511,7 +1511,7 @@ export class NitrogenDioxideDensity extends Characteristic {
       maxValue: 1000,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1531,7 +1531,7 @@ export class ObstructionDetected extends Characteristic {
     super('Obstruction Detected', ObstructionDetected.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1558,7 +1558,7 @@ export class OccupancyDetected extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1578,7 +1578,7 @@ export class On extends Characteristic {
     super('On', On.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1598,7 +1598,7 @@ export class OpticalZoom extends Characteristic {
     super('Optical Zoom', OpticalZoom.UUID);
     this.setProps({
       format: Formats.FLOAT,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1618,7 +1618,7 @@ export class OutletInUse extends Characteristic {
     super('Outlet In Use', OutletInUse.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1641,7 +1641,7 @@ export class OzoneDensity extends Characteristic {
       maxValue: 1000,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1661,7 +1661,7 @@ export class PairSetup extends Characteristic {
     super('Pair Setup', PairSetup.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.WRITE]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -1681,7 +1681,7 @@ export class PairVerify extends Characteristic {
     super('Pair Verify', PairVerify.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.WRITE]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -1701,7 +1701,7 @@ export class PairingFeatures extends Characteristic {
     super('Pairing Features', PairingFeatures.UUID);
     this.setProps({
       format: Formats.UINT8,
-      perms: [Perms.READ]
+      perms: [Perms.PAIRED_READ]
     });
     this.value = this.getDefaultValue();
   }
@@ -1721,7 +1721,7 @@ export class PairingPairings extends Characteristic {
     super('Pairing Pairings', PairingPairings.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.WRITE]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -1764,7 +1764,7 @@ export class PM10Density extends Characteristic {
       maxValue: 1000,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1787,7 +1787,7 @@ export class PM2_5Density extends Characteristic {
       maxValue: 1000,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1815,7 +1815,7 @@ export class PositionState extends Characteristic {
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1843,7 +1843,7 @@ export class ProgramMode extends Characteristic {
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1871,7 +1871,7 @@ export class ProgrammableSwitchEvent extends Characteristic {
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.eventOnlyCharacteristic = true; //Manual addition.
     this.value = this.getDefaultValue();
@@ -1895,7 +1895,7 @@ export class RelativeHumidityDehumidifierThreshold extends Characteristic {
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1919,7 +1919,7 @@ export class RelativeHumidityHumidifierThreshold extends Characteristic {
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1942,7 +1942,7 @@ export class RemainingDuration extends Characteristic {
       maxValue: 3600,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -1965,7 +1965,7 @@ export class ResetFilterIndication extends Characteristic {
       maxValue: 1,
       minValue: 1,
       minStep: 1,
-      perms: [Perms.WRITE]
+      perms: [Perms.PAIRED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -1992,7 +1992,7 @@ export class RotationDirection extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2016,7 +2016,7 @@ export class RotationSpeed extends Characteristic {
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2040,7 +2040,7 @@ export class Saturation extends Characteristic {
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2063,7 +2063,7 @@ export class SecuritySystemAlarmType extends Characteristic {
       maxValue: 1,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2093,7 +2093,7 @@ export class SecuritySystemCurrentState extends Characteristic {
       maxValue: 4,
       minValue: 0,
       validValues: [0, 1, 2, 3, 4],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2122,7 +2122,7 @@ export class SecuritySystemTargetState extends Characteristic {
       maxValue: 3,
       minValue: 0,
       validValues: [0, 1, 2, 3],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2142,7 +2142,7 @@ export class SelectedRTPStreamConfiguration extends Characteristic {
     super('Selected RTP Stream Configuration', SelectedRTPStreamConfiguration.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.WRITE]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -2162,7 +2162,7 @@ export class SerialNumber extends Characteristic {
     super('Serial Number', SerialNumber.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.READ]
+      perms: [Perms.PAIRED_READ]
     });
     this.value = this.getDefaultValue();
   }
@@ -2185,7 +2185,7 @@ export class ServiceLabelIndex extends Characteristic {
       maxValue: 255,
       minValue: 1,
       minStep: 1,
-      perms: [Perms.READ]
+      perms: [Perms.PAIRED_READ]
     });
     this.value = this.getDefaultValue();
   }
@@ -2212,7 +2212,7 @@ export class ServiceLabelNamespace extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ]
+      perms: [Perms.PAIRED_READ]
     });
     this.value = this.getDefaultValue();
   }
@@ -2235,7 +2235,7 @@ export class SetDuration extends Characteristic {
       maxValue: 3600,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2255,7 +2255,7 @@ export class SetupEndpoints extends Characteristic {
     super('Setup Endpoints', SetupEndpoints.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.WRITE]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -2282,7 +2282,7 @@ export class SlatType extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ]
+      perms: [Perms.PAIRED_READ]
     });
     this.value = this.getDefaultValue();
   }
@@ -2309,7 +2309,7 @@ export class SmokeDetected extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2329,7 +2329,7 @@ export class StatusActive extends Characteristic {
     super('Status Active', StatusActive.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2356,7 +2356,7 @@ export class StatusFault extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2383,7 +2383,7 @@ export class StatusJammed extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2410,7 +2410,7 @@ export class StatusLowBattery extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2438,7 +2438,7 @@ export class StatusTampered extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2458,7 +2458,7 @@ export class StreamingStatus extends Characteristic {
     super('Streaming Status', StreamingStatus.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2481,7 +2481,7 @@ export class SulphurDioxideDensity extends Characteristic {
       maxValue: 1000,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2501,7 +2501,7 @@ export class SupportedAudioStreamConfiguration extends Characteristic {
     super('Supported Audio Stream Configuration', SupportedAudioStreamConfiguration.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ]
+      perms: [Perms.PAIRED_READ]
     });
     this.value = this.getDefaultValue();
   }
@@ -2521,7 +2521,7 @@ export class SupportedRTPConfiguration extends Characteristic {
     super('Supported RTP Configuration', SupportedRTPConfiguration.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ]
+      perms: [Perms.PAIRED_READ]
     });
     this.value = this.getDefaultValue();
   }
@@ -2541,7 +2541,7 @@ export class SupportedVideoStreamConfiguration extends Characteristic {
     super('Supported Video Stream Configuration', SupportedVideoStreamConfiguration.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ]
+      perms: [Perms.PAIRED_READ]
     });
     this.value = this.getDefaultValue();
   }
@@ -2568,7 +2568,7 @@ export class SwingMode extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2595,7 +2595,7 @@ export class TargetAirPurifierState extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2623,7 +2623,7 @@ export class TargetAirQuality extends Characteristic {
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2650,7 +2650,7 @@ export class TargetDoorState extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2677,7 +2677,7 @@ export class TargetFanState extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2705,7 +2705,7 @@ export class TargetHeaterCoolerState extends Characteristic {
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2734,7 +2734,7 @@ export class TargetHeatingCoolingState extends Characteristic {
       maxValue: 3,
       minValue: 0,
       validValues: [0, 1, 2, 3],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2758,7 +2758,7 @@ export class TargetHorizontalTiltAngle extends Characteristic {
       maxValue: 90,
       minValue: -90,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2791,7 +2791,7 @@ export class TargetHumidifierDehumidifierState extends Characteristic {
       maxValue: 2,
       minValue: 0,
       validValues: [0, 1, 2],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2815,7 +2815,7 @@ export class TargetPosition extends Characteristic {
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2839,7 +2839,7 @@ export class TargetRelativeHumidity extends Characteristic {
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2866,7 +2866,7 @@ export class TargetSlatState extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2890,7 +2890,7 @@ export class TargetTemperature extends Characteristic {
       maxValue: 38,
       minValue: 10,
       minStep: 0.1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2914,7 +2914,7 @@ export class TargetTiltAngle extends Characteristic {
       maxValue: 90,
       minValue: -90,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2938,7 +2938,7 @@ export class TargetVerticalTiltAngle extends Characteristic {
       maxValue: 90,
       minValue: -90,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2965,7 +2965,7 @@ export class TemperatureDisplayUnits extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0, 1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -2994,7 +2994,7 @@ export class ValveType extends Characteristic {
       maxValue: 3,
       minValue: 0,
       validValues: [0, 1, 2, 3],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -3037,7 +3037,7 @@ export class VOCDensity extends Characteristic {
       maxValue: 1000,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -3061,7 +3061,7 @@ export class Volume extends Characteristic {
       maxValue: 100,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -3083,7 +3083,7 @@ export class WaterLevel extends Characteristic {
       format: Formats.FLOAT,
       maxValue: 100,
       minValue: 0,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -3106,7 +3106,7 @@ export class RecordingAudioActive extends Characteristic {
     super('Recording Audio Active', RecordingAudioActive.UUID);
     this.setProps({
         format: Formats.UINT8,
-        perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -3126,7 +3126,7 @@ export class SupportedCameraRecordingConfiguration extends Characteristic {
     super('Supported Camera Recording Configuration', SupportedCameraRecordingConfiguration.UUID);
     this.setProps({
         format: Formats.TLV8,
-        perms: [Perms.READ, Perms.NOTIFY]
+        perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -3146,7 +3146,7 @@ export class SupportedVideoRecordingConfiguration extends Characteristic {
     super('Supported Video Recording Configuration', SupportedVideoRecordingConfiguration.UUID);
     this.setProps({
         format: Formats.TLV8,
-        perms: [Perms.READ, Perms.NOTIFY]
+        perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -3166,7 +3166,7 @@ export class SupportedAudioRecordingConfiguration extends Characteristic {
     super('Supported Audio Recording Configuration', SupportedAudioRecordingConfiguration.UUID);
     this.setProps({
         format: Formats.TLV8,
-        perms: [Perms.READ, Perms.NOTIFY]
+        perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -3186,7 +3186,7 @@ export class SelectedCameraRecordingConfiguration extends Characteristic {
     super('Selected Camera Recording Configuration', SelectedCameraRecordingConfiguration.UUID);
     this.setProps({
         format: Formats.TLV8,
-        perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -3209,7 +3209,7 @@ export class CameraOperatingModeIndicator extends Characteristic {
     super('Camera Operating Mode Indicator', CameraOperatingModeIndicator.UUID);
     this.setProps({
         format: Formats.UINT8,
-        perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -3232,7 +3232,7 @@ export class EventSnapshotsActive extends Characteristic {
     super('Event Snapshots Active', EventSnapshotsActive.UUID);
     this.setProps({
       format: Formats.UINT8,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -3242,8 +3242,6 @@ Characteristic.EventSnapshotsActive = EventSnapshotsActive;
 
 /**
  * Characteristic "Diagonal Field Of View"
- *
- * @deprecated was removed again
  */
 
 export class DiagonalFieldOfView extends Characteristic {
@@ -3258,7 +3256,7 @@ export class DiagonalFieldOfView extends Characteristic {
       maxValue: 360,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -3281,7 +3279,7 @@ export class HomeKitCameraActive extends Characteristic {
     super('HomeKit Camera Active', HomeKitCameraActive.UUID);
     this.setProps({
       format: Formats.UINT8,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -3304,7 +3302,7 @@ export class ManuallyDisabled extends Characteristic {
     super('Manually disabled', ManuallyDisabled.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -3327,7 +3325,7 @@ export class ThirdPartyCameraActive extends Characteristic {
     super('Third Party Camera Active', ThirdPartyCameraActive.UUID);
     this.setProps({
       format: Formats.UINT8,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -3350,7 +3348,7 @@ export class PeriodicSnapshotsActive extends Characteristic {
     super('Periodic Snapshots Active', PeriodicSnapshotsActive.UUID);
     this.setProps({
       format: Formats.UINT8,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -3370,7 +3368,7 @@ export class NetworkClientProfileControl extends Characteristic {
     super('Network Client Profile Control', NetworkClientProfileControl.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE, Perms.WRITE_RESPONSE]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY, Perms.TIMED_WRITE, Perms.WRITE_RESPONSE]
     });
     this.value = this.getDefaultValue();
   }
@@ -3390,7 +3388,7 @@ export class NetworkClientStatusControl extends Characteristic {
     super('Network Client Status Control', NetworkClientStatusControl.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.WRITE, Perms.WRITE_RESPONSE]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE]
     });
     this.value = this.getDefaultValue();
   }
@@ -3416,7 +3414,7 @@ export class RouterStatus extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0,1],
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -3436,7 +3434,7 @@ export class SupportedRouterConfiguration extends Characteristic {
     super('Supported Router Configuration', SupportedRouterConfiguration.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ]
+      perms: [Perms.PAIRED_READ]
     });
     this.value = this.getDefaultValue();
   }
@@ -3456,7 +3454,7 @@ export class WANConfigurationList extends Characteristic {
     super('WAN Configuration List', WANConfigurationList.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -3476,7 +3474,7 @@ export class WANStatusList extends Characteristic {
     super('WAN Status List', WANStatusList.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -3502,7 +3500,7 @@ export class ManagedNetworkEnable extends Characteristic {
       maxValue: 1,
       minValue: 0,
       validValues: [0,1],
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -3522,7 +3520,7 @@ export class NetworkAccessViolationControl extends Characteristic {
     super('Network Access Violation Control', NetworkAccessViolationControl.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY, Perms.TIMED_WRITE, Perms.WRITE_RESPONSE]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY, Perms.TIMED_WRITE, Perms.WRITE_RESPONSE]
     });
     this.value = this.getDefaultValue();
   }

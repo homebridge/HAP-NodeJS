@@ -20,6 +20,7 @@ const enum AccessControlTypes {
  * so this information is not really useful.
  */
 export const enum AccessLevel {
+  // noinspection JSUnusedGlobalSymbols
   /**
    * This access level is set when the users selects "Anyone" or "Anyone On The Same Network"
    * in the Access Control settings.

@@ -1,5 +1,4 @@
 import { Advertiser, PairingFeatureFlag, StatusFlag } from './Advertiser';
-import { AccessoryInfo } from './model/AccessoryInfo';
 
 describe(Advertiser, () => {
   describe("ff and sf", () => {

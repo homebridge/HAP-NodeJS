@@ -1,19 +1,18 @@
 import Decimal from 'decimal.js';
-
-import { once } from './util/once';
-import { clone } from "./util/clone";
-import { IdentifierCache } from './model/IdentifierCache';
 import {
   CharacteristicChange,
   CharacteristicValue,
   HapCharacteristic,
-  SessionIdentifier,
   Nullable,
+  SessionIdentifier,
   ToHAPOptions,
   VoidCallback,
 } from '../types';
 import { EventEmitter } from './EventEmitter';
 import * as HomeKitTypes from './gen';
+import { IdentifierCache } from './model/IdentifierCache';
+import { clone } from "./util/clone";
+import { once } from './util/once';
 import { toShortForm } from './util/uuid';
 
 export const enum Formats {
@@ -41,6 +40,7 @@ export const enum Units {
 
 // Known HomeKit permission types
 export const enum Perms {
+  // noinspection JSUnusedGlobalSymbols
   /**
    * @deprecated replaced by {@link PAIRED_READ}. Kept for backwards compatibility.
    */
@@ -223,14 +223,6 @@ export class Characteristic extends EventEmitter<Events> {
   static InputDeviceType: typeof HomeKitTypes.TV.InputDeviceType;
   static InputSourceType: typeof HomeKitTypes.TV.InputSourceType;
   static IsConfigured: typeof HomeKitTypes.Generated.IsConfigured;
-  /**
-   * @deprecated Removed in iOS 11. Use ServiceLabelIndex instead.
-   */
-  static LabelIndex: typeof HomeKitTypes.Generated.ServiceLabelIndex;
-  /**
-   * @deprecated Removed in iOS 11. Use ServiceLabelNamespace instead.
-   */
-  static LabelNamespace: typeof HomeKitTypes.Generated.ServiceLabelNamespace;
   static LeakDetected: typeof HomeKitTypes.Generated.LeakDetected;
   static LinkQuality: typeof HomeKitTypes.Bridged.LinkQuality;
   static LockControlPoint: typeof HomeKitTypes.Generated.LockControlPoint;
@@ -283,10 +275,6 @@ export class Characteristic extends EventEmitter<Events> {
   static SecuritySystemCurrentState: typeof HomeKitTypes.Generated.SecuritySystemCurrentState;
   static SecuritySystemTargetState: typeof HomeKitTypes.Generated.SecuritySystemTargetState;
   static SelectedAudioStreamConfiguration: typeof HomeKitTypes.Remote.SelectedAudioStreamConfiguration;
-  /**
-   * @deprecated Removed in iOS 11. Use SelectedRTPStreamConfiguration instead.
-   */
-  static SelectedStreamConfiguration: typeof HomeKitTypes.Generated.SelectedRTPStreamConfiguration;
   static SelectedRTPStreamConfiguration: typeof HomeKitTypes.Generated.SelectedRTPStreamConfiguration;
   static SerialNumber: typeof HomeKitTypes.Generated.SerialNumber;
   static ServiceLabelIndex: typeof HomeKitTypes.Generated.ServiceLabelIndex;
@@ -353,9 +341,6 @@ export class Characteristic extends EventEmitter<Events> {
   static SupportedAudioRecordingConfiguration: typeof HomeKitTypes.Generated.SupportedAudioRecordingConfiguration;
   static SelectedCameraRecordingConfiguration: typeof HomeKitTypes.Generated.SelectedCameraRecordingConfiguration;
   static CameraOperatingModeIndicator: typeof HomeKitTypes.Generated.CameraOperatingModeIndicator;
-  /**
-   * @deprecated Removed in iOS 13.4
-   */
   static DiagonalFieldOfView: typeof HomeKitTypes.Generated.DiagonalFieldOfView;
   static NetworkClientProfileControl: typeof HomeKitTypes.Generated.NetworkClientProfileControl;
   static NetworkClientStatusControl: typeof HomeKitTypes.Generated.NetworkClientStatusControl;
@@ -444,7 +429,7 @@ export class Characteristic extends EventEmitter<Events> {
    * }
    */
   setProps = (props: Partial<CharacteristicProps>) => {
-    for (var key in (props || {}))
+    for (let key in (props || {}))
       if (Object.prototype.hasOwnProperty.call(props, key)) {
         // @ts-ignore
         this.props[key] = props[key];
@@ -469,7 +454,7 @@ export class Characteristic extends EventEmitter<Events> {
   }
 
   unsubscribe = () => {
-    var wasOne = this.subscriptions === 1;
+    const wasOne = this.subscriptions === 1;
     this.subscriptions--;
     this.subscriptions = Math.max(this.subscriptions, 0);
     if (wasOne) {
@@ -479,7 +464,7 @@ export class Characteristic extends EventEmitter<Events> {
 
   getValue = (callback?: CharacteristicGetCallback, context?: any, connectionID?: SessionIdentifier) => {
     // Handle special event only characteristics.
-    if (this.eventOnlyCharacteristic === true) {
+    if (this.eventOnlyCharacteristic) {
       if (callback) {
         callback(null, null);
       }
@@ -494,11 +479,11 @@ export class Characteristic extends EventEmitter<Events> {
           if (callback)
             callback(err);
         } else {
-          newValue = this.validateValue(newValue); //validateValue returns a value that has be cooerced into a valid value.
+          newValue = this.validateValue(newValue); //validateValue returns a value that has be coerced into a valid value.
           if (newValue === undefined || newValue === null)
             newValue = this.getDefaultValue();
           // getting the value was a success; we can pass it along and also update our cached value
-          var oldValue = this.value;
+          const oldValue = this.value;
           this.value = newValue;
           if (callback)
             callback(null, newValue);
@@ -557,35 +542,34 @@ export class Characteristic extends EventEmitter<Events> {
         maxValue_resolved = 18446744073709551615;
         isNumericType = true;
         break;
-      //All of the following datatypes return from this switch.
+      //All of the following data types return from this switch.
       case Formats.BOOL:
         // @ts-ignore
         return (newValue == true); //We don't need to make sure this returns true or false
-        break;
-      case Formats.STRING:
+      case Formats.STRING: {
         let myString = newValue as string || ''; //If null or undefined or anything odd, make it a blank string
         myString = String(myString);
-        var maxLength = this.props.maxLen;
+        let maxLength = this.props.maxLen;
         if (maxLength === undefined)
           maxLength = 64; //Default Max Length is 64.
         if (myString.length > maxLength)
           myString = myString.substring(0, maxLength); //Truncate strings that are too long
         return myString; //We don't need to do any validation after having truncated the string
-        break;
-      case Formats.DATA:
-        var maxLength = this.props.maxDataLen;
+      }
+      case Formats.DATA: {
+        let maxLength = this.props.maxDataLen;
         if (maxLength === undefined)
           maxLength = 2097152; //Default Max Length is 2097152.
         //if (newValue.length>maxLength) //I don't know the best way to handle this since it's unknown binary data.
         //I suspect that it will crash HomeKit for this bridge if the length is too long.
         return newValue;
-        break;
+      }
       case Formats.TLV8:
         //Should we parse this to make sure the tlv8 is valid?
         break;
       default: //Datatype out of HAP Spec encountered. We'll assume the developer knows what they're doing.
         return newValue;
-    };
+    }
 
     if (isNumericType) {
       if (newValue === false) {
@@ -613,10 +597,10 @@ export class Characteristic extends EventEmitter<Events> {
           stepDecimals = 0;
         else
           stepDecimals = minStep_resolved.toString().split(".")[1].length || 0;
-        //Use Decimal to detemine the lowest value within the step.
+        //Use Decimal to determine the lowest value within the step.
         try {
-          var decimalVal = new Decimal(parseFloat(newValue as string));
-          var decimalDiff = decimalVal.mod(minStep_resolved);
+          let decimalVal = new Decimal(parseFloat(newValue as string));
+          const decimalDiff = decimalVal.mod(minStep_resolved);
           decimalVal = decimalVal.minus(decimalDiff);
           if (stepDecimals === 0) {
             newValue = parseInt(decimalVal.toFixed(0));
@@ -646,8 +630,8 @@ export class Characteristic extends EventEmitter<Events> {
     } else {
       this.status = null;
     }
-    newValue = this.validateValue(newValue as Nullable<CharacteristicValue>); //validateValue returns a value that has be cooerced into a valid value.
-    var oldValue = this.value;
+    newValue = this.validateValue(newValue as Nullable<CharacteristicValue>); //validateValue returns a value that has be coerced into a valid value.
+    const oldValue = this.value;
     if (this.listeners(CharacteristicEventTypes.SET).length > 0) {
       // allow a listener to handle the setting of this value, and wait for completion
       this.emit(CharacteristicEventTypes.SET, newValue, once((err: Error, writeResponse?: CharacteristicValue) => {
@@ -666,7 +650,7 @@ export class Characteristic extends EventEmitter<Events> {
           this.value = newValue as CharacteristicValue;
           if (callback)
             callback();
-          if (this.eventOnlyCharacteristic === true || oldValue !== newValue)
+          if (this.eventOnlyCharacteristic || oldValue !== newValue)
             this.emit(CharacteristicEventTypes.CHANGE, {oldValue: oldValue, newValue: newValue, context: context});
         }
       }), context, connectionID);
@@ -677,7 +661,7 @@ export class Characteristic extends EventEmitter<Events> {
       this.value = newValue as string | number;
       if (callback)
         callback();
-      if (this.eventOnlyCharacteristic === true || oldValue !== newValue)
+      if (this.eventOnlyCharacteristic || oldValue !== newValue)
         this.emit(CharacteristicEventTypes.CHANGE, {oldValue: oldValue, newValue: newValue, context: context});
     }
     return this; // for chaining
@@ -689,15 +673,15 @@ export class Characteristic extends EventEmitter<Events> {
     } else {
       this.status = null;
     }
-    newValue = this.validateValue(newValue as Nullable<CharacteristicValue>); //validateValue returns a value that has be cooerced into a valid value.
+    newValue = this.validateValue(newValue as Nullable<CharacteristicValue>); //validateValue returns a value that has be coerced into a valid value.
     if (newValue === undefined || newValue === null)
       newValue = this.getDefaultValue() as CharacteristicValue;
     // no one is listening to the 'set' event, so just assign the value blindly
-    var oldValue = this.value;
+    const oldValue = this.value;
     this.value = newValue;
     if (callback)
       callback();
-    if (this.eventOnlyCharacteristic === true || oldValue !== newValue)
+    if (this.eventOnlyCharacteristic || oldValue !== newValue)
       this.emit(CharacteristicEventTypes.CHANGE, {oldValue: oldValue, newValue: newValue, context: context});
     return this; // for chaining
   }
@@ -731,7 +715,7 @@ export class Characteristic extends EventEmitter<Events> {
    */
   toHAP = (opt?: ToHAPOptions) => {
     // ensure our value fits within our constraints if present
-    var value = this.value;
+    let value = this.value;
 
     if (this.props.minValue != null && value! < this.props.minValue)
       value = this.props.minValue;
@@ -751,12 +735,12 @@ export class Characteristic extends EventEmitter<Events> {
       else if (this.props.format === Formats.FLOAT) {
         value = parseFloat(value as string);
         if (this.props.minStep != null) {
-          var pow = Math.pow(10, decimalPlaces(this.props.minStep));
+          const pow = Math.pow(10, decimalPlaces(this.props.minStep));
           value = Math.round(value * pow) / pow;
         }
       }
     }
-    if (this.eventOnlyCharacteristic === true) {
+    if (this.eventOnlyCharacteristic) {
       // @ts-ignore
       value = null;
     }
@@ -790,16 +774,16 @@ export class Characteristic extends EventEmitter<Events> {
       hap.minStep = this.props.minStep;
     // add maxLen if string length is > 64 bytes and trim to max 256 bytes
     if (this.props.format === Formats.STRING) {
-      var str = Buffer.from(value as string, 'utf8'), len = str.byteLength;
+      const str = Buffer.from(value as string, 'utf8'), len = str.byteLength;
       if (len > 256) { // 256 bytes is the max allowed length
         hap.value = str.toString('utf8', 0, 256);
         hap.maxLen = 256;
-      } else if (len > 64) { // values below can be ommited
+      } else if (len > 64) { // values below can be omitted
         hap.maxLen = len;
       }
     }
     // if we're not readable, omit the "value" property - otherwise iOS will complain about non-compliance
-    if (this.props.perms.indexOf(Perms.READ) == -1)
+    if (this.props.perms.indexOf(Perms.PAIRED_READ) == -1)
       delete hap.value;
     // delete the "value" property anyway if we were asked to
     if (opt && opt.omitValues)
@@ -831,7 +815,7 @@ export class Characteristic extends EventEmitter<Events> {
 // Mike Samuel
 // http://stackoverflow.com/questions/10454518/javascript-how-to-retrieve-the-number-of-decimals-of-a-string-number
 function decimalPlaces(num: number) {
-  var match = (''+num).match(/(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/);
+  const match = ('' + num).match(/(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/);
   if (!match) { return 0; }
   return Math.max(
        0,

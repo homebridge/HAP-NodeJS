@@ -60,6 +60,7 @@ export const enum Topics { // a collection of currently known topics grouped by 
 }
 
 export enum HDSStatus {
+    // noinspection JSUnusedGlobalSymbols
     SUCCESS = 0,
     OUT_OF_MEMORY = 1,
     TIMEOUT = 2,
@@ -70,6 +71,7 @@ export enum HDSStatus {
 }
 
 export enum DataSendCloseReason { // close reason used in the dataSend protocol
+    // noinspection JSUnusedGlobalSymbols
     NORMAL = 0,
     NOT_ALLOWED = 1,
     BUSY = 2,

@@ -1,21 +1,16 @@
 import { MDNSServerOptions } from "@homebridge/ciao";
+import assert from "assert";
 import crypto from 'crypto';
 import createDebug from 'debug';
-import assert from "assert";
 import net from "net";
-import os from "os";
-import * as uuid from './util/uuid';
-import { clone } from './util/clone';
-import { SerializedService, Service, ServiceConfigurationChange, ServiceEventTypes, ServiceId } from './Service';
-import { Access, Characteristic, CharacteristicEventTypes, CharacteristicSetCallback, Perms } from './Characteristic';
-import { Advertiser, AdvertiserEvent } from './Advertiser';
-import { CharacteristicsWriteRequest, Codes, HAPServer, HAPServerEventTypes, Status } from './HAPServer';
-import { AccessoryInfo, PairingInformation, PermissionTypes } from './model/AccessoryInfo';
-import { IdentifierCache } from './model/IdentifierCache';
 import {
   CharacteristicChange,
   CharacteristicData,
-  CharacteristicValue, HAPPincode, InterfaceName, IPAddress, MacAddress,
+  CharacteristicValue,
+  HAPPincode,
+  InterfaceName,
+  IPAddress,
+  MacAddress,
   NodeCallback,
   Nullable,
   PairingsCallback,
@@ -24,24 +19,29 @@ import {
   VoidCallback,
   WithUUID,
 } from '../types';
+import { Advertiser, AdvertiserEvent } from './Advertiser';
 // noinspection JSDeprecatedSymbols
 import { LegacyCameraSource, LegacyCameraSourceAdapter, StreamController } from './camera';
-import { EventEmitter } from './EventEmitter';
-import { Session } from "./util/eventedhttp";
+import { Access, Characteristic, CharacteristicEventTypes, CharacteristicSetCallback, Perms } from './Characteristic';
 import {
   CameraController,
   CameraControllerOptions,
   Controller,
   ControllerConstructor,
-  ControllerServiceMap, ControllerType,
+  ControllerServiceMap,
+  ControllerType,
   isSerializableController,
 } from "./controller";
-import {
-  CameraEventRecordingManagement,
-  CameraOperatingMode,
-  CameraRTPStreamManagement,
-} from "./gen/HomeKit";
+import { EventEmitter } from './EventEmitter';
+import { CameraEventRecordingManagement, CameraOperatingMode, CameraRTPStreamManagement, } from "./gen/HomeKit";
+import { CharacteristicsWriteRequest, Codes, HAPServer, HAPServerEventTypes, Status } from './HAPServer';
+import { AccessoryInfo, PairingInformation, PermissionTypes } from './model/AccessoryInfo';
 import { ControllerStorage } from "./model/ControllerStorage";
+import { IdentifierCache } from './model/IdentifierCache';
+import { SerializedService, Service, ServiceConfigurationChange, ServiceEventTypes, ServiceId } from './Service';
+import { clone } from './util/clone';
+import { Session } from "./util/eventedhttp";
+import * as uuid from './util/uuid';
 
 const debug = createDebug('HAP-NodeJS:Accessory');
 const MAX_ACCESSORIES = 149; // Maximum number of bridged accessories per bridge.
@@ -339,8 +339,8 @@ export class Accessory extends EventEmitter<Events> {
         : serviceParam;
 
     // check for UUID+subtype conflict
-    for (var index in this.services) {
-      var existing = this.services[index];
+    for (let index in this.services) {
+      const existing = this.services[index];
       if (existing.UUID === service.UUID) {
         // OK we have two Services with the same UUID. Check that each defines a `subtype` property and that each is unique.
         if (!service.subtype)
@@ -432,8 +432,8 @@ export class Accessory extends EventEmitter<Events> {
   }
 
   getService = <T extends WithUUID<typeof Service>>(name: string | T) => {
-    for (var index in this.services) {
-      var service = this.services[index];
+    for (let index in this.services) {
+      const service = this.services[index];
 
       if (typeof name === 'string' && (service.displayName === name || service.name === name || service.subtype === name))
         return service;
@@ -479,8 +479,8 @@ export class Accessory extends EventEmitter<Events> {
       throw new Error("Cannot Bridge another Bridge!");
 
     // check for UUID conflict
-    for (var index in this.bridgedAccessories) {
-      var existing = this.bridgedAccessories[index];
+    for (let index in this.bridgedAccessories) {
+      const existing = this.bridgedAccessories[index];
       if (existing.UUID === accessory.UUID)
         throw new Error("Cannot add a bridged Accessory with the same UUID as another bridged Accessory: " + existing.UUID);
     }
@@ -514,8 +514,8 @@ export class Accessory extends EventEmitter<Events> {
   }
 
   addBridgedAccessories = (accessories: Accessory[]) => {
-    for (var index in accessories) {
-      var accessory = accessories[index];
+    for (let index in accessories) {
+      const accessory = accessories[index];
       this.addBridgedAccessory(accessory, true);
     }
 
@@ -526,10 +526,10 @@ export class Accessory extends EventEmitter<Events> {
     if (accessory._isBridge)
       throw new Error("Cannot Bridge another Bridge!");
 
-    var foundMatchAccessory = false;
+    let foundMatchAccessory = false;
     // check for UUID conflict
-    for (var index in this.bridgedAccessories) {
-      var existing = this.bridgedAccessories[index];
+    for (let index in this.bridgedAccessories) {
+      const existing = this.bridgedAccessories[index];
       if (existing.UUID === accessory.UUID) {
         foundMatchAccessory = true;
         this.bridgedAccessories.splice(Number.parseInt(index), 1);
@@ -548,8 +548,8 @@ export class Accessory extends EventEmitter<Events> {
   }
 
   removeBridgedAccessories = (accessories: Accessory[]) => {
-    for (var index in accessories) {
-      var accessory = accessories[index];
+    for (let index in accessories) {
+      const accessory = accessories[index];
       this.removeBridgedAccessory(accessory, true);
     }
 
@@ -557,23 +557,23 @@ export class Accessory extends EventEmitter<Events> {
   }
 
   removeAllBridgedAccessories = () => {
-    for (var i = this.bridgedAccessories.length - 1; i >= 0; i --) {
+    for (let i = this.bridgedAccessories.length - 1; i >= 0; i --) {
       this.removeBridgedAccessory(this.bridgedAccessories[i], true);
     }
     this._updateConfiguration();
   }
 
   getCharacteristicByIID = (iid: number) => {
-    for (var index in this.services) {
-      var service = this.services[index];
-      var characteristic = service.getCharacteristicByIID(iid);
+    for (let index in this.services) {
+      const service = this.services[index];
+      const characteristic = service.getCharacteristicByIID(iid);
       if (characteristic) return characteristic;
     }
   }
 
   getBridgedAccessoryByAID = (aid: number) => {
-    for (var index in this.bridgedAccessories) {
-      var accessory = this.bridgedAccessories[index];
+    for (let index in this.bridgedAccessories) {
+      const accessory = this.bridgedAccessories[index];
       if (accessory.aid === aid) return accessory;
     }
   }
@@ -582,11 +582,12 @@ export class Accessory extends EventEmitter<Events> {
 
     // if aid === 1, the accessory is us (because we are the server), otherwise find it among our bridged
     // accessories (if any)
-    var accessory = (aid === 1) ? this : this.getBridgedAccessoryByAID(aid);
+    const accessory = (aid === 1) ? this : this.getBridgedAccessoryByAID(aid);
 
     return accessory && accessory.getCharacteristicByIID(iid);
   }
 
+  // noinspection JSDeprecatedSymbols
   /**
    * Method is used to configure an old style CameraSource.
    * The CameraSource API was fully replaced by the new Controller API used by {@link CameraController}.
@@ -637,6 +638,7 @@ export class Accessory extends EventEmitter<Events> {
     });
 
     // replace stream controllers; basically only to still support the "forceStop" call
+    // noinspection JSDeprecatedSymbols
     cameraSource.streamControllers = cameraController.streamManagements as StreamController[];
 
     return cameraController; // return the reference for the controller (maybe this could be useful?)
@@ -764,11 +766,11 @@ export class Accessory extends EventEmitter<Events> {
       return this._setupURI;
     }
 
-    var buffer = Buffer.alloc(8);
-    var setupCode = this._accessoryInfo && parseInt(this._accessoryInfo.pincode.replace(/-/g, ''), 10);
+    const buffer = Buffer.alloc(8);
+    const setupCode = this._accessoryInfo && parseInt(this._accessoryInfo.pincode.replace(/-/g, ''), 10);
 
-    var value_low = setupCode!;
-    var value_high = this._accessoryInfo && this._accessoryInfo.category >> 1;
+    let value_low = setupCode!;
+    const value_high = this._accessoryInfo && this._accessoryInfo.category >> 1;
 
     value_low |= 1 << 28; // Supports IP;
 
@@ -780,10 +782,10 @@ export class Accessory extends EventEmitter<Events> {
 
     buffer.writeUInt32BE(value_high!, 0);
 
-    var encodedPayload = (buffer.readUInt32BE(4) + (buffer.readUInt32BE(0) * Math.pow(2, 32))).toString(36).toUpperCase();
+    let encodedPayload = (buffer.readUInt32BE(4) + (buffer.readUInt32BE(0) * Math.pow(2, 32))).toString(36).toUpperCase();
 
     if (encodedPayload.length != 9) {
-      for (var i = 0; i <= 9 - encodedPayload.length; i++) {
+      for (let i = 0; i <= 9 - encodedPayload.length; i++) {
         encodedPayload = "0" + encodedPayload;
       }
     }
@@ -856,8 +858,8 @@ export class Accessory extends EventEmitter<Events> {
       this.aid = 1;
     }
 
-    for (var index in this.services) {
-      var service = this.services[index];
+    for (let index in this.services) {
+      const service = this.services[index];
       if (this._isBridge) {
         service._assignIDs(identifierCache, this.UUID, 2000000000);
       } else {
@@ -866,8 +868,8 @@ export class Accessory extends EventEmitter<Events> {
     }
 
     // now assign IDs for any Accessories we are bridging
-    for (var index in this.bridgedAccessories) {
-      var accessory = this.bridgedAccessories[index];
+    for (let index in this.bridgedAccessories) {
+      const accessory = this.bridgedAccessories[index];
 
       accessory._assignIDs(identifierCache);
     }
@@ -896,14 +898,14 @@ export class Accessory extends EventEmitter<Events> {
    * when you have disabled auto purge so you can do it manually
    */
   purgeUnusedIDs = () => {
-    //Cache the state of the purge mechanisam and set it to true
-    var oldValue = this.shouldPurgeUnusedIDs;
+    //Cache the state of the purge mechanism and set it to true
+    const oldValue = this.shouldPurgeUnusedIDs;
     this.shouldPurgeUnusedIDs = true;
 
     //Reassign all ids
     this._assignIDs(this._identifierCache!);
 
-    //Revert back the purge mechanisam state
+    //Revert back the purge mechanism state
     this.shouldPurgeUnusedIDs = oldValue;
   }
 
@@ -912,22 +914,22 @@ export class Accessory extends EventEmitter<Events> {
    */
   toHAP = (opt?: ToHAPOptions) => {
 
-    var servicesHAP = [];
+    const servicesHAP = [];
 
-    for (var index in this.services) {
-      var service = this.services[index];
+    for (let index in this.services) {
+      const service = this.services[index];
       servicesHAP.push(service.toHAP(opt));
     }
 
-    var accessoriesHAP = [{
+    const accessoriesHAP = [{
       aid: this.aid,
       services: servicesHAP
     }];
 
     // now add any Accessories we are bridging
-    for (var index in this.bridgedAccessories) {
-      var accessory = this.bridgedAccessories[index];
-      var bridgedAccessoryHAP = accessory.toHAP(opt);
+    for (let index in this.bridgedAccessories) {
+      const accessory = this.bridgedAccessories[index];
+      const bridgedAccessoryHAP = accessory.toHAP(opt);
 
       // bridgedAccessoryHAP is an array of accessories with one item - extract it
       // and add it to our own array
@@ -1010,7 +1012,7 @@ export class Accessory extends EventEmitter<Events> {
 
     //If it's bridge and there are not accessories already assigned to the bridge
     //probably purge is not needed since it's going to delete all the ids
-    //of accessories that might be added later. Usefull when dynamically adding
+    //of accessories that might be added later. Useful when dynamically adding
     //accessories.
     if (this._isBridge && this.bridgedAccessories.length == 0) {
       this.disableUnusedIDPurge();
@@ -1025,12 +1027,12 @@ export class Accessory extends EventEmitter<Events> {
     // get our accessory information in HAP format and determine if our configuration (that is, our
     // Accessories/Services/Characteristics) has changed since the last time we were published. make
     // sure to omit actual values since these are not part of the "configuration".
-    var config = this.toHAP({omitValues:true});
+    const config = this.toHAP({omitValues: true});
 
     // now convert it into a hash code and check it against the last one we made, if we have one
-    var shasum = crypto.createHash('sha1');
+    const shasum = crypto.createHash('sha1');
     shasum.update(JSON.stringify(config));
-    var configHash = shasum.digest('hex');
+    const configHash = shasum.digest('hex');
 
     if (configHash !== this._accessoryInfo.configHash) {
 
@@ -1105,6 +1107,7 @@ export class Accessory extends EventEmitter<Events> {
       this._server = undefined;
     }
     if (this._advertiser) {
+      // noinspection JSIgnoredPromiseFromCall
       this._advertiser.shutdown();
       this._advertiser = undefined;
     }
@@ -1115,12 +1118,12 @@ export class Accessory extends EventEmitter<Events> {
       // get our accessory information in HAP format and determine if our configuration (that is, our
       // Accessories/Services/Characteristics) has changed since the last time we were published. make
       // sure to omit actual values since these are not part of the "configuration".
-      var config = this.toHAP({omitValues:true});
+      const config = this.toHAP({omitValues: true});
 
       // now convert it into a hash code and check it against the last one we made, if we have one
-      var shasum = crypto.createHash('sha1');
+      const shasum = crypto.createHash('sha1');
       shasum.update(JSON.stringify(config));
-      var configHash = shasum.digest('hex');
+      const configHash = shasum.digest('hex');
 
       if (this._accessoryInfo && configHash !== this._accessoryInfo.configHash) {
 
@@ -1137,6 +1140,7 @@ export class Accessory extends EventEmitter<Events> {
     assert(this._advertiser, "Advertiser wasn't created at onListening!");
     // the HAP server is listening, so we can now start advertising our presence.
     this._advertiser!.initPort(port);
+    // noinspection JSIgnoredPromiseFromCall
     this._advertiser!.startAdvertising();
     this.emit(AccessoryEventTypes.LISTENING, port, hostname);
   }
@@ -1248,21 +1252,21 @@ export class Accessory extends EventEmitter<Events> {
   _handleGetCharacteristics = (data: CharacteristicData[], events: CharacteristicEvents, callback: HandleGetCharacteristicsCallback, remote: boolean, session: Session) => {
 
     // build up our array of responses to the characteristics requested asynchronously
-    var characteristics: CharacteristicData[] = [];
-    var statusKey = remote ? 's' : 'status';
-    var valueKey = remote ? 'v' : 'value';
+    const characteristics: CharacteristicData[] = [];
+    const statusKey = remote ? 's' : 'status';
+    const valueKey = remote ? 'v' : 'value';
 
     data.forEach((characteristicData) => {
-      var aid = characteristicData.aid;
-      var iid = characteristicData.iid;
+      const aid = characteristicData.aid;
+      const iid = characteristicData.iid;
 
-      var includeEvent = characteristicData.e;
+      const includeEvent = characteristicData.e;
 
-      var characteristic = this.findCharacteristic(characteristicData.aid, characteristicData.iid);
+      const characteristic = this.findCharacteristic(characteristicData.aid, characteristicData.iid);
 
       if (!characteristic) {
         debug('[%s] Could not find a Characteristic with aid of %s and iid of %s', this.displayName, characteristicData.aid, characteristicData.iid);
-        var response: any = {
+        let response: any = {
           aid: aid,
           iid: iid
         };
@@ -1321,13 +1325,13 @@ export class Accessory extends EventEmitter<Events> {
       // cached Characteristic value, an internal 'change' event will be emitted which will cause us to
       // notify all connected clients about that new value. But this client is about to get the new value
       // anyway, so we don't want to notify it twice.
-      var context = events;
+      const context = events;
 
       // set the value and wait for success
       characteristic.getValue((err, value) => {
         if (err) {
           debug('[%s] Error getting value for Characteristic "%s": %s', this.displayName, characteristic!.displayName, err.message);
-          var response: any = {
+          let response: any = {
             aid: aid,
             iid: iid
           };
@@ -1336,14 +1340,14 @@ export class Accessory extends EventEmitter<Events> {
         } else {
           debug('[%s] Got Characteristic "%s" value: %s', this.displayName, characteristic!.displayName, value);
 
-          var response: any = {
+          let response: any = {
             aid: aid,
             iid: iid
           };
           response[valueKey] = value;
 
           if (includeEvent) {
-            var eventName = aid + '.' + iid;
+            const eventName = aid + '.' + iid;
             response['e'] = (events[eventName] === true);
           }
 
@@ -1386,22 +1390,22 @@ export class Accessory extends EventEmitter<Events> {
     }
 
     // build up our array of responses to the characteristics requested asynchronously
-    var characteristics: CharacteristicData[] = [];
+    const characteristics: CharacteristicData[] = [];
 
     data.forEach((characteristicData) => {
-      var aid = characteristicData.aid;
-      var iid = characteristicData.iid;
-      var value = remote ? characteristicData.v : characteristicData.value;
-      var ev = remote ? characteristicData.e : characteristicData.ev;
-      var includeValue = characteristicData.r || false;
+      const aid = characteristicData.aid;
+      const iid = characteristicData.iid;
+      const value = remote ? characteristicData.v : characteristicData.value;
+      const ev = remote ? characteristicData.e : characteristicData.ev;
+      const includeValue = characteristicData.r || false;
 
-      var statusKey = remote ? 's' : 'status';
+      const statusKey = remote ? 's' : 'status';
 
-      var characteristic = this.findCharacteristic(aid, iid);
+      const characteristic = this.findCharacteristic(aid, iid);
 
       if (!characteristic) {
         debug('[%s] Could not find a Characteristic with iid of %s and aid of %s', this.displayName, characteristicData.aid, characteristicData.iid);
-        var response: any = {
+        let response: any = {
           aid: aid,
           iid: iid
         };
@@ -1433,7 +1437,7 @@ export class Accessory extends EventEmitter<Events> {
       // by Characteristic and passed on to the corresponding 'change' events bubbled up from Characteristic
       // through Service and Accessory. We'll assign it to the events object since it essentially represents
       // the connection requesting the change.
-      var context = events;
+      const context = events;
 
       // if "ev" is present, that means we need to register or unregister this client for change events for
       // this characteristic.
@@ -1478,10 +1482,10 @@ export class Accessory extends EventEmitter<Events> {
 
         // store event registrations in the supplied "events" dict which is associated with the connection making
         // the request.
-        var eventName = aid + '.' + iid;
+        const eventName = aid + '.' + iid;
 
         if (ev === true && events[eventName] != true) {
-          events[eventName] = true; // value is arbitrary, just needs to be non-falsey
+          events[eventName] = true; // value is arbitrary, just needs to be non-falsy
           characteristic.subscribe();
         }
 
@@ -1551,14 +1555,14 @@ export class Accessory extends EventEmitter<Events> {
           if (err) {
             debug('[%s] Error setting Characteristic "%s" to value %s: ', this.displayName, characteristic!.displayName, value, err.message);
 
-            var response: any = {
+            let response: any = {
               aid: aid,
               iid: iid
             };
             response[statusKey] = hapStatus(err);
             characteristics.push(response);
           } else {
-            var response: any = {
+            let response: any = {
               aid: aid,
               iid: iid
             };
@@ -1578,7 +1582,7 @@ export class Accessory extends EventEmitter<Events> {
 
       } else {
         // no value to set, so we're done (success)
-        var response: any = {
+        let response: any = {
           aid: aid,
           iid: iid
         };
@@ -1632,14 +1636,14 @@ export class Accessory extends EventEmitter<Events> {
   }
 
   _unsubscribeEvents = (events: CharacteristicEvents) => {
-    for (var key in events) {
+    for (let key in events) {
       if (key.indexOf('.') !== -1) {
         try {
-          var id = key.split('.');
-          var aid = Number.parseInt(id[0]);
-          var iid = Number.parseInt(id[1]);
+          const id = key.split('.');
+          const aid = Number.parseInt(id[0]);
+          const iid = Number.parseInt(id[1]);
 
-          var characteristic = this.findCharacteristic(aid, iid);
+          const characteristic = this.findCharacteristic(aid, iid);
           if (characteristic) {
             characteristic.unsubscribe();
           }
@@ -1654,7 +1658,7 @@ export class Accessory extends EventEmitter<Events> {
     if (!this._server)
       return; // we're not running a HAPServer, so there's no one to notify about this event
 
-    var data = {
+    const data = {
       characteristics: [{
         aid: change.accessory.aid,
         iid: change.characteristic.iid,
@@ -1663,11 +1667,11 @@ export class Accessory extends EventEmitter<Events> {
     };
 
     // name for this event that corresponds to what we stored when the client signed up (in handleSetCharacteristics)
-    var eventName = change.accessory.aid + '.' + change.characteristic.iid;
+    const eventName = change.accessory.aid + '.' + change.characteristic.iid;
 
     // pull the events object associated with the original connection (if any) that initiated the change request,
     // which we assigned in handleGetCharacteristics/handleSetCharacteristics.
-    var excludeEvents = change.context;
+    const excludeEvents = change.context;
 
     // pass it along to notifyClients() so that it can omit the connection where events === excludeEvents.
     this._server.notifyClients(eventName, data, excludeEvents);
@@ -1694,8 +1698,8 @@ export class Accessory extends EventEmitter<Events> {
   }
 
   _sideloadServices = (targetServices: Service[]) => {
-    for (var index in targetServices) {
-      var target = targetServices[index];
+    for (let index in targetServices) {
+      const target = targetServices[index];
       this._setupService(target);
     }
 
@@ -1707,7 +1711,7 @@ export class Accessory extends EventEmitter<Events> {
       .getCharacteristic(Characteristic.Identify)!
       .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
         if (value) {
-          var paired = true;
+          const paired = true;
           this._identificationRequest(paired, callback);
         }
       });
@@ -1718,8 +1722,8 @@ export class Accessory extends EventEmitter<Events> {
     const bytes = crypto.randomBytes(4);
     let setupID = '';
 
-    for (var i = 0; i < 4; i++) {
-      var index = bytes.readUInt8(i) % 26;
+    for (let i = 0; i < 4; i++) {
+      const index = bytes.readUInt8(i) % 26;
       setupID += chars.charAt(index);
     }
 
@@ -1760,7 +1764,7 @@ export class Accessory extends EventEmitter<Events> {
     const controllers: SerializedControllerContext[] = [];
 
     // save controllers
-    Object.entries(accessory.controllers).forEach(([key, context]: [string, ControllerContext])  => {
+    Object.values(accessory.controllers).forEach((context: ControllerContext)  => {
       controllers.push({
         type: context.controller.controllerType,
         services: Accessory.serializeServiceMap(context.serviceMap),

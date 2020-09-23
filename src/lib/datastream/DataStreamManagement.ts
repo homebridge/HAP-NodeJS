@@ -61,7 +61,7 @@ export class DataStreamManagement {
     // one server per accessory is probably the best practice
     private readonly dataStreamServer: DataStreamServer = new DataStreamServer();
 
-    private dataStreamTransportManagementService: DataStreamTransportManagement;
+    private readonly dataStreamTransportManagementService: DataStreamTransportManagement;
 
     readonly supportedDataStreamTransportConfiguration: string;
     lastSetupDataStreamTransportResponse: string = ""; // stripped. excludes ACCESSORY_KEY_SALT

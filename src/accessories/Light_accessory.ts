@@ -77,10 +77,10 @@ const LightController = new LightControllerClass();
 // Generate a consistent UUID for our light Accessory that will remain the same even when
 // restarting our server. We use the `uuid.generate` helper function to create a deterministic
 // UUID based on an arbitrary "namespace" and the word "light".
-var lightUUID = uuid.generate('hap-nodejs:accessories:light' + LightController.name);
+const lightUUID = uuid.generate('hap-nodejs:accessories:light' + LightController.name);
 
 // This is the Accessory that we'll return to HAP-NodeJS that represents our light.
-var lightAccessory = exports.accessory = new Accessory(LightController.name as string, lightUUID);
+const lightAccessory = exports.accessory = new Accessory(LightController.name as string, lightUUID);
 
 // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
 // @ts-ignore

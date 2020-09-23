@@ -19,7 +19,7 @@ export class AppMatchingIdentifier extends Characteristic {
     super('App Matching Identifier', AppMatchingIdentifier.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ]
+      perms: [Perms.PAIRED_READ]
     });
     this.value = this.getDefaultValue();
   }
@@ -42,7 +42,7 @@ export class ProgrammableSwitchOutputState extends Characteristic {
       maxValue: 1,
       minValue: 0,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -62,7 +62,7 @@ export class SoftwareRevision extends Characteristic {
     super('Software Revision', SoftwareRevision.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.READ]
+      perms: [Perms.PAIRED_READ]
     });
     this.value = this.getDefaultValue();
   }
@@ -140,7 +140,7 @@ export class AccessoryIdentifier extends Characteristic {
     super('Accessory Identifier', AccessoryIdentifier.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.READ]
+      perms: [Perms.PAIRED_READ]
     });
     this.value = this.getDefaultValue();
   }
@@ -163,7 +163,7 @@ export class Category extends Characteristic {
       maxValue: 16,
       minValue: 1,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -183,7 +183,7 @@ export class ConfigureBridgedAccessory extends Characteristic {
     super('Configure Bridged Accessory', ConfigureBridgedAccessory.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.WRITE]
+      perms: [Perms.PAIRED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -203,7 +203,7 @@ export class ConfigureBridgedAccessoryStatus extends Characteristic {
     super('Configure Bridged Accessory Status', ConfigureBridgedAccessoryStatus.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -223,7 +223,7 @@ export class CurrentTime extends Characteristic {
     super('Current Time', CurrentTime.UUID);
     this.setProps({
       format: Formats.STRING,
-      perms: [Perms.READ, Perms.WRITE]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -246,7 +246,7 @@ export class DayoftheWeek extends Characteristic {
       maxValue: 7,
       minValue: 1,
       minStep: 1,
-      perms: [Perms.READ, Perms.WRITE]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE]
     });
     this.value = this.getDefaultValue();
   }
@@ -270,7 +270,7 @@ export class DiscoverBridgedAccessories extends Characteristic {
     super('Discover Bridged Accessories', DiscoverBridgedAccessories.UUID);
     this.setProps({
       format: Formats.UINT8,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -290,7 +290,7 @@ export class DiscoveredBridgedAccessories extends Characteristic {
     super('Discovered Bridged Accessories', DiscoveredBridgedAccessories.UUID);
     this.setProps({
       format: Formats.UINT16,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -313,7 +313,7 @@ export class LinkQuality extends Characteristic {
       maxValue: 4,
       minValue: 1,
       minStep: 1,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -333,7 +333,7 @@ export class Reachable extends Characteristic {
     super('Reachable', Reachable.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -353,7 +353,7 @@ export class RelayControlPoint extends Characteristic {
     super('Relay Control Point', RelayControlPoint.UUID);
     this.setProps({
       format: Formats.TLV8,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -373,7 +373,7 @@ export class RelayEnabled extends Characteristic {
     super('Relay Enabled', RelayEnabled.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -393,7 +393,7 @@ export class RelayState extends Characteristic {
     super('Relay State', RelayState.UUID);
     this.setProps({
       format: Formats.UINT8,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -413,7 +413,7 @@ export class TimeUpdate extends Characteristic {
     super('Time Update', TimeUpdate.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -433,7 +433,7 @@ export class TunnelConnectionTimeout extends Characteristic {
     super('Tunnel Connection Timeout ', TunnelConnectionTimeout.UUID);
     this.setProps({
       format: Formats.UINT32,
-      perms: [Perms.WRITE, Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_WRITE, Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -453,7 +453,7 @@ export class TunneledAccessoryAdvertising extends Characteristic {
     super('Tunneled Accessory Advertising', TunneledAccessoryAdvertising.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.WRITE, Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_WRITE, Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -473,7 +473,7 @@ export class TunneledAccessoryConnected extends Characteristic {
     super('Tunneled Accessory Connected', TunneledAccessoryConnected.UUID);
     this.setProps({
       format: Formats.BOOL,
-      perms: [Perms.WRITE, Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_WRITE, Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }
@@ -493,7 +493,7 @@ export class TunneledAccessoryStateNumber extends Characteristic {
     super('Tunneled Accessory State Number', TunneledAccessoryStateNumber.UUID);
     this.setProps({
       format: Formats.FLOAT,
-      perms: [Perms.READ, Perms.NOTIFY]
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
     this.value = this.getDefaultValue();
   }

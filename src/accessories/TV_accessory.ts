@@ -15,10 +15,10 @@ import {
 // Generate a consistent UUID for TV that will remain the same even when
 // restarting our server. We use the `uuid.generate` helper function to create a deterministic
 // UUID based on an arbitrary "namespace" and the word "tv".
-var tvUUID = uuid.generate('hap-nodejs:accessories:tv');
+const tvUUID = uuid.generate('hap-nodejs:accessories:tv');
 
 // This is the Accessory that we'll return to HAP-NodeJS.
-var tv = exports.accessory = new Accessory('TV', tvUUID);
+const tv = exports.accessory = new Accessory('TV', tvUUID);
 
 // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
 // @ts-ignore
@@ -30,7 +30,7 @@ tv.category = Categories.TELEVISION;
 
 // Add the actual TV Service and listen for change events from iOS.
 // We can see the complete list of Services and Characteristics in `lib/gen/HomeKit.ts`
-var televisionService = tv.addService(Service.Television, "Television", "Television");
+const televisionService = tv.addService(Service.Television, "Television", "Television");
 
 televisionService
   .setCharacteristic(Characteristic.ConfiguredName, "Television");
@@ -81,7 +81,7 @@ televisionService
 
 // Speaker
 
-var speakerService = tv.addService(Service.TelevisionSpeaker)
+const speakerService = tv.addService(Service.TelevisionSpeaker);
 
 speakerService
   .setCharacteristic(Characteristic.Active, Characteristic.Active.ACTIVE)
@@ -95,7 +95,7 @@ speakerService.getCharacteristic(Characteristic.VolumeSelector)!
 
 // HDMI 1
 
-var inputHDMI1 = tv.addService(Service.InputSource, "hdmi1", "HDMI 1");
+const inputHDMI1 = tv.addService(Service.InputSource, "hdmi1", "HDMI 1");
 
 inputHDMI1
   .setCharacteristic(Characteristic.Identifier, 1)
@@ -105,7 +105,7 @@ inputHDMI1
 
 // HDMI 2
 
-var inputHDMI2 = tv.addService(Service.InputSource, "hdmi2", "HDMI 2");
+const inputHDMI2 = tv.addService(Service.InputSource, "hdmi2", "HDMI 2");
 
 inputHDMI2
   .setCharacteristic(Characteristic.Identifier, 2)
@@ -115,7 +115,7 @@ inputHDMI2
 
 // Netflix
 
-var inputNetflix = tv.addService(Service.InputSource, "netflix", "Netflix");
+const inputNetflix = tv.addService(Service.InputSource, "netflix", "Netflix");
 
 inputNetflix
   .setCharacteristic(Characteristic.Identifier, 3)

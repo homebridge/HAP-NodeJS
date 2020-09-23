@@ -7,7 +7,7 @@ export const EMPTY_TLV_TYPE = 0x00; // and empty tlv with id 0 is usually used a
 
 export function encode(type: number, data: Buffer | number | string, ...args: any[]) {
 
-    var encodedTLVBuffer = Buffer.alloc(0);
+    let encodedTLVBuffer = Buffer.alloc(0);
 
     // coerce data to Buffer if needed
     if (typeof data === 'number')
@@ -18,9 +18,9 @@ export function encode(type: number, data: Buffer | number | string, ...args: an
     if (data.length <= 255) {
         encodedTLVBuffer = Buffer.concat([Buffer.from([type,data.length]),data]);
     } else {
-        var leftLength = data.length;
-        var tempBuffer = Buffer.alloc(0);
-        var currentStart = 0;
+        let leftLength = data.length;
+        let tempBuffer = Buffer.alloc(0);
+        let currentStart = 0;
 
         for (; leftLength > 0;) {
             if (leftLength >= 255) {
@@ -52,18 +52,18 @@ export function encode(type: number, data: Buffer | number | string, ...args: an
 
 export function decode(data: Buffer) {
 
-    var objects: Record<number, Buffer> = {};
+    const objects: Record<number, Buffer> = {};
 
-    var leftLength = data.length;
-    var currentIndex = 0;
+    let leftLength = data.length;
+    let currentIndex = 0;
 
     for (; leftLength > 0;) {
-        var type = data[currentIndex];
-        var length = data[currentIndex+1];
+        const type = data[currentIndex];
+        const length = data[currentIndex + 1];
         currentIndex += 2;
         leftLength -= 2;
 
-        var newData = data.slice(currentIndex, currentIndex+length);
+        const newData = data.slice(currentIndex, currentIndex + length);
 
         if (objects[type]) {
             objects[type] = Buffer.concat([objects[type],newData]);

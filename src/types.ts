@@ -89,12 +89,14 @@ export type VideoCodec = {
  */
 export type StreamAudioParams = {
   comfort_noise: boolean;
+  // noinspection JSDeprecatedSymbols
   codecs: AudioCodec[];
 };
 /**
  * @deprecated replaced by {@link VideoStreamingOptions}
  */
 export type StreamVideoParams = {
+  // noinspection JSDeprecatedSymbols
   codec?: VideoCodec;
   resolutions: [number, number, number][]; // width, height, framerate
 };

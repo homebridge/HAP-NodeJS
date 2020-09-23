@@ -11,7 +11,7 @@ import {
 import { NodeCallback, VoidCallback } from '../types';
 
 // here's a fake hardware device that we'll expose to HomeKit
-var FAKE_LOCK = {
+const FAKE_LOCK = {
   locked: false,
   lock: () => {
     console.log("Locking the lock!");
@@ -24,15 +24,15 @@ var FAKE_LOCK = {
   identify: () => {
     console.log("Identify the lock!");
   }
-}
+};
 
 // Generate a consistent UUID for our Lock Accessory that will remain the same even when
 // restarting our server. We use the `uuid.generate` helper function to create a deterministic
 // UUID based on an arbitrary "namespace" and the word "lock".
-var lockUUID = uuid.generate('hap-nodejs:accessories:lock');
+const lockUUID = uuid.generate('hap-nodejs:accessories:lock');
 
 // This is the Accessory that we'll return to HAP-NodeJS that represents our fake lock.
-var lock = exports.accessory = new Accessory('Lock', lockUUID);
+const lock = exports.accessory = new Accessory('Lock', lockUUID);
 
 // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
 // @ts-ignore
@@ -93,7 +93,7 @@ lock
     // the lock hardware itself to find this out, then call the callback. But if you take longer than a
     // few seconds to respond, Siri will give up.
 
-    var err = null; // in case there were any problems
+    const err = null; // in case there were any problems
 
     if (FAKE_LOCK.locked) {
       console.log("Are we locked? Yes.");
