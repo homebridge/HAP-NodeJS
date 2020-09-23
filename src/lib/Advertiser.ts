@@ -7,7 +7,6 @@ import ciao, {
   ServiceType
 } from "@homebridge/ciao";
 import { ServiceOptions } from "@homebridge/ciao/lib/CiaoService";
-import assert from "assert";
 import crypto from 'crypto';
 import { EventEmitter } from "events";
 import { AccessoryInfo } from './model/AccessoryInfo';

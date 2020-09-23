@@ -1,5 +1,5 @@
 export function once(func: Function) {
-  var called = false;
+  let called = false;
 
   return (...args: any[]) => {
     if (called) {

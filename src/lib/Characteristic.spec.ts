@@ -387,7 +387,7 @@ describe('Characteristic', () => {
     it('should serialize characteristic', () => {
       const props: CharacteristicProps = {
         format: Formats.STRING,
-        perms: [Perms.TIMED_WRITE, Perms.READ],
+        perms: [Perms.TIMED_WRITE, Perms.PAIRED_READ],
         unit: Units.LUX,
         maxValue: 1234,
         minValue: 123,
@@ -430,7 +430,7 @@ describe('Characteristic', () => {
         UUID: "00000001-0000-1000-8000-0026BB765291",
         props: {
           format: Formats.STRING,
-          perms: [Perms.TIMED_WRITE, Perms.READ],
+          perms: [Perms.TIMED_WRITE, Perms.PAIRED_READ],
           unit: Units.LUX,
           maxValue: 1234,
           minValue: 123,

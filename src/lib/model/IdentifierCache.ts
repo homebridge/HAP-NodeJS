@@ -16,7 +16,7 @@ export class IdentifierCache {
 
   _cache: Record<string, number> = {}; // cache[key:string] = id:number
   _usedCache: Record<string, number> | null = null; // for usage tracking and expiring old keys
-  _savedCacheHash: string = ""; // for checking if new cache neeed to be saved
+  _savedCacheHash: string = ""; // for checking if new cache need to be saved
 
   constructor(public username: MacAddress) {
   }
@@ -32,7 +32,7 @@ export class IdentifierCache {
   }
 
   getCache = (key: string) => {
-    var value = this._cache[key];
+    const value = this._cache[key];
     // track this cache item if needed
     if (this._usedCache && typeof value !== 'undefined')
       this._usedCache[key] = value;
@@ -48,14 +48,14 @@ export class IdentifierCache {
   }
 
   getAID = (accessoryUUID: string) => {
-    var key = accessoryUUID;
+    const key = accessoryUUID;
     // ensure that our "next AID" field is not expired
     this.getCache('|nextAID');
     return this.getCache(key) || this.setCache(key, this.getNextAID());
   }
 
   getIID = (accessoryUUID: string, serviceUUID: string, serviceSubtype?: string, characteristicUUID?: string) => {
-    var key = accessoryUUID
+    const key = accessoryUUID
       + '|' + serviceUUID
       + (serviceSubtype ? '|' + serviceSubtype : '')
       + (characteristicUUID ? '|' + characteristicUUID : '');
@@ -65,26 +65,26 @@ export class IdentifierCache {
   }
 
   getNextAID = () => {
-    var key = '|nextAID';
-    var nextAID = this.getCache(key) || 2; // start at 2 because the root Accessory or Bridge must be 1
+    const key = '|nextAID';
+    const nextAID = this.getCache(key) || 2; // start at 2 because the root Accessory or Bridge must be 1
     this.setCache(key, nextAID + 1); // increment
     return nextAID;
   }
 
   getNextIID = (accessoryUUID: string) => {
-    var key = accessoryUUID + '|nextIID';
-    var nextIID = this.getCache(key) || 2; // iid 1 is reserved for the Accessory Information service
+    const key = accessoryUUID + '|nextIID';
+    const nextIID = this.getCache(key) || 2; // iid 1 is reserved for the Accessory Information service
     this.setCache(key, nextIID + 1); // increment
     return nextIID;
   }
 
   save = () => {
-    var newCacheHash = crypto.createHash('sha1').update(JSON.stringify(this._cache)).digest('hex'); //calculate hash of new cache
+    const newCacheHash = crypto.createHash('sha1').update(JSON.stringify(this._cache)).digest('hex'); //calculate hash of new cache
     if (newCacheHash != this._savedCacheHash) { //check if cache need to be saved and proceed accordingly
-      var saved = {
+      const saved = {
         cache: this._cache
       };
-      var key = IdentifierCache.persistKey(this.username);
+      const key = IdentifierCache.persistKey(this.username);
       HAPStorage.storage().setItemSync(key, saved);
       this._savedCacheHash = newCacheHash; //update hash of saved cache for future use
     }
@@ -99,12 +99,12 @@ export class IdentifierCache {
   }
 
   static load = (username: MacAddress) => {
-    var key = IdentifierCache.persistKey(username);
-    var saved = HAPStorage.storage().getItem(key);
+    const key = IdentifierCache.persistKey(username);
+    const saved = HAPStorage.storage().getItem(key);
     if (saved) {
-      var info = new IdentifierCache(username);
+      const info = new IdentifierCache(username);
       info._cache = saved.cache;
-      info._savedCacheHash = crypto.createHash('sha1').update(JSON.stringify(info._cache)).digest('hex'); //calculate hash of the saved hash to decide in future if saving of new cache is neeeded
+      info._savedCacheHash = crypto.createHash('sha1').update(JSON.stringify(info._cache)).digest('hex'); //calculate hash of the saved hash to decide in future if saving of new cache is needed
       return info;
     } else {
       return null;

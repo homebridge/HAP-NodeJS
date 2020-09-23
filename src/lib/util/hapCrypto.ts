@@ -22,14 +22,14 @@ type Count = {
 }
 
 export function layerEncrypt(data: Buffer, count: Count, key: Buffer) {
-  var result = Buffer.alloc(0);
-  var total = data.length;
-  for (var offset = 0; offset < total; ) {
-    var length = Math.min(total - offset, 0x400);
-    var leLength = Buffer.alloc(2);
+  let result = Buffer.alloc(0);
+  const total = data.length;
+  for (let offset = 0; offset < total; ) {
+    const length = Math.min(total - offset, 0x400);
+    const leLength = Buffer.alloc(2);
     leLength.writeUInt16LE(length,0);
 
-    var nonce = Buffer.alloc(8);
+    const nonce = Buffer.alloc(8);
     writeUInt64LE(count.value++, nonce, 0);
 
     const encrypted = chacha20_poly1305_encryptAndSeal(key, nonce, leLength, data.slice(offset, offset + length));
@@ -46,13 +46,13 @@ export function layerDecrypt(packet: Buffer, count: Count, key: Buffer, extraInf
     packet = Buffer.concat([extraInfo.leftoverData, packet]);
   }
 
-  var result = Buffer.alloc(0);
-  var total = packet.length;
+  let result = Buffer.alloc(0);
+  const total = packet.length;
 
-  for (var offset = 0; offset < total;) {
-    var realDataLength = packet.slice(offset,offset+2).readUInt16LE(0);
+  for (let offset = 0; offset < total;) {
+    const realDataLength = packet.slice(offset, offset + 2).readUInt16LE(0);
 
-    var availableDataLength = total - offset - 2 - 16;
+    const availableDataLength = total - offset - 2 - 16;
     if (realDataLength > availableDataLength) {
       // Fragmented packet
       extraInfo.leftoverData = packet.slice(offset);
@@ -61,7 +61,7 @@ export function layerDecrypt(packet: Buffer, count: Count, key: Buffer, extraInf
       extraInfo.leftoverData = undefined;
     }
 
-    var nonce = Buffer.alloc(8);
+    const nonce = Buffer.alloc(8);
     writeUInt64LE(count.value++, nonce, 0);
 
     const plaintext = chacha20_poly1305_decryptAndVerify(key, nonce, packet.slice(offset,offset+2), packet.slice(offset + 2, offset + 2 + realDataLength), packet.slice(offset + 2 + realDataLength, offset + 2 + realDataLength + 16));
@@ -103,8 +103,8 @@ export function chacha20_poly1305_encryptAndSeal(key: Buffer, nonce: Buffer, aad
   };
 }
 
-var MAX_UINT32 = 0x00000000FFFFFFFF
-var MAX_INT53 =  0x001FFFFFFFFFFFFF
+const MAX_UINT32 = 0x00000000FFFFFFFF;
+const MAX_INT53 = 0x001FFFFFFFFFFFFF;
 
 function onesComplement(number: number) {
   number = ~number
@@ -117,9 +117,9 @@ function onesComplement(number: number) {
 function uintHighLow(number: number) {
   assert(number > -1 && number <= MAX_INT53, "number out of range")
   assert(Math.floor(number) === number, "number must be an integer")
-  var high = 0
-  var signbit = number & 0xFFFFFFFF
-  var low = signbit < 0 ? (number & 0x7FFFFFFF) + 0x80000000 : signbit
+  let high = 0;
+  const signbit = number & 0xFFFFFFFF;
+  const low = signbit < 0 ? (number & 0x7FFFFFFF) + 0x80000000 : signbit;
   if (number > MAX_UINT32) {
     high = (number - low) / (MAX_UINT32 + 1)
   }
@@ -130,9 +130,9 @@ function intHighLow(number: number) {
   if (number > -1) {
     return uintHighLow(number)
   }
-  var hl = uintHighLow(-number)
-  var high = onesComplement(hl[0])
-  var low = onesComplement(hl[1])
+  const hl = uintHighLow(-number);
+  let high = onesComplement(hl[0]);
+  let low = onesComplement(hl[1]);
   if (low === MAX_UINT32) {
     high += 1
     low = 0
@@ -144,13 +144,13 @@ function intHighLow(number: number) {
 }
 
 function writeUInt64BE(number: number, buffer: Buffer, offset: number = 0) {
-  var hl = uintHighLow(number)
+  const hl = uintHighLow(number);
   buffer.writeUInt32BE(hl[0], offset)
   buffer.writeUInt32BE(hl[1], offset + 4)
 }
 
 export function writeUInt64LE (number: number, buffer: Buffer, offset: number = 0) {
-  var hl = uintHighLow(number)
+  const hl = uintHighLow(number);
   buffer.writeUInt32LE(hl[1], offset)
   buffer.writeUInt32LE(hl[0], offset + 4)
 }

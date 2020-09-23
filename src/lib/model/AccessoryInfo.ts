@@ -8,6 +8,7 @@ import { MacAddress } from "../../types";
 import { HAPStorage } from "./HAPStorage";
 
 export const enum PermissionTypes {
+  // noinspection JSUnusedGlobalSymbols
   USER = 0x00,
   ADMIN = 0x01, // admins are the only ones who can add/remove/list pairings (also some characteristics are restricted)
 }
@@ -135,7 +136,7 @@ export class AccessoryInfo {
     return !!pairingInformation && pairingInformation.permission === PermissionTypes.ADMIN;
   };
 
-  // Gets the public key for a paired client as a Buffer, or falsey value if not paired.
+  // Gets the public key for a paired client as a Buffer, or falsy value if not paired.
   getClientPublicKey = (username: string) => {
     const pairingInformation = this.pairedClients[username];
     if (pairingInformation) {
@@ -172,7 +173,7 @@ export class AccessoryInfo {
   }
 
   save = () => {
-    var saved = {
+    const saved = {
       displayName: this.displayName,
       category: this.category,
       pincode: this.pincode,
@@ -188,7 +189,7 @@ export class AccessoryInfo {
       setupID: this.setupID,
     };
 
-    for (var username in this.pairedClients) {
+    for (let username in this.pairedClients) {
       const pairingInformation = this.pairedClients[username];
       //@ts-ignore
       saved.pairedClients[username] = pairingInformation.publicKey.toString('hex');
@@ -196,7 +197,7 @@ export class AccessoryInfo {
       saved.pairedClientsPermission[username] = pairingInformation.permission;
     }
 
-    var key = AccessoryInfo.persistKey(this.username);
+    const key = AccessoryInfo.persistKey(this.username);
 
     HAPStorage.storage().setItemSync(key, saved);
   }
@@ -208,10 +209,10 @@ export class AccessoryInfo {
 
   static create = (username: MacAddress) => {
     AccessoryInfo.assertValidUsername(username);
-    var accessoryInfo = new AccessoryInfo(username);
+    const accessoryInfo = new AccessoryInfo(username);
 
     // Create a new unique key pair for this accessory.
-    var keyPair = tweetnacl.sign.keyPair();
+    const keyPair = tweetnacl.sign.keyPair();
 
     accessoryInfo.signSk = Buffer.from(keyPair.secretKey);
     accessoryInfo.signPk = Buffer.from(keyPair.publicKey);
@@ -222,11 +223,11 @@ export class AccessoryInfo {
   static load = (username: MacAddress) => {
     AccessoryInfo.assertValidUsername(username);
 
-    var key = AccessoryInfo.persistKey(username);
-    var saved = HAPStorage.storage().getItem(key);
+    const key = AccessoryInfo.persistKey(username);
+    const saved = HAPStorage.storage().getItem(key);
 
     if (saved) {
-      var info = new AccessoryInfo(username);
+      const info = new AccessoryInfo(username);
       info.displayName = saved.displayName || "";
       info.category = saved.category || "";
       info.pincode = saved.pincode || "";
@@ -234,8 +235,8 @@ export class AccessoryInfo {
       info.signPk = Buffer.from(saved.signPk || '', 'hex');
 
       info.pairedClients = {};
-      for (var username in saved.pairedClients || {}) {
-        var publicKey = saved.pairedClients[username];
+      for (let username in saved.pairedClients || {}) {
+        const publicKey = saved.pairedClients[username];
         let permission = saved.pairedClientsPermission? saved.pairedClientsPermission[username]: undefined;
         if (permission === undefined)
           permission = PermissionTypes.ADMIN; // defaulting to admin permissions is the only suitable solution, there is no way to recover permissions

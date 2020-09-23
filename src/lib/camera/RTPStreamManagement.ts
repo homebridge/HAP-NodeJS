@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import createDebug from 'debug';
 import net from "net";
+// noinspection JSDeprecatedSymbols
 import { LegacyCameraSource, LegacyCameraSourceAdapter, once, uuid } from "../../index";
 import { CharacteristicValue, Nullable, SessionIdentifier } from '../../types';
 import {

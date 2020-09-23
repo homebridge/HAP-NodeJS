@@ -20,7 +20,7 @@ interface ControllerData {
     data: any,
     /*
     This property and the exact sequence this property is accessed solves the following problems:
-      - Orphaned ControllerData won't be there forever and get's cleared at some point
+      - Orphaned ControllerData won't be there forever and gets cleared at some point
       - When storage is loaded, there is no fixed time frame after which Controllers need to be configured
      */
     purgeOnNextLoad?: boolean,
@@ -152,7 +152,7 @@ export class ControllerStorage {
         });
     }
 
-    public load(username: MacAddress) { // will be called once accessory get's published
+    public load(username: MacAddress) { // will be called once accessory gets published
         if (this.username) {
             throw new Error("ControllerStorage was already loaded!");
         }

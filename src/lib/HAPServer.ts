@@ -16,6 +16,7 @@ import * as tlv from './util/tlv';
 const debug = createDebug('HAP-NodeJS:HAPServer');
 
 const enum TLVValues {
+  // noinspection JSUnusedGlobalSymbols
   REQUEST_TYPE = 0x00,
   METHOD = 0x00, // (match the terminology of the spec sheet but keep backwards compatibility with entry above)
   USERNAME = 0x01,
@@ -38,6 +39,7 @@ const enum TLVValues {
 }
 
 const enum Methods {
+  // noinspection JSUnusedGlobalSymbols
   PAIR_SETUP = 0x00,
   PAIR_SETUP_WITH_AUTH = 0x01,
   PAIR_VERIFY = 0x02,
@@ -56,6 +58,7 @@ const enum States {
 }
 
 export const enum Codes {
+  // noinspection JSUnusedGlobalSymbols
   UNKNOWN = 0x01,
   INVALID_REQUEST = 0x02,
   AUTHENTICATION = 0x02, // setup code or signature verification failed
@@ -67,6 +70,7 @@ export const enum Codes {
 }
 
 export const enum Status {
+  // noinspection JSUnusedGlobalSymbols
   SUCCESS = 0,
   INSUFFICIENT_PRIVILEGES = -70401,
   SERVICE_COMMUNICATION_FAILURE = -70402,
@@ -224,7 +228,7 @@ export class HAPServer extends EventEmitter<Events> {
     // it will leave it open and hope that it's still valid when it returns to the network. And Node,
     // by itself, does not ever "discover" that the connection has been closed behind it, until a
     // potentially very long system-level socket timeout (like, days). To work around this, we have
-    // invented a manual "keepalive" mechanism where we send "empty" events perodicially, such that
+    // invented a manual "keepalive" mechanism where we send "empty" events periodically, such that
     // when Node attempts to write to the socket, it discovers that it's been disconnected after
     // an additional one-minute timeout (this timeout appears to be hardcoded).
     this._keepAliveTimerID = setInterval(this._onKeepAliveTimerTick, 1000 * 60 * 10); // send keepalive every 10 minutes
@@ -264,15 +268,15 @@ export class HAPServer extends EventEmitter<Events> {
   _onRequest = (request: IncomingMessage, response: ServerResponse, session: Session, events: any) => {
     debug("[%s] HAP Request: %s %s", this.accessoryInfo.username, request.method, request.url);
     // collect request data, if any
-    var requestData = Buffer.alloc(0);
+    let requestData = Buffer.alloc(0);
     request.on('data', (data) => {
       requestData = Buffer.concat([requestData, data]);
     });
     request.on('end', () => {
       // parse request.url (which can contain querystring, etc.) into components, then extract just the path
-      var pathname = url.parse(request.url!).pathname!;
+      const pathname = url.parse(request.url!).pathname!;
       // all request data received; now process this request
-      for (var path in HAPServer.handlers)
+      for (let path in HAPServer.handlers)
         if (new RegExp('^' + path + '/?$').test(pathname)) { // match exact string and allow trailing slash
           const handler = HAPServer.handlers[path] as keyof HAPServer;
           this[handler](request, response, session, events, requestData);
@@ -287,7 +291,7 @@ export class HAPServer extends EventEmitter<Events> {
 
   _onEncrypt = (data: Buffer, encrypted: { data: Buffer; }, session: Session) => {
     // instance of HAPEncryption (created in handlePairVerifyStepOne)
-    var enc = session.encryption;
+    const enc = session.encryption;
     // if accessoryToControllerKey is not empty, then encryption is enabled for this connection. However, we'll
     // need to be careful to ensure that we don't encrypt the last few bytes of the response from handlePairVerifyStepTwo.
     // Since all communication calls are asynchronous, we could easily receive this 'encrypt' event for those bytes.
@@ -300,7 +304,7 @@ export class HAPServer extends EventEmitter<Events> {
 
   _onDecrypt = (data: Buffer, decrypted: { data: number | Buffer; error: Error | null }, session: Session) => {
     // possibly an instance of HAPEncryption (created in handlePairVerifyStepOne)
-    var enc = session.encryption;
+    const enc = session.encryption;
     // if controllerToAccessoryKey is not empty, then encryption is enabled for this connection.
     if (enc && enc.controllerToAccessoryKey.length > 0) {
       try {
@@ -319,7 +323,7 @@ export class HAPServer extends EventEmitter<Events> {
    * Unpaired Accessory identification.
    */
   _handleIdentify = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: any) => {
-    // /identify only works if the accesory is not paired
+    // /identify only works if the accessory is not paired
     if (!this.allowInsecureRequest && this.accessoryInfo.paired()) {
       response.writeHead(400, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
@@ -354,8 +358,8 @@ export class HAPServer extends EventEmitter<Events> {
       return;
     }
 
-    var objects = tlv.decode(requestData);
-    var sequence = objects[TLVValues.SEQUENCE_NUM][0]; // value is single byte with sequence number
+    const objects = tlv.decode(requestData);
+    const sequence = objects[TLVValues.SEQUENCE_NUM][0]; // value is single byte with sequence number
     if (sequence == States.M1)
       this._handlePairStepOne(request, response, session);
     else if (sequence == States.M3 && session._pairSetupState === States.M2)
@@ -396,10 +400,10 @@ export class HAPServer extends EventEmitter<Events> {
   // M3 + M4
   _handlePairStepTwo = (request: IncomingMessage, response: ServerResponse, session: Session, objects: Record<number, Buffer>) => {
     debug("[%s] Pair step 2/5", this.accessoryInfo.username);
-    var A = objects[TLVValues.PUBLIC_KEY]; // "A is a public key that exists only for a single login session."
-    var M1 = objects[TLVValues.PASSWORD_PROOF]; // "M1 is the proof that you actually know your own password."
+    const A = objects[TLVValues.PUBLIC_KEY]; // "A is a public key that exists only for a single login session."
+    const M1 = objects[TLVValues.PASSWORD_PROOF]; // "M1 is the proof that you actually know your own password."
     // pull the SRP server we created in stepOne out of the current session
-    var srpServer = session.srpServer!;
+    const srpServer = session.srpServer!;
     srpServer.setA(A);
     try {
       srpServer.checkM1(M1);
@@ -413,7 +417,7 @@ export class HAPServer extends EventEmitter<Events> {
       return;
     }
     // "M2 is the proof that the server actually knows your password."
-    var M2 = srpServer.computeM2();
+    const M2 = srpServer.computeM2();
     response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
     response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M4, TLVValues.PASSWORD_PROOF, M2));
     session._pairSetupState = States.M4;
@@ -423,16 +427,16 @@ export class HAPServer extends EventEmitter<Events> {
   _handlePairStepThree = (request: IncomingMessage, response: ServerResponse, session: Session, objects: Record<number, Buffer>) => {
     debug("[%s] Pair step 3/5", this.accessoryInfo.username);
     // pull the SRP server we created in stepOne out of the current session
-    var srpServer = session.srpServer!;
-    var encryptedData = objects[TLVValues.ENCRYPTED_DATA];
-    var messageData = Buffer.alloc(encryptedData.length - 16);
-    var authTagData = Buffer.alloc(16);
+    const srpServer = session.srpServer!;
+    const encryptedData = objects[TLVValues.ENCRYPTED_DATA];
+    const messageData = Buffer.alloc(encryptedData.length - 16);
+    const authTagData = Buffer.alloc(16);
     encryptedData.copy(messageData, 0, 0, encryptedData.length - 16);
     encryptedData.copy(authTagData, 0, encryptedData.length - 16, encryptedData.length);
-    var S_private = srpServer.computeK();
-    var encSalt = Buffer.from("Pair-Setup-Encrypt-Salt");
-    var encInfo = Buffer.from("Pair-Setup-Encrypt-Info");
-    var outputKey = hapCrypto.HKDF("sha512", encSalt, S_private, encInfo, 32);
+    const S_private = srpServer.computeK();
+    const encSalt = Buffer.from("Pair-Setup-Encrypt-Salt");
+    const encInfo = Buffer.from("Pair-Setup-Encrypt-Info");
+    const outputKey = hapCrypto.HKDF("sha512", encSalt, S_private, encInfo, 32);
 
     let plaintext;
     try {
@@ -445,22 +449,21 @@ export class HAPServer extends EventEmitter<Events> {
       return;
     }
     // decode the client payload and pass it on to the next step
-    var M5Packet = tlv.decode(plaintext);
-    var clientUsername = M5Packet[TLVValues.USERNAME];
-    var clientLTPK = M5Packet[TLVValues.PUBLIC_KEY];
-    var clientProof = M5Packet[TLVValues.PROOF];
-    var hkdfEncKey = outputKey;
-    this._handlePairStepFour(request, response, session, clientUsername, clientLTPK, clientProof, hkdfEncKey);
+    const M5Packet = tlv.decode(plaintext);
+    const clientUsername = M5Packet[TLVValues.USERNAME];
+    const clientLTPK = M5Packet[TLVValues.PUBLIC_KEY];
+    const clientProof = M5Packet[TLVValues.PROOF];
+    this._handlePairStepFour(request, response, session, clientUsername, clientLTPK, clientProof, outputKey);
   }
 
   // M5-2
   _handlePairStepFour = (request: IncomingMessage, response: ServerResponse, session: Session, clientUsername: Buffer, clientLTPK: Buffer, clientProof: Buffer, hkdfEncKey: Buffer) => {
     debug("[%s] Pair step 4/5", this.accessoryInfo.username);
-    var S_private = session.srpServer!.computeK();
-    var controllerSalt = Buffer.from("Pair-Setup-Controller-Sign-Salt");
-    var controllerInfo = Buffer.from("Pair-Setup-Controller-Sign-Info");
-    var outputKey = hapCrypto.HKDF("sha512", controllerSalt, S_private, controllerInfo, 32);
-    var completeData = Buffer.concat([outputKey, clientUsername, clientLTPK]);
+    const S_private = session.srpServer!.computeK();
+    const controllerSalt = Buffer.from("Pair-Setup-Controller-Sign-Salt");
+    const controllerInfo = Buffer.from("Pair-Setup-Controller-Sign-Info");
+    const outputKey = hapCrypto.HKDF("sha512", controllerSalt, S_private, controllerInfo, 32);
+    const completeData = Buffer.concat([outputKey, clientUsername, clientLTPK]);
     if (!tweetnacl.sign.detached.verify(completeData, clientProof, clientLTPK)) {
       debug("[%s] Invalid signature", this.accessoryInfo.username);
       response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
@@ -474,16 +477,16 @@ export class HAPServer extends EventEmitter<Events> {
   // M5 - F + M6
   _handlePairStepFive = (request: IncomingMessage, response: ServerResponse, session: Session, clientUsername: Buffer, clientLTPK: Buffer, hkdfEncKey: Buffer) => {
     debug("[%s] Pair step 5/5", this.accessoryInfo.username);
-    var S_private = session.srpServer!.computeK();
-    var accessorySalt = Buffer.from("Pair-Setup-Accessory-Sign-Salt");
-    var accessoryInfo = Buffer.from("Pair-Setup-Accessory-Sign-Info");
-    var outputKey = hapCrypto.HKDF("sha512", accessorySalt, S_private, accessoryInfo, 32);
-    var serverLTPK = this.accessoryInfo.signPk;
-    var usernameData = Buffer.from(this.accessoryInfo.username);
-    var material = Buffer.concat([outputKey, usernameData, serverLTPK]);
-    var privateKey = Buffer.from(this.accessoryInfo.signSk);
-    var serverProof = tweetnacl.sign.detached(material, privateKey);
-    var message = tlv.encode(TLVValues.USERNAME, usernameData, TLVValues.PUBLIC_KEY, serverLTPK, TLVValues.PROOF, serverProof);
+    const S_private = session.srpServer!.computeK();
+    const accessorySalt = Buffer.from("Pair-Setup-Accessory-Sign-Salt");
+    const accessoryInfo = Buffer.from("Pair-Setup-Accessory-Sign-Info");
+    const outputKey = hapCrypto.HKDF("sha512", accessorySalt, S_private, accessoryInfo, 32);
+    const serverLTPK = this.accessoryInfo.signPk;
+    const usernameData = Buffer.from(this.accessoryInfo.username);
+    const material = Buffer.concat([outputKey, usernameData, serverLTPK]);
+    const privateKey = Buffer.from(this.accessoryInfo.signSk);
+    const serverProof = tweetnacl.sign.detached(material, privateKey);
+    const message = tlv.encode(TLVValues.USERNAME, usernameData, TLVValues.PUBLIC_KEY, serverLTPK, TLVValues.PROOF, serverProof);
 
     const encrypted = hapCrypto.chacha20_poly1305_encryptAndSeal(hkdfEncKey, Buffer.from("PS-Msg06"), null, message);
 
@@ -507,8 +510,8 @@ export class HAPServer extends EventEmitter<Events> {
    * iOS <-> Accessory pairing verification.
    */
   _handlePairVerify = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: Buffer) => {
-    var objects = tlv.decode(requestData);
-    var sequence = objects[TLVValues.SEQUENCE_NUM][0]; // value is single byte with sequence number
+    const objects = tlv.decode(requestData);
+    const sequence = objects[TLVValues.SEQUENCE_NUM][0]; // value is single byte with sequence number
     if (sequence == States.M1)
       this._handlePairVerifyStepOne(request, response, session, objects);
     else if (sequence == States.M3 && session._pairVerifyState === States.M2)
@@ -523,21 +526,21 @@ export class HAPServer extends EventEmitter<Events> {
 
   _handlePairVerifyStepOne = (request: IncomingMessage, response: ServerResponse, session: Session, objects: Record<number, Buffer>) => {
     debug("[%s] Pair verify step 1/2", this.accessoryInfo.username);
-    var clientPublicKey = objects[TLVValues.PUBLIC_KEY]; // Buffer
+    const clientPublicKey = objects[TLVValues.PUBLIC_KEY]; // Buffer
     // generate new encryption keys for this session
-    var keyPair = hapCrypto.generateCurve25519KeyPair();
-    var secretKey = Buffer.from(keyPair.secretKey);
-    var publicKey = Buffer.from(keyPair.publicKey);
-    var sharedSec = Buffer.from(hapCrypto.generateCurve25519SharedSecKey(secretKey, clientPublicKey));
-    var usernameData = Buffer.from(this.accessoryInfo.username);
-    var material = Buffer.concat([publicKey, usernameData, clientPublicKey]);
-    var privateKey = Buffer.from(this.accessoryInfo.signSk);
-    var serverProof = tweetnacl.sign.detached(material, privateKey);
-    var encSalt = Buffer.from("Pair-Verify-Encrypt-Salt");
-    var encInfo = Buffer.from("Pair-Verify-Encrypt-Info");
-    var outputKey = hapCrypto.HKDF("sha512", encSalt, sharedSec, encInfo, 32).slice(0, 32);
+    const keyPair = hapCrypto.generateCurve25519KeyPair();
+    const secretKey = Buffer.from(keyPair.secretKey);
+    const publicKey = Buffer.from(keyPair.publicKey);
+    const sharedSec = Buffer.from(hapCrypto.generateCurve25519SharedSecKey(secretKey, clientPublicKey));
+    const usernameData = Buffer.from(this.accessoryInfo.username);
+    const material = Buffer.concat([publicKey, usernameData, clientPublicKey]);
+    const privateKey = Buffer.from(this.accessoryInfo.signSk);
+    const serverProof = tweetnacl.sign.detached(material, privateKey);
+    const encSalt = Buffer.from("Pair-Verify-Encrypt-Salt");
+    const encInfo = Buffer.from("Pair-Verify-Encrypt-Info");
+    const outputKey = hapCrypto.HKDF("sha512", encSalt, sharedSec, encInfo, 32).slice(0, 32);
     // store keys in a new instance of HAPEncryption
-    var enc = new HAPEncryption();
+    const enc = new HAPEncryption();
     enc.clientPublicKey = clientPublicKey;
     enc.secretKey = secretKey;
     enc.publicKey = publicKey;
@@ -546,7 +549,7 @@ export class HAPServer extends EventEmitter<Events> {
     // store this in the current TCP session
     session.encryption = enc;
     // compose the response data in TLV format
-    var message = tlv.encode(TLVValues.USERNAME, usernameData, TLVValues.PROOF, serverProof);
+    const message = tlv.encode(TLVValues.USERNAME, usernameData, TLVValues.PROOF, serverProof);
 
     const encrypted = hapCrypto.chacha20_poly1305_encryptAndSeal(outputKey, Buffer.from("PV-Msg02"), null, message);
 
@@ -557,14 +560,14 @@ export class HAPServer extends EventEmitter<Events> {
 
   _handlePairVerifyStepTwo = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, objects: Record<number, Buffer>) => {
     debug("[%s] Pair verify step 2/2", this.accessoryInfo.username);
-    var encryptedData = objects[TLVValues.ENCRYPTED_DATA];
-    var messageData = Buffer.alloc(encryptedData.length - 16);
-    var authTagData = Buffer.alloc(16);
+    const encryptedData = objects[TLVValues.ENCRYPTED_DATA];
+    const messageData = Buffer.alloc(encryptedData.length - 16);
+    const authTagData = Buffer.alloc(16);
     encryptedData.copy(messageData, 0, 0, encryptedData.length - 16);
     encryptedData.copy(authTagData, 0, encryptedData.length - 16, encryptedData.length);
 
     // instance of HAPEncryption (created in handlePairVerifyStepOne)
-    var enc = session.encryption!;
+    const enc = session.encryption!;
 
     let plaintext;
     try {
@@ -577,12 +580,12 @@ export class HAPServer extends EventEmitter<Events> {
       return;
     }
 
-    var decoded = tlv.decode(plaintext);
-    var clientUsername = decoded[TLVValues.USERNAME];
-    var proof = decoded[TLVValues.PROOF];
-    var material = Buffer.concat([enc.clientPublicKey, clientUsername, enc.publicKey]);
+    const decoded = tlv.decode(plaintext);
+    const clientUsername = decoded[TLVValues.USERNAME];
+    const proof = decoded[TLVValues.PROOF];
+    const material = Buffer.concat([enc.clientPublicKey, clientUsername, enc.publicKey]);
     // since we're paired, we should have the public key stored for this client
-    var clientPublicKey = this.accessoryInfo.getClientPublicKey(clientUsername.toString());
+    const clientPublicKey = this.accessoryInfo.getClientPublicKey(clientUsername.toString());
     // if we're not actually paired, then there's nothing to verify - this client thinks it's paired with us but we
     // disagree. Respond with invalid request (seems to match HomeKit Accessory Simulator behavior)
     if (!clientPublicKey) {
@@ -602,12 +605,12 @@ export class HAPServer extends EventEmitter<Events> {
     debug("[%s] Client %s verification complete", this.accessoryInfo.username, clientUsername);
     response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
     response.end(tlv.encode(TLVValues.SEQUENCE_NUM, 0x04));
-    // now that the client has been verified, we must "upgrade" our pesudo-HTTP connection to include
+    // now that the client has been verified, we must "upgrade" our pseudo-HTTP connection to include
     // TCP-level encryption. We'll do this by adding some more encryption vars to the session, and using them
     // in future calls to onEncrypt, onDecrypt.
-    var encSalt = Buffer.from("Control-Salt");
-    var infoRead = Buffer.from("Control-Read-Encryption-Key");
-    var infoWrite = Buffer.from("Control-Write-Encryption-Key");
+    const encSalt = Buffer.from("Control-Salt");
+    const infoRead = Buffer.from("Control-Read-Encryption-Key");
+    const infoWrite = Buffer.from("Control-Write-Encryption-Key");
     enc.accessoryToControllerKey = hapCrypto.HKDF("sha512", encSalt, enc.sharedSec, infoRead, 32);
     enc.controllerToAccessoryKey = hapCrypto.HKDF("sha512", encSalt, enc.sharedSec, infoWrite, 32);
     // Our connection is now completely setup. We now want to subscribe this connection to special
@@ -730,25 +733,21 @@ export class HAPServer extends EventEmitter<Events> {
       return;
     }
 
-    type Characteristics = Pick<CharacteristicData, 'aid' | 'iid'> & {
-      status?: any;
-    };
-
     if (request.method == "GET") {
       // Extract the query params from the URL which looks like: /characteristics?id=1.9,2.14,...
-      var parseQueryString = true;
-      var query = url.parse(request.url!, parseQueryString).query; // { id: '1.9,2.14' }
+      const parseQueryString = true;
+      const query = url.parse(request.url!, parseQueryString).query; // { id: '1.9,2.14' }
       if (query == undefined || query.id == undefined) {
         response.writeHead(500);
         response.end();
         return;
       }
-      var sets = (query.id as string).split(','); // ["1.9","2.14"]
-      var data: CharacteristicData[] = []; // [{aid:1,iid:9},{aid:2,iid:14}]
-      for (var i in sets) {
-        var ids = sets[i].split('.'); // ["1","9"]
-        var aid = parseInt(ids[0]); // accessory ID
-        var iid = parseInt(ids[1]); // instance ID (for characteristic)
+      const sets = (query.id as string).split(','); // ["1.9","2.14"]
+      const data: CharacteristicData[] = []; // [{aid:1,iid:9},{aid:2,iid:14}]
+      for (let i in sets) {
+        const ids = sets[i].split('.'); // ["1","9"]
+        const aid = parseInt(ids[0]); // accessory ID
+        const iid = parseInt(ids[1]); // instance ID (for characteristic)
         data.push({aid: aid, iid: iid});
       }
       this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, data, events, once((err: Error, characteristics: CharacteristicData[]) => {
@@ -758,7 +757,7 @@ export class HAPServer extends EventEmitter<Events> {
           debug("[%s] Error getting characteristics: %s", this.accessoryInfo.username, err.stack);
           // rewrite characteristics array to include error status for each characteristic requested
           characteristics = [];
-          for (var i in data) {
+          for (let i in data) {
             characteristics.push({
               aid: data[i].aid,
               iid: data[i].iid,
@@ -804,15 +803,15 @@ export class HAPServer extends EventEmitter<Events> {
         return;
       }
       // requestData is a JSON payload like { characteristics: [ { aid: 1, iid: 8, value: true, ev: true } ] }
-      var writeRequest = JSON.parse(requestData.toString()) as CharacteristicsWriteRequest;
-      var data = writeRequest.characteristics; // pull out characteristics array
+      const writeRequest = JSON.parse(requestData.toString()) as CharacteristicsWriteRequest;
+      const data = writeRequest.characteristics; // pull out characteristics array
       // call out to listeners to retrieve the latest accessories JSON
       this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, writeRequest, events, once((err: Error, characteristics: CharacteristicData[]) => {
         if (err) {
           debug("[%s] Error setting characteristics: %s", this.accessoryInfo.username, err.message);
           // rewrite characteristics array to include error status for each characteristic requested
           characteristics = [];
-          for (var i in data) {
+          for (let i in data) {
             characteristics.push({
               aid: data[i].aid,
               iid: data[i].iid,
@@ -911,7 +910,7 @@ export class HAPServer extends EventEmitter<Events> {
         return;
       }
       // requestData is a JSON payload
-      var data = JSON.parse(requestData.toString());
+      const data = JSON.parse(requestData.toString());
       // call out to listeners to retrieve the resource, snapshot only right now
       this.emit(HAPServerEventTypes.REQUEST_RESOURCE, data, once((err: Error, resource: any) => {
         if (err) {

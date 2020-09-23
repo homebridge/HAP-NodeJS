@@ -1,17 +1,16 @@
+import createDebug from 'debug';
 import fs from 'fs';
 import path from 'path';
-
-import createDebug from 'debug';
-
+import { CharacteristicValue, Nullable } from '../types';
 import { Accessory } from './Accessory';
-import { Service } from './Service';
 import {
   Characteristic,
-  CharacteristicEventTypes, CharacteristicGetCallback,
+  CharacteristicEventTypes,
+  CharacteristicGetCallback,
   CharacteristicSetCallback
 } from './Characteristic';
+import { Service } from './Service';
 import * as uuid from './util/uuid';
-import { CharacteristicValue, NodeCallback, Nullable } from '../types';
 
 const debug = createDebug('HAP-NodeJS:AccessoryLoader');
 
@@ -23,7 +22,7 @@ const debug = createDebug('HAP-NodeJS:AccessoryLoader');
 export function loadDirectory(dir: string): Accessory[] {
 
   // exported accessory objects loaded from this dir
-  var accessories: Accessory[] = [];
+  let accessories: Accessory[] = [];
 
   fs.readdirSync(dir).forEach((file) => {
     const suffix = file.split('_').pop();
@@ -31,7 +30,7 @@ export function loadDirectory(dir: string): Accessory[] {
     // "Accessories" are modules that export a single accessory.
     if (suffix === 'accessory.js' || suffix === 'accessory.ts') {
       debug('Parsing accessory: %s', file);
-      var loadedAccessory = require(path.join(dir, file)).accessory;
+      const loadedAccessory = require(path.join(dir, file)).accessory;
       accessories.push(loadedAccessory);
     }
     // "Accessory Factories" are modules that export an array of accessories.
@@ -39,7 +38,7 @@ export function loadDirectory(dir: string): Accessory[] {
       debug('Parsing accessory factory: %s', file);
 
       // should return an array of objects { accessory: accessory-json }
-      var loadedAccessories = require(path.join(dir, file));
+      const loadedAccessories = require(path.join(dir, file));
       accessories = accessories.concat(loadedAccessories);
     }
   });
@@ -53,7 +52,7 @@ export function loadDirectory(dir: string): Accessory[] {
     } else {
       return (accessory instanceof Accessory) ? accessory : parseAccessoryJSON(accessory);
     }
-  }).filter((accessory: Accessory | false) => { return accessory ? true : false; }) as Accessory[];
+  }).filter((accessory: Accessory | false) => { return !!accessory; }) as Accessory[];
 }
 
 /**
@@ -64,14 +63,14 @@ export function loadDirectory(dir: string): Accessory[] {
 export function parseAccessoryJSON(json: any) {
 
   // parse services first so we can extract the accessory name
-  var services: Service[] = [];
+  const services: Service[] = [];
 
   json.services.forEach(function(serviceJSON: any) {
-    var service = parseServiceJSON(serviceJSON);
+    const service = parseServiceJSON(serviceJSON);
     services.push(service);
   });
 
-  var displayName = json.displayName;
+  let displayName = json.displayName;
 
   services.forEach(function(service) {
     if (service.UUID === '0000003E-0000-1000-8000-0026BB765291') { // Service.AccessoryInformation.UUID
@@ -83,7 +82,7 @@ export function parseAccessoryJSON(json: any) {
     }
   });
 
-  var accessory = new Accessory(displayName, uuid.generate(displayName));
+  const accessory = new Accessory(displayName, uuid.generate(displayName));
 
   // create custom properties for "username" and "pincode" for Core.js to find later (if using Core.js)
   // @ts-ignore
@@ -103,17 +102,17 @@ export function parseAccessoryJSON(json: any) {
 }
 
 export function parseServiceJSON(json: any) {
-  var serviceUUID = json.sType;
+  const serviceUUID = json.sType;
 
   // build characteristics first so we can extract the Name (if present)
-  var characteristics: Characteristic[] = [];
+  const characteristics: Characteristic[] = [];
 
   json.characteristics.forEach((characteristicJSON: any) => {
-    var characteristic = parseCharacteristicJSON(characteristicJSON);
+    const characteristic = parseCharacteristicJSON(characteristicJSON);
     characteristics.push(characteristic);
   });
 
-  var displayName: Nullable<CharacteristicValue> = null;
+  let displayName: Nullable<CharacteristicValue> = null;
 
   // extract the "Name" characteristic to use for 'type' discrimination if necessary
   characteristics.forEach(function(characteristic) {
@@ -122,7 +121,7 @@ export function parseServiceJSON(json: any) {
   });
 
   // Use UUID for "displayName" if necessary, as the JSON structures don't have a value for this
-  var service = new Service(displayName || serviceUUID, serviceUUID, `${displayName}`);
+  const service = new Service(displayName || serviceUUID, serviceUUID, `${displayName}`);
 
   characteristics.forEach(function(characteristic) {
     if (characteristic.UUID != '00000023-0000-1000-8000-0026BB765291') // Characteristic.Name.UUID, already present in all Services
@@ -133,9 +132,9 @@ export function parseServiceJSON(json: any) {
 }
 
 export function parseCharacteristicJSON(json: any) {
-  var characteristicUUID = json.cType;
+  const characteristicUUID = json.cType;
 
-  var characteristic = new Characteristic(json.manfDescription || characteristicUUID, characteristicUUID);
+  const characteristic = new Characteristic(json.manfDescription || characteristicUUID, characteristicUUID);
 
   // copy simple properties
   characteristic.value = json.initialValue;
@@ -160,9 +159,9 @@ export function parseCharacteristicJSON(json: any) {
   // @ts-ignore
   characteristic.locals = json.locals;
 
-  var updateFunc = json.onUpdate; // optional function(value)
-  var readFunc = json.onRead; // optional function(callback(value))
-  var registerFunc = json.onRegister; // optional function
+  const updateFunc = json.onUpdate; // optional function(value)
+  const readFunc = json.onRead; // optional function(callback(value))
+  const registerFunc = json.onRegister; // optional function
 
   if (updateFunc) {
     characteristic.on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {

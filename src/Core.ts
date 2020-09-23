@@ -13,11 +13,11 @@ console.warn("DEPRECATION NOTICE: The use of Core and BridgeCore are deprecated 
 storage.initSync();
 
 // Our Accessories will each have their own HAP server; we will assign ports sequentially
-var targetPort = 51826;
+let targetPort = 51826;
 
 // Load up all accessories in the /accessories folder
-var dir = path.join(__dirname, "accessories");
-var accessories = AccessoryLoader.loadDirectory(dir);
+const dir = path.join(__dirname, "accessories");
+const accessories = AccessoryLoader.loadDirectory(dir);
 
 // Publish them all separately (as opposed to BridgedCore which publishes them behind a single Bridge accessory)
 accessories.forEach((accessory) => {
@@ -45,10 +45,10 @@ accessories.forEach((accessory) => {
   });
 });
 
-var signals = { 'SIGINT': 2, 'SIGTERM': 15 } as Record<string, number>;
+const signals = {'SIGINT': 2, 'SIGTERM': 15} as Record<string, number>;
 Object.keys(signals).forEach((signal: any) => {
   process.on(signal, () => {
-    for (var i = 0; i < accessories.length; i++) {
+    for (let i = 0; i < accessories.length; i++) {
       accessories[i].unpublish();
     }
 
