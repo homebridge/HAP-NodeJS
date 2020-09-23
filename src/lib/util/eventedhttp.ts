@@ -29,6 +29,47 @@ export type Events = {
   [EventedHTTPServerEvents.SESSION_CLOSE]: (sessionID: SessionIdentifier, events: any) => void;
 };
 
+function findLoopbackAddress(): string {
+  let ipv6: string | undefined = undefined; // ::1/128
+  let ipv6LinkLocal: string | undefined = undefined; // fe80::/10
+  let ipv4: string | undefined = undefined; // 127.0.0.1/8
+
+  for (const [name, infos] of Object.entries(os.networkInterfaces())) {
+    let internal = false;
+    for (const info of infos) {
+      if (!info.internal) {
+        continue;
+      }
+
+      internal = true;
+      if (info.family === "IPv4") {
+        if (!ipv4) {
+          ipv4 = info.address;
+        }
+      } else if (info.family === "IPv6") {
+        if (info.scopeid) {
+          if (!ipv6LinkLocal) {
+            ipv6LinkLocal = info.address + "%" + name; // ipv6 link local addresses are only valid with a scope
+          }
+        } else if (!ipv6) {
+          ipv6 = info.address;
+        }
+      }
+    }
+
+    if (internal) {
+      break;
+    }
+  }
+
+  const address = ipv6 || ipv6LinkLocal || ipv4;
+  if (!address) {
+    throw new Error("Could not find a valid loopback address on the platform!");
+  }
+  return address;
+}
+const loopbackAddress = findLoopbackAddress(); // loopback addressed used for the internal http server (::1 or 127.0.0.1)
+
 /**
  * EventedHTTPServer provides an HTTP-like server that supports HAP "extensions" for security and events.
  *
@@ -66,8 +107,8 @@ export type Events = {
  */
 export class EventedHTTPServer extends EventEmitter<Events> {
 
-  _tcpServer: net.Server;
-  _connections: EventedHTTPServerConnection[];
+  private readonly _tcpServer: net.Server;
+  private readonly _connections: EventedHTTPServerConnection[] = [];
 
   /**
    * Session dictionary indexed by username/identifier. The username uniquely identifies every person added to the home.
@@ -78,7 +119,6 @@ export class EventedHTTPServer extends EventEmitter<Events> {
   constructor() {
     super();
     this._tcpServer = net.createServer();
-    this._connections = []; // track all open connections (for sending events)
   }
 
   listen = (targetPort: number, hostname?: string) => {
@@ -105,7 +145,7 @@ export class EventedHTTPServer extends EventEmitter<Events> {
     this._connections.forEach((connection) => {
       connection.close();
     });
-    this._connections = [];
+    this._connections.splice(0, this._connections.length);
   }
 
   sendEvent = (
@@ -141,6 +181,7 @@ export class EventedHTTPServer extends EventEmitter<Events> {
     // remove it from our array of connections for events
     this._connections.splice(this._connections.indexOf(connection), 1);
   }
+
 }
 
 export const enum HAPSessionEvents {
@@ -333,7 +374,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     this._httpServer.on('listening', this._onHttpServerListening);
     this._httpServer.on('request', this._onHttpServerRequest);
     this._httpServer.on('error', this._onHttpServerError);
-    this._httpServer.listen(0);
+    this._httpServer.listen(0, loopbackAddress);
     // an arbitrary dict that users of this class can store values in to associate with this particular connection
     this._session = new Session(this);
     // a collection of event names subscribed to by this connection
@@ -411,12 +452,15 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
 
   // Called only once right after constructor finishes
   _onHttpServerListening = () => {
-    this._httpPort = (this._httpServer.address() as AddressInfo).port;
-    debug("[%s] HTTP server listening on port %s", this._remoteAddress, this._httpPort);
+    const addressInfo = this._httpServer.address() as AddressInfo; // address() is only a string when listening to unix domain sockets
+    this._httpPort = addressInfo.port;
+    const addressString = addressInfo.family === "IPv6"? `[${addressInfo.address}]`: addressInfo.address;
+
+    debug("[%s] HTTP server listening on %s:%s", this._remoteAddress, addressString, addressInfo.port);
     // closes before this are due to retrying listening, which don't need to be handled
     this._httpServer.on('close', this._onHttpServerClose);
     // now we can establish a connection to this running HTTP server for proxying data
-    this._serverSocket = net.createConnection(this._httpPort);
+    this._serverSocket = net.createConnection(this._httpPort, addressInfo.address);
     this._serverSocket.on('connect', this._onServerSocketConnect);
     this._serverSocket.on('data', this._onServerSocketData);
     this._serverSocket.on('close', this._onServerSocketClose);
