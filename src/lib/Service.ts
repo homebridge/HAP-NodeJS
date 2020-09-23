@@ -246,8 +246,9 @@ export class Service extends EventEmitter<Events> {
 
   removeLinkedService = (oldLinkedService: Service) => {
     //TODO: Add a check if the service is on the same accessory.
-    if (this.linkedServices.includes(oldLinkedService))
-      this.linkedServices.splice(this.linkedServices.indexOf(oldLinkedService), 1);
+    const index = this.linkedServices.indexOf(oldLinkedService);
+    if (index !== -1)
+      this.linkedServices.splice(index, 1);
     this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
   }
 
