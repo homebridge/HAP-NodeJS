@@ -420,14 +420,25 @@ export class Accessory extends EventEmitter<Events> {
       if (this.primaryService === service) { // check if we are removing out primary service
         this.primaryService = undefined;
       }
+      this.removeLinkedService(service); // remove it from linked service entries on the local accessory
 
       if (!this.bridged) {
         this._updateConfiguration();
       } else {
         this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({accessory:this, service:service}));
+        
+        for (const accessory of this.bridgedAccessories) {
+          accessory.removeLinkedService(service);
+        }
       }
 
       service.removeAllListeners();
+    }
+  }
+
+  private removeLinkedService(service: Service) {
+    for (const service of this.services) {
+      service.removeLinkedService(service);
     }
   }
 
