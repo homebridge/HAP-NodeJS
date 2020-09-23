@@ -21,7 +21,7 @@ export const enum EventedHTTPServerEvents {
 }
 
 export type Events = {
-  [EventedHTTPServerEvents.LISTENING]: (port: number) => void;
+  [EventedHTTPServerEvents.LISTENING]: (port: number, hostname: string) => void;
   [EventedHTTPServerEvents.REQUEST]: (request: IncomingMessage, response: ServerResponse, session: Session, events: any) => void;
   [EventedHTTPServerEvents.DECRYPT]: (data: Buffer, decrypted: { data: Buffer; error: Error | null }, session: Session) => void;
   [EventedHTTPServerEvents.ENCRYPT]: (data: Buffer, encrypted: { data: number | Buffer; }, session: Session) => void;
@@ -81,16 +81,18 @@ export class EventedHTTPServer extends EventEmitter<Events> {
     this._connections = []; // track all open connections (for sending events)
   }
 
-  listen = (targetPort: number) => {
-    this._tcpServer.listen(targetPort);
+  listen = (targetPort: number, hostname?: string) => {
+    this._tcpServer.listen(targetPort, hostname);
 
     this._tcpServer.on('listening', () => {
       const address = this._tcpServer.address();
 
       if (address && typeof address !== 'string') {
+        const hostname = address.address;
         const port = address.port;
-        debug("Server listening on port %s", port);
-        this.emit(EventedHTTPServerEvents.LISTENING, port);
+
+        debug("Server listening on %s:%s", address.family === "IPv6"? `[${hostname}]`: hostname, port);
+        this.emit(EventedHTTPServerEvents.LISTENING, port, hostname);
       }
 
     });

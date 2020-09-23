@@ -6,6 +6,7 @@ import ciao, {
   ServiceTxt,
   ServiceType
 } from "@homebridge/ciao";
+import { ServiceOptions } from "@homebridge/ciao/lib/CiaoService";
 import assert from "assert";
 import crypto from 'crypto';
 import { EventEmitter } from "events";
@@ -54,33 +55,32 @@ export class Advertiser extends EventEmitter {
   static protocolVersionService: string = "1.1.0";
 
   private readonly accessoryInfo: AccessoryInfo;
-  private readonly responder: Responder;
   private readonly setupHash: string;
 
-  private advertisedService?: CiaoService;
+  private readonly responder: Responder;
+  private readonly advertisedService: CiaoService;
 
-  constructor(accessoryInfo: AccessoryInfo, options?: MDNSServerOptions) {
+  constructor(accessoryInfo: AccessoryInfo, responderOptions?: MDNSServerOptions, serviceOptions?: Partial<ServiceOptions>) {
     super();
     this.accessoryInfo = accessoryInfo;
-    this.responder = ciao.getResponder(options);
     this.setupHash = this.computeSetupHash();
-  }
 
-  public initAdvertiser(port: number): void {
-    assert(!this.advertisedService, "Service was already created!");
-
+    this.responder = ciao.getResponder(responderOptions);
     this.advertisedService = this.responder.createService({
       name: this.accessoryInfo.displayName,
       type: ServiceType.HAP,
-      port: port,
       txt: this.createTxt(),
       // host will default now to <displayName>.local, spaces replaced with dashes
+      ...serviceOptions,
     });
     this.advertisedService.on(ServiceEvent.NAME_CHANGED, this.emit.bind(this, AdvertiserEvent.UPDATED_NAME));
   }
 
+  public initPort(port: number): void {
+    this.advertisedService.updatePort(port);
+  }
+
   public startAdvertising(): Promise<void> {
-    assert(this.advertisedService, "Cannot create advertisement when the service wasn't created yet!");
     return this.advertisedService!.advertise();
   }
 
@@ -89,17 +89,15 @@ export class Advertiser extends EventEmitter {
   }
 
   public updateAdvertisement(): void {
-    assert(this.advertisedService, "Cannot update advertisement when service wasn't yet advertised!");
     this.advertisedService!.updateTxt(this.createTxt());
   }
 
-  public stopAdvertising(): Promise<void> {
-    assert(this.advertisedService, "Cannot stop advertisement when service wasn't yet advertised!");
-    return this.advertisedService!.end();
+  public destroyAdvertising(): Promise<void> {
+    return this.advertisedService!.destroy();
   }
 
   public async shutdown(): Promise<void> {
-    await this.stopAdvertising(); // would also be done by the shutdown method below
+    await this.destroyAdvertising(); // would also be done by the shutdown method below
     await this.responder.shutdown();
   }
 

@@ -9,8 +9,24 @@ export interface ToHAPOptions {
   omitValues: boolean;
 }
 
-export type SessionIdentifier = string; // uuid string uniquely identifying every HAP connection
-export type MacAddress = string; // format like 'XX:XX:XX:XX:XX:XX' with XX being a valid hexadecimal string
+/**
+ * UUID string uniquely identifying every HAP connection.
+ */
+export type SessionIdentifier = string;
+/**
+ * Defines a mac address.
+ * Must have a format like 'XX:XX:XX:XX:XX:XX' with XX being a valid hexadecimal string
+ */
+export type MacAddress = string;
+/**
+ * Defines a pincode for the HAP accessory.
+ * Must have a format like "XXX-XX-XXX".
+ */
+export type HAPPincode = string;
+export type InterfaceName = string;
+export type IPv4Address = string;
+export type IPv6Address = string;
+export type IPAddress = IPv4Address | IPv6Address;
 
 export type Callback = (...args: any[]) => void;
 export type NodeCallback<T> = (err: Nullable<Error> | undefined, data?: T) => void;

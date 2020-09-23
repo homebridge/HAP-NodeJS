@@ -2,7 +2,8 @@ import { MDNSServerOptions } from "@homebridge/ciao";
 import crypto from 'crypto';
 import createDebug from 'debug';
 import assert from "assert";
-
+import net from "net";
+import os from "os";
 import * as uuid from './util/uuid';
 import { clone } from './util/clone';
 import { SerializedService, Service, ServiceConfigurationChange, ServiceEventTypes, ServiceId } from './Service';
@@ -14,7 +15,7 @@ import { IdentifierCache } from './model/IdentifierCache';
 import {
   CharacteristicChange,
   CharacteristicData,
-  CharacteristicValue, MacAddress,
+  CharacteristicValue, HAPPincode, InterfaceName, IPAddress, MacAddress,
   NodeCallback,
   Nullable,
   PairingsCallback,
@@ -124,13 +125,14 @@ export const enum AccessoryEventTypes {
 
 type Events = {
   identify: (paired:boolean, cb: VoidCallback) => void;
-  listening: (port: number) => void;
+  listening: (port: number, hostname: string) => void;
   "service-configurationChange": VoidCallback;
   "service-characteristic-change": (change: ServiceCharacteristicChange) => void;
   [AccessoryEventTypes.PAIRED]: () => void;
   [AccessoryEventTypes.UNPAIRED]: () => void;
 }
 
+// noinspection JSUnusedGlobalSymbols
 /**
  * @deprecated Use AccessoryEventTypes instead
  */
@@ -140,10 +142,74 @@ export type CharacteristicEvents = Record<string, any>;
 
 export interface PublishInfo {
   username: MacAddress;
-  pincode: string;
+  pincode: HAPPincode;
+  /**
+   * Specify the category for the HomeKit accessory.
+   * The category is used only in the mdns advertisement and specifies the devices type
+   * for the HomeKit controller.
+   * Currently this only affects the icon shown in the pairing screen.
+   * For the Television and Smart Speaker service it also affects the icon shown in
+   * the Home app when paired.
+   */
   category?: Categories;
   setupID?: string;
+  /**
+   * Defines the host where the HAP server will be bound to.
+   * When undefined the HAP server will bind to all available interfaces
+   * (see https://nodejs.org/api/net.html#net_server_listen_port_host_backlog_callback).
+   *
+   * This property accepts a mixture of IPAddresses and network interface names.
+   * Depending on the mixture of supplied addresses/names hap-nodejs will bind differently.
+   *
+   * It is advised to not just bind to a specific address, but specifying the interface name
+   * in oder to bind on all address records (and ip version) available.
+   *
+   * HAP-NodeJS (or the underlying ciao library) will not report about misspelled interface names,
+   * as it could be that the interface is currently just down and will come up later.
+   *
+   * Here are a few examples:
+   *  - bind: "::"
+   *      Pretty much identical to not specifying anything, as most systems (with ipv6 support)
+   *      will default to the unspecified ipv6 address (with dual stack support).
+   *
+   *  - bind: "0.0.0.0"
+   *      Binding TCP socket to the unspecified ipv4 address.
+   *      The mdns advertisement will exclude any ipv6 address records.
+   *
+   *  - bind: ["en0", "lo0"]
+   *      The mdns advertising will advertise all records of the en0 and loopback interface (if available) and
+   *      will also react to address changes on those interfaces.
+   *      In order for the HAP server to accept all those address records (which may contain ipv6 records)
+   *      it will bind on the unspecified ipv6 address "::" (assuming dual stack is supported).
+   *
+   *  - bind: ["en0", "lo0", "0.0.0.0"]
+   *      Same as above, only that the HAP server will bind on the unspecified ipv4 address "0.0.0.0".
+   *      The mdns advertisement will not advertise any ipv6 records.
+   *
+   *  - bind: "169.254.104.90"
+   *      This will bind the HAP server to the address 169.254.104.90.
+   *      The application will throw an error if the address is not available at startup.
+   *      The mdns advertisement will only advertise the A record 169.254.104.90.
+   *      If the given network interface of that address encounters an ip address change,
+   *      the mdns advertisement will result in not advertising a address at all.
+   *      This is identical with ipv6 addresses.
+   *
+   *  - bind: ["169.254.104.90", "192.168.1.4"]
+   *      As the HAP TCP socket can only bind to a single address, when specifying multiple ip addresses
+   *      the HAP server will bind to the unspecified ip address (0.0.0.0 if only ipv4 addresses are supplied,
+   *      :: if a mixture or only ipv6 addresses are supplied).
+   *      The mdns advertisement will only advertise the specified ip addresses.
+   */
+  bind?: (InterfaceName | IPAddress) | (InterfaceName | IPAddress)[];
+  /**
+   * Defines the port where the HAP server will be bound to.
+   * When undefined port 0 will be used resulting in a random port.
+   */
   port?: number;
+  /**
+   * Used to define custom MDNS options. Is not used anymore.
+   * @deprecated
+   */
   mdns?: MDNSServerOptions;
 }
 
@@ -875,6 +941,7 @@ export class Accessory extends EventEmitter<Events> {
    * Publishes this Accessory on the local network for iOS clients to communicate with.
    *
    * @param {Object} info - Required info for publishing.
+   * @param allowInsecureRequest - Will allow unencrypted and unauthenticated access to the http server
    * @param {string} info.username - The "username" (formatted as a MAC address - like "CC:22:3D:E3:CE:F6") of
    *                                this Accessory. Must be globally unique from all Accessories on your local network.
    * @param {string} info.pincode - The 8-digit pincode for clients to use when pairing this Accessory. Must be formatted
@@ -885,7 +952,10 @@ export class Accessory extends EventEmitter<Events> {
    *                                new Accessory.
    */
   publish = (info: PublishInfo, allowInsecureRequest?: boolean) => {
-    // TODO maybe directly enqueue the method call on nextTick (could solve most out of order constructions)
+    if (info.mdns) {
+      console.log("DEPRECATED user supplied a custom 'mdns' option. This option is deprecated and ignored. " +
+        "Please move to the new 'bind' option.");
+    }
 
     let service = this.getService(Service.ProtocolInformation);
     if (!service) {
@@ -971,7 +1041,13 @@ export class Accessory extends EventEmitter<Events> {
     this.validateAccessory(true);
 
     // create our Advertiser which broadcasts our presence over mdns
-    this._advertiser = new Advertiser(this._accessoryInfo, info.mdns);
+    const parsed = Accessory.parseBindOption(info);
+    this._advertiser = new Advertiser(this._accessoryInfo, {
+      interface: parsed.advertiserAddress
+    }, {
+      restrictedAddresses: parsed.serviceRestrictedAddress,
+      disabledIpv6: parsed.serviceDisableIpv6,
+    });
     this._advertiser.on(AdvertiserEvent.UPDATED_NAME, name => {
       this.displayName = name;
       if (this._accessoryInfo) {
@@ -999,7 +1075,7 @@ export class Accessory extends EventEmitter<Events> {
     this._server.on(HAPServerEventTypes.SESSION_CLOSE, this._handleSessionClose.bind(this));
     this._server.on(HAPServerEventTypes.REQUEST_RESOURCE, this._handleResource.bind(this));
 
-    this._server.listen(info.port || 0);
+    this._server.listen(info.port, parsed.serverAddress);
   }
 
   /**
@@ -1057,12 +1133,12 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
-  _onListening = (port: number) => {
+  _onListening = (port: number, hostname: string) => {
     assert(this._advertiser, "Advertiser wasn't created at onListening!");
     // the HAP server is listening, so we can now start advertising our presence.
-    this._advertiser!.initAdvertiser(port);
+    this._advertiser!.initPort(port);
     this._advertiser!.startAdvertising();
-    this.emit(AccessoryEventTypes.LISTENING, port);
+    this.emit(AccessoryEventTypes.LISTENING, port, hostname);
   }
 
 // Called when an unpaired client wishes for us to identify ourself
@@ -1785,6 +1861,66 @@ export class Accessory extends EventEmitter<Events> {
     });
 
     return controllerServiceMap;
+  }
+
+  private static parseBindOption(info: PublishInfo): { advertiserAddress?: string[], serviceRestrictedAddress?: string[], serviceDisableIpv6?: boolean, serverAddress?: string } {
+    let advertiserAddress: string[] | undefined = undefined;
+    let disableIpv6 = false;
+    let serverAddress: string | undefined = undefined;
+
+    if (info.bind) {
+      const entries: Set<InterfaceName | IPAddress> = new Set(Array.isArray(info.bind)? info.bind: [info.bind]);
+
+      if (entries.has("::")) {
+        entries.delete("::");
+        if (entries.size) {
+          advertiserAddress = Array.from(entries);
+        }
+      } else if (entries.has("0.0.0.0")) {
+        disableIpv6 = true;
+        serverAddress = "0.0.0.0";
+
+        entries.delete("0.0.0.0");
+        if (entries.size) {
+          advertiserAddress = Array.from(entries);
+        }
+      } else {
+        advertiserAddress = Array.from(entries);
+
+        if (entries.size === 1) {
+          const entry = entries.values().next().value; // grab the first one
+
+          if (net.isIP(entry)) {
+            serverAddress = entry;
+          } else {
+            serverAddress = "::"; // the interface could have both ipv4 and ipv6 addresses
+          }
+        } else {
+          let bindUnspecifiedIpv6 = false; // we bind on "::" if there are interface names, or we detect ipv6 addresses
+
+          for (const entry of entries) {
+            const version = net.isIP(entry);
+            if (version === 0 || version === 6) {
+              bindUnspecifiedIpv6 = true;
+              break;
+            }
+          }
+
+          if (bindUnspecifiedIpv6) {
+            serverAddress = "::";
+          } else {
+            serverAddress = "0.0.0.0";
+          }
+        }
+      }
+    }
+
+    return {
+      advertiserAddress: advertiserAddress,
+      serviceRestrictedAddress: advertiserAddress,
+      serviceDisableIpv6: disableIpv6,
+      serverAddress: serverAddress,
+    };
   }
 
 }
