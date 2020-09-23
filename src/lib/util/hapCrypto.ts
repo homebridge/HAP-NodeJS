@@ -1,7 +1,12 @@
-import crypto from 'crypto';
-import tweetnacl from 'tweetnacl';
 import assert from 'assert';
+import crypto from 'crypto';
 import hkdf from "futoin-hkdf";
+import tweetnacl from 'tweetnacl';
+
+if (!crypto.getCiphers().includes("chacha20-poly1305")) {
+  assert.fail("The cipher 'chacha20-poly1305' is not supported with your current running nodejs version v" + process.version + ". " +
+    "At least a nodejs version of v10.17.0 (excluding v11.0 and v11.1) is required!");
+}
 
 export function generateCurve25519KeyPair() {
   return tweetnacl.box.keyPair();
