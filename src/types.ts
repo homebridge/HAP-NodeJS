@@ -1,3 +1,4 @@
+import { CharacteristicEvents } from "./lib/Accessory";
 import { Status } from './lib/HAPServer';
 import { Characteristic, CharacteristicProps } from './lib/Characteristic';
 
@@ -34,21 +35,17 @@ export type VoidCallback = (err?: Nullable<Error>) => void;
 export type PairingsCallback<T> = (err: number, data?: T) => void;
 export type PrimitiveTypes = string | number | boolean;
 
-type HAPProps =
-  Pick<CharacteristicProps, 'perms' | 'format' | 'description' | 'unit' | 'maxValue' | 'minValue' | 'minStep' | 'maxLen'>
-  & Pick<Characteristic, 'valid-values' | 'valid-values-range'>
+type HAPProps = Pick<CharacteristicProps, 'perms' | 'format' | 'description' | 'unit' | 'maxValue' | 'minValue' | 'minStep' | 'maxLen'>
+  & {
+  "valid-values"?: number[],
+  "valid-values-range"?: [number, number],
+}
 export type HapCharacteristic = HAPProps & {
   iid: number;
   type: string;
   value: string | number | {} | null;
 }
 export type CharacteristicValue = PrimitiveTypes | PrimitiveTypes[] | { [key: string]: PrimitiveTypes };
-export type CharacteristicChange = {
-  newValue: CharacteristicValue;
-  oldValue: CharacteristicValue;
-  context?: any;
-  characteristic: Characteristic;
-};
 export type HapService = {
   iid: number;
   type: string;
@@ -57,18 +54,6 @@ export type HapService = {
   primary: boolean;
   hidden: boolean;
   linked: number[];
-}
-
-export type CharacteristicData = {
-  aid: number;
-  iid: number;
-  v?: string;
-  value?: string;
-  s?: Status;
-  status?: Status;
-  e?: string;
-  ev?: boolean;
-  r?: boolean;
 }
 /**
  * @deprecated replaced by {@link AudioStreamingCodec}

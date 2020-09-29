@@ -1,11 +1,11 @@
 import {
-    Accessory,
-    Categories,
-    Characteristic,
-    CharacteristicEventTypes,
-    CharacteristicGetCallback, CharacteristicSetCallback, CharacteristicValue,
-    Service,
-    uuid
+  Accessory,
+  Categories,
+  Characteristic,
+  CharacteristicEventTypes,
+  CharacteristicGetCallback, CharacteristicSetCallback, CharacteristicValue,
+  Service,
+  uuid
 } from "..";
 import {CurrentMediaState, TargetMediaState} from "../lib/gen/HomeKit-TV";
 
@@ -30,31 +30,33 @@ service.setCharacteristic(Characteristic.Mute, false);
 service.setCharacteristic(Characteristic.Volume, 100);
 
 service.getCharacteristic(Characteristic.CurrentMediaState)!
-    .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-        console.log("Reading CurrentMediaState: " + currentMediaState);
-        callback(undefined, currentMediaState);
-    }).getValue();
+  .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+    console.log("Reading CurrentMediaState: " + currentMediaState);
+    callback(undefined, currentMediaState);
+  })
+  .updateValue(currentMediaState); // init value
 
 service.getCharacteristic(Characteristic.TargetMediaState)!
-    .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        console.log("Setting TargetMediaState to: " + value);
-        targetMediaState = value as number;
-        currentMediaState = targetMediaState;
+  .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+    console.log("Setting TargetMediaState to: " + value);
+    targetMediaState = value as number;
+    currentMediaState = targetMediaState;
 
-        callback();
+    callback();
 
-        service.setCharacteristic(Characteristic.CurrentMediaState, targetMediaState);
-    })
-    .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-        console.log("Reading TargetMediaState: " + targetMediaState);
-        callback(undefined, targetMediaState);
-    }).getValue();
+    service.setCharacteristic(Characteristic.CurrentMediaState, targetMediaState);
+  })
+  .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+    console.log("Reading TargetMediaState: " + targetMediaState);
+    callback(undefined, targetMediaState);
+  })
+  .updateValue(targetMediaState);
 
 service.getCharacteristic(Characteristic.ConfiguredName)!
-    .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        console.log(`Name was changed to: '${value}'`);
-        callback();
-    });
+  .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+    console.log(`Name was changed to: '${value}'`);
+    callback();
+  });
 
 speaker.addService(service);
 

@@ -5,6 +5,7 @@ import http, { IncomingMessage, OutgoingMessage, ServerResponse } from 'http';
 import net, { AddressInfo, Socket } from 'net';
 import os from "os";
 import { Nullable, SessionIdentifier } from '../../types';
+import { CharacteristicEvents } from "../Accessory";
 import { EventEmitter } from '../EventEmitter';
 import { HAPEncryption } from '../HAPServer';
 import * as uuid from './uuid';
@@ -22,9 +23,9 @@ export const enum EventedHTTPServerEvents {
 
 export type Events = {
   [EventedHTTPServerEvents.LISTENING]: (port: number, hostname: string) => void;
-  [EventedHTTPServerEvents.REQUEST]: (request: IncomingMessage, response: ServerResponse, session: Session, events: any) => void;
-  [EventedHTTPServerEvents.DECRYPT]: (data: Buffer, decrypted: { data: Buffer; error: Error | null }, session: Session) => void;
-  [EventedHTTPServerEvents.ENCRYPT]: (data: Buffer, encrypted: { data: number | Buffer; }, session: Session) => void;
+  [EventedHTTPServerEvents.REQUEST]: (request: IncomingMessage, response: ServerResponse, session: HAPSession, events: CharacteristicEvents) => void;
+  [EventedHTTPServerEvents.DECRYPT]: (data: Buffer, decrypted: { data: Buffer; error: Error | null }, session: HAPSession) => void;
+  [EventedHTTPServerEvents.ENCRYPT]: (data: Buffer, encrypted: { data: number | Buffer; }, session: HAPSession) => void;
   [EventedHTTPServerEvents.CLOSE]: (events: any) => void;
   [EventedHTTPServerEvents.SESSION_CLOSE]: (sessionID: SessionIdentifier, events: any) => void;
 };
@@ -114,7 +115,7 @@ export class EventedHTTPServer extends EventEmitter<Events> {
    * Session dictionary indexed by username/identifier. The username uniquely identifies every person added to the home.
    * So there can be multiple sessions open for a single username (multiple devices connected to the same Apple ID).
    */
-  sessions: Record<string, Session[]> = {};
+  sessions: Record<string, HAPSession[]> = {};
 
   constructor() {
     super();
@@ -165,9 +166,9 @@ export class EventedHTTPServer extends EventEmitter<Events> {
     const connection = new EventedHTTPServerConnection(this, socket);
 
     // pass on session events to our listeners directly
-    connection.on(EventedHTTPServerEvents.REQUEST, (request: IncomingMessage, response: ServerResponse, session: Session, events: any) => { this.emit(EventedHTTPServerEvents.REQUEST, request, response, session, events); });
-    connection.on(EventedHTTPServerEvents.ENCRYPT, (data: Buffer, encrypted: { data: Buffer; }, session: Session) => { this.emit(EventedHTTPServerEvents.ENCRYPT, data, encrypted, session); });
-    connection.on(EventedHTTPServerEvents.DECRYPT, (data: Buffer, decrypted: { data: number | Buffer; }, session: Session) => { this.emit(EventedHTTPServerEvents.DECRYPT, data, decrypted, session); });
+    connection.on(EventedHTTPServerEvents.REQUEST, (request: IncomingMessage, response: ServerResponse, session: HAPSession, events: any) => { this.emit(EventedHTTPServerEvents.REQUEST, request, response, session, events); });
+    connection.on(EventedHTTPServerEvents.ENCRYPT, (data: Buffer, encrypted: { data: Buffer; }, session: HAPSession) => { this.emit(EventedHTTPServerEvents.ENCRYPT, data, encrypted, session); });
+    connection.on(EventedHTTPServerEvents.DECRYPT, (data: Buffer, decrypted: { data: number | Buffer; }, session: HAPSession) => { this.emit(EventedHTTPServerEvents.DECRYPT, data, decrypted, session); });
     connection.on(EventedHTTPServerEvents.CLOSE, (events: any) => { this._handleConnectionClose(connection, events); });
     this._connections.push(connection);
   }
@@ -192,7 +193,7 @@ export type HAPSessionEventMap = {
   [HAPSessionEvents.CLOSED]: () => void;
 }
 
-export class Session extends EventEmitter<HAPSessionEventMap> {
+export class HAPSession extends EventEmitter<HAPSessionEventMap> {
 
   readonly _server: EventedHTTPServer;
   readonly _connection: EventedHTTPServerConnection;
@@ -201,7 +202,7 @@ export class Session extends EventEmitter<HAPSessionEventMap> {
     SessionID gets passed to get/set handlers for characteristics. We mainly need this dictionary in order
     to access the sharedSecret in the HAPEncryption object from the SetupDataStreamTransport characteristic set handler.
    */
-  private static sessionsBySessionID: Record<SessionIdentifier, Session> = {};
+  private static sessionsBySessionID: Record<SessionIdentifier, HAPSession> = {};
 
   sessionID: SessionIdentifier; // uuid unique to every HAP connection
   _pairSetupState?: number;
@@ -220,7 +221,7 @@ export class Session extends EventEmitter<HAPSessionEventMap> {
     this._connection = connection;
     this.sessionID = connection.sessionID;
 
-    Session.sessionsBySessionID[this.sessionID] = this;
+    HAPSession.sessionsBySessionID[this.sessionID] = this;
   }
 
   public getLocalAddress(ipVersion: "ipv4" | "ipv6"): string {
@@ -263,7 +264,7 @@ export class Session extends EventEmitter<HAPSessionEventMap> {
     this.authenticated = true;
     this.username = username;
 
-    let sessions: Session[] = this._server.sessions[username];
+    let sessions: HAPSession[] = this._server.sessions[username];
     if (!sessions) {
       sessions = [];
       this._server.sessions[username] = sessions;
@@ -278,10 +279,10 @@ export class Session extends EventEmitter<HAPSessionEventMap> {
 
   // called when socket of this session is destroyed
   _connectionDestroyed = () => {
-    delete Session.sessionsBySessionID[this.sessionID];
+    delete HAPSession.sessionsBySessionID[this.sessionID];
 
     if (this.username) {
-      const sessions: Session[] = this._server.sessions[this.username];
+      const sessions: HAPSession[] = this._server.sessions[this.username];
       if (sessions) {
         const index = sessions.indexOf(this);
         if (index >= 0) {
@@ -295,8 +296,8 @@ export class Session extends EventEmitter<HAPSessionEventMap> {
     this.emit(HAPSessionEvents.CLOSED);
   };
 
-  static destroyExistingConnectionsAfterUnpair = (initiator: Session, username: string) => {
-    const sessions: Session[] = initiator._server.sessions[username];
+  static destroyExistingConnectionsAfterUnpair = (initiator: HAPSession, username: string) => {
+    const sessions: HAPSession[] = initiator._server.sessions[username];
 
     if (sessions) {
       sessions.forEach(session => {
@@ -341,8 +342,8 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
   _clientSocket: Socket;
   _httpServer: http.Server;
   _serverSocket: Nullable<Socket>;
-  _session: Session;
-  _events: Record<string, boolean>;
+  _session: HAPSession;
+  _events: CharacteristicEvents;
   _httpPort?: number;
 
   constructor(server: EventedHTTPServer, clientSocket: Socket) {
@@ -376,7 +377,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     this._httpServer.on('error', this._onHttpServerError);
     this._httpServer.listen(0, loopbackAddress);
     // an arbitrary dict that users of this class can store values in to associate with this particular connection
-    this._session = new Session(this);
+    this._session = new HAPSession(this);
     // a collection of event names subscribed to by this connection
     this._events = {}; // this._events[eventName] = true (value is arbitrary, but must be truthy)
     debug("[%s] New connection from client at interface %s", this._remoteAddress, this.networkInterface);

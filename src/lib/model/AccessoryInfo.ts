@@ -3,7 +3,7 @@ import assert from 'assert';
 import tweetnacl from 'tweetnacl';
 
 import { Categories } from '../Accessory';
-import { Session } from "../util/eventedhttp";
+import { HAPSession } from "../util/eventedhttp";
 import { MacAddress } from "../../types";
 import { HAPStorage } from "./HAPStorage";
 
@@ -104,7 +104,7 @@ export class AccessoryInfo {
    * @param controller - the session of the controller initiated the removal of the pairing
    * @param {string} username
    */
-  removePairedClient = (controller: Session, username: string) => {
+  removePairedClient = (controller: HAPSession, username: string) => {
     this._removePairedClient0(controller, username);
 
     if (this.pairedAdminClients === 0) { // if we don't have any admin clients left paired it is required to kill all normal clients
@@ -114,12 +114,12 @@ export class AccessoryInfo {
     }
   };
 
-  _removePairedClient0 = (controller: Session, username: string) => {
+  _removePairedClient0 = (controller: HAPSession, username: string) => {
     if (this.pairedClients[username] && this.pairedClients[username].permission === PermissionTypes.ADMIN)
       this.pairedAdminClients--;
     delete this.pairedClients[username];
 
-    Session.destroyExistingConnectionsAfterUnpair(controller, username);
+    HAPSession.destroyExistingConnectionsAfterUnpair(controller, username);
   };
 
   /**

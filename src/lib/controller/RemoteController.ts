@@ -1,17 +1,13 @@
-import * as tlv from '../util/tlv';
-import createDebug from 'debug';
 import assert from 'assert';
-
-import {Service} from "../Service";
+import createDebug from 'debug';
+import { CharacteristicValue } from "../../types";
+import { Accessory, CharacteristicEvents } from "../Accessory";
 import {
     Characteristic,
     CharacteristicEventTypes,
     CharacteristicGetCallback,
     CharacteristicSetCallback
 } from "../Characteristic";
-import {CharacteristicValue, SessionIdentifier} from "../../types";
-import {Status} from "../HAPServer";
-import {Accessory} from "../Accessory";
 import {
     DataSendCloseReason,
     DataStreamConnection,
@@ -27,11 +23,14 @@ import {
     RequestHandler,
     Topics
 } from "../datastream";
-import {EventEmitter} from "../EventEmitter";
-import {HAPSessionEvents, Session} from "../util/eventedhttp";
-import {ControllerServiceMap, DefaultControllerType, SerializableController, StateChangeDelegate} from "./Controller";
-import {AudioStreamManagement, Siri, TargetControl, TargetControlManagement} from "../gen/HomeKit-Remote";
-import {DataStreamTransportManagement} from "../gen/HomeKit-DataStream";
+import { EventEmitter } from "../EventEmitter";
+import { DataStreamTransportManagement } from "../gen/HomeKit-DataStream";
+import { AudioStreamManagement, Siri, TargetControl, TargetControlManagement } from "../gen/HomeKit-Remote";
+import { Status } from "../HAPServer";
+import { Service } from "../Service";
+import { HAPSession, HAPSessionEvents } from "../util/eventedhttp";
+import * as tlv from '../util/tlv';
+import { ControllerServiceMap, DefaultControllerType, SerializableController, StateChangeDelegate } from "./Controller";
 import Timeout = NodeJS.Timeout;
 
 const debug = createDebug('HAP-NodeJS:Remote:Controller');
@@ -360,7 +359,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
     private lastButtonEvent: string = "";
 
     activeIdentifier: number = 0; // id of 0 means no device selected
-    private activeSession?: Session; // session which marked this remote as active and listens for events and siri
+    private activeSession?: HAPSession; // session which marked this remote as active and listens for events and siri
     private activeSessionDisconnectionListener?: () => void;
 
     supportedAudioConfiguration: string;
@@ -587,7 +586,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
                 handler = this.handleListTargets;
                 break;
             default:
-                callback(new Error(Status.INVALID_VALUE_IN_REQUEST+""), undefined);
+                callback(Status.INVALID_VALUE_IN_REQUEST, undefined);
                 return;
         }
 
@@ -719,20 +718,10 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         return Status.SUCCESS;
     };
 
-    private handleActiveWrite = (value: CharacteristicValue, callback: CharacteristicSetCallback, connectionID?: string) => {
-        if (!connectionID) {
-            callback(new Error(Status.INVALID_VALUE_IN_REQUEST + ""));
-            return;
-        }
-        const session: Session = Session.getSession(connectionID);
-        if (!session) {
-            callback(new Error(Status.INVALID_VALUE_IN_REQUEST + ""));
-            return;
-        }
-
+    private handleActiveWrite(value: CharacteristicValue, callback: CharacteristicSetCallback, session: HAPSession): void {
         if (this.activeIdentifier === 0) {
             debug("Tried to change active state. There is no active target set though");
-            callback(new Error(Status.INVALID_VALUE_IN_REQUEST + ""));
+            callback(Status.INVALID_VALUE_IN_REQUEST);
             return;
         }
 
@@ -771,7 +760,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         setTimeout(() => this.emit(RemoteControllerEvents.ACTIVE_CHANGE, false), 0);
     };
 
-    private handleActiveSessionDisconnected = (session: Session) => {
+    private handleActiveSessionDisconnected = (session: HAPSession) => {
         if (session !== this.activeSession) {
             return;
         }
@@ -1198,8 +1187,8 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
             .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
                 callback(undefined, this.isActive());
             })
-            .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context?: any, connectionID?: SessionIdentifier) => {
-                this.handleActiveWrite(value, callback, connectionID);
+            .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context: CharacteristicEvents, session: HAPSession) => {
+                this.handleActiveWrite(value, callback, session);
             });
         this.targetControlService.getCharacteristic(Characteristic.ButtonEvent)!
             .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
@@ -1213,7 +1202,8 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
                 })
                 .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
                     this.handleSelectedAudioConfigurationWrite(value, callback);
-                }).getValue();
+                })
+                .updateValue(this.selectedAudioConfigurationString);
 
             this.dataStreamManagement!
                 .onEventMessage(Protocols.TARGET_CONTROL, Topics.WHOAMI, this.handleTargetControlWhoAmI.bind(this))

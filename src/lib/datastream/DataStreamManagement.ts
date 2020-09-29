@@ -1,17 +1,24 @@
-import * as tlv from '../util/tlv';
 import createDebug from "debug";
-import {Service} from "../Service";
+import { CharacteristicValue } from "../../types";
+import { CharacteristicEvents } from "../Accessory";
 import {
     Characteristic,
     CharacteristicEventTypes,
     CharacteristicGetCallback,
     CharacteristicSetCallback
 } from "../Characteristic";
-import {CharacteristicValue, SessionIdentifier} from "../../types";
-import {DataStreamTransportManagement} from "../gen/HomeKit-DataStream";
-import {DataStreamServer, DataStreamServerEventMap, GlobalEventHandler, GlobalRequestHandler} from "./DataStreamServer";
-import {Session} from "../util/eventedhttp";
-import {Event} from "../EventEmitter";
+import { Event } from "../EventEmitter";
+import { DataStreamTransportManagement } from "../gen/HomeKit-DataStream";
+import { Status } from "../HAPServer";
+import { Service } from "../Service";
+import { HAPSession } from "../util/eventedhttp";
+import * as tlv from '../util/tlv';
+import {
+    DataStreamServer,
+    DataStreamServerEventMap,
+    GlobalEventHandler,
+    GlobalRequestHandler
+} from "./DataStreamServer";
 
 const debug = createDebug('HAP-NodeJS:DataStream:Management');
 
@@ -144,7 +151,7 @@ export class DataStreamManagement {
         return this;
     }
 
-    private handleSetupDataStreamTransportWrite(value: any, callback: CharacteristicSetCallback, connectionID?: string) {
+    private handleSetupDataStreamTransportWrite(value: any, callback: CharacteristicSetCallback, session: HAPSession) {
         const data = Buffer.from(value, 'base64');
         const objects = tlv.decode(data);
 
@@ -156,18 +163,7 @@ export class DataStreamManagement {
 
         if (sessionCommandType === SessionCommandType.START_SESSION) {
             if (transportType !== TransportType.HOMEKIT_DATA_STREAM) {
-                callback(null, DataStreamManagement.buildSetupStatusResponse(DataStreamStatus.GENERIC_ERROR));
-                return;
-            }
-
-            if (!connectionID) { // we need the session for the shared secret to generate the encryption keys
-                callback(null, DataStreamManagement.buildSetupStatusResponse(DataStreamStatus.GENERIC_ERROR));
-                return;
-            }
-
-            const session: Session = Session.getSession(connectionID);
-            if (!session) { // we need the session for the shared secret to generate the encryption keys
-                callback(null, DataStreamManagement.buildSetupStatusResponse(DataStreamStatus.GENERIC_ERROR));
+                callback(Status.INVALID_VALUE_IN_REQUEST);
                 return;
             }
 
@@ -187,13 +183,9 @@ export class DataStreamManagement {
                 callback(null, response.toString('base64'));
             });
         } else {
-            callback(null, DataStreamManagement.buildSetupStatusResponse(DataStreamStatus.GENERIC_ERROR));
+            callback(Status.INVALID_VALUE_IN_REQUEST);
             return;
         }
-    }
-
-    private static buildSetupStatusResponse(status: DataStreamStatus) {
-        return tlv.encode(SetupDataStreamWriteResponseTypes.STATUS, status).toString('base64');
     }
 
     private buildSupportedDataStreamTransportConfigurationTLV(supportedConfiguration: TransportType[]): string {
@@ -222,9 +214,10 @@ export class DataStreamManagement {
             .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
                 callback(null, this.lastSetupDataStreamTransportResponse);
             })
-            .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context?: any, connectionID?: SessionIdentifier) => {
-                this.handleSetupDataStreamTransportWrite(value, callback, connectionID);
-            }).getValue();
+            .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context: CharacteristicEvents, session: HAPSession) => {
+                this.handleSetupDataStreamTransportWrite(value, callback, session);
+            })
+            .updateValue(this.lastSetupDataStreamTransportResponse);
     }
 
 }
