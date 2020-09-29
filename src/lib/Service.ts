@@ -1,5 +1,10 @@
-import { CharacteristicChange, CharacteristicValue, HapService, Nullable, ToHAPOptions, WithUUID, } from '../types';
-import { Characteristic, CharacteristicEventTypes, SerializedCharacteristic } from './Characteristic';
+import { CharacteristicValue, HapService, Nullable, ToHAPOptions, WithUUID, } from '../types';
+import {
+  Characteristic,
+  CharacteristicChange,
+  CharacteristicEventTypes,
+  SerializedCharacteristic
+} from './Characteristic';
 import { EventEmitter } from './EventEmitter';
 import * as HomeKitTypes from './gen';
 import { IdentifierCache } from './model/IdentifierCache';
@@ -31,8 +36,10 @@ export type ServiceConfigurationChange = {
   service: Service;
 };
 
+export type ServiceCharacteristicChange = CharacteristicChange & { characteristic: Characteristic };
+
 type Events = {
-  [ServiceEventTypes.CHARACTERISTIC_CHANGE]: (change: CharacteristicChange) => void;
+  [ServiceEventTypes.CHARACTERISTIC_CHANGE]: (change: ServiceCharacteristicChange) => void;
   [ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE]: (change: ServiceConfigurationChange) => void;
 }
 
@@ -202,8 +209,7 @@ export class Service extends EventEmitter<Events> {
 
     // listen for changes in characteristics and bubble them up
     characteristic.on(CharacteristicEventTypes.CHANGE, (change: CharacteristicChange) => {
-      // make a new object with the relevant characteristic added, and bubble it up
-      this.emit(ServiceEventTypes.CHARACTERISTIC_CHANGE, clone(change, { characteristic: characteristic }));
+      this.emit(ServiceEventTypes.CHARACTERISTIC_CHANGE, { ...change, characteristic: characteristic });
     });
 
     this.characteristics.push(characteristic);
@@ -375,6 +381,7 @@ export class Service extends EventEmitter<Events> {
         if (getListeners.length) {
           // the callback can only be called once so we remove all old listeners
           characteristic.removeAllListeners(CharacteristicEventTypes.GET);
+          // @ts-expect-error
           getListeners.forEach(listener => characteristic.addListener(CharacteristicEventTypes.GET, listener));
         }
 
@@ -382,6 +389,7 @@ export class Service extends EventEmitter<Events> {
         if (setListeners.length) {
           // the callback can only be called once so we remove all old listeners
           characteristic.removeAllListeners(CharacteristicEventTypes.SET);
+          // @ts-expect-error
           setListeners.forEach(listener => characteristic.addListener(CharacteristicEventTypes.SET, listener));
         }
       }
@@ -454,8 +462,7 @@ export class Service extends EventEmitter<Events> {
   _setupCharacteristic = (characteristic: Characteristic) => {
     // listen for changes in characteristics and bubble them up
     characteristic.on(CharacteristicEventTypes.CHANGE, (change: CharacteristicChange) => {
-      // make a new object with the relevant characteristic added, and bubble it up
-      this.emit(ServiceEventTypes.CHARACTERISTIC_CHANGE, clone(change, { characteristic: characteristic }));
+      this.emit(ServiceEventTypes.CHARACTERISTIC_CHANGE, { ...change, characteristic: characteristic });
     });
   }
 

@@ -3,12 +3,21 @@ import createDebug from 'debug';
 import { SRP, SrpServer } from "fast-srp-hap";
 import { IncomingMessage, ServerResponse } from "http";
 import tweetnacl from 'tweetnacl';
-import url from 'url';
-import { CharacteristicData, NodeCallback, PairingsCallback, SessionIdentifier, VoidCallback } from '../types';
+import { URL } from 'url';
+import {
+  CharacteristicId,
+  CharacteristicsReadRequest,
+  CharacteristicsReadResponse,
+  CharacteristicsWriteRequest,
+  CharacteristicsWriteResponse,
+  consideredTrue,
+  PrepareWriteRequest
+} from "../internal-types";
+import { NodeCallback, PairingsCallback, SessionIdentifier, VoidCallback } from '../types';
 import { Accessory, CharacteristicEvents, Resource } from './Accessory';
 import { EventEmitter } from './EventEmitter';
 import { PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
-import { EventedHTTPServer, EventedHTTPServerEvents, Session } from './util/eventedhttp';
+import { EventedHTTPServer, EventedHTTPServerEvents, HAPSession } from './util/eventedhttp';
 import * as hapCrypto from './util/hapCrypto';
 import { once } from './util/once';
 import * as tlv from './util/tlv';
@@ -75,24 +84,17 @@ export const enum Status {
   INSUFFICIENT_PRIVILEGES = -70401,
   SERVICE_COMMUNICATION_FAILURE = -70402,
   RESOURCE_BUSY = -70403,
-  READ_ONLY_CHARACTERISTIC = -70404,
-  WRITE_ONLY_CHARACTERISTIC = -70405,
+  READ_ONLY_CHARACTERISTIC = -70404, // cannot write to read only
+  WRITE_ONLY_CHARACTERISTIC = -70405, // cannot read from write only
   NOTIFICATION_NOT_SUPPORTED = -70406,
   OUT_OF_RESOURCE = -70407,
   OPERATION_TIMED_OUT = -70408,
   RESOURCE_DOES_NOT_EXIST = -70409,
   INVALID_VALUE_IN_REQUEST = -70410,
-  INSUFFICIENT_AUTHORIZATION = -70411
-}
+  INSUFFICIENT_AUTHORIZATION = -70411,
+  NOT_ALLOWED_IN_CURRENT_STATE = -70412,
 
-export type CharacteristicsWriteRequest = {
-  characteristics: CharacteristicData[],
-  pid?: number
-}
-
-export type PrepareWriteRequest = {
-  ttl: number,
-  pid: number
+  // when adding new status codes, remember to change upper bound in extractHAPStatusFromError
 }
 
 export const enum HAPServerEventTypes {
@@ -113,23 +115,21 @@ export type Events = {
   [HAPServerEventTypes.IDENTIFY]: (cb: VoidCallback) => void;
   [HAPServerEventTypes.LISTENING]: (port: number, hostname: string) => void;
   [HAPServerEventTypes.PAIR]: (clientUsername: string, clientLTPK: Buffer, cb: VoidCallback) => void;
-  [HAPServerEventTypes.ADD_PAIRING]: (controller: Session, username: string, publicKey: Buffer, permission: number, callback: PairingsCallback<void>) => void;
-  [HAPServerEventTypes.REMOVE_PAIRING]: (controller: Session, username: string, callback: PairingsCallback<void>) => void;
-  [HAPServerEventTypes.LIST_PAIRINGS]: (controller: Session, callback: PairingsCallback<PairingInformation[]>) => void;
+  [HAPServerEventTypes.ADD_PAIRING]: (controller: HAPSession, username: string, publicKey: Buffer, permission: number, callback: PairingsCallback<void>) => void;
+  [HAPServerEventTypes.REMOVE_PAIRING]: (controller: HAPSession, username: string, callback: PairingsCallback<void>) => void;
+  [HAPServerEventTypes.LIST_PAIRINGS]: (controller: HAPSession, callback: PairingsCallback<PairingInformation[]>) => void;
   [HAPServerEventTypes.ACCESSORIES]: (cb: NodeCallback<Accessory[]>) => void;
   [HAPServerEventTypes.GET_CHARACTERISTICS]: (
-    data: CharacteristicData[],
+    request: CharacteristicsReadRequest,
+    session: HAPSession,
     events: CharacteristicEvents,
-    cb: NodeCallback<CharacteristicData[]>,
-    remote: boolean,
-    session: Session,
+    callback: (response: CharacteristicsReadResponse) => void,
   ) => void;
   [HAPServerEventTypes.SET_CHARACTERISTICS]: (
     writeRequest: CharacteristicsWriteRequest,
+    session: HAPSession,
     events: CharacteristicEvents,
-    cb: NodeCallback<CharacteristicData[]>,
-    remote: boolean,
-    session: Session,
+    callback: (response: CharacteristicsWriteResponse) => void,
   ) => void;
   [HAPServerEventTypes.SESSION_CLOSE]: (sessionID: SessionIdentifier, events: CharacteristicEvents) => void;
   [HAPServerEventTypes.REQUEST_RESOURCE]: (data: Resource, cb: NodeCallback<Buffer>) => void;
@@ -194,7 +194,7 @@ export type Events = {
  */
 export class HAPServer extends EventEmitter<Events> {
 
-  static handlers: Record<string, string> = {
+  static handlers: Record<string, keyof HAPServer> = {
     '/identify': '_handleIdentify',
     '/pair-setup': '_handlePair',
     '/pair-verify': '_handlePairVerify',
@@ -265,7 +265,7 @@ export class HAPServer extends EventEmitter<Events> {
   }
 
   // Called when an HTTP request was detected.
-  _onRequest = (request: IncomingMessage, response: ServerResponse, session: Session, events: any) => {
+  _onRequest = (request: IncomingMessage, response: ServerResponse, session: HAPSession, events: CharacteristicEvents) => {
     debug("[%s] HAP Request: %s %s", this.accessoryInfo.username, request.method, request.url);
     // collect request data, if any
     let requestData = Buffer.alloc(0);
@@ -274,11 +274,11 @@ export class HAPServer extends EventEmitter<Events> {
     });
     request.on('end', () => {
       // parse request.url (which can contain querystring, etc.) into components, then extract just the path
-      const pathname = url.parse(request.url!).pathname!;
+      const url = new URL(request.url!, "http://hap-nodejs.local");
       // all request data received; now process this request
       for (let path in HAPServer.handlers)
-        if (new RegExp('^' + path + '/?$').test(pathname)) { // match exact string and allow trailing slash
-          const handler = HAPServer.handlers[path] as keyof HAPServer;
+        if (new RegExp('^' + path + '/?$').test(url.pathname)) { // match exact string and allow trailing slash
+          const handler = HAPServer.handlers[path];
           this[handler](request, response, session, events, requestData);
           return;
         }
@@ -289,7 +289,7 @@ export class HAPServer extends EventEmitter<Events> {
     });
   }
 
-  _onEncrypt = (data: Buffer, encrypted: { data: Buffer; }, session: Session) => {
+  _onEncrypt = (data: Buffer, encrypted: { data: Buffer; }, session: HAPSession) => {
     // instance of HAPEncryption (created in handlePairVerifyStepOne)
     const enc = session.encryption;
     // if accessoryToControllerKey is not empty, then encryption is enabled for this connection. However, we'll
@@ -302,7 +302,7 @@ export class HAPServer extends EventEmitter<Events> {
     }
   }
 
-  _onDecrypt = (data: Buffer, decrypted: { data: number | Buffer; error: Error | null }, session: Session) => {
+  _onDecrypt = (data: Buffer, decrypted: { data: number | Buffer; error: Error | null }, session: HAPSession) => {
     // possibly an instance of HAPEncryption (created in handlePairVerifyStepOne)
     const enc = session.encryption;
     // if controllerToAccessoryKey is not empty, then encryption is enabled for this connection.
@@ -322,7 +322,7 @@ export class HAPServer extends EventEmitter<Events> {
   /**
    * Unpaired Accessory identification.
    */
-  _handleIdentify = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: any) => {
+  _handleIdentify = (request: IncomingMessage, response: ServerResponse, session: HAPSession, events: any, requestData: any) => {
     // /identify only works if the accessory is not paired
     if (!this.allowInsecureRequest && this.accessoryInfo.paired()) {
       response.writeHead(400, {"Content-Type": "application/hap+json"});
@@ -345,7 +345,7 @@ export class HAPServer extends EventEmitter<Events> {
   /**
    * iOS <-> Accessory pairing process.
    */
-  _handlePair = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: Buffer) => {
+  _handlePair = (request: IncomingMessage, response: ServerResponse, session: HAPSession, events: any, requestData: Buffer) => {
     // Can only be directly paired with one iOS device
     if (!this.allowInsecureRequest && this.accessoryInfo.paired()) {
         response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
@@ -375,7 +375,7 @@ export class HAPServer extends EventEmitter<Events> {
   }
 
   // M1 + M2
-  _handlePairStepOne = (request: IncomingMessage, response: ServerResponse, session: Session) => {
+  _handlePairStepOne = (request: IncomingMessage, response: ServerResponse, session: HAPSession) => {
     debug("[%s] Pair step 1/5", this.accessoryInfo.username);
     const salt = crypto.randomBytes(16, );
 
@@ -398,7 +398,7 @@ export class HAPServer extends EventEmitter<Events> {
   }
 
   // M3 + M4
-  _handlePairStepTwo = (request: IncomingMessage, response: ServerResponse, session: Session, objects: Record<number, Buffer>) => {
+  _handlePairStepTwo = (request: IncomingMessage, response: ServerResponse, session: HAPSession, objects: Record<number, Buffer>) => {
     debug("[%s] Pair step 2/5", this.accessoryInfo.username);
     const A = objects[TLVValues.PUBLIC_KEY]; // "A is a public key that exists only for a single login session."
     const M1 = objects[TLVValues.PASSWORD_PROOF]; // "M1 is the proof that you actually know your own password."
@@ -424,7 +424,7 @@ export class HAPServer extends EventEmitter<Events> {
   }
 
   // M5-1
-  _handlePairStepThree = (request: IncomingMessage, response: ServerResponse, session: Session, objects: Record<number, Buffer>) => {
+  _handlePairStepThree = (request: IncomingMessage, response: ServerResponse, session: HAPSession, objects: Record<number, Buffer>) => {
     debug("[%s] Pair step 3/5", this.accessoryInfo.username);
     // pull the SRP server we created in stepOne out of the current session
     const srpServer = session.srpServer!;
@@ -457,7 +457,7 @@ export class HAPServer extends EventEmitter<Events> {
   }
 
   // M5-2
-  _handlePairStepFour = (request: IncomingMessage, response: ServerResponse, session: Session, clientUsername: Buffer, clientLTPK: Buffer, clientProof: Buffer, hkdfEncKey: Buffer) => {
+  _handlePairStepFour = (request: IncomingMessage, response: ServerResponse, session: HAPSession, clientUsername: Buffer, clientLTPK: Buffer, clientProof: Buffer, hkdfEncKey: Buffer) => {
     debug("[%s] Pair step 4/5", this.accessoryInfo.username);
     const S_private = session.srpServer!.computeK();
     const controllerSalt = Buffer.from("Pair-Setup-Controller-Sign-Salt");
@@ -475,7 +475,7 @@ export class HAPServer extends EventEmitter<Events> {
   }
 
   // M5 - F + M6
-  _handlePairStepFive = (request: IncomingMessage, response: ServerResponse, session: Session, clientUsername: Buffer, clientLTPK: Buffer, hkdfEncKey: Buffer) => {
+  _handlePairStepFive = (request: IncomingMessage, response: ServerResponse, session: HAPSession, clientUsername: Buffer, clientLTPK: Buffer, hkdfEncKey: Buffer) => {
     debug("[%s] Pair step 5/5", this.accessoryInfo.username);
     const S_private = session.srpServer!.computeK();
     const accessorySalt = Buffer.from("Pair-Setup-Accessory-Sign-Salt");
@@ -509,7 +509,7 @@ export class HAPServer extends EventEmitter<Events> {
   /**
    * iOS <-> Accessory pairing verification.
    */
-  _handlePairVerify = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: Buffer) => {
+  _handlePairVerify = (request: IncomingMessage, response: ServerResponse, session: HAPSession, events: any, requestData: Buffer) => {
     const objects = tlv.decode(requestData);
     const sequence = objects[TLVValues.SEQUENCE_NUM][0]; // value is single byte with sequence number
     if (sequence == States.M1)
@@ -524,7 +524,7 @@ export class HAPServer extends EventEmitter<Events> {
     }
   }
 
-  _handlePairVerifyStepOne = (request: IncomingMessage, response: ServerResponse, session: Session, objects: Record<number, Buffer>) => {
+  _handlePairVerifyStepOne = (request: IncomingMessage, response: ServerResponse, session: HAPSession, objects: Record<number, Buffer>) => {
     debug("[%s] Pair verify step 1/2", this.accessoryInfo.username);
     const clientPublicKey = objects[TLVValues.PUBLIC_KEY]; // Buffer
     // generate new encryption keys for this session
@@ -558,7 +558,7 @@ export class HAPServer extends EventEmitter<Events> {
     session._pairVerifyState = States.M2;
   }
 
-  _handlePairVerifyStepTwo = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, objects: Record<number, Buffer>) => {
+  _handlePairVerifyStepTwo = (request: IncomingMessage, response: ServerResponse, session: HAPSession, events: any, objects: Record<number, Buffer>) => {
     debug("[%s] Pair verify step 2/2", this.accessoryInfo.username);
     const encryptedData = objects[TLVValues.ENCRYPTED_DATA];
     const messageData = Buffer.alloc(encryptedData.length - 16);
@@ -623,7 +623,7 @@ export class HAPServer extends EventEmitter<Events> {
   /**
    * Pair add/remove/list
    */
-  _handlePairings = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: Buffer) => {
+  _handlePairings = (request: IncomingMessage, response: ServerResponse, session: HAPSession, events: any, requestData: Buffer) => {
     // Only accept /pairing request if there is a secure session
     if (!this.allowInsecureRequest && !session.authenticated) {
       response.writeHead(470, {"Content-Type": "application/hap+json"});
@@ -706,7 +706,7 @@ export class HAPServer extends EventEmitter<Events> {
    */
 
   // Called when the client wishes to fetch all data regarding our published Accessories.
-  _handleAccessories = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: any) => {
+  _handleAccessories = (request: IncomingMessage, response: ServerResponse, session: HAPSession, events: any, requestData: any) => {
     if (!this.allowInsecureRequest && !session.authenticated) {
       response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
@@ -726,69 +726,65 @@ export class HAPServer extends EventEmitter<Events> {
   }
 
   // Called when the client wishes to get or set particular characteristics
-  _handleCharacteristics = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: { length: number; toString: () => string; }) => {
+  _handleCharacteristics(request: IncomingMessage, response: ServerResponse, session: HAPSession, events: CharacteristicEvents, requestData: { length: number; toString: () => string; }): void {
     if (!this.allowInsecureRequest && !session.authenticated) {
       response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
       return;
     }
 
-    if (request.method == "GET") {
-      // Extract the query params from the URL which looks like: /characteristics?id=1.9,2.14,...
-      const parseQueryString = true;
-      const query = url.parse(request.url!, parseQueryString).query; // { id: '1.9,2.14' }
-      if (query == undefined || query.id == undefined) {
-        response.writeHead(500);
-        response.end();
+    if (request.method === "GET") {
+      const url = new URL(request.url!, "http://hap-nodejs.local");
+      const searchParams = url.searchParams;
+
+      const idParam = searchParams.get("id");
+      if (!idParam) {
+        // TODO proper error code
+        response.writeHead(500, {"Content-Type": "application/hap+json"});
+        response.end(JSON.stringify({ status: Status.INVALID_VALUE_IN_REQUEST }));
         return;
       }
-      const sets = (query.id as string).split(','); // ["1.9","2.14"]
-      const data: CharacteristicData[] = []; // [{aid:1,iid:9},{aid:2,iid:14}]
-      for (let i in sets) {
-        const ids = sets[i].split('.'); // ["1","9"]
-        const aid = parseInt(ids[0]); // accessory ID
-        const iid = parseInt(ids[1]); // instance ID (for characteristic)
-        data.push({aid: aid, iid: iid});
+
+      const ids: CharacteristicId[] = [];
+      for (const entry of idParam.split(",")) { // ["1.9","2.14"]
+        const split = entry.split(".") // ["1","9"]
+        ids.push({
+          aid: parseInt(split[0]), // accessory Id
+          iid: parseInt(split[1]), // (characteristic) instance Id
+        });
       }
-      this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, data, events, once((err: Error, characteristics: CharacteristicData[]) => {
-        if (!characteristics && !err)
-          err = new Error("characteristics not supplied by the get-characteristics event callback");
-        if (err) {
-          debug("[%s] Error getting characteristics: %s", this.accessoryInfo.username, err.stack);
-          // rewrite characteristics array to include error status for each characteristic requested
-          characteristics = [];
-          for (let i in data) {
-            characteristics.push({
-              aid: data[i].aid,
-              iid: data[i].iid,
-              status: Status.SERVICE_COMMUNICATION_FAILURE
-            });
-          }
-        }
+
+      const readRequest: CharacteristicsReadRequest = {
+        ids: ids,
+        includeMeta: consideredTrue(searchParams.get("meta")),
+        includePerms: consideredTrue(searchParams.get("perms")),
+        includeType: consideredTrue(searchParams.get("type")),
+        includeEvent: consideredTrue(searchParams.get("ev")),
+      };
+
+      this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, readRequest, session, events, once((readResponse: CharacteristicsReadResponse) => {
+        const characteristics = readResponse.characteristics;
 
         let errorOccurred = false; // determine if we send a 207 Multi-Status
-        for (let i = 0; i < characteristics.length; i++) {
-          const value = characteristics[i];
-          if ((value.status !== undefined && value.status !== 0)
-              || (value.s !== undefined && value.s !== 0)) {
+        for (const data of characteristics) {
+          if (data.status) {
             errorOccurred = true;
             break;
           }
         }
 
         if (errorOccurred) { // on a 207 Multi-Status EVERY characteristic MUST include a status property
-          for (let i = 0; i < characteristics.length; i++) {
-            const value = characteristics[i];
-            if (value.status === undefined) { // a status is undefined if the request was successful
-              value.status = 0; // a value of zero indicates success
+          for (const data of characteristics) {
+            if (!data.status) { // a status is undefined if the request was successful
+              data.status = Status.SUCCESS; // a value of zero indicates success
             }
           }
         }
 
         // 207 "multi-status" is returned when an error occurs reading a characteristic. otherwise 200 is returned
         response.writeHead(errorOccurred? 207: 200, {"Content-Type": "application/hap+json"});
-        response.end(JSON.stringify({characteristics: characteristics}));
-      }), false, session);
+        response.end(JSON.stringify({ characteristics: characteristics }));
+      }));
     } else if (request.method == "PUT") {
       if (!session.authenticated) {
         if (!request.headers || (request.headers && request.headers["authorization"] !== this.accessoryInfo.pincode)) {
@@ -797,63 +793,50 @@ export class HAPServer extends EventEmitter<Events> {
           return;
         }
       }
-      if (requestData.length == 0) {
+      if (requestData.length === 0) {
         response.writeHead(400, {"Content-Type": "application/hap+json"});
         response.end(JSON.stringify({status: Status.INVALID_VALUE_IN_REQUEST}));
         return;
       }
-      // requestData is a JSON payload like { characteristics: [ { aid: 1, iid: 8, value: true, ev: true } ] }
+
       const writeRequest = JSON.parse(requestData.toString()) as CharacteristicsWriteRequest;
-      const data = writeRequest.characteristics; // pull out characteristics array
-      // call out to listeners to retrieve the latest accessories JSON
-      this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, writeRequest, events, once((err: Error, characteristics: CharacteristicData[]) => {
-        if (err) {
-          debug("[%s] Error setting characteristics: %s", this.accessoryInfo.username, err.message);
-          // rewrite characteristics array to include error status for each characteristic requested
-          characteristics = [];
-          for (let i in data) {
-            characteristics.push({
-              aid: data[i].aid,
-              iid: data[i].iid,
-              // @ts-ignore
-              status: Status.SERVICE_COMMUNICATION_FAILURE
-            });
-          }
-        }
+      const data = writeRequest.characteristics;
+
+      this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, writeRequest, session, events, once((writeResponse: CharacteristicsWriteResponse) => {
+        const characteristics = writeResponse.characteristics;
 
         let multiStatus = false;
-        for (let i = 0; i < characteristics.length; i++) {
-          const characteristic = characteristics[i];
-          if ((characteristic.status !== undefined && characteristic.status !== 0)
-              || (characteristic.s !== undefined && characteristic.s !== 0)
-              || characteristic.value !== undefined) { // also send multiStatus on write response requests
+        for (const data of characteristics) {
+          if (data.status || data.value !== undefined) {
+            // also send multiStatus on write response requests
             multiStatus = true;
             break;
           }
         }
 
         if (multiStatus) {
-          for (let i = 0; i < characteristics.length; i++) { // on a 207 Multi-Status EVERY characteristic MUST include a status property
-            const value = characteristics[i];
-            if (value.status === undefined) { // a status is undefined if the request was successful
-              value.status = 0; // a value of zero indicates success
+          for (const data of characteristics) { // on a 207 Multi-Status EVERY characteristic MUST include a status property
+            if (data.status === undefined) {
+              data.status = Status.SUCCESS;
             }
           }
 
           // 207 is "multi-status" since HomeKit may be setting multiple things and any one can fail independently
           response.writeHead(207, {"Content-Type": "application/hap+json"});
-          response.end(JSON.stringify({characteristics: characteristics}));
+          response.end(JSON.stringify({ characteristics: characteristics }));
         } else {
           // if everything went fine send 204 no content response
           response.writeHead(204); // 204 "No content"
           response.end();
         }
-      }), false, session);
+      }));
+    } else {
+      // TODO handle that at least for debugging purposes
     }
   }
 
   // Called when controller requests a timed write
-  _prepareWrite = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: { length: number; toString: () => string; }) => {
+  _prepareWrite = (request: IncomingMessage, response: ServerResponse, session: HAPSession, events: any, requestData: { length: number; toString: () => string; }) => {
     if (!this.allowInsecureRequest && !session.authenticated) {
       response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
@@ -890,7 +873,7 @@ export class HAPServer extends EventEmitter<Events> {
   };
 
   // Called when controller request snapshot
-  _handleResource = (request: IncomingMessage, response: ServerResponse, session: Session, events: any, requestData: { length: number; toString: () => string; }) => {
+  _handleResource = (request: IncomingMessage, response: ServerResponse, session: HAPSession, events: any, requestData: { length: number; toString: () => string; }) => {
     if (!this.allowInsecureRequest && !session.authenticated) {
       response.writeHead(470, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));

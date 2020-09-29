@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import createDebug from 'debug';
 import net from "net";
 // noinspection JSDeprecatedSymbols
-import { LegacyCameraSource, LegacyCameraSourceAdapter, once, uuid } from "../../index";
+import { CharacteristicEvents, LegacyCameraSource, LegacyCameraSourceAdapter, once, uuid } from "../../index";
 import { CharacteristicValue, Nullable, SessionIdentifier } from '../../types';
 import {
   Characteristic,
@@ -14,7 +14,7 @@ import { CameraController, CameraStreamingDelegate } from "../controller";
 import { CameraRTPStreamManagement } from "../gen/HomeKit";
 import { Status } from "../HAPServer";
 import { Service } from '../Service';
-import { EventedHTTPServer, Session } from "../util/eventedhttp";
+import { HAPSession } from "../util/eventedhttp";
 import * as tlv from '../util/tlv';
 import RTPProxy from './RTPProxy';
 
@@ -575,8 +575,8 @@ export class RTPStreamManagement {
         .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
           callback(null, this.setupEndpointsResponse);
         })
-        .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context?: any, connectionID?: SessionIdentifier) => {
-          this.handleSetupEndpoints(value, callback, connectionID!);
+        .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context: CharacteristicEvents, session: HAPSession) => {
+          this.handleSetupEndpoints(value, callback, session);
         });
   }
 
@@ -615,7 +615,7 @@ export class RTPStreamManagement {
 
     if (sessionIdentifier !== this.sessionIdentifier) {
       debug(`Received unknown session Identifier with request to ${SessionControlCommand[requestType]}`);
-      callback(new Error(Status.INVALID_VALUE_IN_REQUEST + ""));
+      callback(Status.INVALID_VALUE_IN_REQUEST);
       return;
     }
 
@@ -648,7 +648,7 @@ export class RTPStreamManagement {
       case SessionControlCommand.SUSPEND_SESSION:
       default:
         debug(`Unhandled request type ${SessionControlCommand[requestType]}`);
-        callback(new Error(Status.INVALID_VALUE_IN_REQUEST + ""));
+        callback(Status.INVALID_VALUE_IN_REQUEST);
         return;
     }
   }
@@ -851,7 +851,7 @@ export class RTPStreamManagement {
     this.delegate.handleStreamRequest(request, error => callback? callback(error): undefined);
   }
 
-  private handleSetupEndpoints(value: CharacteristicValue, callback: CharacteristicSetCallback, connectionID: SessionIdentifier): void {
+  private handleSetupEndpoints(value: CharacteristicValue, callback: CharacteristicSetCallback, session: HAPSession): void {
     const data = Buffer.from(value as string, 'base64');
     const objects = tlv.decode(data);
 
@@ -866,11 +866,9 @@ export class RTPStreamManagement {
       return;
     }
 
-    this.connectionID = connectionID;
+    this.connectionID = session.sessionID;
     this.sessionIdentifier = sessionIdentifier;
     this._updateStreamStatus(StreamingStatus.IN_USE);
-
-    const session: Session = Session.getSession(connectionID);
 
     // Address
     const targetAddressPayload = objects[SetupEndpointsTypes.CONTROLLER_ADDRESS];
@@ -979,7 +977,7 @@ export class RTPStreamManagement {
     });
   }
 
-  private generateSetupEndpointResponse(session: Session, identifier: StreamSessionIdentifier, request: PrepareStreamRequest, response: PrepareStreamResponse, callback: CharacteristicSetCallback): void {
+  private generateSetupEndpointResponse(session: HAPSession, identifier: StreamSessionIdentifier, request: PrepareStreamRequest, response: PrepareStreamResponse, callback: CharacteristicSetCallback): void {
     let address: string;
     let addressVersion = request.addressVersion;
 

@@ -4,8 +4,12 @@ import crypto from 'crypto';
 import createDebug from 'debug';
 import net from "net";
 import {
-  CharacteristicChange,
-  CharacteristicData,
+  CharacteristicsReadData,
+  CharacteristicsReadRequest,
+  CharacteristicsReadResponse, CharacteristicsWriteData, CharacteristicsWriteRequest,
+  CharacteristicsWriteResponse
+} from "../internal-types";
+import {
   CharacteristicValue,
   HAPPincode,
   InterfaceName,
@@ -22,7 +26,13 @@ import {
 import { Advertiser, AdvertiserEvent } from './Advertiser';
 // noinspection JSDeprecatedSymbols
 import { LegacyCameraSource, LegacyCameraSourceAdapter, StreamController } from './camera';
-import { Access, Characteristic, CharacteristicEventTypes, CharacteristicSetCallback, Perms } from './Characteristic';
+import {
+  Access,
+  Characteristic,
+  CharacteristicEventTypes,
+  CharacteristicSetCallback,
+  Perms
+} from './Characteristic';
 import {
   CameraController,
   CameraControllerOptions,
@@ -33,14 +43,23 @@ import {
   isSerializableController,
 } from "./controller";
 import { EventEmitter } from './EventEmitter';
+import * as HomeKitTypes from "./gen";
 import { CameraEventRecordingManagement, CameraOperatingMode, CameraRTPStreamManagement, } from "./gen/HomeKit";
-import { CharacteristicsWriteRequest, Codes, HAPServer, HAPServerEventTypes, Status } from './HAPServer';
+import { Codes, HAPServer, HAPServerEventTypes, Status } from './HAPServer';
 import { AccessoryInfo, PairingInformation, PermissionTypes } from './model/AccessoryInfo';
 import { ControllerStorage } from "./model/ControllerStorage";
 import { IdentifierCache } from './model/IdentifierCache';
-import { SerializedService, Service, ServiceConfigurationChange, ServiceEventTypes, ServiceId } from './Service';
+import {
+  SerializedService,
+  Service,
+  ServiceCharacteristicChange,
+  ServiceConfigurationChange,
+  ServiceEventTypes,
+  ServiceId
+} from './Service';
 import { clone } from './util/clone';
-import { Session } from "./util/eventedhttp";
+import { HAPSession } from "./util/eventedhttp";
+import { toShortForm } from "./util/uuid";
 import * as uuid from './util/uuid';
 
 const debug = createDebug('HAP-NodeJS:Accessory');
@@ -127,7 +146,7 @@ type Events = {
   identify: (paired:boolean, cb: VoidCallback) => void;
   listening: (port: number, hostname: string) => void;
   "service-configurationChange": VoidCallback;
-  "service-characteristic-change": (change: ServiceCharacteristicChange) => void;
+  "service-characteristic-change": (change: AccessoryCharacteristicChange) => void;
   [AccessoryEventTypes.PAIRED]: () => void;
   [AccessoryEventTypes.UNPAIRED]: () => void;
 }
@@ -213,8 +232,7 @@ export interface PublishInfo {
   mdns?: MDNSServerOptions;
 }
 
-export type ServiceCharacteristicChange = CharacteristicChange &  {
-  accessory: Accessory;
+export type AccessoryCharacteristicChange = ServiceCharacteristicChange &  {
   service: Service;
 };
 
@@ -241,8 +259,6 @@ type AddPairingCallback = PairingsCallback<void>;
 type RemovePairingCallback = PairingsCallback<void>;
 type ListPairingsCallback = PairingsCallback<PairingInformation[]>;
 type HandleAccessoriesCallback = NodeCallback<{ accessories: any[] }>;
-type HandleGetCharacteristicsCallback = NodeCallback<CharacteristicData[]>;
-type HandleSetCharacteristicsCallback = NodeCallback<CharacteristicData[]>;
 
 /**
  * Accessory is a virtual HomeKit device. It can publish an associated HAP server for iOS devices to communicate
@@ -318,7 +334,7 @@ export class Accessory extends EventEmitter<Events> {
       });
   }
 
-  _identificationRequest = (paired: boolean, callback: CharacteristicSetCallback) => {
+  private _identificationRequest(paired: boolean, callback: VoidCallback) {
     debug("[%s] Identification request", this.displayName);
 
     if (this.listeners(AccessoryEventTypes.IDENTIFY).length > 0) {
@@ -392,13 +408,16 @@ export class Accessory extends EventEmitter<Events> {
     });
 
     // listen for changes in characteristics and bubble them up
-    service.on(ServiceEventTypes.CHARACTERISTIC_CHANGE, (change: CharacteristicChange) => {
-      this.emit(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, clone(change, {service:service as Service}));
+    service.on(ServiceEventTypes.CHARACTERISTIC_CHANGE, (change: ServiceCharacteristicChange) => {
+      this.emit(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, {
+        ...change,
+        service: service,
+      });
 
       // if we're not bridged, when we'll want to process this event through our HAPServer
-      if (!this.bridged)
-        this._handleCharacteristicChange(clone(change, {accessory:this, service:service as Service}));
-
+      if (!this.bridged) {
+        this._handleCharacteristicChange({ ...change, service: service, accessory: this });
+      }
     });
 
     return service;
@@ -502,8 +521,8 @@ export class Accessory extends EventEmitter<Events> {
     }
 
     // listen for changes in ANY characteristics of ANY services on this Accessory
-    accessory.on(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, (change: ServiceCharacteristicChange) => {
-      this._handleCharacteristicChange(clone(change, {accessory:accessory}));
+    accessory.on(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, (change: AccessoryCharacteristicChange) => {
+      this._handleCharacteristicChange({ ...change, accessory: accessory });
     });
 
     accessory.on(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, () => {
@@ -574,11 +593,14 @@ export class Accessory extends EventEmitter<Events> {
     this._updateConfiguration();
   }
 
-  getCharacteristicByIID = (iid: number) => {
+  private getCharacteristicByIID(iid: number): Characteristic | undefined {
     for (let index in this.services) {
       const service = this.services[index];
       const characteristic = service.getCharacteristicByIID(iid);
-      if (characteristic) return characteristic;
+
+      if (characteristic) {
+        return characteristic;
+      }
     }
   }
 
@@ -589,8 +611,7 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
-  findCharacteristic = (aid: number, iid: number) => {
-
+  private findCharacteristic(aid: number, iid: number): Characteristic | undefined {
     // if aid === 1, the accessory is us (because we are the server), otherwise find it among our bridged
     // accessories (if any)
     const accessory = (aid === 1) ? this : this.getBridgedAccessoryByAID(aid);
@@ -1156,8 +1177,7 @@ export class Accessory extends EventEmitter<Events> {
     this.emit(AccessoryEventTypes.LISTENING, port, hostname);
   }
 
-// Called when an unpaired client wishes for us to identify ourself
-  _handleIdentify = (callback: IdentifyCallback) => {
+  private _handleIdentify(callback: IdentifyCallback) {
     this._identificationRequest(false, callback);
   }
 
@@ -1178,7 +1198,7 @@ export class Accessory extends EventEmitter<Events> {
   }
 
 // called when a controller adds an additional pairing
-  _handleAddPairing = (controller: Session, username: string, publicKey: Buffer, permission: PermissionTypes, callback: AddPairingCallback) => {
+  _handleAddPairing = (controller: HAPSession, username: string, publicKey: Buffer, permission: PermissionTypes, callback: AddPairingCallback) => {
     if (!this._accessoryInfo) {
       callback(Codes.UNAVAILABLE);
       return;
@@ -1206,7 +1226,7 @@ export class Accessory extends EventEmitter<Events> {
     callback(0);
   };
 
-  _handleRemovePairing = (controller: Session, username: string, callback: RemovePairingCallback) => {
+  _handleRemovePairing = (controller: HAPSession, username: string, callback: RemovePairingCallback) => {
     if (!this._accessoryInfo) {
       callback(Codes.UNAVAILABLE);
       return;
@@ -1233,7 +1253,7 @@ export class Accessory extends EventEmitter<Events> {
     }
   };
 
-  _handleListPairings = (controller: Session, callback: ListPairingsCallback) => {
+  _handleListPairings = (controller: HAPSession, callback: ListPairingsCallback) => {
     if (!this._accessoryInfo) {
       callback(Codes.UNAVAILABLE);
       return;
@@ -1247,8 +1267,7 @@ export class Accessory extends EventEmitter<Events> {
     callback(0, this._accessoryInfo.listPairings());
   };
 
-// Called when an iOS client wishes to know all about our accessory via JSON payload
-  _handleAccessories = (callback: HandleAccessoriesCallback) => {
+  private _handleAccessories(callback: HandleAccessoriesCallback): void {
 
     // make sure our aid/iid's are all assigned
     this._assignIDs(this._identifierCache!);
@@ -1259,131 +1278,95 @@ export class Accessory extends EventEmitter<Events> {
     });
   }
 
-// Called when an iOS client wishes to query the state of one or more characteristics, like "door open?", "light on?", etc.
-  _handleGetCharacteristics = (data: CharacteristicData[], events: CharacteristicEvents, callback: HandleGetCharacteristicsCallback, remote: boolean, session: Session) => {
+  private _handleGetCharacteristics(request: CharacteristicsReadRequest, session: HAPSession, events: CharacteristicEvents, callback: (response: CharacteristicsReadResponse) => void): void {
+    const promises: Promise<CharacteristicsReadData>[] = [];
 
-    // build up our array of responses to the characteristics requested asynchronously
-    const characteristics: CharacteristicData[] = [];
-    const statusKey = remote ? 's' : 'status';
-    const valueKey = remote ? 'v' : 'value';
-
-    data.forEach((characteristicData) => {
-      const aid = characteristicData.aid;
-      const iid = characteristicData.iid;
-
-      const includeEvent = characteristicData.e;
-
-      const characteristic = this.findCharacteristic(characteristicData.aid, characteristicData.iid);
+    for (const id of request.ids) {
+      const characteristic = this.findCharacteristic(id.aid, id.iid);
 
       if (!characteristic) {
-        debug('[%s] Could not find a Characteristic with aid of %s and iid of %s', this.displayName, characteristicData.aid, characteristicData.iid);
-        let response: any = {
-          aid: aid,
-          iid: iid
-        };
-        response[statusKey] = Status.SERVICE_COMMUNICATION_FAILURE; // generic error status
-        characteristics.push(response);
+        debug('[%s] Could not find a Characteristic with aid of %s and iid of %s', this.displayName, id.aid, id.iid);
 
-        // have we collected all responses yet?
-        if (characteristics.length === data.length)
-          callback(null, characteristics);
-
-        return;
-      }
-
-      if (!characteristic.props.perms.includes(Perms.PAIRED_READ)) { // check if we are allowed to read from this characteristic
-        debug('[%s] Tried reading from Characteristic which does not allow reading (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid);
-        const response: any = {
-          aid: aid,
-          iid: iid
-        };
-        response[statusKey] = Status.WRITE_ONLY_CHARACTERISTIC;
-        characteristics.push(response);
-
-        if (characteristics.length === data.length) {
-          callback(null, characteristics);
-        }
-        return;
+        promises.push(Promise.resolve({
+          aid: id.aid,
+          iid: id.iid,
+          status: Status.INVALID_VALUE_IN_REQUEST,
+        }));
+        continue;
       }
 
       if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.READ)) {
         let verifiable = true;
         if (!session || !session.username || !this._accessoryInfo) {
           verifiable = false;
-          debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for reading (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid)
+          debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for reading (aid of %s and iid of %s)', this.displayName, id.aid, id.iid)
         }
 
         if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(session.username!)) {
-          const response: any = {
-            aid: aid,
-            iid: iid
-          };
-          response[statusKey] = Status.INSUFFICIENT_PRIVILEGES;
-          characteristics.push(response);
 
-          if (characteristics.length === data.length)
-            callback(null, characteristics);
-          return;
+          promises.push(Promise.resolve({
+            aid: id.aid,
+            iid: id.iid,
+            status: Status.INSUFFICIENT_PRIVILEGES,
+          }));
+          continue;
         }
       }
 
-      // Found the Characteristic! Get the value!
-      debug('[%s] Getting value for Characteristic "%s"', this.displayName, characteristic.displayName);
-
+      // Explanation for "events" parameter
       // we want to remember "who" made this request, so that we don't send them an event notification
       // about any changes that occurred as a result of the request. For instance, if after querying
       // the current value of a characteristic, the value turns out to be different than the previously
       // cached Characteristic value, an internal 'change' event will be emitted which will cause us to
       // notify all connected clients about that new value. But this client is about to get the new value
       // anyway, so we don't want to notify it twice.
-      const context = events;
 
-      // set the value and wait for success
-      characteristic.getValue((err, value) => {
-        if (err) {
-          debug('[%s] Error getting value for Characteristic "%s": %s', this.displayName, characteristic!.displayName, err.message);
-          let response: any = {
-            aid: aid,
-            iid: iid
-          };
-          response[statusKey] = hapStatus(err);
-          characteristics.push(response);
-        } else {
-          debug('[%s] Got Characteristic "%s" value: %s', this.displayName, characteristic!.displayName, value);
+      // TODO introduce a timeout on those values?
+      const promise = characteristic.handleGetRequest(session, events).then(value => {
+        debug('[%s] Got Characteristic "%s" value: %s', this.displayName, characteristic!.displayName, value);
 
-          let response: any = {
-            aid: aid,
-            iid: iid
-          };
-          response[valueKey] = value;
+        const data: CharacteristicsReadData = {
+          aid: id.aid,
+          iid: id.iid,
+          value: value == undefined? null: value,
+        };
 
-          if (includeEvent) {
-            const eventName = aid + '.' + iid;
-            response['e'] = (events[eventName] === true);
-          }
-
-          // compose the response and add it to the list
-          characteristics.push(response);
+        if (request.includeMeta) {
+          data.format = characteristic.props.format;
+          data.unit = characteristic.props.unit;
+          data.minValue = characteristic.props.minValue;
+          data.maxValue = characteristic.props.maxValue;
+          data.minStep = characteristic.props.minStep;
+          data.maxLen = characteristic.props.maxLen || characteristic.props.maxDataLen;
+        }
+        if (request.includePerms) {
+          data.perms = characteristic.props.perms;
+        }
+        if (request.includeType) {
+          data.type = toShortForm(this.UUID, HomeKitTypes.BASE_UUID);
+        }
+        if (request.includeEvent) {
+          data.ev = events[id.aid + "." + id.iid];
         }
 
-        // have we collected all responses yet?
-        if (characteristics.length === data.length)
-          callback(null, characteristics);
+        return data;
+      }, (reason: Status) => {
+        // @ts-expect-error
+        debug('[%s] Error getting value for characteristic "%s": %s', this.displayName, characteristic.displayName, Status[reason]);
+        return {
+          aid: id.aid,
+          iid: id.iid,
+          status: reason,
+        };
+      });
+      promises.push(promise);
+    }
 
-      }, context, session? session.sessionID: undefined);
-
-    });
+    Promise.all(promises).then(value => callback({ characteristics: value }));
   }
 
-// Called when an iOS client wishes to change the state of this accessory - like opening a door, or turning on a light.
-// Or, to subscribe to change events for a particular Characteristic.
-  _handleSetCharacteristics = (writeRequest: CharacteristicsWriteRequest, events: CharacteristicEvents, callback: HandleSetCharacteristicsCallback, remote: boolean, session: Session) => {
-    const data = writeRequest.characteristics;
-
-    // data is an array of characteristics and values like this:
-    // [ { aid: 1, iid: 8, value: true, ev: true } ]
-
-    debug("[%s] Processing characteristic set: %s", this.displayName, JSON.stringify(data));
+  private _handleSetCharacteristics(writeRequest: CharacteristicsWriteRequest, session: HAPSession, events: CharacteristicEvents, callback: (response: CharacteristicsWriteResponse) => void): void {
+    debug("[%s] Processing characteristic set: %s", this.displayName, JSON.stringify(writeRequest));
 
     let writeState: WriteRequestState = WriteRequestState.REGULAR_REQUEST;
     if (writeRequest.pid !== undefined) { // check for timed writes
@@ -1400,212 +1383,186 @@ export class Accessory extends EventEmitter<Events> {
       }
     }
 
-    // build up our array of responses to the characteristics requested asynchronously
-    const characteristics: CharacteristicData[] = [];
+    const characteristics: CharacteristicsWriteData[] = [];
+    const response: CharacteristicsWriteResponse = { characteristics: characteristics };
 
-    data.forEach((characteristicData) => {
-      const aid = characteristicData.aid;
-      const iid = characteristicData.iid;
-      const value = remote ? characteristicData.v : characteristicData.value;
-      const ev = remote ? characteristicData.e : characteristicData.ev;
-      const includeValue = characteristicData.r || false;
-
-      const statusKey = remote ? 's' : 'status';
-
-      const characteristic = this.findCharacteristic(aid, iid);
+    for (const data of writeRequest.characteristics) {
+      const characteristic = this.findCharacteristic(data.aid, data.iid);
+      let evResponse: boolean | undefined = undefined;
 
       if (!characteristic) {
-        debug('[%s] Could not find a Characteristic with iid of %s and aid of %s', this.displayName, characteristicData.aid, characteristicData.iid);
-        let response: any = {
-          aid: aid,
-          iid: iid
-        };
-        response[statusKey] = Status.SERVICE_COMMUNICATION_FAILURE; // generic error status
-        characteristics.push(response);
+        debug('[%s] Could not find a Characteristic with aid of %s and iid of %s', this.displayName, data.aid, data.iid);
 
-        // have we collected all responses yet?
-        if (characteristics.length === data.length)
-          callback(null, characteristics);
+        characteristics.push({
+          aid: data.aid,
+          iid: data.iid,
+          status: Status.INVALID_VALUE_IN_REQUEST,
+        });
 
-        return;
+        if (characteristics.length === writeRequest.characteristics.length) {
+          callback(response);
+        }
+        continue;
       }
 
       if (writeState === WriteRequestState.TIMED_WRITE_REJECTED) {
-        const response: any = {
-          aid: aid,
-          iid: iid
-        };
-        response[statusKey] = Status.INVALID_VALUE_IN_REQUEST;
-        characteristics.push(response);
+        characteristics.push({
+          aid: data.aid,
+          iid: data.iid,
+          status: Status.INVALID_VALUE_IN_REQUEST,
+        });
 
-        if (characteristics.length === data.length)
-          callback(null, characteristics);
-        return;
+        if (characteristics.length === writeRequest.characteristics.length) {
+          callback(response);
+        }
+        continue;
       }
 
-      // we want to remember "who" initiated this change, so that we don't send them an event notification
-      // about the change they just made. We do this by leveraging the arbitrary "context" object supported
-      // by Characteristic and passed on to the corresponding 'change' events bubbled up from Characteristic
-      // through Service and Accessory. We'll assign it to the events object since it essentially represents
-      // the connection requesting the change.
-      const context = events;
-
-      // if "ev" is present, that means we need to register or unregister this client for change events for
-      // this characteristic.
-      if (typeof ev !== 'undefined') {
+      if (data.ev != undefined) { // register/unregister event notifications
         if (!characteristic.props.perms.includes(Perms.NOTIFY)) { // check if notify is allowed for this characteristic
-          debug('[%s] Tried enabling notifications for Characteristic which does not allow notify (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid);
-          const response: any = {
-            aid: aid,
-            iid: iid
-          };
-          response[statusKey] = Status.NOTIFICATION_NOT_SUPPORTED;
-          characteristics.push(response);
+          debug('[%s] Tried enabling notifications for Characteristic which does not allow notify (aid of %s and iid of %s)', this.displayName, data.aid, data.iid);
+          characteristics.push({
+            aid: data.aid,
+            iid: data.iid,
+            status: Status.NOTIFICATION_NOT_SUPPORTED,
+          });
 
-          if (characteristics.length === data.length) {
-            callback(null, characteristics);
+          if (characteristics.length === writeRequest.characteristics.length) {
+            callback(response);
           }
-          return;
+          continue;
         }
 
         if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.NOTIFY)) {
           let verifiable = true;
           if (!session || !session.username || !this._accessoryInfo) {
             verifiable = false;
-            debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for notify (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid)
+            debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for notify (aid of %s and iid of %s)', this.displayName, data.aid, data.iid)
           }
 
           if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(session.username!)) {
-            const response: any = {
-              aid: aid,
-              iid: iid
-            };
-            response[statusKey] = Status.INSUFFICIENT_PRIVILEGES;
-            characteristics.push(response);
+            characteristics.push({
+              aid: data.aid,
+              iid: data.iid,
+              status: Status.INSUFFICIENT_PRIVILEGES,
+            });
 
-            if (characteristics.length === data.length)
-              callback(null, characteristics);
-            return;
+            if (characteristics.length === writeRequest.characteristics.length) {
+              callback(response);
+            }
+            continue;
           }
         }
 
-        debug('[%s] %s Characteristic "%s" for events', this.displayName, ev ? "Registering" : "Unregistering", characteristic.displayName);
+        debug('[%s] %s Characteristic "%s" for events', this.displayName, data.ev ? "Registering" : "Unregistering", characteristic.displayName);
 
-        // store event registrations in the supplied "events" dict which is associated with the connection making
-        // the request.
-        const eventName = aid + '.' + iid;
+        const eventName = data.aid + "." + data.iid;
 
-        if (ev === true && events[eventName] != true) {
-          events[eventName] = true; // value is arbitrary, just needs to be non-falsy
+        if (data.ev && !events[eventName]) {
+          events[eventName] = true;
           characteristic.subscribe();
+          evResponse = true;
         }
 
-        if (ev === false && events[eventName] != undefined) {
+        if (!data.ev && events[eventName]) {
           characteristic.unsubscribe();
-          delete events[eventName]; // unsubscribe by deleting name from dict
+          delete events[eventName];
+          evResponse = false;
         }
       }
 
-      // Found the characteristic - set the value if there is one
-      if (typeof value !== 'undefined') {
+      if (data.value != undefined) {
+        // TODO move from here
         if (!characteristic.props.perms.includes(Perms.PAIRED_WRITE)) { // check if write is allowed for this characteristic
-          debug('[%s] Tried writing to Characteristic which does not allow writing (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid);
-          const response: any = {
-            aid: aid,
-            iid: iid
-          };
-          response[statusKey] = Status.READ_ONLY_CHARACTERISTIC;
-          characteristics.push(response);
+          debug('[%s] Tried writing to Characteristic which does not allow writing (aid of %s and iid of %s)', this.displayName, data.aid, data.iid);
+          characteristics.push({
+            aid: data.aid,
+            iid: data.iid,
+            status: Status.READ_ONLY_CHARACTERISTIC,
+          });
 
-          if (characteristics.length === data.length) {
-            callback(null, characteristics);
+          if (characteristics.length === writeRequest.characteristics.length) {
+            callback(response);
           }
-          return;
+          continue;
         }
 
         if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.WRITE)) {
           let verifiable = true;
           if (!session || !session.username || !this._accessoryInfo) {
             verifiable = false;
-            debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for write (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid)
+            debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for write (aid of %s and iid of %s)', this.displayName, data.aid, data.iid)
           }
 
           if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(session.username!)) {
-            const response: any = {
-              aid: aid,
-              iid: iid
-            };
-            response[statusKey] = Status.INSUFFICIENT_PRIVILEGES;
-            characteristics.push(response);
+            characteristics.push({
+              aid: data.aid,
+              iid: data.iid,
+              status: Status.INSUFFICIENT_PRIVILEGES,
+            });
 
-            if (characteristics.length === data.length)
-              callback(null, characteristics);
-            return;
+            if (characteristics.length === writeRequest.characteristics.length) {
+              callback(response);
+            }
+            continue;
           }
         }
 
         if (characteristic.props.perms.includes(Perms.TIMED_WRITE) && writeState !== WriteRequestState.TIMED_WRITE_AUTHENTICATED) {
-          debug('[%s] Tried writing to a timed write only Characteristic without properly preparing (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid);
-          const response: any = {
-            aid: aid,
-            iid: iid
-          };
-          response[statusKey] = Status.INVALID_VALUE_IN_REQUEST;
-          characteristics.push(response);
+          debug('[%s] Tried writing to a timed write only Characteristic without properly preparing (iid of %s and aid of %s)', this.displayName, data.aid, data.iid);
+          characteristics.push({
+            aid: data.aid,
+            iid: data.iid,
+            status: Status.INVALID_VALUE_IN_REQUEST,
+          });
 
-          if (characteristics.length === data.length)
-            callback(null, characteristics);
-          return;
+          if (characteristics.length === writeRequest.characteristics.length) {
+            callback(response);
+          }
+          continue;
         }
 
-        debug('[%s] Setting Characteristic "%s" to value %s', this.displayName, characteristic.displayName, value);
+        debug('[%s] Setting Characteristic "%s" to value %s', this.displayName, characteristic.displayName, data.value);
 
-        // set the value and wait for success
-        characteristic.setValue(value, (err) => {
+        characteristic.handleSetRequest(data.value, session, events).then(value => {
+          characteristics.push({
+            aid: data.aid,
+            iid: data.iid,
 
-          if (err) {
-            debug('[%s] Error setting Characteristic "%s" to value %s: ', this.displayName, characteristic!.displayName, value, err.message);
+            value: data.r && value? value: undefined, // if write response is requests and value is provided, return that
 
-            let response: any = {
-              aid: aid,
-              iid: iid
-            };
-            response[statusKey] = hapStatus(err);
-            characteristics.push(response);
-          } else {
-            let response: any = {
-              aid: aid,
-              iid: iid
-            };
-            response[statusKey] = 0;
+            ev: evResponse,
+          })
 
-            if (includeValue)
-              response['value'] = characteristic!.value;
-
-            characteristics.push(response);
+          if (characteristics.length === writeRequest.characteristics.length) {
+            callback(response);
           }
+        }, (status: Status) => {
+          // @ts-expect-error
+          debug('[%s] Error setting Characteristic "%s" to value %s: ', this.displayName, characteristic.displayName, data.value, Status[status]);
 
-          // have we collected all responses yet?
-          if (characteristics.length === data.length)
-            callback(null, characteristics);
+          characteristics.push({
+            aid: data.aid,
+            iid: data.iid,
+            status: status,
+          });
 
-        }, context, session? session.sessionID: undefined);
-
+          if (characteristics.length === writeRequest.characteristics.length) {
+            callback(response);
+          }
+        });
       } else {
-        // no value to set, so we're done (success)
-        let response: any = {
-          aid: aid,
-          iid: iid
-        };
-        response[statusKey] = 0;
-        characteristics.push(response);
+        characteristics.push({
+          aid: data.aid,
+          iid: data.iid,
+          ev: evResponse,
+        });
 
-        // have we collected all responses yet?
-        if (characteristics.length === data.length)
-          callback(null, characteristics);
+        if (characteristics.length === writeRequest.characteristics.length) {
+          callback(response);
+        }
       }
-
-    });
+    }
   }
 
   _handleResource(data: Resource, callback: NodeCallback<Buffer>): void {
@@ -1665,7 +1622,7 @@ export class Accessory extends EventEmitter<Events> {
   }
 
 // Called internally above when a change was detected in one of our hosted Characteristics somewhere in our hierarchy.
-  _handleCharacteristicChange = (change: ServiceCharacteristicChange) => {
+  _handleCharacteristicChange = (change: AccessoryCharacteristicChange & { accessory: Accessory }) => {
     if (!this._server)
       return; // we're not running a HAPServer, so there's no one to notify about this event
 
@@ -1938,20 +1895,4 @@ export class Accessory extends EventEmitter<Events> {
     };
   }
 
-}
-
-const numberPattern = /^-?\d+$/;
-
-function hapStatus(err: Error) {
-  let errorValue = Status.SERVICE_COMMUNICATION_FAILURE;
-
-  if (numberPattern.test(err.message)) {
-    const value = parseInt(err.message);
-
-    if (value >= Status.INSUFFICIENT_PRIVILEGES && value <= Status.INSUFFICIENT_AUTHORIZATION) {
-      errorValue = value;
-    }
-  }
-
-  return errorValue;
 }

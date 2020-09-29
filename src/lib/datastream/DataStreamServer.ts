@@ -5,7 +5,7 @@ import * as hapCrypto from '../util/hapCrypto';
 import {DataStreamParser, DataStreamReader, DataStreamWriter, Int64} from './DataStreamParser';
 import crypto from 'crypto';
 import net, {Socket} from 'net';
-import {HAPSessionEvents, Session} from "../util/eventedhttp";
+import {HAPSessionEvents, HAPSession} from "../util/eventedhttp";
 import {EventEmitter as NodeEventEmitter} from "events";
 import {EventEmitter} from "../EventEmitter";
 import Timeout = NodeJS.Timeout;
@@ -14,7 +14,7 @@ const debug = createDebug('HAP-NodeJS:DataStream:Server');
 
 export type PreparedDataStreamSession = {
 
-    session: Session, // reference to the hap session which created the request
+    session: HAPSession, // reference to the hap session which created the request
 
     accessoryToControllerEncryptionKey: Buffer,
     controllerToAccessoryEncryptionKey: Buffer,
@@ -218,7 +218,7 @@ export class DataStreamServer extends EventEmitter<DataStreamServerEventMap> {
         return this;
     }
 
-    prepareSession(session: Session, controllerKeySalt: Buffer, callback: (preparedSession: PreparedDataStreamSession) => void) {
+    prepareSession(session: HAPSession, controllerKeySalt: Buffer, callback: (preparedSession: PreparedDataStreamSession) => void) {
         debug("Preparing for incoming HDS connection from session %s", session.sessionID);
         const accessoryKeySalt = crypto.randomBytes(32);
         const salt = Buffer.concat([controllerKeySalt, accessoryKeySalt]);
@@ -426,7 +426,7 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
     private static readonly MAX_PAYLOAD_LENGTH = 0b11111111111111111111;
 
     private socket: Socket;
-    private session?: Session; // reference to the hap session. is present when state > UNIDENTIFIED
+    private session?: HAPSession; // reference to the hap session. is present when state > UNIDENTIFIED
     readonly _remoteAddress: string;
     /*
         Since our DataStream server does only listen on one port and this port is supplied to every client
