@@ -6,13 +6,13 @@ import {
   CharacteristicProps,
   Formats,
   Perms,
-  SerializedCharacteristic,
+  SerializedCharacteristic, Status,
   Units,
   uuid
 } from '..';
 
 const createCharacteristic = (type: Formats) => {
-  return new Characteristic('Test', uuid.generate('Foo'), { format: type, perms: [] });
+  return new Characteristic('Test', uuid.generate('Foo'), { format: type, perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE] });
 };
 
 const createCharacteristicWithProps = (props: CharacteristicProps) => {
@@ -58,6 +58,7 @@ describe('Characteristic', () => {
       characteristic.subscribe();
 
       expect(subscribeSpy).toHaveBeenCalledTimes(1);
+      // @ts-expect-error
       expect(characteristic.subscriptions).toEqual(1);
     });
 
@@ -70,6 +71,7 @@ describe('Characteristic', () => {
       characteristic.subscribe();
 
       expect(subscribeSpy).toHaveBeenCalledTimes(1);
+      // @ts-expect-error
       expect(characteristic.subscriptions).toEqual(3);
     });
   });
@@ -86,6 +88,7 @@ describe('Characteristic', () => {
 
       expect(subscribeSpy).toHaveBeenCalledTimes(1);
       expect(unsubscribeSpy).toHaveBeenCalledTimes(1);
+      // @ts-expect-error
       expect(characteristic.subscriptions).toEqual(0);
     });
 
@@ -104,27 +107,30 @@ describe('Characteristic', () => {
 
       expect(subscribeSpy).toHaveBeenCalledTimes(1);
       expect(unsubscribeSpy).toHaveBeenCalledTimes(1);
+      // @ts-expect-error
       expect(characteristic.subscriptions).toEqual(0);
     });
   });
 
-  describe('#getValue()', () => {
+  describe('#handleGetRequest()', () => {
     it('should handle special event only characteristics', () => {
       const characteristic = createCharacteristic(Formats.BOOL);
       characteristic.eventOnlyCharacteristic = true;
 
-      characteristic.getValue((error, value) => {
-        expect(error).toEqual(null);
-        expect(value).toEqual(null);
+      // @ts-expect-error
+      characteristic.handleGetRequest().then(() => {
+        expect(characteristic.status).toEqual(Status.SUCCESS);
+        expect(characteristic.value).toEqual(null);
       });
     });
 
     it('should return cached values if no listeners are registered', () => {
       const characteristic = createCharacteristic(Formats.BOOL);
 
-      characteristic.getValue((status, value) => {
-        expect(status).toEqual(null);
-        expect(value).toEqual(null);
+      // @ts-expect-error
+      characteristic.handleGetRequest().then(() => {
+        expect(characteristic.status).toEqual(Status.SUCCESS);
+        expect(characteristic.value).toEqual(null);
       });
     });
   });
@@ -134,6 +140,7 @@ describe('Characteristic', () => {
     it('should validate an integer property', () => {
       const VALUE = 1024;
       const characteristic = createCharacteristic(Formats.INT);
+      // @ts-expect-error
       expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
     });
 
@@ -144,6 +151,7 @@ describe('Characteristic', () => {
         minStep: 0.001,
         perms: [],
       });
+      // @ts-expect-error
       expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
     });
 
@@ -154,85 +162,78 @@ describe('Characteristic', () => {
         minStep: 0.1,
         perms: [],
       });
+      // @ts-expect-error
       expect(characteristic.validateValue(VALUE)).toEqual(1.5);
     });
 
     it('should validate a UINT8 property', () => {
       const VALUE = 10;
       const characteristic = createCharacteristic(Formats.UINT8);
+      // @ts-expect-error
       expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a UINT16 property', () => {
       const VALUE = 10;
       const characteristic = createCharacteristic(Formats.UINT16);
+      // @ts-expect-error
       expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a UINT32 property', () => {
       const VALUE = 10;
       const characteristic = createCharacteristic(Formats.UINT32);
+      // @ts-expect-error
       expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a UINT64 property', () => {
       const VALUE = 10;
       const characteristic = createCharacteristic(Formats.UINT64);
+      // @ts-expect-error
       expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a boolean property', () => {
       const VALUE = true;
       const characteristic = createCharacteristic(Formats.BOOL);
+      // @ts-expect-error
       expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a string property', () => {
       const VALUE = 'Test';
       const characteristic = createCharacteristic(Formats.STRING);
+      // @ts-expect-error
       expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a data property', () => {
       const VALUE = {};
       const characteristic = createCharacteristic(Formats.DATA);
+      // @ts-expect-error
       expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a TLV8 property', () => {
       const VALUE = '';
       const characteristic = createCharacteristic(Formats.TLV8);
+      // @ts-expect-error
       expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a dictionary property', () => {
       const VALUE = {};
       const characteristic = createCharacteristic(Formats.DICTIONARY);
+      // @ts-expect-error
       expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
     });
 
     it('should validate an array property', () => {
       const VALUE = ['asd'];
       const characteristic = createCharacteristic(Formats.ARRAY);
+      // @ts-expect-error
       expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
-    });
-  });
-
-  describe('#setValue()', () => {
-    it(`should set error values as the characteristic's status property`, () => {
-      const VALUE = new Error();
-      const characteristic = createCharacteristic(Formats.DATA);
-      characteristic.setValue(VALUE);
-      expect(characteristic.status).toEqual(VALUE);
-    });
-  });
-
-  describe('#updateValue()', () => {
-    it(`should set error values as the characteristic's status property`, () => {
-      const VALUE = new Error();
-      const characteristic = createCharacteristic(Formats.DATA);
-      characteristic.setValue(VALUE);
-      expect(characteristic.status).toEqual(VALUE);
     });
   });
 
@@ -240,31 +241,37 @@ describe('Characteristic', () => {
 
     it('should get the correct default value for a boolean property', () => {
       const characteristic = createCharacteristic(Formats.BOOL);
+      // @ts-expect-error
       expect(characteristic.getDefaultValue()).toEqual(false);
     });
 
     it('should get the correct default value for a string property', () => {
       const characteristic = createCharacteristic(Formats.STRING);
+      // @ts-expect-error
       expect(characteristic.getDefaultValue()).toEqual('');
     });
 
     it('should get the correct default value for a data property', () => {
       const characteristic = createCharacteristic(Formats.DATA);
+      // @ts-expect-error
       expect(characteristic.getDefaultValue()).toEqual(null);
     });
 
     it('should get the correct default value for a TLV8 property', () => {
       const characteristic = createCharacteristic(Formats.TLV8);
+      // @ts-expect-error
       expect(characteristic.getDefaultValue()).toEqual(null);
     });
 
     it('should get the correct default value for a dictionary property', () => {
       const characteristic = createCharacteristic(Formats.DICTIONARY);
+      // @ts-expect-error
       expect(characteristic.getDefaultValue()).toEqual({});
     });
 
     it('should get the correct default value for an array property', () => {
       const characteristic = createCharacteristic(Formats.ARRAY);
+      // @ts-expect-error
       expect(characteristic.getDefaultValue()).toEqual([]);
     });
 
@@ -280,14 +287,14 @@ describe('Characteristic', () => {
       const characteristic = createCharacteristic(Formats.STRING);
 
       const listenerCallback = jest.fn();
-      const getValueCallback = jest.fn();
 
-      characteristic.getValue(getValueCallback);
+      // @ts-expect-error
+      characteristic.handleGetRequest();
       characteristic.on(CharacteristicEventTypes.GET, listenerCallback);
-      characteristic.getValue(getValueCallback);
+      // @ts-expect-error
+      characteristic.handleGetRequest();
 
       expect(listenerCallback).toHaveBeenCalledTimes(1);
-      expect(getValueCallback).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -298,14 +305,14 @@ describe('Characteristic', () => {
 
       const VALUE = 'NewValue';
       const listenerCallback = jest.fn();
-      const setValueCallback = jest.fn();
 
-      characteristic.setValue(VALUE, setValueCallback)
+      // @ts-expect-error
+      characteristic.handleSetRequest(VALUE);
       characteristic.on(CharacteristicEventTypes.SET, listenerCallback);
-      characteristic.setValue(VALUE, setValueCallback);
+      // @ts-expect-error
+      characteristic.handleSetRequest(VALUE);
 
       expect(listenerCallback).toHaveBeenCalledTimes(1);
-      expect(setValueCallback).toHaveBeenCalledTimes(1);
     });
   });
 

@@ -792,7 +792,7 @@ export class Characteristic extends EventEmitter {
    */
   toHAP(opt?: ToHAPOptions): HapCharacteristic {
     // ensure our value fits within our constraints if present
-    let value = this.value;
+    let value = this.value; // TODO query value for characteristics which support it
 
     if (this.props.minValue != null && value! < this.props.minValue)
       value = this.props.minValue;
