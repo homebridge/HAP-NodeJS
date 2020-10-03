@@ -364,7 +364,7 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     this._clientSocket.on('close', this._onClientSocketClose);
     this._clientSocket.on('error', this._onClientSocketError); // we MUST register for this event, otherwise the error will bubble up to the top and crash the node process entirely.
     this._clientSocket.setNoDelay(true); // disable Nagle algorithm
-    this._clientSocket.setKeepAlive(true);
+    this._clientSocket.setKeepAlive(true, 5000);
 
     // serverSocket is our connection to our own internal httpServer
     this._serverSocket = null; // created after httpServer 'listening' event
@@ -468,7 +468,6 @@ class EventedHTTPServerConnection extends EventEmitter<Events> {
     this._serverSocket.on('error', this._onServerSocketError); // we MUST register for this event, otherwise the error will bubble up to the top and crash the node process entirely.
 
     this._serverSocket.setNoDelay(true); // disable Nagle algorithm
-    this._serverSocket.setKeepAlive(true);
   }
 
   // Called only once right after onHttpServerListening
