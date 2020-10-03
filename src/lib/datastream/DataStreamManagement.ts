@@ -162,7 +162,7 @@ export class DataStreamManagement {
         debug("Received setup write with command %s and transport type %s", SessionCommandType[sessionCommandType], TransportType[transportType]);
 
         if (sessionCommandType === SessionCommandType.START_SESSION) {
-            if (transportType !== TransportType.HOMEKIT_DATA_STREAM) {
+            if (transportType !== TransportType.HOMEKIT_DATA_STREAM || controllerKeySalt.length !== 32) {
                 callback(Status.INVALID_VALUE_IN_REQUEST);
                 return;
             }
