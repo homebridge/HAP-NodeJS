@@ -80,8 +80,8 @@ export const enum DataFormatTags {
     DATA_LENGTH64LE = 0x94,
     DATA_TERMINATED = 0x9F,
 
-    DEDUPLICATION_START = 0xA0,
-    DEDUPLICATION_STOP = 0xCF,
+    COMPRESSION_START = 0xA0,
+    COMPRESSION_STOP = 0xCF,
 
     ARRAY_LENGTH_START = 0xD0,
     ARRAY_LENGTH_STOP = 0xDE,
@@ -153,9 +153,9 @@ export namespace DataStreamParser {
             return buffer.readData_Length64LE();
         } else if (tag === DataFormatTags.DATA_TERMINATED) {
             return buffer.readData_terminated();
-        } else if (tag >= DataFormatTags.DEDUPLICATION_START && tag <= DataFormatTags.DEDUPLICATION_STOP) {
-            const index = tag - DataFormatTags.DEDUPLICATION_START;
-            return buffer.deduplicateData(index);
+        } else if (tag >= DataFormatTags.COMPRESSION_START && tag <= DataFormatTags.COMPRESSION_STOP) {
+            const index = tag - DataFormatTags.COMPRESSION_START;
+            return buffer.decompressData(index);
         } else if (tag >= DataFormatTags.ARRAY_LENGTH_START && tag <= DataFormatTags.ARRAY_LENGTH_STOP) {
             const length = tag - DataFormatTags.ARRAY_LENGTH_START;
             const array = [];
@@ -296,7 +296,7 @@ export class DataStreamReader {
     private readonly data: Buffer;
     readerIndex: number;
 
-    private deduplicationData: any[] = [];
+    private trackedCompressedData: any[] = [];
 
     constructor(data: Buffer) {
         this.data = data;
@@ -310,16 +310,16 @@ export class DataStreamReader {
         }
     }
 
-    deduplicateData(index: number) {
-        if (index >= this.deduplicationData.length) {
-            throw new Error("HDSDecoder: Tried deduplication of data for an index out of range (index " + index + " and got " + this.deduplicationData.length + " elements)");
+    decompressData(index: number) {
+        if (index >= this.trackedCompressedData.length) {
+            throw new Error("HDSDecoder: Tried decompression of data for an index out of range (index " + index + " and got " + this.trackedCompressedData.length + " elements)");
         }
 
-        return this.deduplicationData[index];
+        return this.trackedCompressedData[index];
     }
 
-    private cache(data: any) {
-        this.deduplicationData.push(data);
+    private trackData(data: any) {
+        this.trackedCompressedData.push(data);
         return data;
     }
 
@@ -336,38 +336,38 @@ export class DataStreamReader {
     }
 
     readTrue() {
-        return this.cache(true); // do those tag encoded values get cached?
+        return this.trackData(true); // do those tag encoded values get cached?
     }
 
     readFalse() {
-        return this.cache(false);
+        return this.trackData(false);
     }
 
     readNegOne() {
-        return this.cache(-1);
+        return this.trackData(-1);
     }
 
     readIntRange(tag: number) {
-        return this.cache(tag - DataFormatTags.INTEGER_RANGE_START_0); // integer values from 0-39
+        return this.trackData(tag - DataFormatTags.INTEGER_RANGE_START_0); // integer values from 0-39
     }
 
     readInt8() {
         this.ensureLength(1);
-        return this.cache(this.data.readInt8(this.readerIndex++));
+        return this.trackData(this.data.readInt8(this.readerIndex++));
     }
 
     readInt16LE() {
         this.ensureLength(2);
         const value = this.data.readInt16LE(this.readerIndex);
         this.readerIndex += 2;
-        return this.cache(value);
+        return this.trackData(value);
     }
 
     readInt32LE() {
         this.ensureLength(4);
         const value = this.data.readInt32LE(this.readerIndex);
         this.readerIndex += 4;
-        return this.cache(value);
+        return this.trackData(value);
     }
 
     readInt64LE() {
@@ -380,20 +380,20 @@ export class DataStreamReader {
         }
 
         this.readerIndex += 8;
-        return this.cache(value);
+        return this.trackData(value);
     }
 
     readFloat32LE() {
         this.ensureLength(4);
         const value = this.data.readFloatLE(this.readerIndex);
         this.readerIndex += 4;
-        return this.cache(value);
+        return this.trackData(value);
     }
 
     readFloat64LE() {
         this.ensureLength(8);
         const value = this.data.readDoubleLE(this.readerIndex);
-        return this.cache(value);
+        return this.trackData(value);
     }
 
     private readLength8() {
@@ -429,7 +429,7 @@ export class DataStreamReader {
         this.ensureLength(length);
         const value = this.data.toString('utf8', this.readerIndex, this.readerIndex + length);
         this.readerIndex += length;
-        return this.cache(value);
+        return this.trackData(value);
     }
 
     readUTF8_Length8() {
@@ -470,7 +470,7 @@ export class DataStreamReader {
 
         const value = this.data.toString('utf8', this.readerIndex, offset);
         this.readerIndex = offset + 1;
-        return this.cache(value);
+        return this.trackData(value);
     }
 
     readData(length: number) {
@@ -478,7 +478,7 @@ export class DataStreamReader {
         const value = this.data.slice(this.readerIndex, this.readerIndex + length);
         this.readerIndex += length;
 
-        return this.cache(value);
+        return this.trackData(value);
     }
 
     readData_Length8() {
@@ -519,7 +519,7 @@ export class DataStreamReader {
 
         const value = this.data.slice(this.readerIndex, offset);
         this.readerIndex = offset + 1;
-        return this.cache(value);
+        return this.trackData(value);
     }
 
     readSecondsSince2001_01_01() {
@@ -531,7 +531,7 @@ export class DataStreamReader {
         this.ensureLength(16);
         const value = uuid.unparse(this.data, this.readerIndex);
         this.readerIndex += 16;
-        return this.cache(value);
+        return this.trackData(value);
     }
 
 }
@@ -597,15 +597,15 @@ export class DataStreamWriter {
         }
     }
 
-    private checkDeduplication(data: any): boolean {
+    private compressDataIfPossible(data: any): boolean {
         const index = this.writtenData.indexOf(data);
         if (index < 0) {
             // data is not present yet
             this.writtenData.push(data);
             return false;
-        } else if (index <= DataFormatTags.DEDUPLICATION_STOP - DataFormatTags.DEDUPLICATION_START) {
+        } else if (index <= DataFormatTags.COMPRESSION_STOP - DataFormatTags.COMPRESSION_START) {
             // data was already written and the index is in the applicable range => shorten the payload
-            this.writeTag(DataFormatTags.DEDUPLICATION_START + index);
+            this.writeTag(DataFormatTags.COMPRESSION_START + index);
             return true;
         }
 
@@ -644,7 +644,7 @@ export class DataStreamWriter {
     }
 
     writeInt8(int8: Int8) {
-        if (this.checkDeduplication(int8)) {
+        if (this.compressDataIfPossible(int8)) {
             return;
         }
 
@@ -654,7 +654,7 @@ export class DataStreamWriter {
     }
 
     writeInt16LE(int16: Int16) {
-        if (this.checkDeduplication(int16)) {
+        if (this.compressDataIfPossible(int16)) {
             return;
         }
 
@@ -665,7 +665,7 @@ export class DataStreamWriter {
     }
 
     writeInt32LE(int32: Int32) {
-        if (this.checkDeduplication(int32)) {
+        if (this.compressDataIfPossible(int32)) {
             return;
         }
 
@@ -676,7 +676,7 @@ export class DataStreamWriter {
     }
 
     writeInt64LE(int64: Int64) {
-        if (this.checkDeduplication(int64)) {
+        if (this.compressDataIfPossible(int64)) {
             return;
         }
 
@@ -688,7 +688,7 @@ export class DataStreamWriter {
     }
 
     writeFloat32LE(float32: Float32) {
-        if (this.checkDeduplication(float32)) {
+        if (this.compressDataIfPossible(float32)) {
             return;
         }
 
@@ -699,7 +699,7 @@ export class DataStreamWriter {
     }
 
     writeFloat64LE(float64: Float64) {
-        if (this.checkDeduplication(float64)) {
+        if (this.compressDataIfPossible(float64)) {
             return;
         }
 
@@ -733,7 +733,7 @@ export class DataStreamWriter {
     }
 
     writeUTF8(utf8: string) {
-        if (this.checkDeduplication(utf8)) {
+        if (this.compressDataIfPossible(utf8)) {
             return;
         }
 
@@ -808,7 +808,7 @@ export class DataStreamWriter {
     }
 
     writeData(data: Buffer) {
-        if (this.checkDeduplication(data)) {
+        if (this.compressDataIfPossible(data)) {
             return;
         }
 
@@ -876,7 +876,7 @@ export class DataStreamWriter {
     }
 
     writeSecondsSince2001_01_01(seconds: SecondsSince2001) {
-        if (this.checkDeduplication(seconds)) {
+        if (this.compressDataIfPossible(seconds)) {
             return;
         }
 
@@ -888,7 +888,7 @@ export class DataStreamWriter {
 
     writeUUID(uuid_string: string) {
         assert(uuid.isValid(uuid_string), "supplied uuid is invalid");
-        if (this.checkDeduplication(new UUID(uuid_string))) {
+        if (this.compressDataIfPossible(new UUID(uuid_string))) {
             return;
         }
 

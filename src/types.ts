@@ -1,6 +1,4 @@
-import { CharacteristicEvents } from "./lib/Accessory";
-import { Status } from './lib/HAPServer';
-import { Characteristic, CharacteristicProps } from './lib/Characteristic';
+import { CharacteristicProps } from './lib/Characteristic';
 
 export type Nullable<T> = T | null;
 
@@ -32,7 +30,6 @@ export type IPAddress = IPv4Address | IPv6Address;
 export type Callback = (...args: any[]) => void;
 export type NodeCallback<T> = (err: Nullable<Error> | undefined, data?: T) => void;
 export type VoidCallback = (err?: Nullable<Error>) => void;
-export type PairingsCallback<T> = (err: number, data?: T) => void;
 export type PrimitiveTypes = string | number | boolean;
 
 type HAPProps = Pick<CharacteristicProps, 'perms' | 'format' | 'description' | 'unit' | 'maxValue' | 'minValue' | 'minStep' | 'maxLen'>

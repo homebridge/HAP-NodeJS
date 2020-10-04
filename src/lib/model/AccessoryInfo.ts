@@ -1,20 +1,19 @@
-import util from 'util';
 import assert from 'assert';
 import tweetnacl from 'tweetnacl';
-
-import { Categories } from '../Accessory';
-import { HAPSession } from "../util/eventedhttp";
+import util from 'util';
 import { MacAddress } from "../../types";
+import { Categories } from '../Accessory';
+import { EventedHTTPServer, HAPConnection, HAPUsername } from "../util/eventedhttp";
 import { HAPStorage } from "./HAPStorage";
 
 export const enum PermissionTypes {
   // noinspection JSUnusedGlobalSymbols
   USER = 0x00,
-  ADMIN = 0x01, // admins are the only ones who can add/remove/list pairings (also some characteristics are restricted)
+  ADMIN = 0x01, // admins are the only ones who can add/remove/list pairings (additionally some characteristics are restricted)
 }
 
 export type PairingInformation = {
-  username: string,
+  username: HAPUsername,
   publicKey: Buffer,
   permission: PermissionTypes,
 }
@@ -34,7 +33,7 @@ export class AccessoryInfo {
   pincode: string;
   signSk: Buffer;
   signPk: Buffer;
-  pairedClients: Record<string, PairingInformation>;
+  pairedClients: Record<HAPUsername, PairingInformation>;
   pairedAdminClients: number;
   private configVersion: number = 1;
   configHash: string;
@@ -58,22 +57,23 @@ export class AccessoryInfo {
 
   /**
    * Add a paired client to memory.
-   * @param {string} username
+   * @param {HAPUsername} username
    * @param {Buffer} publicKey
    * @param {PermissionTypes} permission
    */
-  addPairedClient = (username: string, publicKey: Buffer, permission: PermissionTypes) => {
+  public addPairedClient(username: HAPUsername, publicKey: Buffer, permission: PermissionTypes): void {
     this.pairedClients[username] = {
       username: username,
       publicKey: publicKey,
       permission: permission
     };
 
-    if (permission === PermissionTypes.ADMIN)
+    if (permission === PermissionTypes.ADMIN) {
       this.pairedAdminClients++;
+    }
   };
 
-  updatePermission = (username: string, permission: PermissionTypes) => {
+  public updatePermission(username: HAPUsername, permission: PermissionTypes): void {
     const pairingInformation = this.pairedClients[username];
 
     if (pairingInformation) {
@@ -88,8 +88,8 @@ export class AccessoryInfo {
     }
   };
 
-  listPairings = () => {
-    const array = [] as PairingInformation[];
+  public listPairings(): PairingInformation[] {
+    const array: PairingInformation[] = [];
 
     for (const username in this.pairedClients) {
       const pairingInformation = this.pairedClients[username] as PairingInformation;
@@ -101,43 +101,43 @@ export class AccessoryInfo {
 
   /**
    * Remove a paired client from memory.
-   * @param controller - the session of the controller initiated the removal of the pairing
+   * @param connection - the session of the connection initiated the removal of the pairing
    * @param {string} username
    */
-  removePairedClient = (controller: HAPSession, username: string) => {
-    this._removePairedClient0(controller, username);
+  public removePairedClient(connection: HAPConnection, username: HAPUsername): void {
+    this._removePairedClient0(connection, username);
 
     if (this.pairedAdminClients === 0) { // if we don't have any admin clients left paired it is required to kill all normal clients
       for (const username0 in this.pairedClients) {
-        this._removePairedClient0(controller, username0);
+        this._removePairedClient0(connection, username0);
       }
     }
   };
 
-  _removePairedClient0 = (controller: HAPSession, username: string) => {
+  private _removePairedClient0(connection: HAPConnection, username: HAPUsername): void {
     if (this.pairedClients[username] && this.pairedClients[username].permission === PermissionTypes.ADMIN)
       this.pairedAdminClients--;
     delete this.pairedClients[username];
 
-    HAPSession.destroyExistingConnectionsAfterUnpair(controller, username);
+    EventedHTTPServer.destroyExistingConnectionsAfterUnpair(connection, username);
   };
 
   /**
    * Check if username is paired
    * @param username
    */
-  isPaired = (username: string) => {
+  public isPaired(username: HAPUsername): boolean {
     return !!this.pairedClients[username];
   };
 
-  hasAdminPermissions = (username: string) => {
+  public hasAdminPermissions(username: HAPUsername): boolean {
     if (!username) return false;
     const pairingInformation = this.pairedClients[username];
     return !!pairingInformation && pairingInformation.permission === PermissionTypes.ADMIN;
   };
 
   // Gets the public key for a paired client as a Buffer, or falsy value if not paired.
-  getClientPublicKey = (username: string) => {
+  public getClientPublicKey(username: HAPUsername): Buffer | undefined {
     const pairingInformation = this.pairedClients[username];
     if (pairingInformation) {
       return pairingInformation.publicKey;
@@ -190,9 +190,9 @@ export class AccessoryInfo {
     };
 
     for (let username in this.pairedClients) {
-      const pairingInformation = this.pairedClients[username];
+      const pairingInformation: PairingInformation = this.pairedClients[username];
       //@ts-ignore
-      saved.pairedClients[username] = pairingInformation.publicKey.toString('hex');
+      saved.pairedClients[username] = pairingInformation.publicKey.toString("hex");
       // @ts-ignore
       saved.pairedClientsPermission[username] = pairingInformation.permission;
     }

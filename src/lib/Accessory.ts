@@ -6,8 +6,11 @@ import net from "net";
 import {
   CharacteristicsReadData,
   CharacteristicsReadRequest,
-  CharacteristicsReadResponse, CharacteristicsWriteData, CharacteristicsWriteRequest,
-  CharacteristicsWriteResponse
+  CharacteristicsWriteData,
+  CharacteristicsWriteRequest,
+  CharacteristicsWriteResponse,
+  ResourceRequest,
+  ResourceRequestType
 } from "../internal-types";
 import {
   CharacteristicValue,
@@ -15,10 +18,7 @@ import {
   InterfaceName,
   IPAddress,
   MacAddress,
-  NodeCallback,
   Nullable,
-  PairingsCallback,
-  SessionIdentifier,
   ToHAPOptions,
   VoidCallback,
   WithUUID,
@@ -26,13 +26,7 @@ import {
 import { Advertiser, AdvertiserEvent } from './Advertiser';
 // noinspection JSDeprecatedSymbols
 import { LegacyCameraSource, LegacyCameraSourceAdapter, StreamController } from './camera';
-import {
-  Access,
-  Characteristic,
-  CharacteristicEventTypes,
-  CharacteristicSetCallback,
-  Perms
-} from './Characteristic';
+import { Access, Characteristic, CharacteristicEventTypes, CharacteristicSetCallback, Perms } from './Characteristic';
 import {
   CameraController,
   CameraControllerOptions,
@@ -45,8 +39,23 @@ import {
 import { EventEmitter } from './EventEmitter';
 import * as HomeKitTypes from "./gen";
 import { CameraEventRecordingManagement, CameraOperatingMode, CameraRTPStreamManagement, } from "./gen/HomeKit";
-import { Codes, HAPServer, HAPServerEventTypes, Status } from './HAPServer';
-import { AccessoryInfo, PairingInformation, PermissionTypes } from './model/AccessoryInfo';
+import {
+  AccessoriesCallback,
+  AddPairingCallback,
+  Codes,
+  HAPHTTPCode,
+  HAPServer,
+  HAPServerEventTypes,
+  IdentifyCallback,
+  ListPairingsCallback,
+  PairCallback,
+  ReadCharacteristicsCallback,
+  RemovePairingCallback,
+  ResourceRequestCallback,
+  Status,
+  WriteCharacteristicsCallback
+} from './HAPServer';
+import { AccessoryInfo, PermissionTypes } from './model/AccessoryInfo';
 import { ControllerStorage } from "./model/ControllerStorage";
 import { IdentifierCache } from './model/IdentifierCache';
 import {
@@ -58,9 +67,9 @@ import {
   ServiceId
 } from './Service';
 import { clone } from './util/clone';
-import { HAPSession } from "./util/eventedhttp";
+import { HAPConnection, HAPUsername } from "./util/eventedhttp";
+import * as uuid from "./util/uuid";
 import { toShortForm } from "./util/uuid";
-import * as uuid from './util/uuid';
 
 const debug = createDebug('HAP-NodeJS:Accessory');
 const MAX_ACCESSORIES = 149; // Maximum number of bridged accessories per bridge.
@@ -157,6 +166,9 @@ type Events = {
  */
 export type EventAccessory = "identify" | "listening" | "service-configurationChange" | "service-characteristic-change";
 
+/**
+ * @deprecated
+ */
 export type CharacteristicEvents = Record<string, any>;
 
 export interface PublishInfo {
@@ -236,29 +248,11 @@ export type AccessoryCharacteristicChange = ServiceCharacteristicChange &  {
   service: Service;
 };
 
-export const enum ResourceTypes {
-  IMAGE = 'image',
-}
-
-export type Resource = {
-  'aid'?: number;
-  'image-height': number;
-  'image-width': number;
-  'resource-type': ResourceTypes;
-}
-
 const enum WriteRequestState {
   REGULAR_REQUEST,
   TIMED_WRITE_AUTHENTICATED,
   TIMED_WRITE_REJECTED
 }
-
-type IdentifyCallback = VoidCallback;
-type PairCallback = VoidCallback;
-type AddPairingCallback = PairingsCallback<void>;
-type RemovePairingCallback = PairingsCallback<void>;
-type ListPairingsCallback = PairingsCallback<PairingInformation[]>;
-type HandleAccessoriesCallback = NodeCallback<{ accessories: any[] }>;
 
 /**
  * Accessory is a virtual HomeKit device. It can publish an associated HAP server for iOS devices to communicate
@@ -329,12 +323,12 @@ export class Accessory extends EventEmitter<Events> {
       .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
         if (value) {
           const paired = true;
-          this._identificationRequest(paired, callback);
+          this.identificationRequest(paired, callback);
         }
       });
   }
 
-  private _identificationRequest(paired: boolean, callback: VoidCallback) {
+  private identificationRequest(paired: boolean, callback: IdentifyCallback) {
     debug("[%s] Identification request", this.displayName);
 
     if (this.listeners(AccessoryEventTypes.IDENTIFY).length > 0) {
@@ -409,14 +403,11 @@ export class Accessory extends EventEmitter<Events> {
 
     // listen for changes in characteristics and bubble them up
     service.on(ServiceEventTypes.CHARACTERISTIC_CHANGE, (change: ServiceCharacteristicChange) => {
-      this.emit(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, {
-        ...change,
-        service: service,
-      });
+      this.emit(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, { ...change, service: service });
 
       // if we're not bridged, when we'll want to process this event through our HAPServer
       if (!this.bridged) {
-        this._handleCharacteristicChange({ ...change, service: service, accessory: this });
+        this.handleCharacteristicChange({ ...change, service: service, accessory: this });
       }
     });
 
@@ -522,7 +513,7 @@ export class Accessory extends EventEmitter<Events> {
 
     // listen for changes in ANY characteristics of ANY services on this Accessory
     accessory.on(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, (change: AccessoryCharacteristicChange) => {
-      this._handleCharacteristicChange({ ...change, accessory: accessory });
+      this.handleCharacteristicChange({ ...change, accessory: accessory });
     });
 
     accessory.on(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, () => {
@@ -690,7 +681,7 @@ export class Accessory extends EventEmitter<Events> {
    *
    * @param controllerConstructor {Controller | ControllerConstructor}
    */
-  configureController(controllerConstructor: Controller | ControllerConstructor) {
+  configureController(controllerConstructor: Controller | ControllerConstructor) { // TODO add support to remove controllers
     const controller = typeof controllerConstructor === "function"
         ? new controllerConstructor() // any custom constructor arguments should be passed before using .bind(...)
         : controllerConstructor;
@@ -985,7 +976,8 @@ export class Accessory extends EventEmitter<Events> {
    *                                that for instance an appropriate icon can be drawn for the user while adding a
    *                                new Accessory.
    */
-  publish = (info: PublishInfo, allowInsecureRequest?: boolean) => {
+  public publish(info: PublishInfo, allowInsecureRequest?: boolean): void {
+    // noinspection JSDeprecatedSymbols
     if (info.mdns) {
       console.log("DEPRECATED user supplied a custom 'mdns' option. This option is deprecated and ignored. " +
         "Please move to the new 'bind' option.");
@@ -1097,16 +1089,16 @@ export class Accessory extends EventEmitter<Events> {
     // create our HAP server which handles all communication between iOS devices and us
     this._server = new HAPServer(this._accessoryInfo);
     this._server.allowInsecureRequest = !!allowInsecureRequest;
-    this._server.on(HAPServerEventTypes.LISTENING, this._onListening.bind(this));
-    this._server.on(HAPServerEventTypes.IDENTIFY, this._handleIdentify.bind(this));
-    this._server.on(HAPServerEventTypes.PAIR, this._handlePair.bind(this));
-    this._server.on(HAPServerEventTypes.ADD_PAIRING, this._handleAddPairing.bind(this));
-    this._server.on(HAPServerEventTypes.REMOVE_PAIRING, this._handleRemovePairing.bind(this));
-    this._server.on(HAPServerEventTypes.LIST_PAIRINGS, this._handleListPairings.bind(this));
-    this._server.on(HAPServerEventTypes.ACCESSORIES, this._handleAccessories.bind(this));
-    this._server.on(HAPServerEventTypes.GET_CHARACTERISTICS, this._handleGetCharacteristics.bind(this));
-    this._server.on(HAPServerEventTypes.SET_CHARACTERISTICS, this._handleSetCharacteristics.bind(this));
-    this._server.on(HAPServerEventTypes.SESSION_CLOSE, this._handleSessionClose.bind(this));
+    this._server.on(HAPServerEventTypes.LISTENING, this.onListening.bind(this));
+    this._server.on(HAPServerEventTypes.IDENTIFY, this.handleIdentify.bind(this));
+    this._server.on(HAPServerEventTypes.PAIR, this.handleInitialPairSetupFinished.bind(this));
+    this._server.on(HAPServerEventTypes.ADD_PAIRING, this.handleAddPairing.bind(this));
+    this._server.on(HAPServerEventTypes.REMOVE_PAIRING, this.handleRemovePairing.bind(this));
+    this._server.on(HAPServerEventTypes.LIST_PAIRINGS, this.handleListPairings.bind(this));
+    this._server.on(HAPServerEventTypes.ACCESSORIES, this.handleAccessories.bind(this));
+    this._server.on(HAPServerEventTypes.GET_CHARACTERISTICS, this.handleGetCharacteristics.bind(this));
+    this._server.on(HAPServerEventTypes.SET_CHARACTERISTICS, this.handleSetCharacteristics.bind(this));
+    this._server.on(HAPServerEventTypes.CONNECTION_CLOSED, this.handleHAPConnectionClosed.bind(this));
     this._server.on(HAPServerEventTypes.REQUEST_RESOURCE, this._handleResource.bind(this));
 
     this._server.listen(info.port, parsed.serverAddress);
@@ -1117,7 +1109,7 @@ export class Accessory extends EventEmitter<Events> {
    * Accessory object will no longer valid after invoking this method
    * Trying to invoke publish() on the object will result undefined behavior
    */
-  destroy = () => {
+  public destroy(): void {
     this.unpublish();
 
     if (this._accessoryInfo) {
@@ -1127,13 +1119,10 @@ export class Accessory extends EventEmitter<Events> {
       this._identifierCache = undefined;
       this.controllerStorage = new ControllerStorage(this);
     }
+    this.removeAllListeners();
   }
 
   unpublish = () => {
-    if (this.activeCameraController) {
-      this.activeCameraController.handleShutdown();
-    }
-
     if (this._server) {
       this._server.stop();
       this._server = undefined;
@@ -1168,7 +1157,7 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
-  _onListening = (port: number, hostname: string) => {
+  private onListening(port: number, hostname: string): void {
     assert(this._advertiser, "Advertiser wasn't created at onListening!");
     // the HAP server is listening, so we can now start advertising our presence.
     this._advertiser!.initPort(port);
@@ -1177,13 +1166,11 @@ export class Accessory extends EventEmitter<Events> {
     this.emit(AccessoryEventTypes.LISTENING, port, hostname);
   }
 
-  private _handleIdentify(callback: IdentifyCallback) {
-    this._identificationRequest(false, callback);
+  private handleIdentify(callback: IdentifyCallback) {
+    this.identificationRequest(false, callback);
   }
 
-// Called when HAPServer has completed the pairing process with a client
-  _handlePair = (username: string, publicKey: Buffer, callback: PairCallback) => {
-
+  private handleInitialPairSetupFinished(username: string, publicKey: Buffer, callback: PairCallback): void {
     debug("[%s] Paired with client %s", this.displayName, username);
 
     this._accessoryInfo && this._accessoryInfo.addPairedClient(username, publicKey, PermissionTypes.ADMIN);
@@ -1197,14 +1184,13 @@ export class Accessory extends EventEmitter<Events> {
     this.emit(AccessoryEventTypes.PAIRED);
   }
 
-// called when a controller adds an additional pairing
-  _handleAddPairing = (controller: HAPSession, username: string, publicKey: Buffer, permission: PermissionTypes, callback: AddPairingCallback) => {
+  private handleAddPairing(connection: HAPConnection, username: string, publicKey: Buffer, permission: PermissionTypes, callback: AddPairingCallback): void {
     if (!this._accessoryInfo) {
       callback(Codes.UNAVAILABLE);
       return;
     }
 
-    if (!this._accessoryInfo.hasAdminPermissions(controller.username!)) {
+    if (!this._accessoryInfo.hasAdminPermissions(connection.username!)) {
       callback(Codes.AUTHENTICATION);
       return;
     }
@@ -1226,18 +1212,18 @@ export class Accessory extends EventEmitter<Events> {
     callback(0);
   };
 
-  _handleRemovePairing = (controller: HAPSession, username: string, callback: RemovePairingCallback) => {
+  private handleRemovePairing(connection: HAPConnection, username: HAPUsername, callback: RemovePairingCallback): void {
     if (!this._accessoryInfo) {
       callback(Codes.UNAVAILABLE);
       return;
     }
 
-    if (!this._accessoryInfo.hasAdminPermissions(controller.username!)) {
+    if (!this._accessoryInfo.hasAdminPermissions(connection.username!)) {
       callback(Codes.AUTHENTICATION);
       return;
     }
 
-    this._accessoryInfo.removePairedClient(controller, username);
+    this._accessoryInfo.removePairedClient(connection, username);
     this._accessoryInfo.save();
 
     callback(0); // first of all ensure the pairing is removed before we advertise availability again
@@ -1253,13 +1239,13 @@ export class Accessory extends EventEmitter<Events> {
     }
   };
 
-  _handleListPairings = (controller: HAPSession, callback: ListPairingsCallback) => {
+  private handleListPairings(connection: HAPConnection, callback: ListPairingsCallback): void {
     if (!this._accessoryInfo) {
       callback(Codes.UNAVAILABLE);
       return;
     }
 
-    if (!this._accessoryInfo.hasAdminPermissions(controller.username!)) {
+    if (!this._accessoryInfo.hasAdminPermissions(connection.username!)) {
       callback(Codes.AUTHENTICATION);
       return;
     }
@@ -1267,18 +1253,18 @@ export class Accessory extends EventEmitter<Events> {
     callback(0, this._accessoryInfo.listPairings());
   };
 
-  private _handleAccessories(callback: HandleAccessoriesCallback): void {
+  private handleAccessories(callback: AccessoriesCallback): void {
 
     // make sure our aid/iid's are all assigned
     this._assignIDs(this._identifierCache!);
 
     // build out our JSON payload and call the callback
-    callback(null, {
-      accessories: this.toHAP() // array of Accessory HAP
+    callback({
+      accessories: this.toHAP(), // array of Accessory HAP
     });
   }
 
-  private _handleGetCharacteristics(request: CharacteristicsReadRequest, session: HAPSession, events: CharacteristicEvents, callback: (response: CharacteristicsReadResponse) => void): void {
+  private handleGetCharacteristics(connection: HAPConnection, request: CharacteristicsReadRequest, callback: ReadCharacteristicsCallback): void {
     const promises: Promise<CharacteristicsReadData>[] = [];
 
     for (const id of request.ids) {
@@ -1297,12 +1283,12 @@ export class Accessory extends EventEmitter<Events> {
 
       if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.READ)) {
         let verifiable = true;
-        if (!session || !session.username || !this._accessoryInfo) {
+        if (!connection.username || !this._accessoryInfo) {
           verifiable = false;
           debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for reading (aid of %s and iid of %s)', this.displayName, id.aid, id.iid)
         }
 
-        if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(session.username!)) {
+        if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(connection.username!)) {
 
           promises.push(Promise.resolve({
             aid: id.aid,
@@ -1313,16 +1299,8 @@ export class Accessory extends EventEmitter<Events> {
         }
       }
 
-      // Explanation for "events" parameter
-      // we want to remember "who" made this request, so that we don't send them an event notification
-      // about any changes that occurred as a result of the request. For instance, if after querying
-      // the current value of a characteristic, the value turns out to be different than the previously
-      // cached Characteristic value, an internal 'change' event will be emitted which will cause us to
-      // notify all connected clients about that new value. But this client is about to get the new value
-      // anyway, so we don't want to notify it twice.
-
       // TODO introduce a timeout on those values?
-      const promise = characteristic.handleGetRequest(session, events).then(value => {
+      const promise = characteristic.handleGetRequest(connection).then(value => {
         debug('[%s] Got Characteristic "%s" value: %s', this.displayName, characteristic!.displayName, value);
 
         const data: CharacteristicsReadData = {
@@ -1346,7 +1324,7 @@ export class Accessory extends EventEmitter<Events> {
           data.type = toShortForm(this.UUID, HomeKitTypes.BASE_UUID);
         }
         if (request.includeEvent) {
-          data.ev = events[id.aid + "." + id.iid];
+          data.ev = connection.hasEventNotifications(id.aid, id.iid);
         }
 
         return data;
@@ -1365,16 +1343,16 @@ export class Accessory extends EventEmitter<Events> {
     Promise.all(promises).then(value => callback({ characteristics: value }));
   }
 
-  private _handleSetCharacteristics(writeRequest: CharacteristicsWriteRequest, session: HAPSession, events: CharacteristicEvents, callback: (response: CharacteristicsWriteResponse) => void): void {
+  private handleSetCharacteristics(connection: HAPConnection, writeRequest: CharacteristicsWriteRequest, callback: WriteCharacteristicsCallback): void {
     debug("[%s] Processing characteristic set: %s", this.displayName, JSON.stringify(writeRequest));
 
     let writeState: WriteRequestState = WriteRequestState.REGULAR_REQUEST;
     if (writeRequest.pid !== undefined) { // check for timed writes
-      if (session.timedWritePid === writeRequest.pid) {
+      if (connection.timedWritePid === writeRequest.pid) {
         writeState = WriteRequestState.TIMED_WRITE_AUTHENTICATED;
-        clearTimeout(session.timedWriteTimeout!);
-        session.timedWritePid = undefined;
-        session.timedWriteTimeout = undefined;
+        clearTimeout(connection.timedWriteTimeout!);
+        connection.timedWritePid = undefined;
+        connection.timedWriteTimeout = undefined;
 
         debug("[%s] Timed write request got acknowledged for pid %d", this.displayName, writeRequest.pid);
       } else {
@@ -1435,12 +1413,12 @@ export class Accessory extends EventEmitter<Events> {
 
         if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.NOTIFY)) {
           let verifiable = true;
-          if (!session || !session.username || !this._accessoryInfo) {
+          if (!connection.username || !this._accessoryInfo) {
             verifiable = false;
             debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for notify (aid of %s and iid of %s)', this.displayName, data.aid, data.iid)
           }
 
-          if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(session.username!)) {
+          if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(connection.username!)) {
             characteristics.push({
               aid: data.aid,
               iid: data.iid,
@@ -1454,19 +1432,17 @@ export class Accessory extends EventEmitter<Events> {
           }
         }
 
-        debug('[%s] %s Characteristic "%s" for events', this.displayName, data.ev ? "Registering" : "Unregistering", characteristic.displayName);
+        debug('[%s] %s Characteristic "%s" for events', this.displayName, data.ev ? "Registering" : "Unregistering", characteristic.displayName); // TODO maybe remove this event message?
 
-        const eventName = data.aid + "." + data.iid;
-
-        if (data.ev && !events[eventName]) {
-          events[eventName] = true;
+        if (data.ev && !connection.hasEventNotifications(data.aid, data.iid)) {
+          connection.enableEventNotifications(data.aid, data.iid);
           characteristic.subscribe();
           evResponse = true;
         }
 
-        if (!data.ev && events[eventName]) {
+        if (!data.ev && connection.hasEventNotifications(data.aid, data.iid)) {
           characteristic.unsubscribe();
-          delete events[eventName];
+          connection.disableEventNotifications(data.aid, data.iid);
           evResponse = false;
         }
       }
@@ -1489,12 +1465,12 @@ export class Accessory extends EventEmitter<Events> {
 
         if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.WRITE)) {
           let verifiable = true;
-          if (!session || !session.username || !this._accessoryInfo) {
+          if (!connection.username || !this._accessoryInfo) {
             verifiable = false;
             debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for write (aid of %s and iid of %s)', this.displayName, data.aid, data.iid)
           }
 
-          if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(session.username!)) {
+          if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(connection.username!)) {
             characteristics.push({
               aid: data.aid,
               iid: data.iid,
@@ -1524,7 +1500,7 @@ export class Accessory extends EventEmitter<Events> {
 
         debug('[%s] Setting Characteristic "%s" to value %s', this.displayName, characteristic.displayName, data.value);
 
-        characteristic.handleSetRequest(data.value, session, events).then(value => {
+        characteristic.handleSetRequest(data.value, connection).then(value => {
           characteristics.push({
             aid: data.aid,
             iid: data.iid,
@@ -1565,8 +1541,8 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
-  _handleResource(data: Resource, callback: NodeCallback<Buffer>): void {
-    if (data["resource-type"] === ResourceTypes.IMAGE) {
+  private _handleResource(data: ResourceRequest, callback: ResourceRequestCallback): void {
+    if (data["resource-type"] === ResourceRequestType.IMAGE) {
       const aid = data.aid; // aid is optionally supplied by HomeKit (for example when camera is bridged, multiple cams, etc)
 
       let controller: CameraController | undefined = undefined;
@@ -1584,65 +1560,53 @@ export class Accessory extends EventEmitter<Events> {
       }
 
       if (!controller) {
-        callback(new Error("resource not found"));
+        debug("[%s] received snapshot request though no camera controller was associated!");
+        callback({ httpCode: HAPHTTPCode.NOT_FOUND, status: Status.RESOURCE_DOES_NOT_EXIST });
         return;
       }
 
-      controller.handleSnapshotRequest(data["image-height"], data["image-width"], callback);
+      controller.handleSnapshotRequest(data["image-height"], data["image-width"], (error, resource) => {
+        if (!resource || resource.length === 0) {
+          error = new Error("supplied resource was undefined/empty!");
+        }
+
+        if (error) {
+          debug("[%s] Error getting snapshot: %s", this._accessoryInfo?.username, error.message);
+          callback({ httpCode: HAPHTTPCode.OK, status: Status.SERVICE_COMMUNICATION_FAILURE });
+        } else {
+          callback(undefined, resource);
+        }
+      });
       return;
     }
 
-    callback(new Error('unsupported image type: ' + data["resource-type"]));
+    debug("[%s] received request for unsupported image type: " + data["resource-type"], this._accessoryInfo?.username);
+    callback({ httpCode: HAPHTTPCode.NOT_FOUND, status: Status.RESOURCE_DOES_NOT_EXIST});
   }
 
-  _handleSessionClose = (sessionID: SessionIdentifier, events: CharacteristicEvents) => {
+  private handleHAPConnectionClosed(connection: HAPConnection): void {
     if (this.activeCameraController) {
-      this.activeCameraController.handleCloseConnection(sessionID);
+      this.activeCameraController.handleCloseConnection(connection.sessionID);
     }
 
-    this._unsubscribeEvents(events);
-  }
+    for (const event of connection.getRegisteredEvents()) {
+      const ids = event.split(".");
+      const aid = parseInt(ids[0]);
+      const iid = parseInt(ids[1]);
 
-  _unsubscribeEvents = (events: CharacteristicEvents) => {
-    for (let key in events) {
-      if (key.indexOf('.') !== -1) {
-        try {
-          const id = key.split('.');
-          const aid = Number.parseInt(id[0]);
-          const iid = Number.parseInt(id[1]);
-
-          const characteristic = this.findCharacteristic(aid, iid);
-          if (characteristic) {
-            characteristic.unsubscribe();
-          }
-        } catch (e) {
-        }
+      const characteristic = this.findCharacteristic(aid, iid);
+      if (characteristic) {
+        characteristic.unsubscribe();
       }
     }
   }
 
 // Called internally above when a change was detected in one of our hosted Characteristics somewhere in our hierarchy.
-  _handleCharacteristicChange = (change: AccessoryCharacteristicChange & { accessory: Accessory }) => {
+  private handleCharacteristicChange(change: AccessoryCharacteristicChange & { accessory: Accessory }): void {
     if (!this._server)
       return; // we're not running a HAPServer, so there's no one to notify about this event
 
-    const data = {
-      characteristics: [{
-        aid: change.accessory.aid,
-        iid: change.characteristic.iid,
-        value: change.newValue
-      }]
-    };
-
-    // name for this event that corresponds to what we stored when the client signed up (in handleSetCharacteristics)
-    const eventName = change.accessory.aid + '.' + change.characteristic.iid;
-
-    // pull the events object associated with the original connection (if any) that initiated the change request,
-    // which we assigned in handleGetCharacteristics/handleSetCharacteristics.
-    const excludeEvents = change.context;
-
-    // pass it along to notifyClients() so that it can omit the connection where events === excludeEvents.
-    this._server.notifyClients(eventName, data, excludeEvents);
+    this._server.sendEventNotifications(change.accessory.aid!, change.characteristic.iid!, change.newValue, change.originator);
   }
 
   _setupService = (service: Service) => {
@@ -1655,12 +1619,12 @@ export class Accessory extends EventEmitter<Events> {
     });
 
     // listen for changes in characteristics and bubble them up
-    service.on(ServiceEventTypes.CHARACTERISTIC_CHANGE, (change: any) => {
+    service.on(ServiceEventTypes.CHARACTERISTIC_CHANGE, (change: ServiceCharacteristicChange) => {
       this.emit(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, clone(change, {service }));
 
       // if we're not bridged, when we'll want to process this event through our HAPServer
       if (!this.bridged)
-        this._handleCharacteristicChange(clone(change, {accessory:this, service }));
+        this.handleCharacteristicChange(clone(change, {accessory:this, service }));
 
     });
   }
@@ -1680,7 +1644,7 @@ export class Accessory extends EventEmitter<Events> {
       .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
         if (value) {
           const paired = true;
-          this._identificationRequest(paired, callback);
+          this.identificationRequest(paired, callback);
         }
       });
   }

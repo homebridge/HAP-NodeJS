@@ -1,11 +1,11 @@
 import createDebug from 'debug';
 import assert from 'assert';
+import { HAPConnection, HAPConnectionEvent } from "../util/eventedhttp";
 
 import * as hapCrypto from '../util/hapCrypto';
 import {DataStreamParser, DataStreamReader, DataStreamWriter, Int64} from './DataStreamParser';
 import crypto from 'crypto';
 import net, {Socket} from 'net';
-import {HAPSessionEvents, HAPSession} from "../util/eventedhttp";
 import {EventEmitter as NodeEventEmitter} from "events";
 import {EventEmitter} from "../EventEmitter";
 import Timeout = NodeJS.Timeout;
@@ -14,7 +14,7 @@ const debug = createDebug('HAP-NodeJS:DataStream:Server');
 
 export type PreparedDataStreamSession = {
 
-    session: HAPSession, // reference to the hap session which created the request
+    connection: HAPConnection, // reference to the hap session which created the request
 
     accessoryToControllerEncryptionKey: Buffer,
     controllerToAccessoryEncryptionKey: Buffer,
@@ -143,7 +143,7 @@ export type DataStreamServerEventMap = {
  * @event 'connection-closed': (connection: DataStreamConnection) => void
  *        This event is emitted when the socket of a connection gets closed.
  */
-export class DataStreamServer extends EventEmitter<DataStreamServerEventMap> {
+export class DataStreamServer extends EventEmitter<DataStreamServerEventMap> { // TODO removeAllEvent handlers on closing
 
     static readonly version = "1.0";
 
@@ -218,16 +218,16 @@ export class DataStreamServer extends EventEmitter<DataStreamServerEventMap> {
         return this;
     }
 
-    prepareSession(session: HAPSession, controllerKeySalt: Buffer, callback: (preparedSession: PreparedDataStreamSession) => void) {
-        debug("Preparing for incoming HDS connection from session %s", session.sessionID);
+    prepareSession(connection: HAPConnection, controllerKeySalt: Buffer, callback: (preparedSession: PreparedDataStreamSession) => void) {
+        debug("Preparing for incoming HDS connection from %s", connection.sessionID);
         const accessoryKeySalt = crypto.randomBytes(32);
         const salt = Buffer.concat([controllerKeySalt, accessoryKeySalt]);
 
-        const accessoryToControllerEncryptionKey = hapCrypto.HKDF("sha512", salt, session.encryption!.sharedSec, DataStreamServer.accessoryToControllerInfo, 32);
-        const controllerToAccessoryEncryptionKey = hapCrypto.HKDF("sha512", salt, session.encryption!.sharedSec, DataStreamServer.controllerToAccessoryInfo, 32);
+        const accessoryToControllerEncryptionKey = hapCrypto.HKDF("sha512", salt, connection.encryption!.sharedSec, DataStreamServer.accessoryToControllerInfo, 32);
+        const controllerToAccessoryEncryptionKey = hapCrypto.HKDF("sha512", salt, connection.encryption!.sharedSec, DataStreamServer.controllerToAccessoryInfo, 32);
 
         const preparedSession: PreparedDataStreamSession = {
-            session: session,
+            connection: connection,
             accessoryToControllerEncryptionKey: accessoryToControllerEncryptionKey,
             controllerToAccessoryEncryptionKey: controllerToAccessoryEncryptionKey,
             accessoryKeySalt: accessoryKeySalt,
@@ -239,7 +239,7 @@ export class DataStreamServer extends EventEmitter<DataStreamServerEventMap> {
     }
 
     private timeoutPreparedSession(preparedSession: PreparedDataStreamSession) {
-        debug("Prepared HDS session timed out out since no connection was opened for 10 seconds (%s)", preparedSession.session.sessionID);
+        debug("Prepared HDS session timed out out since no connection was opened for 10 seconds (%s)", preparedSession.connection.sessionID);
         const index = this.preparedSessions.indexOf(preparedSession);
         if (index >= 0) {
             this.preparedSessions.splice(index, 1);
@@ -318,7 +318,7 @@ export class DataStreamServer extends EventEmitter<DataStreamServerEventMap> {
         callback(identifiedSession);
 
         if (identifiedSession) {
-            debug("[%s] Connection was successfully identified (linked with sessionId: %s)", connection._remoteAddress, identifiedSession.session.sessionID);
+            debug("[%s] Connection was successfully identified (linked with sessionId: %s)", connection.remoteAddress, identifiedSession.connection.sessionID);
             const index = this.preparedSessions.indexOf(identifiedSession);
             if (index >= 0) {
                 this.preparedSessions.splice(index, 1);
@@ -329,9 +329,9 @@ export class DataStreamServer extends EventEmitter<DataStreamServerEventMap> {
 
             // we have currently no experience with data stream connections, maybe it would be good to index active connections
             // by their hap sessionId in order to clear out old but still open connections when the controller opens a new one
-            // on the other han the keepAlive should handle that also :thinking:
+            // on the other hand the keepAlive should handle that also :thinking:
         } else { // we looped through all session and didn't find anything
-            debug("[%s] Could not identify connection. Terminating.", connection._remoteAddress);
+            debug("[%s] Could not identify connection. Terminating.", connection.remoteAddress);
             connection.close(); // disconnecting since first message was not a valid hello
         }
     }
@@ -354,17 +354,17 @@ export class DataStreamServer extends EventEmitter<DataStreamServerEventMap> {
             hadListeners = this.internalEventEmitter.emit(message.protocol + separator + message.topic, connection, ...args);
         } catch (error) {
             hadListeners = true;
-            debug("[%s] Error occurred while dispatching handler for HDS message: %o", connection._remoteAddress, message);
+            debug("[%s] Error occurred while dispatching handler for HDS message: %o", connection.remoteAddress, message);
             debug(error.stack);
         }
 
         if (!hadListeners) {
-            debug("[%s] WARNING no handler was found for message: %o", connection._remoteAddress, message);
+            debug("[%s] WARNING no handler was found for message: %o", connection.remoteAddress, message);
         }
     }
 
     private connectionClosed(connection: DataStreamConnection) {
-        debug("[%s] DataStream connection closed", connection._remoteAddress);
+        debug("[%s] DataStream connection closed", connection.remoteAddress);
 
         this.connections.splice(this.connections.indexOf(connection), 1);
         this.emit(DataStreamServerEvents.CONNECTION_CLOSED, connection);
@@ -426,13 +426,13 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
     private static readonly MAX_PAYLOAD_LENGTH = 0b11111111111111111111;
 
     private socket: Socket;
-    private session?: HAPSession; // reference to the hap session. is present when state > UNIDENTIFIED
-    readonly _remoteAddress: string;
+    private connection?: HAPConnection; // reference to the hap connection. is present when state > UNIDENTIFIED
+    readonly remoteAddress: string;
     /*
         Since our DataStream server does only listen on one port and this port is supplied to every client
         which wants to connect, we do not really know which client is who when we receive a tcp connection.
         Thus, we find the correct PreparedDataStreamSession object by testing the encryption keys of all available
-        prepared sessions. Then we can reference this connection with the correct session and mark it as identified.
+        prepared sessions. Then we can reference this hds connection with the correct hap connection and mark it as identified.
      */
     private state: ConnectionState = ConnectionState.UNIDENTIFIED;
 
@@ -456,7 +456,7 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
     constructor(socket: Socket) {
         super();
         this.socket = socket;
-        this._remoteAddress = socket.remoteAddress!;
+        this.remoteAddress = socket.remoteAddress!;
 
         this.socket.setNoDelay(true); // disable Nagle algorithm
         this.socket.setKeepAlive(true);
@@ -473,7 +473,7 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
         });
 
         this.helloTimer = setTimeout(() => {
-            debug("[%s] Hello message did not arrive in time. Killing the connection", this._remoteAddress);
+            debug("[%s] Hello message did not arrive in time. Killing the connection", this.remoteAddress);
             this.close();
         }, 10000);
 
@@ -484,7 +484,7 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
 
     private handleHello(id: number, _message: Record<any, any>) {
         // that hello is indeed the _first_ message received is verified in onSocketData(...)
-        debug("[%s] Received hello message from client", this._remoteAddress);
+        debug("[%s] Received hello message from client", this.remoteAddress);
 
         clearTimeout(this.helloTimer!);
         this.helloTimer = undefined;
@@ -612,25 +612,26 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
             const firstFrame = frames[frameIndex++];
             this.emit(DataStreamConnectionEvents.IDENTIFICATION, firstFrame, (identifiedSession?: PreparedDataStreamSession) => {
                if (identifiedSession) {
-                   // horray, we found our session
-                   this.session = identifiedSession.session;
+                   // horray, we found our connection
+                   this.connection = identifiedSession.connection;
                    this.accessoryToControllerEncryptionKey = identifiedSession.accessoryToControllerEncryptionKey;
                    this.controllerToAccessoryEncryptionKey = identifiedSession.controllerToAccessoryEncryptionKey;
                    this.state = ConnectionState.EXPECTING_HELLO;
 
-                   this.session.on(HAPSessionEvents.CLOSED, this.onHAPSessionClosed.bind(this)); // register close listener
+                   // TODO unregister event again
+                   this.connection.on(HAPConnectionEvent.CLOSED, this.onHAPSessionClosed.bind(this)); // register close listener
                }
             });
 
             if (this.state === ConnectionState.UNIDENTIFIED) {
-                // did not find a prepared session, server already closed this connection; nothing to do here
+                // did not find a prepared connection, server already closed this connection; nothing to do here
                 return;
             }
         }
 
         for (; frameIndex < frames.length; frameIndex++) { // decrypt all remaining frames
             if (!this.decryptHDSFrame(frames[frameIndex])) {
-                debug("[%s] HDS frame decryption or authentication failed. Connection will be terminated!", this._remoteAddress);
+                debug("[%s] HDS frame decryption or authentication failed. Connection will be terminated!", this.remoteAddress);
                 this.close();
                 return;
             }
@@ -643,7 +644,7 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
 
             if (firstMessage.protocol !== Protocols.CONTROL || firstMessage.type !== MessageType.REQUEST || firstMessage.topic !== Topics.HELLO) {
                 // first message is not the expected hello request
-                debug("[%s] First message received was not the expected hello message. Instead got: %o", this._remoteAddress, firstMessage);
+                debug("[%s] First message received was not the expected hello message. Instead got: %o", this.remoteAddress, firstMessage);
                 this.close();
                 return;
             }
@@ -670,7 +671,7 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
                 try {
                     responseHandler(undefined, message.status!, message.message);
                 } catch (error) {
-                    debug("[%s] Error occurred while dispatching response handler for HDS message: %o", this._remoteAddress, message);
+                    debug("[%s] Error occurred while dispatching response handler for HDS message: %o", this.remoteAddress, message);
                     debug(error.stack);
                 }
                 delete this.responseHandlers[message.id!];
@@ -685,31 +686,31 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
                 if (message.type === MessageType.EVENT) {
                     let eventHandler: EventHandler;
                     if (!handler.eventHandler || !(eventHandler = handler.eventHandler[message.topic])) {
-                        debug("[%s] WARNING no event handler was found for message: %o", this._remoteAddress, message);
+                        debug("[%s] WARNING no event handler was found for message: %o", this.remoteAddress, message);
                         return;
                     }
 
                     try {
                         eventHandler(message.message);
                     } catch (error) {
-                        debug("[%s] Error occurred while dispatching event handler for HDS message: %o", this._remoteAddress, message);
+                        debug("[%s] Error occurred while dispatching event handler for HDS message: %o", this.remoteAddress, message);
                         debug(error.stack);
                     }
                 } else if (message.type === MessageType.REQUEST) {
                     let requestHandler: RequestHandler;
                     if (!handler.requestHandler || !(requestHandler = handler.requestHandler[message.topic])) {
-                        debug("[%s] WARNING no request handler was found for message: %o", this._remoteAddress, message);
+                        debug("[%s] WARNING no request handler was found for message: %o", this.remoteAddress, message);
                         return;
                     }
 
                     try {
                         requestHandler(message.id!, message.message);
                     } catch (error) {
-                        debug("[%s] Error occurred while dispatching request handler for HDS message: %o", this._remoteAddress, message);
+                        debug("[%s] Error occurred while dispatching request handler for HDS message: %o", this.remoteAddress, message);
                         debug(error.stack);
                     }
                 } else {
-                    debug("[%s] Encountered unknown message type with id %d", this._remoteAddress, message.type);
+                    debug("[%s] Encountered unknown message type with id %d", this.remoteAddress, message.type);
                 }
             }
         })
@@ -735,7 +736,7 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
             const payloadLength = data.readUIntBE(frameBegin + 1, 3); // read 24-bit big-endian uint length field
 
             if (payloadLength > DataStreamConnection.MAX_PAYLOAD_LENGTH) {
-                debug("[%s] Connection send payload with size bigger than the maximum allow for data stream", this._remoteAddress);
+                debug("[%s] Connection send payload with size bigger than the maximum allow for data stream", this.remoteAddress);
                 this.close();
                 return [];
             }
@@ -766,7 +767,7 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
                 };
                 frames.push(hdsFrame);
             } else {
-                debug("[%s] Encountered unknown payload type %d for payload: %s", this._remoteAddress, plaintextPayload.toString('hex'));
+                debug("[%s] Encountered unknown payload type %d for payload: %s", this.remoteAddress, plaintextPayload.toString('hex'));
             }
         }
 
@@ -812,7 +813,7 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
                 headerDictionary = DataStreamParser.decode(headerPayload);
                 headerPayload.finished();
             } catch (error) {
-                debug("[%s] Failed to decode header payload: %s", this._remoteAddress, error.message);
+                debug("[%s] Failed to decode header payload: %s", this.remoteAddress, error.message);
                 return;
             }
 
@@ -820,7 +821,7 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
                 messageDictionary = DataStreamParser.decode(messagePayload);
                 messagePayload.finished();
             } catch (error) {
-                debug("[%s] Failed to decode message payload: %s (header: %o)", this._remoteAddress, error.message, headerDictionary);
+                debug("[%s] Failed to decode message payload: %s (header: %o)", this.remoteAddress, error.message, headerDictionary);
                 return;
             }
 
@@ -843,7 +844,7 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
                 id = headerDictionary["id"];
                 status = headerDictionary["status"];
             } else {
-                debug("[%s] Encountered unknown payload header format: %o (message: %o)", this._remoteAddress, headerDictionary, messageDictionary);
+                debug("[%s] Encountered unknown payload header format: %o (message: %o)", this.remoteAddress, headerDictionary, messageDictionary);
                 return;
             }
 
@@ -916,13 +917,13 @@ export class DataStreamConnection extends EventEmitter<DataStreamConnectionEvent
     }
 
     private onHAPSessionClosed() {
-        // If the hap session is closed it is probably also a good idea to close the data stream session
-        debug("[%s] HAP session disconnected. Also closing DataStream connection now.", this._remoteAddress);
+        // If the hap connection is closed it is probably also a good idea to close the data stream connection
+        debug("[%s] HAP connection disconnected. Also closing DataStream connection now.", this.remoteAddress);
         this.close();
     }
 
     private onSocketError(error: Error) {
-        debug("[%s] Encountered socket error: %s", this._remoteAddress, error.message);
+        debug("[%s] Encountered socket error: %s", this.remoteAddress, error.message);
         // onSocketClose will be called next
     }
 

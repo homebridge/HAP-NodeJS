@@ -355,15 +355,9 @@ export class CameraController extends EventEmitter<CameraControllerEventMap> imp
     }
 
     handleCloseConnection(sessionID: SessionIdentifier): void {
-        this.streamManagements.forEach(management => management.handleCloseConnection(sessionID));
-
         if (this.delegate instanceof LegacyCameraSourceAdapter) {
             this.delegate.forwardCloseConnection(sessionID);
         }
-    }
-
-    handleShutdown(): void {
-        this.streamManagements.forEach(management => management.handleShutdown());
     }
 
 }
