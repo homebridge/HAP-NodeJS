@@ -117,7 +117,6 @@ describe('Characteristic', () => {
       const characteristic = createCharacteristic(Formats.BOOL);
       characteristic.eventOnlyCharacteristic = true;
 
-      // @ts-expect-error
       characteristic.handleGetRequest().then(() => {
         expect(characteristic.status).toEqual(Status.SUCCESS);
         expect(characteristic.value).toEqual(null);
@@ -127,7 +126,6 @@ describe('Characteristic', () => {
     it('should return cached values if no listeners are registered', () => {
       const characteristic = createCharacteristic(Formats.BOOL);
 
-      // @ts-expect-error
       characteristic.handleGetRequest().then(() => {
         expect(characteristic.status).toEqual(Status.SUCCESS);
         expect(characteristic.value).toEqual(null);
@@ -288,10 +286,8 @@ describe('Characteristic', () => {
 
       const listenerCallback = jest.fn();
 
-      // @ts-expect-error
       characteristic.handleGetRequest();
       characteristic.on(CharacteristicEventTypes.GET, listenerCallback);
-      // @ts-expect-error
       characteristic.handleGetRequest();
 
       expect(listenerCallback).toHaveBeenCalledTimes(1);
