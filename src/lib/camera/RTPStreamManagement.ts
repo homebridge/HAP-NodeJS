@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import createDebug from 'debug';
 import net from "net";
 // noinspection JSDeprecatedSymbols
-import { CharacteristicEvents, LegacyCameraSource, LegacyCameraSourceAdapter, once, uuid } from "../../index";
+import { LegacyCameraSource, LegacyCameraSourceAdapter, once, uuid } from "../../index";
 import { CharacteristicValue, Nullable, SessionIdentifier } from '../../types';
 import {
   Characteristic,
@@ -14,7 +14,7 @@ import { CameraController, CameraStreamingDelegate } from "../controller";
 import { CameraRTPStreamManagement } from "../gen/HomeKit";
 import { Status } from "../HAPServer";
 import { Service } from '../Service';
-import { HAPSession } from "../util/eventedhttp";
+import { HAPConnection, HAPConnectionEvent } from "../util/eventedhttp";
 import * as tlv from '../util/tlv';
 import RTPProxy from './RTPProxy';
 
@@ -483,7 +483,12 @@ export class RTPStreamManagement {
   readonly supportedVideoStreamConfiguration: string;
   readonly supportedAudioStreamConfiguration: string;
 
+  /**
+   * @deprecated
+   */
   connectionID?: SessionIdentifier;
+  private activeConnection?: HAPConnection;
+  private activeConnectionClosedListener?: () => void;
   sessionIdentifier?: StreamSessionIdentifier = undefined;
   streamStatus: StreamingStatus = StreamingStatus.AVAILABLE; // use _updateStreamStatus to update this property
   private ipVersion?: "ipv4" | "ipv6"; // ip version for the current session
@@ -530,18 +535,13 @@ export class RTPStreamManagement {
     return this.service;
   }
 
-  // Private
-
+  /**
+   * @deprecated
+   */
   handleCloseConnection(connectionID: SessionIdentifier): void {
-    if (this.connectionID && this.connectionID === connectionID) {
-      this._handleStopStream();
-    }
-  }
-
-  handleShutdown(): void {
-    if (this.connectionID) {
-      this._handleStopStream();
-    }
+    // This method is only here for legacy compatibility. It used to be called by legacy style CameraSource
+    // implementations to signal that the associated HAP connection was closed.
+    // This is now handled automatically. Thus we don't need to do anything anymore.
   }
 
   handleFactoryReset() {
@@ -575,8 +575,8 @@ export class RTPStreamManagement {
         .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
           callback(null, this.setupEndpointsResponse);
         })
-        .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context: CharacteristicEvents, session: HAPSession) => {
-          this.handleSetupEndpoints(value, callback, session);
+        .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context: any, connection: HAPConnection) => {
+          this.handleSetupEndpoints(value, callback, connection);
         });
   }
 
@@ -590,8 +590,15 @@ export class RTPStreamManagement {
         SetupEndpointsResponseTypes.STATUS, SetupEndpointsStatus.ERROR,
     ).toString("base64");
 
+    if (this.activeConnectionClosedListener && this.activeConnection) {
+      this.activeConnection.removeListener(HAPConnectionEvent.CLOSED, this.activeConnectionClosedListener);
+      this.activeConnectionClosedListener = undefined;
+    }
+
     this._updateStreamStatus(StreamingStatus.AVAILABLE);
     this.sessionIdentifier = undefined;
+    this.activeConnection = undefined;
+    // noinspection JSDeprecatedSymbols
     this.connectionID = undefined;
     this.ipVersion = undefined;
 
@@ -851,7 +858,7 @@ export class RTPStreamManagement {
     this.delegate.handleStreamRequest(request, error => callback? callback(error): undefined);
   }
 
-  private handleSetupEndpoints(value: CharacteristicValue, callback: CharacteristicSetCallback, session: HAPSession): void {
+  private handleSetupEndpoints(value: CharacteristicValue, callback: CharacteristicSetCallback, connection: HAPConnection): void {
     const data = Buffer.from(value as string, 'base64');
     const objects = tlv.decode(data);
 
@@ -866,7 +873,11 @@ export class RTPStreamManagement {
       return;
     }
 
-    this.connectionID = session.sessionID;
+    this.activeConnection = connection;
+    this.activeConnection.on(HAPConnectionEvent.CLOSED, (this.activeConnectionClosedListener = this._handleStopStream.bind(this)));
+
+    // noinspection JSDeprecatedSymbols
+    this.connectionID = connection.sessionID;
     this.sessionIdentifier = sessionIdentifier;
     this._updateStreamStatus(StreamingStatus.IN_USE);
 
@@ -930,7 +941,7 @@ export class RTPStreamManagement {
     const promises: Promise<void>[] = [];
 
     if (this.requireProxy) {
-      prepareRequest.targetAddress = session.getLocalAddress(addressVersion === IPAddressVersion.IPV6? "ipv6": "ipv4"); // ip versions must be the same
+      prepareRequest.targetAddress = connection.getLocalAddress(addressVersion === IPAddressVersion.IPV6? "ipv6": "ipv4"); // ip versions must be the same
 
       this.videoProxy = new RTPProxy({
         outgoingAddress: controllerAddress,
@@ -971,13 +982,13 @@ export class RTPStreamManagement {
           this.handleSessionClosed();
           callback(error);
         } else {
-          this.generateSetupEndpointResponse(session, sessionIdentifier, prepareRequest, response, callback);
+          this.generateSetupEndpointResponse(connection, sessionIdentifier, prepareRequest, response, callback);
         }
       }));
     });
   }
 
-  private generateSetupEndpointResponse(session: HAPSession, identifier: StreamSessionIdentifier, request: PrepareStreamRequest, response: PrepareStreamResponse, callback: CharacteristicSetCallback): void {
+  private generateSetupEndpointResponse(connection: HAPConnection, identifier: StreamSessionIdentifier, request: PrepareStreamRequest, response: PrepareStreamResponse, callback: CharacteristicSetCallback): void {
     let address: string;
     let addressVersion = request.addressVersion;
 
@@ -1014,7 +1025,7 @@ export class RTPStreamManagement {
         addressVersion = net.isIPv4(response.addressOverride)? "ipv4": "ipv6";
         address = response.addressOverride;
       } else {
-        address = session.getLocalAddress(addressVersion);
+        address = connection.getLocalAddress(addressVersion);
       }
 
       if (request.addressVersion !== addressVersion) {
@@ -1048,7 +1059,7 @@ export class RTPStreamManagement {
     } else {
       const videoInfo = response.video as ProxiedSourceResponse;
 
-      address = session.getLocalAddress(request.addressVersion);
+      address = connection.getLocalAddress(request.addressVersion);
 
 
       videoCryptoSuite = SRTPCryptoSuites.NONE;

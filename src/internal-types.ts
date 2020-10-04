@@ -99,6 +99,17 @@ export type PrepareWriteRequest = {
   pid: number
 }
 
+export const enum ResourceRequestType {
+  IMAGE = "image",
+}
+
+export interface ResourceRequest {
+  aid?: number;
+  "image-height": number;
+  "image-width": number;
+  "resource-type": ResourceRequestType;
+}
+
 export function consideredTrue(input: string | null): boolean {
   if (!input) {
     return false;

@@ -1,7 +1,7 @@
 import assert from 'assert';
 import createDebug from 'debug';
 import { CharacteristicValue } from "../../types";
-import { Accessory, CharacteristicEvents } from "../Accessory";
+import { Accessory } from "../Accessory";
 import {
     Characteristic,
     CharacteristicEventTypes,
@@ -28,7 +28,7 @@ import { DataStreamTransportManagement } from "../gen/HomeKit-DataStream";
 import { AudioStreamManagement, Siri, TargetControl, TargetControlManagement } from "../gen/HomeKit-Remote";
 import { Status } from "../HAPServer";
 import { Service } from "../Service";
-import { HAPSession, HAPSessionEvents } from "../util/eventedhttp";
+import { HAPConnection, HAPConnectionEvent } from "../util/eventedhttp";
 import * as tlv from '../util/tlv';
 import { ControllerServiceMap, DefaultControllerType, SerializableController, StateChangeDelegate } from "./Controller";
 import Timeout = NodeJS.Timeout;
@@ -359,8 +359,8 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
     private lastButtonEvent: string = "";
 
     activeIdentifier: number = 0; // id of 0 means no device selected
-    private activeSession?: HAPSession; // session which marked this remote as active and listens for events and siri
-    private activeSessionDisconnectionListener?: () => void;
+    private activeConnection?: HAPConnection; // session which marked this remote as active and listens for events and siri
+    private activeConnectionDisconnectListener?: () => void;
 
     supportedAudioConfiguration: string;
     selectedAudioConfiguration: AudioCodecConfiguration;
@@ -384,7 +384,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
      * @param producerOptions - if supplied this argument will be supplied as third argument of the SiriAudioStreamProducer
      *                          constructor. This should be used to supply configurations to the stream producer.
      */
-    constructor(audioProducerConstructor?: SiriAudioStreamProducerConstructor, producerOptions?: any) {
+    public constructor(audioProducerConstructor?: SiriAudioStreamProducerConstructor, producerOptions?: any) {
         super();
         this.audioSupported = audioProducerConstructor !== undefined;
         this.audioProducerConstructor = audioProducerConstructor;
@@ -394,7 +394,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         this.supportedConfiguration = this.buildTargetControlSupportedConfigurationTLV(configuration);
 
         const audioConfiguration: SupportedAudioStreamConfiguration = this.constructSupportedAudioConfiguration();
-        this.supportedAudioConfiguration = this.buildSupportedAudioConfigurationTLV(audioConfiguration);
+        this.supportedAudioConfiguration = RemoteController.buildSupportedAudioConfigurationTLV(audioConfiguration);
 
         this.selectedAudioConfiguration = { // set the required defaults
             codecType: AudioCodecTypes.OPUS,
@@ -405,7 +405,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
                 rtpTime: 20,
             }
         };
-        this.selectedAudioConfigurationString = this.buildSelectedAudioConfigurationTLV({
+        this.selectedAudioConfigurationString = RemoteController.buildSelectedAudioConfigurationTLV({
             audioCodecConfiguration: this.selectedAudioConfiguration,
         });
     }
@@ -415,7 +415,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
      *
      * @param activeIdentifier {number} - target identifier
      */
-    setActiveIdentifier = (activeIdentifier: number) => {
+    public setActiveIdentifier(activeIdentifier: number): void {
         if (activeIdentifier === this.activeIdentifier) {
             return;
         }
@@ -439,8 +439,8 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
     /**
      * @returns if the current target is active, meaning the active device is listening for button events or audio sessions
      */
-    isActive = () => {
-        return !!this.activeSession;
+    public isActive(): boolean {
+        return !!this.activeConnection;
     };
 
     /**
@@ -448,7 +448,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
      *
      * @param targetIdentifier {number}
      */
-    isConfigured = (targetIdentifier: number) => {
+    public isConfigured(targetIdentifier: number): boolean {
         return this.targetConfigurations[targetIdentifier] !== undefined;
     };
 
@@ -458,7 +458,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
      * @param name {string} - the name of the device
      * @returns the targetIdentifier of the device or undefined if not existent
      */
-    getTargetIdentifierByName = (name: string) => {
+    public getTargetIdentifierByName(name: string): number | undefined {
         for (const activeIdentifier in this.targetConfigurations) {
             const configuration = this.targetConfigurations[activeIdentifier];
             if (configuration.targetName === name) {
@@ -473,7 +473,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
      *
      * @param button {ButtonType} - button to be pressed
      */
-    pushButton = (button: ButtonType) => {
+    public pushButton(button: ButtonType): void {
         this.sendButtonEvent(button, ButtonState.DOWN);
     };
 
@@ -482,7 +482,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
      *
      * @param button {ButtonType} - button which was released
      */
-    releaseButton = (button: ButtonType) => {
+    public releaseButton(button: ButtonType): void {
         this.sendButtonEvent(button, ButtonState.UP);
     };
 
@@ -492,7 +492,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
      * @param button {ButtonType} - button to be pressed and released
      * @param time {number} - time in milliseconds (defaults to 200ms)
      */
-    pushAndReleaseButton = (button: ButtonType, time: number = 200) => {
+    public pushAndReleaseButton(button: ButtonType, time: number = 200): void {
         this.pushButton(button);
         setTimeout(() => this.releaseButton(button), time);
     };
@@ -503,14 +503,14 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
      * @param accessory {Accessory} - the give accessory this remote should be added to
      * @deprecated - use {@link Accessory.configureController} instead
      */
-    addServicesToAccessory = (accessory: Accessory) => {
+    addServicesToAccessory(accessory: Accessory): void {
         accessory.configureController(this);
     };
 
     // ---------------------------------- CONFIGURATION ----------------------------------
     // override methods if you would like to change anything (but should not be necessary most likely)
 
-    constructSupportedConfiguration = () => {
+    protected constructSupportedConfiguration(): SupportedConfiguration {
         const configuration: SupportedConfiguration = {
             maximumTargets: 10, // some random number. (ten should be okay?)
             ticksPerSecond: 1000, // we rely on unix timestamps
@@ -539,7 +539,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         return configuration;
     };
 
-    constructSupportedAudioConfiguration = (): SupportedAudioStreamConfiguration => {
+    protected constructSupportedAudioConfiguration(): SupportedAudioStreamConfiguration {
         // the following parameters are expected from HomeKit for a remote
         return {
             audioCodecConfiguration: {
@@ -555,7 +555,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
 
     // --------------------------------- TARGET CONTROL ----------------------------------
 
-    private handleTargetControlWrite = (value: any, callback: CharacteristicSetCallback) => {
+    private handleTargetControlWrite(value: any, callback: CharacteristicSetCallback): void {
         const data = Buffer.from(value, 'base64');
         const objects = tlv.decode(data);
 
@@ -602,7 +602,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         }
     };
 
-    private handleAddTarget = (targetConfiguration?: TargetConfiguration): Status => {
+    private handleAddTarget(targetConfiguration?: TargetConfiguration): Status {
         if (!targetConfiguration) {
             return Status.INVALID_VALUE_IN_REQUEST;
         }
@@ -617,7 +617,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         return Status.SUCCESS;
     };
 
-    private handleUpdateTarget = (targetConfiguration?: TargetConfiguration): Status => {
+    private handleUpdateTarget(targetConfiguration?: TargetConfiguration): Status {
         if (!targetConfiguration) {
             return Status.INVALID_VALUE_IN_REQUEST;
         }
@@ -661,7 +661,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         return Status.SUCCESS;
     };
 
-    private handleRemoveTarget = (targetConfiguration?: TargetConfiguration): Status => {
+    private handleRemoveTarget(targetConfiguration?: TargetConfiguration): Status {
         if (!targetConfiguration) {
             return Status.INVALID_VALUE_IN_REQUEST;
         }
@@ -693,7 +693,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         return Status.SUCCESS;
     };
 
-    private handleResetTargets = (targetConfiguration?: TargetConfiguration): Status => {
+    private handleResetTargets(targetConfiguration?: TargetConfiguration): Status {
         if (targetConfiguration) {
             return Status.INVALID_VALUE_IN_REQUEST;
         }
@@ -708,7 +708,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         return Status.SUCCESS;
     };
 
-    private handleListTargets = (targetConfiguration?: TargetConfiguration): Status => {
+    private handleListTargets(targetConfiguration?: TargetConfiguration): Status {
         if (targetConfiguration) {
             return Status.INVALID_VALUE_IN_REQUEST;
         }
@@ -718,23 +718,23 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         return Status.SUCCESS;
     };
 
-    private handleActiveWrite(value: CharacteristicValue, callback: CharacteristicSetCallback, session: HAPSession): void {
+    private handleActiveWrite(value: CharacteristicValue, callback: CharacteristicSetCallback, connection: HAPConnection): void {
         if (this.activeIdentifier === 0) {
             debug("Tried to change active state. There is no active target set though");
             callback(Status.INVALID_VALUE_IN_REQUEST);
             return;
         }
 
-        if (this.activeSession) {
-            this.activeSession.removeListener(HAPSessionEvents.CLOSED, this.activeSessionDisconnectionListener!);
-            this.activeSession = undefined;
-            this.activeSessionDisconnectionListener = undefined;
+        if (this.activeConnection) {
+            this.activeConnection.removeListener(HAPConnectionEvent.CLOSED, this.activeConnectionDisconnectListener!);
+            this.activeConnection = undefined;
+            this.activeConnectionDisconnectListener = undefined;
         }
 
-        this.activeSession = value? session: undefined;
-        if (this.activeSession) { // register listener when hap session disconnects
-            this.activeSessionDisconnectionListener = this.handleActiveSessionDisconnected.bind(this, this.activeSession);
-            this.activeSession.on(HAPSessionEvents.CLOSED, this.activeSessionDisconnectionListener);
+        this.activeConnection = value? connection: undefined;
+        if (this.activeConnection) { // register listener when hap connection disconnects
+            this.activeConnectionDisconnectListener = this.handleActiveSessionDisconnected.bind(this, this.activeConnection);
+            this.activeConnection.on(HAPConnectionEvent.CLOSED, this.activeConnectionDisconnectListener);
         }
 
         const activeName = this.targetConfigurations[this.activeIdentifier].targetName;
@@ -745,14 +745,14 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         this.emit(RemoteControllerEvents.ACTIVE_CHANGE, value as boolean);
     };
 
-    private setInactive = () => {
-        if (this.activeSession === undefined) {
+    private setInactive(): void {
+        if (this.activeConnection === undefined) {
             return;
         }
 
-        this.activeSession.removeListener(HAPSessionEvents.CLOSED, this.activeSessionDisconnectionListener!);
-        this.activeSession = undefined;
-        this.activeSessionDisconnectionListener = undefined;
+        this.activeConnection.removeListener(HAPConnectionEvent.CLOSED, this.activeConnectionDisconnectListener!);
+        this.activeConnection = undefined;
+        this.activeConnectionDisconnectListener = undefined;
 
         this.targetControlService!.getCharacteristic(Characteristic.Active)!.updateValue(false);
         debug("Remote was set to INACTIVE");
@@ -760,8 +760,8 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         setTimeout(() => this.emit(RemoteControllerEvents.ACTIVE_CHANGE, false), 0);
     };
 
-    private handleActiveSessionDisconnected = (session: HAPSession) => {
-        if (session !== this.activeSession) {
+    private handleActiveSessionDisconnected(connection: HAPConnection): void {
+        if (connection !== this.activeConnection) {
             return;
         }
 
@@ -769,7 +769,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         this.setInactive();
     };
 
-    private sendButtonEvent = (button: ButtonType, buttonState: ButtonState) => {
+    private sendButtonEvent(button: ButtonType, buttonState: ButtonState) {
         const buttonID = this.buttons[button];
         if (buttonID === undefined || buttonID === 0) {
             throw new Error("Tried sending button event for unsupported button (" + button + ")");
@@ -816,7 +816,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         this.targetControlService!.getCharacteristic(Characteristic.ButtonEvent)!.updateValue(this.lastButtonEvent);
     };
 
-    private parseTargetConfigurationTLV = (data: Buffer): TargetConfiguration => {
+    private parseTargetConfigurationTLV(data: Buffer): TargetConfiguration {
         const configTLV = tlv.decode(data);
 
         const identifier = tlv.readUInt32(configTLV[TargetConfigurationTypes.TARGET_IDENTIFIER]);
@@ -860,7 +860,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         };
     };
 
-    private updatedTargetConfiguration = () => {
+    private updatedTargetConfiguration(): void {
         const bufferList = [];
         for (const key in this.targetConfigurations) {
             // noinspection JSUnfilteredForInLoop
@@ -912,7 +912,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         this.stateChangeDelegate && this.stateChangeDelegate();
     };
 
-    private buildTargetControlSupportedConfigurationTLV = (configuration: SupportedConfiguration) => {
+    private buildTargetControlSupportedConfigurationTLV(configuration: SupportedConfiguration): string {
         const maximumTargets = tlv.encode(
             TargetControlCommands.MAXIMUM_TARGETS, configuration.maximumTargets
         );
@@ -942,7 +942,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
 
     // --------------------------------- SIRI/DATA STREAM --------------------------------
 
-    private handleTargetControlWhoAmI = (connection: DataStreamConnection, message: Record<any, any>) => {
+    private handleTargetControlWhoAmI(connection: DataStreamConnection, message: Record<any, any>): void {
         const targetIdentifier = message["identifier"];
         this.dataStreamConnections[targetIdentifier] = connection;
         debug("Discovered HDS connection for targetIdentifier %s", targetIdentifier);
@@ -950,7 +950,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         connection.addProtocolHandler(Protocols.DATA_SEND, this);
     };
 
-    private handleSiriAudioStart = () => {
+    private handleSiriAudioStart(): void {
         if (!this.audioSupported) {
             throw new Error("Cannot start siri stream on remote where siri is not supported");
         }
@@ -986,7 +986,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         audioSession.start();
     };
 
-    private handleSiriAudioStop = () => {
+    private handleSiriAudioStop(): void {
         if (this.activeAudioSession) {
             if (!this.activeAudioSession.isClosing()) {
                 this.activeAudioSession.stop();
@@ -1000,7 +1000,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         debug("handleSiriAudioStop called although no audio session was started");
     };
 
-    private handleDataSendAckEvent = (message: Record<any, any>) => { // transfer was successful
+    private handleDataSendAckEvent(message: Record<any, any>): void { // transfer was successful
         const streamId = message["streamId"];
         const endOfStream = message["endOfStream"];
 
@@ -1013,7 +1013,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         }
     };
 
-    private handleDataSendCloseEvent = (message: Record<any, any>) => { // controller indicates he can't handle audio request currently
+    private handleDataSendCloseEvent(message: Record<any, any>): void { // controller indicates he can't handle audio request currently
         const streamId = message["streamId"];
         const reason = message["reason"] as DataSendCloseReason;
 
@@ -1026,7 +1026,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         }
     };
 
-    private handleSiriAudioSessionClosed = (session: SiriAudioSession) => {
+    private handleSiriAudioSessionClosed(session: SiriAudioSession): void {
         if (session === this.activeAudioSession) {
             this.activeAudioSession = this.nextAudioSession;
             this.nextAudioSession = undefined;
@@ -1035,7 +1035,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         }
     };
 
-    private handleDataStreamConnectionClosed = (connection: DataStreamConnection) => {
+    private handleDataStreamConnectionClosed(connection: DataStreamConnection): void {
         for (const targetIdentifier in this.dataStreamConnections) {
             const connection0 = this.dataStreamConnections[targetIdentifier];
             if (connection === connection0) {
@@ -1048,7 +1048,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
 
     // ------------------------------- AUDIO CONFIGURATION -------------------------------
 
-    private handleSelectedAudioConfigurationWrite = (value: any, callback: CharacteristicSetCallback) => {
+    private handleSelectedAudioConfigurationWrite(value: any, callback: CharacteristicSetCallback): void {
         const data = Buffer.from(value, 'base64');
         const objects = tlv.decode(data);
 
@@ -1072,15 +1072,15 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
                 rtpTime: 20
             }
         };
-        this.selectedAudioConfigurationString = this.buildSelectedAudioConfigurationTLV({
+        this.selectedAudioConfigurationString = RemoteController.buildSelectedAudioConfigurationTLV({
             audioCodecConfiguration: this.selectedAudioConfiguration,
         });
 
         callback();
     };
 
-    private buildSupportedAudioConfigurationTLV = (configuration: SupportedAudioStreamConfiguration) => {
-        const codecConfigurationTLV = this.buildCodecConfigurationTLV(configuration.audioCodecConfiguration);
+    private static buildSupportedAudioConfigurationTLV(configuration: SupportedAudioStreamConfiguration): string {
+        const codecConfigurationTLV = RemoteController.buildCodecConfigurationTLV(configuration.audioCodecConfiguration);
 
         const supportedAudioStreamConfiguration = tlv.encode(
             SupportedAudioStreamConfigurationTypes.AUDIO_CODEC_CONFIGURATION, codecConfigurationTLV
@@ -1088,8 +1088,8 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         return supportedAudioStreamConfiguration.toString('base64');
     };
 
-    private buildSelectedAudioConfigurationTLV = (configuration: SelectedAudioStreamConfiguration) => {
-        const codecConfigurationTLV = this.buildCodecConfigurationTLV(configuration.audioCodecConfiguration);
+    private static buildSelectedAudioConfigurationTLV(configuration: SelectedAudioStreamConfiguration): string {
+        const codecConfigurationTLV = RemoteController.buildCodecConfigurationTLV(configuration.audioCodecConfiguration);
 
         const supportedAudioStreamConfiguration = tlv.encode(
             SelectedAudioInputStreamConfigurationTypes.SELECTED_AUDIO_INPUT_STREAM_CONFIGURATION, codecConfigurationTLV,
@@ -1097,7 +1097,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
         return supportedAudioStreamConfiguration.toString('base64');
     };
 
-    private buildCodecConfigurationTLV = (codecConfiguration: AudioCodecConfiguration) => {
+    private static buildCodecConfigurationTLV(codecConfiguration: AudioCodecConfiguration): Buffer {
         const parameters = codecConfiguration.parameters;
 
         let parametersTLV = tlv.encode(
@@ -1175,9 +1175,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
             .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
                 callback(null, this.targetConfigurationsString);
             })
-            .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-                this.handleTargetControlWrite(value, callback);
-            });
+            .on(CharacteristicEventTypes.SET, this.handleTargetControlWrite.bind(this));
 
         this.targetControlService.getCharacteristic(Characteristic.ActiveIdentifier)!
             .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
@@ -1187,8 +1185,8 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
             .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
                 callback(undefined, this.isActive());
             })
-            .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context: CharacteristicEvents, session: HAPSession) => {
-                this.handleActiveWrite(value, callback, session);
+            .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context: any, connection: HAPConnection) => {
+                this.handleActiveWrite(value, callback, connection);
             });
         this.targetControlService.getCharacteristic(Characteristic.ButtonEvent)!
             .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
@@ -1200,9 +1198,7 @@ export class RemoteController extends EventEmitter<RemoteControllerEventMap>
                 .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
                     callback(null, this.selectedAudioConfigurationString);
                 })
-                .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-                    this.handleSelectedAudioConfigurationWrite(value, callback);
-                })
+                .on(CharacteristicEventTypes.SET, this.handleSelectedAudioConfigurationWrite.bind(this))
                 .updateValue(this.selectedAudioConfigurationString);
 
             this.dataStreamManagement!
@@ -1430,7 +1426,7 @@ export class SiriAudioSession extends EventEmitter<SiriAudioSessionEventMap> {
         }
     };
 
-    private handleProducerError = (error: DataSendCloseReason) => { // called from audio producer
+    private handleProducerError(error: DataSendCloseReason): void { // called from audio producer
         if (this.state >= SiriAudioSessionState.CLOSING) {
             return;
         }
@@ -1441,7 +1437,7 @@ export class SiriAudioSession extends EventEmitter<SiriAudioSessionEventMap> {
         }
     };
 
-    handleDataSendAckEvent = (endOfStream: boolean) => { // transfer was successful
+    handleDataSendAckEvent(endOfStream: boolean): void { // transfer was successful
         assert.strictEqual(endOfStream, true);
 
         debug("Received acknowledgment for siri audio stream with streamId %s, closing it now", this.streamId);
@@ -1449,7 +1445,7 @@ export class SiriAudioSession extends EventEmitter<SiriAudioSessionEventMap> {
         this.sendDataSendCloseEvent(DataSendCloseReason.NORMAL);
     };
 
-    handleDataSendCloseEvent = (reason: DataSendCloseReason) => { // controller indicates he can't handle audio request currently
+    handleDataSendCloseEvent(reason: DataSendCloseReason): void { // controller indicates he can't handle audio request currently
         debug("Received close event from controller with reason %s for stream with streamId %s", DataSendCloseReason[reason], this.streamId);
         if (this.state <= SiriAudioSessionState.SENDING) {
             this.stopAudioProducer();
@@ -1458,7 +1454,7 @@ export class SiriAudioSession extends EventEmitter<SiriAudioSessionEventMap> {
         this.closed();
     };
 
-    private sendDataSendCloseEvent = (reason: DataSendCloseReason) => {
+    private sendDataSendCloseEvent(reason: DataSendCloseReason): void {
         assert(this.state >= SiriAudioSessionState.SENDING, "state was less than SENDING");
         assert(this.state <= SiriAudioSessionState.CLOSING, "state was higher than CLOSING");
 
@@ -1470,7 +1466,7 @@ export class SiriAudioSession extends EventEmitter<SiriAudioSessionEventMap> {
         this.closed();
     };
 
-    private handleDataStreamConnectionClosed = () => {
+    private handleDataStreamConnectionClosed(): void {
         debug("Closing audio session with streamId %d", this.streamId);
 
         if (this.state <= SiriAudioSessionState.SENDING) {
@@ -1480,7 +1476,7 @@ export class SiriAudioSession extends EventEmitter<SiriAudioSessionEventMap> {
         this.closed();
     };
 
-    private closed = () => {
+    private closed(): void {
         const lastState = this.state;
         this.state = SiriAudioSessionState.CLOSED;
 

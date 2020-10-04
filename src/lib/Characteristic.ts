@@ -1,19 +1,11 @@
 import Decimal from 'decimal.js';
 import { EventEmitter } from "events";
-import {
-  CharacteristicValue,
-  HapCharacteristic,
-  Nullable,
-  SessionIdentifier,
-  ToHAPOptions,
-  VoidCallback,
-} from '../types';
-import { CharacteristicEvents } from "./Accessory";
+import { CharacteristicValue, HapCharacteristic, Nullable, ToHAPOptions, VoidCallback, } from '../types';
 import * as HomeKitTypes from './gen';
 import { Status } from "./HAPServer";
 import { IdentifierCache } from './model/IdentifierCache';
 import { clone } from "./util/clone";
-import { HAPSession } from "./util/eventedhttp";
+import { HAPConnection } from "./util/eventedhttp";
 import { once } from './util/once';
 import { toShortForm } from './util/uuid';
 
@@ -83,9 +75,10 @@ export const enum Access {
 }
 
 export type CharacteristicChange = {
+  originator?: HAPConnection,
   newValue: Nullable<CharacteristicValue>;
   oldValue: Nullable<CharacteristicValue>;
-  context?: CharacteristicEvents;
+  context?: any;
 };
 
 export interface SerializedCharacteristic {
@@ -109,14 +102,14 @@ export type CharacteristicSetCallback = (error?: Status | null | Error, writeRes
 
 export declare interface Characteristic {
 
-  on(event: "get", listener: (callback: CharacteristicGetCallback, context: CharacteristicEvents, session: HAPSession) => void): this;
-  on(event: "set", listener: (value: CharacteristicValue, callback: CharacteristicSetCallback, context: CharacteristicEvents, session: HAPSession) => void): this
+  on(event: "get", listener: (callback: CharacteristicGetCallback, context: any, connection?: HAPConnection) => void): this;
+  on(event: "set", listener: (value: CharacteristicValue, callback: CharacteristicSetCallback, context: any, connection: HAPConnection) => void): this
   on(event: "change", listener: (change: CharacteristicChange) => void): this;
   on(event: "subscribe", listener: VoidCallback): this;
   on(event: "unsubscribe", listener: VoidCallback): this;
 
-  emit(event: "get", callback: CharacteristicGetCallback, context: CharacteristicEvents, session: HAPSession): boolean;
-  emit(event: "set", value: CharacteristicValue, callback: CharacteristicSetCallback, context: CharacteristicEvents, session: HAPSession): boolean;
+  emit(event: "get", callback: CharacteristicGetCallback, context: any, connection?: HAPConnection): boolean;
+  emit(event: "set", value: CharacteristicValue, callback: CharacteristicSetCallback, context: any, connection: HAPConnection): boolean;
   emit(event: "change", change: CharacteristicChange): boolean;
   emit(event: "subscribe"): boolean;
   emit(event: "unsubscribe"): boolean;
@@ -406,7 +399,7 @@ export class Characteristic extends EventEmitter {
   props: CharacteristicProps;
   private subscriptions: number = 0;
 
-  constructor(public displayName: string, public UUID: string, props?: CharacteristicProps) {
+  public constructor(public displayName: string, public UUID: string, props?: CharacteristicProps) {
     super();
     // @ts-ignore
     this.props = props || {
@@ -440,7 +433,7 @@ export class Characteristic extends EventEmitter {
    *   valid-values-range: <array of two numbers for start and end range> (Optional)
    * }
    */
-  setProps = (props: Partial<CharacteristicProps>) => {
+  public setProps(props: Partial<CharacteristicProps>): Characteristic {
     for (let key in (props || {}))
       if (Object.prototype.hasOwnProperty.call(props, key)) {
         // @ts-ignore
@@ -485,18 +478,12 @@ export class Characteristic extends EventEmitter {
    *
    * @param callback
    * @param context
-   * @param sessionId
    * @internal use to return the current value on HAP requests
    *
    * @deprecated
    */
-  getValue(callback?: CharacteristicGetCallback, context?: CharacteristicEvents, sessionId?: SessionIdentifier): void {
-    let session: HAPSession | undefined = undefined;
-    if (sessionId) {
-      session = HAPSession.getSession(sessionId)
-    }
-
-    this.handleGetRequest(session!, context!).then(value => {
+  getValue(callback?: CharacteristicGetCallback, context?: any): void {
+    this.handleGetRequest(undefined, context).then(value => {
       if (callback) {
         callback(null, value);
       }
@@ -507,11 +494,11 @@ export class Characteristic extends EventEmitter {
     });
   }
 
-  setValue(newValue: Nullable<CharacteristicValue>, callback?: () => void, context?: CharacteristicEvents): Characteristic {
+  setValue(newValue: Nullable<CharacteristicValue>, callback?: () => void, context?: any): Characteristic {
     return this.updateValue(newValue, callback, context)
   }
 
-  updateValue(value: Nullable<CharacteristicValue>, callback?: () => void, context?: CharacteristicEvents): Characteristic {
+  updateValue(value: Nullable<CharacteristicValue>, callback?: () => void, context?: any): Characteristic {
     this.status = Status.SUCCESS;
     value = this.validateValue(value); //validateValue returns a value that has be coerced into a valid value.
 
@@ -527,7 +514,7 @@ export class Characteristic extends EventEmitter {
     }
 
     if (this.eventOnlyCharacteristic || oldValue !== value) {
-      this.emit(CharacteristicEventTypes.CHANGE, { oldValue: oldValue, newValue: value, context: context });
+      this.emit(CharacteristicEventTypes.CHANGE, { originator: undefined, oldValue: oldValue, newValue: value, context: context });
     }
 
     return this; // for chaining
@@ -536,11 +523,11 @@ export class Characteristic extends EventEmitter {
   /**
    * Called when a HAP requests wants to know the current value of the characteristic.
    *
-   * @param session - The HAP session from which the request originated from
-   * @param context - events context
+   * @param connection - The HAP connection from which the request originated from.
+   * @param context - Deprecated parameter. There for backwards compatibility.
    * @internal Used by the Accessory to load the characteristic value
    */
-  handleGetRequest(session: HAPSession, context: CharacteristicEvents): Promise<Nullable<CharacteristicValue>> {
+  handleGetRequest(connection?: HAPConnection, context?: any): Promise<Nullable<CharacteristicValue>> {
     if (!this.props.perms.includes(Perms.PAIRED_READ)) { // check if we are allowed to read from this characteristic
       return Promise.reject(Status.WRITE_ONLY_CHARACTERISTIC);
     }
@@ -574,9 +561,9 @@ export class Characteristic extends EventEmitter {
         resolve(value);
 
         if (oldValue !== value) { // emit a change event if necessary
-          this.emit(CharacteristicEventTypes.CHANGE, { oldValue: oldValue, newValue: value, context: context });
+          this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
         }
-      }), context, session);
+      }), context, connection);
     });
   }
 
@@ -584,14 +571,13 @@ export class Characteristic extends EventEmitter {
    * Called when a HAP requests update the current value of the characteristic.
    *
    * @param value - The update value
-   * @param session - The session from which the request originated from
-   * @param context
+   * @param connection - The connection from which the request originated from
    * @returns Promise resolve to void in normal operation. When characteristic supports write response, the
    *  HAP request requests write response and the set handler returns a write response value, the respective
    *  write response value is resolved.
    * @internal
    */
-  handleSetRequest(value: CharacteristicValue, session: HAPSession, context: CharacteristicEvents): Promise<CharacteristicValue | void> {
+  handleSetRequest(value: CharacteristicValue, connection: HAPConnection): Promise<CharacteristicValue | void> {
     this.status = Status.SUCCESS;
 
     // TODO return proper error code if incoming value is not valid!
@@ -604,7 +590,7 @@ export class Characteristic extends EventEmitter {
         const change: CharacteristicChange = {
           oldValue: oldValue as CharacteristicValue,
           newValue: value as CharacteristicValue,
-          context: context,
+          context: undefined,
         }
         this.emit(CharacteristicEventTypes.CHANGE, change);
       }
@@ -630,9 +616,9 @@ export class Characteristic extends EventEmitter {
           }
 
           if (this.eventOnlyCharacteristic || oldValue !== value) {
-            this.emit(CharacteristicEventTypes.CHANGE, { oldValue: oldValue, newValue: value, context: context });
+            this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value });
           }
-        }), context, session);
+        }), undefined, connection);
       });
     }
   }

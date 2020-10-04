@@ -1,6 +1,5 @@
 import createDebug from "debug";
 import { CharacteristicValue } from "../../types";
-import { CharacteristicEvents } from "../Accessory";
 import {
     Characteristic,
     CharacteristicEventTypes,
@@ -11,7 +10,7 @@ import { Event } from "../EventEmitter";
 import { DataStreamTransportManagement } from "../gen/HomeKit-DataStream";
 import { Status } from "../HAPServer";
 import { Service } from "../Service";
-import { HAPSession } from "../util/eventedhttp";
+import { HAPConnection } from "../util/eventedhttp";
 import * as tlv from '../util/tlv';
 import {
     DataStreamServer,
@@ -151,7 +150,7 @@ export class DataStreamManagement {
         return this;
     }
 
-    private handleSetupDataStreamTransportWrite(value: any, callback: CharacteristicSetCallback, session: HAPSession) {
+    private handleSetupDataStreamTransportWrite(value: any, callback: CharacteristicSetCallback, connection: HAPConnection) {
         const data = Buffer.from(value, 'base64');
         const objects = tlv.decode(data);
 
@@ -167,7 +166,7 @@ export class DataStreamManagement {
                 return;
             }
 
-            this.dataStreamServer.prepareSession(session, controllerKeySalt, preparedSession => {
+            this.dataStreamServer.prepareSession(connection, controllerKeySalt, preparedSession => {
                 const listeningPort = tlv.encode(TransportSessionConfiguration.TCP_LISTENING_PORT, tlv.writeUInt16(preparedSession.port!));
 
                 let response: Buffer = Buffer.concat([
@@ -214,8 +213,8 @@ export class DataStreamManagement {
             .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
                 callback(null, this.lastSetupDataStreamTransportResponse);
             })
-            .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context: CharacteristicEvents, session: HAPSession) => {
-                this.handleSetupDataStreamTransportWrite(value, callback, session);
+            .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context: any, connection: HAPConnection) => {
+                this.handleSetupDataStreamTransportWrite(value, callback, connection);
             })
             .updateValue(this.lastSetupDataStreamTransportResponse);
     }
