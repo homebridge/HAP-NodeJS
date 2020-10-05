@@ -1,6 +1,6 @@
 import { Formats, Perms, Units } from "./lib/Characteristic";
 import { Status } from "./lib/HAPServer";
-import { CharacteristicValue } from "./types";
+import { CharacteristicValue, Nullable } from "./types";
 
 export interface CharacteristicId {
   aid: number,
@@ -108,6 +108,16 @@ export interface ResourceRequest {
   "image-height": number;
   "image-width": number;
   "resource-type": ResourceRequestType;
+}
+
+export interface EventNotification {
+  characteristics: CharacteristicEventNotification[],
+}
+
+export interface CharacteristicEventNotification {
+  aid: number,
+  iid: number,
+  value: Nullable<CharacteristicValue>,
 }
 
 export function consideredTrue(input: string | null): boolean {

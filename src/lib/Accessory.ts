@@ -38,7 +38,15 @@ import {
 } from "./controller";
 import { EventEmitter } from './EventEmitter';
 import * as HomeKitTypes from "./gen";
-import { CameraEventRecordingManagement, CameraOperatingMode, CameraRTPStreamManagement, } from "./gen/HomeKit";
+import {
+  CameraEventRecordingManagement,
+  CameraOperatingMode,
+  CameraRTPStreamManagement,
+  ContactSensorState,
+  MotionDetected,
+  ProgrammableSwitchEvent,
+} from "./gen/HomeKit";
+import { ButtonEvent } from "./gen/HomeKit-Remote";
 import {
   AccessoriesCallback,
   AddPairingCallback,
@@ -1599,14 +1607,20 @@ export class Accessory extends EventEmitter<Events> {
         characteristic.unsubscribe();
       }
     }
+    connection.clearRegisteredEvents();
   }
 
 // Called internally above when a change was detected in one of our hosted Characteristics somewhere in our hierarchy.
   private handleCharacteristicChange(change: AccessoryCharacteristicChange & { accessory: Accessory }): void {
-    if (!this._server)
+    if (!this._server) {
       return; // we're not running a HAPServer, so there's no one to notify about this event
+    }
 
-    this._server.sendEventNotifications(change.accessory.aid!, change.characteristic.iid!, change.newValue, change.originator);
+    const uuid = change.characteristic.UUID;
+    const immediateDelivery = uuid === ButtonEvent.UUID || uuid === ProgrammableSwitchEvent.UUID
+      || uuid === MotionDetected.UUID || uuid === ContactSensorState.UUID;
+
+    this._server.sendEventNotifications(change.accessory.aid!, change.characteristic.iid!, change.newValue, change.originator, immediateDelivery);
   }
 
   _setupService = (service: Service) => {
