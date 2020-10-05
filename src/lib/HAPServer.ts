@@ -90,7 +90,7 @@ export const enum Codes {
   BUSY = 0x07 // cannot accept pairing request at this time
 }
 
-export const enum Status {
+export const enum Status { // TODO rename before we spread adoption
   // noinspection JSUnusedGlobalSymbols
   SUCCESS = 0,
   INSUFFICIENT_PRIVILEGES = -70401,

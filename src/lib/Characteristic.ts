@@ -1,3 +1,4 @@
+import createDebug from "debug";
 import Decimal from 'decimal.js';
 import { EventEmitter } from "events";
 import { CharacteristicValue, HapCharacteristic, Nullable, ToHAPOptions, VoidCallback, } from '../types';
@@ -8,6 +9,8 @@ import { clone } from "./util/clone";
 import { HAPConnection } from "./util/eventedhttp";
 import { once } from './util/once';
 import { toShortForm } from './util/uuid';
+
+const debug = createDebug("HAP-NodeJS:Characteristic");
 
 export const enum Formats {
   BOOL = 'bool',
@@ -90,7 +93,19 @@ export interface SerializedCharacteristic {
 }
 
 export const enum CharacteristicEventTypes {
+  /**
+   * This event is thrown when a HomeKit controller wants to read the current value of the characteristic.
+   * The event handler should call the supplied callback as fast as possible.
+   *
+   * HAP-NodeJS will complain about slow running get handlers after 3 seconds and terminate the request after 10 seconds.
+   */
   GET = "get",
+  /**
+   * This event is thrown when a HomeKit controller wants to write a new value to the characteristic.
+   * The event handler should call the supplied callback as fast as possible.
+   *
+   * HAP-NodeJS will complain about slow running set handlers after 3 seconds and terminate the request after 10 seconds.
+   */
   SET = "set",
   CHANGE = "change",
   SUBSCRIBE = "subscribe",
@@ -397,7 +412,6 @@ export class Characteristic extends EventEmitter {
   iid: Nullable<number> = null;
   value: Nullable<CharacteristicValue> = null;
   status: Status = Status.SUCCESS;
-  eventOnlyCharacteristic: boolean = false;
   props: CharacteristicProps;
 
   private subscriptions: number = 0;
@@ -523,9 +537,7 @@ export class Characteristic extends EventEmitter {
       callback();
     }
 
-    if (this.eventOnlyCharacteristic || oldValue !== value) {
-      this.emit(CharacteristicEventTypes.CHANGE, { originator: undefined, oldValue: oldValue, newValue: value, context: context });
-    }
+    this.emit(CharacteristicEventTypes.CHANGE, { originator: undefined, oldValue: oldValue, newValue: value, context: context });
 
     return this; // for chaining
   }
@@ -542,38 +554,50 @@ export class Characteristic extends EventEmitter {
       return Promise.reject(Status.WRITE_ONLY_CHARACTERISTIC);
     }
 
-    // TODO remove this thing (maybe? doorbell people should setup event handler with null returned?)
-    if (this.eventOnlyCharacteristic) {
+    if (this.UUID === Characteristic.ProgrammableSwitchEvent.UUID) {
+      // special workaround for event only programmable switch event, which must always return null
       return Promise.resolve(null);
     }
+
     if (this.listeners(CharacteristicEventTypes.GET).length === 0) {
       return this.status? Promise.reject(this.status): Promise.resolve(this.value);
     }
 
     return new Promise((resolve, reject) => {
-      this.emit(CharacteristicEventTypes.GET, once((status?: Error | Status | null, value?: Nullable<CharacteristicValue>) => {
-        if (status) {
-          this.status = typeof status === "number"? status: extractHAPStatusFromError(status);
-          reject(this.status);
-          return;
-        }
+      try {
+        this.emit(CharacteristicEventTypes.GET, once((status?: Error | Status | null, value?: Nullable<CharacteristicValue>) => {
+          if (status) {
+            if (typeof status === "number") {
+              this.status = status;
+            } else {
+              this.status = extractHAPStatusFromError(status);
+              debug("[%s] Received error from get handler %s", this.displayName, status.stack);
+            }
+            reject(this.status);
+            return;
+          }
 
-        this.status = Status.SUCCESS;
+          this.status = Status.SUCCESS;
 
-        value = this.validateValue(value); // validateValue returns a value that has be coerced into a valid value.
-        if (value == null) { // null or undefined
-          value = this.getDefaultValue();
-        }
+          value = this.validateValue(value); // validateValue returns a value that has be coerced into a valid value.
+          if (value == null) { // null or undefined
+            value = this.getDefaultValue();
+          }
 
-        const oldValue = this.value;
-        this.value = value;
+          const oldValue = this.value;
+          this.value = value;
 
-        resolve(value);
+          resolve(value);
 
-        if (oldValue !== value) { // emit a change event if necessary
-          this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
-        }
-      }), context, connection);
+          if (oldValue !== value) { // emit a change event if necessary
+            this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
+          }
+        }), context, connection);
+      } catch (error) {
+        console.warn(`[${this.displayName}] Unhandled error thrown inside read handler for characteristic: ${error.stack}`);
+        this.status = Status.SERVICE_COMMUNICATION_FAILURE;
+        reject(Status.SERVICE_COMMUNICATION_FAILURE);
+      }
     });
   }
 
@@ -588,47 +612,56 @@ export class Characteristic extends EventEmitter {
    * @internal
    */
   handleSetRequest(value: CharacteristicValue, connection: HAPConnection): Promise<CharacteristicValue | void> {
+    if (!this.props.perms.includes(Perms.PAIRED_WRITE)) { // check if we are allowed to write to this characteristic
+      return Promise.reject(Status.READ_ONLY_CHARACTERISTIC);
+    }
+
     this.status = Status.SUCCESS;
 
-    // TODO return proper error code if incoming value is not valid!
+    // TODO return proper hap status code if incoming value is not valid!
     value = this.validateValue(value)!; // validateValue returns a value that has be coerced into a valid value.
     const oldValue = this.value;
 
     if (this.listeners(CharacteristicEventTypes.SET).length === 0) {
       this.value = value;
-      if (this.eventOnlyCharacteristic || oldValue !== value) {
-        const change: CharacteristicChange = {
-          oldValue: oldValue as CharacteristicValue,
-          newValue: value as CharacteristicValue,
-          context: undefined,
-        }
-        this.emit(CharacteristicEventTypes.CHANGE, change);
-      }
+      this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value });
       return Promise.resolve();
     } else {
       return new Promise((resolve, reject) => {
-        this.emit(CharacteristicEventTypes.SET, value, once((status?: Error | Status | null, writeResponse?: Nullable<CharacteristicValue>) => {
-          if (status) {
-            this.status = typeof status === "number"? status: extractHAPStatusFromError(status);
-            reject(this.status);
-            return;
-          }
+        try {
+          this.emit(CharacteristicEventTypes.SET, value, once((status?: Error | Status | null, writeResponse?: Nullable<CharacteristicValue>) => {
+            if (status) {
+              if (typeof status === "number") {
+                this.status = status;
+              } else {
+                this.status = extractHAPStatusFromError(status);
+                debug("[%s] Received error from set handler %s", this.displayName, status.stack);
+              }
+              reject(this.status);
+              return;
+            }
 
-          this.status = Status.SUCCESS;
+            this.status = Status.SUCCESS;
 
-          if (writeResponse != null && this.props.perms.includes(Perms.WRITE_RESPONSE)) {
-            // support write response simply by letting the implementor pass the response as second argument to the callback
-            this.value = writeResponse;
-            resolve(writeResponse);
-          } else {
-            this.value = value;
-            resolve();
-          }
+            if (writeResponse != null && this.props.perms.includes(Perms.WRITE_RESPONSE)) {
+              // support write response simply by letting the implementor pass the response as second argument to the callback
+              this.value = writeResponse;
+              resolve(writeResponse);
+            } else {
+              if (writeResponse != null) {
+                console.warn(`[${this.displayName}] SET handler returned write response value, though the characteristic doesn't support write response!`);
+              }
+              this.value = value;
+              resolve();
+            }
 
-          if (this.eventOnlyCharacteristic || oldValue !== value) {
             this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value });
-          }
-        }), undefined, connection);
+          }), undefined, connection);
+        } catch (error) {
+          console.warn(`[${this.displayName}] Unhandled error thrown inside write handler for characteristic: ${error.stack}`);
+          this.status = Status.SERVICE_COMMUNICATION_FAILURE;
+          reject(Status.SERVICE_COMMUNICATION_FAILURE);
+        }
       });
     }
   }
@@ -835,8 +868,8 @@ export class Characteristic extends EventEmitter {
         }
       }
     }
-    if (this.eventOnlyCharacteristic) {
-      // @ts-ignore
+    if (this.UUID === Characteristic.ProgrammableSwitchEvent.UUID) {
+      // special workaround for event only programmable switch event, which must always return null
       value = null;
     }
 
@@ -897,7 +930,7 @@ export class Characteristic extends EventEmitter {
       UUID: characteristic.UUID,
       props: clone({}, characteristic.props),
       value: characteristic.value,
-      eventOnlyCharacteristic: characteristic.eventOnlyCharacteristic,
+      eventOnlyCharacteristic: characteristic.UUID === Characteristic.ProgrammableSwitchEvent.UUID, // support downgrades for now
     }
   };
 
@@ -910,7 +943,6 @@ export class Characteristic extends EventEmitter {
     const characteristic = new Characteristic(json.displayName, json.UUID, json.props);
 
     characteristic.value = json.value;
-    characteristic.eventOnlyCharacteristic = json.eventOnlyCharacteristic;
 
     return characteristic;
   };

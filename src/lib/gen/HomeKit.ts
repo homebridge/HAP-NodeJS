@@ -1873,7 +1873,6 @@ export class ProgrammableSwitchEvent extends Characteristic {
       validValues: [0, 1, 2],
       perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
-    this.eventOnlyCharacteristic = true; //Manual addition.
     this.value = this.getDefaultValue();
   }
 }
