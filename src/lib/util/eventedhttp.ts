@@ -6,11 +6,13 @@ import { SrpServer } from "fast-srp-hap";
 import http, { IncomingMessage, ServerResponse } from 'http';
 import net, { AddressInfo, Socket } from 'net';
 import os from "os";
+import { CharacteristicEventNotification, EventNotification } from "../../internal-types";
 import { CharacteristicValue, Nullable, SessionIdentifier } from '../../types';
-import { HAPEncryption } from '../HAPServer';
+import { HAPEncryption } from "../HAPServer";
 import * as hapCrypto from "./hapCrypto";
 import { getOSLoopbackAddress } from "./net-utils";
 import * as uuid from './uuid';
+import Timeout = NodeJS.Timeout;
 
 const debug = createDebug('HAP-NodeJS:EventedHTTPServer');
 
@@ -102,15 +104,17 @@ export class EventedHTTPServer extends EventEmitter {
    * @param iid - The instance id of the updated characteristic.
    * @param value - The newly set value of the characteristic.
    * @param originator - If specified, the connection will not get a event message.
+   * @param immediateDelivery - The HAP spec requires some characteristics to be delivery immediately.
+   *   Namely for the {@link ButtonEvent} and the {@link ProgrammableSwitchEvent} characteristics.
    */
-  public broadcastEvent(aid: number, iid: number, value: Nullable<CharacteristicValue>, originator?: HAPConnection): void {
+  public broadcastEvent(aid: number, iid: number, value: Nullable<CharacteristicValue>, originator?: HAPConnection, immediateDelivery?: boolean): void {
     for (const connection of this.connections) {
       if (connection === originator) {
         debug("[%s] Muting event '%s' notification for this connection since it originated here.", connection.remoteAddress, aid + "." + iid);
         continue;
       }
 
-      connection.sendEvent(aid, iid, value);
+      connection.sendEvent(aid, iid, value, immediateDelivery);
     }
   }
 
@@ -222,7 +226,6 @@ export class HAPConnection extends EventEmitter {
 
   private pendingClientSocketData?: Buffer = Buffer.alloc(0); // data received from client before HTTP proxy is fully setup
   private handlingRequest: boolean = false; // true while we are composing an HTTP response (so events can wait)
-  private readonly pendingEventData: Buffer[] = []; // queue of unencrypted event data waiting to be sent until after an in-progress HTTP response is being written
 
   username?: HAPUsername; // username is unique to every user in the home, basically identifies an Apple Id
   encryption?: HAPEncryption; // created in handlePairVerifyStepOne
@@ -231,6 +234,9 @@ export class HAPConnection extends EventEmitter {
   _pairVerifyState?: number;
 
   private registeredEvents: Set<EventName> = new Set();
+  private eventsTimer?: Timeout;
+  private readonly queuedEvents: Map<EventName, CharacteristicEventNotification> = new Map();
+  private readonly pendingEventData: Buffer[] = []; // queue of unencrypted event data waiting to be sent until after an in-progress HTTP response is being written
 
   timedWritePid?: number;
   timedWriteTimeout?: NodeJS.Timeout;
@@ -249,7 +255,8 @@ export class HAPConnection extends EventEmitter {
     this.tcpSocket.on('close', this.onTCPSocketClose.bind(this));
     this.tcpSocket.on('error', this.onTCPSocketError.bind(this)); // we MUST register for this event, otherwise the error will bubble up to the top and crash the node process entirely.
     this.tcpSocket.setNoDelay(true); // disable Nagle algorithm
-    // this.tcpSocket.setKeepAlive(true, 5000); // TODO HAP accessory servers must not use keepalive messages, which periodically wake up iOS devices.
+    // "HAP accessory servers must not use keepalive messages, which periodically wake up iOS devices".
+    // Thus we don't configure any tcp keepalive
 
     // create our internal HTTP server for this connection that we will proxy data to and from
     this.internalHttpServer = http.createServer();
@@ -280,36 +287,114 @@ export class HAPConnection extends EventEmitter {
     return this.state === HAPConnectionState.AUTHENTICATED;
   }
 
-  public sendEvent(aid: number, iid: number, value: Nullable<CharacteristicValue>): void {
+  public close(): void {
+    if (this.state >= HAPConnectionState.CLOSING) {
+      return; // already closed/closing
+    }
+
+    this.state = HAPConnectionState.CLOSING;
+    this.tcpSocket.destroy();
+  }
+
+  public closeConnectionAsOfUnpair(initiator: HAPConnection): void {
+    if (this === initiator) {
+      // the initiator of the unpair request is this connection, meaning it unpaired itself.
+      // we still need to send the response packet to the unpair request.
+      this.state = HAPConnectionState.TO_BE_TEARED_DOWN;
+    } else {
+      // as HomeKit requires it, destroy any active session which got unpaired
+      this.close();
+    }
+  }
+
+  public sendEvent(aid: number, iid: number, value: Nullable<CharacteristicValue>, immediateDelivery?: boolean): void {
     assert(aid != undefined, "HAPConnection.sendEvent: aid must be defined!");
     assert(iid != undefined, "HAPConnection.sendEvent: iid must be defined!");
 
-    if (!this.hasEventNotifications(aid, iid)) {
+    const eventName = aid + "." + iid;
+
+    if (!this.registeredEvents.has(eventName)) {
       return;
     }
-    debug("[%s] Sending HTTP event '%s' with data: %s", this.remoteAddress, aid + "." + iid, value);
 
-    // TODO queue events!!!
-    const data = Buffer.from(JSON.stringify({
-      characteristics: [{
+    if (immediateDelivery) {
+      // some characteristics are required to deliver notifications immediately
+      this.writeEventNotification({
+        characteristics: [{
+          aid: aid,
+          iid: iid,
+          value: value,
+        }],
+      });
+    } else {
+      this.queuedEvents.set(eventName, {
         aid: aid,
         iid: iid,
         value: value,
-      }],
-    }), "utf8");
+      });
+      if (!this.handlingRequest && !this.eventsTimer) { // if we are handling a request or there is already a timer running we just add it in the queue
+        this.eventsTimer = setTimeout(this.handleEventsTimeout.bind(this), 250);
+      }
+    }
+  }
 
+  private handleEventsTimeout(): void {
+    this.eventsTimer = undefined;
+    if (this.state > HAPConnectionState.AUTHENTICATED || this.handlingRequest) {
+      // connection is closed or about to be closed. no need to send any further events
+      // OR we are currently sending a response
+      return;
+    }
+
+    this.writeQueuedEventNotifications();
+  }
+
+  private writePendingEventNotifications(): void {
+    for (const buffer of this.pendingEventData) {
+      this.tcpSocket.write(this.encrypt(buffer));
+    }
+    this.pendingEventData.splice(0, this.pendingEventData.length);
+  }
+
+  private writeQueuedEventNotifications(): void {
+    if (this.queuedEvents.size === 0 || this.eventsTimer) {
+      return; // don't send empty event notifications or if there is a timeout running
+    }
+
+    const eventData: EventNotification = { characteristics: [] };
+    for (const [eventName, characteristic] of this.queuedEvents) {
+      if (!this.registeredEvents.has(eventName)) { // client unregistered events in the mean time
+        continue;
+      }
+      eventData.characteristics.push(characteristic);
+    }
+    this.queuedEvents.clear();
+
+    this.writeEventNotification(eventData);
+  }
+
+  /**
+   * This will create an EVENT/1.0 notification header with the provided event notification.
+   * If currently a HTTP request is in progress the assembled packet will be
+   * added to the pending events list.
+   *
+   * @param notification - The event which should be sent out
+   */
+  private writeEventNotification(notification: EventNotification): void {
+    debug("[%s] Sending HAP event notifications %o", this.remoteAddress, notification.characteristics);
+
+    const dataBuffer = Buffer.from(JSON.stringify(notification), "utf8");
     const header = Buffer.from(
       "EVENT/1.0 200 OK\r\n" +
       "Content-Type: application/hap+json\r\n" +
-      "Content-Length: " + data.length + "\r\n" +
+      "Content-Length: " + dataBuffer.length + "\r\n" +
       "\r\n",
       "utf8" // buffer encoding
     );
 
-    const buffer = Buffer.concat([header, data]);
-
+    const buffer = Buffer.concat([header, dataBuffer]);
     if (this.handlingRequest) {
-      // it is important to not encrypt the queued data, otherwise nonce counter will get incorrectly incremented
+      // it is important that we not encrypt the pending event data. This would increment the nonce used in encryption
       this.pendingEventData.push(buffer);
     } else {
       this.tcpSocket.write(this.encrypt(buffer));
@@ -330,6 +415,10 @@ export class HAPConnection extends EventEmitter {
 
   public getRegisteredEvents(): Set<EventName> {
     return this.registeredEvents;
+  }
+
+  public clearRegisteredEvents(): void {
+    this.registeredEvents.clear();
   }
 
   private encrypt(data: Buffer): Buffer {
@@ -380,40 +469,6 @@ export class HAPConnection extends EventEmitter {
       }
       this.pendingClientSocketData = undefined;
     });
-  }
-
-  public close(): void {
-    if (this.state >= HAPConnectionState.CLOSING) {
-      return; // already closed/closing
-    }
-
-    this.state = HAPConnectionState.CLOSING;
-    this.tcpSocket.destroy();
-  }
-
-  public closeConnectionAsOfUnpair(initiator: HAPConnection): void {
-    if (this === initiator) {
-      // the initiator of the unpair request is this connection, meaning it unpaired itself.
-      // we still need to send the response packet to the unpair request.
-      this.state = HAPConnectionState.TO_BE_TEARED_DOWN;
-    } else {
-      // as HomeKit requires it, destroy any active session which got unpaired
-      this.close();
-    }
-  }
-
-  private sendPendingEvents(): void {
-    if (this.pendingEventData.length === 0) {
-      return;
-    }
-
-    debug("[%s] Writing pending HTTP event data", this.remoteAddress);
-
-    for (const event of this.pendingEventData) {
-      this.tcpSocket.write(this.encrypt(event));
-    }
-
-    this.pendingEventData.splice(0, this.pendingEventData.length);
   }
 
   /**
@@ -476,7 +531,8 @@ export class HAPConnection extends EventEmitter {
     if (this.state === HAPConnectionState.TO_BE_TEARED_DOWN) {
       setTimeout(() => this.close(), 10);
     } else if (this.state < HAPConnectionState.TO_BE_TEARED_DOWN) {
-      this.sendPendingEvents();
+      this.writePendingEventNotifications();
+      this.writeQueuedEventNotifications();
     }
   }
 

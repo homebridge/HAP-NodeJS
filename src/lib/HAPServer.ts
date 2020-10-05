@@ -15,8 +15,7 @@ import {
   PrepareWriteRequest,
   ResourceRequest
 } from "../internal-types";
-import { CharacteristicValue, NodeCallback, Nullable, VoidCallback } from '../types';
-import { Accessory } from './Accessory';
+import { CharacteristicValue, Nullable, VoidCallback } from '../types';
 import { PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
 import { EventedHTTPServer, EventedHTTPServerEvent, HAPConnection, HAPUsername } from './util/eventedhttp';
 import * as hapCrypto from './util/hapCrypto';
@@ -289,9 +288,11 @@ export class HAPServer extends EventEmitter {
    * @param iid - The instance id of the updated characteristic.
    * @param value - The newly set value of the characteristic.
    * @param originator - If specified, the connection will not get a event message.
+   * @param immediateDelivery - The HAP spec requires some characteristics to be delivery immediately.
+   *   Namely for the {@link ButtonEvent} and the {@link ProgrammableSwitchEvent} characteristics.
    */
-  public sendEventNotifications(aid: number, iid: number, value: Nullable<CharacteristicValue>, originator?: HAPConnection): void {
-    this.httpServer.broadcastEvent(aid, iid, value, originator);
+  public sendEventNotifications(aid: number, iid: number, value: Nullable<CharacteristicValue>, originator?: HAPConnection, immediateDelivery?: boolean): void {
+    this.httpServer.broadcastEvent(aid, iid, value, originator, immediateDelivery);
   }
 
   private onListening(port: number, hostname: string): void {
