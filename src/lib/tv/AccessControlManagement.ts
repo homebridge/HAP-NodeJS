@@ -1,6 +1,6 @@
+import { EventEmitter } from "events";
 import { AccessControl } from "../gen/HomeKit";
 import { Service } from "../Service";
-import { EventEmitter } from "../EventEmitter";
 import {
   Characteristic,
   CharacteristicEventTypes,
@@ -44,12 +44,15 @@ export const enum AccessControlEvent {
   PASSWORD_SETTING_UPDATED = "update-password",
 }
 
-export type AccessControlEventMap = {
-  [AccessControlEvent.ACCESS_LEVEL_UPDATED]: (accessLevel: AccessLevel) => void;
-  [AccessControlEvent.PASSWORD_SETTING_UPDATED]: (password: string | undefined, passwordRequired: boolean) => void;
+export declare interface AccessControlManagement {
+  on(event: "update-control-level", listener: (accessLevel: AccessLevel) => void): this;
+  on(event: "update-password", listener: (password: string | undefined, passwordRequired: boolean) => void): this;
+
+  emit(event: "update-control-level", accessLevel: AccessLevel): boolean;
+  emit(event: "update-password", password: string | undefined, passwordRequired: boolean): boolean;
 }
 
-export class AccessControlManagement extends EventEmitter<AccessControlEventMap> {
+export class AccessControlManagement extends EventEmitter {
 
   private readonly accessControlService: AccessControl;
 

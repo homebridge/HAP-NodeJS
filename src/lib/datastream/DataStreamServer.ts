@@ -1,13 +1,12 @@
-import createDebug from 'debug';
 import assert from 'assert';
+import crypto from 'crypto';
+import createDebug from 'debug';
+import { EventEmitter, EventEmitter as NodeEventEmitter } from "events";
+import net, { Socket } from 'net';
 import { HAPConnection, HAPConnectionEvent } from "../util/eventedhttp";
 
 import * as hapCrypto from '../util/hapCrypto';
-import {DataStreamParser, DataStreamReader, DataStreamWriter, Int64} from './DataStreamParser';
-import crypto from 'crypto';
-import net, {Socket} from 'net';
-import {EventEmitter as NodeEventEmitter} from "events";
-import {EventEmitter} from "../EventEmitter";
+import { DataStreamParser, DataStreamReader, DataStreamWriter, Int64 } from './DataStreamParser';
 import Timeout = NodeJS.Timeout;
 
 const debug = createDebug('HAP-NodeJS:DataStream:Server');
@@ -124,26 +123,29 @@ type DataStreamMessage = {
 }
 
 export const enum DataStreamServerEvents {
+    /**
+     * This event is emitted when a new client socket is received. At this point we have no idea to what
+     * hap session this connection will be matched.
+     */
     CONNECTION_OPENED = "connection-opened",
+    /**
+     * This event is emitted when the socket of a connection gets closed.
+     */
     CONNECTION_CLOSED = "connection-closed",
 }
 
-export type DataStreamServerEventMap = {
-    [DataStreamServerEvents.CONNECTION_OPENED]: (connection: DataStreamConnection) => void;
-    [DataStreamServerEvents.CONNECTION_CLOSED]: (connection: DataStreamConnection) => void;
+export declare interface DataStreamServer {
+    on(event: "connection-opened", listener: (connection: DataStreamConnection) => void): this;
+    on(event: "connection-closed", listener: (connection: DataStreamConnection) => void): this;
+
+    emit(event: "connection-opened", connection: DataStreamConnection): boolean;
+    emit(event: "connection-closed", connection: DataStreamConnection): boolean;
 }
 
 /**
  * DataStreamServer which listens for incoming tcp connections and handles identification of new connections
- *
- * @event 'connection-opened': (connection: DataStreamConnection) => void
- *        This event is emitted when a new client socket is received. At this point we have no idea to what
- *        hap session this connection will be matched.
- *
- * @event 'connection-closed': (connection: DataStreamConnection) => void
- *        This event is emitted when the socket of a connection gets closed.
  */
-export class DataStreamServer extends EventEmitter<DataStreamServerEventMap> { // TODO removeAllEvent handlers on closing
+export class DataStreamServer extends EventEmitter { // TODO removeAllEvent handlers on closing
 
     static readonly version = "1.0";
 
@@ -391,18 +393,22 @@ export class DataStreamServer extends EventEmitter<DataStreamServerEventMap> { /
 
 }
 
+export type IdentificationCallback = (identifiedSession?: PreparedDataStreamSession) => void;
+
 export const enum DataStreamConnectionEvents {
     IDENTIFICATION = "identification",
     HANDLE_MESSAGE_GLOBALLY = "handle-message-globally",
     CLOSED = "closed",
 }
 
-export type IdentificationCallback = (identifiedSession?: PreparedDataStreamSession) => void;
+export declare interface DataStreamConnection {
+    on(event: "identification", listener: (frame: HDSFrame, callback: IdentificationCallback) => void): this;
+    on(event: "handle-message-globally", listener: (message: DataStreamMessage) => void): this;
+    on(event: "closed", listener: () => void): this;
 
-export type DataStreamConnectionEventMap = {
-    [DataStreamConnectionEvents.IDENTIFICATION]: (frame: HDSFrame, callback: IdentificationCallback) => void;
-    [DataStreamConnectionEvents.HANDLE_MESSAGE_GLOBALLY]: (message: DataStreamMessage) => void;
-    [DataStreamConnectionEvents.CLOSED]: () => void;
+    emit(event: "identification", frame: HDSFrame, callback: IdentificationCallback): boolean;
+    emit(event: "handle-message-globally", message: DataStreamMessage): boolean;
+    emit(event: "closed"): boolean;
 }
 
 /**
@@ -421,7 +427,7 @@ export type DataStreamConnectionEventMap = {
  * @event 'closed': () => void
  *        This event is emitted when the socket of the connection was closed.
  */
-export class DataStreamConnection extends EventEmitter<DataStreamConnectionEventMap> {
+export class DataStreamConnection extends EventEmitter {
 
     private static readonly MAX_PAYLOAD_LENGTH = 0b11111111111111111111;
 

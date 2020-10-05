@@ -6,15 +6,15 @@ import {
     CharacteristicGetCallback,
     CharacteristicSetCallback
 } from "../Characteristic";
-import { Event } from "../EventEmitter";
 import { DataStreamTransportManagement } from "../gen/HomeKit-DataStream";
 import { Status } from "../HAPServer";
 import { Service } from "../Service";
 import { HAPConnection } from "../util/eventedhttp";
 import * as tlv from '../util/tlv';
 import {
+    DataStreamConnection,
     DataStreamServer,
-    DataStreamServerEventMap,
+    DataStreamServerEvents,
     GlobalEventHandler,
     GlobalRequestHandler
 } from "./DataStreamServer";
@@ -145,7 +145,8 @@ export class DataStreamManagement {
      * @param event - the event to register for
      * @param listener - the event handler
      */
-    onServerEvent(event: Event<keyof DataStreamServerEventMap>, listener: DataStreamServerEventMap[Event<keyof DataStreamServerEventMap>]): this {
+    onServerEvent(event: DataStreamServerEvents, listener: (connection: DataStreamConnection) => void): this {
+        // @ts-expect-error
         this.dataStreamServer.on(event, listener);
         return this;
     }

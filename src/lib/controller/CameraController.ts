@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import createDebug from "debug";
+import { EventEmitter } from "events";
 import {
   CameraStreamingOptions,
   Characteristic,
@@ -17,7 +18,6 @@ import {
   StreamingRequest
 } from "../..";
 import { SessionIdentifier } from "../../types";
-import { EventEmitter } from "../EventEmitter";
 import { Doorbell, Microphone, Speaker } from "../gen/HomeKit";
 import { Controller, ControllerServiceMap, ControllerType, DefaultControllerType } from "./Controller";
 import Timeout = NodeJS.Timeout;
@@ -90,9 +90,12 @@ export const enum CameraControllerEvents {
   SPEAKER_PROPERTIES_CHANGED = "speaker-change",
 }
 
-export type CameraControllerEventMap = {
-  [CameraControllerEvents.MICROPHONE_PROPERTIES_CHANGED]: (muted: boolean, volume: number) => void;
-  [CameraControllerEvents.SPEAKER_PROPERTIES_CHANGED]: (muted: boolean, volume: number) => void;
+export declare interface CameraController {
+  on(event: "microphone-change", listener: (muted: boolean, volume: number) => void): this;
+  on(event: "speaker-change", listener: (muted: boolean, volume: number) => void): this;
+
+  emit(event: "microphone-change", muted: boolean, volume: number): boolean;
+  emit(event: "speaker-change", muted: boolean, volume: number): boolean;
 }
 
 /**
@@ -106,7 +109,7 @@ export type CameraControllerEventMap = {
  *      Emitted when the mute state or the volume changed. The Apple Home App typically does not set those values
  *      except the mute state. When you unmute the device microphone it will reset the mute state if it was set previously.
  */
-export class CameraController extends EventEmitter<CameraControllerEventMap> implements Controller<CameraControllerServiceMap> {
+export class CameraController extends EventEmitter implements Controller<CameraControllerServiceMap> {
 
   private static readonly STREAM_MANAGEMENT = "streamManagement"; // key to index all RTPStreamManagement services
 
