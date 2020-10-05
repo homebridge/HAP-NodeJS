@@ -22,7 +22,7 @@ const debug = createDebug('HAP-NodeJS:AccessoryLoader');
 export function loadDirectory(dir: string): Accessory[] {
 
   // exported accessory objects loaded from this dir
-  let accessories: Accessory[] = [];
+  let accessories: unknown[] = [];
 
   fs.readdirSync(dir).forEach((file) => {
     const suffix = file.split('_').pop();
@@ -146,14 +146,6 @@ export function parseCharacteristicJSON(json: any) {
     unit: json.unit,
     perms: json.perms // example: ["pw","pr","ev"]
   });
-
-  // monkey-patch this characteristic to add the legacy method `updateValue` which used to exist,
-  // and that accessory modules had access to via the `onRegister` function. This was the old mechanism
-  // for communicating state changes about accessories that happened "outside" HomeKit.
-  // @ts-ignore
-  characteristic.updateValue = function(value, peer) {
-    characteristic.setValue(value);
-  };
 
   // monkey-patch legacy "locals" property which used to exist.
   // @ts-ignore
