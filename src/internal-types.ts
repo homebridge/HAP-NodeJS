@@ -59,7 +59,10 @@ export interface CharacteristicWrite {
   value?: CharacteristicValue,
   ev?: boolean, // enable/disable event notifications for the accessory
 
-  authData?: string, // base64 encoded
+  authData?: string, // base64 encoded string used for custom authorisation
+  /**
+   * @deprecated This indicated if access was done via the old iCloud relay
+   */
   remote?: boolean, // remote access used
   r?: boolean, // write response
 }
