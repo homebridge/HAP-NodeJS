@@ -3623,7 +3623,7 @@ Characteristic.SetupTransferTransport = SetupTransferTransport;
  */
 export class ActivityInterval extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-0000023B';
+  static readonly UUID: string = '0000023B-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Activity Interval", ActivityInterval.UUID);
@@ -3646,7 +3646,7 @@ Characteristic.ActivityInterval = ActivityInterval;
  */
 export class CCAEnergyDetectThreshold extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-00000246';
+  static readonly UUID: string = '00000246-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("CCA Energy Detect Threshold", CCAEnergyDetectThreshold.UUID);
@@ -3667,7 +3667,7 @@ Characteristic.CCAEnergyDetectThreshold = CCAEnergyDetectThreshold;
  */
 export class CCASignalDetectThreshold extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-00000245';
+  static readonly UUID: string = '00000245-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("CCA Signal Detect Threshold", CCASignalDetectThreshold.UUID);
@@ -3688,7 +3688,7 @@ Characteristic.CCASignalDetectThreshold = CCASignalDetectThreshold;
  */
 export class CharacteristicValueTransitionControl extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-00000143';
+  static readonly UUID: string = '00000143-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Characteristic Value Transition Control", CharacteristicValueTransitionControl.UUID);
@@ -3709,7 +3709,7 @@ Characteristic.CharacteristicValueTransitionControl = CharacteristicValueTransit
  */
 export class SupportedCharacteristicValueTransitionConfiguration extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-00000144';
+  static readonly UUID: string = '00000144-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Supported Characteristic Value Transition Configuration", SupportedCharacteristicValueTransitionConfiguration.UUID);
@@ -3730,7 +3730,7 @@ Characteristic.SupportedCharacteristicValueTransitionConfiguration = SupportedCh
  */
 export class CharacteristicValueActiveTransitionCount extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-0000024B';
+  static readonly UUID: string = '0000024B-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Characteristic Value Active Transition Count", CharacteristicValueActiveTransitionCount.UUID);
@@ -3751,7 +3751,7 @@ Characteristic.CharacteristicValueActiveTransitionCount = CharacteristicValueAct
  */
 export class CurrentTransport extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-0000022B';
+  static readonly UUID: string = '0000022B-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Current Transport", CurrentTransport.UUID);
@@ -3772,7 +3772,7 @@ Characteristic.CurrentTransport = CurrentTransport;
  */
 export class DataStreamHAPTransport extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-00000138';
+  static readonly UUID: string = '00000138-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Data Stream HAP Transport", DataStreamHAPTransport.UUID);
@@ -3793,7 +3793,7 @@ Characteristic.DataStreamHAPTransport = DataStreamHAPTransport;
  */
 export class DataStreamHAPTransportInterrupt extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-00000139';
+  static readonly UUID: string = '00000139-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Data Stream HAP Transport Interrupt", DataStreamHAPTransportInterrupt.UUID);
@@ -3814,7 +3814,7 @@ Characteristic.DataStreamHAPTransportInterrupt = DataStreamHAPTransportInterrupt
  */
 export class EventRetransmissionMaximum extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-0000023D';
+  static readonly UUID: string = '0000023D-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Event Retransmission Maximum", EventRetransmissionMaximum.UUID);
@@ -3835,7 +3835,7 @@ Characteristic.EventRetransmissionMaximum = EventRetransmissionMaximum;
  */
 export class EventTransmissionCounters extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-0000023E';
+  static readonly UUID: string = '0000023E-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Event Transmission Counters", EventTransmissionCounters.UUID);
@@ -3856,7 +3856,7 @@ Characteristic.EventTransmissionCounters = EventTransmissionCounters;
  */
 export class HeartBeat extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-0000024A';
+  static readonly UUID: string = '0000024A-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Heart Beat", HeartBeat.UUID);
@@ -3877,7 +3877,7 @@ Characteristic.HeartBeat = HeartBeat;
  */
 export class MACRetransmissionMaximum extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-00000247';
+  static readonly UUID: string = '00000247-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("MAC Retransmission Maximum", MACRetransmissionMaximum.UUID);
@@ -3898,7 +3898,7 @@ Characteristic.MACRetransmissionMaximum = MACRetransmissionMaximum;
  */
 export class MACTransmissionCounters extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-00000248';
+  static readonly UUID: string = '00000248-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("MAC Transmission Counters", MACTransmissionCounters.UUID);
@@ -3919,7 +3919,7 @@ Characteristic.MACTransmissionCounters = MACTransmissionCounters;
  */
 export class OperatingStateResponse extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-00000232';
+  static readonly UUID: string = '00000232-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Operating State Response", OperatingStateResponse.UUID);
@@ -3940,7 +3940,7 @@ Characteristic.OperatingStateResponse = OperatingStateResponse;
  */
 export class Ping extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-0000023C';
+  static readonly UUID: string = '0000023C-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Ping", Ping.UUID);
@@ -3961,7 +3961,7 @@ Characteristic.Ping = Ping;
  */
 export class ReceiverSensitivity extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-00000244';
+  static readonly UUID: string = '00000244-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Receiver Sensitivity", ReceiverSensitivity.UUID);
@@ -3982,7 +3982,7 @@ Characteristic.ReceiverSensitivity = ReceiverSensitivity;
  */
 export class ReceivedSignalStrengthIndication extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-0000023F';
+  static readonly UUID: string = '0000023F-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Received Signal Strength Indication", ReceivedSignalStrengthIndication.UUID);
@@ -4003,7 +4003,7 @@ Characteristic.ReceivedSignalStrengthIndication = ReceivedSignalStrengthIndicati
  */
 export class SleepInterval extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-0000023A';
+  static readonly UUID: string = '0000023A-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Sleep Interval", SleepInterval.UUID);
@@ -4026,7 +4026,7 @@ Characteristic.SleepInterval = SleepInterval;
  */
 export class SignalToNoiseRatio extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-00000241';
+  static readonly UUID: string = '00000241-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Signal-to-noise Ration", SignalToNoiseRatio.UUID);
@@ -4047,7 +4047,7 @@ Characteristic.SignalToNoiseRatio = SignalToNoiseRatio;
  */
 export class SupportedDiagnosticsSnapshot extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-00000238';
+  static readonly UUID: string = '00000238-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Supported Diagnostics Snapshot", SupportedDiagnosticsSnapshot.UUID);
@@ -4068,7 +4068,7 @@ Characteristic.SupportedDiagnosticsSnapshot = SupportedDiagnosticsSnapshot;
  */
 export class TransmitPower extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-00000242';
+  static readonly UUID: string = '00000242-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Transmit Power", TransmitPower.UUID);
@@ -4089,7 +4089,7 @@ Characteristic.TransmitPower = TransmitPower;
  */
 export class TransmitPowerMaximum extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-00000243';
+  static readonly UUID: string = '00000243-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Transmit Power Maximum", TransmitPowerMaximum.UUID);
@@ -4110,7 +4110,7 @@ Characteristic.TransmitPowerMaximum = TransmitPowerMaximum;
  */
 export class VideoAnalysisActive extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-00000229';
+  static readonly UUID: string = '00000229-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Video Analysis Active", VideoAnalysisActive.UUID);
@@ -4131,7 +4131,7 @@ Characteristic.VideoAnalysisActive = VideoAnalysisActive;
  */
 export class WiFiCapabilities extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-0000022C';
+  static readonly UUID: string = '0000022C-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Wi-Fi Capabilities", WiFiCapabilities.UUID);
@@ -4152,7 +4152,7 @@ Characteristic.WiFiCapabilities = WiFiCapabilities;
  */
 export class WiFiConfigurationControl extends Characteristic {
 
-  static readonly UUID: string = '0000021E-0000-1000-8000-0000022D';
+  static readonly UUID: string = '0000022D-0000-1000-8000-0026BB765291';
 
   constructor() {
     super("Wi-Fi Configuration Control", WiFiConfigurationControl.UUID);
@@ -5375,7 +5375,7 @@ Service.TransferTransportManagement = TransferTransportManagement;
  */
 export class AccessoryRuntimeInformation extends Service {
 
-  static readonly UUID: string = '00000203-0000-1000-8000-00000239';
+  static readonly UUID: string = '00000239-0000-1000-8000-0026BB765291';
 
   constructor(displayName?: string, subtype?: string) {
     super(displayName, AccessoryRuntimeInformation.UUID, subtype);
@@ -5399,7 +5399,7 @@ Service.AccessoryRuntimeInformation = AccessoryRuntimeInformation;
  */
 export class Diagnostics extends Service {
 
-  static readonly UUID: string = '00000203-0000-1000-8000-00000237';
+  static readonly UUID: string = '00000237-0000-1000-8000-0026BB765291';
 
   constructor(displayName?: string, subtype?: string) {
     super(displayName, Diagnostics.UUID, subtype);
@@ -5418,7 +5418,7 @@ Service.Diagnostics = Diagnostics;
  */
 export class WiFiTransport extends Service {
 
-  static readonly UUID: string = '00000203-0000-1000-8000-0000022A';
+  static readonly UUID: string = '0000022A-0000-1000-8000-0026BB765291';
 
   constructor(displayName?: string, subtype?: string) {
     super(displayName, WiFiTransport.UUID, subtype);
