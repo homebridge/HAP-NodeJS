@@ -11,12 +11,12 @@ import {
   uuid
 } from '..';
 
-const createCharacteristic = (type: Formats) => {
-  return new Characteristic('Test', uuid.generate('Foo'), { format: type, perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE] });
+const createCharacteristic = (type: Formats, customUUID?: string) => {
+  return new Characteristic('Test', customUUID || uuid.generate('Foo'), { format: type, perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE] });
 };
 
-const createCharacteristicWithProps = (props: CharacteristicProps) => {
-  return new Characteristic('Test', uuid.generate('Foo'), props);
+const createCharacteristicWithProps = (props: CharacteristicProps, customUUID?: string) => {
+  return new Characteristic('Test', customUUID || uuid.generate('Foo'), props);
 };
 
 describe('Characteristic', () => {
@@ -113,22 +113,23 @@ describe('Characteristic', () => {
   });
 
   describe('#handleGetRequest()', () => {
-    it('should handle special event only characteristics', () => {
-      const characteristic = createCharacteristic(Formats.BOOL);
-      characteristic.eventOnlyCharacteristic = true;
+    it('should handle special event only characteristics', (callback) => {
+      const characteristic = createCharacteristic(Formats.BOOL, Characteristic.ProgrammableSwitchEvent.UUID);
 
       characteristic.handleGetRequest().then(() => {
         expect(characteristic.status).toEqual(Status.SUCCESS);
         expect(characteristic.value).toEqual(null);
+        callback();
       });
     });
 
-    it('should return cached values if no listeners are registered', () => {
+    it('should return cached values if no listeners are registered', (callback) => {
       const characteristic = createCharacteristic(Formats.BOOL);
 
       characteristic.handleGetRequest().then(() => {
         expect(characteristic.status).toEqual(Status.SUCCESS);
         expect(characteristic.value).toEqual(null);
+        callback();
       });
     });
   });
@@ -281,16 +282,17 @@ describe('Characteristic', () => {
 
   describe(`@${CharacteristicEventTypes.GET}`, () => {
 
-    it('should call any listeners for the event', () => {
+    it('should call any listeners for the event', (callback) => {
       const characteristic = createCharacteristic(Formats.STRING);
 
       const listenerCallback = jest.fn();
 
-      characteristic.handleGetRequest();
-      characteristic.on(CharacteristicEventTypes.GET, listenerCallback);
-      characteristic.handleGetRequest();
-
-      expect(listenerCallback).toHaveBeenCalledTimes(1);
+      characteristic.handleGetRequest().then(() => {
+        characteristic.on(CharacteristicEventTypes.GET, listenerCallback);
+        characteristic.handleGetRequest();
+        expect(listenerCallback).toHaveBeenCalledTimes(1);
+        callback();
+      })
     });
   });
 
@@ -314,9 +316,8 @@ describe('Characteristic', () => {
 
   describe(`@${CharacteristicEventTypes.CHANGE}`, () => {
 
-    it('should call any listeners for the event when the characteristic is event-only, and the value is set', () => {
-      const characteristic = createCharacteristic(Formats.STRING);
-      characteristic.eventOnlyCharacteristic = true;
+    it('should call listeners for the event when the characteristic is event-only, and the value is set', () => {
+      const characteristic = createCharacteristic(Formats.STRING, Characteristic.ProgrammableSwitchEvent.UUID);
 
       const VALUE = 'NewValue';
       const listenerCallback = jest.fn();
@@ -398,9 +399,8 @@ describe('Characteristic', () => {
         adminOnlyAccess: [Access.WRITE],
       };
 
-      const characteristic = createCharacteristicWithProps(props);
+      const characteristic = createCharacteristicWithProps(props, Characteristic.ProgrammableSwitchEvent.UUID);
       characteristic.value = "TestValue";
-      characteristic.eventOnlyCharacteristic = true;
 
       const json = Characteristic.serialize(characteristic);
       expect(json).toEqual({
@@ -424,7 +424,6 @@ describe('Characteristic', () => {
       expect(characteristic.UUID).toEqual(json.UUID);
       expect(characteristic.props).toEqual(json.props);
       expect(characteristic.value).toEqual(json.value);
-      expect(characteristic.eventOnlyCharacteristic).toEqual(json.eventOnlyCharacteristic);
     });
 
     it('should deserialize complete json', () => {
@@ -441,7 +440,6 @@ describe('Characteristic', () => {
           adminOnlyAccess: [Access.NOTIFY, Access.READ],
         },
         value: "testValue",
-        eventOnlyCharacteristic: true,
       };
 
       const characteristic = Characteristic.deserialize(json);
@@ -450,7 +448,6 @@ describe('Characteristic', () => {
       expect(characteristic.UUID).toEqual(json.UUID);
       expect(characteristic.props).toEqual(json.props);
       expect(characteristic.value).toEqual(json.value);
-      expect(characteristic.eventOnlyCharacteristic).toEqual(json.eventOnlyCharacteristic);
     });
   });
 });

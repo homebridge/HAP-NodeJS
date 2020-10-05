@@ -89,7 +89,7 @@ export interface SerializedCharacteristic {
   UUID: string,
   props: CharacteristicProps,
   value: Nullable<CharacteristicValue>,
-  eventOnlyCharacteristic: boolean,
+  eventOnlyCharacteristic?: boolean,
 }
 
 export const enum CharacteristicEventTypes {
