@@ -15,9 +15,7 @@ export interface CharacteristicsReadRequest {
   includeEvent: boolean,
 }
 
-export interface CharacteristicReadDataValue {
-  aid: number,
-  iid: number,
+export interface PartialCharacteristicReadDataValue {
   value: CharacteristicValue | null,
 
   status?: Status.SUCCESS,
@@ -40,16 +38,25 @@ export interface CharacteristicReadDataValue {
   ev?: boolean,
 }
 
-export interface CharacteristicReadError {
-  aid: number,
-  iid: number,
+export interface PartialCharacteristicReadError {
   status: Status,
 }
 
-export type CharacteristicsReadData = CharacteristicReadDataValue | CharacteristicReadError;
+export interface CharacteristicReadDataValue extends PartialCharacteristicReadDataValue {
+  aid: number,
+  iid: number,
+}
+
+export interface CharacteristicReadError extends PartialCharacteristicReadError {
+  aid: number,
+  iid: number,
+}
+
+export type PartialCharacteristicReadData = PartialCharacteristicReadDataValue | PartialCharacteristicReadError;
+export type CharacteristicReadData = CharacteristicReadDataValue | CharacteristicReadError;
 
 export interface CharacteristicsReadResponse {
-  characteristics: CharacteristicsReadData[],
+  characteristics: CharacteristicReadData[],
 }
 
 export interface CharacteristicWrite {
@@ -72,29 +79,34 @@ export interface CharacteristicsWriteRequest {
   pid?: number
 }
 
-export interface CharacteristicWriteDataValue {
-  aid: number,
-  iid: number,
+export interface PartialCharacteristicWriteDataValue {
   value?: CharacteristicValue | null,
-
-  // event
-  ev?: boolean,
+  ev?: boolean, // event
 
   status?: Status.SUCCESS,
 }
 
-export interface CharacteristicWriteError {
-  aid: number,
-  iid: number,
+export interface PartialCharacteristicWriteError {
   status: Status,
 
   value?: undefined, // defined to make things easier
 }
 
-export type CharacteristicsWriteData = CharacteristicWriteDataValue | CharacteristicWriteError;
+export interface CharacteristicWriteDataValue extends PartialCharacteristicWriteDataValue{
+  aid: number,
+  iid: number,
+}
+
+export interface CharacteristicWriteError extends PartialCharacteristicWriteError {
+  aid: number,
+  iid: number,
+}
+
+export type PartialCharacteristicWriteData = PartialCharacteristicWriteDataValue | PartialCharacteristicWriteError;
+export type CharacteristicWriteData = CharacteristicWriteDataValue | CharacteristicWriteError;
 
 export interface CharacteristicsWriteResponse {
-  characteristics: CharacteristicsWriteData[],
+  characteristics: CharacteristicWriteData[],
 }
 
 export type PrepareWriteRequest = {

@@ -2,13 +2,19 @@ import { MDNSServerOptions } from "@homebridge/ciao";
 import assert from "assert";
 import crypto from 'crypto';
 import createDebug from 'debug';
+import { EventEmitter } from "events";
 import net from "net";
 import {
-  CharacteristicsReadData,
+  CharacteristicId,
+  CharacteristicReadData,
   CharacteristicsReadRequest,
-  CharacteristicsWriteData,
+  CharacteristicsReadResponse,
   CharacteristicsWriteRequest,
   CharacteristicsWriteResponse,
+  CharacteristicWrite,
+  CharacteristicWriteData,
+  PartialCharacteristicReadData,
+  PartialCharacteristicWriteData,
   ResourceRequest,
   ResourceRequestType
 } from "../internal-types";
@@ -36,7 +42,6 @@ import {
   ControllerType,
   isSerializableController,
 } from "./controller";
-import { EventEmitter } from './EventEmitter';
 import * as HomeKitTypes from "./gen";
 import {
   CameraEventRecordingManagement,
@@ -75,9 +80,10 @@ import {
   ServiceId
 } from './Service';
 import { clone } from './util/clone';
-import { HAPConnection, HAPUsername } from "./util/eventedhttp";
+import { EventName, HAPConnection, HAPUsername } from "./util/eventedhttp";
 import * as uuid from "./util/uuid";
 import { toShortForm } from "./util/uuid";
+import Timeout = NodeJS.Timeout;
 
 const debug = createDebug('HAP-NodeJS:Accessory');
 const MAX_ACCESSORIES = 149; // Maximum number of bridged accessories per bridge.
@@ -149,30 +155,12 @@ export interface ControllerContext {
   serviceMap: ControllerServiceMap,
 }
 
-
-export const enum AccessoryEventTypes {
-  IDENTIFY = "identify",
-  LISTENING = "listening",
-  SERVICE_CONFIGURATION_CHANGE = "service-configurationChange",
-  SERVICE_CHARACTERISTIC_CHANGE = "service-characteristic-change",
-  PAIRED = "paired",
-  UNPAIRED = "unpaired",
+export const enum CharacteristicWarningType {
+  SLOW_WRITE = "slow-write",
+  TIMEOUT_WRITE = "timeout-write",
+  SLOW_READ = "slow-read",
+  TIMEOUT_READ = "timeout-read",
 }
-
-type Events = {
-  identify: (paired:boolean, cb: VoidCallback) => void;
-  listening: (port: number, hostname: string) => void;
-  "service-configurationChange": VoidCallback;
-  "service-characteristic-change": (change: AccessoryCharacteristicChange) => void;
-  [AccessoryEventTypes.PAIRED]: () => void;
-  [AccessoryEventTypes.UNPAIRED]: () => void;
-}
-
-// noinspection JSUnusedGlobalSymbols
-/**
- * @deprecated Use AccessoryEventTypes instead
- */
-export type EventAccessory = "identify" | "listening" | "service-configurationChange" | "service-characteristic-change";
 
 /**
  * @deprecated
@@ -262,6 +250,48 @@ const enum WriteRequestState {
   TIMED_WRITE_REJECTED
 }
 
+// noinspection JSUnusedGlobalSymbols
+/**
+ * @deprecated Use AccessoryEventTypes instead
+ */
+export type EventAccessory = "identify" | "listening" | "service-configurationChange" | "service-characteristic-change";
+
+export const enum AccessoryEventTypes {
+  IDENTIFY = "identify",
+  LISTENING = "listening",
+  SERVICE_CONFIGURATION_CHANGE = "service-configurationChange",
+  SERVICE_CHARACTERISTIC_CHANGE = "service-characteristic-change",
+  PAIRED = "paired",
+  UNPAIRED = "unpaired",
+
+  CHARACTERISTIC_WARNING = "characteristic-warning",
+}
+
+export declare interface Accessory {
+  on(event: "identify", listener: (paired: boolean, callback: VoidCallback) => void): this;
+  on(event: "listening", listener: (port: number, address: string) => void): this;
+
+  on(event: "service-configurationChange", listener: (change: ServiceConfigurationChange) => void): this;
+  on(event: "service-characteristic-change", listener: (change: AccessoryCharacteristicChange) => void): this;
+
+  on(event: "paired", listener: () => void): this;
+  on(event: "unpaired", listener: () => void): this;
+
+  on(event: "characteristic-warning", listener: (type: CharacteristicWarningType, iid: number) => void): this;
+
+
+  emit(event: "identify", paired: boolean, callback: VoidCallback): boolean;
+  emit(event: "listening", port: number, address: string): boolean;
+
+  emit(event: "service-configurationChange", change: ServiceConfigurationChange): boolean;
+  emit(event: "service-characteristic-change", change: AccessoryCharacteristicChange): boolean;
+
+  emit(event: "paired"): boolean;
+  emit(event: "unpaired"): boolean;
+
+  emit(event: "characteristic-warning", type: CharacteristicWarningType, iid: number): boolean;
+}
+
 /**
  * Accessory is a virtual HomeKit device. It can publish an associated HAP server for iOS devices to communicate
  * with - or it can run behind another "Bridge" Accessory server.
@@ -282,7 +312,7 @@ const enum WriteRequestState {
  * @event 'service-characteristic-change' => function({service, characteristic, oldValue, newValue, context}) { }
  *        Emitted after a change in the value of one of the provided Service's Characteristics.
  */
-export class Accessory extends EventEmitter<Events> {
+export class Accessory extends EventEmitter {
 
   /**
    * @deprecated Please use the Categories const enum above. Scheduled to be removed in 2021-06.
@@ -386,7 +416,7 @@ export class Accessory extends EventEmitter<Events> {
     if (!this.bridged) {
       this._updateConfiguration();
     } else {
-      this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({accessory:this, service:service}));
+      this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, { service: service });
     }
 
     service.on(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, (change: ServiceConfigurationChange) => {
@@ -405,7 +435,7 @@ export class Accessory extends EventEmitter<Events> {
       if (!this.bridged) {
         this._updateConfiguration();
       } else {
-        this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({accessory:this, service:service}));
+        this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, { service: service });
       }
     });
 
@@ -443,7 +473,7 @@ export class Accessory extends EventEmitter<Events> {
       if (!this.bridged) {
         this._updateConfiguration();
       } else {
-        this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({accessory:this, service:service}));
+        this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, { service: service });
 
         for (const accessory of this.bridgedAccessories) {
           accessory.removeLinkedService(service);
@@ -569,7 +599,7 @@ export class Accessory extends EventEmitter<Events> {
     if (!foundMatchAccessory)
       throw new Error("Cannot find the bridged Accessory to remove.");
 
-    accessory.removeAllListeners();
+    accessory.removeAllListeners(); // TODO remove all listeners from services and characteristics as well
 
     if(!deferUpdate) {
       this._updateConfiguration();
@@ -603,18 +633,22 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
-  getBridgedAccessoryByAID = (aid: number) => {
-    for (let index in this.bridgedAccessories) {
-      const accessory = this.bridgedAccessories[index];
-      if (accessory.aid === aid) return accessory;
+  protected getAccessoryByAID(aid: number): Accessory | undefined {
+    if (aid === 1) {
+      return this;
     }
+
+    for (const accessory of this.bridgedAccessories) {
+      if (accessory.aid === aid) {
+        return accessory;
+      }
+    }
+
+    return undefined;
   }
 
-  private findCharacteristic(aid: number, iid: number): Characteristic | undefined {
-    // if aid === 1, the accessory is us (because we are the server), otherwise find it among our bridged
-    // accessories (if any)
-    const accessory = (aid === 1) ? this : this.getBridgedAccessoryByAID(aid);
-
+  protected findCharacteristic(aid: number, iid: number): Characteristic | undefined {
+    const accessory = this.getAccessoryByAID(aid);
     return accessory && accessory.getCharacteristicByIID(iid);
   }
 
@@ -641,7 +675,7 @@ export class Accessory extends EventEmitter<Events> {
    * @param cameraSource {LegacyCameraSource}
    * @deprecated please refer to the new {@see CameraController} API and {@link configureController}
    */
-  configureCameraSource(cameraSource: LegacyCameraSource): CameraController {
+  public configureCameraSource(cameraSource: LegacyCameraSource): CameraController {
     if (cameraSource.streamControllers.length === 0) {
       throw new Error("Malformed legacy CameraSource. Did not expose any StreamControllers!");
     }
@@ -689,7 +723,7 @@ export class Accessory extends EventEmitter<Events> {
    *
    * @param controllerConstructor {Controller | ControllerConstructor}
    */
-  configureController(controllerConstructor: Controller | ControllerConstructor) { // TODO add support to remove controllers
+  public configureController(controllerConstructor: Controller | ControllerConstructor) { // TODO add support to remove controllers
     const controller = typeof controllerConstructor === "function"
         ? new controllerConstructor() // any custom constructor arguments should be passed before using .bind(...)
         : controllerConstructor;
@@ -943,7 +977,7 @@ export class Accessory extends EventEmitter<Events> {
   /**
    * Returns a JSON representation of this Accessory suitable for delivering to HAP clients.
    */
-  toHAP = (opt?: ToHAPOptions) => {
+  private toHAP(opt?: ToHAPOptions) {
 
     const servicesHAP = [];
 
@@ -1098,7 +1132,7 @@ export class Accessory extends EventEmitter<Events> {
     this._server = new HAPServer(this._accessoryInfo);
     this._server.allowInsecureRequest = !!allowInsecureRequest;
     this._server.on(HAPServerEventTypes.LISTENING, this.onListening.bind(this));
-    this._server.on(HAPServerEventTypes.IDENTIFY, this.handleIdentify.bind(this));
+    this._server.on(HAPServerEventTypes.IDENTIFY, this.identificationRequest.bind(this, false));
     this._server.on(HAPServerEventTypes.PAIR, this.handleInitialPairSetupFinished.bind(this));
     this._server.on(HAPServerEventTypes.ADD_PAIRING, this.handleAddPairing.bind(this));
     this._server.on(HAPServerEventTypes.REMOVE_PAIRING, this.handleRemovePairing.bind(this));
@@ -1107,7 +1141,7 @@ export class Accessory extends EventEmitter<Events> {
     this._server.on(HAPServerEventTypes.GET_CHARACTERISTICS, this.handleGetCharacteristics.bind(this));
     this._server.on(HAPServerEventTypes.SET_CHARACTERISTICS, this.handleSetCharacteristics.bind(this));
     this._server.on(HAPServerEventTypes.CONNECTION_CLOSED, this.handleHAPConnectionClosed.bind(this));
-    this._server.on(HAPServerEventTypes.REQUEST_RESOURCE, this._handleResource.bind(this));
+    this._server.on(HAPServerEventTypes.REQUEST_RESOURCE, this.handleResource.bind(this));
 
     this._server.listen(info.port, parsed.serverAddress);
   }
@@ -1130,7 +1164,7 @@ export class Accessory extends EventEmitter<Events> {
     this.removeAllListeners();
   }
 
-  unpublish = () => {
+  public unpublish(): void {
     if (this._server) {
       this._server.stop();
       this._server = undefined;
@@ -1142,7 +1176,7 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
-  _updateConfiguration = () => {
+  private _updateConfiguration(): void {
     if (this._advertiser && this._advertiser.isServiceCreated()) {
       // get our accessory information in HAP format and determine if our configuration (that is, our
       // Accessories/Services/Characteristics) has changed since the last time we were published. make
@@ -1172,10 +1206,6 @@ export class Accessory extends EventEmitter<Events> {
     // noinspection JSIgnoredPromiseFromCall
     this._advertiser!.startAdvertising();
     this.emit(AccessoryEventTypes.LISTENING, port, hostname);
-  }
-
-  private handleIdentify(callback: IdentifyCallback) {
-    this.identificationRequest(false, callback);
   }
 
   private handleInitialPairSetupFinished(username: string, publicKey: Buffer, callback: PairCallback): void {
@@ -1273,82 +1303,145 @@ export class Accessory extends EventEmitter<Events> {
   }
 
   private handleGetCharacteristics(connection: HAPConnection, request: CharacteristicsReadRequest, callback: ReadCharacteristicsCallback): void {
-    const promises: Promise<CharacteristicsReadData>[] = [];
+    const characteristics: CharacteristicReadData[] = [];
+    const response: CharacteristicsReadResponse = { characteristics: characteristics };
+
+    const missingCharacteristics: Set<EventName> = new Set();
+    let timeout: Timeout | undefined = setTimeout(() => {
+      for (const id of missingCharacteristics) {
+        const split = id.split(".");
+        const aid = parseInt(split[0]);
+        const iid = parseInt(split[1]);
+
+        const accessory = this.getAccessoryByAID(aid);
+        let emitted = accessory?.emit(AccessoryEventTypes.CHARACTERISTIC_WARNING, CharacteristicWarningType.SLOW_READ, iid);
+        if (!emitted) {
+          const characteristic = accessory?.getCharacteristicByIID(iid);
+          console.log(`The read handler for the characteristic '${characteristic?.displayName || iid}' on the accessory '${accessory?.displayName}' was slow to respond!`);
+        }
+      }
+
+      // after a total of 10s we do not longer wait for a request to appear and just return status code timeout
+      timeout = setTimeout(() => {
+        timeout = undefined;
+
+        for (const id of missingCharacteristics) {
+          const split = id.split(".");
+          const aid = parseInt(split[0]);
+          const iid = parseInt(split[1]);
+
+          const accessory = this.getAccessoryByAID(aid);
+          let emitted = accessory?.emit(AccessoryEventTypes.CHARACTERISTIC_WARNING, CharacteristicWarningType.TIMEOUT_READ, iid);
+          if (!emitted) {
+            const characteristic = accessory?.getCharacteristicByIID(iid);
+            console.log("The read handler for the characteristic '" + (characteristic?.displayName || iid) + "' on the accessory '" + accessory?.displayName +
+              "' didn't respond at all!. Please check that you properly call the callback!");
+          }
+
+          characteristics.push({
+            aid: aid,
+            iid: iid,
+            status: Status.OPERATION_TIMED_OUT,
+          });
+        }
+        missingCharacteristics.clear();
+
+        callback(response);
+      }, 7000);
+    }, 3000);
 
     for (const id of request.ids) {
-      const characteristic = this.findCharacteristic(id.aid, id.iid);
+      const name = id.aid + "." + id.iid;
+      missingCharacteristics.add(name);
 
-      if (!characteristic) {
-        debug('[%s] Could not find a Characteristic with aid of %s and iid of %s', this.displayName, id.aid, id.iid);
-
-        promises.push(Promise.resolve({
+      this.handleCharacteristicRead(connection, id, request).then(value => {
+        missingCharacteristics.delete(name);
+        characteristics.push({
           aid: id.aid,
           iid: id.iid,
-          status: Status.INVALID_VALUE_IN_REQUEST,
-        }));
-        continue;
-      }
+          ...value,
+        });
+      }, reason => { // this error block is only called if hap-nodejs itself messed up
+        console.error(`[${this.displayName}] Read request for characteristic ${id} encountered an error: ${reason.stack}`)
 
-      if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.READ)) {
-        let verifiable = true;
-        if (!connection.username || !this._accessoryInfo) {
-          verifiable = false;
-          debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for reading (aid of %s and iid of %s)', this.displayName, id.aid, id.iid)
-        }
-
-        if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(connection.username!)) {
-
-          promises.push(Promise.resolve({
-            aid: id.aid,
-            iid: id.iid,
-            status: Status.INSUFFICIENT_PRIVILEGES,
-          }));
-          continue;
-        }
-      }
-
-      // TODO introduce a timeout on those values?
-      const promise = characteristic.handleGetRequest(connection).then(value => {
-        debug('[%s] Got Characteristic "%s" value: %s', this.displayName, characteristic!.displayName, value);
-
-        const data: CharacteristicsReadData = {
+        missingCharacteristics.delete(name);
+        characteristics.push({
           aid: id.aid,
           iid: id.iid,
-          value: value == undefined? null: value,
-        };
-
-        if (request.includeMeta) {
-          data.format = characteristic.props.format;
-          data.unit = characteristic.props.unit;
-          data.minValue = characteristic.props.minValue;
-          data.maxValue = characteristic.props.maxValue;
-          data.minStep = characteristic.props.minStep;
-          data.maxLen = characteristic.props.maxLen || characteristic.props.maxDataLen;
-        }
-        if (request.includePerms) {
-          data.perms = characteristic.props.perms;
-        }
-        if (request.includeType) {
-          data.type = toShortForm(this.UUID, HomeKitTypes.BASE_UUID);
-        }
-        if (request.includeEvent) {
-          data.ev = connection.hasEventNotifications(id.aid, id.iid);
+          status: Status.SERVICE_COMMUNICATION_FAILURE,
+        });
+      }).then(() => {
+        if (!timeout) {
+          return; // if timeout is undefined, response was already sent out
         }
 
-        return data;
-      }, (reason: Status) => {
-        // @ts-expect-error
-        debug('[%s] Error getting value for characteristic "%s": %s', this.displayName, characteristic.displayName, Status[reason]);
-        return {
-          aid: id.aid,
-          iid: id.iid,
-          status: reason,
-        };
+        if (missingCharacteristics.size === 0) {
+          if (timeout) {
+            clearTimeout(timeout);
+            timeout = undefined;
+          }
+          callback(response);
+        }
       });
-      promises.push(promise);
+    }
+  }
+
+  private async handleCharacteristicRead(connection: HAPConnection, id: CharacteristicId, request: CharacteristicsReadRequest): Promise<PartialCharacteristicReadData> {
+    const characteristic = this.findCharacteristic(id.aid, id.iid);
+
+    if (!characteristic) {
+      debug('[%s] Could not find a Characteristic with aid of %s and iid of %s', this.displayName, id.aid, id.iid);
+      return { status: Status.INVALID_VALUE_IN_REQUEST };
     }
 
-    Promise.all(promises).then(value => callback({ characteristics: value }));
+    if (!characteristic.props.perms.includes(Perms.PAIRED_READ)) { // check if read is allowed for this characteristic
+      debug('[%s] Tried reading from characteristic which does not allow reading (aid of %s and iid of %s)', this.displayName, id.aid, id.iid);
+      return { status: Status.WRITE_ONLY_CHARACTERISTIC };
+    }
+
+    if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.READ)) {
+      let verifiable = true;
+      if (!connection.username || !this._accessoryInfo) {
+        verifiable = false;
+        debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for reading (aid of %s and iid of %s)', this.displayName, id.aid, id.iid)
+      }
+
+      if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(connection.username!)) {
+        return { status: Status.INSUFFICIENT_PRIVILEGES };
+      }
+    }
+
+    return characteristic.handleGetRequest(connection).then(value => {
+      debug('[%s] Got Characteristic "%s" value: %s', this.displayName, characteristic!.displayName, value);
+
+      const data: PartialCharacteristicReadData = {
+        value: value == undefined? null: value,
+      };
+
+      if (request.includeMeta) {
+        data.format = characteristic.props.format;
+        data.unit = characteristic.props.unit;
+        data.minValue = characteristic.props.minValue;
+        data.maxValue = characteristic.props.maxValue;
+        data.minStep = characteristic.props.minStep;
+        data.maxLen = characteristic.props.maxLen || characteristic.props.maxDataLen;
+      }
+      if (request.includePerms) {
+        data.perms = characteristic.props.perms;
+      }
+      if (request.includeType) {
+        data.type = toShortForm(this.UUID, HomeKitTypes.BASE_UUID);
+      }
+      if (request.includeEvent) {
+        data.ev = connection.hasEventNotifications(id.aid, id.iid);
+      }
+
+      return data;
+    }, (reason: Status) => {
+      // @ts-expect-error
+      debug('[%s] Error getting value for characteristic "%s": %s', this.displayName, characteristic.displayName, Status[reason]);
+      return { status: reason };
+    });
   }
 
   private handleSetCharacteristics(connection: HAPConnection, writeRequest: CharacteristicsWriteRequest, callback: WriteCharacteristicsCallback): void {
@@ -1369,227 +1462,207 @@ export class Accessory extends EventEmitter<Events> {
       }
     }
 
-    const characteristics: CharacteristicsWriteData[] = [];
+    const characteristics: CharacteristicWriteData[] = [];
     const response: CharacteristicsWriteResponse = { characteristics: characteristics };
 
+    const missingCharacteristics: Set<EventName> = new Set();
+    let timeout: Timeout | undefined = setTimeout(() => {
+      for (const id of missingCharacteristics) {
+        const split = id.split(".");
+        const aid = parseInt(split[0]);
+        const iid = parseInt(split[1]);
+
+        const accessory = this.getAccessoryByAID(aid);
+        let emitted = accessory?.emit(AccessoryEventTypes.CHARACTERISTIC_WARNING, CharacteristicWarningType.SLOW_WRITE, iid);
+        if (!emitted) {
+          const characteristic = accessory?.getCharacteristicByIID(iid);
+          console.log(`The write handler for the characteristic '${characteristic?.displayName || iid}' on the accessory '${accessory?.displayName}' was slow to respond!`);
+        }
+      }
+
+      // after a total of 10s we do not longer wait for a request to appear and just return status code timeout
+      timeout = setTimeout(() => {
+        timeout = undefined;
+
+        for (const id of missingCharacteristics) {
+          const split = id.split(".");
+          const aid = parseInt(split[0]);
+          const iid = parseInt(split[1]);
+
+          const accessory = this.getAccessoryByAID(aid);
+          let emitted = accessory?.emit(AccessoryEventTypes.CHARACTERISTIC_WARNING, CharacteristicWarningType.TIMEOUT_WRITE, iid);
+          if (!emitted) {
+            const characteristic = accessory?.getCharacteristicByIID(iid);
+            console.log("The write handler for the characteristic '" + (characteristic?.displayName || iid) + "' on the accessory '" + accessory?.displayName +
+              "' didn't respond at all!. Please check that you properly call the callback!");
+          }
+
+          characteristics.push({
+            aid: aid,
+            iid: iid,
+            status: Status.OPERATION_TIMED_OUT,
+          });
+        }
+        missingCharacteristics.clear();
+
+        callback(response);
+      }, 7000);
+    }, 3000);
+
     for (const data of writeRequest.characteristics) {
-      const characteristic = this.findCharacteristic(data.aid, data.iid);
-      let evResponse: boolean | undefined = undefined;
+      const id = data.aid + "." + data.iid;
+      missingCharacteristics.add(id);
 
-      if (!characteristic) {
-        debug('[%s] Could not find a Characteristic with aid of %s and iid of %s', this.displayName, data.aid, data.iid);
-
+      this.handleCharacteristicWrite(connection, data, writeState).then(value => {
+        missingCharacteristics.delete(id);
         characteristics.push({
           aid: data.aid,
           iid: data.iid,
-          status: Status.INVALID_VALUE_IN_REQUEST,
+          ...value,
         });
+      }, reason => { // this error block is only called if hap-nodejs itself messed up
+        console.error(`[${this.displayName}] Write request for characteristic ${id} encountered an error: ${reason.stack}`)
 
-        if (characteristics.length === writeRequest.characteristics.length) {
-          callback(response);
-        }
-        continue;
-      }
-
-      if (writeState === WriteRequestState.TIMED_WRITE_REJECTED) {
+        missingCharacteristics.delete(id);
         characteristics.push({
           aid: data.aid,
           iid: data.iid,
-          status: Status.INVALID_VALUE_IN_REQUEST,
+          status: Status.SERVICE_COMMUNICATION_FAILURE,
         });
+      }).then(() => {
+        if (!timeout) {
+          return; // if timeout is undefined, response was already sent out
+        }
 
-        if (characteristics.length === writeRequest.characteristics.length) {
+        if (missingCharacteristics.size === 0) { // if everything returned send the response
+          if (timeout) {
+            clearTimeout(timeout);
+            timeout = undefined;
+          }
           callback(response);
         }
-        continue;
-      }
-
-      if (data.ev != undefined) { // register/unregister event notifications
-        if (!characteristic.props.perms.includes(Perms.NOTIFY)) { // check if notify is allowed for this characteristic
-          debug('[%s] Tried enabling notifications for Characteristic which does not allow notify (aid of %s and iid of %s)', this.displayName, data.aid, data.iid);
-          characteristics.push({
-            aid: data.aid,
-            iid: data.iid,
-            status: Status.NOTIFICATION_NOT_SUPPORTED,
-          });
-
-          if (characteristics.length === writeRequest.characteristics.length) {
-            callback(response);
-          }
-          continue;
-        }
-
-        if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.NOTIFY)) {
-          let verifiable = true;
-          if (!connection.username || !this._accessoryInfo) {
-            verifiable = false;
-            debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for notify (aid of %s and iid of %s)', this.displayName, data.aid, data.iid)
-          }
-
-          if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(connection.username!)) {
-            characteristics.push({
-              aid: data.aid,
-              iid: data.iid,
-              status: Status.INSUFFICIENT_PRIVILEGES,
-            });
-
-            if (characteristics.length === writeRequest.characteristics.length) {
-              callback(response);
-            }
-            continue;
-          }
-        }
-
-        if (data.ev && !connection.hasEventNotifications(data.aid, data.iid)) {
-          connection.enableEventNotifications(data.aid, data.iid);
-          characteristic.subscribe();
-          evResponse = true;
-          debug('[%s] %s Characteristic "%s" for events', this.displayName, data.ev ? "Registering" : "Unregistering", characteristic.displayName); // TODO maybe remove this event message?
-        }
-
-        if (!data.ev && connection.hasEventNotifications(data.aid, data.iid)) {
-          characteristic.unsubscribe();
-          connection.disableEventNotifications(data.aid, data.iid);
-          evResponse = false;
-          debug('[%s] %s Characteristic "%s" for events', this.displayName, data.ev ? "Registering" : "Unregistering", characteristic.displayName); // TODO maybe remove this event message?
-        }
-      }
-
-      if (data.value != undefined) {
-        // TODO move from here
-        if (!characteristic.props.perms.includes(Perms.PAIRED_WRITE)) { // check if write is allowed for this characteristic
-          debug('[%s] Tried writing to Characteristic which does not allow writing (aid of %s and iid of %s)', this.displayName, data.aid, data.iid);
-          characteristics.push({
-            aid: data.aid,
-            iid: data.iid,
-            status: Status.READ_ONLY_CHARACTERISTIC,
-          });
-
-          if (characteristics.length === writeRequest.characteristics.length) {
-            callback(response);
-          }
-          continue;
-        }
-
-        if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.WRITE)) {
-          let verifiable = true;
-          if (!connection.username || !this._accessoryInfo) {
-            verifiable = false;
-            debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for write (aid of %s and iid of %s)', this.displayName, data.aid, data.iid)
-          }
-
-          if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(connection.username!)) {
-            characteristics.push({
-              aid: data.aid,
-              iid: data.iid,
-              status: Status.INSUFFICIENT_PRIVILEGES,
-            });
-
-            if (characteristics.length === writeRequest.characteristics.length) {
-              callback(response);
-            }
-            continue;
-          }
-        }
-
-        if (characteristic.props.perms.includes(Perms.ADDITIONAL_AUTHORIZATION) && characteristic.additionalAuthorizationHandler) {
-          // if the characteristic "supports additional authorization" but doesn't define a handler for the check
-          // we conclude that the characteristic doesn't want to check the authData (currently) and just allows access for everybody
-
-          let allowWrite;
-          try {
-            allowWrite = characteristic.additionalAuthorizationHandler(data.authData);
-          } catch (error) {
-            console.log("[" + this.displayName + "] Additional authorization handler has thrown an error when checking authData: " + error.stack);
-            allowWrite = false;
-          }
-
-          if (!allowWrite) {
-            characteristics.push({
-              aid: data.aid,
-              iid: data.iid,
-              status: Status.INSUFFICIENT_AUTHORIZATION,
-            });
-
-            if (characteristics.length === writeRequest.characteristics.length) {
-              callback(response);
-            }
-            continue;
-          }
-        }
-
-        if (characteristic.props.perms.includes(Perms.TIMED_WRITE) && writeState !== WriteRequestState.TIMED_WRITE_AUTHENTICATED) {
-          debug('[%s] Tried writing to a timed write only Characteristic without properly preparing (iid of %s and aid of %s)', this.displayName, data.aid, data.iid);
-          characteristics.push({
-            aid: data.aid,
-            iid: data.iid,
-            status: Status.INVALID_VALUE_IN_REQUEST,
-          });
-
-          if (characteristics.length === writeRequest.characteristics.length) {
-            callback(response);
-          }
-          continue;
-        }
-
-        debug('[%s] Setting Characteristic "%s" to value %s', this.displayName, characteristic.displayName, data.value);
-
-        characteristic.handleSetRequest(data.value, connection).then(value => {
-          characteristics.push({
-            aid: data.aid,
-            iid: data.iid,
-
-            value: data.r && value? value: undefined, // if write response is requests and value is provided, return that
-
-            ev: evResponse,
-          })
-
-          if (characteristics.length === writeRequest.characteristics.length) {
-            callback(response);
-          }
-        }, (status: Status) => {
-          // @ts-expect-error
-          debug('[%s] Error setting Characteristic "%s" to value %s: ', this.displayName, characteristic.displayName, data.value, Status[status]);
-
-          characteristics.push({
-            aid: data.aid,
-            iid: data.iid,
-            status: status,
-          });
-
-          if (characteristics.length === writeRequest.characteristics.length) {
-            callback(response);
-          }
-        });
-      } else {
-        characteristics.push({
-          aid: data.aid,
-          iid: data.iid,
-          ev: evResponse,
-        });
-
-        if (characteristics.length === writeRequest.characteristics.length) {
-          callback(response);
-        }
-      }
+      })
     }
   }
 
-  private _handleResource(data: ResourceRequest, callback: ResourceRequestCallback): void {
+  private async handleCharacteristicWrite(connection: HAPConnection, data: CharacteristicWrite, writeState: WriteRequestState): Promise<PartialCharacteristicWriteData> {
+    const characteristic = this.findCharacteristic(data.aid, data.iid);
+    let evResponse: boolean | undefined = undefined;
+
+    if (!characteristic) {
+      debug('[%s] Could not find a Characteristic with aid of %s and iid of %s', this.displayName, data.aid, data.iid);
+      return { status: Status.INVALID_VALUE_IN_REQUEST };
+    }
+
+    if (writeState === WriteRequestState.TIMED_WRITE_REJECTED) {
+      return { status: Status.INVALID_VALUE_IN_REQUEST };
+    }
+
+    if (data.ev != undefined) { // register/unregister event notifications
+      if (!characteristic.props.perms.includes(Perms.NOTIFY)) { // check if notify is allowed for this characteristic
+        debug('[%s] Tried enabling notifications for Characteristic which does not allow notify (aid of %s and iid of %s)', this.displayName, data.aid, data.iid);
+        return { status: Status.NOTIFICATION_NOT_SUPPORTED };
+      }
+
+      if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.NOTIFY)) {
+        let verifiable = true;
+        if (!connection.username || !this._accessoryInfo) {
+          verifiable = false;
+          debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for notify (aid of %s and iid of %s)', this.displayName, data.aid, data.iid)
+        }
+
+        if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(connection.username!)) {
+          return { status: Status.INSUFFICIENT_PRIVILEGES };
+        }
+      }
+
+      if (data.ev && !connection.hasEventNotifications(data.aid, data.iid)) {
+        connection.enableEventNotifications(data.aid, data.iid);
+        characteristic.subscribe();
+        evResponse = true;
+        debug('[%s] Registered Characteristic "%s" on "%s" for events', connection.remoteAddress, characteristic.displayName, this.displayName);
+      }
+
+      if (!data.ev && connection.hasEventNotifications(data.aid, data.iid)) {
+        characteristic.unsubscribe();
+        connection.disableEventNotifications(data.aid, data.iid);
+        evResponse = false;
+        debug('[%s] Unregistered Characteristic "%s" on "%s" for events', connection.remoteAddress, characteristic.displayName, this.displayName);
+      }
+      // response is returned below in the else block
+    }
+
+    if (data.value != undefined) {
+      if (!characteristic.props.perms.includes(Perms.PAIRED_WRITE)) { // check if write is allowed for this characteristic
+        debug('[%s] Tried writing to Characteristic which does not allow writing (aid of %s and iid of %s)', this.displayName, data.aid, data.iid);
+        return { status: Status.READ_ONLY_CHARACTERISTIC };
+      }
+
+      if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.WRITE)) {
+        let verifiable = true;
+        if (!connection.username || !this._accessoryInfo) {
+          verifiable = false;
+          debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for write (aid of %s and iid of %s)', this.displayName, data.aid, data.iid)
+        }
+
+        if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(connection.username!)) {
+          return { status: Status.INSUFFICIENT_PRIVILEGES };
+        }
+      }
+
+      if (characteristic.props.perms.includes(Perms.ADDITIONAL_AUTHORIZATION) && characteristic.additionalAuthorizationHandler) {
+        // if the characteristic "supports additional authorization" but doesn't define a handler for the check
+        // we conclude that the characteristic doesn't want to check the authData (currently) and just allows access for everybody
+
+        let allowWrite;
+        try {
+          allowWrite = characteristic.additionalAuthorizationHandler(data.authData);
+        } catch (error) {
+          console.log("[" + this.displayName + "] Additional authorization handler has thrown an error when checking authData: " + error.stack);
+          allowWrite = false;
+        }
+
+        if (!allowWrite) {
+          return { status: Status.INSUFFICIENT_AUTHORIZATION };
+        }
+      }
+
+      if (characteristic.props.perms.includes(Perms.TIMED_WRITE) && writeState !== WriteRequestState.TIMED_WRITE_AUTHENTICATED) {
+        debug('[%s] Tried writing to a timed write only Characteristic without properly preparing (iid of %s and aid of %s)', this.displayName, data.aid, data.iid);
+        return { status: Status.INVALID_VALUE_IN_REQUEST };
+      }
+
+      return characteristic.handleSetRequest(data.value, connection).then(value => {
+        debug('[%s] Setting Characteristic "%s" to value %s', this.displayName, characteristic.displayName, data.value);
+        return {
+          value: data.r && value? value: undefined, // if write response is requests and value is provided, return that
+
+          ev: evResponse,
+        };
+      }, (status: Status) => {
+        // @ts-expect-error
+        debug('[%s] Error setting Characteristic "%s" to value %s: ', this.displayName, characteristic.displayName, data.value, Status[status]);
+
+        return { status: status };
+      });
+    } else {
+      return { ev: evResponse };
+    }
+  }
+
+  private handleResource(data: ResourceRequest, callback: ResourceRequestCallback): void {
     if (data["resource-type"] === ResourceRequestType.IMAGE) {
       const aid = data.aid; // aid is optionally supplied by HomeKit (for example when camera is bridged, multiple cams, etc)
 
+      let accessory: Accessory | undefined = undefined;
       let controller: CameraController | undefined = undefined;
       if (aid) {
-        if (this.aid === aid && this.activeCameraController) { // bridge is probably not a camera but it is possible in theory
-          controller = this.activeCameraController;
-        } else {
-          const accessory = this.getBridgedAccessoryByAID(aid);
-          if (accessory && accessory.activeCameraController) {
-            controller = accessory.activeCameraController;
-          }
+        accessory = this.getAccessoryByAID(aid);
+        if (accessory && accessory.activeCameraController) {
+          controller = accessory.activeCameraController;
         }
       } else if (this.activeCameraController) { // aid was not supplied, check if this accessory is a camera
+        accessory = this;
         controller = this.activeCameraController;
       }
 
@@ -1599,17 +1672,10 @@ export class Accessory extends EventEmitter<Events> {
         return;
       }
 
-      controller.handleSnapshotRequest(data["image-height"], data["image-width"], (error, resource) => {
-        if (!resource || resource.length === 0) {
-          error = new Error("supplied resource was undefined/empty!");
-        }
-
-        if (error) {
-          debug("[%s] Error getting snapshot: %s", this._accessoryInfo?.username, error.message);
-          callback({ httpCode: HAPHTTPCode.OK, status: Status.SERVICE_COMMUNICATION_FAILURE });
-        } else {
-          callback(undefined, resource);
-        }
+      controller.handleSnapshotRequest(data["image-height"], data["image-width"], accessory?.displayName).then(buffer => {
+        callback(undefined, buffer);
+      }, (status: Status) => {
+        callback({ httpCode: HAPHTTPCode.OK, status: status });
       });
       return;
     }
@@ -1636,7 +1702,6 @@ export class Accessory extends EventEmitter<Events> {
     connection.clearRegisteredEvents();
   }
 
-// Called internally above when a change was detected in one of our hosted Characteristics somewhere in our hierarchy.
   private handleCharacteristicChange(change: AccessoryCharacteristicChange & { accessory: Accessory }): void {
     if (!this._server) {
       return; // we're not running a HAPServer, so there's no one to notify about this event
@@ -1654,7 +1719,7 @@ export class Accessory extends EventEmitter<Events> {
       if (!this.bridged) {
         this._updateConfiguration();
       } else {
-        this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({accessory:this, service }));
+        this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, { service: service });
       }
     });
 

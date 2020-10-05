@@ -40,7 +40,7 @@ export type ServiceCharacteristicChange = CharacteristicChange & { characteristi
 
 type Events = {
   [ServiceEventTypes.CHARACTERISTIC_CHANGE]: (change: ServiceCharacteristicChange) => void;
-  [ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE]: (change: ServiceConfigurationChange) => void;
+  [ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE]: (change: ServiceConfigurationChange) => void; // TODO remove service: this
 }
 
 // noinspection JSUnusedGlobalSymbols
