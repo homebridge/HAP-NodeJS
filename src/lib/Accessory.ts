@@ -1440,18 +1440,18 @@ export class Accessory extends EventEmitter<Events> {
           }
         }
 
-        debug('[%s] %s Characteristic "%s" for events', this.displayName, data.ev ? "Registering" : "Unregistering", characteristic.displayName); // TODO maybe remove this event message?
-
         if (data.ev && !connection.hasEventNotifications(data.aid, data.iid)) {
           connection.enableEventNotifications(data.aid, data.iid);
           characteristic.subscribe();
           evResponse = true;
+          debug('[%s] %s Characteristic "%s" for events', this.displayName, data.ev ? "Registering" : "Unregistering", characteristic.displayName); // TODO maybe remove this event message?
         }
 
         if (!data.ev && connection.hasEventNotifications(data.aid, data.iid)) {
           characteristic.unsubscribe();
           connection.disableEventNotifications(data.aid, data.iid);
           evResponse = false;
+          debug('[%s] %s Characteristic "%s" for events', this.displayName, data.ev ? "Registering" : "Unregistering", characteristic.displayName); // TODO maybe remove this event message?
         }
       }
 
@@ -1483,6 +1483,32 @@ export class Accessory extends EventEmitter<Events> {
               aid: data.aid,
               iid: data.iid,
               status: Status.INSUFFICIENT_PRIVILEGES,
+            });
+
+            if (characteristics.length === writeRequest.characteristics.length) {
+              callback(response);
+            }
+            continue;
+          }
+        }
+
+        if (characteristic.props.perms.includes(Perms.ADDITIONAL_AUTHORIZATION) && characteristic.additionalAuthorizationHandler) {
+          // if the characteristic "supports additional authorization" but doesn't define a handler for the check
+          // we conclude that the characteristic doesn't want to check the authData (currently) and just allows access for everybody
+
+          let allowWrite;
+          try {
+            allowWrite = characteristic.additionalAuthorizationHandler(data.authData);
+          } catch (error) {
+            console.log("[" + this.displayName + "] Additional authorization handler has thrown an error when checking authData: " + error.stack);
+            allowWrite = false;
+          }
+
+          if (!allowWrite) {
+            characteristics.push({
+              aid: data.aid,
+              iid: data.iid,
+              status: Status.INSUFFICIENT_AUTHORIZATION,
             });
 
             if (characteristics.length === writeRequest.characteristics.length) {

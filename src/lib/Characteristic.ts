@@ -100,6 +100,8 @@ export const enum CharacteristicEventTypes {
 export type CharacteristicGetCallback = (status?: Status | null | Error, value?: Nullable<CharacteristicValue>) => void;
 export type CharacteristicSetCallback = (error?: Status | null | Error, writeResponse?: Nullable<CharacteristicValue>) => void;
 
+export type AdditionalAuthorizationHandler = (additionalAuthorizationData: string | undefined) => boolean;
+
 export declare interface Characteristic {
 
   on(event: "get", listener: (callback: CharacteristicGetCallback, context: any, connection?: HAPConnection) => void): this;
@@ -397,7 +399,12 @@ export class Characteristic extends EventEmitter {
   status: Status = Status.SUCCESS;
   eventOnlyCharacteristic: boolean = false;
   props: CharacteristicProps;
+
   private subscriptions: number = 0;
+  /**
+   * @internal
+   */
+  additionalAuthorizationHandler?: AdditionalAuthorizationHandler;
 
   public constructor(public displayName: string, public UUID: string, props?: CharacteristicProps) {
     super();
@@ -434,6 +441,8 @@ export class Characteristic extends EventEmitter {
    * }
    */
   public setProps(props: Partial<CharacteristicProps>): Characteristic {
+    // TODO calling setProps after publish doesn't lead to a increment in the current configuration number
+
     for (let key in (props || {}))
       if (Object.prototype.hasOwnProperty.call(props, key)) {
         // @ts-ignore
@@ -452,25 +461,26 @@ export class Characteristic extends EventEmitter {
   }
 
   /**
-   * @internal
+   * This method can be used to setup additional authorization for a characteristic.
+   * For one it adds the {@link Perms.ADDITIONAL_AUTHORIZATION} permission to the characteristic
+   * (if it wasn't already) to signal support for additional authorization to HomeKit.
+   * Additionally an {@link AdditionalAuthorizationHandler} is setup up which is called
+   * before a write request is performed.
+   *
+   * Additional Authorization Data can be added to SET request via a custom iOS App.
+   * Before hap-nodejs executes a write request it will call the {@link AdditionalAuthorizationHandler}
+   * with 'authData' supplied in the write request. The 'authData' is a base64 encoded string
+   * (or undefined if no authData was supplied).
+   * The {@link AdditionalAuthorizationHandler} must then return true or false to indicate if the write request
+   * is authorized and should be accepted.
+   *
+   * @param handler - Handler called to check additional authorization data.
    */
-  subscribe(): void {
-    if (this.subscriptions === 0) {
-      this.emit(CharacteristicEventTypes.SUBSCRIBE);
+  public setupAdditionalAuthorization(handler: AdditionalAuthorizationHandler): void {
+    if (!this.props.perms.includes(Perms.ADDITIONAL_AUTHORIZATION)) {
+      this.props.perms.push(Perms.ADDITIONAL_AUTHORIZATION);
     }
-    this.subscriptions++;
-  }
-
-  /**
-   * @internal
-   */
-  unsubscribe(): void {
-    const wasOne = this.subscriptions === 1;
-    this.subscriptions--;
-    this.subscriptions = Math.max(this.subscriptions, 0);
-    if (wasOne) {
-      this.emit(CharacteristicEventTypes.UNSUBSCRIBE);
-    }
+    this.additionalAuthorizationHandler = handler;
   }
 
   /**
@@ -620,6 +630,28 @@ export class Characteristic extends EventEmitter {
           }
         }), undefined, connection);
       });
+    }
+  }
+
+  /**
+   * @internal
+   */
+  subscribe(): void {
+    if (this.subscriptions === 0) {
+      this.emit(CharacteristicEventTypes.SUBSCRIBE);
+    }
+    this.subscriptions++;
+  }
+
+  /**
+   * @internal
+   */
+  unsubscribe(): void {
+    const wasOne = this.subscriptions === 1;
+    this.subscriptions--;
+    this.subscriptions = Math.max(this.subscriptions, 0);
+    if (wasOne) {
+      this.emit(CharacteristicEventTypes.UNSUBSCRIBE);
     }
   }
 
