@@ -8,7 +8,6 @@ import net, { AddressInfo, Socket } from 'net';
 import os from "os";
 import { CharacteristicEventNotification, EventNotification } from "../../internal-types";
 import { CharacteristicValue, Nullable, SessionIdentifier } from '../../types';
-import { HAPEncryption } from "../HAPServer";
 import * as hapCrypto from "./hapCrypto";
 import { getOSLoopbackAddress } from "./net-utils";
 import * as uuid from './uuid';
@@ -18,6 +17,37 @@ const debug = createDebug('HAP-NodeJS:EventedHTTPServer');
 
 export type HAPUsername = string;
 export type EventName = string; // "<aid>.<iid>"
+
+/**
+ * Simple struct to hold vars needed to support HAP encryption.
+ */
+
+export class HAPEncryption {
+
+  readonly clientPublicKey: Buffer;
+  readonly secretKey: Buffer;
+  readonly publicKey: Buffer;
+  readonly sharedSecret: Buffer;
+  readonly hkdfPairEncryptionKey: Buffer;
+
+  accessoryToControllerCount: number = 0;
+  controllerToAccessoryCount: number = 0;
+  accessoryToControllerKey: Buffer;
+  controllerToAccessoryKey: Buffer;
+
+  incompleteFrame?: Buffer;
+
+  public constructor(clientPublicKey: Buffer, secretKey: Buffer, publicKey: Buffer, sharedSecret: Buffer, hkdfPairEncryptionKey: Buffer) {
+    this.clientPublicKey = clientPublicKey;
+    this.secretKey = secretKey;
+    this.publicKey = publicKey;
+    this.sharedSecret = sharedSecret;
+    this.hkdfPairEncryptionKey = hkdfPairEncryptionKey;
+
+    this.accessoryToControllerKey = Buffer.alloc(0);
+    this.controllerToAccessoryKey = Buffer.alloc(0);
+  }
+}
 
 export const enum EventedHTTPServerEvent {
   LISTENING = 'listening',
@@ -426,8 +456,8 @@ export class HAPConnection extends EventEmitter {
     // need to be careful to ensure that we don't encrypt the last few bytes of the response from handlePairVerifyStepTwo.
     // Since all communication calls are asynchronous, we could easily receive this 'encrypt' event for those bytes.
     // So we want to make sure that we aren't encrypting data until we have *received* some encrypted data from the client first.
-    if (this.encryption && this.encryption.accessoryToControllerKey.length > 0 && this.encryption.controllerToAccessoryCount.value > 0) {
-      return hapCrypto.layerEncrypt(data, this.encryption.accessoryToControllerCount, this.encryption.accessoryToControllerKey);
+    if (this.encryption && this.encryption.accessoryToControllerKey.length > 0 && this.encryption.controllerToAccessoryCount > 0) {
+      return hapCrypto.layerEncrypt(data, this.encryption);
     }
     return data; // otherwise we don't encrypt and return plaintext
   }
@@ -435,7 +465,7 @@ export class HAPConnection extends EventEmitter {
   private decrypt(data: Buffer): Buffer {
     if (this.encryption && this.encryption.controllerToAccessoryKey.length > 0) {
       // below call may throw an error if decryption failed
-      return hapCrypto.layerDecrypt(data, this.encryption.controllerToAccessoryCount, this.encryption.controllerToAccessoryKey, this.encryption.extraInfo);
+      return hapCrypto.layerDecrypt(data, this.encryption);
     }
     return data; // otherwise we don't decrypt and return plaintext
   }

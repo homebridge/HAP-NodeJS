@@ -2,6 +2,7 @@ import assert from 'assert';
 import crypto from 'crypto';
 import hkdf from "futoin-hkdf";
 import tweetnacl from 'tweetnacl';
+import { HAPEncryption } from "./eventedhttp";
 
 if (!crypto.getCiphers().includes("chacha20-poly1305")) {
   assert.fail("The cipher 'chacha20-poly1305' is not supported with your current running nodejs version v" + process.version + ". " +
@@ -26,7 +27,7 @@ type Count = {
   value: any;
 }
 
-export function layerEncrypt(data: Buffer, count: Count, key: Buffer) {
+export function layerEncrypt(data: Buffer, encryption: HAPEncryption) {
   let result = Buffer.alloc(0);
   const total = data.length;
   for (let offset = 0; offset < total; ) {
@@ -35,9 +36,9 @@ export function layerEncrypt(data: Buffer, count: Count, key: Buffer) {
     leLength.writeUInt16LE(length,0);
 
     const nonce = Buffer.alloc(8);
-    writeUInt64LE(count.value++, nonce, 0);
+    writeUInt64LE(encryption.accessoryToControllerCount++, nonce, 0);
 
-    const encrypted = chacha20_poly1305_encryptAndSeal(key, nonce, leLength, data.slice(offset, offset + length));
+    const encrypted = chacha20_poly1305_encryptAndSeal(encryption.accessoryToControllerKey, nonce, leLength, data.slice(offset, offset + length));
     offset += length;
 
     result = Buffer.concat([result,leLength,encrypted.ciphertext,encrypted.authTag]);
@@ -45,10 +46,10 @@ export function layerEncrypt(data: Buffer, count: Count, key: Buffer) {
   return result;
 }
 
-export function layerDecrypt(packet: Buffer, count: Count, key: Buffer, extraInfo: Record<string, any>) {
-  // Handle Extra Info
-  if (extraInfo.leftoverData != undefined) {
-    packet = Buffer.concat([extraInfo.leftoverData, packet]);
+export function layerDecrypt(packet: Buffer, encryption: HAPEncryption) {
+  if (encryption.incompleteFrame) {
+    packet = Buffer.concat([encryption.incompleteFrame, packet]);
+    encryption.incompleteFrame = undefined;
   }
 
   let result = Buffer.alloc(0);
@@ -58,18 +59,15 @@ export function layerDecrypt(packet: Buffer, count: Count, key: Buffer, extraInf
     const realDataLength = packet.slice(offset, offset + 2).readUInt16LE(0);
 
     const availableDataLength = total - offset - 2 - 16;
-    if (realDataLength > availableDataLength) {
-      // Fragmented packet
-      extraInfo.leftoverData = packet.slice(offset);
+    if (realDataLength > availableDataLength) { // Fragmented packet
+      encryption.incompleteFrame = packet.slice(offset);
       break;
-    } else {
-      extraInfo.leftoverData = undefined;
     }
 
     const nonce = Buffer.alloc(8);
-    writeUInt64LE(count.value++, nonce, 0);
+    writeUInt64LE(encryption.controllerToAccessoryCount++, nonce, 0);
 
-    const plaintext = chacha20_poly1305_decryptAndVerify(key, nonce, packet.slice(offset,offset+2), packet.slice(offset + 2, offset + 2 + realDataLength), packet.slice(offset + 2 + realDataLength, offset + 2 + realDataLength + 16));
+    const plaintext = chacha20_poly1305_decryptAndVerify(encryption.controllerToAccessoryKey, nonce, packet.slice(offset,offset+2), packet.slice(offset + 2, offset + 2 + realDataLength), packet.slice(offset + 2 + realDataLength, offset + 2 + realDataLength + 16));
     result = Buffer.concat([result, plaintext]);
     offset += (18 + realDataLength);
   }
