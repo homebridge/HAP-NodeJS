@@ -17,7 +17,13 @@ import {
 } from "../internal-types";
 import { CharacteristicValue, Nullable, VoidCallback } from '../types';
 import { PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
-import { EventedHTTPServer, EventedHTTPServerEvent, HAPConnection, HAPUsername } from './util/eventedhttp';
+import {
+  EventedHTTPServer,
+  EventedHTTPServerEvent,
+  HAPConnection,
+  HAPEncryption,
+  HAPUsername
+} from './util/eventedhttp';
 import * as hapCrypto from './util/hapCrypto';
 import { once } from './util/once';
 import * as tlv from './util/tlv';
@@ -568,15 +574,9 @@ export class HAPServer extends EventEmitter {
     const encSalt = Buffer.from("Pair-Verify-Encrypt-Salt");
     const encInfo = Buffer.from("Pair-Verify-Encrypt-Info");
     const outputKey = hapCrypto.HKDF("sha512", encSalt, sharedSec, encInfo, 32).slice(0, 32);
-    // store keys in a new instance of HAPEncryption
-    const enc = new HAPEncryption();
-    enc.clientPublicKey = clientPublicKey;
-    enc.secretKey = secretKey;
-    enc.publicKey = publicKey;
-    enc.sharedSec = sharedSec;
-    enc.hkdfPairEncKey = outputKey;
-    // store this in the current TCP session
-    connection.encryption = enc;
+
+    connection.encryption = new HAPEncryption(clientPublicKey, secretKey, publicKey, sharedSec, outputKey);
+
     // compose the response data in TLV format
     const message = tlv.encode(TLVValues.USERNAME, usernameData, TLVValues.PROOF, serverProof);
 
@@ -600,7 +600,7 @@ export class HAPServer extends EventEmitter {
 
     let plaintext;
     try {
-      plaintext = hapCrypto.chacha20_poly1305_decryptAndVerify(enc.hkdfPairEncKey, Buffer.from("PV-Msg03"), null, messageData, authTagData);
+      plaintext = hapCrypto.chacha20_poly1305_decryptAndVerify(enc.hkdfPairEncryptionKey, Buffer.from("PV-Msg03"), null, messageData, authTagData);
     } catch (error) {
       debug("[%s] M3: Failed to decrypt and/or verify", this.accessoryInfo.username);
       response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
@@ -640,8 +640,8 @@ export class HAPServer extends EventEmitter {
     const encSalt = Buffer.from("Control-Salt");
     const infoRead = Buffer.from("Control-Read-Encryption-Key");
     const infoWrite = Buffer.from("Control-Write-Encryption-Key");
-    enc.accessoryToControllerKey = hapCrypto.HKDF("sha512", encSalt, enc.sharedSec, infoRead, 32);
-    enc.controllerToAccessoryKey = hapCrypto.HKDF("sha512", encSalt, enc.sharedSec, infoWrite, 32);
+    enc.accessoryToControllerKey = hapCrypto.HKDF("sha512", encSalt, enc.sharedSecret, infoRead, 32);
+    enc.controllerToAccessoryKey = hapCrypto.HKDF("sha512", encSalt, enc.sharedSecret, infoWrite, 32);
     // Our connection is now completely setup. We now want to subscribe this connection to special
 
     connection.connectionAuthenticated(clientUsername.toString());
@@ -920,37 +920,4 @@ export class HAPServer extends EventEmitter {
     }
   }
 
-}
-
-
-/**
- * Simple struct to hold vars needed to support HAP encryption.
- */
-
-export class HAPEncryption {
-
-  clientPublicKey: Buffer;
-  secretKey: Buffer;
-  publicKey: Buffer;
-  sharedSec: Buffer;
-  hkdfPairEncKey: Buffer;
-  accessoryToControllerCount: { value: number; };
-  controllerToAccessoryCount: { value: number; };
-  accessoryToControllerKey: Buffer;
-  controllerToAccessoryKey: Buffer;
-  extraInfo: Record<string, any>;
-
-  constructor() {
-    // initialize member vars with null-object values
-    this.clientPublicKey = Buffer.alloc(0);
-    this.secretKey = Buffer.alloc(0);
-    this.publicKey = Buffer.alloc(0);
-    this.sharedSec = Buffer.alloc(0);
-    this.hkdfPairEncKey = Buffer.alloc(0);
-    this.accessoryToControllerCount = { value: 0 };
-    this.controllerToAccessoryCount = { value: 0 };
-    this.accessoryToControllerKey = Buffer.alloc(0);
-    this.controllerToAccessoryKey = Buffer.alloc(0);
-    this.extraInfo = {};
-  }
 }

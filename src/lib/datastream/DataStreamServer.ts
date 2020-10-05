@@ -223,8 +223,8 @@ export class DataStreamServer extends EventEmitter<DataStreamServerEventMap> { /
         const accessoryKeySalt = crypto.randomBytes(32);
         const salt = Buffer.concat([controllerKeySalt, accessoryKeySalt]);
 
-        const accessoryToControllerEncryptionKey = hapCrypto.HKDF("sha512", salt, connection.encryption!.sharedSec, DataStreamServer.accessoryToControllerInfo, 32);
-        const controllerToAccessoryEncryptionKey = hapCrypto.HKDF("sha512", salt, connection.encryption!.sharedSec, DataStreamServer.controllerToAccessoryInfo, 32);
+        const accessoryToControllerEncryptionKey = hapCrypto.HKDF("sha512", salt, connection.encryption!.sharedSecret, DataStreamServer.accessoryToControllerInfo, 32);
+        const controllerToAccessoryEncryptionKey = hapCrypto.HKDF("sha512", salt, connection.encryption!.sharedSecret, DataStreamServer.controllerToAccessoryInfo, 32);
 
         const preparedSession: PreparedDataStreamSession = {
             connection: connection,
