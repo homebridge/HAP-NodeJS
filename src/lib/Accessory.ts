@@ -75,7 +75,6 @@ import {
   SerializedService,
   Service,
   ServiceCharacteristicChange,
-  ServiceConfigurationChange,
   ServiceEventTypes,
   ServiceId
 } from './Service';
@@ -243,6 +242,10 @@ export interface PublishInfo {
 export type AccessoryCharacteristicChange = ServiceCharacteristicChange &  {
   service: Service;
 };
+
+export interface ServiceConfigurationChange {
+  service: Service;
+}
 
 const enum WriteRequestState {
   REGULAR_REQUEST,
@@ -419,7 +422,7 @@ export class Accessory extends EventEmitter {
       this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, { service: service });
     }
 
-    service.on(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, (change: ServiceConfigurationChange) => {
+    service.on(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, () => {
       if (!service.isPrimaryService && service === this.primaryService) {
         // service changed form primary to non primary service
         this.primaryService = undefined;

@@ -1,3 +1,4 @@
+import { EventEmitter } from "events";
 import { CharacteristicValue, HapService, Nullable, ToHAPOptions, WithUUID, } from '../types';
 import {
   Characteristic,
@@ -5,12 +6,13 @@ import {
   CharacteristicEventTypes,
   SerializedCharacteristic
 } from './Characteristic';
-import { EventEmitter } from './EventEmitter';
 import * as HomeKitTypes from './gen';
 import { IdentifierCache } from './model/IdentifierCache';
-import { clone } from './util/clone';
 import { toShortForm } from './util/uuid';
 
+/**
+ * HAP spec allows a maximum of 100 characteristics per service!
+ */
 const MAX_CHARACTERISTICS = 100;
 
 export interface SerializedService {
@@ -27,27 +29,26 @@ export interface SerializedService {
 
 export type ServiceId = string; // string with the format: UUID + (subtype | "")
 
-export const enum ServiceEventTypes {
-  CHARACTERISTIC_CHANGE = "characteristic-change",
-  SERVICE_CONFIGURATION_CHANGE = "service-configurationChange",
-}
-
-export type ServiceConfigurationChange = {
-  service: Service;
-};
-
 export type ServiceCharacteristicChange = CharacteristicChange & { characteristic: Characteristic };
-
-type Events = {
-  [ServiceEventTypes.CHARACTERISTIC_CHANGE]: (change: ServiceCharacteristicChange) => void;
-  [ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE]: (change: ServiceConfigurationChange) => void; // TODO remove service: this
-}
 
 // noinspection JSUnusedGlobalSymbols
 /**
  * @deprecated Use ServiceEventTypes instead
  */
 export type EventService = ServiceEventTypes.CHARACTERISTIC_CHANGE | ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE;
+
+export const enum ServiceEventTypes {
+  CHARACTERISTIC_CHANGE = "characteristic-change",
+  SERVICE_CONFIGURATION_CHANGE = "service-configurationChange",
+}
+
+export declare interface Service {
+  on(event: "characteristic-change", listener: (change: ServiceCharacteristicChange) => void): this;
+  on(event: "service-configurationChange", listener: () => void): this;
+
+  emit(event: "characteristic-change", change: ServiceCharacteristicChange): boolean;
+  emit(event: "service-configurationChange"): boolean;
+}
 
 /**
  * Service represents a set of grouped values necessary to provide a logical function. For instance, a
@@ -68,11 +69,8 @@ export type EventService = ServiceEventTypes.CHARACTERISTIC_CHANGE | ServiceEven
  * You can also define custom Services by providing your own UUID for the type that you generate yourself.
  * Custom Services can contain an arbitrary set of Characteristics, but Siri will likely not be able to
  * work with these.
- *
- * @event 'characteristic-change' => function({characteristic, oldValue, newValue, context}) { }
- *        Emitted after a change in the value of one of our Characteristics has occurred.
  */
-export class Service extends EventEmitter<Events> {
+export class Service extends EventEmitter {
 
   static AccessControl: typeof HomeKitTypes.Generated.AccessControl;
   static AccessoryInformation: typeof HomeKitTypes.Generated.AccessoryInformation;
@@ -100,10 +98,6 @@ export class Service extends EventEmitter<Events> {
   static HumiditySensor: typeof HomeKitTypes.Generated.HumiditySensor;
   static InputSource: typeof HomeKitTypes.TV.InputSource;
   static IrrigationSystem: typeof HomeKitTypes.Generated.IrrigationSystem;
-  /**
-   * @deprecated Removed in iOS 11. Use ServiceLabel instead.
-   */
-  static Label: typeof HomeKitTypes.Generated.ServiceLabel;
   static LeakSensor: typeof HomeKitTypes.Generated.LeakSensor;
   static LightSensor: typeof HomeKitTypes.Generated.LightSensor;
   static Lightbulb: typeof HomeKitTypes.Generated.Lightbulb;
@@ -185,12 +179,11 @@ export class Service extends EventEmitter<Events> {
     return this.UUID + (this.subtype || "");
   }
 
-  addCharacteristic = (characteristic: Characteristic | {new (...args: any[]): Characteristic}, ...constructorArgs: any[]) => {
-    // characteristic might be a constructor like `Characteristic.Brightness` instead of an instance
-    // of Characteristic. Coerce if necessary.
-    if (typeof characteristic === 'function') {
-      characteristic = new characteristic(...constructorArgs) as Characteristic;
-    }
+  public addCharacteristic(input: Characteristic | {new (...args: any[]): Characteristic}, ...constructorArgs: any[]): Characteristic {
+    // characteristic might be a constructor like `Characteristic.Brightness` instead of an instance of Characteristic. Coerce if necessary.
+
+    let characteristic = typeof input === "function"? new input(...constructorArgs): input;
+
     // check for UUID conflict
     for (let index in this.characteristics) {
       const existing = this.characteristics[index];
@@ -214,7 +207,7 @@ export class Service extends EventEmitter<Events> {
 
     this.characteristics.push(characteristic);
 
-    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
+    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
 
     return characteristic;
   }
@@ -229,7 +222,7 @@ export class Service extends EventEmitter<Events> {
    */
   setPrimaryService = (isPrimary: boolean = true) => {
     this.isPrimaryService = isPrimary;
-    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
+    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
   };
 
   /**
@@ -239,7 +232,7 @@ export class Service extends EventEmitter<Events> {
    */
   setHiddenService = (isHidden: boolean = true) => {
     this.isHiddenService = isHidden;
-    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
+    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
   }
 
 //Allows setting other services that link to this one.
@@ -247,7 +240,7 @@ export class Service extends EventEmitter<Events> {
     //TODO: Add a check if the service is on the same accessory.
     if (!this.linkedServices.includes(newLinkedService))
       this.linkedServices.push(newLinkedService);
-    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
+    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
   }
 
   removeLinkedService = (oldLinkedService: Service) => {
@@ -255,7 +248,7 @@ export class Service extends EventEmitter<Events> {
     const index = this.linkedServices.indexOf(oldLinkedService);
     if (index !== -1)
       this.linkedServices.splice(index, 1);
-    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
+    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
   }
 
   removeCharacteristic = (characteristic: Characteristic) => {
@@ -274,7 +267,7 @@ export class Service extends EventEmitter<Events> {
       this.characteristics.splice(Number.parseInt(targetCharacteristicIndex), 1);
       characteristic.removeAllListeners();
 
-      this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
+      this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
     }
   }
 

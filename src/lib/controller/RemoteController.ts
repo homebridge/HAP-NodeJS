@@ -1,5 +1,6 @@
 import assert from 'assert';
 import createDebug from 'debug';
+import { EventEmitter } from "events";
 import { CharacteristicValue } from "../../types";
 import { Accessory } from "../Accessory";
 import {
@@ -23,7 +24,6 @@ import {
     RequestHandler,
     Topics
 } from "../datastream";
-import { EventEmitter } from "../EventEmitter";
 import { DataStreamTransportManagement } from "../gen/HomeKit-DataStream";
 import { AudioStreamManagement, Siri, TargetControl, TargetControlManagement } from "../gen/HomeKit-Remote";
 import { Status } from "../HAPServer";
@@ -48,6 +48,7 @@ const enum SupportedButtonConfigurationTypes {
 }
 
 export const enum ButtonType {
+    // noinspection JSUnusedGlobalSymbols
     UNDEFINED = 0x00,
     MENU = 0x01,
     PLAY_PAUSE = 0x02,
@@ -71,6 +72,7 @@ const enum TargetControlList {
 }
 
 enum Operation {
+    // noinspection JSUnusedGlobalSymbols
     UNDEFINED = 0x00,
     LIST = 0x01,
     ADD = 0x02,
@@ -87,6 +89,7 @@ const enum TargetConfigurationTypes {
 }
 
 export const enum TargetCategory {
+    // noinspection JSUnusedGlobalSymbols
     UNDEFINED = 0x00,
     APPLE_TV = 0x18
 }
@@ -148,6 +151,7 @@ const enum SelectedAudioInputStreamConfigurationTypes {
 // ----------
 
 const enum SupportedAudioStreamConfigurationTypes {
+    // noinspection JSUnusedGlobalSymbols
     AUDIO_CODEC_CONFIGURATION = 0x01,
     COMFORT_NOISE_SUPPORT = 0x02,
 }
@@ -158,6 +162,7 @@ const enum AudioCodecConfigurationTypes {
 }
 
 export const enum AudioCodecTypes { // only really by HAP supported codecs are AAC-ELD and OPUS
+    // noinspection JSUnusedGlobalSymbols
     PCMU = 0x00,
     PCMA = 0x01,
     AAC_ELD = 0x02,
@@ -263,6 +268,13 @@ export interface SiriAudioStreamProducerConstructor {
 
 }
 
+export const enum TargetUpdates {
+    NAME,
+    CATEGORY,
+    UPDATED_BUTTONS,
+    REMOVED_BUTTONS,
+}
+
 export const enum RemoteControllerEvents {
     ACTIVE_CHANGE = "active-change",
     ACTIVE_IDENTIFIER_CHANGE = "active-identifier-change",
@@ -273,21 +285,22 @@ export const enum RemoteControllerEvents {
     TARGETS_RESET = "targets-reset",
 }
 
-export const enum TargetUpdates {
-    NAME,
-    CATEGORY,
-    UPDATED_BUTTONS,
-    REMOVED_BUTTONS,
-}
+export declare interface RemoteController {
+    on(event: "active-change", listener: (active: boolean) => void): this;
+    on(event: "active-identifier-change", listener: (activeIdentifier: number) => void): this;
 
-export type RemoteControllerEventMap = {
-    [RemoteControllerEvents.ACTIVE_CHANGE]: (active: boolean) => void;
-    [RemoteControllerEvents.ACTIVE_IDENTIFIER_CHANGE]: (activeIdentifier: number) => void;
+    on(event: "target-add", listener: (targetConfiguration: TargetConfiguration) => void): this;
+    on(event: "target-update", listener: (targetConfiguration: TargetConfiguration, updates: TargetUpdates[]) => void): this;
+    on(event: "target-remove", listener: (targetIdentifier: number) => void): this;
+    on(event: "targets-reset", listener: () => void): this;
 
-    [RemoteControllerEvents.TARGET_ADDED]: (targetConfiguration: TargetConfiguration) => void;
-    [RemoteControllerEvents.TARGET_UPDATED]: (targetConfiguration: TargetConfiguration, updates: TargetUpdates[]) => void;
-    [RemoteControllerEvents.TARGET_REMOVED]: (targetIdentifier: number) => void;
-    [RemoteControllerEvents.TARGETS_RESET]: () => void;
+    emit(event: "active-change", active: boolean): boolean;
+    emit(event: "active-identifier-change", activeIdentifier: number): boolean;
+
+    emit(event: "target-add", targetConfiguration: TargetConfiguration): boolean;
+    emit(event: "target-update", targetConfiguration: TargetConfiguration, updates: TargetUpdates[]): boolean;
+    emit(event: "target-remove", targetIdentifier: number): boolean;
+    emit(event: "targets-reset"): boolean;
 }
 
 export interface RemoteControllerServiceMap extends ControllerServiceMap {
@@ -334,8 +347,7 @@ export interface SerializedControllerState {
  *        With this event every configuration made should be reset. This event is also called
  *        when the accessory gets unpaired.
  */
-export class RemoteController extends EventEmitter<RemoteControllerEventMap>
-    implements SerializableController<RemoteControllerServiceMap, SerializedControllerState>, DataStreamProtocolHandler {
+export class RemoteController extends EventEmitter implements SerializableController<RemoteControllerServiceMap, SerializedControllerState>, DataStreamProtocolHandler {
 
     readonly controllerType = DefaultControllerType.REMOTE;
     stateChangeDelegate?: StateChangeDelegate;
@@ -1249,14 +1261,16 @@ export const enum SiriAudioSessionEvents {
     CLOSE = "close",
 }
 
-export type SiriAudioSessionEventMap = {
-    [SiriAudioSessionEvents.CLOSE]: () => void;
+export declare interface SiriAudioSession {
+    on(event: "close", listener: () => void): this;
+
+    emit(event: "close"): boolean;
 }
 
 /**
  * Represents an ongoing audio transmission
  */
-export class SiriAudioSession extends EventEmitter<SiriAudioSessionEventMap> {
+export class SiriAudioSession extends EventEmitter {
 
     readonly connection: DataStreamConnection;
     private readonly selectedAudioConfiguration: AudioCodecConfiguration;
