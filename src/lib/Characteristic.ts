@@ -89,7 +89,7 @@ export interface SerializedCharacteristic {
   UUID: string,
   props: CharacteristicProps,
   value: Nullable<CharacteristicValue>,
-  eventOnlyCharacteristic?: boolean,
+  eventOnlyCharacteristic: boolean,
 }
 
 export const enum CharacteristicEventTypes {
@@ -120,13 +120,13 @@ export type AdditionalAuthorizationHandler = (additionalAuthorizationData: strin
 export declare interface Characteristic {
 
   on(event: "get", listener: (callback: CharacteristicGetCallback, context: any, connection?: HAPConnection) => void): this;
-  on(event: "set", listener: (value: CharacteristicValue, callback: CharacteristicSetCallback, context: any, connection: HAPConnection) => void): this
+  on(event: "set", listener: (value: CharacteristicValue, callback: CharacteristicSetCallback, context: any, connection?: HAPConnection) => void): this
   on(event: "change", listener: (change: CharacteristicChange) => void): this;
   on(event: "subscribe", listener: VoidCallback): this;
   on(event: "unsubscribe", listener: VoidCallback): this;
 
   emit(event: "get", callback: CharacteristicGetCallback, context: any, connection?: HAPConnection): boolean;
-  emit(event: "set", value: CharacteristicValue, callback: CharacteristicSetCallback, context: any, connection: HAPConnection): boolean;
+  emit(event: "set", value: CharacteristicValue, callback: CharacteristicSetCallback, context: any, connection?: HAPConnection): boolean;
   emit(event: "change", change: CharacteristicChange): boolean;
   emit(event: "subscribe"): boolean;
   emit(event: "unsubscribe"): boolean;
@@ -518,8 +518,22 @@ export class Characteristic extends EventEmitter {
     });
   }
 
-  setValue(newValue: Nullable<CharacteristicValue>, callback?: () => void, context?: any): Characteristic {
-    return this.updateValue(newValue, callback, context)
+  setValue(value: CharacteristicValue, callback?: CharacteristicSetCallback, context?: any): Characteristic {
+    this.handleSetRequest(value, undefined, context).then(value => {
+      if (callback) {
+        if (value) { // possible write response
+          callback(null, value);
+        } else {
+          callback(null);
+        }
+      }
+    }, reason => {
+      if (callback) {
+        callback(reason);
+      }
+    });
+
+    return this;
   }
 
   updateValue(value: Nullable<CharacteristicValue>, callback?: () => void, context?: any): Characteristic {
@@ -604,14 +618,15 @@ export class Characteristic extends EventEmitter {
   /**
    * Called when a HAP requests update the current value of the characteristic.
    *
-   * @param value - The update value
+   * @param value - The updated value
    * @param connection - The connection from which the request originated from
+   * @param context - Deprecated parameter. There for backwards compatibility.
    * @returns Promise resolve to void in normal operation. When characteristic supports write response, the
    *  HAP request requests write response and the set handler returns a write response value, the respective
    *  write response value is resolved.
    * @internal
    */
-  handleSetRequest(value: CharacteristicValue, connection: HAPConnection): Promise<CharacteristicValue | void> {
+  handleSetRequest(value: CharacteristicValue, connection?: HAPConnection, context?: any): Promise<CharacteristicValue | void> {
     if (!this.props.perms.includes(Perms.PAIRED_WRITE)) { // check if we are allowed to write to this characteristic
       return Promise.reject(Status.READ_ONLY_CHARACTERISTIC);
     }
@@ -624,7 +639,7 @@ export class Characteristic extends EventEmitter {
 
     if (this.listeners(CharacteristicEventTypes.SET).length === 0) {
       this.value = value;
-      this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value });
+      this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
       return Promise.resolve();
     } else {
       return new Promise((resolve, reject) => {
@@ -655,8 +670,8 @@ export class Characteristic extends EventEmitter {
               resolve();
             }
 
-            this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value });
-          }), undefined, connection);
+            this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
+          }), context, connection);
         } catch (error) {
           console.warn(`[${this.displayName}] Unhandled error thrown inside write handler for characteristic: ${error.stack}`);
           this.status = Status.SERVICE_COMMUNICATION_FAILURE;

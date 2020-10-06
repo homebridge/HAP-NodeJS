@@ -440,6 +440,7 @@ describe('Characteristic', () => {
           adminOnlyAccess: [Access.NOTIFY, Access.READ],
         },
         value: "testValue",
+        eventOnlyCharacteristic: false,
       };
 
       const characteristic = Characteristic.deserialize(json);

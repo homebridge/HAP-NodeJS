@@ -1,11 +1,6 @@
+import assert from "assert";
 import createDebug from "debug";
-import { CharacteristicValue } from "../../types";
-import {
-    Characteristic,
-    CharacteristicEventTypes,
-    CharacteristicGetCallback,
-    CharacteristicSetCallback
-} from "../Characteristic";
+import { Characteristic, CharacteristicEventTypes, CharacteristicSetCallback } from "../Characteristic";
 import { DataStreamTransportManagement } from "../gen/HomeKit-DataStream";
 import { Status } from "../HAPServer";
 import { Service } from "../Service";
@@ -211,10 +206,15 @@ export class DataStreamManagement {
 
     private setupServiceHandlers() {
         this.dataStreamTransportManagementService.getCharacteristic(Characteristic.SetupDataStreamTransport)!
-            .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+            .on(CharacteristicEventTypes.GET, callback => {
                 callback(null, this.lastSetupDataStreamTransportResponse);
             })
-            .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context: any, connection: HAPConnection) => {
+            .on(CharacteristicEventTypes.SET, (value, callback, context, connection) => {
+                if (!connection) {
+                    debug("Set event handler for SetupDataStreamTransport cannot be called from plugin! Connection undefined!");
+                    callback(Status.INVALID_VALUE_IN_REQUEST);
+                    return;
+                }
                 this.handleSetupDataStreamTransportWrite(value, callback, connection);
             })
             .updateValue(this.lastSetupDataStreamTransportResponse);
