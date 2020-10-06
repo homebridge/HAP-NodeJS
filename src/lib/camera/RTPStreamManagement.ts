@@ -17,6 +17,7 @@ import { Service } from '../Service';
 import { HAPConnection, HAPConnectionEvent } from "../util/eventedhttp";
 import * as tlv from '../util/tlv';
 import RTPProxy from './RTPProxy';
+import assert from "assert";
 
 const debug = createDebug('HAP-NodeJS:Camera:RTPStreamManagement');
 // ---------------------------------- TLV DEFINITIONS START ----------------------------------
@@ -566,16 +567,21 @@ export class RTPStreamManagement {
     this.service.setCharacteristic(Characteristic.SetupEndpoints, this.setupEndpointsResponse); // reset SetupEndpoints to default
 
     this.service.getCharacteristic(Characteristic.SelectedRTPStreamConfiguration)!
-        .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+        .on(CharacteristicEventTypes.GET, callback => {
           callback(null, this.selectedConfiguration);
         })
         .on(CharacteristicEventTypes.SET, this._handleSelectedStreamConfigurationWrite.bind(this));
 
     this.service.getCharacteristic(Characteristic.SetupEndpoints)!
-        .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+        .on(CharacteristicEventTypes.GET, callback => {
           callback(null, this.setupEndpointsResponse);
         })
-        .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context: any, connection: HAPConnection) => {
+        .on(CharacteristicEventTypes.SET, (value, callback, context, connection) => {
+          if (!connection) {
+            debug("Set event handler for SetupEndpoints cannot be called from plugin. Connection undefined!");
+            callback(Status.INVALID_VALUE_IN_REQUEST);
+            return;
+          }
           this.handleSetupEndpoints(value, callback, connection);
         });
   }

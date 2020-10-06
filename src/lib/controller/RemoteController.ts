@@ -1184,20 +1184,25 @@ export class RemoteController extends EventEmitter implements SerializableContro
         }
 
         this.targetControlManagementService.getCharacteristic(Characteristic.TargetControlList)!
-            .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+            .on(CharacteristicEventTypes.GET, callback => {
                 callback(null, this.targetConfigurationsString);
             })
             .on(CharacteristicEventTypes.SET, this.handleTargetControlWrite.bind(this));
 
         this.targetControlService.getCharacteristic(Characteristic.ActiveIdentifier)!
-            .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+            .on(CharacteristicEventTypes.GET, callback => {
                 callback(undefined, this.activeIdentifier);
             });
         this.targetControlService.getCharacteristic(Characteristic.Active)!
-            .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+            .on(CharacteristicEventTypes.GET, callback => {
                 callback(undefined, this.isActive());
             })
-            .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context: any, connection: HAPConnection) => {
+            .on(CharacteristicEventTypes.SET, (value, callback, context, connection) => {
+                if (!connection) {
+                    debug("Set event handler for Remote.Active cannot be called from plugin. Connection undefined!");
+                    callback(Status.INVALID_VALUE_IN_REQUEST);
+                    return;
+                }
                 this.handleActiveWrite(value, callback, connection);
             });
         this.targetControlService.getCharacteristic(Characteristic.ButtonEvent)!
@@ -1207,7 +1212,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
         if (this.audioSupported) {
             this.audioStreamManagementService!.getCharacteristic(Characteristic.SelectedAudioStreamConfiguration)!
-                .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+                .on(CharacteristicEventTypes.GET, callback => {
                     callback(null, this.selectedAudioConfigurationString);
                 })
                 .on(CharacteristicEventTypes.SET, this.handleSelectedAudioConfigurationWrite.bind(this))
