@@ -518,6 +518,7 @@ export class Characteristic extends EventEmitter {
     });
   }
 
+  // TODO document difference to updateValue (also in Service.ts)
   setValue(value: CharacteristicValue, callback?: CharacteristicSetCallback, context?: any): Characteristic {
     this.handleSetRequest(value, undefined, context).then(value => {
       if (callback) {
@@ -627,10 +628,6 @@ export class Characteristic extends EventEmitter {
    * @internal
    */
   handleSetRequest(value: CharacteristicValue, connection?: HAPConnection, context?: any): Promise<CharacteristicValue | void> {
-    if (!this.props.perms.includes(Perms.PAIRED_WRITE)) { // check if we are allowed to write to this characteristic
-      return Promise.reject(Status.READ_ONLY_CHARACTERISTIC);
-    }
-
     this.status = Status.SUCCESS;
 
     // TODO return proper hap status code if incoming value is not valid!
@@ -642,6 +639,10 @@ export class Characteristic extends EventEmitter {
       this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
       return Promise.resolve();
     } else {
+      // the executor of the promise is called on the next tick, thus we set the updated value immediately until the set
+      // event is executed.
+      this.value = value;
+
       return new Promise((resolve, reject) => {
         try {
           this.emit(CharacteristicEventTypes.SET, value, once((status?: Error | Status | null, writeResponse?: Nullable<CharacteristicValue>) => {

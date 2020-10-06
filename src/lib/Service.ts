@@ -164,7 +164,7 @@ export class Service extends EventEmitter {
         this.getCharacteristic(Characteristic.Name) ||
         this.addCharacteristic(Characteristic.Name);
 
-      nameCharacteristic.setValue(displayName);
+      nameCharacteristic.updateValue(displayName);
     }
   }
 

@@ -304,10 +304,8 @@ describe('Characteristic', () => {
       const VALUE = 'NewValue';
       const listenerCallback = jest.fn();
 
-      // @ts-expect-error
       characteristic.handleSetRequest(VALUE);
       characteristic.on(CharacteristicEventTypes.SET, listenerCallback);
-      // @ts-expect-error
       characteristic.handleSetRequest(VALUE);
 
       expect(listenerCallback).toHaveBeenCalledTimes(1);
@@ -316,19 +314,25 @@ describe('Characteristic', () => {
 
   describe(`@${CharacteristicEventTypes.CHANGE}`, () => {
 
-    it('should call listeners for the event when the characteristic is event-only, and the value is set', () => {
+    it('should call listeners for the event when the characteristic is event-only, and the value is set', (callback) => {
       const characteristic = createCharacteristic(Formats.STRING, Characteristic.ProgrammableSwitchEvent.UUID);
 
       const VALUE = 'NewValue';
       const listenerCallback = jest.fn();
       const setValueCallback = jest.fn();
 
-      characteristic.setValue(VALUE, setValueCallback)
-      characteristic.on(CharacteristicEventTypes.CHANGE, listenerCallback);
-      characteristic.setValue(VALUE, setValueCallback)
+      characteristic.setValue(VALUE, () => {
+        setValueCallback();
 
-      expect(listenerCallback).toHaveBeenCalledTimes(1);
-      expect(setValueCallback).toHaveBeenCalledTimes(2);
+        characteristic.on(CharacteristicEventTypes.CHANGE, listenerCallback);
+        characteristic.setValue(VALUE, () => {
+          setValueCallback();
+
+          expect(listenerCallback).toHaveBeenCalledTimes(1);
+          expect(setValueCallback).toHaveBeenCalledTimes(2);
+          callback();
+        });
+      })
     });
 
     it('should call any listeners for the event when the characteristic is event-only, and the value is updated', () => {
