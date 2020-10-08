@@ -12,8 +12,7 @@ export class ActiveIdentifier extends Characteristic {
   static readonly UUID: string = '000000E7-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Active Identifier', ActiveIdentifier.UUID);
-    this.setProps({
+    super('Active Identifier', ActiveIdentifier.UUID, {
       format: Formats.UINT32,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
@@ -32,8 +31,7 @@ export class ConfiguredName extends Characteristic {
   static readonly UUID: string = '000000E3-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Configured Name', ConfiguredName.UUID);
-    this.setProps({
+    super('Configured Name', ConfiguredName.UUID, {
       format: Formats.STRING,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
@@ -56,8 +54,7 @@ export class SleepDiscoveryMode extends Characteristic {
   static readonly UUID: string = '000000E8-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Sleep Discovery Mode', SleepDiscoveryMode.UUID);
-    this.setProps({
+    super('Sleep Discovery Mode', SleepDiscoveryMode.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -83,8 +80,7 @@ export class ClosedCaptions extends Characteristic {
   static readonly UUID: string = '000000DD-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Closed Captions', ClosedCaptions.UUID);
-    this.setProps({
+    super('Closed Captions', ClosedCaptions.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -106,8 +102,7 @@ export class DisplayOrder extends Characteristic {
   static readonly UUID: string = '00000136-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Display Order', DisplayOrder.UUID);
-    this.setProps({
+    super('Display Order', DisplayOrder.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
@@ -133,8 +128,7 @@ export class CurrentMediaState extends Characteristic {
   static readonly UUID: string = '000000E0-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Current Media State', CurrentMediaState.UUID);
-    this.setProps({
+    super('Current Media State', CurrentMediaState.UUID, {
       format: Formats.UINT8,
       maxValue: 5,
       minValue: 0,
@@ -161,8 +155,7 @@ export class TargetMediaState extends Characteristic {
   static readonly UUID: string = '00000137-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Target Media State', TargetMediaState.UUID);
-    this.setProps({
+    super('Target Media State', TargetMediaState.UUID, {
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
@@ -194,8 +187,7 @@ export class PictureMode extends Characteristic {
   static readonly UUID: string = '000000E2-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Picture Mode', PictureMode.UUID);
-    this.setProps({
+    super('Picture Mode', PictureMode.UUID, {
       format: Formats.UINT8,
       maxValue: 13,
       minValue: 0,
@@ -221,8 +213,7 @@ export class PowerModeSelection extends Characteristic {
   static readonly UUID: string = '000000DF-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Power Mode Selection', PowerModeSelection.UUID);
-    this.setProps({
+    super('Power Mode Selection', PowerModeSelection.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -259,8 +250,7 @@ export class RemoteKey extends Characteristic {
   static readonly UUID: string = '000000E1-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Remote Key', RemoteKey.UUID);
-    this.setProps({
+    super('Remote Key', RemoteKey.UUID, {
       format: Formats.UINT8,
       maxValue: 16,
       minValue: 0,
@@ -295,8 +285,7 @@ export class InputSourceType extends Characteristic {
   static readonly UUID: string = '000000DB-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Input Source Type', InputSourceType.UUID);
-    this.setProps({
+    super('Input Source Type', InputSourceType.UUID, {
       format: Formats.UINT8,
       maxValue: 10,
       minValue: 0,
@@ -327,8 +316,7 @@ export class InputDeviceType extends Characteristic {
   static readonly UUID: string = '000000DC-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Input Device Type', InputDeviceType.UUID);
-    this.setProps({
+    super('Input Device Type', InputDeviceType.UUID, {
       format: Formats.UINT8,
       maxValue: 6,
       minValue: 0,
@@ -350,8 +338,7 @@ export class Identifier extends Characteristic {
   static readonly UUID: string = '000000E6-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Identifier', Identifier.UUID);
-    this.setProps({
+    super('Identifier', Identifier.UUID, {
       format: Formats.UINT32,
       minValue: 0,
       minStep: 1,
@@ -376,8 +363,7 @@ export class CurrentVisibilityState extends Characteristic {
   static readonly UUID: string = '00000135-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Current Visibility State', CurrentVisibilityState.UUID);
-    this.setProps({
+    super('Current Visibility State', CurrentVisibilityState.UUID, {
       format: Formats.UINT8,
       maxValue: 3,
       minValue: 0,
@@ -403,8 +389,7 @@ export class TargetVisibilityState extends Characteristic {
   static readonly UUID: string = '00000134-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Target Visibility State', TargetVisibilityState.UUID);
-    this.setProps({
+    super('Target Visibility State', TargetVisibilityState.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -432,8 +417,7 @@ export class VolumeControlType extends Characteristic {
   static readonly UUID: string = '000000E9-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Volume Control Type', VolumeControlType.UUID);
-    this.setProps({
+    super('Volume Control Type', VolumeControlType.UUID, {
       format: Formats.UINT8,
       maxValue: 3,
       minValue: 0,
@@ -459,8 +443,7 @@ export class VolumeSelector extends Characteristic {
   static readonly UUID: string = '000000EA-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Volume Selector', VolumeSelector.UUID);
-    this.setProps({
+    super('Volume Selector', VolumeSelector.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,

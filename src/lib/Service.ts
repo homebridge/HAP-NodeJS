@@ -1,5 +1,7 @@
+import assert from "assert";
 import { EventEmitter } from "events";
-import { CharacteristicValue, HapService, Nullable, ToHAPOptions, WithUUID, } from '../types';
+import { ServiceJsonObject } from "../internal-types";
+import { CharacteristicValue, Nullable, WithUUID } from '../types';
 import {
   Characteristic,
   CharacteristicChange,
@@ -8,7 +10,9 @@ import {
 } from './Characteristic';
 import * as HomeKitTypes from './gen';
 import { IdentifierCache } from './model/IdentifierCache';
+import { HAPConnection } from "./util/eventedhttp";
 import { toShortForm } from './util/uuid';
+import Timeout = NodeJS.Timeout;
 
 /**
  * HAP spec allows a maximum of 100 characteristics per service!
@@ -417,39 +421,97 @@ export class Service extends EventEmitter {
   }
 
   /**
-   * Returns a JSON representation of this Accessory suitable for delivering to HAP clients.
+   * Returns a JSON representation of this service suitable for delivering to HAP clients.
+   * @internal used to generate response to /accessories query
    */
-  toHAP = (opt?: ToHAPOptions) => {
-    const characteristicsHAP = [];
+  toHAP(connection: HAPConnection): Promise<ServiceJsonObject> {
+    return new Promise((resolve, reject) => {
+      assert(this.iid, "iid cannot be undefined for service '" + this.displayName + "'");
+      assert(this.characteristics.length, "service '" + this.displayName + "' does not have any characteristics!");
 
-    for (let index in this.characteristics) {
-      const characteristic = this.characteristics[index];
-      characteristicsHAP.push(characteristic.toHAP(opt));
-    }
+      const service: ServiceJsonObject = {
+        type: toShortForm(this.UUID, HomeKitTypes.BASE_UUID),
+        iid: this.iid!,
+        characteristics: [],
+        hidden: this.isHiddenService? true: undefined,
+        primary: this.isPrimaryService? true: undefined,
+      }
 
-    const hap: Partial<HapService> = {
-      iid: this.iid!,
+      if (this.linkedServices.length) {
+        service.linked = [];
+        for (const linked of this.linkedServices) {
+          assert(linked.iid, "iid of linked service '" + linked.displayName + "' is undefined on service '" + this.displayName + "'");
+          service.linked.push(linked.iid!);
+        }
+      }
+
+      const missingCharacteristics: Set<Characteristic> = new Set();
+      let timeout: Timeout | undefined = setTimeout(() => {
+        for (const characteristic of missingCharacteristics) {
+          console.warn(`The read handler for the characteristic '${characteristic.displayName}' was slow to respond!`);
+        }
+
+        timeout = setTimeout(() => {
+          timeout = undefined;
+
+          for (const characteristic of missingCharacteristics) {
+            console.error("The read handler for the characteristic '" + characteristic?.displayName + "' didn't respond at all!. " +
+              "Please check that you properly call the callback!");
+            service.characteristics.push(characteristic.internalHAPRepresentation()); // value is set to null
+          }
+
+          missingCharacteristics.clear();
+          resolve(service);
+        }, 7000);
+      }, 3000);
+
+      for (const characteristic of this.characteristics) {
+        missingCharacteristics.add(characteristic);
+        characteristic.toHAP(connection).then(value => {
+          if (!timeout) {
+            return; // if timeout is undefined, response was already sent out
+          }
+
+          missingCharacteristics.delete(characteristic);
+          service.characteristics.push(value);
+
+          if (missingCharacteristics.size === 0) {
+            if (timeout) {
+              clearTimeout(timeout);
+              timeout = undefined;
+            }
+            resolve(service);
+          }
+        });
+      }
+    });
+  }
+
+  /**
+   * Returns a JSON representation of this service without characteristic values.
+   * @internal used to generate the config hash
+   */
+  internalHAPRepresentation(): ServiceJsonObject {
+    assert(this.iid, "iid cannot be undefined for service '" + this.displayName + "'");
+    assert(this.characteristics.length, "service '" + this.displayName + "' does not have any characteristics!");
+
+    const service: ServiceJsonObject = {
       type: toShortForm(this.UUID, HomeKitTypes.BASE_UUID),
-      characteristics: characteristicsHAP
-    };
-
-    if (this.isPrimaryService) {
-      hap['primary'] = this.isPrimaryService;
+      iid: this.iid!,
+      characteristics: this.characteristics.map(characteristic => characteristic.internalHAPRepresentation()),
+      hidden: this.isHiddenService? true: undefined,
+      primary: this.isPrimaryService? true: undefined,
     }
 
-    if (this.isHiddenService) {
-      hap['hidden'] = this.isHiddenService;
-    }
-
-    if (this.linkedServices.length > 0) {
-      hap['linked'] = [];
-      for (let index in this.linkedServices) {
-        const otherService = this.linkedServices[index];
-        hap['linked'].push(otherService.iid!);
+    if (this.linkedServices.length) {
+      service.linked = [];
+      for (const linked of this.linkedServices) {
+        assert(linked.iid, "iid of linked service '" + linked.displayName + "' is undefined on service '" + this.displayName + "'");
+        service.linked.push(linked.iid!);
       }
     }
 
-    return hap as HapService;
+    return service;
   }
 
   _setupCharacteristic = (characteristic: Characteristic) => {

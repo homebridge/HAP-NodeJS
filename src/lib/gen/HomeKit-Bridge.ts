@@ -16,8 +16,7 @@ export class AppMatchingIdentifier extends Characteristic {
   static readonly UUID: string = '000000A4-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('App Matching Identifier', AppMatchingIdentifier.UUID);
-    this.setProps({
+    super('App Matching Identifier', AppMatchingIdentifier.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ]
     });
@@ -36,8 +35,7 @@ export class ProgrammableSwitchOutputState extends Characteristic {
   static readonly UUID: string = '00000074-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Programmable Switch Output State', ProgrammableSwitchOutputState.UUID);
-    this.setProps({
+    super('Programmable Switch Output State', ProgrammableSwitchOutputState.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -59,8 +57,7 @@ export class SoftwareRevision extends Characteristic {
   static readonly UUID: string = '00000054-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Software Revision', SoftwareRevision.UUID);
-    this.setProps({
+    super('Software Revision', SoftwareRevision.UUID, {
       format: Formats.STRING,
       perms: [Perms.PAIRED_READ]
     });
@@ -137,8 +134,7 @@ export class AccessoryIdentifier extends Characteristic {
   static readonly UUID: string = '00000057-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Accessory Identifier', AccessoryIdentifier.UUID);
-    this.setProps({
+    super('Accessory Identifier', AccessoryIdentifier.UUID, {
       format: Formats.STRING,
       perms: [Perms.PAIRED_READ]
     });
@@ -157,8 +153,7 @@ export class Category extends Characteristic {
   static readonly UUID: string = '000000A3-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Category', Category.UUID);
-    this.setProps({
+    super('Category', Category.UUID, {
       format: Formats.UINT16,
       maxValue: 16,
       minValue: 1,
@@ -180,8 +175,7 @@ export class ConfigureBridgedAccessory extends Characteristic {
   static readonly UUID: string = '000000A0-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Configure Bridged Accessory', ConfigureBridgedAccessory.UUID);
-    this.setProps({
+    super('Configure Bridged Accessory', ConfigureBridgedAccessory.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_WRITE]
     });
@@ -200,8 +194,7 @@ export class ConfigureBridgedAccessoryStatus extends Characteristic {
   static readonly UUID: string = '0000009D-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Configure Bridged Accessory Status', ConfigureBridgedAccessoryStatus.UUID);
-    this.setProps({
+    super('Configure Bridged Accessory Status', ConfigureBridgedAccessoryStatus.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -220,8 +213,7 @@ export class CurrentTime extends Characteristic {
   static readonly UUID: string = '0000009B-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Current Time', CurrentTime.UUID);
-    this.setProps({
+    super('Current Time', CurrentTime.UUID, {
       format: Formats.STRING,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE]
     });
@@ -240,8 +232,7 @@ export class DayoftheWeek extends Characteristic {
   static readonly UUID: string = '00000098-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Day of the Week', DayoftheWeek.UUID);
-    this.setProps({
+    super('Day of the Week', DayoftheWeek.UUID, {
       format: Formats.UINT8,
       maxValue: 7,
       minValue: 1,
@@ -267,8 +258,7 @@ export class DiscoverBridgedAccessories extends Characteristic {
   static readonly UUID: string = '0000009E-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Discover Bridged Accessories', DiscoverBridgedAccessories.UUID);
-    this.setProps({
+    super('Discover Bridged Accessories', DiscoverBridgedAccessories.UUID, {
       format: Formats.UINT8,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
@@ -287,8 +277,7 @@ export class DiscoveredBridgedAccessories extends Characteristic {
   static readonly UUID: string = '0000009F-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Discovered Bridged Accessories', DiscoveredBridgedAccessories.UUID);
-    this.setProps({
+    super('Discovered Bridged Accessories', DiscoveredBridgedAccessories.UUID, {
       format: Formats.UINT16,
       perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -307,8 +296,7 @@ export class LinkQuality extends Characteristic {
   static readonly UUID: string = '0000009C-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Link Quality', LinkQuality.UUID);
-    this.setProps({
+    super('Link Quality', LinkQuality.UUID, {
       format: Formats.UINT8,
       maxValue: 4,
       minValue: 1,
@@ -330,8 +318,7 @@ export class Reachable extends Characteristic {
   static readonly UUID: string = '00000063-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Reachable', Reachable.UUID);
-    this.setProps({
+    super('Reachable', Reachable.UUID, {
       format: Formats.BOOL,
       perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -350,8 +337,7 @@ export class RelayControlPoint extends Characteristic {
   static readonly UUID: string = '0000005E-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Relay Control Point', RelayControlPoint.UUID);
-    this.setProps({
+    super('Relay Control Point', RelayControlPoint.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
@@ -370,8 +356,7 @@ export class RelayEnabled extends Characteristic {
   static readonly UUID: string = '0000005B-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Relay Enabled', RelayEnabled.UUID);
-    this.setProps({
+    super('Relay Enabled', RelayEnabled.UUID, {
       format: Formats.BOOL,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
@@ -390,8 +375,7 @@ export class RelayState extends Characteristic {
   static readonly UUID: string = '0000005C-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Relay State', RelayState.UUID);
-    this.setProps({
+    super('Relay State', RelayState.UUID, {
       format: Formats.UINT8,
       perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -410,8 +394,7 @@ export class TimeUpdate extends Characteristic {
   static readonly UUID: string = '0000009A-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Time Update', TimeUpdate.UUID);
-    this.setProps({
+    super('Time Update', TimeUpdate.UUID, {
       format: Formats.BOOL,
       perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -430,8 +413,7 @@ export class TunnelConnectionTimeout extends Characteristic {
   static readonly UUID: string = '00000061-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Tunnel Connection Timeout ', TunnelConnectionTimeout.UUID);
-    this.setProps({
+    super('Tunnel Connection Timeout ', TunnelConnectionTimeout.UUID, {
       format: Formats.UINT32,
       perms: [Perms.PAIRED_WRITE, Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -450,8 +432,7 @@ export class TunneledAccessoryAdvertising extends Characteristic {
   static readonly UUID: string = '00000060-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Tunneled Accessory Advertising', TunneledAccessoryAdvertising.UUID);
-    this.setProps({
+    super('Tunneled Accessory Advertising', TunneledAccessoryAdvertising.UUID, {
       format: Formats.BOOL,
       perms: [Perms.PAIRED_WRITE, Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -470,8 +451,7 @@ export class TunneledAccessoryConnected extends Characteristic {
   static readonly UUID: string = '00000059-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Tunneled Accessory Connected', TunneledAccessoryConnected.UUID);
-    this.setProps({
+    super('Tunneled Accessory Connected', TunneledAccessoryConnected.UUID, {
       format: Formats.BOOL,
       perms: [Perms.PAIRED_WRITE, Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -490,8 +470,7 @@ export class TunneledAccessoryStateNumber extends Characteristic {
   static readonly UUID: string = '00000058-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Tunneled Accessory State Number', TunneledAccessoryStateNumber.UUID);
-    this.setProps({
+    super('Tunneled Accessory State Number', TunneledAccessoryStateNumber.UUID, {
       format: Formats.FLOAT,
       perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });

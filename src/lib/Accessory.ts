@@ -5,6 +5,7 @@ import createDebug from 'debug';
 import { EventEmitter } from "events";
 import net from "net";
 import {
+  AccessoryJsonObject,
   CharacteristicId,
   CharacteristicReadData,
   CharacteristicsReadRequest,
@@ -25,7 +26,6 @@ import {
   IPAddress,
   MacAddress,
   Nullable,
-  ToHAPOptions,
   VoidCallback,
   WithUUID,
 } from '../types';
@@ -59,25 +59,19 @@ import {
   HAPHTTPCode,
   HAPServer,
   HAPServerEventTypes,
+  HAPStatus,
   IdentifyCallback,
   ListPairingsCallback,
   PairCallback,
   ReadCharacteristicsCallback,
   RemovePairingCallback,
   ResourceRequestCallback,
-  Status,
   WriteCharacteristicsCallback
 } from './HAPServer';
 import { AccessoryInfo, PermissionTypes } from './model/AccessoryInfo';
 import { ControllerStorage } from "./model/ControllerStorage";
 import { IdentifierCache } from './model/IdentifierCache';
-import {
-  SerializedService,
-  Service,
-  ServiceCharacteristicChange,
-  ServiceEventTypes,
-  ServiceId
-} from './Service';
+import { SerializedService, Service, ServiceCharacteristicChange, ServiceEventTypes, ServiceId } from './Service';
 import { clone } from './util/clone';
 import { EventName, HAPConnection, HAPUsername } from "./util/eventedhttp";
 import * as uuid from "./util/uuid";
@@ -978,33 +972,49 @@ export class Accessory extends EventEmitter {
   }
 
   /**
-   * Returns a JSON representation of this Accessory suitable for delivering to HAP clients.
+   * Returns a JSON representation of this accessory suitable for delivering to HAP clients.
    */
-  private toHAP(opt?: ToHAPOptions) {
+  private async toHAP(connection: HAPConnection): Promise<AccessoryJsonObject[]> {
+    assert(this.aid, "aid cannot be undefined for accessory '" + this.displayName + "'");
+    assert(this.services.length, "accessory '" + this.displayName + "' does not have any services!");
 
-    const servicesHAP = [];
+    const accessory: AccessoryJsonObject = {
+      aid: this.aid!,
+      services: await Promise.all(this.services.map(service => service.toHAP(connection))),
+    };
 
-    for (let index in this.services) {
-      const service = this.services[index];
-      servicesHAP.push(service.toHAP(opt));
+    const accessories: AccessoryJsonObject[] = [accessory];
+
+    if (this.bridge) {
+      for (const accessory of this.bridgedAccessories) {
+        accessories.push((await accessory.toHAP(connection))[0]);
+      }
     }
 
-    const accessoriesHAP = [{
-      aid: this.aid,
-      services: servicesHAP
-    }];
+    return accessories;
+  }
 
-    // now add any Accessories we are bridging
-    for (let index in this.bridgedAccessories) {
-      const accessory = this.bridgedAccessories[index];
-      const bridgedAccessoryHAP = accessory.toHAP(opt);
+  /**
+   * Returns a JSON representation of this accessory without characteristic values.
+   */
+  private internalHAPRepresentation(): AccessoryJsonObject[] {
+    assert(this.aid, "aid cannot be undefined for accessory '" + this.displayName + "'");
+    assert(this.services.length, "accessory '" + this.displayName + "' does not have any services!");
 
-      // bridgedAccessoryHAP is an array of accessories with one item - extract it
-      // and add it to our own array
-      accessoriesHAP.push(bridgedAccessoryHAP[0])
+    const accessory: AccessoryJsonObject = {
+      aid: this.aid!,
+      services: this.services.map(service => service.internalHAPRepresentation()),
+    };
+
+    const accessories: AccessoryJsonObject[] = [accessory];
+
+    if (this.bridge) {
+      for (const accessory of this.bridgedAccessories) {
+        accessories.push(accessory.internalHAPRepresentation()[0]);
+      }
     }
 
-    return accessoriesHAP;
+    return accessories;
   }
 
   /**
@@ -1096,7 +1106,7 @@ export class Accessory extends EventEmitter {
     // get our accessory information in HAP format and determine if our configuration (that is, our
     // Accessories/Services/Characteristics) has changed since the last time we were published. make
     // sure to omit actual values since these are not part of the "configuration".
-    const config = this.toHAP({omitValues: true});
+    const config = this.internalHAPRepresentation()
 
     // now convert it into a hash code and check it against the last one we made, if we have one
     const shasum = crypto.createHash('sha1');
@@ -1184,7 +1194,7 @@ export class Accessory extends EventEmitter {
       // get our accessory information in HAP format and determine if our configuration (that is, our
       // Accessories/Services/Characteristics) has changed since the last time we were published. make
       // sure to omit actual values since these are not part of the "configuration".
-      const config = this.toHAP({omitValues: true});
+      const config = this.internalHAPRepresentation()
 
       // now convert it into a hash code and check it against the last one we made, if we have one
       const shasum = crypto.createHash('sha1');
@@ -1294,14 +1304,16 @@ export class Accessory extends EventEmitter {
     callback(0, this._accessoryInfo.listPairings());
   };
 
-  private handleAccessories(callback: AccessoriesCallback): void {
+  private handleAccessories(connection: HAPConnection, callback: AccessoriesCallback): void {
+    this._assignIDs(this._identifierCache!); // make sure our aid/iid's are all assigned
 
-    // make sure our aid/iid's are all assigned
-    this._assignIDs(this._identifierCache!);
-
-    // build out our JSON payload and call the callback
-    callback({
-      accessories: this.toHAP(), // array of Accessory HAP
+    this.toHAP(connection).then(value => {
+      callback(undefined, {
+        accessories: value,
+      });
+    }, reason => {
+      console.error("[" + this.displayName + "] /accessories request error with: " + reason.stack);
+      callback({ httpCode: HAPHTTPCode.INTERNAL_SERVER_ERROR, status: HAPStatus.SERVICE_COMMUNICATION_FAILURE });
     });
   }
 
@@ -1320,7 +1332,7 @@ export class Accessory extends EventEmitter {
         let emitted = accessory?.emit(AccessoryEventTypes.CHARACTERISTIC_WARNING, CharacteristicWarningType.SLOW_READ, iid);
         if (!emitted) {
           const characteristic = accessory?.getCharacteristicByIID(iid);
-          console.log(`The read handler for the characteristic '${characteristic?.displayName || iid}' on the accessory '${accessory?.displayName}' was slow to respond!`);
+          console.warn(`The read handler for the characteristic '${characteristic?.displayName || iid}' on the accessory '${accessory?.displayName}' was slow to respond!`);
         }
       }
 
@@ -1337,14 +1349,14 @@ export class Accessory extends EventEmitter {
           let emitted = accessory?.emit(AccessoryEventTypes.CHARACTERISTIC_WARNING, CharacteristicWarningType.TIMEOUT_READ, iid);
           if (!emitted) {
             const characteristic = accessory?.getCharacteristicByIID(iid);
-            console.log("The read handler for the characteristic '" + (characteristic?.displayName || iid) + "' on the accessory '" + accessory?.displayName +
+            console.error("The read handler for the characteristic '" + (characteristic?.displayName || iid) + "' on the accessory '" + accessory?.displayName +
               "' didn't respond at all!. Please check that you properly call the callback!");
           }
 
           characteristics.push({
             aid: aid,
             iid: iid,
-            status: Status.OPERATION_TIMED_OUT,
+            status: HAPStatus.OPERATION_TIMED_OUT,
           });
         }
         missingCharacteristics.clear();
@@ -1358,25 +1370,26 @@ export class Accessory extends EventEmitter {
       missingCharacteristics.add(name);
 
       this.handleCharacteristicRead(connection, id, request).then(value => {
-        missingCharacteristics.delete(name);
-        characteristics.push({
+        return {
           aid: id.aid,
           iid: id.iid,
           ...value,
-        });
+        };
       }, reason => { // this error block is only called if hap-nodejs itself messed up
         console.error(`[${this.displayName}] Read request for characteristic ${id} encountered an error: ${reason.stack}`)
 
-        missingCharacteristics.delete(name);
-        characteristics.push({
+        return {
           aid: id.aid,
           iid: id.iid,
-          status: Status.SERVICE_COMMUNICATION_FAILURE,
-        });
-      }).then(() => {
+          status: HAPStatus.SERVICE_COMMUNICATION_FAILURE,
+        };
+      }).then(value => {
         if (!timeout) {
           return; // if timeout is undefined, response was already sent out
         }
+
+        missingCharacteristics.delete(name);
+        characteristics.push(value);
 
         if (missingCharacteristics.size === 0) {
           if (timeout) {
@@ -1394,12 +1407,12 @@ export class Accessory extends EventEmitter {
 
     if (!characteristic) {
       debug('[%s] Could not find a Characteristic with aid of %s and iid of %s', this.displayName, id.aid, id.iid);
-      return { status: Status.INVALID_VALUE_IN_REQUEST };
+      return { status: HAPStatus.INVALID_VALUE_IN_REQUEST };
     }
 
     if (!characteristic.props.perms.includes(Perms.PAIRED_READ)) { // check if read is allowed for this characteristic
       debug('[%s] Tried reading from characteristic which does not allow reading (aid of %s and iid of %s)', this.displayName, id.aid, id.iid);
-      return { status: Status.WRITE_ONLY_CHARACTERISTIC };
+      return { status: HAPStatus.WRITE_ONLY_CHARACTERISTIC };
     }
 
     if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.READ)) {
@@ -1410,7 +1423,7 @@ export class Accessory extends EventEmitter {
       }
 
       if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(connection.username!)) {
-        return { status: Status.INSUFFICIENT_PRIVILEGES };
+        return { status: HAPStatus.INSUFFICIENT_PRIVILEGES };
       }
     }
 
@@ -1440,9 +1453,9 @@ export class Accessory extends EventEmitter {
       }
 
       return data;
-    }, (reason: Status) => {
+    }, (reason: HAPStatus) => {
       // @ts-expect-error
-      debug('[%s] Error getting value for characteristic "%s": %s', this.displayName, characteristic.displayName, Status[reason]);
+      debug('[%s] Error getting value for characteristic "%s": %s', this.displayName, characteristic.displayName, HAPStatus[reason]);
       return { status: reason };
     });
   }
@@ -1479,7 +1492,7 @@ export class Accessory extends EventEmitter {
         let emitted = accessory?.emit(AccessoryEventTypes.CHARACTERISTIC_WARNING, CharacteristicWarningType.SLOW_WRITE, iid);
         if (!emitted) {
           const characteristic = accessory?.getCharacteristicByIID(iid);
-          console.log(`The write handler for the characteristic '${characteristic?.displayName || iid}' on the accessory '${accessory?.displayName}' was slow to respond!`);
+          console.warn(`The write handler for the characteristic '${characteristic?.displayName || iid}' on the accessory '${accessory?.displayName}' was slow to respond!`);
         }
       }
 
@@ -1496,14 +1509,14 @@ export class Accessory extends EventEmitter {
           let emitted = accessory?.emit(AccessoryEventTypes.CHARACTERISTIC_WARNING, CharacteristicWarningType.TIMEOUT_WRITE, iid);
           if (!emitted) {
             const characteristic = accessory?.getCharacteristicByIID(iid);
-            console.log("The write handler for the characteristic '" + (characteristic?.displayName || iid) + "' on the accessory '" + accessory?.displayName +
+            console.error("The write handler for the characteristic '" + (characteristic?.displayName || iid) + "' on the accessory '" + accessory?.displayName +
               "' didn't respond at all!. Please check that you properly call the callback!");
           }
 
           characteristics.push({
             aid: aid,
             iid: iid,
-            status: Status.OPERATION_TIMED_OUT,
+            status: HAPStatus.OPERATION_TIMED_OUT,
           });
         }
         missingCharacteristics.clear();
@@ -1517,25 +1530,26 @@ export class Accessory extends EventEmitter {
       missingCharacteristics.add(id);
 
       this.handleCharacteristicWrite(connection, data, writeState).then(value => {
-        missingCharacteristics.delete(id);
-        characteristics.push({
+        return {
           aid: data.aid,
           iid: data.iid,
           ...value,
-        });
+        };
       }, reason => { // this error block is only called if hap-nodejs itself messed up
         console.error(`[${this.displayName}] Write request for characteristic ${id} encountered an error: ${reason.stack}`)
 
-        missingCharacteristics.delete(id);
-        characteristics.push({
+        return {
           aid: data.aid,
           iid: data.iid,
-          status: Status.SERVICE_COMMUNICATION_FAILURE,
-        });
-      }).then(() => {
+          status: HAPStatus.SERVICE_COMMUNICATION_FAILURE,
+        };
+      }).then(value => {
         if (!timeout) {
           return; // if timeout is undefined, response was already sent out
         }
+
+        missingCharacteristics.delete(id);
+        characteristics.push(value);
 
         if (missingCharacteristics.size === 0) { // if everything returned send the response
           if (timeout) {
@@ -1554,17 +1568,17 @@ export class Accessory extends EventEmitter {
 
     if (!characteristic) {
       debug('[%s] Could not find a Characteristic with aid of %s and iid of %s', this.displayName, data.aid, data.iid);
-      return { status: Status.INVALID_VALUE_IN_REQUEST };
+      return { status: HAPStatus.INVALID_VALUE_IN_REQUEST };
     }
 
     if (writeState === WriteRequestState.TIMED_WRITE_REJECTED) {
-      return { status: Status.INVALID_VALUE_IN_REQUEST };
+      return { status: HAPStatus.INVALID_VALUE_IN_REQUEST };
     }
 
     if (data.ev != undefined) { // register/unregister event notifications
       if (!characteristic.props.perms.includes(Perms.NOTIFY)) { // check if notify is allowed for this characteristic
         debug('[%s] Tried enabling notifications for Characteristic which does not allow notify (aid of %s and iid of %s)', this.displayName, data.aid, data.iid);
-        return { status: Status.NOTIFICATION_NOT_SUPPORTED };
+        return { status: HAPStatus.NOTIFICATION_NOT_SUPPORTED };
       }
 
       if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.NOTIFY)) {
@@ -1575,7 +1589,7 @@ export class Accessory extends EventEmitter {
         }
 
         if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(connection.username!)) {
-          return { status: Status.INSUFFICIENT_PRIVILEGES };
+          return { status: HAPStatus.INSUFFICIENT_PRIVILEGES };
         }
       }
 
@@ -1598,7 +1612,7 @@ export class Accessory extends EventEmitter {
     if (data.value != undefined) {
       if (!characteristic.props.perms.includes(Perms.PAIRED_WRITE)) { // check if write is allowed for this characteristic
         debug('[%s] Tried writing to Characteristic which does not allow writing (aid of %s and iid of %s)', this.displayName, data.aid, data.iid);
-        return { status: Status.READ_ONLY_CHARACTERISTIC };
+        return { status: HAPStatus.READ_ONLY_CHARACTERISTIC };
       }
 
       if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.WRITE)) {
@@ -1609,7 +1623,7 @@ export class Accessory extends EventEmitter {
         }
 
         if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(connection.username!)) {
-          return { status: Status.INSUFFICIENT_PRIVILEGES };
+          return { status: HAPStatus.INSUFFICIENT_PRIVILEGES };
         }
       }
 
@@ -1626,13 +1640,13 @@ export class Accessory extends EventEmitter {
         }
 
         if (!allowWrite) {
-          return { status: Status.INSUFFICIENT_AUTHORIZATION };
+          return { status: HAPStatus.INSUFFICIENT_AUTHORIZATION };
         }
       }
 
       if (characteristic.props.perms.includes(Perms.TIMED_WRITE) && writeState !== WriteRequestState.TIMED_WRITE_AUTHENTICATED) {
         debug('[%s] Tried writing to a timed write only Characteristic without properly preparing (iid of %s and aid of %s)', this.displayName, data.aid, data.iid);
-        return { status: Status.INVALID_VALUE_IN_REQUEST };
+        return { status: HAPStatus.INVALID_VALUE_IN_REQUEST };
       }
 
       return characteristic.handleSetRequest(data.value, connection).then(value => {
@@ -1642,9 +1656,9 @@ export class Accessory extends EventEmitter {
 
           ev: evResponse,
         };
-      }, (status: Status) => {
+      }, (status: HAPStatus) => {
         // @ts-expect-error
-        debug('[%s] Error setting Characteristic "%s" to value %s: ', this.displayName, characteristic.displayName, data.value, Status[status]);
+        debug('[%s] Error setting Characteristic "%s" to value %s: ', this.displayName, characteristic.displayName, data.value, HAPStatus[status]);
 
         return { status: status };
       });
@@ -1671,20 +1685,20 @@ export class Accessory extends EventEmitter {
 
       if (!controller) {
         debug("[%s] received snapshot request though no camera controller was associated!");
-        callback({ httpCode: HAPHTTPCode.NOT_FOUND, status: Status.RESOURCE_DOES_NOT_EXIST });
+        callback({ httpCode: HAPHTTPCode.NOT_FOUND, status: HAPStatus.RESOURCE_DOES_NOT_EXIST });
         return;
       }
 
       controller.handleSnapshotRequest(data["image-height"], data["image-width"], accessory?.displayName).then(buffer => {
         callback(undefined, buffer);
-      }, (status: Status) => {
+      }, (status: HAPStatus) => {
         callback({ httpCode: HAPHTTPCode.OK, status: status });
       });
       return;
     }
 
     debug("[%s] received request for unsupported image type: " + data["resource-type"], this._accessoryInfo?.username);
-    callback({ httpCode: HAPHTTPCode.NOT_FOUND, status: Status.RESOURCE_DOES_NOT_EXIST});
+    callback({ httpCode: HAPHTTPCode.NOT_FOUND, status: HAPStatus.RESOURCE_DOES_NOT_EXIST});
   }
 
   private handleHAPConnectionClosed(connection: HAPConnection): void {

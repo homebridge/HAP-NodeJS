@@ -6,6 +6,7 @@ import { IncomingMessage, ServerResponse } from "http";
 import tweetnacl from 'tweetnacl';
 import { URL } from 'url';
 import {
+  AccessoriesResponse,
   CharacteristicId,
   CharacteristicsReadRequest,
   CharacteristicsReadResponse,
@@ -90,7 +91,7 @@ export const enum Codes {
   BUSY = 0x07 // cannot accept pairing request at this time
 }
 
-export const enum Status { // TODO rename before we spread adoption
+export const enum HAPStatus {
   // noinspection JSUnusedGlobalSymbols
   SUCCESS = 0,
   INSUFFICIENT_PRIVILEGES = -70401,
@@ -110,10 +111,16 @@ export const enum Status { // TODO rename before we spread adoption
 }
 
 /**
+ * @deprecated please use {@link HAPStatus} as naming is more precise
+ */
+// @ts-expect-error (as we use const enums with --preserveConstEnums)
+export const Status = HAPStatus;
+
+/**
  * Those status codes are the one listed as appropriate for the HAP spec!
  *
  * When the response is a client error 4xx or server error 5xx, the response
- * must include a status {@link Status} property.
+ * must include a status {@link HAPStatus} property.
  *
  * When the response is a MULTI_STATUS EVERY entry in the characteristics property MUST include a status property (even success).
  */
@@ -153,15 +160,17 @@ type HAPRequestHandler = (connection: HAPConnection, url: URL, request: Incoming
 
 export type IdentifyCallback = VoidCallback;
 
+export type HAPHttpError = { httpCode: HAPHTTPCode, status: HAPStatus};
+
 export type PairingsCallback<T = void> = (error: Codes | 0, data?: T) => void;
 export type AddPairingCallback = PairingsCallback;
 export type RemovePairingCallback = PairingsCallback;
 export type ListPairingsCallback = PairingsCallback<PairingInformation[]>;
 export type PairCallback = VoidCallback;
-export type AccessoriesCallback = (result: { accessories: any[] }) => void; // TODO type accessories
+export type AccessoriesCallback = (error: HAPHttpError | undefined, result?: AccessoriesResponse) => void;
 export type ReadCharacteristicsCallback = (response: CharacteristicsReadResponse) => void;
 export type WriteCharacteristicsCallback = (response: CharacteristicsWriteResponse) => void;
-export type ResourceRequestCallback = (error: { httpCode: HAPHTTPCode, status: Status} | undefined, resource?: Buffer) => void;
+export type ResourceRequestCallback = (error: HAPHttpError | undefined, resource?: Buffer) => void;
 
 export const enum HAPServerEventTypes {
   /**
@@ -216,7 +225,7 @@ export declare interface HAPServer {
   on(event: "list-pairings", listener: (connection: HAPConnection, callback: ListPairingsCallback) => void): this;
   on(event: "pair", listener: (username: HAPUsername, clientLTPK: Buffer, callback: PairCallback) => void): this;
 
-  on(event: "accessories", listener: (callback: AccessoriesCallback) => void): this;
+  on(event: "accessories", listener: (connection: HAPConnection, callback: AccessoriesCallback) => void): this;
   on(event: "get-characteristics", listener: (connection: HAPConnection, request: CharacteristicsReadRequest, callback: ReadCharacteristicsCallback) => void): this;
   on(event: "set-characteristics", listener: (connection: HAPConnection, request: CharacteristicsWriteRequest, callback: WriteCharacteristicsCallback) => void): this;
   on(event: "request-resource", listener: (resource: ResourceRequest, callback: ResourceRequestCallback) => void): this;
@@ -232,7 +241,7 @@ export declare interface HAPServer {
   emit(event: "list-pairings", connection: HAPConnection, callback: ListPairingsCallback): boolean;
   emit(event: "pair", username: HAPUsername, clientLTPK: Buffer, callback: PairCallback): boolean;
 
-  emit(event: "accessories", callback : AccessoriesCallback): boolean;
+  emit(event: "accessories", connection: HAPConnection, callback : AccessoriesCallback): boolean;
   emit(event: "get-characteristics", connection: HAPConnection, request: CharacteristicsReadRequest, callback: ReadCharacteristicsCallback): boolean;
   emit(event: "set-characteristics", connection: HAPConnection, request: CharacteristicsWriteRequest, callback: WriteCharacteristicsCallback): boolean;
   emit(event: "request-resource", resource: ResourceRequest, callback: ResourceRequestCallback): boolean;
@@ -319,7 +328,7 @@ export class HAPServer extends EventEmitter {
       if (!handler) {
         debug("[%s] WARNING: Handler for %s not implemented", this.accessoryInfo.username, request.url);
         response.writeHead(HAPHTTPCode.NOT_FOUND, {'Content-Type': 'application/hap+json'});
-        response.end(JSON.stringify({ status: Status.RESOURCE_DOES_NOT_EXIST }));
+        response.end(JSON.stringify({ status: HAPStatus.RESOURCE_DOES_NOT_EXIST }));
       } else {
         const data = Buffer.concat(buffers);
         try {
@@ -327,7 +336,7 @@ export class HAPServer extends EventEmitter {
         } catch (error) {
           debug("[%s] Error executing route handler: %s", this.accessoryInfo.username, error.stack);
           response.writeHead(HAPHTTPCode.INTERNAL_SERVER_ERROR, {'Content-Type': 'application/hap+json'});
-          response.end(JSON.stringify({ status: Status.RESOURCE_BUSY })); // resource busy try again, does somehow fit?
+          response.end(JSON.stringify({ status: HAPStatus.RESOURCE_BUSY })); // resource busy try again, does somehow fit?
         }
       }
     });
@@ -367,7 +376,7 @@ export class HAPServer extends EventEmitter {
     // POST body is empty
     if (!this.allowInsecureRequest && this.accessoryInfo.paired()) {
       response.writeHead(HAPHTTPCode.BAD_REQUEST, {"Content-Type": "application/hap+json"});
-      response.end(JSON.stringify({ status: Status.INSUFFICIENT_PRIVILEGES }));
+      response.end(JSON.stringify({ status: HAPStatus.INSUFFICIENT_PRIVILEGES }));
       return;
     }
 
@@ -379,7 +388,7 @@ export class HAPServer extends EventEmitter {
       } else {
         debug("[%s] Identification error: %s", this.accessoryInfo.username, err.message);
         response.writeHead(HAPHTTPCode.INTERNAL_SERVER_ERROR, {"Content-Type": "application/hap+json"});
-        response.end(JSON.stringify({ status: Status.RESOURCE_BUSY }));
+        response.end(JSON.stringify({ status: HAPStatus.RESOURCE_BUSY }));
       }
     }));
   }
@@ -652,7 +661,7 @@ export class HAPServer extends EventEmitter {
     // Only accept /pairing request if there is a secure session
     if (!this.allowInsecureRequest && !connection.isAuthenticated()) {
       response.writeHead(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED, {"Content-Type": "application/hap+json"});
-      response.end(JSON.stringify({ status: Status.INSUFFICIENT_PRIVILEGES }));
+      response.end(JSON.stringify({ status: HAPStatus.INSUFFICIENT_PRIVILEGES }));
       return;
     }
 
@@ -729,20 +738,25 @@ export class HAPServer extends EventEmitter {
   private handleAccessories(connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse): void {
     if (!this.allowInsecureRequest && !connection.isAuthenticated()) {
       response.writeHead(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED, {"Content-Type": "application/hap+json"});
-      response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
+      response.end(JSON.stringify({status: HAPStatus.INSUFFICIENT_PRIVILEGES}));
       return;
     }
     // call out to listeners to retrieve the latest accessories JSON
-    this.emit(HAPServerEventTypes.ACCESSORIES, once((result: { accessories: any[] }) => {
-      response.writeHead(HAPHTTPCode.OK, {"Content-Type": "application/hap+json"});
-      response.end(JSON.stringify(result));
+    this.emit(HAPServerEventTypes.ACCESSORIES, connection, once((error: HAPHttpError | undefined, result: AccessoriesResponse) => {
+      if (error) {
+        response.writeHead(error.httpCode, {"Content-Type": "application/hap+json"});
+        response.end(JSON.stringify({ status: error.status }));
+      } else {
+        response.writeHead(HAPHTTPCode.OK, {"Content-Type": "application/hap+json"});
+        response.end(JSON.stringify(result));
+      }
     }));
   }
 
   private handleCharacteristics(connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse): void {
     if (!this.allowInsecureRequest && !connection.isAuthenticated()) {
       response.writeHead(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED, {"Content-Type": "application/hap+json"});
-      response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
+      response.end(JSON.stringify({status: HAPStatus.INSUFFICIENT_PRIVILEGES}));
       return;
     }
 
@@ -752,7 +766,7 @@ export class HAPServer extends EventEmitter {
       const idParam = searchParams.get("id");
       if (!idParam) {
         response.writeHead(HAPHTTPCode.BAD_REQUEST, {"Content-Type": "application/hap+json"});
-        response.end(JSON.stringify({ status: Status.INVALID_VALUE_IN_REQUEST }));
+        response.end(JSON.stringify({ status: HAPStatus.INVALID_VALUE_IN_REQUEST }));
         return;
       }
 
@@ -787,7 +801,7 @@ export class HAPServer extends EventEmitter {
         if (errorOccurred) { // on a 207 Multi-Status EVERY characteristic MUST include a status property
           for (const data of characteristics) {
             if (!data.status) { // a status is undefined if the request was successful
-              data.status = Status.SUCCESS; // a value of zero indicates success
+              data.status = HAPStatus.SUCCESS; // a value of zero indicates success
             }
           }
         }
@@ -800,13 +814,13 @@ export class HAPServer extends EventEmitter {
       if (!connection.isAuthenticated()) {
         if (!request.headers || (request.headers && request.headers["authorization"] !== this.accessoryInfo.pincode)) {
           response.writeHead(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED, {"Content-Type": "application/hap+json"});
-          response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
+          response.end(JSON.stringify({status: HAPStatus.INSUFFICIENT_PRIVILEGES}));
           return;
         }
       }
       if (data.length === 0) {
         response.writeHead(400, {"Content-Type": "application/hap+json"});
-        response.end(JSON.stringify({status: Status.INVALID_VALUE_IN_REQUEST}));
+        response.end(JSON.stringify({status: HAPStatus.INVALID_VALUE_IN_REQUEST}));
         return;
       }
 
@@ -827,7 +841,7 @@ export class HAPServer extends EventEmitter {
         if (multiStatus) {
           for (const data of characteristics) { // on a 207 Multi-Status EVERY characteristic MUST include a status property
             if (data.status === undefined) {
-              data.status = Status.SUCCESS;
+              data.status = HAPStatus.SUCCESS;
             }
           }
 
@@ -842,21 +856,21 @@ export class HAPServer extends EventEmitter {
       }));
     } else {
       response.writeHead(HAPHTTPCode.BAD_REQUEST, {"Content-Type": "application/hap+json"}); // method not allowed
-      response.end(JSON.stringify({ status: Status.INVALID_VALUE_IN_REQUEST }));
+      response.end(JSON.stringify({ status: HAPStatus.INVALID_VALUE_IN_REQUEST }));
     }
   }
 
   private handlePrepareWrite(connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse): void {
     if (!this.allowInsecureRequest && !connection.isAuthenticated()) {
       response.writeHead(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED, {"Content-Type": "application/hap+json"});
-      response.end(JSON.stringify({status: Status.INSUFFICIENT_PRIVILEGES}));
+      response.end(JSON.stringify({status: HAPStatus.INSUFFICIENT_PRIVILEGES}));
       return;
     }
 
     if (request.method == "PUT") {
       if (data.length == 0) {
         response.writeHead(HAPHTTPCode.BAD_REQUEST, {"Content-Type": "application/hap+json"});
-        response.end(JSON.stringify({status: Status.INVALID_VALUE_IN_REQUEST}));
+        response.end(JSON.stringify({status: HAPStatus.INVALID_VALUE_IN_REQUEST}));
         return;
       }
 
@@ -876,15 +890,15 @@ export class HAPServer extends EventEmitter {
         }, prepareRequest.ttl);
 
         response.writeHead(HAPHTTPCode.OK, {"Content-Type": "application/hap+json"});
-        response.end(JSON.stringify({status: Status.SUCCESS}));
+        response.end(JSON.stringify({status: HAPStatus.SUCCESS}));
         return;
       } else {
         response.writeHead(HAPHTTPCode.BAD_REQUEST, {"Content-Type": "application/hap+json"});
-        response.end(JSON.stringify({ status: Status.INVALID_VALUE_IN_REQUEST }));
+        response.end(JSON.stringify({ status: HAPStatus.INVALID_VALUE_IN_REQUEST }));
       }
     } else {
       response.writeHead(HAPHTTPCode.BAD_REQUEST, {"Content-Type": "application/hap+json"});
-      response.end(JSON.stringify({ status: Status.INVALID_VALUE_IN_REQUEST }));
+      response.end(JSON.stringify({ status: HAPStatus.INVALID_VALUE_IN_REQUEST }));
     }
   };
 
@@ -892,20 +906,20 @@ export class HAPServer extends EventEmitter {
     if (!connection.isAuthenticated()) {
       if (!(this.allowInsecureRequest && request.headers && request.headers.authorization === this.accessoryInfo.pincode)) {
         response.writeHead(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED, {"Content-Type": "application/hap+json"});
-        response.end(JSON.stringify({ status: Status.INSUFFICIENT_PRIVILEGES }));
+        response.end(JSON.stringify({ status: HAPStatus.INSUFFICIENT_PRIVILEGES }));
         return;
       }
     }
     if (request.method === "POST") {
       if (data.length === 0) {
         response.writeHead(HAPHTTPCode.BAD_REQUEST, {"Content-Type": "application/hap+json"});
-        response.end(JSON.stringify({ status: Status.INVALID_VALUE_IN_REQUEST }));
+        response.end(JSON.stringify({ status: HAPStatus.INVALID_VALUE_IN_REQUEST }));
         return;
       }
 
       const resourceRequest = JSON.parse(data.toString()) as ResourceRequest;
       // call out to listeners to retrieve the resource, snapshot only right now
-      this.emit(HAPServerEventTypes.REQUEST_RESOURCE, resourceRequest, once((error: { httpCode: HAPHTTPCode, status: Status} | undefined, resource: Buffer) => {
+      this.emit(HAPServerEventTypes.REQUEST_RESOURCE, resourceRequest, once((error: HAPHttpError | undefined, resource: Buffer) => {
         if (error) {
           response.writeHead(error.httpCode, {"Content-Type": "application/hap+json"});
           response.end(JSON.stringify({ status: error.status }));
@@ -916,7 +930,7 @@ export class HAPServer extends EventEmitter {
       }));
     } else {
       response.writeHead(HAPHTTPCode.BAD_REQUEST, {"Content-Type": "application/hap+json"}); // method not allowed
-      response.end(JSON.stringify({ status: Status.INVALID_VALUE_IN_REQUEST }));
+      response.end(JSON.stringify({ status: HAPStatus.INVALID_VALUE_IN_REQUEST }));
     }
   }
 

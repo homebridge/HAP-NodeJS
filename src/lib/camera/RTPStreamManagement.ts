@@ -4,20 +4,14 @@ import net from "net";
 // noinspection JSDeprecatedSymbols
 import { LegacyCameraSource, LegacyCameraSourceAdapter, once, uuid } from "../../index";
 import { CharacteristicValue, Nullable, SessionIdentifier } from '../../types';
-import {
-  Characteristic,
-  CharacteristicEventTypes,
-  CharacteristicGetCallback,
-  CharacteristicSetCallback
-} from '../Characteristic';
+import { Characteristic, CharacteristicEventTypes, CharacteristicSetCallback } from '../Characteristic';
 import { CameraController, CameraStreamingDelegate } from "../controller";
 import { CameraRTPStreamManagement } from "../gen/HomeKit";
-import { Status } from "../HAPServer";
+import { HAPStatus } from "../HAPServer";
 import { Service } from '../Service';
 import { HAPConnection, HAPConnectionEvent } from "../util/eventedhttp";
 import * as tlv from '../util/tlv';
 import RTPProxy from './RTPProxy';
-import assert from "assert";
 
 const debug = createDebug('HAP-NodeJS:Camera:RTPStreamManagement');
 // ---------------------------------- TLV DEFINITIONS START ----------------------------------
@@ -536,6 +530,7 @@ export class RTPStreamManagement {
     return this.service;
   }
 
+  // noinspection JSUnusedGlobalSymbols,JSUnusedLocalSymbols
   /**
    * @deprecated
    */
@@ -579,7 +574,7 @@ export class RTPStreamManagement {
         .on(CharacteristicEventTypes.SET, (value, callback, context, connection) => {
           if (!connection) {
             debug("Set event handler for SetupEndpoints cannot be called from plugin. Connection undefined!");
-            callback(Status.INVALID_VALUE_IN_REQUEST);
+            callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
             return;
           }
           this.handleSetupEndpoints(value, callback, connection);
@@ -628,7 +623,7 @@ export class RTPStreamManagement {
 
     if (sessionIdentifier !== this.sessionIdentifier) {
       debug(`Received unknown session Identifier with request to ${SessionControlCommand[requestType]}`);
-      callback(Status.INVALID_VALUE_IN_REQUEST);
+      callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
       return;
     }
 
@@ -661,7 +656,7 @@ export class RTPStreamManagement {
       case SessionControlCommand.SUSPEND_SESSION:
       default:
         debug(`Unhandled request type ${SessionControlCommand[requestType]}`);
-        callback(Status.INVALID_VALUE_IN_REQUEST);
+        callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
         return;
     }
   }

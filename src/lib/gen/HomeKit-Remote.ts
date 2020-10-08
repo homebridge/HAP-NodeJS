@@ -13,8 +13,7 @@ export class TargetControlSupportedConfiguration extends Characteristic {
     static readonly UUID: string = '00000123-0000-1000-8000-0026BB765291';
 
     constructor() {
-        super('Target Control Supported Configuration', TargetControlSupportedConfiguration.UUID);
-        this.setProps({
+        super('Target Control Supported Configuration', TargetControlSupportedConfiguration.UUID, {
             format: Formats.TLV8,
             perms: [Perms.PAIRED_READ]
         });
@@ -33,8 +32,7 @@ export class TargetControlList extends Characteristic {
     static readonly UUID: string = '00000124-0000-1000-8000-0026BB765291';
 
     constructor() {
-        super('Target Control List', TargetControlList.UUID);
-        this.setProps({
+        super('Target Control List', TargetControlList.UUID, {
             format: Formats.TLV8,
             perms: [Perms.PAIRED_WRITE, Perms.PAIRED_READ, Perms.WRITE_RESPONSE],
             adminOnlyAccess: [Access.READ, Access.WRITE],
@@ -55,8 +53,7 @@ export class ButtonEvent extends Characteristic {
     static readonly UUID: string = '00000126-0000-1000-8000-0026BB765291';
 
     constructor() {
-        super('Button Event', ButtonEvent.UUID);
-        this.setProps({
+        super('Button Event', ButtonEvent.UUID, {
             format: Formats.TLV8,
             perms: [Perms.PAIRED_READ, Perms.NOTIFY],
             adminOnlyAccess: [Access.NOTIFY],
@@ -77,8 +74,7 @@ export class SelectedAudioStreamConfiguration extends Characteristic {
     static readonly UUID: string = '00000128-0000-1000-8000-0026BB765291';
 
     constructor() {
-        super('Selected Audio Stream Configuration', SelectedAudioStreamConfiguration.UUID);
-        this.setProps({
+        super('Selected Audio Stream Configuration', SelectedAudioStreamConfiguration.UUID, {
             format: Formats.TLV8,
             perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE]
         });
@@ -100,8 +96,7 @@ export class SiriInputType extends Characteristic {
     static readonly UUID: string = '00000132-0000-1000-8000-0026BB765291';
 
     constructor() {
-        super('Siri Input Type', SiriInputType.UUID);
-        this.setProps({
+        super('Siri Input Type', SiriInputType.UUID, {
             format: Formats.UINT8,
             minValue: 0,
             maxValue: 0,

@@ -12,8 +12,7 @@ export class AccessControlLevel extends Characteristic {
   static readonly UUID: string = '000000E5-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Access Control Level', AccessControlLevel.UUID);
-    this.setProps({
+    super('Access Control Level', AccessControlLevel.UUID, {
       format: Formats.UINT16,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
       maxValue: 2,
@@ -35,8 +34,7 @@ export class AccessoryFlags extends Characteristic {
   static readonly UUID: string = '000000A6-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Accessory Flags', AccessoryFlags.UUID);
-    this.setProps({
+    super('Accessory Flags', AccessoryFlags.UUID, {
       format: Formats.UINT32,
       perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -55,8 +53,7 @@ export class ProductData extends Characteristic {
   static readonly UUID: string = '00000220-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Product Data', ProductData.UUID);
-    this.setProps({
+    super('Product Data', ProductData.UUID, {
       format: Formats.DATA,
       perms: [Perms.PAIRED_READ]
     });
@@ -79,8 +76,7 @@ export class Active extends Characteristic {
   static readonly UUID: string = '000000B0-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Active', Active.UUID);
-    this.setProps({
+    super('Active', Active.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -102,8 +98,7 @@ export class AdministratorOnlyAccess extends Characteristic {
   static readonly UUID: string = '00000001-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Administrator Only Access', AdministratorOnlyAccess.UUID);
-    this.setProps({
+    super('Administrator Only Access', AdministratorOnlyAccess.UUID, {
       format: Formats.BOOL,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
@@ -122,8 +117,7 @@ export class AirParticulateDensity extends Characteristic {
   static readonly UUID: string = '00000064-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Air Particulate Density', AirParticulateDensity.UUID);
-    this.setProps({
+    super('Air Particulate Density', AirParticulateDensity.UUID, {
       format: Formats.FLOAT,
       maxValue: 1000,
       minValue: 0,
@@ -149,8 +143,7 @@ export class AirParticulateSize extends Characteristic {
   static readonly UUID: string = '00000065-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Air Particulate Size', AirParticulateSize.UUID);
-    this.setProps({
+    super('Air Particulate Size', AirParticulateSize.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -181,8 +174,7 @@ export class AirQuality extends Characteristic {
   static readonly UUID: string = '00000095-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Air Quality', AirQuality.UUID);
-    this.setProps({
+    super('Air Quality', AirQuality.UUID, {
       format: Formats.UINT8,
       maxValue: 5,
       minValue: 0,
@@ -205,8 +197,7 @@ export class AudioFeedback extends Characteristic {
   static readonly UUID: string = '00000005-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Audio Feedback', AudioFeedback.UUID);
-    this.setProps({
+    super('Audio Feedback', AudioFeedback.UUID, {
       format: Formats.BOOL,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
@@ -225,8 +216,7 @@ export class BatteryLevel extends Characteristic {
   static readonly UUID: string = '00000068-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Battery Level', BatteryLevel.UUID);
-    this.setProps({
+    super('Battery Level', BatteryLevel.UUID, {
       format: Formats.UINT8,
       unit: Units.PERCENTAGE,
       maxValue: 100,
@@ -249,8 +239,7 @@ export class Brightness extends Characteristic {
   static readonly UUID: string = '00000008-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Brightness', Brightness.UUID);
-    this.setProps({
+    super('Brightness', Brightness.UUID, {
       format: Formats.INT,
       unit: Units.PERCENTAGE,
       maxValue: 100,
@@ -277,8 +266,7 @@ export class CarbonDioxideDetected extends Characteristic {
   static readonly UUID: string = '00000092-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Carbon Dioxide Detected', CarbonDioxideDetected.UUID);
-    this.setProps({
+    super('Carbon Dioxide Detected', CarbonDioxideDetected.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -300,8 +288,7 @@ export class CarbonDioxideLevel extends Characteristic {
   static readonly UUID: string = '00000093-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Carbon Dioxide Level', CarbonDioxideLevel.UUID);
-    this.setProps({
+    super('Carbon Dioxide Level', CarbonDioxideLevel.UUID, {
       format: Formats.FLOAT,
       maxValue: 100000,
       minValue: 0,
@@ -322,8 +309,7 @@ export class CarbonDioxidePeakLevel extends Characteristic {
   static readonly UUID: string = '00000094-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Carbon Dioxide Peak Level', CarbonDioxidePeakLevel.UUID);
-    this.setProps({
+    super('Carbon Dioxide Peak Level', CarbonDioxidePeakLevel.UUID, {
       format: Formats.FLOAT,
       maxValue: 100000,
       minValue: 0,
@@ -348,8 +334,7 @@ export class CarbonMonoxideDetected extends Characteristic {
   static readonly UUID: string = '00000069-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Carbon Monoxide Detected', CarbonMonoxideDetected.UUID);
-    this.setProps({
+    super('Carbon Monoxide Detected', CarbonMonoxideDetected.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -371,8 +356,7 @@ export class CarbonMonoxideLevel extends Characteristic {
   static readonly UUID: string = '00000090-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Carbon Monoxide Level', CarbonMonoxideLevel.UUID);
-    this.setProps({
+    super('Carbon Monoxide Level', CarbonMonoxideLevel.UUID, {
       format: Formats.FLOAT,
       maxValue: 100,
       minValue: 0,
@@ -393,8 +377,7 @@ export class CarbonMonoxidePeakLevel extends Characteristic {
   static readonly UUID: string = '00000091-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Carbon Monoxide Peak Level', CarbonMonoxidePeakLevel.UUID);
-    this.setProps({
+    super('Carbon Monoxide Peak Level', CarbonMonoxidePeakLevel.UUID, {
       format: Formats.FLOAT,
       maxValue: 100,
       minValue: 0,
@@ -420,8 +403,7 @@ export class ChargingState extends Characteristic {
   static readonly UUID: string = '0000008F-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Charging State', ChargingState.UUID);
-    this.setProps({
+    super('Charging State', ChargingState.UUID, {
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
@@ -443,8 +425,7 @@ export class ColorTemperature extends Characteristic {
   static readonly UUID: string = '000000CE-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Color Temperature', ColorTemperature.UUID);
-    this.setProps({
+    super('Color Temperature', ColorTemperature.UUID, {
       format: Formats.UINT32,
       maxValue: 500,
       minValue: 140,
@@ -470,8 +451,7 @@ export class ContactSensorState extends Characteristic {
   static readonly UUID: string = '0000006A-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Contact Sensor State', ContactSensorState.UUID);
-    this.setProps({
+    super('Contact Sensor State', ContactSensorState.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -493,8 +473,7 @@ export class CoolingThresholdTemperature extends Characteristic {
   static readonly UUID: string = '0000000D-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Cooling Threshold Temperature', CoolingThresholdTemperature.UUID);
-    this.setProps({
+    super('Cooling Threshold Temperature', CoolingThresholdTemperature.UUID, {
       format: Formats.FLOAT,
       unit: Units.CELSIUS,
       maxValue: 35,
@@ -522,8 +501,7 @@ export class CurrentAirPurifierState extends Characteristic {
   static readonly UUID: string = '000000A9-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Current Air Purifier State', CurrentAirPurifierState.UUID);
-    this.setProps({
+    super('Current Air Purifier State', CurrentAirPurifierState.UUID, {
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
@@ -546,8 +524,7 @@ export class CurrentAmbientLightLevel extends Characteristic {
   static readonly UUID: string = '0000006B-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Current Ambient Light Level', CurrentAmbientLightLevel.UUID);
-    this.setProps({
+    super('Current Ambient Light Level', CurrentAmbientLightLevel.UUID, {
       format: Formats.FLOAT,
       unit: Units.LUX,
       maxValue: 100000,
@@ -576,8 +553,7 @@ export class CurrentDoorState extends Characteristic {
   static readonly UUID: string = '0000000E-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Current Door State', CurrentDoorState.UUID);
-    this.setProps({
+    super('Current Door State', CurrentDoorState.UUID, {
       format: Formats.UINT8,
       maxValue: 4,
       minValue: 0,
@@ -604,8 +580,7 @@ export class CurrentFanState extends Characteristic {
   static readonly UUID: string = '000000AF-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Current Fan State', CurrentFanState.UUID);
-    this.setProps({
+    super('Current Fan State', CurrentFanState.UUID, {
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
@@ -633,8 +608,7 @@ export class CurrentHeaterCoolerState extends Characteristic {
   static readonly UUID: string = '000000B1-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Current Heater Cooler State', CurrentHeaterCoolerState.UUID);
-    this.setProps({
+    super('Current Heater Cooler State', CurrentHeaterCoolerState.UUID, {
       format: Formats.UINT8,
       maxValue: 3,
       minValue: 0,
@@ -661,8 +635,7 @@ export class CurrentHeatingCoolingState extends Characteristic {
   static readonly UUID: string = '0000000F-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Current Heating Cooling State', CurrentHeatingCoolingState.UUID);
-    this.setProps({
+    super('Current Heating Cooling State', CurrentHeatingCoolingState.UUID, {
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
@@ -684,8 +657,7 @@ export class CurrentHorizontalTiltAngle extends Characteristic {
   static readonly UUID: string = '0000006C-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Current Horizontal Tilt Angle', CurrentHorizontalTiltAngle.UUID);
-    this.setProps({
+    super('Current Horizontal Tilt Angle', CurrentHorizontalTiltAngle.UUID, {
       format: Formats.INT,
       unit: Units.ARC_DEGREE,
       maxValue: 90,
@@ -714,8 +686,7 @@ export class CurrentHumidifierDehumidifierState extends Characteristic {
   static readonly UUID: string = '000000B3-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Current Humidifier Dehumidifier State', CurrentHumidifierDehumidifierState.UUID);
-    this.setProps({
+    super('Current Humidifier Dehumidifier State', CurrentHumidifierDehumidifierState.UUID, {
       format: Formats.UINT8,
       maxValue: 3,
       minValue: 0,
@@ -737,8 +708,7 @@ export class CurrentPosition extends Characteristic {
   static readonly UUID: string = '0000006D-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Current Position', CurrentPosition.UUID);
-    this.setProps({
+    super('Current Position', CurrentPosition.UUID, {
       format: Formats.UINT8,
       unit: Units.PERCENTAGE,
       maxValue: 100,
@@ -761,8 +731,7 @@ export class CurrentRelativeHumidity extends Characteristic {
   static readonly UUID: string = '00000010-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Current Relative Humidity', CurrentRelativeHumidity.UUID);
-    this.setProps({
+    super('Current Relative Humidity', CurrentRelativeHumidity.UUID, {
       format: Formats.FLOAT,
       unit: Units.PERCENTAGE,
       maxValue: 100,
@@ -790,8 +759,7 @@ export class CurrentSlatState extends Characteristic {
   static readonly UUID: string = '000000AA-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Current Slat State', CurrentSlatState.UUID);
-    this.setProps({
+    super('Current Slat State', CurrentSlatState.UUID, {
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
@@ -813,8 +781,7 @@ export class CurrentTemperature extends Characteristic {
   static readonly UUID: string = '00000011-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Current Temperature', CurrentTemperature.UUID);
-    this.setProps({
+    super('Current Temperature', CurrentTemperature.UUID, {
       format: Formats.FLOAT,
       unit: Units.CELSIUS,
       maxValue: 100,
@@ -837,8 +804,7 @@ export class CurrentTiltAngle extends Characteristic {
   static readonly UUID: string = '000000C1-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Current Tilt Angle', CurrentTiltAngle.UUID);
-    this.setProps({
+    super('Current Tilt Angle', CurrentTiltAngle.UUID, {
       format: Formats.INT,
       unit: Units.ARC_DEGREE,
       maxValue: 90,
@@ -861,8 +827,7 @@ export class CurrentVerticalTiltAngle extends Characteristic {
   static readonly UUID: string = '0000006E-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Current Vertical Tilt Angle', CurrentVerticalTiltAngle.UUID);
-    this.setProps({
+    super('Current Vertical Tilt Angle', CurrentVerticalTiltAngle.UUID, {
       format: Formats.INT,
       unit: Units.ARC_DEGREE,
       maxValue: 90,
@@ -885,8 +850,7 @@ export class DigitalZoom extends Characteristic {
   static readonly UUID: string = '0000011D-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Digital Zoom', DigitalZoom.UUID);
-    this.setProps({
+    super('Digital Zoom', DigitalZoom.UUID, {
       format: Formats.FLOAT,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
@@ -909,8 +873,7 @@ export class FilterChangeIndication extends Characteristic {
   static readonly UUID: string = '000000AC-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Filter Change Indication', FilterChangeIndication.UUID);
-    this.setProps({
+    super('Filter Change Indication', FilterChangeIndication.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -932,8 +895,7 @@ export class FilterLifeLevel extends Characteristic {
   static readonly UUID: string = '000000AB-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Filter Life Level', FilterLifeLevel.UUID);
-    this.setProps({
+    super('Filter Life Level', FilterLifeLevel.UUID, {
       format: Formats.FLOAT,
       maxValue: 100,
       minValue: 0,
@@ -954,6 +916,8 @@ export class FirmwareRevision extends Characteristic {
   static readonly UUID: string = '00000052-0000-1000-8000-0026BB765291';
 
   constructor() {
+    // TODO change later
+    // @ts-expect-error
     super('Firmware Revision', FirmwareRevision.UUID);
     this.setProps({
       format: Formats.STRING,
@@ -974,8 +938,7 @@ export class HardwareRevision extends Characteristic {
   static readonly UUID: string = '00000053-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Hardware Revision', HardwareRevision.UUID);
-    this.setProps({
+    super('Hardware Revision', HardwareRevision.UUID, {
       format: Formats.STRING,
       perms: [Perms.PAIRED_READ]
     });
@@ -994,8 +957,7 @@ export class HeatingThresholdTemperature extends Characteristic {
   static readonly UUID: string = '00000012-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Heating Threshold Temperature', HeatingThresholdTemperature.UUID);
-    this.setProps({
+    super('Heating Threshold Temperature', HeatingThresholdTemperature.UUID, {
       format: Formats.FLOAT,
       unit: Units.CELSIUS,
       maxValue: 25,
@@ -1018,8 +980,7 @@ export class HoldPosition extends Characteristic {
   static readonly UUID: string = '0000006F-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Hold Position', HoldPosition.UUID);
-    this.setProps({
+    super('Hold Position', HoldPosition.UUID, {
       format: Formats.BOOL,
       perms: [Perms.PAIRED_WRITE]
     });
@@ -1038,8 +999,7 @@ export class Hue extends Characteristic {
   static readonly UUID: string = '00000013-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Hue', Hue.UUID);
-    this.setProps({
+    super('Hue', Hue.UUID, {
       format: Formats.FLOAT,
       unit: Units.ARC_DEGREE,
       maxValue: 360,
@@ -1062,8 +1022,7 @@ export class Identify extends Characteristic {
   static readonly UUID: string = '00000014-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Identify', Identify.UUID);
-    this.setProps({
+    super('Identify', Identify.UUID, {
       format: Formats.BOOL,
       perms: [Perms.PAIRED_WRITE]
     });
@@ -1082,8 +1041,7 @@ export class ImageMirroring extends Characteristic {
   static readonly UUID: string = '0000011F-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Image Mirroring', ImageMirroring.UUID);
-    this.setProps({
+    super('Image Mirroring', ImageMirroring.UUID, {
       format: Formats.BOOL,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
@@ -1102,8 +1060,7 @@ export class ImageRotation extends Characteristic {
   static readonly UUID: string = '0000011E-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Image Rotation', ImageRotation.UUID);
-    this.setProps({
+    super('Image Rotation', ImageRotation.UUID, {
       format: Formats.FLOAT,
       unit: Units.ARC_DEGREE,
       maxValue: 270,
@@ -1130,8 +1087,7 @@ export class InUse extends Characteristic {
   static readonly UUID: string = '000000D2-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('In Use', InUse.UUID);
-    this.setProps({
+    super('In Use', InUse.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -1157,8 +1113,7 @@ export class IsConfigured extends Characteristic {
   static readonly UUID: string = '000000D6-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Is Configured', IsConfigured.UUID);
-    this.setProps({
+    super('Is Configured', IsConfigured.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -1184,8 +1139,7 @@ export class LeakDetected extends Characteristic {
   static readonly UUID: string = '00000070-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Leak Detected', LeakDetected.UUID);
-    this.setProps({
+    super('Leak Detected', LeakDetected.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -1207,8 +1161,7 @@ export class LockControlPoint extends Characteristic {
   static readonly UUID: string = '00000019-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Lock Control Point', LockControlPoint.UUID);
-    this.setProps({
+    super('Lock Control Point', LockControlPoint.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_WRITE]
     });
@@ -1233,8 +1186,7 @@ export class LockCurrentState extends Characteristic {
   static readonly UUID: string = '0000001D-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Lock Current State', LockCurrentState.UUID);
-    this.setProps({
+    super('Lock Current State', LockCurrentState.UUID, {
       format: Formats.UINT8,
       maxValue: 3,
       minValue: 0,
@@ -1267,8 +1219,7 @@ export class LockLastKnownAction extends Characteristic {
   static readonly UUID: string = '0000001C-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Lock Last Known Action', LockLastKnownAction.UUID);
-    this.setProps({
+    super('Lock Last Known Action', LockLastKnownAction.UUID, {
       format: Formats.UINT8,
       maxValue: 8,
       minValue: 0,
@@ -1290,8 +1241,7 @@ export class LockManagementAutoSecurityTimeout extends Characteristic {
   static readonly UUID: string = '0000001A-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Lock Management Auto Security Timeout', LockManagementAutoSecurityTimeout.UUID);
-    this.setProps({
+    super('Lock Management Auto Security Timeout', LockManagementAutoSecurityTimeout.UUID, {
       format: Formats.UINT32,
       unit: Units.SECONDS,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
@@ -1315,8 +1265,7 @@ export class LockPhysicalControls extends Characteristic {
   static readonly UUID: string = '000000A7-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Lock Physical Controls', LockPhysicalControls.UUID);
-    this.setProps({
+    super('Lock Physical Controls', LockPhysicalControls.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -1342,8 +1291,7 @@ export class LockTargetState extends Characteristic {
   static readonly UUID: string = '0000001E-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Lock Target State', LockTargetState.UUID);
-    this.setProps({
+    super('Lock Target State', LockTargetState.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -1365,8 +1313,7 @@ export class Logs extends Characteristic {
   static readonly UUID: string = '0000001F-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Logs', Logs.UUID);
-    this.setProps({
+    super('Logs', Logs.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -1385,8 +1332,7 @@ export class Manufacturer extends Characteristic {
   static readonly UUID: string = '00000020-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Manufacturer', Manufacturer.UUID);
-    this.setProps({
+    super('Manufacturer', Manufacturer.UUID, {
       format: Formats.STRING,
       perms: [Perms.PAIRED_READ]
     });
@@ -1405,8 +1351,7 @@ export class Model extends Characteristic {
   static readonly UUID: string = '00000021-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Model', Model.UUID);
-    this.setProps({
+    super('Model', Model.UUID, {
       format: Formats.STRING,
       perms: [Perms.PAIRED_READ]
     });
@@ -1425,8 +1370,7 @@ export class MotionDetected extends Characteristic {
   static readonly UUID: string = '00000022-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Motion Detected', MotionDetected.UUID);
-    this.setProps({
+    super('Motion Detected', MotionDetected.UUID, {
       format: Formats.BOOL,
       perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -1445,8 +1389,7 @@ export class Mute extends Characteristic {
   static readonly UUID: string = '0000011A-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Mute', Mute.UUID);
-    this.setProps({
+    super('Mute', Mute.UUID, {
       format: Formats.BOOL,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
@@ -1465,8 +1408,7 @@ export class Name extends Characteristic {
   static readonly UUID: string = '00000023-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Name', Name.UUID);
-    this.setProps({
+    super('Name', Name.UUID, {
       format: Formats.STRING,
       perms: [Perms.PAIRED_READ]
     });
@@ -1485,8 +1427,7 @@ export class NightVision extends Characteristic {
   static readonly UUID: string = '0000011B-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Night Vision', NightVision.UUID);
-    this.setProps({
+    super('Night Vision', NightVision.UUID, {
       format: Formats.BOOL,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
     });
@@ -1505,8 +1446,7 @@ export class NitrogenDioxideDensity extends Characteristic {
   static readonly UUID: string = '000000C4-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Nitrogen Dioxide Density', NitrogenDioxideDensity.UUID);
-    this.setProps({
+    super('Nitrogen Dioxide Density', NitrogenDioxideDensity.UUID, {
       format: Formats.FLOAT,
       maxValue: 1000,
       minValue: 0,
@@ -1528,8 +1468,7 @@ export class ObstructionDetected extends Characteristic {
   static readonly UUID: string = '00000024-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Obstruction Detected', ObstructionDetected.UUID);
-    this.setProps({
+    super('Obstruction Detected', ObstructionDetected.UUID, {
       format: Formats.BOOL,
       perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -1552,8 +1491,7 @@ export class OccupancyDetected extends Characteristic {
   static readonly UUID: string = '00000071-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Occupancy Detected', OccupancyDetected.UUID);
-    this.setProps({
+    super('Occupancy Detected', OccupancyDetected.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -1575,8 +1513,7 @@ export class On extends Characteristic {
   static readonly UUID: string = '00000025-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('On', On.UUID);
-    this.setProps({
+    super('On', On.UUID, {
       format: Formats.BOOL,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
@@ -1595,8 +1532,7 @@ export class OpticalZoom extends Characteristic {
   static readonly UUID: string = '0000011C-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Optical Zoom', OpticalZoom.UUID);
-    this.setProps({
+    super('Optical Zoom', OpticalZoom.UUID, {
       format: Formats.FLOAT,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
@@ -1615,8 +1551,7 @@ export class OutletInUse extends Characteristic {
   static readonly UUID: string = '00000026-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Outlet In Use', OutletInUse.UUID);
-    this.setProps({
+    super('Outlet In Use', OutletInUse.UUID, {
       format: Formats.BOOL,
       perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -1635,8 +1570,7 @@ export class OzoneDensity extends Characteristic {
   static readonly UUID: string = '000000C3-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Ozone Density', OzoneDensity.UUID);
-    this.setProps({
+    super('Ozone Density', OzoneDensity.UUID, {
       format: Formats.FLOAT,
       maxValue: 1000,
       minValue: 0,
@@ -1658,8 +1592,7 @@ export class PairSetup extends Characteristic {
   static readonly UUID: string = '0000004C-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Pair Setup', PairSetup.UUID);
-    this.setProps({
+    super('Pair Setup', PairSetup.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE]
     });
@@ -1678,8 +1611,7 @@ export class PairVerify extends Characteristic {
   static readonly UUID: string = '0000004E-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Pair Verify', PairVerify.UUID);
-    this.setProps({
+    super('Pair Verify', PairVerify.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE]
     });
@@ -1698,8 +1630,7 @@ export class PairingFeatures extends Characteristic {
   static readonly UUID: string = '0000004F-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Pairing Features', PairingFeatures.UUID);
-    this.setProps({
+    super('Pairing Features', PairingFeatures.UUID, {
       format: Formats.UINT8,
       perms: [Perms.PAIRED_READ]
     });
@@ -1718,8 +1649,7 @@ export class PairingPairings extends Characteristic {
   static readonly UUID: string = '00000050-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Pairing Pairings', PairingPairings.UUID);
-    this.setProps({
+    super('Pairing Pairings', PairingPairings.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE]
     });
@@ -1738,8 +1668,7 @@ export class PasswordSetting extends Characteristic {
   static readonly UUID: string = '000000E4-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Password Setting', PasswordSetting.UUID);
-    this.setProps({
+    super('Password Setting', PasswordSetting.UUID, {
       format: Formats.TLV8,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
     });
@@ -1758,8 +1687,7 @@ export class PM10Density extends Characteristic {
   static readonly UUID: string = '000000C7-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('PM10 Density', PM10Density.UUID);
-    this.setProps({
+    super('PM10 Density', PM10Density.UUID, {
       format: Formats.FLOAT,
       maxValue: 1000,
       minValue: 0,
@@ -1781,8 +1709,7 @@ export class PM2_5Density extends Characteristic {
   static readonly UUID: string = '000000C6-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('PM2.5 Density', PM2_5Density.UUID);
-    this.setProps({
+    super('PM2.5 Density', PM2_5Density.UUID, {
       format: Formats.FLOAT,
       maxValue: 1000,
       minValue: 0,
@@ -1809,8 +1736,7 @@ export class PositionState extends Characteristic {
   static readonly UUID: string = '00000072-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Position State', PositionState.UUID);
-    this.setProps({
+    super('Position State', PositionState.UUID, {
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
@@ -1837,8 +1763,7 @@ export class ProgramMode extends Characteristic {
   static readonly UUID: string = '000000D1-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Program Mode', ProgramMode.UUID);
-    this.setProps({
+    super('Program Mode', ProgramMode.UUID, {
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
@@ -1865,8 +1790,7 @@ export class ProgrammableSwitchEvent extends Characteristic {
   static readonly UUID: string = '00000073-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Programmable Switch Event', ProgrammableSwitchEvent.UUID);
-    this.setProps({
+    super('Programmable Switch Event', ProgrammableSwitchEvent.UUID, {
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
@@ -1888,8 +1812,7 @@ export class RelativeHumidityDehumidifierThreshold extends Characteristic {
   static readonly UUID: string = '000000C9-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Relative Humidity Dehumidifier Threshold', RelativeHumidityDehumidifierThreshold.UUID);
-    this.setProps({
+    super('Relative Humidity Dehumidifier Threshold', RelativeHumidityDehumidifierThreshold.UUID, {
       format: Formats.FLOAT,
       maxValue: 100,
       minValue: 0,
@@ -1911,8 +1834,7 @@ export class RelativeHumidityHumidifierThreshold extends Characteristic {
   static readonly UUID: string = '000000CA-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Relative Humidity Humidifier Threshold', RelativeHumidityHumidifierThreshold.UUID);
-    this.setProps({
+    super('Relative Humidity Humidifier Threshold', RelativeHumidityHumidifierThreshold.UUID, {
       format: Formats.FLOAT,
       unit: Units.PERCENTAGE,
       maxValue: 100,
@@ -1935,8 +1857,7 @@ export class RemainingDuration extends Characteristic {
   static readonly UUID: string = '000000D4-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Remaining Duration', RemainingDuration.UUID);
-    this.setProps({
+    super('Remaining Duration', RemainingDuration.UUID, {
       format: Formats.UINT32,
       maxValue: 3600,
       minValue: 0,
@@ -1958,8 +1879,7 @@ export class ResetFilterIndication extends Characteristic {
   static readonly UUID: string = '000000AD-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Reset Filter Indication', ResetFilterIndication.UUID);
-    this.setProps({
+    super('Reset Filter Indication', ResetFilterIndication.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 1,
@@ -1985,8 +1905,7 @@ export class RotationDirection extends Characteristic {
   static readonly UUID: string = '00000028-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Rotation Direction', RotationDirection.UUID);
-    this.setProps({
+    super('Rotation Direction', RotationDirection.UUID, {
       format: Formats.INT,
       maxValue: 1,
       minValue: 0,
@@ -2008,8 +1927,7 @@ export class RotationSpeed extends Characteristic {
   static readonly UUID: string = '00000029-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Rotation Speed', RotationSpeed.UUID);
-    this.setProps({
+    super('Rotation Speed', RotationSpeed.UUID, {
       format: Formats.FLOAT,
       unit: Units.PERCENTAGE,
       maxValue: 100,
@@ -2032,8 +1950,7 @@ export class Saturation extends Characteristic {
   static readonly UUID: string = '0000002F-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Saturation', Saturation.UUID);
-    this.setProps({
+    super('Saturation', Saturation.UUID, {
       format: Formats.FLOAT,
       unit: Units.PERCENTAGE,
       maxValue: 100,
@@ -2056,8 +1973,7 @@ export class SecuritySystemAlarmType extends Characteristic {
   static readonly UUID: string = '0000008E-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Security System Alarm Type', SecuritySystemAlarmType.UUID);
-    this.setProps({
+    super('Security System Alarm Type', SecuritySystemAlarmType.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -2086,8 +2002,7 @@ export class SecuritySystemCurrentState extends Characteristic {
   static readonly UUID: string = '00000066-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Security System Current State', SecuritySystemCurrentState.UUID);
-    this.setProps({
+    super('Security System Current State', SecuritySystemCurrentState.UUID, {
       format: Formats.UINT8,
       maxValue: 4,
       minValue: 0,
@@ -2115,8 +2030,7 @@ export class SecuritySystemTargetState extends Characteristic {
   static readonly UUID: string = '00000067-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Security System Target State', SecuritySystemTargetState.UUID);
-    this.setProps({
+    super('Security System Target State', SecuritySystemTargetState.UUID, {
       format: Formats.UINT8,
       maxValue: 3,
       minValue: 0,
@@ -2138,8 +2052,7 @@ export class SelectedRTPStreamConfiguration extends Characteristic {
   static readonly UUID: string = '00000117-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Selected RTP Stream Configuration', SelectedRTPStreamConfiguration.UUID);
-    this.setProps({
+    super('Selected RTP Stream Configuration', SelectedRTPStreamConfiguration.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE]
     });
@@ -2158,8 +2071,7 @@ export class SerialNumber extends Characteristic {
   static readonly UUID: string = '00000030-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Serial Number', SerialNumber.UUID);
-    this.setProps({
+    super('Serial Number', SerialNumber.UUID, {
       format: Formats.STRING,
       perms: [Perms.PAIRED_READ]
     });
@@ -2178,8 +2090,7 @@ export class ServiceLabelIndex extends Characteristic {
   static readonly UUID: string = '000000CB-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Service Label Index', ServiceLabelIndex.UUID);
-    this.setProps({
+    super('Service Label Index', ServiceLabelIndex.UUID, {
       format: Formats.UINT8,
       maxValue: 255,
       minValue: 1,
@@ -2205,8 +2116,7 @@ export class ServiceLabelNamespace extends Characteristic {
   static readonly UUID: string = '000000CD-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Service Label Namespace', ServiceLabelNamespace.UUID);
-    this.setProps({
+    super('Service Label Namespace', ServiceLabelNamespace.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -2228,8 +2138,7 @@ export class SetDuration extends Characteristic {
   static readonly UUID: string = '000000D3-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Set Duration', SetDuration.UUID);
-    this.setProps({
+    super('Set Duration', SetDuration.UUID, {
       format: Formats.UINT32,
       maxValue: 3600,
       minValue: 0,
@@ -2251,8 +2160,7 @@ export class SetupEndpoints extends Characteristic {
   static readonly UUID: string = '00000118-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Setup Endpoints', SetupEndpoints.UUID);
-    this.setProps({
+    super('Setup Endpoints', SetupEndpoints.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE]
     });
@@ -2275,8 +2183,7 @@ export class SlatType extends Characteristic {
   static readonly UUID: string = '000000C0-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Slat Type', SlatType.UUID);
-    this.setProps({
+    super('Slat Type', SlatType.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -2302,8 +2209,7 @@ export class SmokeDetected extends Characteristic {
   static readonly UUID: string = '00000076-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Smoke Detected', SmokeDetected.UUID);
-    this.setProps({
+    super('Smoke Detected', SmokeDetected.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -2325,8 +2231,7 @@ export class StatusActive extends Characteristic {
   static readonly UUID: string = '00000075-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Status Active', StatusActive.UUID);
-    this.setProps({
+    super('Status Active', StatusActive.UUID, {
       format: Formats.BOOL,
       perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -2349,8 +2254,7 @@ export class StatusFault extends Characteristic {
   static readonly UUID: string = '00000077-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Status Fault', StatusFault.UUID);
-    this.setProps({
+    super('Status Fault', StatusFault.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -2376,8 +2280,7 @@ export class StatusJammed extends Characteristic {
   static readonly UUID: string = '00000078-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Status Jammed', StatusJammed.UUID);
-    this.setProps({
+    super('Status Jammed', StatusJammed.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -2403,8 +2306,7 @@ export class StatusLowBattery extends Characteristic {
   static readonly UUID: string = '00000079-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Status Low Battery', StatusLowBattery.UUID);
-    this.setProps({
+    super('Status Low Battery', StatusLowBattery.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -2431,8 +2333,7 @@ export class StatusTampered extends Characteristic {
   static readonly UUID: string = '0000007A-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Status Tampered', StatusTampered.UUID);
-    this.setProps({
+    super('Status Tampered', StatusTampered.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -2454,8 +2355,7 @@ export class StreamingStatus extends Characteristic {
   static readonly UUID: string = '00000120-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Streaming Status', StreamingStatus.UUID);
-    this.setProps({
+    super('Streaming Status', StreamingStatus.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -2474,8 +2374,7 @@ export class SulphurDioxideDensity extends Characteristic {
   static readonly UUID: string = '000000C5-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Sulphur Dioxide Density', SulphurDioxideDensity.UUID);
-    this.setProps({
+    super('Sulphur Dioxide Density', SulphurDioxideDensity.UUID, {
       format: Formats.FLOAT,
       maxValue: 1000,
       minValue: 0,
@@ -2497,8 +2396,7 @@ export class SupportedAudioStreamConfiguration extends Characteristic {
   static readonly UUID: string = '00000115-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Supported Audio Stream Configuration', SupportedAudioStreamConfiguration.UUID);
-    this.setProps({
+    super('Supported Audio Stream Configuration', SupportedAudioStreamConfiguration.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ]
     });
@@ -2517,8 +2415,7 @@ export class SupportedRTPConfiguration extends Characteristic {
   static readonly UUID: string = '00000116-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Supported RTP Configuration', SupportedRTPConfiguration.UUID);
-    this.setProps({
+    super('Supported RTP Configuration', SupportedRTPConfiguration.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ]
     });
@@ -2537,8 +2434,7 @@ export class SupportedVideoStreamConfiguration extends Characteristic {
   static readonly UUID: string = '00000114-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Supported Video Stream Configuration', SupportedVideoStreamConfiguration.UUID);
-    this.setProps({
+    super('Supported Video Stream Configuration', SupportedVideoStreamConfiguration.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ]
     });
@@ -2561,8 +2457,7 @@ export class SwingMode extends Characteristic {
   static readonly UUID: string = '000000B6-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Swing Mode', SwingMode.UUID);
-    this.setProps({
+    super('Swing Mode', SwingMode.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -2588,8 +2483,7 @@ export class TargetAirPurifierState extends Characteristic {
   static readonly UUID: string = '000000A8-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Target Air Purifier State', TargetAirPurifierState.UUID);
-    this.setProps({
+    super('Target Air Purifier State', TargetAirPurifierState.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -2616,8 +2510,7 @@ export class TargetAirQuality extends Characteristic {
   static readonly UUID: string = '000000AE-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Target Air Quality', TargetAirQuality.UUID);
-    this.setProps({
+    super('Target Air Quality', TargetAirQuality.UUID, {
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
@@ -2643,8 +2536,7 @@ export class TargetDoorState extends Characteristic {
   static readonly UUID: string = '00000032-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Target Door State', TargetDoorState.UUID);
-    this.setProps({
+    super('Target Door State', TargetDoorState.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -2670,8 +2562,7 @@ export class TargetFanState extends Characteristic {
   static readonly UUID: string = '000000BF-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Target Fan State', TargetFanState.UUID);
-    this.setProps({
+    super('Target Fan State', TargetFanState.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -2698,8 +2589,7 @@ export class TargetHeaterCoolerState extends Characteristic {
   static readonly UUID: string = '000000B2-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Target Heater Cooler State', TargetHeaterCoolerState.UUID);
-    this.setProps({
+    super('Target Heater Cooler State', TargetHeaterCoolerState.UUID, {
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
@@ -2727,8 +2617,7 @@ export class TargetHeatingCoolingState extends Characteristic {
   static readonly UUID: string = '00000033-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Target Heating Cooling State', TargetHeatingCoolingState.UUID);
-    this.setProps({
+    super('Target Heating Cooling State', TargetHeatingCoolingState.UUID, {
       format: Formats.UINT8,
       maxValue: 3,
       minValue: 0,
@@ -2750,8 +2639,7 @@ export class TargetHorizontalTiltAngle extends Characteristic {
   static readonly UUID: string = '0000007B-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Target Horizontal Tilt Angle', TargetHorizontalTiltAngle.UUID);
-    this.setProps({
+    super('Target Horizontal Tilt Angle', TargetHorizontalTiltAngle.UUID, {
       format: Formats.INT,
       unit: Units.ARC_DEGREE,
       maxValue: 90,
@@ -2784,8 +2672,7 @@ export class TargetHumidifierDehumidifierState extends Characteristic {
   static readonly UUID: string = '000000B4-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Target Humidifier Dehumidifier State', TargetHumidifierDehumidifierState.UUID);
-    this.setProps({
+    super('Target Humidifier Dehumidifier State', TargetHumidifierDehumidifierState.UUID, {
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
@@ -2807,8 +2694,7 @@ export class TargetPosition extends Characteristic {
   static readonly UUID: string = '0000007C-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Target Position', TargetPosition.UUID);
-    this.setProps({
+    super('Target Position', TargetPosition.UUID, {
       format: Formats.UINT8,
       unit: Units.PERCENTAGE,
       maxValue: 100,
@@ -2831,8 +2717,7 @@ export class TargetRelativeHumidity extends Characteristic {
   static readonly UUID: string = '00000034-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Target Relative Humidity', TargetRelativeHumidity.UUID);
-    this.setProps({
+    super('Target Relative Humidity', TargetRelativeHumidity.UUID, {
       format: Formats.FLOAT,
       unit: Units.PERCENTAGE,
       maxValue: 100,
@@ -2859,8 +2744,7 @@ export class TargetSlatState extends Characteristic {
   static readonly UUID: string = '000000BE-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Target Slat State', TargetSlatState.UUID);
-    this.setProps({
+    super('Target Slat State', TargetSlatState.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -2882,8 +2766,7 @@ export class TargetTemperature extends Characteristic {
   static readonly UUID: string = '00000035-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Target Temperature', TargetTemperature.UUID);
-    this.setProps({
+    super('Target Temperature', TargetTemperature.UUID, {
       format: Formats.FLOAT,
       unit: Units.CELSIUS,
       maxValue: 38,
@@ -2906,8 +2789,7 @@ export class TargetTiltAngle extends Characteristic {
   static readonly UUID: string = '000000C2-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Target Tilt Angle', TargetTiltAngle.UUID);
-    this.setProps({
+    super('Target Tilt Angle', TargetTiltAngle.UUID, {
       format: Formats.INT,
       unit: Units.ARC_DEGREE,
       maxValue: 90,
@@ -2930,8 +2812,7 @@ export class TargetVerticalTiltAngle extends Characteristic {
   static readonly UUID: string = '0000007D-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Target Vertical Tilt Angle', TargetVerticalTiltAngle.UUID);
-    this.setProps({
+    super('Target Vertical Tilt Angle', TargetVerticalTiltAngle.UUID, {
       format: Formats.INT,
       unit: Units.ARC_DEGREE,
       maxValue: 90,
@@ -2958,8 +2839,7 @@ export class TemperatureDisplayUnits extends Characteristic {
   static readonly UUID: string = '00000036-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Temperature Display Units', TemperatureDisplayUnits.UUID);
-    this.setProps({
+    super('Temperature Display Units', TemperatureDisplayUnits.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -2987,8 +2867,7 @@ export class ValveType extends Characteristic {
   static readonly UUID: string = '000000D5-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Valve Type', ValveType.UUID);
-    this.setProps({
+    super('Valve Type', ValveType.UUID, {
       format: Formats.UINT8,
       maxValue: 3,
       minValue: 0,
@@ -3010,8 +2889,7 @@ export class Version extends Characteristic {
   static readonly UUID: string = '00000037-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Version', Version.UUID);
-    this.setProps({
+    super('Version', Version.UUID, {
       format: Formats.STRING,
       perms: [Perms.PAIRED_READ]
     });
@@ -3030,8 +2908,7 @@ export class VOCDensity extends Characteristic {
   static readonly UUID: string = '000000C8-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('VOC Density', VOCDensity.UUID);
-    this.setProps({
+    super('VOC Density', VOCDensity.UUID, {
       format: Formats.FLOAT,
       maxValue: 1000,
       minValue: 0,
@@ -3053,8 +2930,7 @@ export class Volume extends Characteristic {
   static readonly UUID: string = '00000119-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Volume', Volume.UUID);
-    this.setProps({
+    super('Volume', Volume.UUID, {
       format: Formats.UINT8,
       unit: Units.PERCENTAGE,
       maxValue: 100,
@@ -3077,8 +2953,7 @@ export class WaterLevel extends Characteristic {
   static readonly UUID: string = '000000B5-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Water Level', WaterLevel.UUID);
-    this.setProps({
+    super('Water Level', WaterLevel.UUID, {
       format: Formats.FLOAT,
       maxValue: 100,
       minValue: 0,
@@ -3102,8 +2977,7 @@ export class RecordingAudioActive extends Characteristic {
   static readonly UUID: string = '00000226-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Recording Audio Active', RecordingAudioActive.UUID);
-    this.setProps({
+    super('Recording Audio Active', RecordingAudioActive.UUID, {
         format: Formats.UINT8,
         perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
@@ -3122,8 +2996,7 @@ export class SupportedCameraRecordingConfiguration extends Characteristic {
   static readonly UUID: string = '00000205-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Supported Camera Recording Configuration', SupportedCameraRecordingConfiguration.UUID);
-    this.setProps({
+    super('Supported Camera Recording Configuration', SupportedCameraRecordingConfiguration.UUID, {
         format: Formats.TLV8,
         perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -3142,8 +3015,7 @@ export class SupportedVideoRecordingConfiguration extends Characteristic {
   static readonly UUID: string = '00000206-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Supported Video Recording Configuration', SupportedVideoRecordingConfiguration.UUID);
-    this.setProps({
+    super('Supported Video Recording Configuration', SupportedVideoRecordingConfiguration.UUID, {
         format: Formats.TLV8,
         perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -3162,8 +3034,7 @@ export class SupportedAudioRecordingConfiguration extends Characteristic {
   static readonly UUID: string = '00000207-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Supported Audio Recording Configuration', SupportedAudioRecordingConfiguration.UUID);
-    this.setProps({
+    super('Supported Audio Recording Configuration', SupportedAudioRecordingConfiguration.UUID, {
         format: Formats.TLV8,
         perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -3182,8 +3053,7 @@ export class SelectedCameraRecordingConfiguration extends Characteristic {
   static readonly UUID: string = '00000209-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Selected Camera Recording Configuration', SelectedCameraRecordingConfiguration.UUID);
-    this.setProps({
+    super('Selected Camera Recording Configuration', SelectedCameraRecordingConfiguration.UUID, {
         format: Formats.TLV8,
         perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
@@ -3205,8 +3075,7 @@ export class CameraOperatingModeIndicator extends Characteristic {
   static readonly UUID: string = '0000021D-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Camera Operating Mode Indicator', CameraOperatingModeIndicator.UUID);
-    this.setProps({
+    super('Camera Operating Mode Indicator', CameraOperatingModeIndicator.UUID, {
         format: Formats.UINT8,
         perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
     });
@@ -3228,8 +3097,7 @@ export class EventSnapshotsActive extends Characteristic {
   static readonly UUID: string = '00000223-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Event Snapshots Active', EventSnapshotsActive.UUID);
-    this.setProps({
+    super('Event Snapshots Active', EventSnapshotsActive.UUID, {
       format: Formats.UINT8,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
@@ -3248,8 +3116,7 @@ export class DiagonalFieldOfView extends Characteristic {
   static readonly UUID: string = '00000224-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Diagonal Field Of View', DiagonalFieldOfView.UUID);
-    this.setProps({
+    super('Diagonal Field Of View', DiagonalFieldOfView.UUID, {
       format: Formats.FLOAT,
       unit: Units.ARC_DEGREE,
       maxValue: 360,
@@ -3275,8 +3142,7 @@ export class HomeKitCameraActive extends Characteristic {
   static readonly UUID: string = '0000021B-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('HomeKit Camera Active', HomeKitCameraActive.UUID);
-    this.setProps({
+    super('HomeKit Camera Active', HomeKitCameraActive.UUID, {
       format: Formats.UINT8,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY, Perms.TIMED_WRITE]
     });
@@ -3298,8 +3164,7 @@ export class ManuallyDisabled extends Characteristic {
   static readonly UUID: string = '00000227-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Manually disabled', ManuallyDisabled.UUID);
-    this.setProps({
+    super('Manually disabled', ManuallyDisabled.UUID, {
       format: Formats.BOOL,
       perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -3321,8 +3186,7 @@ export class ThirdPartyCameraActive extends Characteristic {
   static readonly UUID: string = '0000021C-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Third Party Camera Active', ThirdPartyCameraActive.UUID);
-    this.setProps({
+    super('Third Party Camera Active', ThirdPartyCameraActive.UUID, {
       format: Formats.UINT8,
       perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -3344,8 +3208,7 @@ export class PeriodicSnapshotsActive extends Characteristic {
   static readonly UUID: string = '00000225-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Periodic Snapshots Active', PeriodicSnapshotsActive.UUID);
-    this.setProps({
+    super('Periodic Snapshots Active', PeriodicSnapshotsActive.UUID, {
       format: Formats.UINT8,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY]
     });
@@ -3364,8 +3227,7 @@ export class NetworkClientProfileControl extends Characteristic {
   static readonly UUID: string = '0000020C-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Network Client Profile Control', NetworkClientProfileControl.UUID);
-    this.setProps({
+    super('Network Client Profile Control', NetworkClientProfileControl.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY, Perms.TIMED_WRITE, Perms.WRITE_RESPONSE]
     });
@@ -3384,8 +3246,7 @@ export class NetworkClientStatusControl extends Characteristic {
   static readonly UUID: string = '0000020D-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Network Client Status Control', NetworkClientStatusControl.UUID);
-    this.setProps({
+    super('Network Client Status Control', NetworkClientStatusControl.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE]
     });
@@ -3407,8 +3268,7 @@ export class RouterStatus extends Characteristic {
   static readonly UUID: string = '0000020E-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Router Status', RouterStatus.UUID);
-    this.setProps({
+    super('Router Status', RouterStatus.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -3430,8 +3290,7 @@ export class SupportedRouterConfiguration extends Characteristic {
   static readonly UUID: string = '00000210-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Supported Router Configuration', SupportedRouterConfiguration.UUID);
-    this.setProps({
+    super('Supported Router Configuration', SupportedRouterConfiguration.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ]
     });
@@ -3450,8 +3309,7 @@ export class WANConfigurationList extends Characteristic {
   static readonly UUID: string = '00000211-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('WAN Configuration List', WANConfigurationList.UUID);
-    this.setProps({
+    super('WAN Configuration List', WANConfigurationList.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -3470,8 +3328,7 @@ export class WANStatusList extends Characteristic {
   static readonly UUID: string = '00000212-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('WAN Status List', WANStatusList.UUID);
-    this.setProps({
+    super('WAN Status List', WANStatusList.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ, Perms.NOTIFY]
     });
@@ -3493,8 +3350,7 @@ export class ManagedNetworkEnable extends Characteristic {
   static readonly UUID: string = '00000215-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Managed Network Enable', ManagedNetworkEnable.UUID);
-    this.setProps({
+    super('Managed Network Enable', ManagedNetworkEnable.UUID, {
       format: Formats.UINT8,
       maxValue: 1,
       minValue: 0,
@@ -3516,8 +3372,7 @@ export class NetworkAccessViolationControl extends Characteristic {
   static readonly UUID: string = '0000021F-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Network Access Violation Control', NetworkAccessViolationControl.UUID);
-    this.setProps({
+    super('Network Access Violation Control', NetworkAccessViolationControl.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY, Perms.TIMED_WRITE, Perms.WRITE_RESPONSE]
     });
@@ -3540,8 +3395,7 @@ export class WiFiSatelliteStatus extends Characteristic {
   static readonly UUID: string = '0000021E-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Wi-Fi Satellite Status', WiFiSatelliteStatus.UUID);
-    this.setProps({
+    super('Wi-Fi Satellite Status', WiFiSatelliteStatus.UUID, {
       format: Formats.UINT8,
       maxValue: 2,
       minValue: 0,
@@ -3564,8 +3418,7 @@ export class WakeConfiguration extends Characteristic {
   static readonly UUID: string = '00000222-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Wake Configuration', WakeConfiguration.UUID);
-    this.setProps({
+    super('Wake Configuration', WakeConfiguration.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ],
     });
@@ -3585,8 +3438,7 @@ export class SupportedTransferTransportConfiguration extends Characteristic {
   static readonly UUID: string = '00000202-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Supported Transfer Transport Configuration', SupportedTransferTransportConfiguration.UUID);
-    this.setProps({
+    super('Supported Transfer Transport Configuration', SupportedTransferTransportConfiguration.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ],
     });
@@ -3606,8 +3458,7 @@ export class SetupTransferTransport extends Characteristic {
   static readonly UUID: string = '00000201-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super('Setup Transfer Transport', SetupTransferTransport.UUID);
-    this.setProps({
+    super('Setup Transfer Transport', SetupTransferTransport.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
     });
@@ -3626,8 +3477,7 @@ export class ActivityInterval extends Characteristic {
   static readonly UUID: string = '0000023B-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Activity Interval", ActivityInterval.UUID);
-    this.setProps({
+    super("Activity Interval", ActivityInterval.UUID, {
       format: Formats.UINT32,
       minValue: 0,
       minStep: 1,
@@ -3649,8 +3499,7 @@ export class CCAEnergyDetectThreshold extends Characteristic {
   static readonly UUID: string = '00000246-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("CCA Energy Detect Threshold", CCAEnergyDetectThreshold.UUID);
-    this.setProps({
+    super("CCA Energy Detect Threshold", CCAEnergyDetectThreshold.UUID, {
       format: Formats.INT,
       perms: [Perms.PAIRED_READ],
     });
@@ -3670,8 +3519,7 @@ export class CCASignalDetectThreshold extends Characteristic {
   static readonly UUID: string = '00000245-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("CCA Signal Detect Threshold", CCASignalDetectThreshold.UUID);
-    this.setProps({
+    super("CCA Signal Detect Threshold", CCASignalDetectThreshold.UUID, {
       format: Formats.INT,
       perms: [Perms.PAIRED_READ],
     });
@@ -3691,8 +3539,7 @@ export class CharacteristicValueTransitionControl extends Characteristic {
   static readonly UUID: string = '00000143-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Characteristic Value Transition Control", CharacteristicValueTransitionControl.UUID);
-    this.setProps({
+    super("Characteristic Value Transition Control", CharacteristicValueTransitionControl.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
     });
@@ -3712,8 +3559,7 @@ export class SupportedCharacteristicValueTransitionConfiguration extends Charact
   static readonly UUID: string = '00000144-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Supported Characteristic Value Transition Configuration", SupportedCharacteristicValueTransitionConfiguration.UUID);
-    this.setProps({
+    super("Supported Characteristic Value Transition Configuration", SupportedCharacteristicValueTransitionConfiguration.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ],
     });
@@ -3733,8 +3579,7 @@ export class CharacteristicValueActiveTransitionCount extends Characteristic {
   static readonly UUID: string = '0000024B-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Characteristic Value Active Transition Count", CharacteristicValueActiveTransitionCount.UUID);
-    this.setProps({
+    super("Characteristic Value Active Transition Count", CharacteristicValueActiveTransitionCount.UUID, {
       format: Formats.UINT8,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ],
     })
@@ -3754,8 +3599,7 @@ export class CurrentTransport extends Characteristic {
   static readonly UUID: string = '0000022B-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Current Transport", CurrentTransport.UUID);
-    this.setProps({
+    super("Current Transport", CurrentTransport.UUID, {
       format: Formats.BOOL,
       perms: [Perms.PAIRED_READ],
     });
@@ -3775,8 +3619,7 @@ export class DataStreamHAPTransport extends Characteristic {
   static readonly UUID: string = '00000138-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Data Stream HAP Transport", DataStreamHAPTransport.UUID);
-    this.setProps({
+    super("Data Stream HAP Transport", DataStreamHAPTransport.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
     });
@@ -3796,8 +3639,7 @@ export class DataStreamHAPTransportInterrupt extends Characteristic {
   static readonly UUID: string = '00000139-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Data Stream HAP Transport Interrupt", DataStreamHAPTransportInterrupt.UUID);
-    this.setProps({
+    super("Data Stream HAP Transport Interrupt", DataStreamHAPTransportInterrupt.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ, Perms.NOTIFY],
     });
@@ -3817,8 +3659,7 @@ export class EventRetransmissionMaximum extends Characteristic {
   static readonly UUID: string = '0000023D-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Event Retransmission Maximum", EventRetransmissionMaximum.UUID);
-    this.setProps({
+    super("Event Retransmission Maximum", EventRetransmissionMaximum.UUID, {
       format: Formats.UINT8,
       perms: [Perms.PAIRED_READ],
     });
@@ -3838,8 +3679,7 @@ export class EventTransmissionCounters extends Characteristic {
   static readonly UUID: string = '0000023E-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Event Transmission Counters", EventTransmissionCounters.UUID);
-    this.setProps({
+    super("Event Transmission Counters", EventTransmissionCounters.UUID, {
       format: Formats.UINT32,
       perms: [Perms.PAIRED_READ],
     });
@@ -3859,8 +3699,7 @@ export class HeartBeat extends Characteristic {
   static readonly UUID: string = '0000024A-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Heart Beat", HeartBeat.UUID);
-    this.setProps({
+    super("Heart Beat", HeartBeat.UUID, {
       format: Formats.UINT32,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ],
     })
@@ -3880,8 +3719,7 @@ export class MACRetransmissionMaximum extends Characteristic {
   static readonly UUID: string = '00000247-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("MAC Retransmission Maximum", MACRetransmissionMaximum.UUID);
-    this.setProps({
+    super("MAC Retransmission Maximum", MACRetransmissionMaximum.UUID, {
       format: Formats.UINT8,
       perms: [Perms.PAIRED_READ],
     });
@@ -3901,8 +3739,7 @@ export class MACTransmissionCounters extends Characteristic {
   static readonly UUID: string = '00000248-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("MAC Transmission Counters", MACTransmissionCounters.UUID);
-    this.setProps({
+    super("MAC Transmission Counters", MACTransmissionCounters.UUID, {
       format: Formats.DATA,
       perms: [Perms.PAIRED_READ],
     });
@@ -3922,8 +3759,7 @@ export class OperatingStateResponse extends Characteristic {
   static readonly UUID: string = '00000232-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Operating State Response", OperatingStateResponse.UUID);
-    this.setProps({
+    super("Operating State Response", OperatingStateResponse.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ, Perms.NOTIFY],
     });
@@ -3943,8 +3779,7 @@ export class Ping extends Characteristic {
   static readonly UUID: string = '0000023C-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Ping", Ping.UUID);
-    this.setProps({
+    super("Ping", Ping.UUID, {
       format: Formats.DATA,
       perms: [Perms.PAIRED_READ],
     });
@@ -3964,8 +3799,7 @@ export class ReceiverSensitivity extends Characteristic {
   static readonly UUID: string = '00000244-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Receiver Sensitivity", ReceiverSensitivity.UUID);
-    this.setProps({
+    super("Receiver Sensitivity", ReceiverSensitivity.UUID, {
       format: Formats.INT,
       perms: [Perms.PAIRED_READ],
     });
@@ -3985,8 +3819,7 @@ export class ReceivedSignalStrengthIndication extends Characteristic {
   static readonly UUID: string = '0000023F-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Received Signal Strength Indication", ReceivedSignalStrengthIndication.UUID);
-    this.setProps({
+    super("Received Signal Strength Indication", ReceivedSignalStrengthIndication.UUID, {
       format: Formats.INT,
       perms: [Perms.PAIRED_READ],
     });
@@ -4006,8 +3839,7 @@ export class SleepInterval extends Characteristic {
   static readonly UUID: string = '0000023A-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Sleep Interval", SleepInterval.UUID);
-    this.setProps({
+    super("Sleep Interval", SleepInterval.UUID, {
       format: Formats.UINT32,
       minValue: 0,
       minStep: 1,
@@ -4029,8 +3861,7 @@ export class SignalToNoiseRatio extends Characteristic {
   static readonly UUID: string = '00000241-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Signal-to-noise Ration", SignalToNoiseRatio.UUID);
-    this.setProps({
+    super("Signal-to-noise Ration", SignalToNoiseRatio.UUID, {
       format: Formats.INT,
       perms: [Perms.PAIRED_READ],
     });
@@ -4050,8 +3881,7 @@ export class SupportedDiagnosticsSnapshot extends Characteristic {
   static readonly UUID: string = '00000238-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Supported Diagnostics Snapshot", SupportedDiagnosticsSnapshot.UUID);
-    this.setProps({
+    super("Supported Diagnostics Snapshot", SupportedDiagnosticsSnapshot.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ],
     });
@@ -4071,8 +3901,7 @@ export class TransmitPower extends Characteristic {
   static readonly UUID: string = '00000242-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Transmit Power", TransmitPower.UUID);
-    this.setProps({
+    super("Transmit Power", TransmitPower.UUID, {
       format: Formats.INT,
       perms: [Perms.PAIRED_READ],
     });
@@ -4092,8 +3921,7 @@ export class TransmitPowerMaximum extends Characteristic {
   static readonly UUID: string = '00000243-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Transmit Power Maximum", TransmitPowerMaximum.UUID);
-    this.setProps({
+    super("Transmit Power Maximum", TransmitPowerMaximum.UUID, {
       format: Formats.INT,
       perms: [Perms.PAIRED_READ],
     });
@@ -4113,8 +3941,7 @@ export class VideoAnalysisActive extends Characteristic {
   static readonly UUID: string = '00000229-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Video Analysis Active", VideoAnalysisActive.UUID);
-    this.setProps({
+    super("Video Analysis Active", VideoAnalysisActive.UUID, {
       format: Formats.UINT8,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY],
     });
@@ -4134,8 +3961,7 @@ export class WiFiCapabilities extends Characteristic {
   static readonly UUID: string = '0000022C-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Wi-Fi Capabilities", WiFiCapabilities.UUID);
-    this.setProps({
+    super("Wi-Fi Capabilities", WiFiCapabilities.UUID, {
       format: Formats.UINT32,
       perms: [Perms.PAIRED_READ],
     });
@@ -4155,8 +3981,7 @@ export class WiFiConfigurationControl extends Characteristic {
   static readonly UUID: string = '0000022D-0000-1000-8000-0026BB765291';
 
   constructor() {
-    super("Wi-Fi Configuration Control", WiFiConfigurationControl.UUID);
-    this.setProps({
+    super("Wi-Fi Configuration Control", WiFiConfigurationControl.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY, Perms.TIMED_WRITE, Perms.WRITE_RESPONSE],
     });
