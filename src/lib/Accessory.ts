@@ -419,7 +419,7 @@ export class Accessory extends EventEmitter {
     }
 
     service.on(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, this.handleServiceConfigurationChangeEvent.bind(this, service));
-    service.on(ServiceEventTypes.CHARACTERISTIC_CHANGE, this.handleCharacteristicChangeEvent.bind(this, service));
+    service.on(ServiceEventTypes.CHARACTERISTIC_CHANGE, this.handleCharacteristicChangeEvent.bind(this, this, service));
 
     return service;
   }
@@ -518,7 +518,7 @@ export class Accessory extends EventEmitter {
     }
 
     // listen for changes in ANY characteristics of ANY services on this Accessory
-    accessory.on(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, change => this.handleCharacteristicChangeEvent(change.service, change));
+    accessory.on(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, change => this.handleCharacteristicChangeEvent(accessory, change.service, change));
     accessory.on(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, this.enqueueConfigurationUpdate.bind(this));
 
     accessory.bridged = true;
@@ -1712,7 +1712,7 @@ export class Accessory extends EventEmitter {
     }
   }
 
-  private handleCharacteristicChangeEvent(service: Service, change: ServiceCharacteristicChange): void {
+  private handleCharacteristicChangeEvent(accessory: Accessory, service: Service, change: ServiceCharacteristicChange): void {
     if (this.bridged) { // forward this to our main accessory
       this.emit(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, { ...change, service: service });
     } else {
@@ -1720,8 +1720,8 @@ export class Accessory extends EventEmitter {
         return; // we're not running a HAPServer, so there's no one to notify about this event
       }
 
-      if (this.aid == undefined || change.characteristic.iid == undefined) {
-        debug("[%s] Muting event notification for %s as ids aren't yet assigned!", this.displayName, change.characteristic.displayName);
+      if (accessory.aid == undefined || change.characteristic.iid == undefined) {
+        debug("[%s] Muting event notification for %s as ids aren't yet assigned!", accessory.displayName, change.characteristic.displayName);
         return;
       }
 
@@ -1729,13 +1729,13 @@ export class Accessory extends EventEmitter {
       const immediateDelivery = uuid === ButtonEvent.UUID || uuid === ProgrammableSwitchEvent.UUID
         || uuid === MotionDetected.UUID || uuid === ContactSensorState.UUID;
 
-      this._server.sendEventNotifications(this.aid, change.characteristic.iid, change.newValue, change.originator, immediateDelivery);
+      this._server.sendEventNotifications(accessory.aid, change.characteristic.iid, change.newValue, change.originator, immediateDelivery);
     }
   }
 
   _setupService = (service: Service) => {
     service.on(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, this.handleServiceConfigurationChangeEvent.bind(this, service));
-    service.on(ServiceEventTypes.CHARACTERISTIC_CHANGE, this.handleCharacteristicChangeEvent.bind(this, service));
+    service.on(ServiceEventTypes.CHARACTERISTIC_CHANGE, this.handleCharacteristicChangeEvent.bind(this, this, service));
   }
 
   _sideloadServices = (targetServices: Service[]) => {
