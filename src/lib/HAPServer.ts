@@ -140,7 +140,7 @@ export const enum HAPHTTPCode {
   // client error
   BAD_REQUEST = 400, // e.g. malformed request
   NOT_FOUND = 404,
-  UNPROCESSABLE_ENTITY = 422, // for well-formed requests tha contain invalid http parameters
+  UNPROCESSABLE_ENTITY = 422, // for well-formed requests tha contain invalid http parameters (semantics are wrong and not syntax)
 
   // server error
   INTERNAL_SERVER_ERROR = 500,
@@ -175,8 +175,8 @@ export type RemovePairingCallback = PairingsCallback;
 export type ListPairingsCallback = PairingsCallback<PairingInformation[]>;
 export type PairCallback = VoidCallback;
 export type AccessoriesCallback = (error: HAPHttpError | undefined, result?: AccessoriesResponse) => void;
-export type ReadCharacteristicsCallback = (response: CharacteristicsReadResponse) => void;
-export type WriteCharacteristicsCallback = (response: CharacteristicsWriteResponse) => void;
+export type ReadCharacteristicsCallback = (error: HAPHttpError | undefined, response?: CharacteristicsReadResponse) => void;
+export type WriteCharacteristicsCallback = (error: HAPHttpError | undefined, response?: CharacteristicsWriteResponse) => void;
 export type ResourceRequestCallback = (error: HAPHttpError | undefined, resource?: Buffer) => void;
 
 export const enum HAPServerEventTypes {
@@ -799,7 +799,13 @@ export class HAPServer extends EventEmitter {
         includeEvent: consideredTrue(searchParams.get("ev")),
       };
 
-      this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, connection, readRequest, once((readResponse: CharacteristicsReadResponse) => {
+      this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, connection, readRequest, once((error: HAPHttpError | undefined, readResponse: CharacteristicsReadResponse) => {
+        if (error) {
+          response.writeHead(error.httpCode, {"Content-Type": "application/hap+json"});
+          response.end(JSON.stringify({ status: error.status }));
+          return;
+        }
+
         const characteristics = readResponse.characteristics;
 
         let errorOccurred = false; // determine if we send a 207 Multi-Status
@@ -838,7 +844,13 @@ export class HAPServer extends EventEmitter {
 
       const writeRequest = JSON.parse(data.toString("utf8")) as CharacteristicsWriteRequest;
 
-      this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, connection, writeRequest, once((writeResponse: CharacteristicsWriteResponse) => {
+      this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, connection, writeRequest, once((error: HAPHttpError | undefined, writeResponse: CharacteristicsWriteResponse) => {
+        if (error) {
+          response.writeHead(error.httpCode, {"Content-Type": "application/hap+json"});
+          response.end(JSON.stringify({ status: error.status }));
+          return;
+        }
+
         const characteristics = writeResponse.characteristics;
 
         let multiStatus = false;

@@ -55,7 +55,6 @@ import { ButtonEvent } from "./gen/HomeKit-Remote";
 import {
   AccessoriesCallback,
   AddPairingCallback,
-  TLVErrorCode,
   HAPHTTPCode,
   HAPServer,
   HAPServerEventTypes,
@@ -66,6 +65,7 @@ import {
   ReadCharacteristicsCallback,
   RemovePairingCallback,
   ResourceRequestCallback,
+  TLVErrorCode,
   WriteCharacteristicsCallback
 } from './HAPServer';
 import { AccessoryInfo, PermissionTypes } from './model/AccessoryInfo';
@@ -1279,7 +1279,13 @@ export class Accessory extends EventEmitter {
     const characteristics: CharacteristicReadData[] = [];
     const response: CharacteristicsReadResponse = { characteristics: characteristics };
 
-    const missingCharacteristics: Set<EventName> = new Set();
+    const missingCharacteristics: Set<EventName> = new Set(request.ids.map(id => id.aid + "." + id.iid));
+    if (missingCharacteristics.size !== request.ids.length) {
+      // if those sizes differ, we have duplicates and can't properly handle that
+      callback({ httpCode: HAPHTTPCode.UNPROCESSABLE_ENTITY, status: HAPStatus.INVALID_VALUE_IN_REQUEST });
+      return;
+    }
+
     let timeout: Timeout | undefined = setTimeout(() => {
       for (const id of missingCharacteristics) {
         const split = id.split(".");
@@ -1319,7 +1325,7 @@ export class Accessory extends EventEmitter {
         }
         missingCharacteristics.clear();
 
-        callback(response);
+        callback(undefined, response);
       }, 7000);
       timeout.unref();
     }, 3000);
@@ -1327,8 +1333,6 @@ export class Accessory extends EventEmitter {
 
     for (const id of request.ids) {
       const name = id.aid + "." + id.iid;
-      missingCharacteristics.add(name);
-
       this.handleCharacteristicRead(connection, id, request).then(value => {
         return {
           aid: id.aid,
@@ -1336,7 +1340,7 @@ export class Accessory extends EventEmitter {
           ...value,
         };
       }, reason => { // this error block is only called if hap-nodejs itself messed up
-        console.error(`[${this.displayName}] Read request for characteristic ${id} encountered an error: ${reason.stack}`)
+        console.error(`[${this.displayName}] Read request for characteristic ${name} encountered an error: ${reason.stack}`)
 
         return {
           aid: id.aid,
@@ -1356,7 +1360,7 @@ export class Accessory extends EventEmitter {
             clearTimeout(timeout);
             timeout = undefined;
           }
-          callback(response);
+          callback(undefined, response);
         }
       });
     }
@@ -1441,7 +1445,16 @@ export class Accessory extends EventEmitter {
     const characteristics: CharacteristicWriteData[] = [];
     const response: CharacteristicsWriteResponse = { characteristics: characteristics };
 
-    const missingCharacteristics: Set<EventName> = new Set();
+    const missingCharacteristics: Set<EventName> = new Set(
+      writeRequest.characteristics
+        .map(characteristic => characteristic.aid + "." + characteristic.iid)
+    );
+    if (missingCharacteristics.size !== writeRequest.characteristics.length) {
+      // if those sizes differ, we have duplicates and can't properly handle that
+      callback({ httpCode: HAPHTTPCode.UNPROCESSABLE_ENTITY, status: HAPStatus.INVALID_VALUE_IN_REQUEST });
+      return;
+    }
+
     let timeout: Timeout | undefined = setTimeout(() => {
       for (const id of missingCharacteristics) {
         const split = id.split(".");
@@ -1481,16 +1494,14 @@ export class Accessory extends EventEmitter {
         }
         missingCharacteristics.clear();
 
-        callback(response);
+        callback(undefined, response);
       }, 7000);
       timeout.unref();
     }, 3000);
     timeout.unref();
 
     for (const data of writeRequest.characteristics) {
-      const id = data.aid + "." + data.iid;
-      missingCharacteristics.add(id);
-
+      const name = data.aid + "." + data.iid;
       this.handleCharacteristicWrite(connection, data, writeState).then(value => {
         return {
           aid: data.aid,
@@ -1498,7 +1509,7 @@ export class Accessory extends EventEmitter {
           ...value,
         };
       }, reason => { // this error block is only called if hap-nodejs itself messed up
-        console.error(`[${this.displayName}] Write request for characteristic ${id} encountered an error: ${reason.stack}`)
+        console.error(`[${this.displayName}] Write request for characteristic ${name} encountered an error: ${reason.stack}`)
 
         return {
           aid: data.aid,
@@ -1510,7 +1521,7 @@ export class Accessory extends EventEmitter {
           return; // if timeout is undefined, response was already sent out
         }
 
-        missingCharacteristics.delete(id);
+        missingCharacteristics.delete(name);
         characteristics.push(value);
 
         if (missingCharacteristics.size === 0) { // if everything returned send the response
@@ -1518,7 +1529,7 @@ export class Accessory extends EventEmitter {
             clearTimeout(timeout);
             timeout = undefined;
           }
-          callback(response);
+          callback(undefined, response);
         }
       })
     }
