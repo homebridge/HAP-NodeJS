@@ -341,6 +341,8 @@ export class Accessory extends EventEmitter {
   _server?: HAPServer;
   _setupURI?: string;
 
+  private configurationChangeDebounceTimeout?: Timeout;
+
   constructor(public displayName: string, public UUID: string) {
     super();
     assert(displayName, "Accessories must be created with a non-empty displayName.");
@@ -411,40 +413,13 @@ export class Accessory extends EventEmitter {
     }
 
     if (!this.bridged) {
-      this._updateConfiguration();
+      this.enqueueConfigurationUpdate();
     } else {
       this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, { service: service });
     }
 
-    service.on(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, () => {
-      if (!service.isPrimaryService && service === this.primaryService) {
-        // service changed form primary to non primary service
-        this.primaryService = undefined;
-      } else if (service.isPrimaryService && service !== this.primaryService) {
-        // service changed from non primary to primary service
-        if (this.primaryService !== undefined) {
-          this.primaryService.isPrimaryService = false;
-        }
-
-        this.primaryService = service;
-      }
-
-      if (!this.bridged) {
-        this._updateConfiguration();
-      } else {
-        this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, { service: service });
-      }
-    });
-
-    // listen for changes in characteristics and bubble them up
-    service.on(ServiceEventTypes.CHARACTERISTIC_CHANGE, (change: ServiceCharacteristicChange) => {
-      this.emit(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, { ...change, service: service });
-
-      // if we're not bridged, when we'll want to process this event through our HAPServer
-      if (!this.bridged) {
-        this.handleCharacteristicChange({ ...change, service: service, accessory: this });
-      }
-    });
+    service.on(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, this.handleServiceConfigurationChangeEvent.bind(this, service));
+    service.on(ServiceEventTypes.CHARACTERISTIC_CHANGE, this.handleCharacteristicChangeEvent.bind(this, service));
 
     return service;
   }
@@ -456,7 +431,7 @@ export class Accessory extends EventEmitter {
     service.setPrimaryService();
   };
 
-  removeService = (service: Service) => {
+  public removeService(service: Service): void {
     const index = this.services.indexOf(service);
 
     if (index >= 0) {
@@ -468,13 +443,9 @@ export class Accessory extends EventEmitter {
       this.removeLinkedService(service); // remove it from linked service entries on the local accessory
 
       if (!this.bridged) {
-        this._updateConfiguration();
+        this.enqueueConfigurationUpdate();
       } else {
         this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, { service: service });
-
-        for (const accessory of this.bridgedAccessories) {
-          accessory.removeLinkedService(service);
-        }
       }
 
       service.removeAllListeners();
@@ -531,29 +502,24 @@ export class Accessory extends EventEmitter {
   }
 
   addBridgedAccessory = (accessory: Accessory, deferUpdate: boolean = false) => {
-    if (accessory._isBridge)
+    if (accessory._isBridge) {
       throw new Error("Cannot Bridge another Bridge!");
-
-    // check for UUID conflict
-    for (let index in this.bridgedAccessories) {
-      const existing = this.bridgedAccessories[index];
-      if (existing.UUID === accessory.UUID)
-        throw new Error("Cannot add a bridged Accessory with the same UUID as another bridged Accessory: " + existing.UUID);
     }
 
-    // A bridge too far...
+    // check for UUID conflict
+    for (const accessory of this.bridgedAccessories) {
+      if (accessory.UUID === accessory.UUID) {
+        throw new Error("Cannot add a bridged Accessory with the same UUID as another bridged Accessory: " + accessory.UUID);
+      }
+    }
+
     if (this.bridgedAccessories.length >= MAX_ACCESSORIES) {
       throw new Error("Cannot Bridge more than " + MAX_ACCESSORIES + " Accessories");
     }
 
     // listen for changes in ANY characteristics of ANY services on this Accessory
-    accessory.on(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, (change: AccessoryCharacteristicChange) => {
-      this.handleCharacteristicChange({ ...change, accessory: accessory });
-    });
-
-    accessory.on(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, () => {
-      this._updateConfiguration();
-    });
+    accessory.on(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, change => this.handleCharacteristicChangeEvent(change.service, change));
+    accessory.on(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, this.enqueueConfigurationUpdate.bind(this));
 
     accessory.bridged = true;
     accessory.bridge = this;
@@ -563,7 +529,7 @@ export class Accessory extends EventEmitter {
     this.controllerStorage.linkAccessory(accessory); // init controllers of bridged accessory
 
     if(!deferUpdate) {
-      this._updateConfiguration();
+      this.enqueueConfigurationUpdate();
     }
 
     return accessory;
@@ -575,7 +541,7 @@ export class Accessory extends EventEmitter {
       this.addBridgedAccessory(accessory, true);
     }
 
-    this._updateConfiguration();
+    this.enqueueConfigurationUpdate();
   }
 
   removeBridgedAccessory = (accessory: Accessory, deferUpdate: boolean) => {
@@ -599,7 +565,7 @@ export class Accessory extends EventEmitter {
     accessory.removeAllListeners(); // TODO remove all listeners from services and characteristics as well
 
     if(!deferUpdate) {
-      this._updateConfiguration();
+      this.enqueueConfigurationUpdate();
     }
   }
 
@@ -609,14 +575,14 @@ export class Accessory extends EventEmitter {
       this.removeBridgedAccessory(accessory, true);
     }
 
-    this._updateConfiguration();
+    this.enqueueConfigurationUpdate();
   }
 
   removeAllBridgedAccessories = () => {
     for (let i = this.bridgedAccessories.length - 1; i >= 0; i --) {
       this.removeBridgedAccessory(this.bridgedAccessories[i], true);
     }
-    this._updateConfiguration();
+    this.enqueueConfigurationUpdate();
   }
 
   private getCharacteristicByIID(iid: number): Characteristic | undefined {
@@ -823,7 +789,7 @@ export class Accessory extends EventEmitter {
     });
   }
 
-  setupURI = () => {
+  setupURI(): string {
     if (this._setupURI) {
       return this._setupURI;
     }
@@ -902,7 +868,7 @@ export class Accessory extends EventEmitter {
    * Assigns aid/iid to ourselves, any Accessories we are bridging, and all associated Services+Characteristics. Uses
    * the provided identifierCache to keep IDs stable.
    */
-  _assignIDs = (identifierCache: IdentifierCache) => {
+  _assignIDs(identifierCache: IdentifierCache): void {
 
     // if we are responsible for our own identifierCache, start the expiration process
     // also check weather we want to have an expiration process
@@ -1106,18 +1072,8 @@ export class Accessory extends EventEmitter {
     // get our accessory information in HAP format and determine if our configuration (that is, our
     // Accessories/Services/Characteristics) has changed since the last time we were published. make
     // sure to omit actual values since these are not part of the "configuration".
-    const config = this.internalHAPRepresentation()
-
-    // now convert it into a hash code and check it against the last one we made, if we have one
-    const shasum = crypto.createHash('sha1');
-    shasum.update(JSON.stringify(config));
-    const configHash = shasum.digest('hex');
-
-    if (configHash !== this._accessoryInfo.configHash) {
-
-      // our configuration has changed! we'll need to bump our config version number
-      this._accessoryInfo.updateConfigHash(configHash);
-    }
+    const config = this.internalHAPRepresentation(); // TODO ensure this stuff is ordered
+    this._accessoryInfo.checkForCurrentConfigurationNumberIncrement(config, true);
 
     this.validateAccessory(true);
 
@@ -1189,27 +1145,27 @@ export class Accessory extends EventEmitter {
     }
   }
 
-  private _updateConfiguration(): void {
-    if (this._advertiser && this._advertiser.isServiceCreated()) {
-      // get our accessory information in HAP format and determine if our configuration (that is, our
-      // Accessories/Services/Characteristics) has changed since the last time we were published. make
-      // sure to omit actual values since these are not part of the "configuration".
-      const config = this.internalHAPRepresentation()
-
-      // now convert it into a hash code and check it against the last one we made, if we have one
-      const shasum = crypto.createHash('sha1');
-      shasum.update(JSON.stringify(config));
-      const configHash = shasum.digest('hex');
-
-      if (this._accessoryInfo && configHash !== this._accessoryInfo.configHash) {
-
-        // our configuration has changed! we'll need to bump our config version number
-        this._accessoryInfo.updateConfigHash(configHash);
-      }
-
-      // update our advertisement so HomeKit on iOS can pickup new accessory
-      this._advertiser.updateAdvertisement();
+  private enqueueConfigurationUpdate(): void {
+    if (this.configurationChangeDebounceTimeout) {
+      return; // already enqueued
     }
+
+    this.configurationChangeDebounceTimeout = setTimeout(() => {
+      this.configurationChangeDebounceTimeout = undefined;
+
+      if (this._advertiser && this._advertiser) {
+        // get our accessory information in HAP format and determine if our configuration (that is, our
+        // Accessories/Services/Characteristics) has changed since the last time we were published. make
+        // sure to omit actual values since these are not part of the "configuration".
+        const config = this.internalHAPRepresentation(); // TODO ensure this stuff is ordered
+        if (this._accessoryInfo?.checkForCurrentConfigurationNumberIncrement(config)) {
+          this._advertiser.updateAdvertisement();
+        }
+      }
+    }, 1000);
+    // 1d is fine, HomeKit is built that with configuration updates no iid or aid conflicts occur.
+    // Thus the only thing happening when the txt update arrives late is already removed accessories/services
+    // not responding or new accessories/services not yet shown
   }
 
   private onListening(port: number, hostname: string): void {
@@ -1719,36 +1675,45 @@ export class Accessory extends EventEmitter {
     connection.clearRegisteredEvents();
   }
 
-  private handleCharacteristicChange(change: AccessoryCharacteristicChange & { accessory: Accessory }): void {
-    if (!this._server) {
-      return; // we're not running a HAPServer, so there's no one to notify about this event
+  private handleServiceConfigurationChangeEvent(service: Service): void {
+    if (!service.isPrimaryService && service === this.primaryService) {
+      // service changed form primary to non primary service
+      this.primaryService = undefined;
+    } else if (service.isPrimaryService && service !== this.primaryService) {
+      // service changed from non primary to primary service
+      if (this.primaryService !== undefined) {
+        this.primaryService.isPrimaryService = false;
+      }
+
+      this.primaryService = service;
     }
 
-    const uuid = change.characteristic.UUID;
-    const immediateDelivery = uuid === ButtonEvent.UUID || uuid === ProgrammableSwitchEvent.UUID
-      || uuid === MotionDetected.UUID || uuid === ContactSensorState.UUID;
+    if (this.bridged) {
+      this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, { service: service });
+    } else {
+      this.enqueueConfigurationUpdate();
+    }
+  }
 
-    this._server.sendEventNotifications(change.accessory.aid!, change.characteristic.iid!, change.newValue, change.originator, immediateDelivery);
+  private handleCharacteristicChangeEvent(service: Service, change: ServiceCharacteristicChange): void {
+    if (this.bridged) { // forward this to our main accessory
+      this.emit(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, { ...change, service: service });
+    } else {
+      if (!this._server) {
+        return; // we're not running a HAPServer, so there's no one to notify about this event
+      }
+
+      const uuid = change.characteristic.UUID;
+      const immediateDelivery = uuid === ButtonEvent.UUID || uuid === ProgrammableSwitchEvent.UUID
+        || uuid === MotionDetected.UUID || uuid === ContactSensorState.UUID;
+
+      this._server.sendEventNotifications(this.aid!, change.characteristic.iid!, change.newValue, change.originator, immediateDelivery);
+    }
   }
 
   _setupService = (service: Service) => {
-    service.on(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, () => {
-      if (!this.bridged) {
-        this._updateConfiguration();
-      } else {
-        this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, { service: service });
-      }
-    });
-
-    // listen for changes in characteristics and bubble them up
-    service.on(ServiceEventTypes.CHARACTERISTIC_CHANGE, (change: ServiceCharacteristicChange) => {
-      this.emit(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, clone(change, {service }));
-
-      // if we're not bridged, when we'll want to process this event through our HAPServer
-      if (!this.bridged)
-        this.handleCharacteristicChange(clone(change, {accessory:this, service }));
-
-    });
+    service.on(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, this.handleServiceConfigurationChangeEvent.bind(this, service));
+    service.on(ServiceEventTypes.CHARACTERISTIC_CHANGE, this.handleCharacteristicChangeEvent.bind(this, service));
   }
 
   _sideloadServices = (targetServices: Service[]) => {

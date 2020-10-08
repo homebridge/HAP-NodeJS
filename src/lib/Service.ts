@@ -198,6 +198,8 @@ export class Service extends EventEmitter {
     return this.UUID + (this.subtype || "");
   }
 
+  public addCharacteristic(input: Characteristic): Characteristic
+  public addCharacteristic(input: { new (...args: any[]): Characteristic }, ...constructorArgs: any[]): Characteristic
   public addCharacteristic(input: Characteristic | {new (...args: any[]): Characteristic}, ...constructorArgs: any[]): Characteristic {
     // characteristic might be a constructor like `Characteristic.Brightness` instead of an instance of Characteristic. Coerce if necessary.
 

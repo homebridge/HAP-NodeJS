@@ -83,10 +83,6 @@ export class Advertiser extends EventEmitter {
     return this.advertisedService!.advertise();
   }
 
-  public isServiceCreated(): boolean {
-    return !!this.advertisedService;
-  }
-
   public updateAdvertisement(): void {
     this.advertisedService!.updateTxt(this.createTxt());
   }
