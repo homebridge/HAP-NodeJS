@@ -951,10 +951,11 @@ export class Accessory extends EventEmitter {
 
     const accessories: AccessoryJsonObject[] = [accessory];
 
-    if (this.bridge) {
-      for (const accessory of this.bridgedAccessories) {
-        accessories.push((await accessory.toHAP(connection))[0]);
-      }
+    if (!this.bridged) {
+      accessories.push(... await Promise.all(
+        this.bridgedAccessories
+          .map(accessory => accessory.toHAP(connection).then(value => value[0]))
+      ));
     }
 
     return accessories;
@@ -974,7 +975,7 @@ export class Accessory extends EventEmitter {
 
     const accessories: AccessoryJsonObject[] = [accessory];
 
-    if (this.bridge) {
+    if (!this.bridged) {
       for (const accessory of this.bridgedAccessories) {
         accessories.push(accessory.internalHAPRepresentation()[0]);
       }
