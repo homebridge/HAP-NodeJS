@@ -1151,6 +1151,11 @@ export class Characteristic extends EventEmitter {
           throw new Error("characteristic value expected string and received " + (typeof value));
         }
 
+        if (value.length <= 1 && (this.UUID === Characteristic.Model.UUID || this.UUID === Characteristic.SerialNumber.UUID)) {
+          console.error(new Error(`[${this.displayName}] characteristic must have a length of more than 1 character otherwise HomeKit will reject this accessory. Ignoring it.`).stack);
+          return this.value; // just return the current value
+        }
+
         const maxLength = this.props.maxLen != null? this.props.maxLen: 64; // default is 64 (max is 256 which is set in setProps)
         if (value.length > maxLength) {
           console.warn(`[${this.displayName}] characteristic was supplied illegal value: string '${value}' exceeded max length of ${maxLength}. Supplying illegal values will throw errors in the future!`);
