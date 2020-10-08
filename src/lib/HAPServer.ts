@@ -17,7 +17,7 @@ import {
   ResourceRequest
 } from "../internal-types";
 import { CharacteristicValue, Nullable, VoidCallback } from '../types';
-import { PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
+import { AccessoryInfo, PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
 import {
   EventedHTTPServer,
   EventedHTTPServerEvent,
@@ -277,12 +277,13 @@ export declare interface HAPServer {
  */
 export class HAPServer extends EventEmitter {
 
+  private accessoryInfo: AccessoryInfo;
   private httpServer: EventedHTTPServer;
   private unsuccessfulPairAttempts: number = 0; // after 100 unsuccessful attempts the server won't accept any further attempts. Will currently be reset on a reboot
 
   allowInsecureRequest: boolean;
 
-  constructor(public accessoryInfo: any) {
+  constructor(accessoryInfo: AccessoryInfo) {
     super();
     this.accessoryInfo = accessoryInfo;
     this.allowInsecureRequest = false;
@@ -314,7 +315,11 @@ export class HAPServer extends EventEmitter {
    *   Namely for the {@link ButtonEvent} and the {@link ProgrammableSwitchEvent} characteristics.
    */
   public sendEventNotifications(aid: number, iid: number, value: Nullable<CharacteristicValue>, originator?: HAPConnection, immediateDelivery?: boolean): void {
-    this.httpServer.broadcastEvent(aid, iid, value, originator, immediateDelivery);
+    try {
+      this.httpServer.broadcastEvent(aid, iid, value, originator, immediateDelivery);
+    } catch (error) {
+      console.warn("[" + this.accessoryInfo.username + "] Error when sending event notifications: " + error.message);
+    }
   }
 
   private onListening(port: number, hostname: string): void {
