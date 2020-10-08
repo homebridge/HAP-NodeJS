@@ -1,12 +1,6 @@
-import { CharacteristicProps } from './lib/Characteristic';
-
 export type Nullable<T> = T | null;
 
 export type WithUUID<T> = T & { UUID: string };
-
-export interface ToHAPOptions {
-  omitValues: boolean;
-}
 
 /**
  * UUID string uniquely identifying every HAP connection.
@@ -31,27 +25,7 @@ export type Callback = (...args: any[]) => void;
 export type NodeCallback<T> = (err: Nullable<Error> | undefined, data?: T) => void;
 export type VoidCallback = (err?: Nullable<Error>) => void;
 export type PrimitiveTypes = string | number | boolean;
-
-type HAPProps = Pick<CharacteristicProps, 'perms' | 'format' | 'description' | 'unit' | 'maxValue' | 'minValue' | 'minStep' | 'maxLen'>
-  & {
-  "valid-values"?: number[],
-  "valid-values-range"?: [number, number],
-}
-export type HapCharacteristic = HAPProps & {
-  iid: number;
-  type: string;
-  value: string | number | {} | null;
-}
 export type CharacteristicValue = PrimitiveTypes | PrimitiveTypes[] | { [key: string]: PrimitiveTypes };
-export type HapService = {
-  iid: number;
-  type: string;
-
-  characteristics: HapCharacteristic[];
-  primary: boolean;
-  hidden: boolean;
-  linked: number[];
-}
 /**
  * @deprecated replaced by {@link AudioStreamingCodec}
  */

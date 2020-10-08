@@ -1,6 +1,65 @@
 import { Formats, Perms, Units } from "./lib/Characteristic";
-import { Status } from "./lib/HAPServer";
+import { HAPStatus } from "./lib/HAPServer";
 import { CharacteristicValue, Nullable } from "./types";
+
+/*
+type HAPProps = Pick<CharacteristicProps, 'perms' | 'format' | 'description' | 'unit' | 'maxValue' | 'minValue' | 'minStep' | 'maxLen'>
+  & {
+  "valid-values"?: number[],
+  "valid-values-range"?: [number, number],
+}
+export type HapCharacteristic = HAPProps & {
+  iid: number;
+  type: string;
+  value: string | number | {} | null;
+}
+export type HapService = {
+  iid: number;
+  type: string;
+
+  characteristics: HapCharacteristic[];
+  primary: boolean;
+  hidden: boolean;
+  linked: number[];
+}
+ */
+export interface CharacteristicJsonObject {
+  type: string, // uuid or short uuid
+  iid: number,
+  value?: Nullable<CharacteristicValue>, // undefined for non readable characteristics
+
+  perms: Perms[],
+  format: Formats | string,
+
+  description?: string,
+
+  unit?: Units | string,
+  minValue?: number,
+  maxValue?: number,
+  minStep?: number,
+  maxLen?: number,
+  maxDataLen?: number,
+  "valid-values"?: number[],
+  "valid-values-range"?: [number, number],
+}
+
+export interface ServiceJsonObject {
+  type: string,
+  iid: number,
+  characteristics: CharacteristicJsonObject[], // must not be empty, max 100 characteristics
+  hidden?: boolean,
+  primary?: boolean,
+  linked?: number[], // iid array
+}
+
+export interface AccessoryJsonObject {
+  aid: number,
+  services: ServiceJsonObject[], // must not be empty, max 100 services
+}
+
+export interface AccessoriesResponse {
+  accessories: AccessoryJsonObject[],
+}
 
 export interface CharacteristicId {
   aid: number,
@@ -18,14 +77,14 @@ export interface CharacteristicsReadRequest {
 export interface PartialCharacteristicReadDataValue {
   value: CharacteristicValue | null,
 
-  status?: Status.SUCCESS,
+  status?: HAPStatus.SUCCESS,
 
   // type
   type?: string, // characteristics uuid
 
   // metadata
-  format?: Formats,
-  unit?: Units,
+  format?: string,
+  unit?: string,
   minValue?: number,
   maxValue?: number,
   minStep?: number,
@@ -39,7 +98,7 @@ export interface PartialCharacteristicReadDataValue {
 }
 
 export interface PartialCharacteristicReadError {
-  status: Status,
+  status: HAPStatus,
 }
 
 export interface CharacteristicReadDataValue extends PartialCharacteristicReadDataValue {
@@ -83,11 +142,11 @@ export interface PartialCharacteristicWriteDataValue {
   value?: CharacteristicValue | null,
   ev?: boolean, // event
 
-  status?: Status.SUCCESS,
+  status?: HAPStatus.SUCCESS,
 }
 
 export interface PartialCharacteristicWriteError {
-  status: Status,
+  status: HAPStatus,
 
   value?: undefined, // defined to make things easier
 }

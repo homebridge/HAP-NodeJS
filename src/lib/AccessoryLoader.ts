@@ -134,11 +134,7 @@ export function parseServiceJSON(json: any) {
 export function parseCharacteristicJSON(json: any) {
   const characteristicUUID = json.cType;
 
-  const characteristic = new Characteristic(json.manfDescription || characteristicUUID, characteristicUUID);
-
-  // copy simple properties
-  characteristic.value = json.initialValue;
-  characteristic.setProps({
+  const characteristic = new Characteristic(json.manfDescription || characteristicUUID, characteristicUUID, {
     format: json.format, // example: "int"
     minValue: json.designedMinValue,
     maxValue: json.designedMaxValue,
@@ -146,6 +142,9 @@ export function parseCharacteristicJSON(json: any) {
     unit: json.unit,
     perms: json.perms // example: ["pw","pr","ev"]
   });
+
+  // copy simple properties
+  characteristic.value = json.initialValue;
 
   // monkey-patch legacy "locals" property which used to exist.
   // @ts-ignore

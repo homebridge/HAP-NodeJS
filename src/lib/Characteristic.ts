@@ -1,9 +1,10 @@
+import assert from "assert";
 import createDebug from "debug";
-import Decimal from 'decimal.js';
 import { EventEmitter } from "events";
-import { CharacteristicValue, HapCharacteristic, Nullable, ToHAPOptions, VoidCallback, } from '../types';
+import { CharacteristicJsonObject } from "../internal-types";
+import { CharacteristicValue, Nullable, VoidCallback, } from '../types';
 import * as HomeKitTypes from './gen';
-import { Status } from "./HAPServer";
+import { HAPStatus } from "./HAPServer";
 import { IdentifierCache } from './model/IdentifierCache';
 import { clone } from "./util/clone";
 import { HAPConnection } from "./util/eventedhttp";
@@ -14,28 +15,79 @@ const debug = createDebug("HAP-NodeJS:Characteristic");
 
 export const enum Formats {
   BOOL = 'bool',
-  INT = 'int',
+  /**
+   * Signed 32-bit integer
+   */
+  INT = 'int', // signed 32-bit int
+  /**
+   * Signed 64-bit floating point
+   */
   FLOAT = 'float',
+  /**
+   * String encoded in utf8
+   */
   STRING = 'string',
+  /**
+   * Unsigned 8-bit integer.
+   */
   UINT8 = 'uint8',
+  /**
+   * Unsigned 16-bit integer.
+   */
   UINT16 = 'uint16',
+  /**
+   * Unsigned 32-bit integer.
+   */
   UINT32 = 'uint32',
+  /**
+   * Unsigned 64-bit integer.
+   */
   UINT64 = 'uint64',
+  /**
+   * Data is base64 encoded string.
+   */
   DATA = 'data',
+  /**
+   * Base64 encoded tlv8 string.
+   */
   TLV8 = 'tlv8',
-  ARRAY = 'array', //Not in HAP Spec
-  DICTIONARY = 'dict', //Not in HAP Spec
+  /**
+   * @deprecated Not contained in the HAP spec
+   */
+  ARRAY = 'array',
+  /**
+   * @deprecated Not contained in the HAP spec
+   */
+  DICTIONARY = 'dict',
+}
+
+function isNumericFormat(format: Formats | string): boolean {
+  switch (format) {
+    case Formats.INT:
+    case Formats.FLOAT:
+    case Formats.UINT8:
+    case Formats.UINT16:
+    case Formats.UINT32:
+    case Formats.UINT64:
+      return true;
+    default:
+      return false;
+  }
 }
 
 export const enum Units {
-  CELSIUS = 'celsius', // celsius is the only temperature unit, conversion to fahrenheit is done on the iOS device
+  /**
+   * Celsius is the only temperature unit in the HomeKit Accessory Protocol.
+   * Unit conversion is always done on the client side e.g. on the iPhone in the Home App depending on
+   * the configured unit on the device itself.
+   */
+  CELSIUS = 'celsius',
   PERCENTAGE = 'percentage',
   ARC_DEGREE = 'arcdegrees',
   LUX = 'lux',
   SECONDS = 'seconds',
 }
 
-// Known HomeKit permission types
 export const enum Perms {
   // noinspection JSUnusedGlobalSymbols
   /**
@@ -48,7 +100,7 @@ export const enum Perms {
   WRITE = 'pw',
   PAIRED_READ = 'pr',
   PAIRED_WRITE = 'pw',
-  NOTIFY = 'ev', // both terms are used in hap spec
+  NOTIFY = 'ev',
   EVENTS = 'ev',
   ADDITIONAL_AUTHORIZATION = 'aa',
   TIMED_WRITE = 'tw',
@@ -57,16 +109,28 @@ export const enum Perms {
 }
 
 export interface CharacteristicProps {
-  format: Formats;
+  format: Formats | string;
   perms: Perms[];
-  unit?: Units;
+  unit?: Units | string;
   description?: string;
   minValue?: number;
   maxValue?: number;
   minStep?: number;
+  /**
+   * Maximum number of characters when format is {@link Formats.STRING}.
+   * Default is 64 characters. Maximum allowed is 256 characters.
+   */
   maxLen?: number;
+  /**
+   * Maximum number of characters when format is {@link Formats.DATA}.
+   * Default is 2097152 characters.
+   */
   maxDataLen?: number;
   validValues?: number[];
+  /**
+   * Two element array where the first value specifies the lowest valid value and
+   * the second element specifies the highest valid value.
+   */
   validValueRanges?: [number, number];
   adminOnlyAccess?: Access[];
 }
@@ -107,13 +171,23 @@ export const enum CharacteristicEventTypes {
    * HAP-NodeJS will complain about slow running set handlers after 3 seconds and terminate the request after 10 seconds.
    */
   SET = "set",
+  /**
+   * Emitted after a new value is set for the characteristic.
+   * The new value can be set via a request by a HomeKit controller or via an API call.
+   */
   CHANGE = "change",
+  /**
+   * @internal
+   */
   SUBSCRIBE = "subscribe",
+  /**
+   * @internal
+   */
   UNSUBSCRIBE = "unsubscribe",
 }
 
-export type CharacteristicGetCallback = (status?: Status | null | Error, value?: Nullable<CharacteristicValue>) => void;
-export type CharacteristicSetCallback = (error?: Status | null | Error, writeResponse?: Nullable<CharacteristicValue>) => void;
+export type CharacteristicGetCallback = (status?: HAPStatus | null | Error, value?: Nullable<CharacteristicValue>) => void;
+export type CharacteristicSetCallback = (error?: HAPStatus | null | Error, writeResponse?: Nullable<CharacteristicValue>) => void;
 
 export type AdditionalAuthorizationHandler = (additionalAuthorizationData: string | undefined) => boolean;
 
@@ -122,13 +196,34 @@ export declare interface Characteristic {
   on(event: "get", listener: (callback: CharacteristicGetCallback, context: any, connection?: HAPConnection) => void): this;
   on(event: "set", listener: (value: CharacteristicValue, callback: CharacteristicSetCallback, context: any, connection?: HAPConnection) => void): this
   on(event: "change", listener: (change: CharacteristicChange) => void): this;
+  /**
+   * @internal
+   */
   on(event: "subscribe", listener: VoidCallback): this;
+  /**
+   * @internal
+   */
   on(event: "unsubscribe", listener: VoidCallback): this;
 
+  /**
+   * @internal
+   */
   emit(event: "get", callback: CharacteristicGetCallback, context: any, connection?: HAPConnection): boolean;
+  /**
+   * @internal
+   */
   emit(event: "set", value: CharacteristicValue, callback: CharacteristicSetCallback, context: any, connection?: HAPConnection): boolean;
+  /**
+   * @internal
+   */
   emit(event: "change", change: CharacteristicChange): boolean;
+  /**
+   * @internal
+   */
   emit(event: "subscribe"): boolean;
+  /**
+   * @internal
+   */
   emit(event: "unsubscribe"): boolean;
 
 }
@@ -136,50 +231,29 @@ export declare interface Characteristic {
 /**
  * Characteristic represents a particular typed variable that can be assigned to a Service. For instance, a
  * "Hue" Characteristic might store a 'float' value of type 'arcdegrees'. You could add the Hue Characteristic
- * to a Service in order to store that value. A particular Characteristic is distinguished from others by its
+ * to a {@link Service} in order to store that value. A particular Characteristic is distinguished from others by its
  * UUID. HomeKit provides a set of known Characteristic UUIDs defined in HomeKit.ts along with a
  * corresponding concrete subclass.
  *
  * You can also define custom Characteristics by providing your own UUID. Custom Characteristics can be added
  * to any native or custom Services, but Siri will likely not be able to work with these.
- *
- * Note that you can get the "value" of a Characteristic by accessing the "value" property directly, but this
- * is really a "cached value". If you want to fetch the latest value, which may involve doing some work, then
- * call getValue().
- *
- * @event 'get' => function(callback(err, newValue), context) { }
- *        Emitted when someone calls getValue() on this Characteristic and desires the latest non-cached
- *        value. If there are any listeners to this event, one of them MUST call the callback in order
- *        for the value to ever be delivered. The `context` object is whatever was passed in by the initiator
- *        of this event (for instance whomever called `getValue`).
- *
- * @event 'set' => function(newValue, callback(err), context) { }
- *        Emitted when someone calls setValue() on this Characteristic with a desired new value. If there
- *        are any listeners to this event, one of them MUST call the callback in order for this.value to
- *        actually be set. The `context` object is whatever was passed in by the initiator of this change
- *        (for instance, whomever called `setValue`).
- *
- * @event 'change' => function({ oldValue, newValue, context }) { }
- *        Emitted after a change in our value has occurred. The new value will also be immediately accessible
- *        in this.value. The event object contains the new value as well as the context object originally
- *        passed in by the initiator of this change (if known).
  */
 export class Characteristic extends EventEmitter {
 
   /**
    * @deprecated Please use the Formats const enum above. Scheduled to be removed in 2021-06.
    */
-  // @ts-ignore
+  // @ts-expect-error
   static Formats = Formats;
   /**
    * @deprecated Please use the Units const enum above. Scheduled to be removed in 2021-06.
    */
-  // @ts-ignore
+  // @ts-expect-error
   static Units = Units;
   /**
    * @deprecated Please use the Perms const enum above. Scheduled to be removed in 2021-06.
    */
-  // @ts-ignore
+  // @ts-expect-error
   static Perms = Perms;
 
   static AccessControlLevel: typeof HomeKitTypes.Generated.AccessControlLevel;
@@ -409,9 +483,11 @@ export class Characteristic extends EventEmitter {
   static WiFiConfigurationControl: typeof HomeKitTypes.Generated.WiFiConfigurationControl;
 
   // NOTICE: when adding/changing properties, remember to possibly adjust the serialize/deserialize functions
+  public displayName: string;
+  public UUID: string;
   iid: Nullable<number> = null;
   value: Nullable<CharacteristicValue> = null;
-  status: Status = Status.SUCCESS;
+  status: HAPStatus = HAPStatus.SUCCESS;
   props: CharacteristicProps;
 
   private subscriptions: number = 0;
@@ -420,51 +496,80 @@ export class Characteristic extends EventEmitter {
    */
   additionalAuthorizationHandler?: AdditionalAuthorizationHandler;
 
-  public constructor(public displayName: string, public UUID: string, props?: CharacteristicProps) {
+  public constructor(displayName: string, UUID: string, props: CharacteristicProps) {
     super();
-    // @ts-ignore
-    this.props = props || {
-      format: null,
-      unit: null,
-      minValue: null,
-      maxValue: null,
-      minStep: null,
-      perms: []
+    this.displayName = displayName;
+    this.UUID = UUID;
+    this.props = { // some weird defaults (with legacy constructor props was optional)
+      format: Formats.INT,
+      perms: [Perms.NOTIFY],
     };
 
-    this.setProps({}); // ensure sanity checks are called
+    this.setProps(props || {}); // ensure sanity checks are called
   }
 
   /**
-   * Copies the given properties to our props member variable,
-   * and returns 'this' for chaining.
+   * Updates the properties of this characteristic.
+   * Properties passed via the parameter will be set. Any parameter set to null will be deleted.
+   * See {@link CharacteristicProps}.
    *
-   * @param 'props' {
-   *   format: <one of Formats>,
-   *   unit: <one of Characteristic.Units>,
-   *   perms: array of [Characteristic.Perms] like [Characteristic.Perms.READ, Characteristic.Perms.WRITE]
-   *   ev: <Event Notifications Enabled Boolean>, (Optional)
-   *   description: <String of description>, (Optional)
-   *   minValue: <minimum value for numeric characteristics>, (Optional)
-   *   maxValue: <maximum value for numeric characteristics>, (Optional)
-   *   minStep: <smallest allowed increment for numeric characteristics>, (Optional)
-   *   maxLen: <max length of string up to 256>, (Optional default: 64)
-   *   maxDataLen: <max length of data>, (Optional default: 2097152)
-   *   valid-values: <array of numbers>, (Optional)
-   *   valid-values-range: <array of two numbers for start and end range> (Optional)
-   * }
+   * @param props - Partial properties object with the desired updates.
    */
   public setProps(props: Partial<CharacteristicProps>): Characteristic {
+    assert(props, "props cannot be undefined when setting props");
     // TODO calling setProps after publish doesn't lead to a increment in the current configuration number
 
-    for (let key in (props || {}))
-      if (Object.prototype.hasOwnProperty.call(props, key)) {
-        // @ts-ignore
-        this.props[key] = props[key];
+    // for every value "null" can be used to reset props, except for required props
+    if (props.format) {
+      this.props.format = props.format;
+    }
+    if (props.perms) {
+      assert(props.perms, "characteristic prop perms cannot be empty array");
+      this.props.perms = props.perms;
+    }
+    if (props.unit !== undefined) {
+      this.props.unit = props.unit != null? props.unit: undefined;
+    }
+    if (props.description !== undefined) {
+      this.props.description = props.description != null? props.description: undefined;
+    }
+    if (props.minValue !== undefined) {
+      this.props.minValue = props.minValue != null? props.minValue: undefined;
+    }
+    if (props.maxValue !== undefined) {
+      this.props.maxValue = props.maxValue != null? props.maxValue: undefined;
+    }
+    if (props.minStep !== undefined) {
+      this.props.minStep = props.minStep != null? props.minStep: undefined;
+    }
+    if (props.maxLen !== undefined) {
+      if (props.maxLen != null) {
+        if (props.maxLen > 256) {
+          console.warn("");
+          props.maxLen = 256;
+        }
+        this.props.maxLen = props.maxLen;
+      } else {
+        this.props.maxLen = undefined;
       }
+    }
+    if (props.maxDataLen !== undefined) {
+      this.props.maxDataLen = props.maxDataLen != null? props.maxDataLen: undefined;
+    }
+    if (props.validValues !== undefined) {
+      assert(props.validValues.length, "characteristic prop validValues cannot be empty array");
+      this.props.validValues = props.validValues != null? props.validValues: undefined;
+    }
+    if (props.validValueRanges !== undefined) {
+      assert(props.validValueRanges.length === 2, "characteristic prop validValueRanges must have a length of 2");
+      this.props.validValueRanges = props.validValueRanges != null? props.validValueRanges: undefined;
+    }
+    if (props.adminOnlyAccess !== undefined) {
+      this.props.adminOnlyAccess = props.adminOnlyAccess != null? props.adminOnlyAccess: undefined;
+    }
 
     if (this.props.minValue != null && this.props.maxValue != null) { // the eqeq instead of eqeqeq is important here
-      if (this.props.minValue > this.props.maxValue) { // preventing DOS attack, see https://github.com/homebridge/HAP-NodeJS/issues/690
+      if (this.props.minValue > this.props.maxValue) { // see https://github.com/homebridge/HAP-NodeJS/issues/690
         this.props.minValue = undefined;
         this.props.maxValue = undefined;
         throw new Error("Error setting CharacteristicsProps for '" + this.displayName + "': 'minValue' cannot be greater or equal the 'maxValue'!");
@@ -474,6 +579,7 @@ export class Characteristic extends EventEmitter {
     return this;
   }
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * This method can be used to setup additional authorization for a characteristic.
    * For one it adds the {@link Perms.ADDITIONAL_AUTHORIZATION} permission to the characteristic
@@ -518,8 +624,37 @@ export class Characteristic extends EventEmitter {
     });
   }
 
-  // TODO document difference to updateValue (also in Service.ts)
+  /**
+   * This updates the value by calling the {@link CharacteristicEventTypes.SET} event handler associated with the characteristic.
+   * This acts the same way as when a HomeKit controller sends a /characteristics request to update the characteristic.
+   * A event notification will be sent to all connected HomeKit controllers which are registered
+   * to receive event notifications for this characteristic.
+   *
+   * This method behaves like a {@link updateValue} call with the addition that the own {@link CharacteristicEventTypes.SET}
+   * event handler is called.
+   *
+   * @param value - The new value.
+   */
+  setValue(value: CharacteristicValue): Characteristic
+  /**
+   * This updates the value by calling the {@link CharacteristicEventTypes.SET} event handler associated with the characteristic.
+   * This acts the same way as when a HomeKit controller sends a /characteristics request to update the characteristic.
+   * A event notification will be sent to all connected HomeKit controllers which are registered
+   * to receive event notifications for this characteristic.
+   *
+   * This method behaves like a {@link updateValue} call with the addition that the own {@link CharacteristicEventTypes.SET}
+   * event handler is called.
+   *
+   * @param value - The new value.
+   * @param callback - Deprecated parameter there to provide backwards compatibility. Called once the
+   *   {@link CharacteristicEventTypes.SET} event handler returns.
+   * @param context - Deprecated parameter there to provide backwards compatibility. Passed to the
+   *   {@link CharacteristicEventTypes.SET} event handler.
+   * @deprecated Parameters callback and context are deprecated.
+   */
+  setValue(value: CharacteristicValue, callback?: CharacteristicSetCallback, context?: any): Characteristic
   setValue(value: CharacteristicValue, callback?: CharacteristicSetCallback, context?: any): Characteristic {
+    value = this.validateUserInput(value)!;
     this.handleSetRequest(value, undefined, context).then(value => {
       if (callback) {
         if (value) { // possible write response
@@ -537,14 +672,27 @@ export class Characteristic extends EventEmitter {
     return this;
   }
 
+  /**
+   * This updates the value of the characteristic. A event notification will be sent to all connected
+   * HomeKit controllers which are registered to receive event notifications for this characteristic.
+   *
+   * @param value - The new value.
+   */
+  updateValue(value: Nullable<CharacteristicValue>): Characteristic;
+  /**
+   * This updates the value of the characteristic. A event notification will be sent to all connected
+   * HomeKit controllers which are registered to receive event notifications for this characteristic.
+   *
+   * @param value - The new value.
+   * @param callback - Deprecated parameter there to provide backwards compatibility. Callback is called instantly.
+   * @param context - Deprecated parameter there to provide backwards compatibility.
+   * @deprecated Parameters callback and context are deprecated.
+   */
+  updateValue(value: Nullable<CharacteristicValue>, callback?: () => void, context?: any): Characteristic;
   updateValue(value: Nullable<CharacteristicValue>, callback?: () => void, context?: any): Characteristic {
-    this.status = Status.SUCCESS;
-    value = this.validateValue(value); //validateValue returns a value that has be coerced into a valid value.
+    this.status = HAPStatus.SUCCESS;
 
-    if (value == undefined) {
-      value = this.getDefaultValue();
-    }
-
+    value = this.validateUserInput(value);
     const oldValue = this.value;
     this.value = value;
 
@@ -566,7 +714,7 @@ export class Characteristic extends EventEmitter {
    */
   handleGetRequest(connection?: HAPConnection, context?: any): Promise<Nullable<CharacteristicValue>> {
     if (!this.props.perms.includes(Perms.PAIRED_READ)) { // check if we are allowed to read from this characteristic
-      return Promise.reject(Status.WRITE_ONLY_CHARACTERISTIC);
+      return Promise.reject(HAPStatus.WRITE_ONLY_CHARACTERISTIC);
     }
 
     if (this.UUID === Characteristic.ProgrammableSwitchEvent.UUID) {
@@ -580,7 +728,7 @@ export class Characteristic extends EventEmitter {
 
     return new Promise((resolve, reject) => {
       try {
-        this.emit(CharacteristicEventTypes.GET, once((status?: Error | Status | null, value?: Nullable<CharacteristicValue>) => {
+        this.emit(CharacteristicEventTypes.GET, once((status?: Error | HAPStatus | null, value?: Nullable<CharacteristicValue>) => {
           if (status) {
             if (typeof status === "number") {
               this.status = status;
@@ -592,13 +740,9 @@ export class Characteristic extends EventEmitter {
             return;
           }
 
-          this.status = Status.SUCCESS;
+          this.status = HAPStatus.SUCCESS;
 
-          value = this.validateValue(value); // validateValue returns a value that has be coerced into a valid value.
-          if (value == null) { // null or undefined
-            value = this.getDefaultValue();
-          }
-
+          value = this.validateUserInput(value);
           const oldValue = this.value;
           this.value = value;
 
@@ -610,8 +754,8 @@ export class Characteristic extends EventEmitter {
         }), context, connection);
       } catch (error) {
         console.warn(`[${this.displayName}] Unhandled error thrown inside read handler for characteristic: ${error.stack}`);
-        this.status = Status.SERVICE_COMMUNICATION_FAILURE;
-        reject(Status.SERVICE_COMMUNICATION_FAILURE);
+        this.status = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+        reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       }
     });
   }
@@ -628,10 +772,16 @@ export class Characteristic extends EventEmitter {
    * @internal
    */
   handleSetRequest(value: CharacteristicValue, connection?: HAPConnection, context?: any): Promise<CharacteristicValue | void> {
-    this.status = Status.SUCCESS;
+    this.status = HAPStatus.SUCCESS;
 
-    // TODO return proper hap status code if incoming value is not valid!
-    value = this.validateValue(value)!; // validateValue returns a value that has be coerced into a valid value.
+    if (!this.validClientSuppliedValue(value)) {
+      return Promise.reject(HAPStatus.INVALID_VALUE_IN_REQUEST);
+    }
+
+    if (isNumericFormat(this.props.format)) {
+      value = this.roundNumericValue(value as number);
+    }
+
     const oldValue = this.value;
 
     if (this.listeners(CharacteristicEventTypes.SET).length === 0) {
@@ -645,7 +795,7 @@ export class Characteristic extends EventEmitter {
 
       return new Promise((resolve, reject) => {
         try {
-          this.emit(CharacteristicEventTypes.SET, value, once((status?: Error | Status | null, writeResponse?: Nullable<CharacteristicValue>) => {
+          this.emit(CharacteristicEventTypes.SET, value, once((status?: Error | HAPStatus | null, writeResponse?: Nullable<CharacteristicValue>) => {
             if (status) {
               if (typeof status === "number") {
                 this.status = status;
@@ -657,7 +807,7 @@ export class Characteristic extends EventEmitter {
               return;
             }
 
-            this.status = Status.SUCCESS;
+            this.status = HAPStatus.SUCCESS;
 
             if (writeResponse != null && this.props.perms.includes(Perms.WRITE_RESPONSE)) {
               // support write response simply by letting the implementor pass the response as second argument to the callback
@@ -675,14 +825,15 @@ export class Characteristic extends EventEmitter {
           }), context, connection);
         } catch (error) {
           console.warn(`[${this.displayName}] Unhandled error thrown inside write handler for characteristic: ${error.stack}`);
-          this.status = Status.SERVICE_COMMUNICATION_FAILURE;
-          reject(Status.SERVICE_COMMUNICATION_FAILURE);
+          this.status = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+          reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
         }
       });
     }
   }
 
   /**
+   * Called once a HomeKit controller subscribes to events of this characteristics.
    * @internal
    */
   subscribe(): void {
@@ -693,6 +844,8 @@ export class Characteristic extends EventEmitter {
   }
 
   /**
+   * Called once a HomeKit controller unsubscribe to events of this characteristics or a HomeKit controller
+   * which was subscribed to this characteristic disconnects.
    * @internal
    */
   unsubscribe(): void {
@@ -705,6 +858,7 @@ export class Characteristic extends EventEmitter {
   }
 
   protected getDefaultValue(): Nullable<CharacteristicValue> {
+    // noinspection JSDeprecatedSymbols
     switch (this.props.format) {
       case Formats.BOOL:
         return false;
@@ -723,222 +877,367 @@ export class Characteristic extends EventEmitter {
     }
   }
 
-  private validateValue(newValue?: Nullable<CharacteristicValue>): Nullable<CharacteristicValue> {
-    let isNumericType = false;
-    let minValue_resolved: number | undefined = 0;
-    let maxValue_resolved: number | undefined = 0;
-    let minStep_resolved = undefined;
-    let stepDecimals = 0;
-    switch (this.props.format) {
-      case Formats.INT:
-        minStep_resolved = 1;
-        minValue_resolved = -2147483648;
-        maxValue_resolved = 2147483647;
-        isNumericType = true;
-        break;
-      case Formats.FLOAT:
-        minStep_resolved = undefined;
-        minValue_resolved = undefined;
-        maxValue_resolved = undefined;
-        isNumericType = true;
-        break;
-      case Formats.UINT8:
-        minStep_resolved = 1;
-        minValue_resolved = 0;
-        maxValue_resolved = 255;
-        isNumericType = true;
-        break;
-      case Formats.UINT16:
-        minStep_resolved = 1;
-        minValue_resolved = 0;
-        maxValue_resolved = 65535;
-        isNumericType = true;
-        break;
-      case Formats.UINT32:
-        minStep_resolved = 1;
-        minValue_resolved = 0;
-        maxValue_resolved = 4294967295;
-        isNumericType = true;
-        break;
-      case Formats.UINT64:
-        minStep_resolved = 1;
-        minValue_resolved = 0;
-        maxValue_resolved = 18446744073709551615;
-        isNumericType = true;
-        break;
-      //All of the following data types return from this switch.
-      case Formats.BOOL:
-        // @ts-ignore
-        return (newValue == true); //We don't need to make sure this returns true or false
-      case Formats.STRING: {
-        let myString = newValue as string || ''; //If null or undefined or anything odd, make it a blank string
-        myString = String(myString);
-        let maxLength = this.props.maxLen;
-        if (maxLength === undefined)
-          maxLength = 64; //Default Max Length is 64.
-        if (myString.length > maxLength)
-          myString = myString.substring(0, maxLength); //Truncate strings that are too long
-        return myString; //We don't need to do any validation after having truncated the string
-      }
-      case Formats.DATA: {
-        let maxLength = this.props.maxDataLen;
-        if (maxLength === undefined)
-          maxLength = 2097152; //Default Max Length is 2097152.
-        //if (newValue.length>maxLength) //I don't know the best way to handle this since it's unknown binary data.
-        //I suspect that it will crash HomeKit for this bridge if the length is too long.
-        return newValue == undefined? null: newValue;
-      }
-      case Formats.TLV8:
-        //Should we parse this to make sure the tlv8 is valid?
-        break;
-      default: //Datatype out of HAP Spec encountered. We'll assume the developer knows what they're doing.
-        return newValue == undefined? null: newValue;
+  private roundNumericValue(value: number): number {
+    if (!this.props.minStep) {
+      return Math.round(value); // round to 0 decimal places
     }
-
-    if (isNumericType) {
-      if (newValue === false) {
-        return 0;
-      }
-      if (newValue === true) {
-        return 1;
-      }
-      if (isNaN(Number.parseInt(newValue as string, 10))) {
-        return this.value!;
-      } //This is not a number so we'll just pass out the last value.
-      if ((this.props.maxValue && !isNaN(this.props.maxValue)) && (this.props.maxValue !== null))
-        maxValue_resolved = this.props.maxValue;
-      if ((this.props.minValue && !isNaN(this.props.minValue)) && (this.props.minValue !== null))
-        minValue_resolved = this.props.minValue;
-      if ((this.props.minStep && !isNaN(this.props.minStep)) && (this.props.minStep !== null))
-        minStep_resolved = this.props.minStep;
-      if (newValue! < minValue_resolved!)
-        newValue = minValue_resolved!; //Fails Minimum Value Test
-      if (newValue! > maxValue_resolved!)
-        newValue = maxValue_resolved!; //Fails Maximum Value Test
-      if (minStep_resolved !== undefined) {
-        //Determine how many decimals we need to display
-        if (Math.floor(minStep_resolved) === minStep_resolved)
-          stepDecimals = 0;
-        else
-          stepDecimals = minStep_resolved.toString().split(".")[1].length || 0;
-        //Use Decimal to determine the lowest value within the step.
-        try {
-          let decimalVal = new Decimal(parseFloat(newValue as string));
-          const decimalDiff = decimalVal.mod(minStep_resolved);
-          decimalVal = decimalVal.minus(decimalDiff);
-          if (stepDecimals === 0) {
-            newValue = parseInt(decimalVal.toFixed(0));
-          } else {
-            newValue = parseFloat(decimalVal.toFixed(stepDecimals)); //Convert it to a fixed decimal
-          }
-        } catch (e) {
-          return this.value!; //If we had an error, return the current value.
-        }
-      }
-      if (this.props.validValues !== undefined)
-        if (!this.props.validValues.includes(newValue as number))
-          return this.value!; //Fails Valid Values Test
-      if (this.props.validValueRanges !== undefined) { //This is another way Apple has to handle min/max
-        if (newValue! < this.props.validValueRanges[0])
-          newValue = this.props.validValueRanges[0];
-        if (newValue! > this.props.validValueRanges[1])
-          newValue = this.props.validValueRanges[1];
-      }
-    }
-    return newValue == undefined? null: newValue;
+    const base = this.props.minValue || 0;
+    const times = ((value - base) / this.props.minStep); // this value could become very large, so this doesn't really support little minStep values
+    return Math.round(times) * this.props.minStep + base;
   }
 
-  _assignID = (identifierCache: IdentifierCache, accessoryName: string, serviceUUID: string, serviceSubtype?: string) => {
+  /**
+   * Checks if the value received from the HAP request is valid.
+   * If returned false the received value is not valid and {@link HAPStatus.INVALID_VALUE_IN_REQUEST}
+   * must be returned.
+   * @param value - Value supplied by the HomeKit controller
+   */
+  private validClientSuppliedValue(value?: Nullable<CharacteristicValue>): boolean {
+    if (value == undefined) {
+      return false;
+    }
+
+    let numericMin: number | undefined = undefined;
+    let numericMax: number | undefined = undefined;
+
+    switch (this.props.format) {
+      case Formats.BOOL:
+        if (!(typeof value === "boolean" || value == 0 || value == 1)) {
+          return false;
+        }
+        break;
+      case Formats.INT: // 32-bit signed int
+        if (typeof value !== "number") {
+          return false;
+        }
+
+        numericMin = maxWithUndefined(this.props.minValue, -2147483648);
+        numericMax = minWithUndefined(this.props.maxValue, 2147483647);
+        break;
+      case Formats.FLOAT:
+        if (typeof value !== "number") {
+          return false;
+        }
+
+        if (this.props.minValue != null) {
+          numericMin = this.props.minValue;
+        }
+        if (this.props.maxValue != null) {
+          numericMax = this.props.maxValue;
+        }
+        break;
+      case Formats.UINT8:
+        if (typeof value !== "number") {
+          return false;
+        }
+
+        numericMin = maxWithUndefined(this.props.minValue, 0);
+        numericMax = minWithUndefined(this.props.maxValue, 255);
+        break;
+      case Formats.UINT16:
+        if (typeof value !== "number") {
+          return false;
+        }
+
+        numericMin = maxWithUndefined(this.props.minValue, 0);
+        numericMax = minWithUndefined(this.props.maxValue, 65535);
+        break;
+      case Formats.UINT32:
+        if (typeof value !== "number") {
+          return false;
+        }
+
+        numericMin = maxWithUndefined(this.props.minValue, 0);
+        numericMax = minWithUndefined(this.props.maxValue, 4294967295);
+        break;
+      case Formats.UINT64:
+        if (typeof value !== "number") {
+          return false;
+        }
+
+        numericMin = maxWithUndefined(this.props.minValue, 0);
+        numericMax = minWithUndefined(this.props.maxValue, 18446744073709551615); // don't get fooled, javascript uses 18446744073709552000 here
+        break;
+      case Formats.STRING: {
+        if (typeof value !== "string") {
+          return false;
+        }
+
+        const maxLength = this.props.maxLen != null? this.props.maxLen: 64; // default is 64; max is 256 which is set in setProps
+        if (value.length > maxLength) {
+          return false;
+        }
+        break;
+      }
+      case Formats.DATA: {
+        if (typeof value !== "string") {
+          return false;
+        }
+        // we don't validate base64 here
+
+        const maxLength = this.props.maxDataLen != null? this.props.maxDataLen: 0x200000; // default is 0x200000
+        if (value.length > maxLength) {
+          return false;
+        }
+        break;
+      }
+      case Formats.TLV8:
+        if (typeof value !== "string") {
+          return false;
+        }
+        break;
+    }
+
+    if (typeof value === "number") {
+      if (numericMin != null && value < numericMin) {
+        return false;
+      }
+      if (numericMax != null && value > numericMax) {
+        return false;
+      }
+
+      if (this.props.validValues && !this.props.validValues.includes(value)) {
+        return false;
+      }
+      if (this.props.validValueRanges && this.props.validValueRanges.length === 2) {
+        if (value < this.props.validValueRanges[0]) {
+          return false;
+        } else if (value > this.props.validValueRanges[1]) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Checks if the value received from the API call is valid.
+   * It adjust the value where it makes sense, prints a warning where values may be rejected with an error
+   * in the future and throws an error which can't be converted to a valid value.
+   *
+   * @param value - The value received from the API call
+   */
+  private validateUserInput(value?: Nullable<CharacteristicValue>): Nullable<CharacteristicValue> {
+    if (value === undefined) {
+      console.warn(`[${this.displayName}] characteristic was supplied illegal value: undefined. Supplying illegal values will throw errors in the future!`);
+      return this.getDefaultValue();
+    } else if (value === null) {
+      return null; // null is allowed
+    }
+
+
+    let numericMin: number | undefined = undefined;
+    let numericMax: number | undefined = undefined;
+
+    switch (this.props.format) {
+      case Formats.BOOL: {
+        const type = typeof value;
+        if (type === "boolean") {
+          return value;
+        } else if (type === "number") {
+          return value === 1;
+        } else if (type === "string") {
+          return value === "1";
+        } else {
+          throw new Error("characteristic value expected boolean and received " + type);
+        }
+      }
+      case Formats.INT: {
+        if (typeof value === "string") {
+          console.warn(`[${this.displayName}] characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
+          value = parseInt(value, 10);
+        } else if (typeof value !== "number") {
+          throw new Error("characteristic value expected number and received " + typeof value);
+        }
+
+        numericMin = maxWithUndefined(this.props.minValue, -2147483648);
+        numericMax = minWithUndefined(this.props.maxValue, 2147483647);
+        break;
+      }
+      case Formats.FLOAT: {
+        if (typeof value === "string") {
+          console.warn(`[${this.displayName}] characteristic was supplied illegal value: string instead of float. Supplying illegal values will throw errors in the future!`);
+          value = parseFloat(value);
+        } else if (typeof value !== "number") {
+          throw new Error("characteristic value expected float and received " + typeof value);
+        }
+
+        if (this.props.minValue != null) {
+          numericMin = this.props.minValue;
+        }
+        if (this.props.maxValue != null) {
+          numericMax = this.props.maxValue;
+        }
+        break;
+      }
+      case Formats.UINT8: {
+        if (typeof value === "string") {
+          console.warn(`[${this.displayName}] characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
+          value = parseInt(value, 10);
+        } else if (typeof value !== "number") {
+          throw new Error("characteristic value expected number and received " + typeof value);
+        }
+
+        numericMin = maxWithUndefined(this.props.minValue, 0);
+        numericMax = minWithUndefined(this.props.maxValue, 255);
+        break;
+      }
+      case Formats.UINT16: {
+        if (typeof value === "string") {
+          console.warn(`[${this.displayName}] characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
+          value = parseInt(value, 10);
+        } else if (typeof value !== "number") {
+          throw new Error("characteristic value expected number and received " + typeof value);
+        }
+
+        numericMin = maxWithUndefined(this.props.minValue, 0);
+        numericMax = minWithUndefined(this.props.maxValue, 65535);
+        break;
+      }
+      case Formats.UINT32: {
+        if (typeof value === "string") {
+          console.warn(`[${this.displayName}] characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
+          value = parseInt(value, 10);
+        } else if (typeof value !== "number") {
+          throw new Error("characteristic value expected number and received " + typeof value);
+        }
+
+        numericMin = maxWithUndefined(this.props.minValue, 0);
+        numericMax = minWithUndefined(this.props.maxValue, 4294967295);
+        break;
+      }
+      case Formats.UINT64: {
+        if (typeof value === "string") {
+          console.warn(`[${this.displayName}] characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
+          value = parseInt(value, 10);
+        } else if (typeof value !== "number") {
+          throw new Error("characteristic value expected number and received " + typeof value);
+        }
+
+        numericMin = maxWithUndefined(this.props.minValue, 0);
+        numericMax = minWithUndefined(this.props.maxValue, 18446744073709551615); // don't get fooled, javascript uses 18446744073709552000 here
+        break;
+      }
+      case Formats.STRING: {
+        if (typeof value === "number") {
+          console.warn(`[${this.displayName}] characteristic was supplied illegal value: number instead of string. Supplying illegal values will throw errors in the future!`);
+          value = String(value);
+        } else if (typeof value !== "string") {
+          throw new Error("characteristic value expected string and received " + (typeof value));
+        }
+
+        const maxLength = this.props.maxLen != null? this.props.maxLen: 64; // default is 64 (max is 256 which is set in setProps)
+        if (value.length > maxLength) {
+          console.warn(`[${this.displayName}] characteristic was supplied illegal value: string '${value}' exceeded max length of ${maxLength}. Supplying illegal values will throw errors in the future!`);
+          value = value.substring(0, maxLength);
+        }
+
+        return value;
+      }
+      case Formats.DATA:
+        if (typeof value !== "string") {
+          throw new Error("characteristic with data format must have string value");
+        }
+
+        if (this.props.maxDataLen != null && value.length > this.props.maxDataLen) {
+          // can't cut it as we would basically yet binary rubbish afterwards
+          throw new Error("characteristic with data format exceeds specified maxDataLen!");
+        }
+        return value;
+      case Formats.TLV8:
+        return value; // we trust that this is valid tlv8
+    }
+
+    if (typeof value === "number") {
+      if (numericMin != null && value < numericMin) {
+        console.warn(`[${this.displayName}] characteristic was supplied illegal value: number ${value} exceeded minimum of ${numericMin}. Supplying illegal values will throw errors in the future!`);
+        value = numericMin;
+      }
+      if (numericMax != null && value > numericMax) {
+        console.warn(`[${this.displayName}] characteristic was supplied illegal value: number ${value} exceeded maximum of ${numericMax}. Supplying illegal values will throw errors in the future!`);
+        value = numericMax;
+      }
+
+      if (this.props.validValues && !this.props.validValues.includes(value)) {
+        throw new Error(`characteristic value ${value} is not contained in valid values array!`);
+      }
+
+      if (this.props.validValueRanges && this.props.validValueRanges.length === 2) {
+        if (value < this.props.validValueRanges[0]) {
+          console.warn(`[${this.displayName}] characteristic was supplied illegal value: number ${value} not contained in valid value range of ${this.props.validValueRanges}. Supplying illegal values will throw errors in the future!`);
+          value = this.props.validValueRanges[0];
+        } else if (value > this.props.validValueRanges[1]) {
+          console.warn(`[${this.displayName}] characteristic was supplied illegal value: number ${value} not contained in valid value range of ${this.props.validValueRanges}. Supplying illegal values will throw errors in the future!`);
+          value = this.props.validValueRanges[1];
+        }
+      }
+
+      value = this.roundNumericValue(value);
+    }
+
+    return value;
+  }
+
+  /**
+   * @internal used to assign iid to characteristic
+   */
+  _assignID(identifierCache: IdentifierCache, accessoryName: string, serviceUUID: string, serviceSubtype?: string): void {
     // generate our IID based on our UUID
     this.iid = identifierCache.getIID(accessoryName, serviceUUID, serviceSubtype, this.UUID);
   }
 
   /**
-   * Returns a JSON representation of this Accessory suitable for delivering to HAP clients.
-   * @internal
+   * Returns a JSON representation of this characteristic suitable for delivering to HAP clients.
+   * @internal used to generate response to /accessories query
    */
-  toHAP(opt?: ToHAPOptions): HapCharacteristic {
-    // ensure our value fits within our constraints if present
-    let value = this.value; // TODO query value for characteristics which support it
+  async toHAP(connection: HAPConnection): Promise<CharacteristicJsonObject> {
+    const object = this.internalHAPRepresentation();
 
-    if (this.props.minValue != null && value! < this.props.minValue)
-      value = this.props.minValue;
-    if (this.props.maxValue != null && value! > this.props.maxValue)
-      value = this.props.maxValue;
-    if (this.props.format != null) {
-      if (this.props.format === Formats.INT)
-        value = parseInt(value as string);
-      else if (this.props.format === Formats.UINT8)
-        value = parseInt(value as string);
-      else if (this.props.format === Formats.UINT16)
-        value = parseInt(value as string);
-      else if (this.props.format === Formats.UINT32)
-        value = parseInt(value as string);
-      else if (this.props.format === Formats.UINT64)
-        value = parseInt(value as string);
-      else if (this.props.format === Formats.FLOAT) {
-        value = parseFloat(value as string);
-        if (this.props.minStep != null) {
-          const pow = Math.pow(10, decimalPlaces(this.props.minStep));
-          value = Math.round(value * pow) / pow;
-        }
-      }
-    }
-    if (this.UUID === Characteristic.ProgrammableSwitchEvent.UUID) {
+    if (!this.props.perms.includes(Perms.PAIRED_READ)) {
+      object.value = undefined;
+    } else if (this.UUID === Characteristic.ProgrammableSwitchEvent.UUID) {
       // special workaround for event only programmable switch event, which must always return null
-      value = null;
+      object.value = null;
+    } else { // query the current value
+      object.value = await this.handleGetRequest(connection).catch(() => {
+        debug('[%s] Error getting value for characteristic on /accessories request', this.displayName);
+        return this.value; // use cached value
+      });
     }
 
-    const hap: Partial<HapCharacteristic> = {
-      iid: this.iid!,
-      type: toShortForm(this.UUID, HomeKitTypes.BASE_UUID),
-      perms: this.props.perms,
-      format: this.props.format,
-      value: value,
-      description: this.displayName,
-      // These properties used to be sent but do not seem to be used:
-      //
-      // events: false,
-      // bonjour: false
-    };
-    if (this.props.validValues != null && this.props.validValues.length > 0) {
-      hap['valid-values'] = this.props.validValues;
-    }
-    if (this.props.validValueRanges != null && this.props.validValueRanges.length > 0 && !(this.props.validValueRanges.length & 1)) {
-      hap['valid-values-range'] = this.props.validValueRanges;
-    }
-    // extra properties
-    if (this.props.unit != null)
-      hap.unit = this.props.unit;
-    if (this.props.maxValue != null)
-      hap.maxValue = this.props.maxValue;
-    if (this.props.minValue != null)
-      hap.minValue = this.props.minValue;
-    if (this.props.minStep != null)
-      hap.minStep = this.props.minStep;
-    // add maxLen if string length is > 64 bytes and trim to max 256 bytes
-    if (this.props.format === Formats.STRING) {
-      const str = Buffer.from(value as string, 'utf8'), len = str.byteLength;
-      if (len > 256) { // 256 bytes is the max allowed length
-        hap.value = str.toString('utf8', 0, 256);
-        hap.maxLen = 256;
-      } else if (len > 64) { // values below can be omitted
-        hap.maxLen = len;
-      }
-    }
-    // if we're not readable, omit the "value" property - otherwise iOS will complain about non-compliance
-    if (this.props.perms.indexOf(Perms.PAIRED_READ) == -1)
-      delete hap.value;
-    // delete the "value" property anyway if we were asked to
-    if (opt && opt.omitValues)
-      delete hap.value;
-    return hap as HapCharacteristic;
+    return object;
   }
 
   /**
+   * Returns a JSON representation of this characteristic without the value.
+   * @internal used to generate the config hash
+   */
+  internalHAPRepresentation(): CharacteristicJsonObject {
+    assert(this.iid,"iid cannot be undefined for characteristic '" + this.displayName + "'");
+    return {
+      type: toShortForm(this.UUID, HomeKitTypes.BASE_UUID),
+      iid: this.iid!,
+      value: null,
+      perms: this.props.perms,
+      description: this.props.description || this.displayName,
+      format: this.props.format,
+      unit: this.props.unit,
+      minValue: this.props.minValue,
+      maxValue: this.props.maxValue,
+      minStep: this.props.minStep,
+      maxLen: this.props.maxLen,
+      maxDataLen: this.props.maxDataLen,
+      "valid-values": this.props.validValues,
+      "valid-values-range": this.props.validValueRanges,
+    }
+  }
+
+  /**
+   * Serialize characteristic into json string.
    *
-   * @param characteristic
-   * @internal
+   * @param characteristic - Characteristic object.
+   * @internal used to store characteristic on disk
    */
   static serialize(characteristic: Characteristic): SerializedCharacteristic {
     return {
@@ -951,9 +1250,10 @@ export class Characteristic extends EventEmitter {
   };
 
   /**
+   * Deserialize characteristic from json string.
    *
-   * @param json
-   * @internal
+   * @param json - Json string representing a characteristic.
+   * @internal used to recreate characteristic from disk
    */
   static deserialize(json: SerializedCharacteristic): Characteristic {
     const characteristic = new Characteristic(json.displayName, json.UUID, json.props);
@@ -965,31 +1265,37 @@ export class Characteristic extends EventEmitter {
 
 }
 
-// Mike Samuel
-// http://stackoverflow.com/questions/10454518/javascript-how-to-retrieve-the-number-of-decimals-of-a-string-number
-function decimalPlaces(num: number) {
-  const match = ('' + num).match(/(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/);
-  if (!match) { return 0; }
-  return Math.max(
-       0,
-       // Number of digits right of decimal point.
-       (match[1] ? match[1].length : 0)
-       // Adjust for scientific notation.
-       - (match[2] ? +match[2] : 0));
-}
-
 const numberPattern = /^-?\d+$/;
-
 function extractHAPStatusFromError(error: Error) {
-  let errorValue = Status.SERVICE_COMMUNICATION_FAILURE;
+  let errorValue = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
 
   if (numberPattern.test(error.message)) {
     const value = parseInt(error.message);
 
-    if (value >= Status.INSUFFICIENT_PRIVILEGES && value <= Status.NOT_ALLOWED_IN_CURRENT_STATE) {
+    if (value >= HAPStatus.INSUFFICIENT_PRIVILEGES && value <= HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE) {
       errorValue = value;
     }
   }
 
   return errorValue;
+}
+
+function maxWithUndefined(a?: number, b?: number): number | undefined {
+  if (a === undefined) {
+    return b;
+  } else if (b === undefined) {
+    return a;
+  } else {
+    return Math.max(a, b);
+  }
+}
+
+function minWithUndefined(a?: number, b?: number): number | undefined {
+  if (a === undefined) {
+    return b;
+  } else if (b === undefined) {
+    return a;
+  } else {
+    return Math.min(a, b);
+  }
 }

@@ -13,8 +13,7 @@ export class SupportedDataStreamTransportConfiguration extends Characteristic {
     static readonly UUID: string = '00000130-0000-1000-8000-0026BB765291';
 
     constructor() {
-        super('Supported Data Stream Transport Configuration', SupportedDataStreamTransportConfiguration.UUID);
-        this.setProps({
+        super('Supported Data Stream Transport Configuration', SupportedDataStreamTransportConfiguration.UUID, {
             format: Formats.TLV8,
             perms: [Perms.PAIRED_READ]
         });
@@ -34,8 +33,7 @@ export class SetupDataStreamTransport extends Characteristic {
     static readonly UUID: string = '00000131-0000-1000-8000-0026BB765291';
 
     constructor() {
-        super('Setup Data Stream Transport', SetupDataStreamTransport.UUID);
-        this.setProps({
+        super('Setup Data Stream Transport', SetupDataStreamTransport.UUID, {
             format: Formats.TLV8,
             perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE]
         });

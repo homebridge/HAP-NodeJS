@@ -14,7 +14,7 @@ import {
   RTPStreamManagement,
   Service,
   SnapshotRequest,
-  Status,
+  HAPStatus,
   StreamingRequest
 } from "../..";
 import { SessionIdentifier } from "../../types";
@@ -49,7 +49,7 @@ export interface CameraControllerOptions {
   // recordingOptions: CameraRecordingOptions, // soon
 }
 
-export type SnapshotRequestCallback = (error?: Error | Status, buffer?: Buffer) => void;
+export type SnapshotRequestCallback = (error?: Error | HAPStatus, buffer?: Buffer) => void;
 export type PrepareStreamCallback = (error?: Error, response?: PrepareStreamResponse) => void;
 export type StreamRequestCallback = (error?: Error) => void;
 
@@ -376,7 +376,7 @@ export class CameraController extends EventEmitter implements Controller<CameraC
 
           console.warn(`[${accessoryName}] Image snapshot handler didn't respond at all!`);
 
-          reject(Status.OPERATION_TIMED_OUT);
+          reject(HAPStatus.OPERATION_TIMED_OUT);
         }, 10000);
       }, 5000);
 
@@ -397,14 +397,14 @@ export class CameraController extends EventEmitter implements Controller<CameraC
               reject(error);
             } else {
               debug("[%s] Error getting snapshot: %s", accessoryName, error.stack);
-              reject(Status.SERVICE_COMMUNICATION_FAILURE);
+              reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
             }
             return;
           }
 
           if (!buffer || buffer.length === 0) {
             console.warn(`[${accessoryName}] Snapshot request handler provided empty image buffer!`);
-            reject(Status.SERVICE_COMMUNICATION_FAILURE);
+            reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
           } else {
             resolve(buffer);
           }
@@ -418,7 +418,7 @@ export class CameraController extends EventEmitter implements Controller<CameraC
         }
 
         console.warn(`[${accessoryName}] Unhandled error thrown inside snapshot request handler: ${error.stack}`);
-        reject(Status.SERVICE_COMMUNICATION_FAILURE);
+        reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       }
     });
   }

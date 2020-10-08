@@ -26,7 +26,7 @@ import {
 } from "../datastream";
 import { DataStreamTransportManagement } from "../gen/HomeKit-DataStream";
 import { AudioStreamManagement, Siri, TargetControl, TargetControlManagement } from "../gen/HomeKit-Remote";
-import { Status } from "../HAPServer";
+import { HAPStatus } from "../HAPServer";
 import { Service } from "../Service";
 import { HAPConnection, HAPConnectionEvent } from "../util/eventedhttp";
 import * as tlv from '../util/tlv';
@@ -580,7 +580,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
         debug("Received TargetControl write operation %s", Operation[operation]);
 
-        let handler: (targetConfiguration?: TargetConfiguration) => Status;
+        let handler: (targetConfiguration?: TargetConfiguration) => HAPStatus;
         switch (operation) {
             case Operation.ADD:
                 handler = this.handleAddTarget;
@@ -598,12 +598,12 @@ export class RemoteController extends EventEmitter implements SerializableContro
                 handler = this.handleListTargets;
                 break;
             default:
-                callback(Status.INVALID_VALUE_IN_REQUEST, undefined);
+                callback(HAPStatus.INVALID_VALUE_IN_REQUEST, undefined);
                 return;
         }
 
         const status = handler(targetConfiguration);
-        if (status === Status.SUCCESS) {
+        if (status === HAPStatus.SUCCESS) {
             callback(undefined, this.targetConfigurationsString); // passing value for write response
 
             if (operation === Operation.ADD && this.activeIdentifier === 0) {
@@ -614,9 +614,9 @@ export class RemoteController extends EventEmitter implements SerializableContro
         }
     };
 
-    private handleAddTarget(targetConfiguration?: TargetConfiguration): Status {
+    private handleAddTarget(targetConfiguration?: TargetConfiguration): HAPStatus {
         if (!targetConfiguration) {
-            return Status.INVALID_VALUE_IN_REQUEST;
+            return HAPStatus.INVALID_VALUE_IN_REQUEST;
         }
 
         this.targetConfigurations[targetConfiguration.targetIdentifier] = targetConfiguration;
@@ -626,12 +626,12 @@ export class RemoteController extends EventEmitter implements SerializableContro
         setTimeout(() => this.emit(RemoteControllerEvents.TARGET_ADDED, targetConfiguration), 0);
 
         this.updatedTargetConfiguration(); // set response
-        return Status.SUCCESS;
+        return HAPStatus.SUCCESS;
     };
 
-    private handleUpdateTarget(targetConfiguration?: TargetConfiguration): Status {
+    private handleUpdateTarget(targetConfiguration?: TargetConfiguration): HAPStatus {
         if (!targetConfiguration) {
-            return Status.INVALID_VALUE_IN_REQUEST;
+            return HAPStatus.INVALID_VALUE_IN_REQUEST;
         }
 
         const updates: TargetUpdates[] = [];
@@ -670,17 +670,17 @@ export class RemoteController extends EventEmitter implements SerializableContro
         setTimeout(() => this.emit(RemoteControllerEvents.TARGET_UPDATED, targetConfiguration, updates), 0);
 
         this.updatedTargetConfiguration(); // set response
-        return Status.SUCCESS;
+        return HAPStatus.SUCCESS;
     };
 
-    private handleRemoveTarget(targetConfiguration?: TargetConfiguration): Status {
+    private handleRemoveTarget(targetConfiguration?: TargetConfiguration): HAPStatus {
         if (!targetConfiguration) {
-            return Status.INVALID_VALUE_IN_REQUEST;
+            return HAPStatus.INVALID_VALUE_IN_REQUEST;
         }
 
         const configuredTarget = this.targetConfigurations[targetConfiguration.targetIdentifier];
         if (!configuredTarget) {
-            return Status.INVALID_VALUE_IN_REQUEST;
+            return HAPStatus.INVALID_VALUE_IN_REQUEST;
         }
 
         if (targetConfiguration.buttonConfiguration) {
@@ -702,12 +702,12 @@ export class RemoteController extends EventEmitter implements SerializableContro
         }
 
         this.updatedTargetConfiguration(); // set response
-        return Status.SUCCESS;
+        return HAPStatus.SUCCESS;
     };
 
-    private handleResetTargets(targetConfiguration?: TargetConfiguration): Status {
+    private handleResetTargets(targetConfiguration?: TargetConfiguration): HAPStatus {
         if (targetConfiguration) {
-            return Status.INVALID_VALUE_IN_REQUEST;
+            return HAPStatus.INVALID_VALUE_IN_REQUEST;
         }
 
         debug("Resetting all target configurations");
@@ -717,23 +717,23 @@ export class RemoteController extends EventEmitter implements SerializableContro
         setTimeout(() => this.emit(RemoteControllerEvents.TARGETS_RESET), 0);
         this.setActiveIdentifier(0); // resetting active identifier (also sets active to false)
 
-        return Status.SUCCESS;
+        return HAPStatus.SUCCESS;
     };
 
-    private handleListTargets(targetConfiguration?: TargetConfiguration): Status {
+    private handleListTargets(targetConfiguration?: TargetConfiguration): HAPStatus {
         if (targetConfiguration) {
-            return Status.INVALID_VALUE_IN_REQUEST;
+            return HAPStatus.INVALID_VALUE_IN_REQUEST;
         }
 
         // this.targetConfigurationsString is updated after each change, so we basically don't need to do anything here
         debug("Returning " + Object.keys(this.targetConfigurations).length + " target configurations");
-        return Status.SUCCESS;
+        return HAPStatus.SUCCESS;
     };
 
     private handleActiveWrite(value: CharacteristicValue, callback: CharacteristicSetCallback, connection: HAPConnection): void {
         if (this.activeIdentifier === 0) {
             debug("Tried to change active state. There is no active target set though");
-            callback(Status.INVALID_VALUE_IN_REQUEST);
+            callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
             return;
         }
 
@@ -1200,7 +1200,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
             .on(CharacteristicEventTypes.SET, (value, callback, context, connection) => {
                 if (!connection) {
                     debug("Set event handler for Remote.Active cannot be called from plugin. Connection undefined!");
-                    callback(Status.INVALID_VALUE_IN_REQUEST);
+                    callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
                     return;
                 }
                 this.handleActiveWrite(value, callback, connection);

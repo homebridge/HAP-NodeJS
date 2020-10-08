@@ -1,19 +1,20 @@
-import './gen';
 import {
   Access,
   Characteristic,
   CharacteristicEventTypes,
   CharacteristicProps,
   Formats,
+  HAPStatus,
   Perms,
-  SerializedCharacteristic, Status,
+  SerializedCharacteristic,
   Units,
   uuid
 } from '..';
+import './gen';
 
-const createCharacteristic = (type: Formats, customUUID?: string) => {
+function createCharacteristic(type: Formats, customUUID?: string): Characteristic {
   return new Characteristic('Test', customUUID || uuid.generate('Foo'), { format: type, perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE] });
-};
+}
 
 const createCharacteristicWithProps = (props: CharacteristicProps, customUUID?: string) => {
   return new Characteristic('Test', customUUID || uuid.generate('Foo'), props);
@@ -117,7 +118,7 @@ describe('Characteristic', () => {
       const characteristic = createCharacteristic(Formats.BOOL, Characteristic.ProgrammableSwitchEvent.UUID);
 
       characteristic.handleGetRequest().then(() => {
-        expect(characteristic.status).toEqual(Status.SUCCESS);
+        expect(characteristic.status).toEqual(HAPStatus.SUCCESS);
         expect(characteristic.value).toEqual(null);
         callback();
       });
@@ -127,20 +128,76 @@ describe('Characteristic', () => {
       const characteristic = createCharacteristic(Formats.BOOL);
 
       characteristic.handleGetRequest().then(() => {
-        expect(characteristic.status).toEqual(Status.SUCCESS);
+        expect(characteristic.status).toEqual(HAPStatus.SUCCESS);
         expect(characteristic.value).toEqual(null);
         callback();
       });
     });
   });
 
-  describe('#validateValue()', () => {
+  describe("#roundNumericValue()", () => {
+    it("should not round valid value", () => {
+      const characteristic = createCharacteristic(Formats.INT);
+      characteristic.setProps({
+        minStep: 1,
+      })
+      // @ts-expect-error
+      const result = characteristic.roundNumericValue(4);
+      expect(result).toBe(4);
+    });
+
+    it("should round invalid value", () => {
+      const characteristic = createCharacteristic(Formats.INT);
+      characteristic.setProps({
+        minStep: 0.15,
+        minValue: 6,
+      })
+      // @ts-expect-error
+      const result = characteristic.roundNumericValue(6.1500001);
+      expect(result).toBe(6.15);
+    });
+
+    it("should round up invalid value", () => {
+      const characteristic = createCharacteristic(Formats.INT);
+      characteristic.setProps({
+        minStep: 0.1,
+        minValue: 2,
+      })
+      // @ts-expect-error
+      const result = characteristic.roundNumericValue(2.1542);
+      expect(result).toBe(2.2);
+    });
+
+    it("should round up invalid huge value", () => {
+      const characteristic = createCharacteristic(Formats.INT);
+      characteristic.setProps({
+        minStep: 90,
+      })
+      // @ts-expect-error
+      const result = characteristic.roundNumericValue(240);
+      expect(result).toBe(270);
+    });
+
+    it("should round invalid huge value", () => {
+      const characteristic = createCharacteristic(Formats.INT);
+      characteristic.setProps({
+        maxValue: 38,
+        minValue: 10,
+        minStep: 0.1,
+      })
+      // @ts-expect-error
+      const result = characteristic.roundNumericValue(36.135795);
+      expect(result).toBe(36.1);
+    });
+  });
+
+  describe('#validateUserInput()', () => {
 
     it('should validate an integer property', () => {
       const VALUE = 1024;
       const characteristic = createCharacteristic(Formats.INT);
       // @ts-expect-error
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a float property', () => {
@@ -151,10 +208,10 @@ describe('Characteristic', () => {
         perms: [],
       });
       // @ts-expect-error
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
-    it('should cut off decimal places correctly', function () {
+    it('should round decimal places correctly', function () {
       const VALUE = 1.5642;
       const characteristic = createCharacteristicWithProps({
         format: Formats.FLOAT,
@@ -162,77 +219,77 @@ describe('Characteristic', () => {
         perms: [],
       });
       // @ts-expect-error
-      expect(characteristic.validateValue(VALUE)).toEqual(1.5);
+      expect(characteristic.validateUserInput(VALUE)).toEqual(1.6);
     });
 
     it('should validate a UINT8 property', () => {
       const VALUE = 10;
       const characteristic = createCharacteristic(Formats.UINT8);
       // @ts-expect-error
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a UINT16 property', () => {
       const VALUE = 10;
       const characteristic = createCharacteristic(Formats.UINT16);
       // @ts-expect-error
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a UINT32 property', () => {
       const VALUE = 10;
       const characteristic = createCharacteristic(Formats.UINT32);
       // @ts-expect-error
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a UINT64 property', () => {
       const VALUE = 10;
       const characteristic = createCharacteristic(Formats.UINT64);
       // @ts-expect-error
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a boolean property', () => {
       const VALUE = true;
       const characteristic = createCharacteristic(Formats.BOOL);
       // @ts-expect-error
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a string property', () => {
       const VALUE = 'Test';
       const characteristic = createCharacteristic(Formats.STRING);
       // @ts-expect-error
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a data property', () => {
-      const VALUE = {};
+      const VALUE = Buffer.from("Hello my good friend. Have a nice day!", "ascii").toString("base64");
       const characteristic = createCharacteristic(Formats.DATA);
       // @ts-expect-error
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a TLV8 property', () => {
       const VALUE = '';
       const characteristic = createCharacteristic(Formats.TLV8);
       // @ts-expect-error
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a dictionary property', () => {
       const VALUE = {};
       const characteristic = createCharacteristic(Formats.DICTIONARY);
       // @ts-expect-error
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
     it('should validate an array property', () => {
       const VALUE = ['asd'];
       const characteristic = createCharacteristic(Formats.ARRAY);
       // @ts-expect-error
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
   });
 
@@ -344,6 +401,7 @@ describe('Characteristic', () => {
       const updateValueCallback = jest.fn();
 
       characteristic.on(CharacteristicEventTypes.CHANGE, listenerCallback);
+      // noinspection JSDeprecatedSymbols
       characteristic.updateValue(VALUE, updateValueCallback)
 
       expect(listenerCallback).toHaveBeenCalledTimes(1);
@@ -420,7 +478,7 @@ describe('Characteristic', () => {
   describe('#deserialize', () => {
     it('should deserialize legacy json from homebridge', () => {
       const json = JSON.parse('{"displayName": "On", "UUID": "00000025-0000-1000-8000-0026BB765291", ' +
-          '"props": {"format": "bool", "unit": null, "minValue": null, "maxValue": null, "minStep": null, "perms": ["pr", "pw", "ev"]}, ' +
+          '"props": {"format": "bool", "unit": "seconds", "minValue": 4, "maxValue": 6, "minStep": 0.1, "perms": ["pr", "pw", "ev"]}, ' +
           '"value": false, "eventOnlyCharacteristic": false}');
       const characteristic = Characteristic.deserialize(json);
 

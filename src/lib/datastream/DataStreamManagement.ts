@@ -1,8 +1,7 @@
-import assert from "assert";
 import createDebug from "debug";
 import { Characteristic, CharacteristicEventTypes, CharacteristicSetCallback } from "../Characteristic";
 import { DataStreamTransportManagement } from "../gen/HomeKit-DataStream";
-import { Status } from "../HAPServer";
+import { HAPStatus } from "../HAPServer";
 import { Service } from "../Service";
 import { HAPConnection } from "../util/eventedhttp";
 import * as tlv from '../util/tlv';
@@ -158,7 +157,7 @@ export class DataStreamManagement {
 
         if (sessionCommandType === SessionCommandType.START_SESSION) {
             if (transportType !== TransportType.HOMEKIT_DATA_STREAM || controllerKeySalt.length !== 32) {
-                callback(Status.INVALID_VALUE_IN_REQUEST);
+                callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
                 return;
             }
 
@@ -178,7 +177,7 @@ export class DataStreamManagement {
                 callback(null, response.toString('base64'));
             });
         } else {
-            callback(Status.INVALID_VALUE_IN_REQUEST);
+            callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
             return;
         }
     }
@@ -212,7 +211,7 @@ export class DataStreamManagement {
             .on(CharacteristicEventTypes.SET, (value, callback, context, connection) => {
                 if (!connection) {
                     debug("Set event handler for SetupDataStreamTransport cannot be called from plugin! Connection undefined!");
-                    callback(Status.INVALID_VALUE_IN_REQUEST);
+                    callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
                     return;
                 }
                 this.handleSetupDataStreamTransportWrite(value, callback, connection);
