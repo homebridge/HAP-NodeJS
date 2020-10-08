@@ -907,7 +907,9 @@ export class Characteristic extends EventEmitter {
         }
         break;
       case Formats.INT: // 32-bit signed int
-        if (typeof value !== "number") {
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value !== "number") {
           return false;
         }
 
@@ -915,7 +917,9 @@ export class Characteristic extends EventEmitter {
         numericMax = minWithUndefined(this.props.maxValue, 2147483647);
         break;
       case Formats.FLOAT:
-        if (typeof value !== "number") {
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value !== "number") {
           return false;
         }
 
@@ -927,7 +931,9 @@ export class Characteristic extends EventEmitter {
         }
         break;
       case Formats.UINT8:
-        if (typeof value !== "number") {
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value !== "number") {
           return false;
         }
 
@@ -935,7 +941,9 @@ export class Characteristic extends EventEmitter {
         numericMax = minWithUndefined(this.props.maxValue, 255);
         break;
       case Formats.UINT16:
-        if (typeof value !== "number") {
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value !== "number") {
           return false;
         }
 
@@ -943,7 +951,9 @@ export class Characteristic extends EventEmitter {
         numericMax = minWithUndefined(this.props.maxValue, 65535);
         break;
       case Formats.UINT32:
-        if (typeof value !== "number") {
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value !== "number") {
           return false;
         }
 
@@ -951,7 +961,9 @@ export class Characteristic extends EventEmitter {
         numericMax = minWithUndefined(this.props.maxValue, 4294967295);
         break;
       case Formats.UINT64:
-        if (typeof value !== "number") {
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value !== "number") {
           return false;
         }
 
@@ -1044,7 +1056,9 @@ export class Characteristic extends EventEmitter {
         }
       }
       case Formats.INT: {
-        if (typeof value === "string") {
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value === "string") {
           console.warn(`[${this.displayName}] characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
           value = parseInt(value, 10);
         } else if (typeof value !== "number") {
@@ -1056,7 +1070,9 @@ export class Characteristic extends EventEmitter {
         break;
       }
       case Formats.FLOAT: {
-        if (typeof value === "string") {
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value === "string") {
           console.warn(`[${this.displayName}] characteristic was supplied illegal value: string instead of float. Supplying illegal values will throw errors in the future!`);
           value = parseFloat(value);
         } else if (typeof value !== "number") {
@@ -1072,7 +1088,9 @@ export class Characteristic extends EventEmitter {
         break;
       }
       case Formats.UINT8: {
-        if (typeof value === "string") {
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value === "string") {
           console.warn(`[${this.displayName}] characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
           value = parseInt(value, 10);
         } else if (typeof value !== "number") {
@@ -1084,7 +1102,9 @@ export class Characteristic extends EventEmitter {
         break;
       }
       case Formats.UINT16: {
-        if (typeof value === "string") {
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value === "string") {
           console.warn(`[${this.displayName}] characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
           value = parseInt(value, 10);
         } else if (typeof value !== "number") {
@@ -1096,7 +1116,9 @@ export class Characteristic extends EventEmitter {
         break;
       }
       case Formats.UINT32: {
-        if (typeof value === "string") {
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value === "string") {
           console.warn(`[${this.displayName}] characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
           value = parseInt(value, 10);
         } else if (typeof value !== "number") {
@@ -1108,7 +1130,9 @@ export class Characteristic extends EventEmitter {
         break;
       }
       case Formats.UINT64: {
-        if (typeof value === "string") {
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value === "string") {
           console.warn(`[${this.displayName}] characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
           value = parseInt(value, 10);
         } else if (typeof value !== "number") {
