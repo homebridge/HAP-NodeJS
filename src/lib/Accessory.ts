@@ -1709,11 +1709,16 @@ export class Accessory extends EventEmitter {
         return; // we're not running a HAPServer, so there's no one to notify about this event
       }
 
+      if (this.aid == undefined || change.characteristic.iid == undefined) {
+        debug("[%s] Muting event notification for %s as ids aren't yet assigned!", this.displayName, change.characteristic.displayName);
+        return;
+      }
+
       const uuid = change.characteristic.UUID;
       const immediateDelivery = uuid === ButtonEvent.UUID || uuid === ProgrammableSwitchEvent.UUID
         || uuid === MotionDetected.UUID || uuid === ContactSensorState.UUID;
 
-      this._server.sendEventNotifications(this.aid!, change.characteristic.iid!, change.newValue, change.originator, immediateDelivery);
+      this._server.sendEventNotifications(this.aid, change.characteristic.iid, change.newValue, change.originator, immediateDelivery);
     }
   }
 
