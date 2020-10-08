@@ -1945,7 +1945,7 @@ export class Accessory extends EventEmitter {
           } else {
             serverAddress = "::"; // the interface could have both ipv4 and ipv6 addresses
           }
-        } else {
+        } else if (entries.size > 1) {
           let bindUnspecifiedIpv6 = false; // we bind on "::" if there are interface names, or we detect ipv6 addresses
 
           for (const entry of entries) {
