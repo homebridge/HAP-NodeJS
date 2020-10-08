@@ -1,10 +1,15 @@
 import assert from 'assert';
+import crypto from "crypto";
 import tweetnacl from 'tweetnacl';
 import util from 'util';
+import { AccessoryJsonObject } from "../../internal-types";
 import { MacAddress } from "../../types";
 import { Categories } from '../Accessory';
 import { EventedHTTPServer, HAPConnection, HAPUsername } from "../util/eventedhttp";
 import { HAPStorage } from "./HAPStorage";
+
+
+const packageJson = require("../../../package.json");
 
 export const enum PermissionTypes {
   // noinspection JSUnusedGlobalSymbols
@@ -36,8 +41,9 @@ export class AccessoryInfo {
   pairedClients: Record<HAPUsername, PairingInformation>;
   pairedAdminClients: number;
   private configVersion: number = 1;
-  configHash: string;
+  private configHash: string;
   setupID: string;
+  private lastFirmwareVersion: string = "";
 
   private constructor(username: MacAddress) {
     this.username = username;
@@ -151,12 +157,40 @@ export class AccessoryInfo {
     return Object.keys(this.pairedClients).length > 0; // if we have any paired clients, we're paired.
   }
 
-  public updateConfigHash(hash: string): void {
-    this.configVersion++;
-    this.ensureConfigVersionBounds();
+  /**
+   * Checks based on the current accessory configuration if the current configuration number needs to be incremented.
+   * Additionally, if desired, it checks if the firmware version was incremented (aka the HAP-NodeJS) version did grow.
+   *
+   * @param configuration - The current accessory configuration.
+   * @param checkFirmwareIncrement
+   * @returns True if the current configuration number was incremented and thus a new TXT must be advertised.
+   */
+  public checkForCurrentConfigurationNumberIncrement(configuration: AccessoryJsonObject[], checkFirmwareIncrement?: boolean): boolean {
+    const shasum = crypto.createHash('sha1');
+    shasum.update(JSON.stringify(configuration));
+    const configHash = shasum.digest('hex');
 
-    this.configHash = hash;
-    this.save();
+    let changed = false;
+
+    if (configHash !== this.configHash) {
+      this.configVersion++;
+      this.configHash = configHash;
+
+      this.ensureConfigVersionBounds();
+      changed = true;
+    }
+    if (this.lastFirmwareVersion !== packageJson.version) {
+      // we only check if it is different and not only if it is incremented
+      // HomeKit spec prohibits firmware downgrades, but with hap-nodejs it's possible lol
+      this.lastFirmwareVersion = packageJson.version;
+      changed = true;
+    }
+
+    if (changed) {
+      this.save();
+    }
+
+    return changed;
   }
 
   public getConfigVersion(): number {
@@ -187,6 +221,7 @@ export class AccessoryInfo {
       configVersion: this.configVersion,
       configHash: this.configHash,
       setupID: this.setupID,
+      lastFirmwareVersion: this.lastFirmwareVersion,
     };
 
     for (let username in this.pairedClients) {
@@ -210,6 +245,8 @@ export class AccessoryInfo {
   static create = (username: MacAddress) => {
     AccessoryInfo.assertValidUsername(username);
     const accessoryInfo = new AccessoryInfo(username);
+
+    accessoryInfo.lastFirmwareVersion = packageJson.version;
 
     // Create a new unique key pair for this accessory.
     const keyPair = tweetnacl.sign.keyPair();
@@ -255,11 +292,12 @@ export class AccessoryInfo {
 
       info.setupID = saved.setupID || "";
 
+      info.lastFirmwareVersion = saved.lastFirmwareVersion || packageJson.version;
+
       info.ensureConfigVersionBounds();
 
       return info;
-    }
-    else {
+    } else {
       return null;
     }
   }
