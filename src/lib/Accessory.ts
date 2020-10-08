@@ -207,11 +207,11 @@ export interface PublishInfo {
    *      The mdns advertisement will not advertise any ipv6 records.
    *
    *  - bind: "169.254.104.90"
-   *      This will bind the HAP server to the address 169.254.104.90.
-   *      The application will throw an error if the address is not available at startup.
+   *      This will bind the HAP server to the address 0.0.0.0.
    *      The mdns advertisement will only advertise the A record 169.254.104.90.
-   *      If the given network interface of that address encounters an ip address change,
+   *      If the given network interface of that address encounters an ip address change (to a different address),
    *      the mdns advertisement will result in not advertising a address at all.
+   *      So it is advised to specify a interface name instead of a specific address.
    *      This is identical with ipv6 addresses.
    *
    *  - bind: ["169.254.104.90", "192.168.1.4"]
@@ -219,6 +219,10 @@ export interface PublishInfo {
    *      the HAP server will bind to the unspecified ip address (0.0.0.0 if only ipv4 addresses are supplied,
    *      :: if a mixture or only ipv6 addresses are supplied).
    *      The mdns advertisement will only advertise the specified ip addresses.
+   *      If the given network interface of that address encounters an ip address change (to different addresses),
+   *      the mdns advertisement will result in not advertising a address at all.
+   *      So it is advised to specify a interface name instead of a specific address.
+   *
    */
   bind?: (InterfaceName | IPAddress) | (InterfaceName | IPAddress)[];
   /**
@@ -1935,8 +1939,9 @@ export class Accessory extends EventEmitter {
         if (entries.size === 1) {
           const entry = entries.values().next().value; // grab the first one
 
-          if (net.isIP(entry)) {
-            serverAddress = entry;
+          const version = net.isIP(entry); // check if ip address was specified or a interface name
+          if (version) {
+            serverAddress = version === 4? "0.0.0.0": "::"; // we currently bind to unspecified addresses so config-ui always has a connection via loopback
           } else {
             serverAddress = "::"; // the interface could have both ipv4 and ipv6 addresses
           }
