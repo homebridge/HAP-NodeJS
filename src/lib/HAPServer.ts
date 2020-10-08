@@ -54,7 +54,7 @@ const enum TLVValues {
   SEPARATOR = 0x0FF // Zero-length TLV that separates different TLVs in a list.
 }
 
-const enum Methods {
+const enum PairMethods {
   // noinspection JSUnusedGlobalSymbols
   PAIR_SETUP = 0x00,
   PAIR_SETUP_WITH_AUTH = 0x01,
@@ -67,7 +67,7 @@ const enum Methods {
 /**
  * Pairing states (pair-setup or pair-verify). Encoded in {@link TLVValues.SEQUENCE_NUM}.
  */
-const enum States {
+const enum PairingStates {
   M1 = 0x01,
   M2 = 0x02,
   M3 = 0x03,
@@ -79,7 +79,7 @@ const enum States {
 /**
  * TLV error codes for the {@link TLVValues.ERROR_CODE} field.
  */
-export const enum Codes {
+export const enum TLVErrorCode {
   // noinspection JSUnusedGlobalSymbols
   UNKNOWN = 0x01,
   INVALID_REQUEST = 0x02,
@@ -110,6 +110,13 @@ export const enum HAPStatus {
   // when adding new status codes, remember to change upper bound in extractHAPStatusFromError
 }
 
+// noinspection JSUnusedGlobalSymbols
+/**
+ * @deprecated please use {@link TLVErrorCode} as naming is more precise
+ */
+// @ts-expect-error (as we use const enums with --preserveConstEnums)
+export const Codes = TLVErrorCode;
+// noinspection JSUnusedGlobalSymbols
 /**
  * @deprecated please use {@link HAPStatus} as naming is more precise
  */
@@ -162,7 +169,7 @@ export type IdentifyCallback = VoidCallback;
 
 export type HAPHttpError = { httpCode: HAPHTTPCode, status: HAPStatus};
 
-export type PairingsCallback<T = void> = (error: Codes | 0, data?: T) => void;
+export type PairingsCallback<T = void> = (error: TLVErrorCode | 0, data?: T) => void;
 export type AddPairingCallback = PairingsCallback;
 export type RemovePairingCallback = PairingsCallback;
 export type ListPairingsCallback = PairingsCallback<PairingInformation[]>;
@@ -397,28 +404,28 @@ export class HAPServer extends EventEmitter {
     // Can only be directly paired with one iOS device
     if (!this.allowInsecureRequest && this.accessoryInfo.paired()) {
       response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.STATE, States.M2, TLVValues.ERROR_CODE, Codes.UNAVAILABLE));
+      response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.UNAVAILABLE));
       return;
     }
     if (this.unsuccessfulPairAttempts > 100) {
       debug("[%s] Reached maximum amount of unsuccessful pair attempts!", this.accessoryInfo.username);
       response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.STATE, States.M2, TLVValues.ERROR_CODE, Codes.MAX_TRIES));
+      response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.MAX_TRIES));
       return;
     }
 
     const tlvData = tlv.decode(data);
     const sequence = tlvData[TLVValues.SEQUENCE_NUM][0]; // value is single byte with sequence number
-    if (sequence == States.M1) {
+    if (sequence == PairingStates.M1) {
       this.handlePairSetupM1(connection, request, response);
-    } else if (sequence == States.M3 && connection._pairSetupState === States.M2) {
+    } else if (sequence == PairingStates.M3 && connection._pairSetupState === PairingStates.M2) {
       this.handlePairSetupM3(connection, request, response, tlvData);
-    } else if (sequence == States.M5 && connection._pairSetupState === States.M4) {
+    } else if (sequence == PairingStates.M5 && connection._pairSetupState === PairingStates.M4) {
       this.handlePairSetupM5(connection, request, response, tlvData);
     } else {
       // Invalid state/sequence number
       response.writeHead(HAPPairingHTTPCode.BAD_REQUEST, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.STATE, sequence + 1, TLVValues.ERROR_CODE, Codes.UNKNOWN));
+      response.end(tlv.encode(TLVValues.STATE, sequence + 1, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
       return;
     }
   }
@@ -435,12 +442,12 @@ export class HAPServer extends EventEmitter {
       // attach it to the current TCP session
       connection.srpServer = srpServer;
       response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M2, TLVValues.SALT, salt, TLVValues.PUBLIC_KEY, srpB));
-      connection._pairSetupState = States.M2;
+      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M2, TLVValues.SALT, salt, TLVValues.PUBLIC_KEY, srpB));
+      connection._pairSetupState = PairingStates.M2;
     }).catch(error => {
       debug("[%s] Error occurred when generating srp key: %s", this.accessoryInfo.username, error.message);
       response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.STATE, States.M2, TLVValues.ERROR_CODE, Codes.UNKNOWN));
+      response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
       return;
     });
   }
@@ -459,15 +466,15 @@ export class HAPServer extends EventEmitter {
       this.unsuccessfulPairAttempts++;
       debug("[%s] Error while checking pincode: %s", this.accessoryInfo.username, err.message);
       response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
+      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M4, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
       connection._pairSetupState = undefined;
       return;
     }
     // "M2 is the proof that the server actually knows your password."
     const M2 = srpServer.computeM2();
     response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-    response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M4, TLVValues.PASSWORD_PROOF, M2));
-    connection._pairSetupState = States.M4;
+    response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M4, TLVValues.PASSWORD_PROOF, M2));
+    connection._pairSetupState = PairingStates.M4;
   }
 
   private handlePairSetupM5(connection: HAPConnection, request: IncomingMessage, response: ServerResponse, tlvData: Record<number, Buffer>): void {
@@ -490,7 +497,7 @@ export class HAPServer extends EventEmitter {
     } catch (error) {
       debug("[%s] Error while decrypting and verifying M5 subTlv: %s", this.accessoryInfo.username);
       response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
+      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M4, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
       connection._pairSetupState = undefined;
       return;
     }
@@ -513,7 +520,7 @@ export class HAPServer extends EventEmitter {
     if (!tweetnacl.sign.detached.verify(completeData, clientProof, clientLTPK)) {
       debug("[%s] Invalid signature", this.accessoryInfo.username);
       response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M6, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
+      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M6, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
       connection._pairSetupState = undefined;
       return;
     }
@@ -541,13 +548,13 @@ export class HAPServer extends EventEmitter {
       if (err) {
         debug("[%s] Error adding pairing info: %s", this.accessoryInfo.username, err.message);
         response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-        response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M6, TLVValues.ERROR_CODE, Codes.UNKNOWN));
+        response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M6, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
         connection._pairSetupState = undefined;
         return;
       }
       // send final pairing response to client
       response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M6, TLVValues.ENCRYPTED_DATA, Buffer.concat([encrypted.ciphertext, encrypted.authTag])));
+      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M6, TLVValues.ENCRYPTED_DATA, Buffer.concat([encrypted.ciphertext, encrypted.authTag])));
       connection._pairSetupState = undefined;
     }));
   }
@@ -556,14 +563,14 @@ export class HAPServer extends EventEmitter {
     const tlvData = tlv.decode(data);
     const sequence = tlvData[TLVValues.SEQUENCE_NUM][0]; // value is single byte with sequence number
 
-    if (sequence == States.M1)
+    if (sequence == PairingStates.M1)
       this.handlePairVerifyM1(connection, request, response, tlvData);
-    else if (sequence == States.M3 && connection._pairVerifyState === States.M2)
+    else if (sequence == PairingStates.M3 && connection._pairVerifyState === PairingStates.M2)
       this.handlePairVerifyM2(connection, request, response, tlvData);
     else {
       // Invalid state/sequence number
       response.writeHead(HAPPairingHTTPCode.BAD_REQUEST, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.STATE, sequence + 1, TLVValues.ERROR_CODE, Codes.UNKNOWN));
+      response.end(tlv.encode(TLVValues.STATE, sequence + 1, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
       return;
     }
   }
@@ -592,8 +599,8 @@ export class HAPServer extends EventEmitter {
     const encrypted = hapCrypto.chacha20_poly1305_encryptAndSeal(outputKey, Buffer.from("PV-Msg02"), null, message);
 
     response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-    response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M2, TLVValues.ENCRYPTED_DATA, Buffer.concat([encrypted.ciphertext, encrypted.authTag]), TLVValues.PUBLIC_KEY, publicKey));
-    connection._pairVerifyState = States.M2;
+    response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M2, TLVValues.ENCRYPTED_DATA, Buffer.concat([encrypted.ciphertext, encrypted.authTag]), TLVValues.PUBLIC_KEY, publicKey));
+    connection._pairVerifyState = PairingStates.M2;
   }
 
   private handlePairVerifyM2(connection: HAPConnection, request: IncomingMessage, response: ServerResponse, objects: Record<number, Buffer>): void {
@@ -613,7 +620,7 @@ export class HAPServer extends EventEmitter {
     } catch (error) {
       debug("[%s] M3: Failed to decrypt and/or verify", this.accessoryInfo.username);
       response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.STATE, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
+      response.end(tlv.encode(TLVValues.STATE, PairingStates.M4, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
       connection._pairVerifyState = undefined;
       return;
     }
@@ -629,20 +636,20 @@ export class HAPServer extends EventEmitter {
     if (!clientPublicKey) {
       debug("[%s] Client %s attempting to verify, but we are not paired; rejecting client", this.accessoryInfo.username, clientUsername);
       response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.STATE, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
+      response.end(tlv.encode(TLVValues.STATE, PairingStates.M4, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
       connection._pairVerifyState = undefined;
       return;
     }
     if (!tweetnacl.sign.detached.verify(material, proof, clientPublicKey)) {
       debug("[%s] Client %s provided an invalid signature", this.accessoryInfo.username, clientUsername);
       response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.STATE, States.M4, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
+      response.end(tlv.encode(TLVValues.STATE, PairingStates.M4, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
       connection._pairVerifyState = undefined;
       return;
     }
     debug("[%s] Client %s verification complete", this.accessoryInfo.username, clientUsername);
     response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-    response.end(tlv.encode(TLVValues.SEQUENCE_NUM, States.M4));
+    response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M4));
     // now that the client has been verified, we must "upgrade" our pseudo-HTTP connection to include
     // TCP-level encryption. We'll do this by adding some more encryption vars to the session, and using them
     // in future calls to onEncrypt, onDecrypt.
@@ -669,48 +676,48 @@ export class HAPServer extends EventEmitter {
     const method = objects[TLVValues.METHOD][0]; // value is single byte with request type
 
     const state = objects[TLVValues.STATE][0];
-    if (state !== States.M1) {
+    if (state !== PairingStates.M1) {
       return;
     }
 
-    if (method === Methods.ADD_PAIRING) {
+    if (method === PairMethods.ADD_PAIRING) {
       const identifier = objects[TLVValues.IDENTIFIER].toString();
       const publicKey = objects[TLVValues.PUBLIC_KEY];
       const permissions = objects[TLVValues.PERMISSIONS][0] as PermissionTypes;
 
-      this.emit(HAPServerEventTypes.ADD_PAIRING, connection, identifier, publicKey, permissions, once((error: Codes | 0) => {
+      this.emit(HAPServerEventTypes.ADD_PAIRING, connection, identifier, publicKey, permissions, once((error: TLVErrorCode | 0) => {
         if (error > 0) {
           debug("[%s] Pairings: failed ADD_PAIRING with code %d", this.accessoryInfo.username, error);
           response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-          response.end(tlv.encode(TLVValues.STATE, States.M2, TLVValues.ERROR_CODE, error));
+          response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, error));
           return;
         }
 
         response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-        response.end(tlv.encode(TLVValues.STATE, States.M2));
+        response.end(tlv.encode(TLVValues.STATE, PairingStates.M2));
         debug("[%s] Pairings: successfully executed ADD_PAIRING", this.accessoryInfo.username);
       }));
-    } else if (method === Methods.REMOVE_PAIRING) {
+    } else if (method === PairMethods.REMOVE_PAIRING) {
       const identifier = objects[TLVValues.IDENTIFIER].toString();
 
-      this.emit(HAPServerEventTypes.REMOVE_PAIRING, connection, identifier, once((error: Codes | 0) => {
+      this.emit(HAPServerEventTypes.REMOVE_PAIRING, connection, identifier, once((error: TLVErrorCode | 0) => {
         if (error > 0) {
           debug("[%s] Pairings: failed REMOVE_PAIRING with code %d", this.accessoryInfo.username, error);
           response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-          response.end(tlv.encode(TLVValues.STATE, States.M2, TLVValues.ERROR_CODE, error));
+          response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, error));
           return;
         }
 
         response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-        response.end(tlv.encode(TLVValues.STATE, States.M2));
+        response.end(tlv.encode(TLVValues.STATE, PairingStates.M2));
         debug("[%s] Pairings: successfully executed REMOVE_PAIRING", this.accessoryInfo.username);
       }));
-    } else if (method === Methods.LIST_PAIRINGS) {
-      this.emit(HAPServerEventTypes.LIST_PAIRINGS, connection, once((error: Codes | 0, data?: PairingInformation[]) => {
+    } else if (method === PairMethods.LIST_PAIRINGS) {
+      this.emit(HAPServerEventTypes.LIST_PAIRINGS, connection, once((error: TLVErrorCode | 0, data?: PairingInformation[]) => {
         if (error > 0) {
           debug("[%s] Pairings: failed LIST_PAIRINGS with code %d", this.accessoryInfo.username, error);
           response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-          response.end(tlv.encode(TLVValues.STATE, States.M2, TLVValues.ERROR_CODE, error));
+          response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, error));
           return;
         }
 
@@ -727,7 +734,7 @@ export class HAPServer extends EventEmitter {
           );
         });
 
-        const list = tlv.encode(TLVValues.STATE, States.M2, ...tlvList);
+        const list = tlv.encode(TLVValues.STATE, PairingStates.M2, ...tlvList);
         response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
         response.end(list);
         debug("[%s] Pairings: successfully executed LIST_PAIRINGS", this.accessoryInfo.username);

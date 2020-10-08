@@ -55,7 +55,7 @@ import { ButtonEvent } from "./gen/HomeKit-Remote";
 import {
   AccessoriesCallback,
   AddPairingCallback,
-  Codes,
+  TLVErrorCode,
   HAPHTTPCode,
   HAPServer,
   HAPServerEventTypes,
@@ -1237,19 +1237,19 @@ export class Accessory extends EventEmitter {
 
   private handleAddPairing(connection: HAPConnection, username: string, publicKey: Buffer, permission: PermissionTypes, callback: AddPairingCallback): void {
     if (!this._accessoryInfo) {
-      callback(Codes.UNAVAILABLE);
+      callback(TLVErrorCode.UNAVAILABLE);
       return;
     }
 
     if (!this._accessoryInfo.hasAdminPermissions(connection.username!)) {
-      callback(Codes.AUTHENTICATION);
+      callback(TLVErrorCode.AUTHENTICATION);
       return;
     }
 
     const existingKey = this._accessoryInfo.getClientPublicKey(username);
     if (existingKey) {
       if (existingKey.toString() !== publicKey.toString()) {
-        callback(Codes.UNKNOWN);
+        callback(TLVErrorCode.UNKNOWN);
         return;
       }
 
@@ -1265,12 +1265,12 @@ export class Accessory extends EventEmitter {
 
   private handleRemovePairing(connection: HAPConnection, username: HAPUsername, callback: RemovePairingCallback): void {
     if (!this._accessoryInfo) {
-      callback(Codes.UNAVAILABLE);
+      callback(TLVErrorCode.UNAVAILABLE);
       return;
     }
 
     if (!this._accessoryInfo.hasAdminPermissions(connection.username!)) {
-      callback(Codes.AUTHENTICATION);
+      callback(TLVErrorCode.AUTHENTICATION);
       return;
     }
 
@@ -1292,12 +1292,12 @@ export class Accessory extends EventEmitter {
 
   private handleListPairings(connection: HAPConnection, callback: ListPairingsCallback): void {
     if (!this._accessoryInfo) {
-      callback(Codes.UNAVAILABLE);
+      callback(TLVErrorCode.UNAVAILABLE);
       return;
     }
 
     if (!this._accessoryInfo.hasAdminPermissions(connection.username!)) {
-      callback(Codes.AUTHENTICATION);
+      callback(TLVErrorCode.AUTHENTICATION);
       return;
     }
 
