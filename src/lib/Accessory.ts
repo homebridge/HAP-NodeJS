@@ -501,15 +501,15 @@ export class Accessory extends EventEmitter {
     debug('Reachability update is no longer being supported.');
   }
 
-  addBridgedAccessory = (accessory: Accessory, deferUpdate: boolean = false) => {
+  public addBridgedAccessory(accessory: Accessory, deferUpdate: boolean = false): Accessory {
     if (accessory._isBridge) {
       throw new Error("Cannot Bridge another Bridge!");
     }
 
     // check for UUID conflict
-    for (const accessory of this.bridgedAccessories) {
-      if (accessory.UUID === accessory.UUID) {
-        throw new Error("Cannot add a bridged Accessory with the same UUID as another bridged Accessory: " + accessory.UUID);
+    for (const existing of this.bridgedAccessories) {
+      if (existing.UUID === accessory.UUID) {
+        throw new Error("Cannot add a bridged Accessory with the same UUID as another bridged Accessory: " + existing.UUID);
       }
     }
 
