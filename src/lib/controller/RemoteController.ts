@@ -1380,6 +1380,7 @@ export class SiriAudioSession extends EventEmitter {
             this.producerTimer = undefined;
             this.handleProducerError(DataSendCloseReason.CANCELLED);
         }, 3000);
+        this.producerTimer.unref();
     }
 
     private stopAudioProducer() {

@@ -364,6 +364,7 @@ export class HAPConnection extends EventEmitter {
       });
       if (!this.handlingRequest && !this.eventsTimer) { // if we are handling a request or there is already a timer running we just add it in the queue
         this.eventsTimer = setTimeout(this.handleEventsTimeout.bind(this), 250);
+        this.eventsTimer.unref();
       }
     }
   }

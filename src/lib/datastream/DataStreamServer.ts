@@ -235,6 +235,7 @@ export class DataStreamServer extends EventEmitter { // TODO removeAllEvent hand
             accessoryKeySalt: accessoryKeySalt,
             connectTimeout: setTimeout(() => this.timeoutPreparedSession(preparedSession), 10000),
         };
+        preparedSession.connectTimeout!.unref();
         this.preparedSessions.push(preparedSession);
 
         this.checkTCPServerEstablished(preparedSession, () => callback(preparedSession));

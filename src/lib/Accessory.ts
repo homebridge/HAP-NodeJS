@@ -1163,6 +1163,7 @@ export class Accessory extends EventEmitter {
         }
       }
     }, 1000);
+    this.configurationChangeDebounceTimeout.unref();
     // 1d is fine, HomeKit is built that with configuration updates no iid or aid conflicts occur.
     // Thus the only thing happening when the txt update arrives late is already removed accessories/services
     // not responding or new accessories/services not yet shown
@@ -1319,7 +1320,9 @@ export class Accessory extends EventEmitter {
 
         callback(response);
       }, 7000);
+      timeout.unref();
     }, 3000);
+    timeout.unref();
 
     for (const id of request.ids) {
       const name = id.aid + "." + id.iid;
@@ -1479,7 +1482,9 @@ export class Accessory extends EventEmitter {
 
         callback(response);
       }, 7000);
+      timeout.unref();
     }, 3000);
+    timeout.unref();
 
     for (const data of writeRequest.characteristics) {
       const id = data.aid + "." + data.iid;

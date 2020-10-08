@@ -378,7 +378,9 @@ export class CameraController extends EventEmitter implements Controller<CameraC
 
           reject(HAPStatus.OPERATION_TIMED_OUT);
         }, 10000);
+        timeout.unref();
       }, 5000);
+      timeout.unref();
 
       try {
         this.delegate.handleSnapshotRequest({
