@@ -147,17 +147,32 @@ export class Service extends EventEmitter {
   static WiFiTransport: typeof HomeKitTypes.Generated.WiFiTransport;
 
   // NOTICE: when adding/changing properties, remember to possibly adjust the serialize/deserialize functions
+  public displayName: string;
+  public UUID: string;
+  subtype?: string;
   iid: Nullable<number> = null; // assigned later by our containing Accessory
   name: Nullable<string> = null;
   characteristics: Characteristic[] = [];
   optionalCharacteristics: Characteristic[] = [];
+  /**
+   * @internal
+   */
   isHiddenService: boolean = false;
+  /**
+   * @internal
+   */
   isPrimaryService: boolean = false; // do not write to this directly
+  /**
+   * @internal
+   */
   linkedServices: Service[] = [];
 
-  constructor(public displayName: string = "", public UUID: string, public subtype?: string) {
+  public constructor(displayName: string = "", UUID: string, subtype?: string) {
     super();
-    if (!UUID) throw new Error("Services must be created with a valid UUID.");
+    assert(UUID, "Services must be created with a valid UUID.");
+    this.displayName = displayName;
+    this.UUID = UUID;
+    this.subtype = subtype;
 
     // every service has an optional Characteristic.Name property - we'll set it to our displayName
     // if one was given
@@ -179,7 +194,7 @@ export class Service extends EventEmitter {
    *
    * @returns the serviceId
    */
-  getServiceId(): ServiceId {
+  public getServiceId(): ServiceId {
     return this.UUID + (this.subtype || "");
   }
 
@@ -224,7 +239,7 @@ export class Service extends EventEmitter {
    *
    * @param isPrimary {boolean} - optional boolean (default true) if the service should be the primary service
    */
-  setPrimaryService = (isPrimary: boolean = true) => {
+  public setPrimaryService(isPrimary: boolean = true): void {
     this.isPrimaryService = isPrimary;
     this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
   };
@@ -234,28 +249,40 @@ export class Service extends EventEmitter {
    *
    * @param isHidden {boolean} - optional boolean (default true) if the service should be marked hidden
    */
-  setHiddenService = (isHidden: boolean = true) => {
+  public setHiddenService(isHidden: boolean = true): void {
     this.isHiddenService = isHidden;
     this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
   }
 
-//Allows setting other services that link to this one.
-  addLinkedService = (newLinkedService: Service) => {
+  /**
+   * Adds a new link to the specified service. The service MUST be already added to
+   * the SAME accessory.
+   *
+   * @param service - The service this service should link to
+   */
+  public addLinkedService(service: Service): void {
     //TODO: Add a check if the service is on the same accessory.
-    if (!this.linkedServices.includes(newLinkedService))
-      this.linkedServices.push(newLinkedService);
+    if (!this.linkedServices.includes(service)) {
+      this.linkedServices.push(service);
+    }
     this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
   }
 
-  removeLinkedService = (oldLinkedService: Service) => {
+  /**
+   * Removes a link to the specified service which was previously added with {@link addLinkedService}
+   *
+   * @param service - Previously linked service
+   */
+  public removeLinkedService(service: Service): void {
     //TODO: Add a check if the service is on the same accessory.
-    const index = this.linkedServices.indexOf(oldLinkedService);
-    if (index !== -1)
+    const index = this.linkedServices.indexOf(service);
+    if (index !== -1) {
       this.linkedServices.splice(index, 1);
+    }
     this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
   }
 
-  removeCharacteristic = (characteristic: Characteristic) => {
+  public removeCharacteristic(characteristic: Characteristic): void {
     let targetCharacteristicIndex;
 
     for (let index in this.characteristics) {
@@ -276,11 +303,11 @@ export class Service extends EventEmitter {
   }
 
   // If a Characteristic constructor is passed a Characteristic object will always be returned
-  getCharacteristic(constructor: WithUUID<{new (): Characteristic}>): Characteristic
+  public getCharacteristic(constructor: WithUUID<{new (): Characteristic}>): Characteristic
   // Still support using a Characteristic constructor or a name so "passing though" a value still works
   // https://www.typescriptlang.org/docs/handbook/declaration-files/do-s-and-don-ts.html#use-union-types
-  getCharacteristic(name: string | WithUUID<{new (): Characteristic}>): Characteristic | undefined
-  getCharacteristic(name: string | WithUUID<{new (): Characteristic}>) {
+  public getCharacteristic(name: string | WithUUID<{new (): Characteristic}>): Characteristic | undefined
+  public getCharacteristic(name: string | WithUUID<{new (): Characteristic}>) {
     // returns a characteristic object from the service
     // If  Service.prototype.getCharacteristic(Characteristic.Type)  does not find the characteristic,
     // but the type is in optionalCharacteristics, it adds the characteristic.type to the service and returns it.
@@ -309,7 +336,7 @@ export class Service extends EventEmitter {
     }
   }
 
-  testCharacteristic = <T extends WithUUID<typeof Characteristic>>(name: string | T) => {
+  public testCharacteristic<T extends WithUUID<typeof Characteristic>>(name: string | T): boolean {
     // checks for the existence of a characteristic object in the service
     let index, characteristic;
     for (index in this.characteristics) {
@@ -323,18 +350,18 @@ export class Service extends EventEmitter {
     return false;
   }
 
-  setCharacteristic = <T extends WithUUID<{new (): Characteristic}>>(name: string | T, value: CharacteristicValue) => {
+  public setCharacteristic<T extends WithUUID<{new (): Characteristic}>>(name: string | T, value: CharacteristicValue): Service {
     this.getCharacteristic(name)!.setValue(value);
     return this; // for chaining
   }
 
   // A function to only updating the remote value, but not firing the 'set' event.
-  updateCharacteristic = <T extends WithUUID<{new (): Characteristic}>>(name: string | T, value: CharacteristicValue) => {
+  public updateCharacteristic<T extends WithUUID<{new (): Characteristic}>>(name: string | T, value: CharacteristicValue): Service {
     this.getCharacteristic(name)!.updateValue(value);
     return this;
   }
 
-  addOptionalCharacteristic = (characteristic: Characteristic | {new (): Characteristic}) => {
+  public addOptionalCharacteristic(characteristic: Characteristic | {new (): Characteristic}): void {
     // characteristic might be a constructor like `Characteristic.Brightness` instead of an instance
     // of Characteristic. Coerce if necessary.
     if (typeof characteristic === 'function') {
@@ -345,6 +372,7 @@ export class Service extends EventEmitter {
     this.optionalCharacteristics.push(characteristic);
   }
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * This method was created to copy all characteristics from another service to this.
    * It's only adopting is currently in homebridge to merge the AccessoryInformation service. So some things
@@ -353,8 +381,9 @@ export class Service extends EventEmitter {
    * It will not remove characteristics which are present currently but not added on the other characteristic.
    * It will not replace the characteristic if the value is falsy (except of '0' or 'false')
    * @param service
+   * @internal used by homebridge
    */
-  replaceCharacteristicsFromService(service: Service) {
+  replaceCharacteristicsFromService(service: Service): void {
     if (this.UUID !== service.UUID) {
       throw new Error(`Incompatible services. Tried replacing characteristics of ${this.UUID} with characteristics from ${service.UUID}`);
     }
@@ -396,7 +425,10 @@ export class Service extends EventEmitter {
     Object.values(foreignCharacteristics).forEach(characteristic => this.addCharacteristic(characteristic));
   }
 
-  getCharacteristicByIID = (iid: number) => {
+  /**
+   * @internal
+   */
+  getCharacteristicByIID(iid: number): Characteristic | undefined {
     for (let index in this.characteristics) {
       const characteristic = this.characteristics[index];
       if (characteristic.iid === iid)
@@ -404,7 +436,10 @@ export class Service extends EventEmitter {
     }
   }
 
-  _assignIDs = (identifierCache: IdentifierCache, accessoryName: string, baseIID: number = 0) => {
+  /**
+   * @internal
+   */
+  _assignIDs(identifierCache: IdentifierCache, accessoryName: string, baseIID: number = 0): void {
     // the Accessory Information service must have a (reserved by IdentifierCache) ID of 1
     if (this.UUID === '0000003E-0000-1000-8000-0026BB765291') {
       this.iid = 1;
@@ -425,7 +460,7 @@ export class Service extends EventEmitter {
    * @internal used to generate response to /accessories query
    */
   toHAP(connection: HAPConnection): Promise<ServiceJsonObject> {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
       assert(this.iid, "iid cannot be undefined for service '" + this.displayName + "'");
       assert(this.characteristics.length, "service '" + this.displayName + "' does not have any characteristics!");
 
@@ -514,14 +549,20 @@ export class Service extends EventEmitter {
     return service;
   }
 
-  _setupCharacteristic = (characteristic: Characteristic) => {
+  /**
+   * @internal
+   */
+  _setupCharacteristic(characteristic: Characteristic): void {
     // listen for changes in characteristics and bubble them up
     characteristic.on(CharacteristicEventTypes.CHANGE, (change: CharacteristicChange) => {
       this.emit(ServiceEventTypes.CHARACTERISTIC_CHANGE, { ...change, characteristic: characteristic });
     });
   }
 
-  _sideloadCharacteristics = (targetCharacteristics: Characteristic[]) => {
+  /**
+   * @internal
+   */
+  _sideloadCharacteristics(targetCharacteristics: Characteristic[]): void {
     for (let index in targetCharacteristics) {
       const target = targetCharacteristics[index];
       this._setupCharacteristic(target);
@@ -530,7 +571,10 @@ export class Service extends EventEmitter {
     this.characteristics = targetCharacteristics.slice();
   }
 
-  static serialize = (service: Service): SerializedService => {
+  /**
+   * @internal
+   */
+  static serialize(service: Service): SerializedService {
     return {
       displayName: service.displayName,
       UUID: service.UUID,
@@ -544,7 +588,10 @@ export class Service extends EventEmitter {
     };
   };
 
-  static deserialize = (json: SerializedService): Service => {
+  /**
+   * @internal
+   */
+  static deserialize(json: SerializedService): Service {
     const service = new Service(json.displayName, json.UUID, json.subtype);
 
     service.isHiddenService = !!json.hiddenService;
