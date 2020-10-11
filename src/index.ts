@@ -24,6 +24,7 @@ export * from './lib/controller';
 export * from './lib/util/clone';
 export * from './lib/util/once';
 export * from './lib/util/tlv';
+export * from './lib/util/hapStatusError';
 
 export * from './types';
 export const LegacyTypes = legacyTypes;
