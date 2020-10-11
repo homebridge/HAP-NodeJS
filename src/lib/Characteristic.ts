@@ -491,7 +491,14 @@ export class Characteristic extends EventEmitter {
   status: HAPStatus = HAPStatus.SUCCESS;
   props: CharacteristicProps;
 
+  /**
+   * The .onGet handler
+   */
   private getHandler?: () => Promise<Nullable<CharacteristicValue>> | Nullable<CharacteristicValue>;
+
+  /**
+   * The .onSet handler
+   */
   private setHandler?: (value: CharacteristicValue) => Promise<Nullable<CharacteristicValue> | void> | Nullable<CharacteristicValue> | void;
 
   private subscriptions: number = 0;
