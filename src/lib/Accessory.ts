@@ -967,8 +967,10 @@ export class Accessory extends EventEmitter {
   /**
    * Returns a JSON representation of this accessory without characteristic values.
    */
-  private internalHAPRepresentation(): AccessoryJsonObject[] {
-    this._assignIDs(this._identifierCache!); // make sure our aid/iid's are all assigned
+  private internalHAPRepresentation(assignIds: boolean = true): AccessoryJsonObject[] {
+    if (assignIds) {
+      this._assignIDs(this._identifierCache!); // make sure our aid/iid's are all assigned
+    }
     assert(this.aid, "aid cannot be undefined for accessory '" + this.displayName + "'");
     assert(this.services.length, "accessory '" + this.displayName + "' does not have any services!");
 
@@ -981,7 +983,7 @@ export class Accessory extends EventEmitter {
 
     if (!this.bridged) {
       for (const accessory of this.bridgedAccessories) {
-        accessories.push(accessory.internalHAPRepresentation()[0]);
+        accessories.push(accessory.internalHAPRepresentation(false)[0]);
       }
     }
 
@@ -1077,7 +1079,7 @@ export class Accessory extends EventEmitter {
     // get our accessory information in HAP format and determine if our configuration (that is, our
     // Accessories/Services/Characteristics) has changed since the last time we were published. make
     // sure to omit actual values since these are not part of the "configuration".
-    const config = this.internalHAPRepresentation(); // TODO ensure this stuff is ordered
+    const config = this.internalHAPRepresentation(false); // TODO ensure this stuff is ordered
     this._accessoryInfo.checkForCurrentConfigurationNumberIncrement(config, true);
 
     this.validateAccessory(true);

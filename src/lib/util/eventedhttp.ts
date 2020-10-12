@@ -357,6 +357,8 @@ export class HAPConnection extends EventEmitter {
         }],
       });
     } else {
+      // TODO should a new event not remove a previous event (to support censor open -> censor closed :thinking:)
+      //   any only remove previous events if the same value was set?
       this.queuedEvents.set(eventName, {
         aid: aid,
         iid: iid,

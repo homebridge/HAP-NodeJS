@@ -40,7 +40,7 @@ export interface CharacteristicJsonObject {
   maxLen?: number,
   maxDataLen?: number,
   "valid-values"?: number[],
-  "valid-values-range"?: [number, number],
+  "valid-values-range"?: [min: number, max: number],
 }
 
 export interface ServiceJsonObject {
