@@ -77,8 +77,7 @@ fan
 
     if (FAKE_FAN.powerOn) {
       return true;
-    }
-    else {
+    } else {
       return false;
     }
   });
