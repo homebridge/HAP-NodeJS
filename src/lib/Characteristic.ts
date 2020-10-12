@@ -132,7 +132,7 @@ export interface CharacteristicProps {
    * Two element array where the first value specifies the lowest valid value and
    * the second element specifies the highest valid value.
    */
-  validValueRanges?: [number, number];
+  validValueRanges?: [min: number, max: number];
   adminOnlyAccess?: Access[];
 }
 
@@ -582,7 +582,7 @@ export class Characteristic extends EventEmitter {
       this.props.format = props.format;
     }
     if (props.perms) {
-      assert(props.perms, "characteristic prop perms cannot be empty array");
+      assert(props.perms.length, "characteristic prop perms cannot be empty array");
       this.props.perms = props.perms;
     }
     if (props.unit !== undefined) {
@@ -1008,7 +1008,7 @@ export class Characteristic extends EventEmitter {
       case Formats.ARRAY:
         return [];
       default:
-        return this.props.minValue || 0;
+        return this.props.minValue ?? 0;
     }
   }
 
@@ -1016,7 +1016,7 @@ export class Characteristic extends EventEmitter {
     if (!this.props.minStep) {
       return Math.round(value); // round to 0 decimal places
     }
-    const base = this.props.minValue || 0;
+    const base = this.props.minValue ?? 0;
     const times = ((value - base) / this.props.minStep); // this value could become very large, so this doesn't really support little minStep values
     return Math.round(times) * this.props.minStep + base;
   }
