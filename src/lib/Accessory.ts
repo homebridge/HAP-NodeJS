@@ -890,8 +890,7 @@ export class Accessory extends EventEmitter {
       this.aid = 1;
     }
 
-    for (let index in this.services) {
-      const service = this.services[index];
+    for (const service of this.services) {
       if (this._isBridge) {
         service._assignIDs(identifierCache, this.UUID, 2000000000);
       } else {
@@ -969,6 +968,7 @@ export class Accessory extends EventEmitter {
    * Returns a JSON representation of this accessory without characteristic values.
    */
   private internalHAPRepresentation(): AccessoryJsonObject[] {
+    this._assignIDs(this._identifierCache!); // make sure our aid/iid's are all assigned
     assert(this.aid, "aid cannot be undefined for accessory '" + this.displayName + "'");
     assert(this.services.length, "accessory '" + this.displayName + "' does not have any services!");
 
