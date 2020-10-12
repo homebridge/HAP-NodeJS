@@ -189,6 +189,8 @@ export const enum CharacteristicEventTypes {
 
 export type CharacteristicGetCallback = (status?: HAPStatus | null | Error, value?: Nullable<CharacteristicValue>) => void;
 export type CharacteristicSetCallback = (error?: HAPStatus | null | Error, writeResponse?: Nullable<CharacteristicValue>) => void;
+export type CharacteristicGetHandler = () => Promise<Nullable<CharacteristicValue>> | Nullable<CharacteristicValue>;
+export type CharacteristicSetHandler = (value: CharacteristicValue) => Promise<Nullable<CharacteristicValue> | void> | Nullable<CharacteristicValue> | void;
 
 export type AdditionalAuthorizationHandler = (additionalAuthorizationData: string | undefined) => boolean;
 
@@ -492,14 +494,14 @@ export class Characteristic extends EventEmitter {
   props: CharacteristicProps;
 
   /**
-   * The .onGet handler
+   * The {@link onGet} handler
    */
-  private getHandler?: () => Promise<Nullable<CharacteristicValue>> | Nullable<CharacteristicValue>;
+  private getHandler?: CharacteristicGetHandler;
 
   /**
-   * The .onSet handler
+   * The {@link onSet} handler
    */
-  private setHandler?: (value: CharacteristicValue) => Promise<Nullable<CharacteristicValue> | void> | Nullable<CharacteristicValue> | void;
+  private setHandler?: CharacteristicSetHandler;
 
   private subscriptions: number = 0;
   /**
@@ -523,7 +525,7 @@ export class Characteristic extends EventEmitter {
    * Accepts a function that will be called to retrieve the current value of a Characteristic.
    * The function must return a valid Characteristic value for the Characteristic type.
    * May optionally return a promise.
-   * 
+   *
    * @example
    * ```ts
    * Characteristic.onGet(async () => {
@@ -532,7 +534,7 @@ export class Characteristic extends EventEmitter {
    * ```
    * @param handler
    */
-  public onGet(handler: () => Promise<Nullable<CharacteristicValue>> | Nullable<CharacteristicValue>) {
+  public onGet(handler: CharacteristicGetHandler) {
     if (typeof handler !== 'function' || handler.length !== 0) {
       console.warn(`[${this.displayName}] .onGet handler must be a function with exactly zero input arguments.`);
       return this;
@@ -543,9 +545,10 @@ export class Characteristic extends EventEmitter {
 
   /**
    * Accepts a function that will be called when setting the value of a Characteristic.
-   * If the Characteristic expects a set response value, the returned value will be used.
+   * If the characteristic supports {@link Perms.WRITE_RESPONSE} and the request requests a write response value,
+   * the returned value will be used.
    * May optionally return a promise.
-   * 
+   *
    * @example
    * ```ts
    * Characteristic.onSet(async (value: CharacteristicValue) => {
@@ -554,7 +557,7 @@ export class Characteristic extends EventEmitter {
    * ```
    * @param handler
    */
-  public onSet(handler: (value: CharacteristicValue) => Promise<Nullable<CharacteristicValue> | void> | Nullable<CharacteristicValue> | void) {
+  public onSet(handler: CharacteristicSetHandler) {
     if (typeof handler !== 'function' || handler.length !== 1) {
       console.warn(`[${this.displayName}] .onSet handler must be a function with exactly one input argument.`);
       return this;
@@ -769,12 +772,12 @@ export class Characteristic extends EventEmitter {
    */
   async handleGetRequest(connection?: HAPConnection, context?: any): Promise<Nullable<CharacteristicValue>> {
     if (!this.props.perms.includes(Perms.PAIRED_READ)) { // check if we are allowed to read from this characteristic
-      return Promise.reject(HAPStatus.WRITE_ONLY_CHARACTERISTIC);
+      throw HAPStatus.WRITE_ONLY_CHARACTERISTIC;
     }
 
     if (this.UUID === Characteristic.ProgrammableSwitchEvent.UUID) {
       // special workaround for event only programmable switch event, which must always return null
-      return Promise.resolve(null);
+      return null;
     }
 
     if (this.getHandler) {
@@ -785,7 +788,15 @@ export class Characteristic extends EventEmitter {
       try {
         let value = await this.getHandler();
         this.status = HAPStatus.SUCCESS;
-        value = this.validateUserInput(value);
+
+        try {
+          value = this.validateUserInput(value);
+        } catch (error) {
+          console.warn(`[${this.displayName}] An illegal value was supplied by the read handler for characteristic: ${error.message}`);
+          this.status = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+          return Promise.reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+        }
+
         const oldValue = this.value;
         this.value = value;
 
@@ -793,19 +804,24 @@ export class Characteristic extends EventEmitter {
           this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
         }
       } catch (error) {
-        if (error instanceof HapStatusError) {
-          this.status = (error as HapStatusError).hapStatus;
-          throw this.status;
+        if (typeof error === "number") {
+          this.status = error;
+        } else if (error instanceof HapStatusError) {
+          this.status = error.hapStatus;
         } else {
           console.warn(`[${this.displayName}] Unhandled error thrown inside read handler for characteristic: ${error.stack}`);
           this.status = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
-          throw HAPStatus.SERVICE_COMMUNICATION_FAILURE;
         }
+        throw this.status;
       }
     }
 
     if (this.listeners(CharacteristicEventTypes.GET).length === 0) {
-      return this.status? Promise.reject(this.status): Promise.resolve(this.value);
+      if (this.status) {
+        throw this.status;
+      } else {
+        return this.value;
+      }
     }
 
     return new Promise((resolve, reject) => {
@@ -815,7 +831,7 @@ export class Characteristic extends EventEmitter {
             if (typeof status === "number") {
               this.status = status;
             } else if (status instanceof HapStatusError) {
-              this.status = (status as HapStatusError).hapStatus;
+              this.status = status.hapStatus;
             } else {
               this.status = extractHAPStatusFromError(status);
               debug("[%s] Received error from get handler %s", this.displayName, status.stack);
@@ -877,10 +893,10 @@ export class Characteristic extends EventEmitter {
         const writeResponse = await this.setHandler(value);
         this.status = HAPStatus.SUCCESS;
 
-        if (writeResponse != null && writeResponse !== undefined && this.props.perms.includes(Perms.WRITE_RESPONSE)) {
+        if (writeResponse != null && this.props.perms.includes(Perms.WRITE_RESPONSE)) {
           this.value = writeResponse;
         } else {
-          if (writeResponse != null && writeResponse !== undefined) {
+          if (writeResponse != null) {
             console.warn(`[${this.displayName}] SET handler returned write response value, though the characteristic doesn't support write response!`);
           }
           this.value = value;
@@ -889,14 +905,15 @@ export class Characteristic extends EventEmitter {
         this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
         return this.value;
       } catch (error) {
-        if (error instanceof HapStatusError) {
-          this.status = (error as HapStatusError).hapStatus;
-          throw this.status;
+        if (typeof error === "number") {
+          this.status = error;
+        } else if (error instanceof HapStatusError) {
+          this.status = error.hapStatus;
         } else {
           console.warn(`[${this.displayName}] Unhandled error thrown inside write handler for characteristic: ${error.stack}`);
           this.status = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
-          throw HAPStatus.SERVICE_COMMUNICATION_FAILURE;
         }
+        throw this.status;
       }
     }
 
@@ -916,7 +933,7 @@ export class Characteristic extends EventEmitter {
               if (typeof status === "number") {
                 this.status = status;
               } else if (status instanceof HapStatusError) {
-                this.status = (status as HapStatusError).hapStatus;
+                this.status = status.hapStatus;
               } else {
                 this.status = extractHAPStatusFromError(status);
                 debug("[%s] Received error from set handler %s", this.displayName, status.stack);
