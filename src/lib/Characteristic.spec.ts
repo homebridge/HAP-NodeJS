@@ -26,7 +26,7 @@ describe('Characteristic', () => {
     it('should overwrite existing properties', () => {
       const characteristic = createCharacteristic(Formats.BOOL);
 
-      const NEW_PROPS = {format: Formats.STRING, perms: []};
+      const NEW_PROPS = {format: Formats.STRING, perms: [Perms.NOTIFY]};
       characteristic.setProps(NEW_PROPS);
 
       expect(characteristic.props).toEqual(NEW_PROPS);
@@ -205,7 +205,7 @@ describe('Characteristic', () => {
       const characteristic = createCharacteristicWithProps({
         format: Formats.FLOAT,
         minStep: 0.001,
-        perms: [],
+        perms: [Perms.NOTIFY],
       });
       // @ts-expect-error
       expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
@@ -216,7 +216,7 @@ describe('Characteristic', () => {
       const characteristic = createCharacteristicWithProps({
         format: Formats.FLOAT,
         minStep: 0.1,
-        perms: [],
+        perms: [Perms.NOTIFY],
       });
       // @ts-expect-error
       expect(characteristic.validateUserInput(VALUE)).toEqual(1.6);

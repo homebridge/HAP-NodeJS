@@ -582,7 +582,7 @@ export class Characteristic extends EventEmitter {
       this.props.format = props.format;
     }
     if (props.perms) {
-      assert(props.perms.length, "characteristic prop perms cannot be empty array");
+      assert(props.perms.length > 0, "characteristic prop perms cannot be empty array");
       this.props.perms = props.perms;
     }
     if (props.unit !== undefined) {
