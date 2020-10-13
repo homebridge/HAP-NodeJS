@@ -845,13 +845,11 @@ export class Accessory extends EventEmitter {
         }
       };
 
-      const manufacturer = service.getCharacteristic(Characteristic.Manufacturer).value;
       const model = service.getCharacteristic(Characteristic.Model).value;
       const serialNumber = service.getCharacteristic(Characteristic.SerialNumber).value;
       const firmwareRevision = service.getCharacteristic(Characteristic.FirmwareRevision).value;
       const name = service.getCharacteristic(Characteristic.Name).value;
 
-      checkValue("Manufacturer", manufacturer);
       checkValue("Model", model);
       checkValue("SerialNumber", serialNumber);
       checkValue("FirmwareRevision", firmwareRevision);
