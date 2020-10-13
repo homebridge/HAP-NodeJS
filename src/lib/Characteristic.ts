@@ -1293,7 +1293,7 @@ export class Characteristic extends EventEmitter {
 
         const maxLength = this.props.maxLen != null? this.props.maxLen: 64; // default is 64 (max is 256 which is set in setProps)
         if (value.length > maxLength) {
-          console.warn(`[${this.displayName}] characteristic was supplied illegal value: string '${value}' exceeded max length of ${maxLength}. Supplying illegal values will throw errors in the future!`);
+          console.warn(`[${this.displayName}] characteristic was supplied illegal value: string '${value}' exceeded max length of ${maxLength}.`);
           value = value.substring(0, maxLength);
         }
 
@@ -1315,11 +1315,11 @@ export class Characteristic extends EventEmitter {
 
     if (typeof value === "number") {
       if (numericMin != null && value < numericMin) {
-        console.warn(`[${this.displayName}] characteristic was supplied illegal value: number ${value} exceeded minimum of ${numericMin}. Supplying illegal values will throw errors in the future!`);
+        console.warn(`[${this.displayName}] characteristic was supplied illegal value: number ${value} exceeded minimum of ${numericMin}.`);
         value = numericMin;
       }
       if (numericMax != null && value > numericMax) {
-        console.warn(`[${this.displayName}] characteristic was supplied illegal value: number ${value} exceeded maximum of ${numericMax}. Supplying illegal values will throw errors in the future!`);
+        console.warn(`[${this.displayName}] characteristic was supplied illegal value: number ${value} exceeded maximum of ${numericMax}.`);
         value = numericMax;
       }
 
