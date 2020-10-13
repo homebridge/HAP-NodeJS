@@ -874,7 +874,9 @@ export class Characteristic extends EventEmitter {
   async handleSetRequest(value: CharacteristicValue, connection?: HAPConnection, context?: any): Promise<CharacteristicValue | void> {
     this.status = HAPStatus.SUCCESS;
 
-    if (!this.validClientSuppliedValue(value)) {
+    if (connection !== undefined && !this.validClientSuppliedValue(value)) {
+      // if connection is undefined, the set "request" comes from the setValue method.
+      // for setValue a value of "null" is allowed and checked via validateUserInput.
       return Promise.reject(HAPStatus.INVALID_VALUE_IN_REQUEST);
     }
 
@@ -1167,9 +1169,13 @@ export class Characteristic extends EventEmitter {
    */
   private validateUserInput(value?: Nullable<CharacteristicValue>): Nullable<CharacteristicValue> {
     if (value === undefined) {
-      console.warn(`[${this.displayName}] characteristic was supplied illegal value: undefined. Supplying illegal values will throw errors in the future!`);
-      return this.getDefaultValue();
+      throw new Error(`[${this.displayName}] characteristic was supplied illegal value: undefined!`);
     } else if (value === null) {
+      if (this.UUID === Characteristic.Model.UUID || this.UUID === Characteristic.SerialNumber.UUID) { // mirrors the statement in case: Formats.STRING
+        console.error(new Error(`[${this.displayName}] characteristic must have a non null value otherwise HomeKit will reject this accessory. Ignoring new value.`).stack);
+        return this.value; // don't change the value
+      }
+
       return null; // null is allowed
     }
 
@@ -1286,8 +1292,8 @@ export class Characteristic extends EventEmitter {
           throw new Error("characteristic value expected string and received " + (typeof value));
         }
 
-        if (value.length <= 1 && (this.UUID === Characteristic.Model.UUID || this.UUID === Characteristic.SerialNumber.UUID)) {
-          console.error(new Error(`[${this.displayName}] characteristic must have a length of more than 1 character otherwise HomeKit will reject this accessory. Ignoring it.`).stack);
+        if (value.length <= 1 && (this.UUID === Characteristic.Model.UUID || this.UUID === Characteristic.SerialNumber.UUID)) { // mirrors the case value = null at the beginning
+          console.error(new Error(`[${this.displayName}] characteristic must have a length of more than 1 character otherwise HomeKit will reject this accessory. Ignoring new value.`).stack);
           return this.value; // just return the current value
         }
 
