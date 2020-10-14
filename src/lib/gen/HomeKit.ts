@@ -916,10 +916,7 @@ export class FirmwareRevision extends Characteristic {
   static readonly UUID: string = '00000052-0000-1000-8000-0026BB765291';
 
   constructor() {
-    // TODO change later
-    // @ts-expect-error
-    super('Firmware Revision', FirmwareRevision.UUID);
-    this.setProps({
+    super('Firmware Revision', FirmwareRevision.UUID, {
       format: Formats.STRING,
       perms: [Perms.PAIRED_READ]
     });
@@ -4026,10 +4023,10 @@ export class AccessoryInformation extends Service {
 
     // Required Characteristics
     this.addCharacteristic(Characteristic.Identify);
-    this.addCharacteristic(Characteristic.Manufacturer).updateValue("Default-Manufacturer");
-    this.addCharacteristic(Characteristic.Model).updateValue("Default-Model");
+    this.addCharacteristic(Characteristic.Manufacturer);
+    this.addCharacteristic(Characteristic.Model);
     this.addCharacteristic(Characteristic.Name);
-    this.addCharacteristic(Characteristic.SerialNumber).updateValue("Default-SerialNumber");
+    this.addCharacteristic(Characteristic.SerialNumber);
 
     // Optional Characteristics
     this.addOptionalCharacteristic(Characteristic.AccessoryFlags);

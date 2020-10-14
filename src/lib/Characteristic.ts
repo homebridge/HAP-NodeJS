@@ -1000,7 +1000,18 @@ export class Characteristic extends EventEmitter {
       case Formats.BOOL:
         return false;
       case Formats.STRING:
-        return "";
+        switch (this.UUID) {
+          case Characteristic.Manufacturer.UUID:
+            return "Default-Manufacturer";
+          case Characteristic.Model.UUID:
+            return "Default-Model";
+          case Characteristic.SerialNumber.UUID:
+            return "Default-SerialNumber";
+          case Characteristic.FirmwareRevision.UUID:
+            return "0.0.0";
+          default:
+              return "";
+        }
       case Formats.DATA:
         return null; // who knows!
       case Formats.TLV8:
@@ -1169,7 +1180,8 @@ export class Characteristic extends EventEmitter {
    */
   private validateUserInput(value?: Nullable<CharacteristicValue>): Nullable<CharacteristicValue> {
     if (value === undefined) {
-      throw new Error(`[${this.displayName}] characteristic was supplied illegal value: undefined!`);
+      console.warn(`[${this.displayName}] characteristic was supplied illegal value: undefined! This might throw errors in the future!`);
+      return this.value; // don't change the value
     } else if (value === null) {
       if (this.UUID === Characteristic.Model.UUID || this.UUID === Characteristic.SerialNumber.UUID) { // mirrors the statement in case: Formats.STRING
         console.error(new Error(`[${this.displayName}] characteristic must have a non null value otherwise HomeKit will reject this accessory. Ignoring new value.`).stack);
