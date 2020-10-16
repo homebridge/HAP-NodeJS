@@ -104,7 +104,6 @@ lightAccessory.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: Void
 });
 
 // Add the actual Lightbulb Service and listen for change events from iOS.
-// We can see the complete list of Services and Characteristics in `lib/gen/HomeKit.ts`
 lightAccessory
   .addService(Service.Lightbulb, LightController.name) // services exposed to the user should have "names" like "Light" for this case
   .getCharacteristic(Characteristic.On)!

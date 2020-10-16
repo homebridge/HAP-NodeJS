@@ -45,7 +45,6 @@ sprinkler.pincode = "123-44-567";
 sprinkler.category = Categories.SPRINKLER;
 
 // Add the actual Valve Service and listen for change events from iOS.
-// We can see the complete list of Services and Characteristics in `lib/gen/HomeKit.ts`
 const sprinklerService = sprinkler.addService(Service.Valve, "💦 Sprinkler");
 
 

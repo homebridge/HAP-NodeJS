@@ -3,7 +3,223 @@ import createDebug from "debug";
 import { EventEmitter } from "events";
 import { CharacteristicJsonObject } from "../internal-types";
 import { CharacteristicValue, Nullable, VoidCallback, } from '../types';
-import * as HomeKitTypes from './gen';
+import {
+  AccessControlLevel,
+  AccessoryFlags,
+  AccessoryIdentifier,
+  Active,
+  ActiveIdentifier,
+  ActivityInterval,
+  AdministratorOnlyAccess,
+  AirParticulateDensity,
+  AirParticulateSize,
+  AirQuality,
+  AppMatchingIdentifier,
+  AudioFeedback,
+  BatteryLevel,
+  Brightness,
+  ButtonEvent,
+  CameraOperatingModeIndicator,
+  CarbonDioxideDetected,
+  CarbonDioxideLevel,
+  CarbonDioxidePeakLevel,
+  CarbonMonoxideDetected,
+  CarbonMonoxideLevel,
+  CarbonMonoxidePeakLevel,
+  CCAEnergyDetectThreshold,
+  CCASignalDetectThreshold,
+  CharacteristicValueActiveTransitionCount,
+  CharacteristicValueTransitionControl,
+  ChargingState,
+  ClosedCaptions,
+  ColorTemperature,
+  ConfiguredName,
+  ContactSensorState,
+  CoolingThresholdTemperature,
+  CurrentAirPurifierState,
+  CurrentAmbientLightLevel,
+  CurrentDoorState,
+  CurrentFanState,
+  CurrentHeaterCoolerState,
+  CurrentHeatingCoolingState,
+  CurrentHorizontalTiltAngle,
+  CurrentHumidifierDehumidifierState,
+  CurrentMediaState,
+  CurrentPosition,
+  CurrentRelativeHumidity,
+  CurrentSlatState,
+  CurrentTemperature,
+  CurrentTiltAngle,
+  CurrentTransport,
+  CurrentVerticalTiltAngle,
+  CurrentVisibilityState,
+  DataStreamHAPTransport,
+  DataStreamHAPTransportInterrupt,
+  DiagonalFieldOfView,
+  DigitalZoom,
+  DisplayOrder,
+  EventRetransmissionMaximum,
+  EventSnapshotsActive,
+  EventTransmissionCounters,
+  FilterChangeIndication,
+  FilterLifeLevel,
+  FirmwareRevision,
+  HardwareRevision,
+  HeartBeat,
+  HeatingThresholdTemperature,
+  HoldPosition,
+  HomeKitCameraActive,
+  Hue,
+  Identifier,
+  Identify,
+  ImageMirroring,
+  ImageRotation,
+  InputDeviceType,
+  InputSourceType,
+  InUse,
+  IsConfigured,
+  LeakDetected,
+  ListPairings,
+  LockControlPoint,
+  LockCurrentState,
+  LockLastKnownAction,
+  LockManagementAutoSecurityTimeout,
+  LockPhysicalControls,
+  LockTargetState,
+  Logs,
+  MACRetransmissionMaximum,
+  MACTransmissionCounters,
+  ManagedNetworkEnable,
+  ManuallyDisabled,
+  Manufacturer,
+  MaximumTransmitPower,
+  Model,
+  MotionDetected,
+  Mute,
+  Name,
+  NetworkAccessViolationControl,
+  NetworkClientProfileControl,
+  NetworkClientStatusControl,
+  NightVision,
+  NitrogenDioxideDensity,
+  ObstructionDetected,
+  OccupancyDetected,
+  On,
+  OperatingStateResponse,
+  OpticalZoom,
+  OutletInUse,
+  OzoneDensity,
+  PairingFeatures,
+  PairSetup,
+  PairVerify,
+  PasswordSetting,
+  PeriodicSnapshotsActive,
+  PictureMode,
+  Ping,
+  PM10Density,
+  PM2_5Density,
+  PositionState,
+  PowerModeSelection,
+  ProductData,
+  ProgrammableSwitchEvent,
+  ProgrammableSwitchOutputState,
+  ProgramMode,
+  ReceivedSignalStrengthIndication,
+  ReceiverSensitivity,
+  RecordingAudioActive,
+  RelativeHumidityDehumidifierThreshold,
+  RelativeHumidityHumidifierThreshold,
+  RelayControlPoint,
+  RelayEnabled,
+  RelayState,
+  RemainingDuration,
+  RemoteKey,
+  ResetFilterIndication,
+  RotationDirection,
+  RotationSpeed,
+  RouterStatus,
+  Saturation,
+  SecuritySystemAlarmType,
+  SecuritySystemCurrentState,
+  SecuritySystemTargetState,
+  SelectedAudioStreamConfiguration,
+  SelectedCameraRecordingConfiguration,
+  SelectedRTPStreamConfiguration,
+  SerialNumber,
+  ServiceLabelIndex,
+  ServiceLabelNamespace,
+  SetDuration,
+  SetupDataStreamTransport,
+  SetupEndpoints,
+  SetupTransferTransport,
+  SignalToNoiseRatio,
+  SiriInputType,
+  SlatType,
+  SleepDiscoveryMode,
+  SleepInterval,
+  SmokeDetected,
+  SoftwareRevision,
+  StatusActive,
+  StatusFault,
+  StatusJammed,
+  StatusLowBattery,
+  StatusTampered,
+  StreamingStatus,
+  SulphurDioxideDensity,
+  SupportedAudioRecordingConfiguration,
+  SupportedAudioStreamConfiguration,
+  SupportedCameraRecordingConfiguration,
+  SupportedCharacteristicValueTransitionConfiguration,
+  SupportedDataStreamTransportConfiguration,
+  SupportedDiagnosticsSnapshot,
+  SupportedRouterConfiguration,
+  SupportedRTPConfiguration,
+  SupportedTransferTransportConfiguration,
+  SupportedVideoRecordingConfiguration,
+  SupportedVideoStreamConfiguration,
+  SwingMode,
+  TargetAirPurifierState,
+  TargetControlList,
+  TargetControlSupportedConfiguration,
+  TargetDoorState,
+  TargetFanState,
+  TargetHeaterCoolerState,
+  TargetHeatingCoolingState,
+  TargetHorizontalTiltAngle,
+  TargetHumidifierDehumidifierState,
+  TargetMediaState,
+  TargetPosition,
+  TargetRelativeHumidity,
+  TargetTemperature,
+  TargetTiltAngle,
+  TargetVerticalTiltAngle,
+  TargetVisibilityState,
+  TemperatureDisplayUnits,
+  ThirdPartyCameraActive,
+  ThreadControlPoint,
+  ThreadNodeCapabilities,
+  ThreadOpenThreadVersion,
+  ThreadStatus,
+  TransmitPower,
+  TunnelConnectionTimeout,
+  TunneledAccessoryAdvertising,
+  TunneledAccessoryConnected,
+  TunneledAccessoryStateNumber,
+  ValveType,
+  Version,
+  VideoAnalysisActive,
+  VOCDensity,
+  Volume,
+  VolumeControlType,
+  VolumeSelector,
+  WakeConfiguration,
+  WANConfigurationList,
+  WANStatusList,
+  WaterLevel,
+  WiFiCapabilities,
+  WiFiConfigurationControl,
+  WiFiSatelliteStatus,
+} from "./definitions";
 import { HAPStatus } from "./HAPServer";
 import { IdentifierCache } from './model/IdentifierCache';
 import { clone } from "./util/clone";
@@ -259,231 +475,228 @@ export class Characteristic extends EventEmitter {
   // @ts-expect-error
   static Perms = Perms;
 
-  static AccessControlLevel: typeof HomeKitTypes.Generated.AccessControlLevel;
-  static AccessoryFlags: typeof HomeKitTypes.Generated.AccessoryFlags;
-  static AccessoryIdentifier: typeof HomeKitTypes.Bridged.AccessoryIdentifier;
-  static Active: typeof HomeKitTypes.Generated.Active;
-  static ActiveIdentifier: typeof HomeKitTypes.TV.ActiveIdentifier;
-  static AdministratorOnlyAccess: typeof HomeKitTypes.Generated.AdministratorOnlyAccess;
-  static AirParticulateDensity: typeof HomeKitTypes.Generated.AirParticulateDensity;
-  static AirParticulateSize: typeof HomeKitTypes.Generated.AirParticulateSize;
-  static AirQuality: typeof HomeKitTypes.Generated.AirQuality;
-  static AppMatchingIdentifier: typeof HomeKitTypes.Bridged.AppMatchingIdentifier;
-  static AudioFeedback: typeof HomeKitTypes.Generated.AudioFeedback;
-  static BatteryLevel: typeof HomeKitTypes.Generated.BatteryLevel;
-  static Brightness: typeof HomeKitTypes.Generated.Brightness;
-  static ButtonEvent: typeof HomeKitTypes.Remote.ButtonEvent;
-  static CarbonDioxideDetected: typeof HomeKitTypes.Generated.CarbonDioxideDetected;
-  static CarbonDioxideLevel: typeof HomeKitTypes.Generated.CarbonDioxideLevel;
-  static CarbonDioxidePeakLevel: typeof HomeKitTypes.Generated.CarbonDioxidePeakLevel;
-  static CarbonMonoxideDetected: typeof HomeKitTypes.Generated.CarbonMonoxideDetected;
-  static CarbonMonoxideLevel: typeof HomeKitTypes.Generated.CarbonMonoxideLevel;
-  static CarbonMonoxidePeakLevel: typeof HomeKitTypes.Generated.CarbonMonoxidePeakLevel;
-  static Category: typeof HomeKitTypes.Bridged.Category;
-  static ChargingState: typeof HomeKitTypes.Generated.ChargingState;
-  static ClosedCaptions: typeof HomeKitTypes.TV.ClosedCaptions;
-  static ColorTemperature: typeof HomeKitTypes.Generated.ColorTemperature;
-  static ConfigureBridgedAccessory: typeof HomeKitTypes.Bridged.ConfigureBridgedAccessory;
-  static ConfigureBridgedAccessoryStatus: typeof HomeKitTypes.Bridged.ConfigureBridgedAccessoryStatus;
-  static ConfiguredName: typeof HomeKitTypes.TV.ConfiguredName;
-  static ContactSensorState: typeof HomeKitTypes.Generated.ContactSensorState;
-  static CoolingThresholdTemperature: typeof HomeKitTypes.Generated.CoolingThresholdTemperature;
-  static CurrentAirPurifierState: typeof HomeKitTypes.Generated.CurrentAirPurifierState;
-  static CurrentAmbientLightLevel: typeof HomeKitTypes.Generated.CurrentAmbientLightLevel;
-  static CurrentDoorState: typeof HomeKitTypes.Generated.CurrentDoorState;
-  static CurrentFanState: typeof HomeKitTypes.Generated.CurrentFanState;
-  static CurrentHeaterCoolerState: typeof HomeKitTypes.Generated.CurrentHeaterCoolerState;
-  static CurrentHeatingCoolingState: typeof HomeKitTypes.Generated.CurrentHeatingCoolingState;
-  static CurrentHorizontalTiltAngle: typeof HomeKitTypes.Generated.CurrentHorizontalTiltAngle;
-  static CurrentHumidifierDehumidifierState: typeof HomeKitTypes.Generated.CurrentHumidifierDehumidifierState;
-  static CurrentMediaState: typeof HomeKitTypes.TV.CurrentMediaState;
-  static CurrentPosition: typeof HomeKitTypes.Generated.CurrentPosition;
-  static CurrentRelativeHumidity: typeof HomeKitTypes.Generated.CurrentRelativeHumidity;
-  static CurrentSlatState: typeof HomeKitTypes.Generated.CurrentSlatState;
-  static CurrentTemperature: typeof HomeKitTypes.Generated.CurrentTemperature;
-  static CurrentTiltAngle: typeof HomeKitTypes.Generated.CurrentTiltAngle;
-  static CurrentTime: typeof HomeKitTypes.Bridged.CurrentTime;
-  static CurrentVerticalTiltAngle: typeof HomeKitTypes.Generated.CurrentVerticalTiltAngle;
-  static CurrentVisibilityState: typeof HomeKitTypes.TV.CurrentVisibilityState;
-  static DayoftheWeek: typeof HomeKitTypes.Bridged.DayoftheWeek;
-  static DigitalZoom: typeof HomeKitTypes.Generated.DigitalZoom;
-  static DiscoverBridgedAccessories: typeof HomeKitTypes.Bridged.DiscoverBridgedAccessories;
-  static DiscoveredBridgedAccessories: typeof HomeKitTypes.Bridged.DiscoveredBridgedAccessories;
-  static DisplayOrder: typeof HomeKitTypes.TV.DisplayOrder;
-  static FilterChangeIndication: typeof HomeKitTypes.Generated.FilterChangeIndication;
-  static FilterLifeLevel: typeof HomeKitTypes.Generated.FilterLifeLevel;
-  static FirmwareRevision: typeof HomeKitTypes.Generated.FirmwareRevision;
-  static HardwareRevision: typeof HomeKitTypes.Generated.HardwareRevision;
-  static HeatingThresholdTemperature: typeof HomeKitTypes.Generated.HeatingThresholdTemperature;
-  static HoldPosition: typeof HomeKitTypes.Generated.HoldPosition;
-  static Hue: typeof HomeKitTypes.Generated.Hue;
-  static Identifier: typeof HomeKitTypes.TV.Identifier;
-  static Identify: typeof HomeKitTypes.Generated.Identify;
-  static ImageMirroring: typeof HomeKitTypes.Generated.ImageMirroring;
-  static ImageRotation: typeof HomeKitTypes.Generated.ImageRotation;
-  static InUse: typeof HomeKitTypes.Generated.InUse;
-  static InputDeviceType: typeof HomeKitTypes.TV.InputDeviceType;
-  static InputSourceType: typeof HomeKitTypes.TV.InputSourceType;
-  static IsConfigured: typeof HomeKitTypes.Generated.IsConfigured;
-  static LeakDetected: typeof HomeKitTypes.Generated.LeakDetected;
-  static LinkQuality: typeof HomeKitTypes.Bridged.LinkQuality;
-  static LockControlPoint: typeof HomeKitTypes.Generated.LockControlPoint;
-  static LockCurrentState: typeof HomeKitTypes.Generated.LockCurrentState;
-  static LockLastKnownAction: typeof HomeKitTypes.Generated.LockLastKnownAction;
-  static LockManagementAutoSecurityTimeout: typeof HomeKitTypes.Generated.LockManagementAutoSecurityTimeout;
-  static LockPhysicalControls: typeof HomeKitTypes.Generated.LockPhysicalControls;
-  static LockTargetState: typeof HomeKitTypes.Generated.LockTargetState;
-  static Logs: typeof HomeKitTypes.Generated.Logs;
-  static Manufacturer: typeof HomeKitTypes.Generated.Manufacturer;
-  static Model: typeof HomeKitTypes.Generated.Model;
-  static MotionDetected: typeof HomeKitTypes.Generated.MotionDetected;
-  static Mute: typeof HomeKitTypes.Generated.Mute;
-  static Name: typeof HomeKitTypes.Generated.Name;
-  static NightVision: typeof HomeKitTypes.Generated.NightVision;
-  static NitrogenDioxideDensity: typeof HomeKitTypes.Generated.NitrogenDioxideDensity;
-  static ObstructionDetected: typeof HomeKitTypes.Generated.ObstructionDetected;
-  static OccupancyDetected: typeof HomeKitTypes.Generated.OccupancyDetected;
-  static On: typeof HomeKitTypes.Generated.On;
-  static OpticalZoom: typeof HomeKitTypes.Generated.OpticalZoom;
-  static OutletInUse: typeof HomeKitTypes.Generated.OutletInUse;
-  static OzoneDensity: typeof HomeKitTypes.Generated.OzoneDensity;
-  static PM10Density: typeof HomeKitTypes.Generated.PM10Density;
-  static PM2_5Density: typeof HomeKitTypes.Generated.PM2_5Density;
-  static PairSetup: typeof HomeKitTypes.Generated.PairSetup;
-  static PairVerify: typeof HomeKitTypes.Generated.PairVerify;
-  static PairingFeatures: typeof HomeKitTypes.Generated.PairingFeatures;
-  static PairingPairings: typeof HomeKitTypes.Generated.PairingPairings;
-  static PasswordSetting: typeof HomeKitTypes.Generated.PasswordSetting;
-  static PictureMode: typeof HomeKitTypes.TV.PictureMode;
-  static PositionState: typeof HomeKitTypes.Generated.PositionState;
-  static PowerModeSelection: typeof HomeKitTypes.TV.PowerModeSelection;
-  static ProgramMode: typeof HomeKitTypes.Generated.ProgramMode;
-  static ProgrammableSwitchEvent: typeof HomeKitTypes.Generated.ProgrammableSwitchEvent;
-  static ProductData: typeof HomeKitTypes.Generated.ProductData;
-  static ProgrammableSwitchOutputState: typeof HomeKitTypes.Bridged.ProgrammableSwitchOutputState;
-  static Reachable: typeof HomeKitTypes.Bridged.Reachable;
-  static RelativeHumidityDehumidifierThreshold: typeof HomeKitTypes.Generated.RelativeHumidityDehumidifierThreshold;
-  static RelativeHumidityHumidifierThreshold: typeof HomeKitTypes.Generated.RelativeHumidityHumidifierThreshold;
-  static RelayControlPoint: typeof HomeKitTypes.Bridged.RelayControlPoint;
-  static RelayEnabled: typeof HomeKitTypes.Bridged.RelayEnabled;
-  static RelayState: typeof HomeKitTypes.Bridged.RelayState;
-  static RemainingDuration: typeof HomeKitTypes.Generated.RemainingDuration;
-  static RemoteKey: typeof HomeKitTypes.TV.RemoteKey;
-  static ResetFilterIndication: typeof HomeKitTypes.Generated.ResetFilterIndication;
-  static RotationDirection: typeof HomeKitTypes.Generated.RotationDirection;
-  static RotationSpeed: typeof HomeKitTypes.Generated.RotationSpeed;
-  static Saturation: typeof HomeKitTypes.Generated.Saturation;
-  static SecuritySystemAlarmType: typeof HomeKitTypes.Generated.SecuritySystemAlarmType;
-  static SecuritySystemCurrentState: typeof HomeKitTypes.Generated.SecuritySystemCurrentState;
-  static SecuritySystemTargetState: typeof HomeKitTypes.Generated.SecuritySystemTargetState;
-  static SelectedAudioStreamConfiguration: typeof HomeKitTypes.Remote.SelectedAudioStreamConfiguration;
-  static SelectedRTPStreamConfiguration: typeof HomeKitTypes.Generated.SelectedRTPStreamConfiguration;
-  static SerialNumber: typeof HomeKitTypes.Generated.SerialNumber;
-  static ServiceLabelIndex: typeof HomeKitTypes.Generated.ServiceLabelIndex;
-  static ServiceLabelNamespace: typeof HomeKitTypes.Generated.ServiceLabelNamespace;
-  static SetDuration: typeof HomeKitTypes.Generated.SetDuration;
-  static SetupDataStreamTransport: typeof HomeKitTypes.DataStream.SetupDataStreamTransport;
-  static SetupEndpoints: typeof HomeKitTypes.Generated.SetupEndpoints;
-  static SiriInputType: typeof HomeKitTypes.Remote.SiriInputType;
-  static SlatType: typeof HomeKitTypes.Generated.SlatType;
-  static SleepDiscoveryMode: typeof HomeKitTypes.TV.SleepDiscoveryMode;
-  static SmokeDetected: typeof HomeKitTypes.Generated.SmokeDetected;
-  static SoftwareRevision: typeof HomeKitTypes.Bridged.SoftwareRevision;
-  static StatusActive: typeof HomeKitTypes.Generated.StatusActive;
-  static StatusFault: typeof HomeKitTypes.Generated.StatusFault;
-  static StatusJammed: typeof HomeKitTypes.Generated.StatusJammed;
-  static StatusLowBattery: typeof HomeKitTypes.Generated.StatusLowBattery;
-  static StatusTampered: typeof HomeKitTypes.Generated.StatusTampered;
-  static StreamingStatus: typeof HomeKitTypes.Generated.StreamingStatus;
-  static SulphurDioxideDensity: typeof HomeKitTypes.Generated.SulphurDioxideDensity;
-  static SupportedAudioStreamConfiguration: typeof HomeKitTypes.Generated.SupportedAudioStreamConfiguration;
-  static SupportedDataStreamTransportConfiguration: typeof HomeKitTypes.DataStream.SupportedDataStreamTransportConfiguration;
-  static SupportedRTPConfiguration: typeof HomeKitTypes.Generated.SupportedRTPConfiguration;
-  static SupportedVideoStreamConfiguration: typeof HomeKitTypes.Generated.SupportedVideoStreamConfiguration;
-  static SwingMode: typeof HomeKitTypes.Generated.SwingMode;
-  static TargetAirPurifierState: typeof HomeKitTypes.Generated.TargetAirPurifierState;
-  static TargetAirQuality: typeof HomeKitTypes.Generated.TargetAirQuality;
-  static TargetControlList: typeof HomeKitTypes.Remote.TargetControlList;
-  static TargetControlSupportedConfiguration: typeof HomeKitTypes.Remote.TargetControlSupportedConfiguration;
-  static TargetDoorState: typeof HomeKitTypes.Generated.TargetDoorState;
-  static TargetFanState: typeof HomeKitTypes.Generated.TargetFanState;
-  static TargetHeaterCoolerState: typeof HomeKitTypes.Generated.TargetHeaterCoolerState;
-  static TargetHeatingCoolingState: typeof HomeKitTypes.Generated.TargetHeatingCoolingState;
-  static TargetHorizontalTiltAngle: typeof HomeKitTypes.Generated.TargetHorizontalTiltAngle;
-  static TargetHumidifierDehumidifierState: typeof HomeKitTypes.Generated.TargetHumidifierDehumidifierState;
-  static TargetMediaState: typeof HomeKitTypes.TV.TargetMediaState;
-  static TargetPosition: typeof HomeKitTypes.Generated.TargetPosition;
-  static TargetRelativeHumidity: typeof HomeKitTypes.Generated.TargetRelativeHumidity;
-  static TargetSlatState: typeof HomeKitTypes.Generated.TargetSlatState;
-  static TargetTemperature: typeof HomeKitTypes.Generated.TargetTemperature;
-  static TargetTiltAngle: typeof HomeKitTypes.Generated.TargetTiltAngle;
-  static TargetVerticalTiltAngle: typeof HomeKitTypes.Generated.TargetVerticalTiltAngle;
-  static TargetVisibilityState: typeof HomeKitTypes.TV.TargetVisibilityState;
-  static TemperatureDisplayUnits: typeof HomeKitTypes.Generated.TemperatureDisplayUnits;
-  static TimeUpdate: typeof HomeKitTypes.Bridged.TimeUpdate;
-  static TunnelConnectionTimeout: typeof HomeKitTypes.Bridged.TunnelConnectionTimeout;
-  static TunneledAccessoryAdvertising: typeof HomeKitTypes.Bridged.TunneledAccessoryAdvertising;
-  static TunneledAccessoryConnected: typeof HomeKitTypes.Bridged.TunneledAccessoryConnected;
-  static TunneledAccessoryStateNumber: typeof HomeKitTypes.Bridged.TunneledAccessoryStateNumber;
-  static VOCDensity: typeof HomeKitTypes.Generated.VOCDensity;
-  static ValveType: typeof HomeKitTypes.Generated.ValveType;
-  static Version: typeof HomeKitTypes.Generated.Version;
-  static Volume: typeof HomeKitTypes.Generated.Volume;
-  static VolumeControlType: typeof HomeKitTypes.TV.VolumeControlType;
-  static VolumeSelector: typeof HomeKitTypes.TV.VolumeSelector;
-  static WaterLevel: typeof HomeKitTypes.Generated.WaterLevel;
-  static ManuallyDisabled: typeof HomeKitTypes.Generated.ManuallyDisabled;
-  static ThirdPartyCameraActive: typeof HomeKitTypes.Generated.ThirdPartyCameraActive;
-  static PeriodicSnapshotsActive: typeof HomeKitTypes.Generated.PeriodicSnapshotsActive;
-  static EventSnapshotsActive: typeof HomeKitTypes.Generated.EventSnapshotsActive;
-  static HomeKitCameraActive: typeof HomeKitTypes.Generated.HomeKitCameraActive;
-  static RecordingAudioActive: typeof HomeKitTypes.Generated.RecordingAudioActive;
-  static SupportedCameraRecordingConfiguration: typeof HomeKitTypes.Generated.SupportedCameraRecordingConfiguration;
-  static SupportedVideoRecordingConfiguration: typeof HomeKitTypes.Generated.SupportedVideoRecordingConfiguration;
-  static SupportedAudioRecordingConfiguration: typeof HomeKitTypes.Generated.SupportedAudioRecordingConfiguration;
-  static SelectedCameraRecordingConfiguration: typeof HomeKitTypes.Generated.SelectedCameraRecordingConfiguration;
-  static CameraOperatingModeIndicator: typeof HomeKitTypes.Generated.CameraOperatingModeIndicator;
-  static DiagonalFieldOfView: typeof HomeKitTypes.Generated.DiagonalFieldOfView;
-  static NetworkClientProfileControl: typeof HomeKitTypes.Generated.NetworkClientProfileControl;
-  static NetworkClientStatusControl: typeof HomeKitTypes.Generated.NetworkClientStatusControl;
-  static RouterStatus: typeof HomeKitTypes.Generated.RouterStatus;
-  static SupportedRouterConfiguration: typeof HomeKitTypes.Generated.SupportedRouterConfiguration;
-  static WANConfigurationList: typeof HomeKitTypes.Generated.WANConfigurationList;
-  static WANStatusList: typeof HomeKitTypes.Generated.WANStatusList;
-  static ManagedNetworkEnable: typeof HomeKitTypes.Generated.ManagedNetworkEnable;
-  static NetworkAccessViolationControl: typeof HomeKitTypes.Generated.NetworkAccessViolationControl;
-  static WiFiSatelliteStatus: typeof HomeKitTypes.Generated.WiFiSatelliteStatus;
-  static WakeConfiguration: typeof HomeKitTypes.Generated.WakeConfiguration;
-  static SupportedTransferTransportConfiguration: typeof HomeKitTypes.Generated.SupportedTransferTransportConfiguration;
-  static SetupTransferTransport: typeof HomeKitTypes.Generated.SetupTransferTransport;
-
-
-  static ActivityInterval: typeof HomeKitTypes.Generated.ActivityInterval;
-  static CCAEnergyDetectThreshold: typeof HomeKitTypes.Generated.CCAEnergyDetectThreshold;
-  static CCASignalDetectThreshold: typeof HomeKitTypes.Generated.CCASignalDetectThreshold;
-  static CharacteristicValueTransitionControl: typeof HomeKitTypes.Generated.CharacteristicValueTransitionControl;
-  static SupportedCharacteristicValueTransitionConfiguration: typeof HomeKitTypes.Generated.SupportedCharacteristicValueTransitionConfiguration;
-  static CharacteristicValueActiveTransitionCount: typeof HomeKitTypes.Generated.CharacteristicValueActiveTransitionCount;
-  static CurrentTransport: typeof HomeKitTypes.Generated.CurrentTransport;
-  static DataStreamHAPTransport: typeof HomeKitTypes.Generated.DataStreamHAPTransport;
-  static DataStreamHAPTransportInterrupt: typeof HomeKitTypes.Generated.DataStreamHAPTransportInterrupt;
-  static EventRetransmissionMaximum: typeof HomeKitTypes.Generated.EventRetransmissionMaximum;
-  static EventTransmissionCounters: typeof HomeKitTypes.Generated.EventTransmissionCounters;
-  static HeartBeat: typeof HomeKitTypes.Generated.HeartBeat;
-  static MACRetransmissionMaximum: typeof HomeKitTypes.Generated.MACRetransmissionMaximum;
-  static MACTransmissionCounters: typeof HomeKitTypes.Generated.MACTransmissionCounters;
-  static OperatingStateResponse: typeof HomeKitTypes.Generated.OperatingStateResponse;
-  static Ping: typeof HomeKitTypes.Generated.Ping;
-  static ReceiverSensitivity: typeof HomeKitTypes.Generated.ReceiverSensitivity;
-  static ReceivedSignalStrengthIndication: typeof HomeKitTypes.Generated.ReceivedSignalStrengthIndication;
-  static SleepInterval: typeof HomeKitTypes.Generated.SleepInterval;
-  static SignalToNoiseRatio: typeof HomeKitTypes.Generated.SignalToNoiseRatio;
-  static SupportedDiagnosticsSnapshot: typeof HomeKitTypes.Generated.SupportedDiagnosticsSnapshot;
-  static TransmitPower: typeof HomeKitTypes.Generated.TransmitPower;
-  static TransmitPowerMaximum: typeof HomeKitTypes.Generated.TransmitPowerMaximum;
-  static VideoAnalysisActive: typeof HomeKitTypes.Generated.VideoAnalysisActive;
-  static WiFiCapabilities: typeof HomeKitTypes.Generated.WiFiCapabilities;
-  static WiFiConfigurationControl: typeof HomeKitTypes.Generated.WiFiConfigurationControl;
+  // Pattern below is for automatic detection of the section of defined characteristics. Used by the generator
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  public static AccessControlLevel: typeof AccessControlLevel;
+  public static AccessoryFlags: typeof AccessoryFlags;
+  public static AccessoryIdentifier: typeof AccessoryIdentifier;
+  public static Active: typeof Active;
+  public static ActiveIdentifier: typeof ActiveIdentifier;
+  public static ActivityInterval: typeof ActivityInterval;
+  public static AdministratorOnlyAccess: typeof AdministratorOnlyAccess;
+  public static AirParticulateDensity: typeof AirParticulateDensity;
+  public static AirParticulateSize: typeof AirParticulateSize;
+  public static AirQuality: typeof AirQuality;
+  public static AppMatchingIdentifier: typeof AppMatchingIdentifier;
+  public static AudioFeedback: typeof AudioFeedback;
+  public static BatteryLevel: typeof BatteryLevel;
+  public static Brightness: typeof Brightness;
+  public static ButtonEvent: typeof ButtonEvent;
+  public static CameraOperatingModeIndicator: typeof CameraOperatingModeIndicator;
+  public static CarbonDioxideDetected: typeof CarbonDioxideDetected;
+  public static CarbonDioxideLevel: typeof CarbonDioxideLevel;
+  public static CarbonDioxidePeakLevel: typeof CarbonDioxidePeakLevel;
+  public static CarbonMonoxideDetected: typeof CarbonMonoxideDetected;
+  public static CarbonMonoxideLevel: typeof CarbonMonoxideLevel;
+  public static CarbonMonoxidePeakLevel: typeof CarbonMonoxidePeakLevel;
+  public static CCAEnergyDetectThreshold: typeof CCAEnergyDetectThreshold;
+  public static CCASignalDetectThreshold: typeof CCASignalDetectThreshold;
+  public static CharacteristicValueActiveTransitionCount: typeof CharacteristicValueActiveTransitionCount;
+  public static CharacteristicValueTransitionControl: typeof CharacteristicValueTransitionControl;
+  public static ChargingState: typeof ChargingState;
+  public static ClosedCaptions: typeof ClosedCaptions;
+  public static ColorTemperature: typeof ColorTemperature;
+  public static ConfiguredName: typeof ConfiguredName;
+  public static ContactSensorState: typeof ContactSensorState;
+  public static CoolingThresholdTemperature: typeof CoolingThresholdTemperature;
+  public static CurrentAirPurifierState: typeof CurrentAirPurifierState;
+  public static CurrentAmbientLightLevel: typeof CurrentAmbientLightLevel;
+  public static CurrentDoorState: typeof CurrentDoorState;
+  public static CurrentFanState: typeof CurrentFanState;
+  public static CurrentHeaterCoolerState: typeof CurrentHeaterCoolerState;
+  public static CurrentHeatingCoolingState: typeof CurrentHeatingCoolingState;
+  public static CurrentHorizontalTiltAngle: typeof CurrentHorizontalTiltAngle;
+  public static CurrentHumidifierDehumidifierState: typeof CurrentHumidifierDehumidifierState;
+  public static CurrentMediaState: typeof CurrentMediaState;
+  public static CurrentPosition: typeof CurrentPosition;
+  public static CurrentRelativeHumidity: typeof CurrentRelativeHumidity;
+  public static CurrentSlatState: typeof CurrentSlatState;
+  public static CurrentTemperature: typeof CurrentTemperature;
+  public static CurrentTiltAngle: typeof CurrentTiltAngle;
+  public static CurrentTransport: typeof CurrentTransport;
+  public static CurrentVerticalTiltAngle: typeof CurrentVerticalTiltAngle;
+  public static CurrentVisibilityState: typeof CurrentVisibilityState;
+  public static DataStreamHAPTransport: typeof DataStreamHAPTransport;
+  public static DataStreamHAPTransportInterrupt: typeof DataStreamHAPTransportInterrupt;
+  public static DiagonalFieldOfView: typeof DiagonalFieldOfView;
+  public static DigitalZoom: typeof DigitalZoom;
+  public static DisplayOrder: typeof DisplayOrder;
+  public static EventRetransmissionMaximum: typeof EventRetransmissionMaximum;
+  public static EventSnapshotsActive: typeof EventSnapshotsActive;
+  public static EventTransmissionCounters: typeof EventTransmissionCounters;
+  public static FilterChangeIndication: typeof FilterChangeIndication;
+  public static FilterLifeLevel: typeof FilterLifeLevel;
+  public static FirmwareRevision: typeof FirmwareRevision;
+  public static HardwareRevision: typeof HardwareRevision;
+  public static HeartBeat: typeof HeartBeat;
+  public static HeatingThresholdTemperature: typeof HeatingThresholdTemperature;
+  public static HoldPosition: typeof HoldPosition;
+  public static HomeKitCameraActive: typeof HomeKitCameraActive;
+  public static Hue: typeof Hue;
+  public static Identifier: typeof Identifier;
+  public static Identify: typeof Identify;
+  public static ImageMirroring: typeof ImageMirroring;
+  public static ImageRotation: typeof ImageRotation;
+  public static InputDeviceType: typeof InputDeviceType;
+  public static InputSourceType: typeof InputSourceType;
+  public static InUse: typeof InUse;
+  public static IsConfigured: typeof IsConfigured;
+  public static LeakDetected: typeof LeakDetected;
+  public static ListPairings: typeof ListPairings;
+  public static LockControlPoint: typeof LockControlPoint;
+  public static LockCurrentState: typeof LockCurrentState;
+  public static LockLastKnownAction: typeof LockLastKnownAction;
+  public static LockManagementAutoSecurityTimeout: typeof LockManagementAutoSecurityTimeout;
+  public static LockPhysicalControls: typeof LockPhysicalControls;
+  public static LockTargetState: typeof LockTargetState;
+  public static Logs: typeof Logs;
+  public static MACRetransmissionMaximum: typeof MACRetransmissionMaximum;
+  public static MACTransmissionCounters: typeof MACTransmissionCounters;
+  public static ManagedNetworkEnable: typeof ManagedNetworkEnable;
+  public static ManuallyDisabled: typeof ManuallyDisabled;
+  public static Manufacturer: typeof Manufacturer;
+  public static MaximumTransmitPower: typeof MaximumTransmitPower;
+  public static Model: typeof Model;
+  public static MotionDetected: typeof MotionDetected;
+  public static Mute: typeof Mute;
+  public static Name: typeof Name;
+  public static NetworkAccessViolationControl: typeof NetworkAccessViolationControl;
+  public static NetworkClientProfileControl: typeof NetworkClientProfileControl;
+  public static NetworkClientStatusControl: typeof NetworkClientStatusControl;
+  public static NightVision: typeof NightVision;
+  public static NitrogenDioxideDensity: typeof NitrogenDioxideDensity;
+  public static ObstructionDetected: typeof ObstructionDetected;
+  public static OccupancyDetected: typeof OccupancyDetected;
+  public static On: typeof On;
+  public static OperatingStateResponse: typeof OperatingStateResponse;
+  public static OpticalZoom: typeof OpticalZoom;
+  public static OutletInUse: typeof OutletInUse;
+  public static OzoneDensity: typeof OzoneDensity;
+  public static PairingFeatures: typeof PairingFeatures;
+  /**
+   * @deprecated Please use {@link Characteristic.ListPairings}.
+   */
+  public static PairingPairings: typeof ListPairings;
+  public static PairSetup: typeof PairSetup;
+  public static PairVerify: typeof PairVerify;
+  public static PasswordSetting: typeof PasswordSetting;
+  public static PeriodicSnapshotsActive: typeof PeriodicSnapshotsActive;
+  public static PictureMode: typeof PictureMode;
+  public static Ping: typeof Ping;
+  public static PM10Density: typeof PM10Density;
+  public static PM2_5Density: typeof PM2_5Density;
+  public static PositionState: typeof PositionState;
+  public static PowerModeSelection: typeof PowerModeSelection;
+  public static ProductData: typeof ProductData;
+  public static ProgrammableSwitchEvent: typeof ProgrammableSwitchEvent;
+  public static ProgrammableSwitchOutputState: typeof ProgrammableSwitchOutputState;
+  public static ProgramMode: typeof ProgramMode;
+  public static ReceivedSignalStrengthIndication: typeof ReceivedSignalStrengthIndication;
+  public static ReceiverSensitivity: typeof ReceiverSensitivity;
+  public static RecordingAudioActive: typeof RecordingAudioActive;
+  public static RelativeHumidityDehumidifierThreshold: typeof RelativeHumidityDehumidifierThreshold;
+  public static RelativeHumidityHumidifierThreshold: typeof RelativeHumidityHumidifierThreshold;
+  public static RelayControlPoint: typeof RelayControlPoint;
+  public static RelayEnabled: typeof RelayEnabled;
+  public static RelayState: typeof RelayState;
+  public static RemainingDuration: typeof RemainingDuration;
+  public static RemoteKey: typeof RemoteKey;
+  public static ResetFilterIndication: typeof ResetFilterIndication;
+  public static RotationDirection: typeof RotationDirection;
+  public static RotationSpeed: typeof RotationSpeed;
+  public static RouterStatus: typeof RouterStatus;
+  public static Saturation: typeof Saturation;
+  public static SecuritySystemAlarmType: typeof SecuritySystemAlarmType;
+  public static SecuritySystemCurrentState: typeof SecuritySystemCurrentState;
+  public static SecuritySystemTargetState: typeof SecuritySystemTargetState;
+  public static SelectedAudioStreamConfiguration: typeof SelectedAudioStreamConfiguration;
+  public static SelectedCameraRecordingConfiguration: typeof SelectedCameraRecordingConfiguration;
+  public static SelectedRTPStreamConfiguration: typeof SelectedRTPStreamConfiguration;
+  public static SerialNumber: typeof SerialNumber;
+  public static ServiceLabelIndex: typeof ServiceLabelIndex;
+  public static ServiceLabelNamespace: typeof ServiceLabelNamespace;
+  public static SetDuration: typeof SetDuration;
+  public static SetupDataStreamTransport: typeof SetupDataStreamTransport;
+  public static SetupEndpoints: typeof SetupEndpoints;
+  public static SetupTransferTransport: typeof SetupTransferTransport;
+  public static SignalToNoiseRatio: typeof SignalToNoiseRatio;
+  public static SiriInputType: typeof SiriInputType;
+  public static SlatType: typeof SlatType;
+  public static SleepDiscoveryMode: typeof SleepDiscoveryMode;
+  public static SleepInterval: typeof SleepInterval;
+  public static SmokeDetected: typeof SmokeDetected;
+  public static SoftwareRevision: typeof SoftwareRevision;
+  public static StatusActive: typeof StatusActive;
+  public static StatusFault: typeof StatusFault;
+  public static StatusJammed: typeof StatusJammed;
+  public static StatusLowBattery: typeof StatusLowBattery;
+  public static StatusTampered: typeof StatusTampered;
+  public static StreamingStatus: typeof StreamingStatus;
+  public static SulphurDioxideDensity: typeof SulphurDioxideDensity;
+  public static SupportedAudioRecordingConfiguration: typeof SupportedAudioRecordingConfiguration;
+  public static SupportedAudioStreamConfiguration: typeof SupportedAudioStreamConfiguration;
+  public static SupportedCameraRecordingConfiguration: typeof SupportedCameraRecordingConfiguration;
+  public static SupportedCharacteristicValueTransitionConfiguration: typeof SupportedCharacteristicValueTransitionConfiguration;
+  public static SupportedDataStreamTransportConfiguration: typeof SupportedDataStreamTransportConfiguration;
+  public static SupportedDiagnosticsSnapshot: typeof SupportedDiagnosticsSnapshot;
+  public static SupportedRouterConfiguration: typeof SupportedRouterConfiguration;
+  public static SupportedRTPConfiguration: typeof SupportedRTPConfiguration;
+  public static SupportedTransferTransportConfiguration: typeof SupportedTransferTransportConfiguration;
+  public static SupportedVideoRecordingConfiguration: typeof SupportedVideoRecordingConfiguration;
+  public static SupportedVideoStreamConfiguration: typeof SupportedVideoStreamConfiguration;
+  public static SwingMode: typeof SwingMode;
+  public static TargetAirPurifierState: typeof TargetAirPurifierState;
+  public static TargetControlList: typeof TargetControlList;
+  public static TargetControlSupportedConfiguration: typeof TargetControlSupportedConfiguration;
+  public static TargetDoorState: typeof TargetDoorState;
+  public static TargetFanState: typeof TargetFanState;
+  public static TargetHeaterCoolerState: typeof TargetHeaterCoolerState;
+  public static TargetHeatingCoolingState: typeof TargetHeatingCoolingState;
+  public static TargetHorizontalTiltAngle: typeof TargetHorizontalTiltAngle;
+  public static TargetHumidifierDehumidifierState: typeof TargetHumidifierDehumidifierState;
+  public static TargetMediaState: typeof TargetMediaState;
+  public static TargetPosition: typeof TargetPosition;
+  public static TargetRelativeHumidity: typeof TargetRelativeHumidity;
+  public static TargetTemperature: typeof TargetTemperature;
+  public static TargetTiltAngle: typeof TargetTiltAngle;
+  public static TargetVerticalTiltAngle: typeof TargetVerticalTiltAngle;
+  public static TargetVisibilityState: typeof TargetVisibilityState;
+  public static TemperatureDisplayUnits: typeof TemperatureDisplayUnits;
+  public static ThirdPartyCameraActive: typeof ThirdPartyCameraActive;
+  public static ThreadControlPoint: typeof ThreadControlPoint;
+  public static ThreadNodeCapabilities: typeof ThreadNodeCapabilities;
+  public static ThreadOpenThreadVersion: typeof ThreadOpenThreadVersion;
+  public static ThreadStatus: typeof ThreadStatus;
+  public static TransmitPower: typeof TransmitPower;
+  public static TunnelConnectionTimeout: typeof TunnelConnectionTimeout;
+  public static TunneledAccessoryAdvertising: typeof TunneledAccessoryAdvertising;
+  public static TunneledAccessoryConnected: typeof TunneledAccessoryConnected;
+  public static TunneledAccessoryStateNumber: typeof TunneledAccessoryStateNumber;
+  public static ValveType: typeof ValveType;
+  public static Version: typeof Version;
+  public static VideoAnalysisActive: typeof VideoAnalysisActive;
+  public static VOCDensity: typeof VOCDensity;
+  public static Volume: typeof Volume;
+  public static VolumeControlType: typeof VolumeControlType;
+  public static VolumeSelector: typeof VolumeSelector;
+  public static WakeConfiguration: typeof WakeConfiguration;
+  public static WANConfigurationList: typeof WANConfigurationList;
+  public static WANStatusList: typeof WANStatusList;
+  public static WaterLevel: typeof WaterLevel;
+  public static WiFiCapabilities: typeof WiFiCapabilities;
+  public static WiFiConfigurationControl: typeof WiFiConfigurationControl;
+  public static WiFiSatelliteStatus: typeof WiFiSatelliteStatus;
+  // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
   // NOTICE: when adding/changing properties, remember to possibly adjust the serialize/deserialize functions
   public displayName: string;
@@ -1398,7 +1611,7 @@ export class Characteristic extends EventEmitter {
   internalHAPRepresentation(): CharacteristicJsonObject {
     assert(this.iid,"iid cannot be undefined for characteristic '" + this.displayName + "'");
     return {
-      type: toShortForm(this.UUID, HomeKitTypes.BASE_UUID),
+      type: toShortForm(this.UUID),
       iid: this.iid!,
       value: null,
       perms: this.props.perms,

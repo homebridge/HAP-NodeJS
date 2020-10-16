@@ -67,7 +67,6 @@ outlet.on(AccessoryEventTypes.IDENTIFY, function(paired: boolean, callback: Void
 });
 
 // Add the actual outlet Service and listen for change events from iOS.
-// We can see the complete list of Services and Characteristics in `lib/gen/HomeKit.ts`
 outlet
   .addService(Service.Outlet, "Fake Outlet") // services exposed to the user should have "names" like "Fake Light" for us
   .getCharacteristic(Characteristic.On)!

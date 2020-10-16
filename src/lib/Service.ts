@@ -8,7 +8,73 @@ import {
   CharacteristicEventTypes,
   SerializedCharacteristic
 } from './Characteristic';
-import * as HomeKitTypes from './gen';
+import {
+  AccessControl,
+  AccessoryInformation,
+  AccessoryRuntimeInformation,
+  AirPurifier,
+  AirQualitySensor,
+  AudioStreamManagement,
+  Battery,
+  CameraOperatingMode,
+  CameraRecordingManagement,
+  CameraRTPStreamManagement,
+  CarbonDioxideSensor,
+  CarbonMonoxideSensor,
+  CloudRelay,
+  ContactSensor,
+  DataStreamTransportManagement,
+  Diagnostics,
+  Door,
+  Doorbell,
+  Fan,
+  Fanv2,
+  Faucet,
+  FilterMaintenance,
+  GarageDoorOpener,
+  HeaterCooler,
+  HumidifierDehumidifier,
+  HumiditySensor,
+  InputSource,
+  IrrigationSystem,
+  LeakSensor,
+  Lightbulb,
+  LightSensor,
+  LockManagement,
+  LockMechanism,
+  Microphone,
+  MotionSensor,
+  OccupancySensor,
+  Outlet,
+  Pairing,
+  PowerManagement,
+  ProtocolInformation,
+  SecuritySystem,
+  ServiceLabel,
+  Siri,
+  Slats,
+  SmartSpeaker,
+  SmokeSensor,
+  Speaker,
+  StatefulProgrammableSwitch,
+  StatelessProgrammableSwitch,
+  Switch,
+  TargetControl,
+  TargetControlManagement,
+  Television,
+  TelevisionSpeaker,
+  TemperatureSensor,
+  Thermostat,
+  ThreadTransport,
+  TransferTransportManagement,
+  Tunnel,
+  Valve,
+  WiFiRouter,
+  WiFiSatellite,
+  WiFiTransport,
+  Window,
+  WindowCovering,
+} from "./definitions";
 import { IdentifierCache } from './model/IdentifierCache';
 import { HAPConnection } from "./util/eventedhttp";
 import { toShortForm } from './util/uuid';
@@ -76,75 +142,94 @@ export declare interface Service {
  */
 export class Service extends EventEmitter {
 
-  static AccessControl: typeof HomeKitTypes.Generated.AccessControl;
-  static AccessoryInformation: typeof HomeKitTypes.Generated.AccessoryInformation;
-  static AirPurifier: typeof HomeKitTypes.Generated.AirPurifier;
-  static AirQualitySensor: typeof HomeKitTypes.Generated.AirQualitySensor;
-  static AudioStreamManagement: typeof HomeKitTypes.Remote.AudioStreamManagement;
-  static BatteryService: typeof HomeKitTypes.Generated.BatteryService;
-  static BridgeConfiguration: typeof HomeKitTypes.Bridged.BridgeConfiguration;
-  static BridgingState: typeof HomeKitTypes.Bridged.BridgingState;
-  static CameraControl: typeof HomeKitTypes.Bridged.CameraControl;
-  static CameraRTPStreamManagement: typeof HomeKitTypes.Generated.CameraRTPStreamManagement;
-  static CarbonDioxideSensor: typeof HomeKitTypes.Generated.CarbonDioxideSensor;
-  static CarbonMonoxideSensor: typeof HomeKitTypes.Generated.CarbonMonoxideSensor;
-  static ContactSensor: typeof HomeKitTypes.Generated.ContactSensor;
-  static DataStreamTransportManagement: typeof HomeKitTypes.DataStream.DataStreamTransportManagement;
-  static Door: typeof HomeKitTypes.Generated.Door;
-  static Doorbell: typeof HomeKitTypes.Generated.Doorbell;
-  static Fan: typeof HomeKitTypes.Generated.Fan;
-  static Fanv2: typeof HomeKitTypes.Generated.Fanv2;
-  static Faucet: typeof HomeKitTypes.Generated.Faucet;
-  static FilterMaintenance: typeof HomeKitTypes.Generated.FilterMaintenance;
-  static GarageDoorOpener: typeof HomeKitTypes.Generated.GarageDoorOpener;
-  static HeaterCooler: typeof HomeKitTypes.Generated.HeaterCooler;
-  static HumidifierDehumidifier: typeof HomeKitTypes.Generated.HumidifierDehumidifier;
-  static HumiditySensor: typeof HomeKitTypes.Generated.HumiditySensor;
-  static InputSource: typeof HomeKitTypes.TV.InputSource;
-  static IrrigationSystem: typeof HomeKitTypes.Generated.IrrigationSystem;
-  static LeakSensor: typeof HomeKitTypes.Generated.LeakSensor;
-  static LightSensor: typeof HomeKitTypes.Generated.LightSensor;
-  static Lightbulb: typeof HomeKitTypes.Generated.Lightbulb;
-  static LockManagement: typeof HomeKitTypes.Generated.LockManagement;
-  static LockMechanism: typeof HomeKitTypes.Generated.LockMechanism;
-  static Microphone: typeof HomeKitTypes.Generated.Microphone;
-  static MotionSensor: typeof HomeKitTypes.Generated.MotionSensor;
-  static OccupancySensor: typeof HomeKitTypes.Generated.OccupancySensor;
-  static Outlet: typeof HomeKitTypes.Generated.Outlet;
-  static Pairing: typeof HomeKitTypes.Bridged.Pairing;
-  static ProtocolInformation: typeof HomeKitTypes.Bridged.ProtocolInformation;
-  static Relay: typeof HomeKitTypes.Bridged.Relay;
-  static SecuritySystem: typeof HomeKitTypes.Generated.SecuritySystem;
-  static ServiceLabel: typeof HomeKitTypes.Generated.ServiceLabel;
-  static Siri: typeof HomeKitTypes.Remote.Siri;
-  static Slat: typeof HomeKitTypes.Generated.Slat;
-  static SmokeSensor: typeof HomeKitTypes.Generated.SmokeSensor;
-  static SmartSpeaker: typeof HomeKitTypes.Generated.SmartSpeaker;
-  static Speaker: typeof HomeKitTypes.Generated.Speaker;
-  static StatefulProgrammableSwitch: typeof HomeKitTypes.Bridged.StatefulProgrammableSwitch;
-  static StatelessProgrammableSwitch: typeof HomeKitTypes.Generated.StatelessProgrammableSwitch;
-  static Switch: typeof HomeKitTypes.Generated.Switch;
-  static TargetControl: typeof HomeKitTypes.Remote.TargetControl;
-  static TargetControlManagement: typeof HomeKitTypes.Remote.TargetControlManagement;
-  static Television: typeof HomeKitTypes.TV.Television;
-  static TelevisionSpeaker: typeof HomeKitTypes.TV.TelevisionSpeaker;
-  static TemperatureSensor: typeof HomeKitTypes.Generated.TemperatureSensor;
-  static Thermostat: typeof HomeKitTypes.Generated.Thermostat;
-  static TimeInformation: typeof HomeKitTypes.Bridged.TimeInformation;
-  static TunneledBTLEAccessoryService: typeof HomeKitTypes.Bridged.TunneledBTLEAccessoryService;
-  static Valve: typeof HomeKitTypes.Generated.Valve;
-  static Window: typeof HomeKitTypes.Generated.Window;
-  static WindowCovering: typeof HomeKitTypes.Generated.WindowCovering;
-  static CameraOperatingMode: typeof HomeKitTypes.Generated.CameraOperatingMode;
-  static CameraEventRecordingManagement: typeof HomeKitTypes.Generated.CameraEventRecordingManagement;
-  static WiFiRouter: typeof HomeKitTypes.Generated.WiFiRouter;
-  static WiFiSatellite: typeof HomeKitTypes.Generated.WiFiSatellite;
-  static PowerManagement: typeof HomeKitTypes.Generated.PowerManagement;
-  static TransferTransportManagement: typeof HomeKitTypes.Generated.TransferTransportManagement;
-
-  static AccessoryRuntimeInformation: typeof HomeKitTypes.Generated.AccessoryRuntimeInformation;
-  static Diagnostics: typeof HomeKitTypes.Generated.Diagnostics;
-  static WiFiTransport: typeof HomeKitTypes.Generated.WiFiTransport;
+  // Pattern below is for automatic detection of the section of defined services. Used by the generator
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  public static AccessControl: typeof AccessControl;
+  public static AccessoryInformation: typeof AccessoryInformation;
+  public static AccessoryRuntimeInformation: typeof AccessoryRuntimeInformation;
+  public static AirPurifier: typeof AirPurifier;
+  public static AirQualitySensor: typeof AirQualitySensor;
+  public static AudioStreamManagement: typeof AudioStreamManagement;
+  public static Battery: typeof Battery;
+  /**
+   * @deprecated Please use {@link Service.Battery}.
+   */
+  public static BatteryService: typeof Battery;
+  /**
+   * @deprecated Please use {@link Service.CameraRecordingManagement}.
+   */
+  public static CameraEventRecordingManagement: typeof CameraRecordingManagement;
+  public static CameraOperatingMode: typeof CameraOperatingMode;
+  public static CameraRecordingManagement: typeof CameraRecordingManagement;
+  public static CameraRTPStreamManagement: typeof CameraRTPStreamManagement;
+  public static CarbonDioxideSensor: typeof CarbonDioxideSensor;
+  public static CarbonMonoxideSensor: typeof CarbonMonoxideSensor;
+  public static CloudRelay: typeof CloudRelay;
+  public static ContactSensor: typeof ContactSensor;
+  public static DataStreamTransportManagement: typeof DataStreamTransportManagement;
+  public static Diagnostics: typeof Diagnostics;
+  public static Door: typeof Door;
+  public static Doorbell: typeof Doorbell;
+  public static Fan: typeof Fan;
+  public static Fanv2: typeof Fanv2;
+  public static Faucet: typeof Faucet;
+  public static FilterMaintenance: typeof FilterMaintenance;
+  public static GarageDoorOpener: typeof GarageDoorOpener;
+  public static HeaterCooler: typeof HeaterCooler;
+  public static HumidifierDehumidifier: typeof HumidifierDehumidifier;
+  public static HumiditySensor: typeof HumiditySensor;
+  public static InputSource: typeof InputSource;
+  public static IrrigationSystem: typeof IrrigationSystem;
+  public static LeakSensor: typeof LeakSensor;
+  public static Lightbulb: typeof Lightbulb;
+  public static LightSensor: typeof LightSensor;
+  public static LockManagement: typeof LockManagement;
+  public static LockMechanism: typeof LockMechanism;
+  public static Microphone: typeof Microphone;
+  public static MotionSensor: typeof MotionSensor;
+  public static OccupancySensor: typeof OccupancySensor;
+  public static Outlet: typeof Outlet;
+  public static Pairing: typeof Pairing;
+  public static PowerManagement: typeof PowerManagement;
+  public static ProtocolInformation: typeof ProtocolInformation;
+  /**
+   * @deprecated Please use {@link Service.CloudRelay}.
+   */
+  public static Relay: typeof CloudRelay;
+  public static SecuritySystem: typeof SecuritySystem;
+  public static ServiceLabel: typeof ServiceLabel;
+  public static Siri: typeof Siri;
+  /**
+   * @deprecated Please use {@link Service.Slats}.
+   */
+  public static Slat: typeof Slats;
+  public static Slats: typeof Slats;
+  public static SmartSpeaker: typeof SmartSpeaker;
+  public static SmokeSensor: typeof SmokeSensor;
+  public static Speaker: typeof Speaker;
+  public static StatefulProgrammableSwitch: typeof StatefulProgrammableSwitch;
+  public static StatelessProgrammableSwitch: typeof StatelessProgrammableSwitch;
+  public static Switch: typeof Switch;
+  public static TargetControl: typeof TargetControl;
+  public static TargetControlManagement: typeof TargetControlManagement;
+  public static Television: typeof Television;
+  public static TelevisionSpeaker: typeof TelevisionSpeaker;
+  public static TemperatureSensor: typeof TemperatureSensor;
+  public static Thermostat: typeof Thermostat;
+  public static ThreadTransport: typeof ThreadTransport;
+  public static TransferTransportManagement: typeof TransferTransportManagement;
+  public static Tunnel: typeof Tunnel;
+  /**
+   * @deprecated Please use {@link Service.Tunnel}.
+   */
+  public static TunneledBTLEAccessoryService: typeof Tunnel;
+  public static Valve: typeof Valve;
+  public static WiFiRouter: typeof WiFiRouter;
+  public static WiFiSatellite: typeof WiFiSatellite;
+  public static WiFiTransport: typeof WiFiTransport;
+  public static Window: typeof Window;
+  public static WindowCovering: typeof WindowCovering;
+  // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
   // NOTICE: when adding/changing properties, remember to possibly adjust the serialize/deserialize functions
   public displayName: string;
@@ -467,7 +552,7 @@ export class Service extends EventEmitter {
       assert(this.characteristics.length, "service '" + this.displayName + "' does not have any characteristics!");
 
       const service: ServiceJsonObject = {
-        type: toShortForm(this.UUID, HomeKitTypes.BASE_UUID),
+        type: toShortForm(this.UUID),
         iid: this.iid!,
         characteristics: [],
         hidden: this.isHiddenService? true: undefined,
@@ -533,7 +618,7 @@ export class Service extends EventEmitter {
     assert(this.characteristics.length, "service '" + this.displayName + "' does not have any characteristics!");
 
     const service: ServiceJsonObject = {
-      type: toShortForm(this.UUID, HomeKitTypes.BASE_UUID),
+      type: toShortForm(this.UUID),
       iid: this.iid!,
       characteristics: this.characteristics.map(characteristic => characteristic.internalHAPRepresentation()),
       hidden: this.isHiddenService? true: undefined,

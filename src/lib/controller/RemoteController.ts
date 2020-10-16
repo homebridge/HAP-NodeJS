@@ -24,8 +24,13 @@ import {
     RequestHandler,
     Topics
 } from "../datastream";
-import { DataStreamTransportManagement } from "../gen/HomeKit-DataStream";
-import { AudioStreamManagement, Siri, TargetControl, TargetControlManagement } from "../gen/HomeKit-Remote";
+import type {
+    AudioStreamManagement,
+    DataStreamTransportManagement,
+    Siri,
+    TargetControl,
+    TargetControlManagement
+} from '../definitions';
 import { HAPStatus } from "../HAPServer";
 import { Service } from "../Service";
 import { HAPConnection, HAPConnectionEvent } from "../util/eventedhttp";
@@ -136,11 +141,6 @@ export type ButtonConfiguration = {
     buttonID: number,
     buttonType: ButtonType,
     buttonName?: string
-}
-
-
-export const enum SiriInputType {
-    PUSH_BUTTON_TRIGGERED_APPLE_TV = 0,
 }
 
 
@@ -1147,7 +1147,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
         if (this.audioSupported) {
             this.siriService = new Service.Siri('', '');
-            this.siriService.setCharacteristic(Characteristic.SiriInputType, SiriInputType.PUSH_BUTTON_TRIGGERED_APPLE_TV);
+            this.siriService.setCharacteristic(Characteristic.SiriInputType, Characteristic.SiriInputType.PUSH_BUTTON_TRIGGERED_APPLE_TV);
 
             this.audioStreamManagementService = new Service.AudioStreamManagement('', '');
             this.audioStreamManagementService.setCharacteristic(Characteristic.SupportedAudioStreamConfiguration, this.supportedAudioConfiguration);

@@ -6,7 +6,7 @@ import { LegacyCameraSource, LegacyCameraSourceAdapter, once, uuid } from "../..
 import { CharacteristicValue, Nullable, SessionIdentifier } from '../../types';
 import { Characteristic, CharacteristicEventTypes, CharacteristicSetCallback } from '../Characteristic';
 import { CameraController, CameraStreamingDelegate } from "../controller";
-import { CameraRTPStreamManagement } from "../gen/HomeKit";
+import type { CameraRTPStreamManagement } from "../definitions";
 import { HAPStatus } from "../HAPServer";
 import { Service } from '../Service';
 import { HAPConnection, HAPConnectionEvent } from "../util/eventedhttp";

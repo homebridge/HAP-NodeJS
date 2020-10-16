@@ -1,5 +1,5 @@
 import "source-map-support/register"; // registering node-source-map-support for typescript stack traces
-import './lib/gen';
+import './lib/definitions'; // must be loaded before Characteristic and Service class
 import * as accessoryLoader from './lib/AccessoryLoader';
 import * as uuidFunctions from './lib/util/uuid';
 import * as legacyTypes from './accessories/types';
@@ -17,7 +17,6 @@ export * from './lib/AccessoryLoader';
 export * from './lib/camera';
 export * from './lib/tv/AccessControlManagement';
 export * from './lib/HAPServer';
-export * from './lib/gen';
 export * from './lib/datastream';
 export * from './lib/controller';
 

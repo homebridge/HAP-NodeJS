@@ -64,6 +64,7 @@
     "@types/debug": "^4.1.5",
     "@types/jest": "^26.0.14",
     "@types/node": "^10.17.20",
+    "commander": "^6.1.0",
     "jest": "^26.5.2",
     "rimraf": "^3.0.2",
     "semver": "^7.3.2",

@@ -1,4 +1,3 @@
-import './gen';
 import { Characteristic, Service, ServiceEventTypes, uuid } from '..';
 
 const createService = () => {
