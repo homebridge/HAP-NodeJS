@@ -56,7 +56,6 @@ lock.on(AccessoryEventTypes.IDENTIFY, (paired, callback) => {
 const service = new Service.LockMechanism("Fake Lock");
 
 // Add the actual Door Lock Service and listen for change events from iOS.
-// We can see the complete list of Services and Characteristics in `lib/gen/HomeKit.ts`
 service.getCharacteristic(Characteristic.LockTargetState)
   .on(CharacteristicEventTypes.SET, (value, callback) => {
 

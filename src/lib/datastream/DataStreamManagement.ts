@@ -1,6 +1,6 @@
 import createDebug from "debug";
 import { Characteristic, CharacteristicEventTypes, CharacteristicSetCallback } from "../Characteristic";
-import { DataStreamTransportManagement } from "../gen/HomeKit-DataStream";
+import type { DataStreamTransportManagement } from "../definitions";
 import { HAPStatus } from "../HAPServer";
 import { Service } from "../Service";
 import { HAPConnection } from "../util/eventedhttp";

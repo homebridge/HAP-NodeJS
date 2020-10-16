@@ -1,4 +1,3 @@
-import './gen';
 import {
   Accessory,
   Categories,

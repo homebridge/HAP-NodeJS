@@ -4,6 +4,8 @@ module.exports = {
   coverageReporters: ["lcov"],
   collectCoverageFrom: [
     "src/**",
-    "!src/accessories/**"
+    "!src/accessories/**",
+    "!src/lib/definitions/generate-definitions.ts",
+    "!src/lib/definitions/generator-configuration.ts"
   ],
 };

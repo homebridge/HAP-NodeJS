@@ -10,7 +10,6 @@ import {
   Units,
   uuid
 } from '..';
-import './gen';
 
 function createCharacteristic(type: Formats, customUUID?: string): Characteristic {
   return new Characteristic('Test', customUUID || uuid.generate('Foo'), { format: type, perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE] });

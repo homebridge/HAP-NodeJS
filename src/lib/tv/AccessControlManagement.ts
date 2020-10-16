@@ -1,13 +1,13 @@
 import { EventEmitter } from "events";
-import { AccessControl } from "../gen/HomeKit";
-import { Service } from "../Service";
+import { CharacteristicValue } from "../../types";
 import {
   Characteristic,
   CharacteristicEventTypes,
   CharacteristicGetCallback,
   CharacteristicSetCallback
 } from "../Characteristic";
-import { CharacteristicValue } from "../../types";
+import type { AccessControl } from '../definitions';
+import { Service } from "../Service";
 import * as tlv from "../util/tlv";
 
 const enum AccessControlTypes {

@@ -8,17 +8,17 @@ import {
   CharacteristicGetCallback,
   CharacteristicSetCallback,
   CharacteristicValue,
+  HAPStatus,
   LegacyCameraSourceAdapter,
   PrepareStreamRequest,
   PrepareStreamResponse,
   RTPStreamManagement,
   Service,
   SnapshotRequest,
-  HAPStatus,
   StreamingRequest
 } from "../..";
 import { SessionIdentifier } from "../../types";
-import { Doorbell, Microphone, Speaker } from "../gen/HomeKit";
+import type { Doorbell, Microphone, Speaker } from "../definitions";
 import { Controller, ControllerServiceMap, ControllerType, DefaultControllerType } from "./Controller";
 import Timeout = NodeJS.Timeout;
 

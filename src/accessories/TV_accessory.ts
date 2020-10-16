@@ -29,7 +29,6 @@ tv.pincode = "031-45-154";
 tv.category = Categories.TELEVISION;
 
 // Add the actual TV Service and listen for change events from iOS.
-// We can see the complete list of Services and Characteristics in `lib/gen/HomeKit.ts`
 const televisionService = tv.addService(Service.Television, "Television", "Television");
 
 televisionService

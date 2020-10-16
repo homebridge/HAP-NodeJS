@@ -31,7 +31,6 @@ sensor.pincode = "031-45-154";
 sensor.category = Categories.SENSOR;
 
 // Add the actual TemperatureSensor Service.
-// We can see the complete list of Services and Characteristics in `lib/gen/HomeKit.ts`
 sensor
   .addService(Service.TemperatureSensor)!
   .getCharacteristic(Characteristic.CurrentTemperature)!

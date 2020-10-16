@@ -56,7 +56,6 @@ fan.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback) =
 });
 
 // Add the actual Fan Service and listen for change events from iOS.
-// We can see the complete list of Services and Characteristics in `lib/gen/HomeKit.ts`
 fan
   .addService(Service.Fan, "Fan") // services exposed to the user should have "names" like "Fake Light" for us
   .getCharacteristic(Characteristic.On)!

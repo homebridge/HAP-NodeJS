@@ -3,6 +3,8 @@ import crypto from 'crypto';
 type Binary = Buffer | NodeJS.TypedArray | DataView;
 export type BinaryLike = string | Binary;
 
+export const BASE_UUID = '-0000-1000-8000-0026BB765291';
+
 // http://stackoverflow.com/a/25951500/66673
 export function generate(data: BinaryLike) {
   const sha1sum = crypto.createHash('sha1');
@@ -68,7 +70,7 @@ export function write(uuid: string, buf: Buffer = Buffer.alloc(16), offset: numb
 
 const SHORT_FORM_REGEX = /^0*([0-9a-f]{1,8})-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
 
-export function toShortForm(uuid: string, base?: string) {
+export function toShortForm(uuid: string, base: string = BASE_UUID) {
   if (!isValid(uuid)) throw new TypeError('uuid was not a valid UUID or short form UUID');
   if (base && !isValid('00000000' + base)) throw new TypeError('base was not a valid base UUID');
   if (base && !uuid.endsWith(base)) return uuid.toUpperCase();
@@ -78,7 +80,7 @@ export function toShortForm(uuid: string, base?: string) {
 
 const VALID_SHORT_REGEX = /^[0-9a-f]{1,8}$/i;
 
-export function toLongForm(uuid: string, base: string) {
+export function toLongForm(uuid: string, base: string = BASE_UUID) {
   if (isValid(uuid)) return uuid.toUpperCase();
   if (!VALID_SHORT_REGEX.test(uuid)) throw new TypeError('uuid was not a valid UUID or short form UUID');
   if (!isValid('00000000' + base)) throw new TypeError('base was not a valid base UUID');

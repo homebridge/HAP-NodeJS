@@ -42,16 +42,6 @@ import {
   ControllerType,
   isSerializableController,
 } from "./controller";
-import * as HomeKitTypes from "./gen";
-import {
-  CameraEventRecordingManagement,
-  CameraOperatingMode,
-  CameraRTPStreamManagement,
-  ContactSensorState,
-  MotionDetected,
-  ProgrammableSwitchEvent,
-} from "./gen/HomeKit";
-import { ButtonEvent } from "./gen/HomeKit-Remote";
 import {
   AccessoriesCallback,
   AddPairingCallback,
@@ -659,8 +649,8 @@ export class Accessory extends EventEmitter {
 
     // we try here to be as good as possibly of keeping current behaviour
     cameraSource.services.forEach(service => {
-      if (service.UUID === CameraRTPStreamManagement.UUID || service.UUID === CameraOperatingMode.UUID
-          || service.UUID === CameraEventRecordingManagement.UUID) {
+      if (service.UUID === Service.CameraRTPStreamManagement.UUID || service.UUID === Service.CameraOperatingMode.UUID
+          || service.UUID === Service.CameraRecordingManagement.UUID) {
         return; // ignore those services, as they get replaced by the RTPStreamManagement
       }
 
@@ -1414,7 +1404,7 @@ export class Accessory extends EventEmitter {
         data.perms = characteristic.props.perms;
       }
       if (request.includeType) {
-        data.type = toShortForm(this.UUID, HomeKitTypes.BASE_UUID);
+        data.type = toShortForm(this.UUID);
       }
       if (request.includeEvent) {
         data.ev = connection.hasEventNotifications(id.aid, id.iid);
@@ -1730,8 +1720,8 @@ export class Accessory extends EventEmitter {
       }
 
       const uuid = change.characteristic.UUID;
-      const immediateDelivery = uuid === ButtonEvent.UUID || uuid === ProgrammableSwitchEvent.UUID
-        || uuid === MotionDetected.UUID || uuid === ContactSensorState.UUID;
+      const immediateDelivery = uuid === Characteristic.ButtonEvent.UUID || uuid === Characteristic.ProgrammableSwitchEvent.UUID
+        || uuid === Characteristic.MotionDetected.UUID || uuid === Characteristic.ContactSensorState.UUID;
 
       this._server.sendEventNotifications(accessory.aid, change.characteristic.iid, change.newValue, change.originator, immediateDelivery);
     }

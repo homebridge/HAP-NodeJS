@@ -3,11 +3,12 @@ import {
   Categories,
   Characteristic,
   CharacteristicEventTypes,
-  CharacteristicGetCallback, CharacteristicSetCallback, CharacteristicValue,
+  CharacteristicGetCallback,
+  CharacteristicSetCallback,
+  CharacteristicValue,
   Service,
   uuid
 } from "..";
-import {CurrentMediaState, TargetMediaState} from "../lib/gen/HomeKit-TV";
 
 const speakerUUID = uuid.generate('hap-nodejs:accessories:smart-speaker');
 const speaker = exports.accessory = new Accessory('SmartSpeaker', speakerUUID);
@@ -20,8 +21,8 @@ speaker.category = Categories.SPEAKER;
 
 const service = new Service.SmartSpeaker('Smart Speaker', '');
 
-let currentMediaState: number = CurrentMediaState.PAUSE;
-let targetMediaState: number = TargetMediaState.PAUSE;
+let currentMediaState: number = Characteristic.CurrentMediaState.PAUSE;
+let targetMediaState: number = Characteristic.TargetMediaState.PAUSE;
 
 // ConfigureName is used to listen for Name changes inside the Home App.
 // A device manufacturer would probably need to adjust the name of the device in the AirPlay 2 protocol (or something)
