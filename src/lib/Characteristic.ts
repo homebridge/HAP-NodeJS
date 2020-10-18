@@ -1140,10 +1140,6 @@ export class Characteristic extends EventEmitter {
       this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
       return Promise.resolve();
     } else {
-      // the executor of the promise is called on the next tick, thus we set the updated value immediately until the set
-      // event is executed.
-      this.value = value;
-
       return new Promise((resolve, reject) => {
         try {
           this.emit(CharacteristicEventTypes.SET, value, once((status?: Error | HAPStatus | null, writeResponse?: Nullable<CharacteristicValue>) => {
