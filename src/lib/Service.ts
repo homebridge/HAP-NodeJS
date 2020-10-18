@@ -16,6 +16,7 @@ import {
   AirQualitySensor,
   AudioStreamManagement,
   Battery,
+  CameraControl,
   CameraOperatingMode,
   CameraRecordingManagement,
   CameraRTPStreamManagement,
@@ -155,6 +156,10 @@ export class Service extends EventEmitter {
    * @deprecated Please use {@link Service.Battery}.
    */
   public static BatteryService: typeof Battery;
+  /**
+   * @deprecated This service has no usage anymore and will be ignored by iOS
+   */
+  public static CameraControl: typeof CameraControl;
   /**
    * @deprecated Please use {@link Service.CameraRecordingManagement}.
    */

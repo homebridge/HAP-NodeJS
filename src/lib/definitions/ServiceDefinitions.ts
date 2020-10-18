@@ -169,6 +169,35 @@ Service.BatteryService = Battery;
 Service.Battery = Battery;
 
 /**
+ * Service "Camera Control"
+ * @deprecated This service has no usage anymore and will be ignored by iOS
+ */
+export class CameraControl extends Service {
+
+  public static readonly UUID: string = "00000111-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, CameraControl.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.On);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.CurrentHorizontalTiltAngle);
+    this.addOptionalCharacteristic(Characteristic.CurrentVerticalTiltAngle);
+    this.addOptionalCharacteristic(Characteristic.TargetHorizontalTiltAngle);
+    this.addOptionalCharacteristic(Characteristic.TargetVerticalTiltAngle);
+    this.addOptionalCharacteristic(Characteristic.NightVision);
+    this.addOptionalCharacteristic(Characteristic.OpticalZoom);
+    this.addOptionalCharacteristic(Characteristic.DigitalZoom);
+    this.addOptionalCharacteristic(Characteristic.ImageRotation);
+    this.addOptionalCharacteristic(Characteristic.ImageMirroring);
+    this.addOptionalCharacteristic(Characteristic.Name);
+  }
+}
+Service.CameraControl = CameraControl;
+
+/**
  * Service "Camera Operating Mode"
  */
 export class CameraOperatingMode extends Service {
