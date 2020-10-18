@@ -162,6 +162,28 @@ describe("ServiceDefinitions", () => {
     });
   });
 
+  describe("CameraControl", () => {
+    it("should be able to construct", () => {
+      const service0 = new Service.CameraControl();
+      const service1 = new Service.CameraControl("test name");
+      const service2 = new Service.CameraControl("test name", "test sub type");
+
+      expect(service0.displayName).toBe("");
+      expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);
+      expect(service0.subtype).toBeUndefined();
+
+      expect(service1.displayName).toBe("test name");
+      expect(service1.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service1.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service1.subtype).toBeUndefined();
+
+      expect(service2.displayName).toBe("test name");
+      expect(service2.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service2.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service2.subtype).toBe("test sub type");
+    });
+  });
+
   describe("CameraOperatingMode", () => {
     it("should be able to construct", () => {
       const service0 = new Service.CameraOperatingMode();

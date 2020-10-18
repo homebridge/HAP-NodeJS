@@ -105,7 +105,7 @@ export const ServiceCharacteristicConfigurationOverrides: Map<string, Characteri
 ]);
 
 export const ServiceManualAdditions: Map<string, GeneratedService> = new Map([
-  ["og-speaker", { // same as Speaker service just a bit different
+  ["og-speaker", { // the normal speaker is considered to be the "TelevisionSpeaker"
     id: "og-speaker",
     UUID: "00000113-0000-1000-8000-0026BB765291",
     name: "Speaker",
@@ -114,7 +114,18 @@ export const ServiceManualAdditions: Map<string, GeneratedService> = new Map([
 
     requiredCharacteristics: ["mute"],
     optionalCharacteristics: ["active", "volume"],
-  }]
+  }],
+  ["camera-control", {
+    id: "camera-control",
+    UUID: "00000111-0000-1000-8000-0026BB765291",
+    name: "Camera Control",
+    className: "CameraControl",
+    deprecatedNotice: "This service has no usage anymore and will be ignored by iOS",
+
+    requiredCharacteristics: ["on"],
+    optionalCharacteristics: ["horizontal-tilt.current", "vertical-tilt.current", "horizontal-tilt.target", "vertical-tilt.target", "night-vision", "optical-zoom", "digital-zoom", "image-rotation", "image-mirroring", "name"]
+  }
+  ],
 ]);
 
 export const CharacteristicSinceInformation: Map<string, string> = new Map([

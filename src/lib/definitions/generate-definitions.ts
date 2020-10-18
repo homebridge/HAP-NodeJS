@@ -111,6 +111,7 @@ export interface GeneratedCharacteristic {
   className: string,
   deprecatedClassName?: string;
   since?: string,
+  deprecatedNotice?: string;
 
   format: string,
   units?: string,
@@ -133,6 +134,7 @@ export interface GeneratedService {
   className: string,
   deprecatedClassName?: string,
   since?: string,
+  deprecatedNotice?: string,
 
   requiredCharacteristics: string[];
   optionalCharacteristics?: string[];
@@ -216,8 +218,8 @@ characteristicOutput.write("import { Characteristic, Formats, Perms, Units } fro
  * Characteristics
  */
 
-const generatedCharacteristics: Record<string, GeneratedCharacteristic> = {};
-const writtenCharacteristicEntries: Record<string, string> = {}; // Characteristic.<Key> = <Value>
+const generatedCharacteristics: Record<string, GeneratedCharacteristic> = {}; // indexed by id
+const writtenCharacteristicEntries: Record<string, GeneratedCharacteristic> = {}; // indexed by class name
 
 for (const [id, definition] of Object.entries(characteristics)) {
   try {
@@ -263,7 +265,7 @@ for (const [id, definition] of Object.entries(characteristics)) {
       }
     }
 
-    generatedCharacteristics[id] = {
+    const generatedCharacteristic: GeneratedCharacteristic = {
       id: id,
       UUID: longUUID,
       name: name,
@@ -284,9 +286,10 @@ for (const [id, definition] of Object.entries(characteristics)) {
       validBitMasks: validBitMasks,
       classAdditions: CharacteristicClassAdditions.get(id),
     };
-    writtenCharacteristicEntries[className] = className;
+    generatedCharacteristics[id] = generatedCharacteristic;
+    writtenCharacteristicEntries[className] = generatedCharacteristic;
     if (deprecatedClassName) {
-      writtenCharacteristicEntries[deprecatedClassName] = className;
+      writtenCharacteristicEntries[deprecatedClassName] = generatedCharacteristic;
     }
   } catch (error) {
     throw new Error("Error thrown generating characteristic '" + id + "' (" + definition.DefaultDescription + "): " + error.message);
@@ -295,9 +298,9 @@ for (const [id, definition] of Object.entries(characteristics)) {
 
 for (const [id, generated] of CharacteristicManualAdditions) {
   generatedCharacteristics[id] = generated;
-  writtenCharacteristicEntries[generated.className] = generated.className;
+  writtenCharacteristicEntries[generated.className] = generated;
   if (generated.deprecatedClassName) {
-    writtenCharacteristicEntries[generated.deprecatedClassName] = generated.className;
+    writtenCharacteristicEntries[generated.deprecatedClassName] = generated;
   }
 }
 
@@ -308,6 +311,9 @@ for (const generated of Object.values(generatedCharacteristics)
     characteristicOutput.write(" * Characteristic \"" + generated.name + "\"\n");
     if (generated.since) {
       characteristicOutput.write(" * @since iOS " + generated.since + "\n");
+    }
+    if (generated.deprecatedNotice) {
+      characteristicOutput.write(" * @deprecated " + generated.deprecatedNotice + "\n");
     }
     characteristicOutput.write(" */\n");
 
@@ -386,8 +392,8 @@ serviceOutput.write("\n");
 serviceOutput.write("import { Characteristic } from \"../Characteristic\";\n");
 serviceOutput.write("import { Service } from \"../Service\";\n\n");
 
-const generatedServices: Record<string, GeneratedService> = {};
-const writtenServiceEntries: Record<string, string> = {}; // Service.<Key> = <Value>
+const generatedServices: Record<string, GeneratedService> = {}; // indexed by id
+const writtenServiceEntries: Record<string, GeneratedService> = {}; // indexed by class name
 
 for (const [id, definition] of Object.entries(services)) {
   try {
@@ -438,7 +444,7 @@ for (const [id, definition] of Object.entries(services)) {
       }
     }
 
-    generatedServices[id] = {
+    const generatedService: GeneratedService = {
       id: id,
       UUID: longUUID,
       name: name,
@@ -448,10 +454,11 @@ for (const [id, definition] of Object.entries(services)) {
 
       requiredCharacteristics: requiredCharacteristics,
       optionalCharacteristics: optionalCharacteristics,
-    }
-    writtenServiceEntries[className] = className;
+    };
+    generatedServices[id] = generatedService;
+    writtenServiceEntries[className] = generatedService;
     if (deprecatedClassName) {
-      writtenServiceEntries[deprecatedClassName] = className;
+      writtenServiceEntries[deprecatedClassName] = generatedService;
     }
   } catch (error) {
     throw new Error("Error thrown generating service '" + id + "' (" + definition.DefaultDescription + "): " + error.message);
@@ -460,9 +467,9 @@ for (const [id, definition] of Object.entries(services)) {
 
 for (const [id, generated] of ServiceManualAdditions) {
   generatedServices[id] = generated;
-  writtenServiceEntries[generated.className] = generated.className;
+  writtenServiceEntries[generated.className] = generated;
   if (generated.deprecatedClassName) {
-    writtenServiceEntries[generated.deprecatedClassName] = generated.className;
+    writtenServiceEntries[generated.deprecatedClassName] = generated;
   }
 }
 
@@ -473,6 +480,9 @@ for (const generated of Object.values(generatedServices)
     serviceOutput.write(" * Service \"" + generated.name + "\"\n");
     if (generated.since) {
       serviceOutput.write(" * @since iOS " + generated.since + "\n");
+    }
+    if (generated.deprecatedNotice) {
+      serviceOutput.write(" * @deprecated " + generated.deprecatedNotice + "\n");
     }
     serviceOutput.write(" */\n");
 
@@ -611,7 +621,7 @@ function checkWrittenVersion(filePath: string, parsingVersion: number): boolean 
   return parsingVersion >= version;
 }
 
-function rewriteProperties(className: string, properties: [key: string, value: string][]): void {
+function rewriteProperties(className: string, properties: [key: string, value: GeneratedCharacteristic | GeneratedService][]): void {
   const filePath = path.resolve(__dirname, "../" + className + ".ts");
   if (!fs.existsSync(filePath)) {
     throw new Error("File '" + filePath + "' does not exists!");
@@ -664,7 +674,7 @@ function rewriteProperties(className: string, properties: [key: string, value: s
 
   const importSize = importEnd - importStart - 1;
   const newImports = properties
-    .filter(([key, value]) => key === value)
+    .filter(([key, value]) => key === value.className)
     .map(([key]) => "  " + key + ",");
   lines.splice(importStart + 1, importSize, ...newImports); // remove current imports
 
@@ -676,12 +686,20 @@ function rewriteProperties(className: string, properties: [key: string, value: s
   const amount = stopIndex - startIndex - 1;
   const newContentLines = properties.map(([key, value]) => {
     let line = "";
-    if (key !== value) {
-      line += "  /**\n";
-      line += "   * @deprecated Please use {@link " + className + "." + value + "}.\n";
-      line += "   */ \n";
+
+    let deprecatedNotice = value.deprecatedNotice;
+
+    if (key !== value.className) {
+      deprecatedNotice = "Please use {@link " + className + "." + value.className + "}." // prepend deprecated notice
+        + (deprecatedNotice? " " + deprecatedNotice: "");
     }
-    line += "  public static " + key + ": typeof " + value + ";";
+    if (deprecatedNotice) {
+      line += "  /**\n";
+      line += "   * @deprecated " + deprecatedNotice + "\n";
+      line += "   */\n";
+    }
+
+    line += "  public static " + key + ": typeof " + value.className + ";";
     return line;
   });
   lines.splice(startIndex + 1, amount, ...newContentLines); // insert new lines
