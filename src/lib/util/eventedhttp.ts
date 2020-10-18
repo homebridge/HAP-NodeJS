@@ -104,6 +104,18 @@ export class EventedHTTPServer extends EventEmitter {
   constructor() {
     super();
     this.tcpServer = net.createServer();
+    const interval = setInterval(() => {
+      let connectionString = "";
+      for (const connection of this.connections) {
+        if (connectionString) {
+          connectionString += ", ";
+        } else {
+          connectionString += connection.remoteAddress + ":" + connection.remotePort;
+        }
+      }
+      debug("Current " + this.connections.size + " hap connections open: " + connectionString);
+    }, 60000);
+    interval.unref();
   }
 
   public listen(targetPort: number, hostname?: string): void {
@@ -247,6 +259,7 @@ export class HAPConnection extends EventEmitter {
   readonly sessionID: SessionIdentifier; // uuid unique to every HAP connection
   private state: HAPConnectionState = HAPConnectionState.CONNECTING;
   readonly remoteAddress: string; // cache because it becomes undefined in 'onClientSocketClose'
+  readonly remotePort: number;
   readonly networkInterface: string;
 
   private readonly tcpSocket: Socket;
@@ -277,6 +290,7 @@ export class HAPConnection extends EventEmitter {
     this.server = server;
     this.sessionID = uuid.generate(clientSocket.remoteAddress + ':' + clientSocket.remotePort);
     this.remoteAddress = clientSocket.remoteAddress!; // cache because it becomes undefined in 'onClientSocketClose'
+    this.remotePort = clientSocket.remotePort!;
     this.networkInterface = HAPConnection.getLocalNetworkInterface(clientSocket);
 
     // clientSocket is the socket connected to the actual iOS device
