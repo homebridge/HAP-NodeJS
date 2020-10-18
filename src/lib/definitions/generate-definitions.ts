@@ -624,7 +624,7 @@ function checkWrittenVersion(filePath: string, parsingVersion: number): boolean 
 function rewriteProperties(className: string, properties: [key: string, value: GeneratedCharacteristic | GeneratedService][]): void {
   const filePath = path.resolve(__dirname, "../" + className + ".ts");
   if (!fs.existsSync(filePath)) {
-    throw new Error("File '" + filePath + "' does not exists!");
+    throw new Error("File '" + filePath + "' does not exist!");
   }
 
   const file = fs.readFileSync(filePath, { encoding: "utf8"});

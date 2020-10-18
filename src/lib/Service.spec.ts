@@ -1,4 +1,4 @@
-import { Characteristic, Service, ServiceEventTypes, uuid } from '..';
+import { Characteristic, SerializedService, Service, ServiceEventTypes, uuid } from '..';
 
 const createService = () => {
   return new Service('Test', uuid.generate('Foo'), 'subtype');
@@ -94,6 +94,13 @@ describe('Service', () => {
       expect(service.optionalCharacteristics).toBeDefined();
       expect(json.optionalCharacteristics!.length).toEqual(service.optionalCharacteristics.length);
     });
+
+    it("should serialize service with proper constructor name", () => {
+      const service = new Service.Speaker("Speaker Name");
+
+      const json = Service.serialize(service);
+      expect(json.constructorName).toBe("Speaker");
+    });
   });
 
   describe('#deserialize', () => {
@@ -159,6 +166,24 @@ describe('Service', () => {
       expect(service.characteristics.length).toEqual(2); // On, Name
       expect(service.optionalCharacteristics).toBeDefined();
       expect(service.optionalCharacteristics!.length).toEqual(5); // as defined in the Lightbulb service
+    });
+
+    it("should deserialize from json with constructor name", () => {
+      const json: SerializedService = JSON.parse('{"displayName":"Speaker Name","UUID":"00000113-0000-1000-8000-0026BB765291",' +
+        '"constructorName":"Speaker","hiddenService":false,"primaryService":false,"characteristics":' +
+        '[{"displayName":"Name","UUID":"00000023-0000-1000-8000-0026BB765291","eventOnlyCharacteristic":false,"constructorName":"Name",' +
+        '"value":"Speaker Name","props":{"format":"string","perms":["pr"],"maxLen":64}},{"displayName":"Mute",' +
+        '"UUID":"0000011A-0000-1000-8000-0026BB765291","eventOnlyCharacteristic":false,' +
+        '"constructorName":"Mute","value":false,"props":{"format":"bool","perms":["ev","pr","pw"]}}],' +
+        '"optionalCharacteristics":[{"displayName":"Active","UUID":"000000B0-0000-1000-8000-0026BB765291",' +
+        '"eventOnlyCharacteristic":false,"constructorName":"Active","value":0,"props":{"format":"uint8","perms":["ev","pr","pw"],' +
+        '"minValue":0,"maxValue":1,"minStep":1}},{"displayName":"Volume","UUID":"00000119-0000-1000-8000-0026BB765291",' +
+        '"eventOnlyCharacteristic":false,"constructorName":"Volume","value":0,"props":{"format":"uint8","perms":["ev","pr","pw"],' +
+        '"unit":"percentage","minValue":0,"maxValue":100,"minStep":1}}]}');
+
+      const service = Service.deserialize(json);
+
+      expect(service instanceof Service.Speaker).toBeTruthy();
     });
   });
 });
