@@ -109,9 +109,8 @@ export class EventedHTTPServer extends EventEmitter {
       for (const connection of this.connections) {
         if (connectionString) {
           connectionString += ", ";
-        } else {
-          connectionString += connection.remoteAddress + ":" + connection.remotePort;
         }
+        connectionString += connection.remoteAddress + ":" + connection.remotePort;
       }
       debug("Current " + this.connections.size + " hap connections open: " + connectionString);
     }, 60000);
