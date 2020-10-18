@@ -472,6 +472,21 @@ describe('Characteristic', () => {
         eventOnlyCharacteristic: true,
       })
     });
+
+    it("should serialize characteristic with proper constructor name", () => {
+      const characteristic = new Characteristic.Name();
+      characteristic.updateValue("New Name!");
+
+      const json = Characteristic.serialize(characteristic);
+      expect(json).toEqual({
+        displayName: 'Name',
+        UUID: '00000023-0000-1000-8000-0026BB765291',
+        eventOnlyCharacteristic: false,
+        constructorName: 'Name',
+        value: 'New Name!',
+        props: { format: 'string', perms: [ 'pr' ], maxLen: 64 }
+      });
+    });
   });
 
   describe('#deserialize', () => {
@@ -510,6 +525,21 @@ describe('Characteristic', () => {
       expect(characteristic.UUID).toEqual(json.UUID);
       expect(characteristic.props).toEqual(json.props);
       expect(characteristic.value).toEqual(json.value);
+    });
+
+    it("should deserialize from json with constructor name", () => {
+      const json: SerializedCharacteristic = {
+        displayName: 'Name',
+        UUID: '00000023-0000-1000-8000-0026BB765291',
+        eventOnlyCharacteristic: false,
+        constructorName: 'Name',
+        value: 'New Name!',
+        props: { format: 'string', perms: [ Perms.PAIRED_READ ], maxLen: 64 }
+      };
+
+      const characteristic = Characteristic.deserialize(json);
+
+      expect(characteristic instanceof Characteristic.Name).toBeTruthy();
     });
   });
 });

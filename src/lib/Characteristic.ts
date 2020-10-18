@@ -222,6 +222,7 @@ import {
 } from "./definitions";
 import { HAPStatus } from "./HAPServer";
 import { IdentifierCache } from './model/IdentifierCache';
+import { Service } from "./Service";
 import { clone } from "./util/clone";
 import { HAPConnection } from "./util/eventedhttp";
 import { HapStatusError } from './util/hapStatusError';
@@ -368,9 +369,11 @@ export type CharacteristicChange = {
 export interface SerializedCharacteristic {
   displayName: string,
   UUID: string,
-  props: CharacteristicProps,
-  value: Nullable<CharacteristicValue>,
   eventOnlyCharacteristic: boolean,
+  constructorName?: string,
+
+  value: Nullable<CharacteristicValue>,
+  props: CharacteristicProps,
 }
 
 export const enum CharacteristicEventTypes {
@@ -1635,12 +1638,18 @@ export class Characteristic extends EventEmitter {
    * @internal used to store characteristic on disk
    */
   static serialize(characteristic: Characteristic): SerializedCharacteristic {
+    let constructorName: string | undefined;
+    if (characteristic.constructor.name !== "Characteristic") {
+      constructorName = characteristic.constructor.name;
+    }
+
     return {
       displayName: characteristic.displayName,
       UUID: characteristic.UUID,
-      props: clone({}, characteristic.props),
-      value: characteristic.value,
       eventOnlyCharacteristic: characteristic.UUID === Characteristic.ProgrammableSwitchEvent.UUID, // support downgrades for now
+      constructorName: constructorName,
+      value: characteristic.value,
+      props: clone({}, characteristic.props),
     }
   };
 
@@ -1651,7 +1660,17 @@ export class Characteristic extends EventEmitter {
    * @internal used to recreate characteristic from disk
    */
   static deserialize(json: SerializedCharacteristic): Characteristic {
-    const characteristic = new Characteristic(json.displayName, json.UUID, json.props);
+    let characteristic: Characteristic;
+
+    if (json.constructorName && json.constructorName.charAt(0).toUpperCase() === json.constructorName.charAt(0)
+      && Characteristic[json.constructorName as keyof (typeof Characteristic)]) { // MUST start with uppercase character and must exist on Characteristic object
+      const constructor = Characteristic[json.constructorName as keyof (typeof Characteristic)] as { new(): Characteristic };
+      characteristic = new constructor();
+      characteristic.displayName = json.displayName;
+      characteristic.setProps(json.props);
+    } else {
+      characteristic = new Characteristic(json.displayName, json.UUID, json.props);
+    }
 
     characteristic.value = json.value;
 

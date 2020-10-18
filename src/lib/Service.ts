@@ -86,10 +86,14 @@ import Timeout = NodeJS.Timeout;
  */
 const MAX_CHARACTERISTICS = 100;
 
+/**
+ * @internal
+ */
 export interface SerializedService {
   displayName: string,
   UUID: string,
   subtype?: string,
+  constructorName?: string,
 
   hiddenService?: boolean,
   primaryService?: boolean,
@@ -142,6 +146,7 @@ export declare interface Service {
  * work with these.
  */
 export class Service extends EventEmitter {
+  // Service MUST NOT have any other static variables
 
   // Pattern below is for automatic detection of the section of defined services. Used by the generator
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -667,10 +672,17 @@ export class Service extends EventEmitter {
    * @internal
    */
   static serialize(service: Service): SerializedService {
+    let constructorName: string | undefined;
+    if (service.constructor.name !== "Service") {
+      constructorName = service.constructor.name; // TODO test
+    }
+
     return {
       displayName: service.displayName,
       UUID: service.UUID,
       subtype: service.subtype,
+
+      constructorName: constructorName,
 
       hiddenService: service.isHiddenService,
       primaryService: service.isPrimaryService,
@@ -684,7 +696,16 @@ export class Service extends EventEmitter {
    * @internal
    */
   static deserialize(json: SerializedService): Service {
-    const service = new Service(json.displayName, json.UUID, json.subtype);
+    let service: Service;
+
+    // TODO test
+    if (json.constructorName && json.constructorName.charAt(0).toUpperCase() === json.constructorName.charAt(0)
+      && Service[json.constructorName as keyof (typeof Service)]) { // MUST start with uppercase character and must exist on Service object
+      const constructor = Service[json.constructorName as keyof (typeof Service)] as { new(displayName?: string, subtype?: string): Service };
+      service = new constructor(json.displayName, json.subtype);
+    } else {
+      service = new Service(json.displayName, json.UUID, json.subtype);
+    }
 
     service.isHiddenService = !!json.hiddenService;
     service.isPrimaryService = !!json.primaryService;
