@@ -598,6 +598,10 @@ function generatePermsString(propertiesBitMap: number): string {
   const perms: string [] = [];
 
   for (const [bitMap, name] of properties) {
+    if (name === "ADDITIONAL_AUTHORIZATION") {
+      // aa set by homed just signals that aa may be supported. Setting up aa will always require a custom made app though
+      continue;
+    }
     if ((propertiesBitMap | bitMap) === propertiesBitMap) { // if it stays the same the bit is set
       perms.push("Perms." + name);
     }

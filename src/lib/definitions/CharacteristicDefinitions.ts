@@ -1698,7 +1698,7 @@ export class LockTargetState extends Characteristic {
   constructor() {
     super("Lock Target State", LockTargetState.UUID, {
       format: Formats.UINT8,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.ADDITIONAL_AUTHORIZATION],
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
       minValue: 0,
       maxValue: 1,
       minStep: 1,
@@ -3576,7 +3576,7 @@ export class TargetDoorState extends Characteristic {
   constructor() {
     super("Target Door State", TargetDoorState.UUID, {
       format: Formats.UINT8,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.ADDITIONAL_AUTHORIZATION],
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
       minValue: 0,
       maxValue: 1,
       minStep: 1,
@@ -4098,7 +4098,7 @@ export class Version extends Characteristic {
   constructor() {
     super("Version", Version.UUID, {
       format: Formats.STRING,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      perms: [Perms.PAIRED_READ],
       maxLen: 64,
     });
     this.value = this.getDefaultValue();
