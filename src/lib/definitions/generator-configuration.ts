@@ -73,6 +73,16 @@ export const CharacteristicManualAdditions: Map<string, GeneratedCharacteristic>
     minValue: 0,
     maxValue: 360,
   }],
+  ["version", { // don't know why, but version has notify permission even if it shouldn't have one
+    id: "version",
+    UUID: "00000037-0000-1000-8000-0026BB765291",
+    name: "Version",
+    className: "Version",
+
+    format: "string",
+    properties: 2, // paired read
+    maxLength: 64,
+  }]
 ]);
 
 export const ServiceNameOverrides: Map<string, string> = new Map([
