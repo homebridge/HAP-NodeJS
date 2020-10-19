@@ -974,7 +974,9 @@ export class Characteristic extends EventEmitter {
       callback();
     }
 
-    this.emit(CharacteristicEventTypes.CHANGE, { originator: undefined, oldValue: oldValue, newValue: value, context: context });
+    if (oldValue !== value || this.UUID === Characteristic.ProgrammableSwitchEvent.UUID) {
+      this.emit(CharacteristicEventTypes.CHANGE, { originator: undefined, oldValue: oldValue, newValue: value, context: context });
+    }
 
     return this; // for chaining
   }
@@ -1118,9 +1120,12 @@ export class Characteristic extends EventEmitter {
             console.warn(`[${this.displayName}] SET handler returned write response value, though the characteristic doesn't support write response!`);
           }
           this.value = value;
+
+          if (oldValue !== value || this.UUID === Characteristic.ProgrammableSwitchEvent.UUID) {
+            this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
+          }
         }
 
-        this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
         return this.value;
       } catch (error) {
         if (typeof error === "number") {
@@ -1137,7 +1142,9 @@ export class Characteristic extends EventEmitter {
 
     if (this.listeners(CharacteristicEventTypes.SET).length === 0) {
       this.value = value;
-      this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
+      if (oldValue !== value || this.UUID === Characteristic.ProgrammableSwitchEvent.UUID) {
+        this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
+      }
       return Promise.resolve();
     } else {
       return new Promise((resolve, reject) => {
@@ -1168,9 +1175,11 @@ export class Characteristic extends EventEmitter {
               }
               this.value = value;
               resolve();
-            }
 
-            this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
+              if (oldValue !== value || this.UUID === Characteristic.ProgrammableSwitchEvent.UUID) {
+                this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
+              }
+            }
           }), context, connection);
         } catch (error) {
           console.warn(`[${this.displayName}] Unhandled error thrown inside write handler for characteristic: ${error.stack}`);
