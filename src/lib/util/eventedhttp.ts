@@ -89,6 +89,9 @@ export declare interface EventedHTTPServer {
  */
 export class EventedHTTPServer extends EventEmitter {
 
+  private static readonly CONNECTION_TIMEOUT_LIMIT = 8; // if we have more (or equal) connections we start the timeout TODO raise the limit once tested
+  private static readonly MAX_CONNECTION_IDLE = 60000; // 60 seconds
+
   private readonly tcpServer: net.Server;
 
   /**
@@ -100,11 +103,12 @@ export class EventedHTTPServer extends EventEmitter {
    * So there can be multiple sessions open for a single username (multiple devices connected to the same Apple ID).
    */
   private readonly connectionsByUsername: Map<HAPUsername, HAPConnection[]> = new Map();
+  private connectionIdleTimeout?: Timeout;
 
   constructor() {
     super();
     this.tcpServer = net.createServer();
-    const interval = setInterval(() => {
+    const interval = setInterval(() => { // TODO to be removed
       let connectionString = "";
       for (const connection of this.connections) {
         if (connectionString) {
@@ -115,6 +119,34 @@ export class EventedHTTPServer extends EventEmitter {
       debug("Current " + this.connections.size + " hap connections open: " + connectionString);
     }, 60000);
     interval.unref();
+  }
+
+  private scheduleNextConnectionIdleTimeout(): void {
+    this.connectionIdleTimeout = undefined;
+
+    if (!this.tcpServer.listening) {
+      return;
+    }
+
+    debug("Running idle timeout timer...");
+
+    const currentTime = new Date().getTime();
+    let nextTimeout: number = -1;
+
+    for (const connection of this.connections) {
+      const timeDelta = currentTime - connection.lastSocketOperation;
+
+      if (timeDelta >= EventedHTTPServer.MAX_CONNECTION_IDLE) {
+        debug("[%s] Closing connection as it was inactive for " + timeDelta + "ms");
+        connection.close();
+      } else {
+        nextTimeout = Math.max(nextTimeout, EventedHTTPServer.MAX_CONNECTION_IDLE - timeDelta);
+      }
+    }
+
+    if (this.connections.size >= EventedHTTPServer.CONNECTION_TIMEOUT_LIMIT) {
+      this.connectionIdleTimeout = setTimeout(this.scheduleNextConnectionIdleTimeout.bind(this), nextTimeout);
+    }
   }
 
   public listen(targetPort: number, hostname?: string): void {
@@ -173,6 +205,10 @@ export class EventedHTTPServer extends EventEmitter {
     debug("[%s] New connection from client on interface %s", connection.remoteAddress, connection.networkInterface);
 
     this.emit(EventedHTTPServerEvent.CONNECTION_OPENED, connection);
+
+    if (this.connections.size >= EventedHTTPServer.CONNECTION_TIMEOUT_LIMIT && !this.connectionIdleTimeout) {
+      this.scheduleNextConnectionIdleTimeout();
+    }
   }
 
   private handleConnectionAuthenticated(connection: HAPConnection, username: HAPUsername): void {
@@ -265,6 +301,8 @@ export class HAPConnection extends EventEmitter {
   private readonly internalHttpServer: http.Server;
   private httpSocket?: Socket; // set when in state FULLY_SET_UP
   private internalHttpServerPort?: number;
+
+  lastSocketOperation: number = new Date().getTime();
 
   private pendingClientSocketData?: Buffer = Buffer.alloc(0); // data received from client before HTTP proxy is fully setup
   private handlingRequest: boolean = false; // true while we are composing an HTTP response (so events can wait)
@@ -443,7 +481,7 @@ export class HAPConnection extends EventEmitter {
       // it is important that we not encrypt the pending event data. This would increment the nonce used in encryption
       this.pendingEventData.push(buffer);
     } else {
-      this.tcpSocket.write(this.encrypt(buffer));
+      this.tcpSocket.write(this.encrypt(buffer), this.handleTCPSocketWriteFulfilled.bind(this));
     }
   }
 
@@ -528,6 +566,7 @@ export class HAPConnection extends EventEmitter {
     }
 
     this.handlingRequest = true; // reverted to false once response was sent out
+    this.lastSocketOperation = new Date().getTime();
 
     try {
       data = this.decrypt(data);
@@ -569,7 +608,7 @@ export class HAPConnection extends EventEmitter {
    */
   private handleHttpServerResponse(data: Buffer): void {
     data = this.encrypt(data);
-    this.tcpSocket.write(data);
+    this.tcpSocket.write(data, this.handleTCPSocketWriteFulfilled.bind(this));
 
     debug("[%s] HTTP Response is finished", this.remoteAddress);
     this.handlingRequest = false;
@@ -580,6 +619,10 @@ export class HAPConnection extends EventEmitter {
       this.writePendingEventNotifications();
       this.writeQueuedEventNotifications();
     }
+  }
+
+  private handleTCPSocketWriteFulfilled(): void {
+    this.lastSocketOperation = new Date().getTime();
   }
 
   private onTCPSocketError(err: Error): void {
