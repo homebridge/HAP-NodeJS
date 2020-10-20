@@ -89,8 +89,8 @@ export declare interface EventedHTTPServer {
  */
 export class EventedHTTPServer extends EventEmitter {
 
-  private static readonly CONNECTION_TIMEOUT_LIMIT = 8; // if we have more (or equal) connections we start the timeout TODO raise the limit once tested
-  private static readonly MAX_CONNECTION_IDLE = 60000; // 60 seconds
+  private static readonly CONNECTION_TIMEOUT_LIMIT = 16; // if we have more (or equal) # connections we start the timeout
+  private static readonly MAX_CONNECTION_IDLE_TIME = 60 * 60 * 1000; // 1h
 
   private readonly tcpServer: net.Server;
 
@@ -136,11 +136,11 @@ export class EventedHTTPServer extends EventEmitter {
     for (const connection of this.connections) {
       const timeDelta = currentTime - connection.lastSocketOperation;
 
-      if (timeDelta >= EventedHTTPServer.MAX_CONNECTION_IDLE) {
+      if (timeDelta >= EventedHTTPServer.MAX_CONNECTION_IDLE_TIME) {
         debug("[%s] Closing connection as it was inactive for " + timeDelta + "ms");
         connection.close();
       } else {
-        nextTimeout = Math.max(nextTimeout, EventedHTTPServer.MAX_CONNECTION_IDLE - timeDelta);
+        nextTimeout = Math.max(nextTimeout, EventedHTTPServer.MAX_CONNECTION_IDLE_TIME - timeDelta);
       }
     }
 
