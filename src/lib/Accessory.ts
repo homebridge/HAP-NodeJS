@@ -270,7 +270,7 @@ export declare interface Accessory {
   on(event: "paired", listener: () => void): this;
   on(event: "unpaired", listener: () => void): this;
 
-  on(event: "characteristic-warning-v2", listener: (characteristic: Characteristic, type: CharacteristicWarningType, message?: string) => void): this;
+  on(event: "characteristic-warning-v2", listener: (characteristic: Characteristic, type: CharacteristicWarningType, message: string) => void): this;
 
 
   emit(event: "identify", paired: boolean, callback: VoidCallback): boolean;
