@@ -1098,7 +1098,10 @@ export class Characteristic extends EventEmitter {
       return Promise.reject(HAPStatus.INVALID_VALUE_IN_REQUEST);
     }
 
-    if (isNumericFormat(this.props.format)) {
+    if (this.props.format === Formats.BOOL && typeof value === "number") {
+      // we already validate in validClientSuppliedValue that a number value can only be 0 or 1.
+      value = value === 1;
+    } else if (isNumericFormat(this.props.format)) {
       value = this.roundNumericValue(value as number);
     }
 
