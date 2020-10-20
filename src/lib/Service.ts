@@ -2,6 +2,7 @@ import assert from "assert";
 import { EventEmitter } from "events";
 import { ServiceJsonObject } from "../internal-types";
 import { CharacteristicValue, Nullable, WithUUID } from '../types';
+import { CharacteristicWarningType } from "./Accessory";
 import {
   Characteristic,
   CharacteristicChange,
@@ -115,14 +116,17 @@ export type EventService = ServiceEventTypes.CHARACTERISTIC_CHANGE | ServiceEven
 export const enum ServiceEventTypes {
   CHARACTERISTIC_CHANGE = "characteristic-change",
   SERVICE_CONFIGURATION_CHANGE = "service-configurationChange",
+  CHARACTERISTIC_WARNING = "characteristic-warning",
 }
 
 export declare interface Service {
   on(event: "characteristic-change", listener: (change: ServiceCharacteristicChange) => void): this;
   on(event: "service-configurationChange", listener: () => void): this;
+  on(event: "characteristic-warning", listener: (characteristic: Characteristic, type: CharacteristicWarningType, message: string) => void): this;
 
   emit(event: "characteristic-change", change: ServiceCharacteristicChange): boolean;
   emit(event: "service-configurationChange"): boolean;
+  emit(event: "characteristic-warning", characteristic: Characteristic, type: CharacteristicWarningType, message: string): boolean;
 }
 
 /**
@@ -316,10 +320,7 @@ export class Service extends EventEmitter {
       throw new Error("Cannot add more than " + MAX_CHARACTERISTICS + " characteristics to a single service!");
     }
 
-    // listen for changes in characteristics and bubble them up
-    characteristic.on(CharacteristicEventTypes.CHANGE, (change: CharacteristicChange) => {
-      this.emit(ServiceEventTypes.CHARACTERISTIC_CHANGE, { ...change, characteristic: characteristic });
-    });
+    this.setupCharacteristicEventHandlers(characteristic);
 
     this.characteristics.push(characteristic);
 
@@ -425,11 +426,14 @@ export class Service extends EventEmitter {
           return this.addCharacteristic(name);
         }
       }
+
+      const instance = this.addCharacteristic(name);
       // Not found in optional Characteristics. Adding anyway, but warning about it if it isn't the Name.
       if (name.UUID !== Characteristic.Name.UUID) {
-        console.warn("HAP Warning: Characteristic %s not in required or optional characteristics for service %s. Adding anyway.", name.UUID, this.UUID);
+        instance.characteristicWarning("Characteristic not in required or optional characteristic section for service " + this.constructor.name + ". Adding anyway.");
       }
-      return this.addCharacteristic(name);
+
+      return instance;
     }
   }
 
@@ -580,15 +584,15 @@ export class Service extends EventEmitter {
       const missingCharacteristics: Set<Characteristic> = new Set();
       let timeout: Timeout | undefined = setTimeout(() => {
         for (const characteristic of missingCharacteristics) {
-          console.warn(`The read handler for the characteristic '${characteristic.displayName}' was slow to respond!`);
+          characteristic.characteristicWarning(`The read handler for the characteristic '${characteristic.displayName}' was slow to respond!`, CharacteristicWarningType.SLOW_READ);
         }
 
         timeout = setTimeout(() => {
           timeout = undefined;
 
           for (const characteristic of missingCharacteristics) {
-            console.error("The read handler for the characteristic '" + characteristic?.displayName + "' didn't respond at all!. " +
-              "Please check that you properly call the callback!");
+            characteristic.characteristicWarning("The read handler for the characteristic '" + characteristic?.displayName + "' didn't respond at all!. " +
+              "Please check that you properly call the callback!", CharacteristicWarningType.TIMEOUT_READ);
             service.characteristics.push(characteristic.internalHAPRepresentation()); // value is set to null
           }
 
@@ -649,20 +653,23 @@ export class Service extends EventEmitter {
   /**
    * @internal
    */
-  _setupCharacteristic(characteristic: Characteristic): void {
+  private setupCharacteristicEventHandlers(characteristic: Characteristic): void {
     // listen for changes in characteristics and bubble them up
     characteristic.on(CharacteristicEventTypes.CHANGE, (change: CharacteristicChange) => {
       this.emit(ServiceEventTypes.CHARACTERISTIC_CHANGE, { ...change, characteristic: characteristic });
+    });
+
+    characteristic.on(CharacteristicEventTypes.CHARACTERISTIC_WARNING, (type, message) => {
+      this.emit(ServiceEventTypes.CHARACTERISTIC_WARNING, characteristic, type, message);
     });
   }
 
   /**
    * @internal
    */
-  _sideloadCharacteristics(targetCharacteristics: Characteristic[]): void {
-    for (let index in targetCharacteristics) {
-      const target = targetCharacteristics[index];
-      this._setupCharacteristic(target);
+  private _sideloadCharacteristics(targetCharacteristics: Characteristic[]): void {
+    for (const target of targetCharacteristics) {
+      this.setupCharacteristicEventHandlers(target);
     }
 
     this.characteristics = targetCharacteristics.slice();
