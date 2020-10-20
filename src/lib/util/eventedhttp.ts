@@ -496,7 +496,7 @@ export class HAPConnection extends EventEmitter {
     this.internalHttpServer.on('close', this.onHttpServerClose.bind(this));
 
     // now we can establish a connection to this running HTTP server for proxying data
-    this.httpSocket = net.createConnection(this.internalHttpServerPort, addressInfo.address);
+    this.httpSocket = net.createConnection(this.internalHttpServerPort, getOSLoopbackAddress()); // previously we used addressInfo.address
     this.httpSocket.setNoDelay(true); // disable Nagle algorithm
 
     this.httpSocket.on('data', this.handleHttpServerResponse.bind(this));
