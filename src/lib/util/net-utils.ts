@@ -1,6 +1,6 @@
 import os from "os";
 
-function findLoopbackAddress(): string {
+export function findLoopbackAddress(): string {
   let ipv6: string | undefined = undefined; // ::1/128
   let ipv6LinkLocal: string | undefined = undefined; // fe80::/10
   let ipv4: string | undefined = undefined; // 127.0.0.1/8
@@ -39,8 +39,8 @@ function findLoopbackAddress(): string {
   }
   return address;
 }
-const loopbackAddress = findLoopbackAddress(); // loopback addressed used for the internal http server (::1 or 127.0.0.1)
+let loopbackAddress: string | undefined = undefined; // loopback addressed used for the internal http server (::1 or 127.0.0.1)
 
 export function getOSLoopbackAddress(): string {
-  return loopbackAddress;
+  return loopbackAddress ?? (loopbackAddress = findLoopbackAddress());
 }
