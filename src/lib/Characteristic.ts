@@ -3,6 +3,7 @@ import createDebug from "debug";
 import { EventEmitter } from "events";
 import { CharacteristicJsonObject } from "../internal-types";
 import { CharacteristicValue, Nullable, VoidCallback, } from '../types';
+import { CharacteristicWarningType } from "./Accessory";
 import {
   AccessControlLevel,
   AccessoryFlags,
@@ -404,6 +405,10 @@ export const enum CharacteristicEventTypes {
    * @internal
    */
   UNSUBSCRIBE = "unsubscribe",
+  /**
+   * @internal
+   */
+  CHARACTERISTIC_WARNING = "characteristic-warning",
 }
 
 export type CharacteristicGetCallback = (status?: HAPStatus | null | Error, value?: Nullable<CharacteristicValue>) => void;
@@ -426,6 +431,10 @@ export declare interface Characteristic {
    * @internal
    */
   on(event: "unsubscribe", listener: VoidCallback): this;
+  /**
+   * @internal
+   */
+  on(event: "characteristic-warning", listener: (type: CharacteristicWarningType, message: string) => void): this;
 
   /**
    * @internal
@@ -447,6 +456,10 @@ export declare interface Characteristic {
    * @internal
    */
   emit(event: "unsubscribe"): boolean;
+  /**
+   * @internal
+   */
+  emit(event: "characteristic-warning", type: CharacteristicWarningType, message: string): boolean;
 
 }
 
@@ -752,7 +765,7 @@ export class Characteristic extends EventEmitter {
    */
   public onGet(handler: CharacteristicGetHandler) {
     if (typeof handler !== 'function' || handler.length !== 0) {
-      console.warn(`[${this.displayName}] .onGet handler must be a function with exactly zero input arguments.`);
+      this.characteristicWarning(`.onGet handler must be a function with exactly zero input arguments.`);
       return this;
     }
     this.getHandler = handler;
@@ -775,7 +788,7 @@ export class Characteristic extends EventEmitter {
    */
   public onSet(handler: CharacteristicSetHandler) {
     if (typeof handler !== 'function' || handler.length !== 1) {
-      console.warn(`[${this.displayName}] .onSet handler must be a function with exactly one input argument.`);
+      this.characteristicWarning(`.onSet handler must be a function with exactly one input argument.`);
       return this;
     }
     this.setHandler = handler;
@@ -819,7 +832,7 @@ export class Characteristic extends EventEmitter {
     if (props.maxLen !== undefined) {
       if (props.maxLen != null) {
         if (props.maxLen > 256) {
-          console.warn("");
+          this.characteristicWarning("setProps: string maxLen cannot be bigger than 256!");
           props.maxLen = 256;
         }
         this.props.maxLen = props.maxLen;
@@ -1000,7 +1013,7 @@ export class Characteristic extends EventEmitter {
 
     if (this.getHandler) {
       if (this.listeners(CharacteristicEventTypes.GET).length > 0) {
-        console.warn(`[${this.displayName}] Ignoring on('get') handler as onGet handler was defined instead.`);
+        this.characteristicWarning(`Ignoring on('get') handler as onGet handler was defined instead.`);
       }
 
       try {
@@ -1010,7 +1023,7 @@ export class Characteristic extends EventEmitter {
         try {
           value = this.validateUserInput(value);
         } catch (error) {
-          console.warn(`[${this.displayName}] An illegal value was supplied by the read handler for characteristic: ${error.message}`);
+          this.characteristicWarning(`An illegal value was supplied by the read handler for characteristic: ${error.message}`);
           this.status = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
           return Promise.reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
         }
@@ -1027,7 +1040,7 @@ export class Characteristic extends EventEmitter {
         } else if (error instanceof HapStatusError) {
           this.status = error.hapStatus;
         } else {
-          console.warn(`[${this.displayName}] Unhandled error thrown inside read handler for characteristic: ${error.stack}`);
+          this.characteristicWarning(`Unhandled error thrown inside read handler for characteristic: ${error.stack}`);
           this.status = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
         }
         throw this.status;
@@ -1071,7 +1084,7 @@ export class Characteristic extends EventEmitter {
           }
         }), context, connection);
       } catch (error) {
-        console.warn(`[${this.displayName}] Unhandled error thrown inside read handler for characteristic: ${error.stack}`);
+        this.characteristicWarning(`Unhandled error thrown inside read handler for characteristic: ${error.stack}`);
         this.status = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
         reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       }
@@ -1109,7 +1122,7 @@ export class Characteristic extends EventEmitter {
 
     if (this.setHandler) {
       if (this.listeners(CharacteristicEventTypes.SET).length > 0) {
-        console.warn(`[${this.displayName}] Ignoring on('set') handler as onSet handler was defined instead.`);
+        this.characteristicWarning(`Ignoring on('set') handler as onSet handler was defined instead.`);
       }
 
       try {
@@ -1120,7 +1133,7 @@ export class Characteristic extends EventEmitter {
           this.value = writeResponse;
         } else {
           if (writeResponse != null) {
-            console.warn(`[${this.displayName}] SET handler returned write response value, though the characteristic doesn't support write response!`);
+            this.characteristicWarning(`SET handler returned write response value, though the characteristic doesn't support write response!`);
           }
           this.value = value;
 
@@ -1136,7 +1149,7 @@ export class Characteristic extends EventEmitter {
         } else if (error instanceof HapStatusError) {
           this.status = error.hapStatus;
         } else {
-          console.warn(`[${this.displayName}] Unhandled error thrown inside write handler for characteristic: ${error.stack}`);
+          this.characteristicWarning(`Unhandled error thrown inside write handler for characteristic: ${error.stack}`);
           this.status = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
         }
         throw this.status;
@@ -1174,7 +1187,7 @@ export class Characteristic extends EventEmitter {
               resolve(writeResponse);
             } else {
               if (writeResponse != null) {
-                console.warn(`[${this.displayName}] SET handler returned write response value, though the characteristic doesn't support write response!`);
+                this.characteristicWarning(`SET handler returned write response value, though the characteristic doesn't support write response!`);
               }
               this.value = value;
               resolve();
@@ -1185,7 +1198,7 @@ export class Characteristic extends EventEmitter {
             }
           }), context, connection);
         } catch (error) {
-          console.warn(`[${this.displayName}] Unhandled error thrown inside write handler for characteristic: ${error.stack}`);
+          this.characteristicWarning(`Unhandled error thrown inside write handler for characteristic: ${error.stack}`);
           this.status = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
           reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
         }
@@ -1404,11 +1417,11 @@ export class Characteristic extends EventEmitter {
    */
   private validateUserInput(value?: Nullable<CharacteristicValue>): Nullable<CharacteristicValue> {
     if (value === undefined) {
-      console.warn(`[${this.displayName}] characteristic was supplied illegal value: undefined! This might throw errors in the future!`);
+      this.characteristicWarning(`characteristic was supplied illegal value: undefined! This might throw errors in the future!`);
       return this.value; // don't change the value
     } else if (value === null) {
       if (this.UUID === Characteristic.Model.UUID || this.UUID === Characteristic.SerialNumber.UUID) { // mirrors the statement in case: Formats.STRING
-        console.error(new Error(`[${this.displayName}] characteristic must have a non null value otherwise HomeKit will reject this accessory. Ignoring new value.`).stack);
+        this.characteristicWarning(new Error(`characteristic must have a non null value otherwise HomeKit will reject this accessory. Ignoring new value.`).stack + "", CharacteristicWarningType.ERROR_MESSAGE);
         return this.value; // don't change the value
       }
 
@@ -1436,7 +1449,7 @@ export class Characteristic extends EventEmitter {
         if (typeof value === "boolean") {
           value = value? 1: 0;
         } if (typeof value === "string") {
-          console.warn(`[${this.displayName}] characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
+          this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
           value = parseInt(value, 10);
         } else if (typeof value !== "number") {
           throw new Error("characteristic value expected number and received " + typeof value);
@@ -1450,7 +1463,7 @@ export class Characteristic extends EventEmitter {
         if (typeof value === "boolean") {
           value = value? 1: 0;
         } if (typeof value === "string") {
-          console.warn(`[${this.displayName}] characteristic was supplied illegal value: string instead of float. Supplying illegal values will throw errors in the future!`);
+          this.characteristicWarning(`characteristic was supplied illegal value: string instead of float. Supplying illegal values will throw errors in the future!`);
           value = parseFloat(value);
         } else if (typeof value !== "number") {
           throw new Error("characteristic value expected float and received " + typeof value);
@@ -1468,7 +1481,7 @@ export class Characteristic extends EventEmitter {
         if (typeof value === "boolean") {
           value = value? 1: 0;
         } if (typeof value === "string") {
-          console.warn(`[${this.displayName}] characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
+          this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
           value = parseInt(value, 10);
         } else if (typeof value !== "number") {
           throw new Error("characteristic value expected number and received " + typeof value);
@@ -1482,7 +1495,7 @@ export class Characteristic extends EventEmitter {
         if (typeof value === "boolean") {
           value = value? 1: 0;
         } if (typeof value === "string") {
-          console.warn(`[${this.displayName}] characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
+          this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
           value = parseInt(value, 10);
         } else if (typeof value !== "number") {
           throw new Error("characteristic value expected number and received " + typeof value);
@@ -1496,7 +1509,7 @@ export class Characteristic extends EventEmitter {
         if (typeof value === "boolean") {
           value = value? 1: 0;
         } if (typeof value === "string") {
-          console.warn(`[${this.displayName}] characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
+          this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
           value = parseInt(value, 10);
         } else if (typeof value !== "number") {
           throw new Error("characteristic value expected number and received " + typeof value);
@@ -1510,7 +1523,7 @@ export class Characteristic extends EventEmitter {
         if (typeof value === "boolean") {
           value = value? 1: 0;
         } if (typeof value === "string") {
-          console.warn(`[${this.displayName}] characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
+          this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
           value = parseInt(value, 10);
         } else if (typeof value !== "number") {
           throw new Error("characteristic value expected number and received " + typeof value);
@@ -1522,20 +1535,20 @@ export class Characteristic extends EventEmitter {
       }
       case Formats.STRING: {
         if (typeof value === "number") {
-          console.warn(`[${this.displayName}] characteristic was supplied illegal value: number instead of string. Supplying illegal values will throw errors in the future!`);
+          this.characteristicWarning(`characteristic was supplied illegal value: number instead of string. Supplying illegal values will throw errors in the future!`);
           value = String(value);
         } else if (typeof value !== "string") {
           throw new Error("characteristic value expected string and received " + (typeof value));
         }
 
         if (value.length <= 1 && (this.UUID === Characteristic.Model.UUID || this.UUID === Characteristic.SerialNumber.UUID)) { // mirrors the case value = null at the beginning
-          console.error(new Error(`[${this.displayName}] characteristic must have a length of more than 1 character otherwise HomeKit will reject this accessory. Ignoring new value.`).stack);
+          this.characteristicWarning(new Error(`[${this.displayName}] characteristic must have a length of more than 1 character otherwise HomeKit will reject this accessory. Ignoring new value.`).stack + "", CharacteristicWarningType.ERROR_MESSAGE);
           return this.value; // just return the current value
         }
 
         const maxLength = this.props.maxLen != null? this.props.maxLen: 64; // default is 64 (max is 256 which is set in setProps)
         if (value.length > maxLength) {
-          console.warn(`[${this.displayName}] characteristic was supplied illegal value: string '${value}' exceeded max length of ${maxLength}.`);
+          this.characteristicWarning(`characteristic was supplied illegal value: string '${value}' exceeded max length of ${maxLength}.`);
           value = value.substring(0, maxLength);
         }
 
@@ -1557,11 +1570,11 @@ export class Characteristic extends EventEmitter {
 
     if (typeof value === "number") {
       if (numericMin != null && value < numericMin) {
-        console.warn(`[${this.displayName}] characteristic was supplied illegal value: number ${value} exceeded minimum of ${numericMin}.`);
+        this.characteristicWarning(`characteristic was supplied illegal value: number ${value} exceeded minimum of ${numericMin}.`);
         value = numericMin;
       }
       if (numericMax != null && value > numericMax) {
-        console.warn(`[${this.displayName}] characteristic was supplied illegal value: number ${value} exceeded maximum of ${numericMax}.`);
+        this.characteristicWarning(`characteristic was supplied illegal value: number ${value} exceeded maximum of ${numericMax}.`);
         value = numericMax;
       }
 
@@ -1571,10 +1584,10 @@ export class Characteristic extends EventEmitter {
 
       if (this.props.validValueRanges && this.props.validValueRanges.length === 2) {
         if (value < this.props.validValueRanges[0]) {
-          console.warn(`[${this.displayName}] characteristic was supplied illegal value: number ${value} not contained in valid value range of ${this.props.validValueRanges}. Supplying illegal values will throw errors in the future!`);
+          this.characteristicWarning(`characteristic was supplied illegal value: number ${value} not contained in valid value range of ${this.props.validValueRanges}. Supplying illegal values will throw errors in the future!`);
           value = this.props.validValueRanges[0];
         } else if (value > this.props.validValueRanges[1]) {
-          console.warn(`[${this.displayName}] characteristic was supplied illegal value: number ${value} not contained in valid value range of ${this.props.validValueRanges}. Supplying illegal values will throw errors in the future!`);
+          this.characteristicWarning(`characteristic was supplied illegal value: number ${value} not contained in valid value range of ${this.props.validValueRanges}. Supplying illegal values will throw errors in the future!`);
           value = this.props.validValueRanges[1];
         }
       }
@@ -1591,6 +1604,20 @@ export class Characteristic extends EventEmitter {
   _assignID(identifierCache: IdentifierCache, accessoryName: string, serviceUUID: string, serviceSubtype?: string): void {
     // generate our IID based on our UUID
     this.iid = identifierCache.getIID(accessoryName, serviceUUID, serviceSubtype, this.UUID);
+  }
+
+  /**
+   * @internal
+   */
+  characteristicWarning(message: string, type = CharacteristicWarningType.WARN_MESSAGE): void {
+    const emitted = this.emit(CharacteristicEventTypes.CHARACTERISTIC_WARNING, type, message);
+    if (!emitted) {
+      if (type === CharacteristicWarningType.ERROR_MESSAGE || type === CharacteristicWarningType.TIMEOUT_READ || CharacteristicWarningType.TIMEOUT_WRITE) {
+        console.error(`[${this.displayName}] ${message}`);
+      } else {
+        console.warn(`[${this.displayName}] ${message}`);
+      }
+    }
   }
 
   /**

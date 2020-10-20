@@ -143,6 +143,8 @@ export const enum CharacteristicWarningType {
   TIMEOUT_WRITE = "timeout-write",
   SLOW_READ = "slow-read",
   TIMEOUT_READ = "timeout-read",
+  WARN_MESSAGE = "warn-message",
+  ERROR_MESSAGE = "error-message",
 }
 
 /**
@@ -255,7 +257,7 @@ export const enum AccessoryEventTypes {
   PAIRED = "paired",
   UNPAIRED = "unpaired",
 
-  CHARACTERISTIC_WARNING = "characteristic-warning",
+  CHARACTERISTIC_WARNING = "characteristic-warning-v2",
 }
 
 export declare interface Accessory {
@@ -268,7 +270,7 @@ export declare interface Accessory {
   on(event: "paired", listener: () => void): this;
   on(event: "unpaired", listener: () => void): this;
 
-  on(event: "characteristic-warning", listener: (type: CharacteristicWarningType, iid: number) => void): this;
+  on(event: "characteristic-warning-v2", listener: (characteristic: Characteristic, type: CharacteristicWarningType, message?: string) => void): this;
 
 
   emit(event: "identify", paired: boolean, callback: VoidCallback): boolean;
@@ -280,7 +282,7 @@ export declare interface Accessory {
   emit(event: "paired"): boolean;
   emit(event: "unpaired"): boolean;
 
-  emit(event: "characteristic-warning", type: CharacteristicWarningType, iid: number): boolean;
+  emit(event: "characteristic-warning-v2", characteristic: Characteristic, type: CharacteristicWarningType, message: string): boolean;
 }
 
 /**
@@ -372,7 +374,7 @@ export class Accessory extends EventEmitter {
     }
   }
 
-  addService = (serviceParam: Service | typeof Service, ...constructorArgs: any[]) => {
+  public addService(serviceParam: Service | typeof Service, ...constructorArgs: any[]): Service {
     // service might be a constructor like `Service.AccessoryInformation` instead of an instance
     // of Service. Coerce if necessary.
     const service: Service = typeof serviceParam === 'function'
@@ -412,8 +414,7 @@ export class Accessory extends EventEmitter {
       this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, { service: service });
     }
 
-    service.on(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, this.handleServiceConfigurationChangeEvent.bind(this, service));
-    service.on(ServiceEventTypes.CHARACTERISTIC_CHANGE, this.handleCharacteristicChangeEvent.bind(this, this, service));
+    this.setupServiceEventHandlers(service);
 
     return service;
   }
@@ -421,9 +422,9 @@ export class Accessory extends EventEmitter {
   /**
    * @deprecated use {@link Service.setPrimaryService} directly
    */
-  setPrimaryService = (service: Service) => {
+  public setPrimaryService(service: Service): void {
     service.setPrimaryService();
-  };
+  }
 
   public removeService(service: Service): void {
     const index = this.services.indexOf(service);
@@ -452,18 +453,19 @@ export class Accessory extends EventEmitter {
     }
   }
 
-  getService = <T extends WithUUID<typeof Service>>(name: string | T) => {
-    for (let index in this.services) {
-      const service = this.services[index];
-
-      if (typeof name === 'string' && (service.displayName === name || service.name === name || service.subtype === name))
+  public getService<T extends WithUUID<typeof Service>>(name: string | T): Service | undefined {
+    for (const service of this.services) {
+      if (typeof name === 'string' && (service.displayName === name || service.name === name || service.subtype === name)) {
         return service;
-      else if (typeof name === 'function' && ((service instanceof name) || (name.UUID === service.UUID)))
+      } else if (typeof name === 'function' && ((service instanceof name) || (name.UUID === service.UUID))) {
         return service;
+      }
     }
+
+    return undefined;
   }
 
-  getServiceById<T extends WithUUID<typeof Service>>(uuid: string | T, subType: string): Service | undefined {
+  public getServiceById<T extends WithUUID<typeof Service>>(uuid: string | T, subType: string): Service | undefined {
     for (const index in this.services) {
       const service = this.services[index];
 
@@ -483,11 +485,14 @@ export class Accessory extends EventEmitter {
    *
    * @returns the primary accessory
    */
-  getPrimaryAccessory = (): Accessory => {
+  public getPrimaryAccessory = (): Accessory => {
     return this.bridged? this.bridge!: this;
   }
 
-  updateReachability = (reachable: boolean) => {
+  /**
+   * @deprecated Not supported anymore
+   */
+  public updateReachability(reachable: boolean): void {
     if (!this.bridged)
       throw new Error("Cannot update reachability on non-bridged accessory!");
     this.reachable = reachable;
@@ -529,7 +534,7 @@ export class Accessory extends EventEmitter {
     return accessory;
   }
 
-  addBridgedAccessories = (accessories: Accessory[]) => {
+  public addBridgedAccessories(accessories: Accessory[]): void {
     for (let index in accessories) {
       const accessory = accessories[index];
       this.addBridgedAccessory(accessory, true);
@@ -538,7 +543,7 @@ export class Accessory extends EventEmitter {
     this.enqueueConfigurationUpdate();
   }
 
-  removeBridgedAccessory = (accessory: Accessory, deferUpdate: boolean) => {
+  public removeBridgedAccessory(accessory: Accessory, deferUpdate: boolean): void {
     if (accessory._isBridge)
       throw new Error("Cannot Bridge another Bridge!");
 
@@ -563,7 +568,7 @@ export class Accessory extends EventEmitter {
     }
   }
 
-  removeBridgedAccessories = (accessories: Accessory[]) => {
+  public removeBridgedAccessories(accessories: Accessory[]): void {
     for (let index in accessories) {
       const accessory = accessories[index];
       this.removeBridgedAccessory(accessory, true);
@@ -572,7 +577,7 @@ export class Accessory extends EventEmitter {
     this.enqueueConfigurationUpdate();
   }
 
-  removeAllBridgedAccessories = () => {
+  public removeAllBridgedAccessories(): void {
     for (let i = this.bridgedAccessories.length - 1; i >= 0; i --) {
       this.removeBridgedAccessory(this.bridgedAccessories[i], true);
     }
@@ -1027,7 +1032,7 @@ export class Accessory extends EventEmitter {
     if (info.setupID) {
       this._setupID = info.setupID;
     } else if (this._accessoryInfo.setupID === undefined || this._accessoryInfo.setupID === "") {
-      this._setupID = this._generateSetupID();
+      this._setupID = Accessory._generateSetupID();
     } else {
       this._setupID = this._accessoryInfo.setupID;
     }
@@ -1286,12 +1291,10 @@ export class Accessory extends EventEmitter {
         const aid = parseInt(split[0]);
         const iid = parseInt(split[1]);
 
-        const accessory = this.getAccessoryByAID(aid);
-        let emitted = accessory?.emit(AccessoryEventTypes.CHARACTERISTIC_WARNING, CharacteristicWarningType.SLOW_READ, iid);
-        if (!emitted) {
-          const characteristic = accessory?.getCharacteristicByIID(iid);
-          console.warn(`The read handler for the characteristic '${characteristic?.displayName || iid}' on the accessory '${accessory?.displayName}' was slow to respond!`);
-        }
+        const accessory = this.getAccessoryByAID(aid)!;
+        const characteristic = accessory.getCharacteristicByIID(iid)!;
+        characteristic.characteristicWarning("The read handler for the characteristic '" + characteristic.displayName +
+          "' on the accessory '" + accessory.displayName + "' was slow to respond!", CharacteristicWarningType.SLOW_READ);
       }
 
       // after a total of 10s we do not longer wait for a request to appear and just return status code timeout
@@ -1303,13 +1306,10 @@ export class Accessory extends EventEmitter {
           const aid = parseInt(split[0]);
           const iid = parseInt(split[1]);
 
-          const accessory = this.getAccessoryByAID(aid);
-          let emitted = accessory?.emit(AccessoryEventTypes.CHARACTERISTIC_WARNING, CharacteristicWarningType.TIMEOUT_READ, iid);
-          if (!emitted) {
-            const characteristic = accessory?.getCharacteristicByIID(iid);
-            console.error("The read handler for the characteristic '" + (characteristic?.displayName || iid) + "' on the accessory '" + accessory?.displayName +
-              "' didn't respond at all!. Please check that you properly call the callback!");
-          }
+          const accessory = this.getAccessoryByAID(aid)!;
+          const characteristic = accessory.getCharacteristicByIID(iid)!;
+          characteristic.characteristicWarning("The read handler for the characteristic '" + characteristic.displayName + "' on the accessory '" + accessory.displayName +
+            "' didn't respond at all!. Please check that you properly call the callback!", CharacteristicWarningType.TIMEOUT_READ);
 
           characteristics.push({
             aid: aid,
@@ -1455,12 +1455,10 @@ export class Accessory extends EventEmitter {
         const aid = parseInt(split[0]);
         const iid = parseInt(split[1]);
 
-        const accessory = this.getAccessoryByAID(aid);
-        let emitted = accessory?.emit(AccessoryEventTypes.CHARACTERISTIC_WARNING, CharacteristicWarningType.SLOW_WRITE, iid);
-        if (!emitted) {
-          const characteristic = accessory?.getCharacteristicByIID(iid);
-          console.warn(`The write handler for the characteristic '${characteristic?.displayName || iid}' on the accessory '${accessory?.displayName}' was slow to respond!`);
-        }
+        const accessory = this.getAccessoryByAID(aid)!;
+        const characteristic = accessory.getCharacteristicByIID(iid)!;
+        characteristic.characteristicWarning("The write handler for the characteristic '" + characteristic.displayName +
+          "' on the accessory '" + accessory.displayName + "' was slow to respond!", CharacteristicWarningType.SLOW_WRITE);
       }
 
       // after a total of 10s we do not longer wait for a request to appear and just return status code timeout
@@ -1472,13 +1470,10 @@ export class Accessory extends EventEmitter {
           const aid = parseInt(split[0]);
           const iid = parseInt(split[1]);
 
-          const accessory = this.getAccessoryByAID(aid);
-          let emitted = accessory?.emit(AccessoryEventTypes.CHARACTERISTIC_WARNING, CharacteristicWarningType.TIMEOUT_WRITE, iid);
-          if (!emitted) {
-            const characteristic = accessory?.getCharacteristicByIID(iid);
-            console.error("The write handler for the characteristic '" + (characteristic?.displayName || iid) + "' on the accessory '" + accessory?.displayName +
-              "' didn't respond at all!. Please check that you properly call the callback!");
-          }
+          const accessory = this.getAccessoryByAID(aid)!;
+          const characteristic = accessory.getCharacteristicByIID(iid)!;
+          characteristic.characteristicWarning("The write handler for the characteristic '" + characteristic.displayName + "' on the accessory '" + accessory.displayName +
+            "' didn't respond at all!. Please check that you properly call the callback!", CharacteristicWarningType.TIMEOUT_WRITE);
 
           characteristics.push({
             aid: aid,
@@ -1727,15 +1722,18 @@ export class Accessory extends EventEmitter {
     }
   }
 
-  _setupService = (service: Service) => {
+  private setupServiceEventHandlers(service: Service): void {
     service.on(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, this.handleServiceConfigurationChangeEvent.bind(this, service));
     service.on(ServiceEventTypes.CHARACTERISTIC_CHANGE, this.handleCharacteristicChangeEvent.bind(this, this, service));
+    service.on(ServiceEventTypes.CHARACTERISTIC_WARNING, (characteristic, type, message) => {
+      this.emit(AccessoryEventTypes.CHARACTERISTIC_WARNING, characteristic, type, message);
+    });
   }
 
-  _sideloadServices = (targetServices: Service[]) => {
+  private _sideloadServices(targetServices: Service[]): void {
     for (let index in targetServices) {
       const target = targetServices[index];
-      this._setupService(target);
+      this.setupServiceEventHandlers(target);
     }
 
     this.services = targetServices.slice();
@@ -1752,7 +1750,7 @@ export class Accessory extends EventEmitter {
       });
   }
 
-  _generateSetupID = () => {
+  private static _generateSetupID(): string {
     const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const bytes = crypto.randomBytes(4);
     let setupID = '';
