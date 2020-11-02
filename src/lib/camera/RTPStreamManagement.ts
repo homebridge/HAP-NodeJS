@@ -513,8 +513,8 @@ export class RTPStreamManagement {
       throw new Error('Video parameters cannot be undefined in options');
     }
 
-    this.supportedRTPConfiguration = this._supportedRTPConfiguration(this.supportedCryptoSuites);
-    this.supportedVideoStreamConfiguration = this._supportedVideoStreamConfiguration(options.video);
+    this.supportedRTPConfiguration = RTPStreamManagement._supportedRTPConfiguration(this.supportedCryptoSuites);
+    this.supportedVideoStreamConfiguration = RTPStreamManagement._supportedVideoStreamConfiguration(options.video);
     this.supportedAudioStreamConfiguration = this._supportedAudioStreamConfiguration(options.audio);
     this.setupEndpointsResponse = RTPStreamManagement.initialSetupEndpointsResponse();
 
@@ -1137,28 +1137,15 @@ export class RTPStreamManagement {
       ).toString('base64'));
   }
 
-  private _supportedRTPConfiguration(supportedCryptoSuites: SRTPCryptoSuites[]): string {
+  private static _supportedRTPConfiguration(supportedCryptoSuites: SRTPCryptoSuites[]): string {
     if (supportedCryptoSuites.length === 1 && supportedCryptoSuites[0] === SRTPCryptoSuites.NONE) {
       debug("Client claims it doesn't support SRTP. The stream may stops working with future iOS releases.");
     }
 
-    const buffers: Buffer[] = [];
-    supportedCryptoSuites.forEach(suite => {
-      if (buffers.length > 0) {
-        buffers.push(tlv.encode(
-            tlv.EMPTY_TLV_TYPE, Buffer.alloc(0), // delimiter
-        ));
-      }
-
-      buffers.push(tlv.encode(
-          SupportedRTPConfigurationTypes.SRTP_CRYPTO_SUITE, suite
-      ));
-    });
-
-    return Buffer.concat(buffers).toString("base64");
+    return tlv.encode(SupportedRTPConfigurationTypes.SRTP_CRYPTO_SUITE, supportedCryptoSuites).toString("base64");
   }
 
-  private _supportedVideoStreamConfiguration(videoOptions: VideoStreamingOptions): string {
+  private static _supportedVideoStreamConfiguration(videoOptions: VideoStreamingOptions): string {
     if (!videoOptions.codec) {
       throw new Error('Video codec cannot be undefined');
     }
@@ -1166,80 +1153,48 @@ export class RTPStreamManagement {
       throw new Error('Video resolutions cannot be undefined');
     }
 
-    const videoParametersBuffers: Buffer[] = [];
-    videoOptions.codec.profiles.forEach(profile => {
-      if (videoParametersBuffers.length > 0) {
-        videoParametersBuffers.push(tlv.encode(
-            tlv.EMPTY_TLV_TYPE, Buffer.alloc(0), // delimiter
-        ));
-      }
+    let codecParameters = tlv.encode(
+      VideoCodecParametersTypes.PROFILE_ID, videoOptions.codec.profiles,
+      VideoCodecParametersTypes.LEVEL, videoOptions.codec.levels,
+      VideoCodecParametersTypes.PACKETIZATION_MODE, VideoCodecPacketizationMode.NON_INTERLEAVED,
+    );
 
-      videoParametersBuffers.push(tlv.encode(
-          VideoCodecParametersTypes.PROFILE_ID, profile
-      ));
-    });
-
-    const levelsOffset = videoParametersBuffers.length;
-    videoOptions.codec.levels.forEach(level => {
-      if (videoParametersBuffers.length > levelsOffset) {
-        videoParametersBuffers.push(tlv.encode(
-            tlv.EMPTY_TLV_TYPE, Buffer.alloc(0), // delimiter
-        ));
-      }
-
-      videoParametersBuffers.push(tlv.encode(
-          VideoCodecParametersTypes.LEVEL, level
-      ));
-    });
-
-    videoParametersBuffers.push(tlv.encode(
-        VideoCodecParametersTypes.PACKETIZATION_MODE, VideoCodecPacketizationMode.NON_INTERLEAVED
-    ));
-    if (videoOptions.cvoId) {
-      videoParametersBuffers.push(tlv.encode(
+    if (videoOptions.cvoId != undefined) {
+      codecParameters = Buffer.concat([
+        codecParameters,
+        tlv.encode(
           VideoCodecParametersTypes.CVO_ENABLED, VideoCodecCVO.SUPPORTED,
-          VideoCodecParametersTypes.CVO_ID, videoOptions.cvoId
-      ));
+          VideoCodecParametersTypes.CVO_ID, videoOptions.cvoId,
+        )
+      ]);
     }
 
-
-    const videoAttributesBuffers: Buffer[] = [];
-    videoOptions.resolutions.forEach(resolution => {
-      if (resolution.length != 3) {
-        throw new Error('Unexpected video resolution');
-      }
-
-      const width = Buffer.alloc(2);
-      const height = Buffer.alloc(2);
-      const frameRate = Buffer.alloc(1);
-
-      width.writeUInt16LE(resolution[0], 0);
-      height.writeUInt16LE(resolution[1], 0);
-      frameRate.writeUInt8(resolution[2], 0);
-
-      if (videoAttributesBuffers.length > 0) {
-        videoAttributesBuffers.push(tlv.encode(
-            tlv.EMPTY_TLV_TYPE, Buffer.alloc(0),
-        ));
-      }
-
-      videoAttributesBuffers.push(tlv.encode(
-          VideoCodecConfigurationTypes.ATTRIBUTES, tlv.encode(
-              VideoAttributesTypes.IMAGE_WIDTH, width,
-              VideoAttributesTypes.IMAGE_HEIGHT, height,
-              VideoAttributesTypes.FRAME_RATE, frameRate,
-          ),
-      ));
-    });
-
     const videoStreamConfiguration = tlv.encode(
-        VideoCodecConfigurationTypes.CODEC_TYPE, VideoCodecType.H264,
-        VideoCodecConfigurationTypes.CODEC_PARAMETERS, Buffer.concat(videoParametersBuffers)
+      VideoCodecConfigurationTypes.CODEC_TYPE, VideoCodecType.H264,
+      VideoCodecConfigurationTypes.CODEC_PARAMETERS, codecParameters,
+      VideoCodecConfigurationTypes.ATTRIBUTES, videoOptions.resolutions.map(resolution => {
+        if (resolution.length != 3) {
+          throw new Error('Unexpected video resolution');
+        }
+
+        const width = Buffer.alloc(2);
+        const height = Buffer.alloc(2);
+        const frameRate = Buffer.alloc(1);
+
+        width.writeUInt16LE(resolution[0], 0);
+        height.writeUInt16LE(resolution[1], 0);
+        frameRate.writeUInt8(resolution[2], 0);
+
+        return tlv.encode(
+          VideoAttributesTypes.IMAGE_WIDTH, width,
+          VideoAttributesTypes.IMAGE_HEIGHT, height,
+          VideoAttributesTypes.FRAME_RATE, frameRate,
+        );
+      }),
     );
-    const videoAttributes = Buffer.concat(videoAttributesBuffers);
 
     return tlv.encode(
-      SupportedVideoStreamConfigurationTypes.VIDEO_CODEC_CONFIGURATION, Buffer.concat([videoStreamConfiguration, videoAttributes])
+      SupportedVideoStreamConfigurationTypes.VIDEO_CODEC_CONFIGURATION, videoStreamConfiguration,
     ).toString('base64');
   }
 
@@ -1274,7 +1229,7 @@ export class RTPStreamManagement {
     const supportedCodecs: AudioStreamingCodec[] = (audioOptions && audioOptions.codecs) || [];
     this.checkForLegacyAudioCodecRepresentation(supportedCodecs);
 
-    const codecConfigurationsBuffers: Buffer[] = [];
+    //const codecConfigurationsBuffers: Buffer[] = [];
 
     if (supportedCodecs.length === 0) { // Fake a Codec if we haven't got anything
       debug("Client doesn't support any audio codec that HomeKit supports.");
@@ -1286,7 +1241,7 @@ export class RTPStreamManagement {
       });
     }
 
-    supportedCodecs.forEach(codec => {
+    const codecConfigurations: Buffer[] = supportedCodecs.map(codec => {
       let type: AudioCodecTypes;
 
       switch (codec.type) {
@@ -1312,16 +1267,11 @@ export class RTPStreamManagement {
           type = AudioCodecTypes.AMR_WB;
           break;
         default:
-          debug("Unsupported codec: ", codec.type);
-          return;
+          throw new Error("Unsupported codec: " + codec.type);
       }
 
-      let providedSamplerates = typeof codec.samplerate === "number"? [codec.samplerate]: codec.samplerate;
-      const samplerateBuffers: Buffer[] = [];
-
-      providedSamplerates.forEach(rate => {
+      const providedSamplerates = (typeof codec.samplerate === "number"? [codec.samplerate]: codec.samplerate).map(rate => {
         let samplerate;
-
         switch (rate) {
           case AudioStreamingSamplerate.KHZ_8:
             samplerate = AudioSamplerate.KHZ_8;
@@ -1333,53 +1283,32 @@ export class RTPStreamManagement {
             samplerate = AudioSamplerate.KHZ_24;
             break;
           default:
-            debug("Unsupported sample rate: ", codec.samplerate);
-            return;
+            console.log("Unsupported sample rate: ", codec.samplerate);
+            samplerate = -1;
         }
+        return samplerate;
+      }).filter(rate => rate !== -1);
 
-        if (samplerateBuffers.length > 0) {
-          samplerateBuffers.push(tlv.encode(
-              tlv.EMPTY_TLV_TYPE, Buffer.alloc(0), // delimiter
-          ));
-        }
-        samplerateBuffers.push(tlv.encode(
-          AudioCodecParametersTypes.SAMPLE_RATE, samplerate,
-        ));
-      });
-
-      if (samplerateBuffers.length === 0) {
+      if (providedSamplerates.length === 0) {
         throw new Error("Audio samplerate cannot be empty!");
       }
 
-      const audioParameters = Buffer.concat([
-          tlv.encode(
-              AudioCodecParametersTypes.CHANNEL, Math.max(1, codec.audioChannels || 1),
-              AudioCodecParametersTypes.BIT_RATE, codec.bitrate || AudioBitrate.VARIABLE,
-          ),
-          Buffer.concat(samplerateBuffers),
-      ]);
+      const audioParameters = tlv.encode(
+        AudioCodecParametersTypes.CHANNEL, Math.max(1, codec.audioChannels || 1),
+        AudioCodecParametersTypes.BIT_RATE, codec.bitrate || AudioBitrate.VARIABLE,
+        AudioCodecParametersTypes.SAMPLE_RATE, providedSamplerates,
+      )
 
-      const audioConfiguration = tlv.encode(
+      return tlv.encode(
           AudioCodecConfigurationTypes.CODEC_TYPE, type,
           AudioCodecConfigurationTypes.CODEC_PARAMETERS, audioParameters
       );
-
-      if (codecConfigurationsBuffers.length > 0) {
-        codecConfigurationsBuffers.push(tlv.encode(
-            tlv.EMPTY_TLV_TYPE, Buffer.alloc(0), // delimiter
-        ))
-      }
-
-      codecConfigurationsBuffers.push(tlv.encode(
-          SupportedAudioStreamConfigurationTypes.AUDIO_CODEC_CONFIGURATION, audioConfiguration
-      ));
     });
 
-    codecConfigurationsBuffers.push(tlv.encode(
-        SupportedAudioStreamConfigurationTypes.COMFORT_NOISE_SUPPORT, comfortNoise? 1: 0
-    ));
-
-    return Buffer.concat(codecConfigurationsBuffers).toString("base64");
+    return tlv.encode(
+      SupportedAudioStreamConfigurationTypes.AUDIO_CODEC_CONFIGURATION, codecConfigurations,
+      SupportedAudioStreamConfigurationTypes.COMFORT_NOISE_SUPPORT, comfortNoise? 1: 1,
+    ).toString("base64");
   }
 
   private static initialSetupEndpointsResponse(): string {
