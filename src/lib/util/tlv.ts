@@ -3,159 +3,229 @@
  * https://en.wikipedia.org/wiki/Type-length-value
  */
 
-export const EMPTY_TLV_TYPE = 0x00; // and empty tlv with id 0 is usually used as delimiter for tlv lists
+const EMPTY_TLV_TYPE = 0x00; // and empty tlv with id 0 is usually used as delimiter for tlv lists
 
-export function encode(type: number, data: Buffer | number | string, ...args: any[]) {
+export type TLVEncodable = Buffer | number | string;
 
-    let encodedTLVBuffer = Buffer.alloc(0);
+export function encode(type: number, data: TLVEncodable | TLVEncodable[], ...args: any[]): Buffer {
+  const encodedTLVBuffers: Buffer[] = [];
 
-    // coerce data to Buffer if needed
-    if (typeof data === 'number')
-      data = Buffer.from([data]) as Buffer;
-    else if (typeof data === 'string')
-      data = Buffer.from(data) as Buffer;
+  // coerce data to Buffer if needed
+  if (typeof data === 'number') {
+    data = Buffer.from([data]);
+  } else if (typeof data === 'string') {
+    data = Buffer.from(data);
+  }
 
-    if (data.length <= 255) {
-        encodedTLVBuffer = Buffer.concat([Buffer.from([type,data.length]),data]);
-    } else {
-        let leftLength = data.length;
-        let tempBuffer = Buffer.alloc(0);
-        let currentStart = 0;
-
-        for (; leftLength > 0;) {
-            if (leftLength >= 255) {
-                tempBuffer = Buffer.concat([tempBuffer,Buffer.from([type,0xFF]),data.slice(currentStart, currentStart + 255)]);
-                leftLength -= 255;
-                currentStart = currentStart + 255;
-            } else {
-                tempBuffer = Buffer.concat([tempBuffer,Buffer.from([type,leftLength]),data.slice(currentStart, currentStart + leftLength)]);
-                leftLength -= leftLength;
-            }
-        }
-
-        encodedTLVBuffer = tempBuffer;
+  if (Array.isArray(data)) {
+    let first = true;
+    for (const entry of data) {
+      if (!first) {
+        encodedTLVBuffers.push(Buffer.from([EMPTY_TLV_TYPE, 0])); // push delimiter
+      } else {
+        first = false;
+      }
+      encodedTLVBuffers.push(encode(type, entry));
     }
-
-    // do we have more to encode?
-    if (args.length >= 2) {
-
-      // chop off the first two arguments which we already processed, and process the rest recursively
-      const [ nextType, nextData, ...nextArgs ] = args;
-      const remainingTLVBuffer = encode(nextType, nextData, ...nextArgs);
-
-      // append the remaining encoded arguments directly to the buffer
-      encodedTLVBuffer = Buffer.concat([encodedTLVBuffer, remainingTLVBuffer]);
-    }
-
-    return encodedTLVBuffer;
-}
-
-export function decode(data: Buffer) {
-
-    const objects: Record<number, Buffer> = {};
-
-    let leftLength = data.length;
+  } else if (data.length <= 255) {
+    encodedTLVBuffers.push(Buffer.concat([Buffer.from([type,data.length]),data]));
+  } else { // otherwise it doesn't fit into one tlv entry, thus we push multiple
+    let leftBytes = data.length;
     let currentIndex = 0;
 
-    for (; leftLength > 0;) {
-        const type = data[currentIndex];
-        const length = data[currentIndex + 1];
-        currentIndex += 2;
-        leftLength -= 2;
+    for (; leftBytes > 0;) {
+      if (leftBytes >= 255) {
+        encodedTLVBuffers.push(Buffer.concat([Buffer.from([type, 0xFF]), data.slice(currentIndex, currentIndex + 255)]));
+        leftBytes -= 255;
+        currentIndex += 255;
+      } else {
+        encodedTLVBuffers.push(Buffer.concat([Buffer.from([type,leftBytes]), data.slice(currentIndex)]));
+        leftBytes -= leftBytes;
+      }
+    }
+  }
 
-        const newData = data.slice(currentIndex, currentIndex + length);
+  // do we have more arguments to encode?
+  if (args.length >= 2) {
 
-        if (objects[type]) {
-            objects[type] = Buffer.concat([objects[type],newData]);
-        } else {
-            objects[type] = newData;
-        }
+    // chop off the first two arguments which we already processed, and process the rest recursively
+    const [ nextType, nextData, ...nextArgs ] = args;
+    const remainingTLVBuffer = encode(nextType, nextData, ...nextArgs);
 
-        currentIndex += length;
-        leftLength -= length;
+    // append the remaining encoded arguments directly to the buffer
+    encodedTLVBuffers.push(remainingTLVBuffer);
+  }
+
+  return Buffer.concat(encodedTLVBuffers);
+}
+
+/**
+ * This method is the legacy way of decoding tlv data.
+ * It will not properly decode multiple list of the same id.
+ * Should the decoder encounter multiple instances of the same id, it will just concatenate the buffer data.
+ *
+ * @param buffer - TLV8 data
+ */
+export function decode(buffer: Buffer): Record<number, Buffer> {
+  const objects: Record<number, Buffer> = {};
+
+  let leftLength = buffer.length;
+  let currentIndex = 0;
+
+  for (; leftLength > 0;) {
+    const type = buffer[currentIndex];
+    const length = buffer[currentIndex + 1];
+    currentIndex += 2;
+    leftLength -= 2;
+
+    const data = buffer.slice(currentIndex, currentIndex + length);
+
+    if (objects[type]) {
+      objects[type] = Buffer.concat([objects[type],data]);
+    } else {
+      objects[type] = data;
     }
 
-    return objects;
+    currentIndex += length;
+    leftLength -= length;
+  }
+
+  return objects;
+}
+
+export function decodeWithLists(buffer: Buffer): Record<number, Buffer | Buffer[]> {
+  const result: Record<number, Buffer | Buffer[]> = {};
+
+  let leftBytes = buffer.length;
+  let readIndex = 0;
+
+  let lastType = -1;
+  let lastLength = -1;
+  let lastItemWasDelimiter = false;
+
+  for (; leftBytes > 0;) {
+    const type = buffer.readUInt8(readIndex++);
+    const length = buffer.readUInt8(readIndex++);
+    leftBytes -= 2;
+
+    const data = buffer.slice(readIndex, readIndex + length);
+    readIndex += length;
+    leftBytes -= length;
+
+    if (type === 0 && length === 0) {
+      lastItemWasDelimiter = true;
+      break;
+    }
+
+    const existing = result[type];
+    if (existing) { // there is already an item with the same type
+      if (lastItemWasDelimiter && lastType === type) { // list of tlv types
+        if (Array.isArray(existing)) {
+          existing.push(data);
+        } else {
+          result[type] = [existing, data];
+        }
+      } else if (lastType === type && lastLength === 255) { // tlv data got split into multiple entries as length exceeded 255
+        if (Array.isArray(existing)) {
+          // append to the last data blob in the array
+          const last = existing[existing.length - 1];
+          existing[existing.length - 1] = Buffer.concat([last, data]);
+        } else {
+          result[type] = Buffer.concat([existing, data]);
+        }
+      } else {
+        throw new Error(`Found duplicated tlv entry with type ${type} and length ${length} (lastItemWasDelimiter: ${lastItemWasDelimiter}, lastType: ${lastType}, lastLength: ${lastLength})`);
+      }
+    } else {
+      result[type] = data;
+    }
+
+    lastType = type;
+    lastLength = length;
+    lastItemWasDelimiter = false;
+  }
+
+  return result;
 }
 
 export function decodeList(data: Buffer, entryStartId: number) {
-    const objectsList: Record<number, Buffer>[] = [];
+  const objectsList: Record<number, Buffer>[] = [];
 
-    let leftLength = data.length;
-    let currentIndex = 0;
+  let leftLength = data.length;
+  let currentIndex = 0;
 
-    let objects: Record<number, Buffer> | undefined = undefined;
+  let objects: Record<number, Buffer> | undefined = undefined;
 
-    for (; leftLength > 0;) {
-        const type = data[currentIndex]; // T
-        const length = data[currentIndex + 1]; // L
-        const value = data.slice(currentIndex + 2, currentIndex + 2 + length); // V
+  for (; leftLength > 0;) {
+    const type = data[currentIndex]; // T
+    const length = data[currentIndex + 1]; // L
+    const value = data.slice(currentIndex + 2, currentIndex + 2 + length); // V
 
-        if (type === entryStartId) { // we got the start of a new entry
-            if (objects !== undefined) { // save the previous entry
-                objectsList.push(objects);
-            }
+    if (type === entryStartId) { // we got the start of a new entry
+      if (objects !== undefined) { // save the previous entry
+        objectsList.push(objects);
+      }
 
-            objects = {};
-        }
-
-        if (objects === undefined)
-            throw new Error("Error parsing tlv list: Encountered uninitialized storage object");
-
-        if (objects[type]) { // append to buffer if we have an already data for this type
-            objects[type] = Buffer.concat([value, objects[type]]);
-        } else {
-            objects[type] = value;
-        }
-
-        currentIndex += 2 + length;
-        leftLength -= 2 + length;
+      objects = {};
     }
 
-    if (objects !== undefined)
-        objectsList.push(objects); // push last entry
+    if (objects === undefined)
+      throw new Error("Error parsing tlv list: Encountered uninitialized storage object");
 
-    return objectsList;
+    if (objects[type]) { // append to buffer if we have an already data for this type
+      objects[type] = Buffer.concat([value, objects[type]]);
+    } else {
+      objects[type] = value;
+    }
+
+    currentIndex += 2 + length;
+    leftLength -= 2 + length;
+  }
+
+  if (objects !== undefined)
+    objectsList.push(objects); // push last entry
+
+  return objectsList;
 }
 
 export function writeUInt64(value: number) {
-    const float64 = new Float64Array(1);
-    float64[0] = value;
+  const float64 = new Float64Array(1);
+  float64[0] = value;
 
-    const buffer = Buffer.alloc(float64.buffer.byteLength);
-    const view = new Uint8Array(float64.buffer);
-    for (let i = 0; i < buffer.length; i++) {
-        buffer[i] = view[i];
-    }
+  const buffer = Buffer.alloc(float64.buffer.byteLength);
+  const view = new Uint8Array(float64.buffer);
+  for (let i = 0; i < buffer.length; i++) {
+    buffer[i] = view[i];
+  }
 
-    return buffer;
+  return buffer;
 }
 
 export function readUInt64(buffer: Buffer) {
-    const float64 = new Float64Array(buffer);
-    return float64[0];
+  const float64 = new Float64Array(buffer);
+  return float64[0];
 }
 
 export function writeUInt32(value: number) {
-    const buffer = Buffer.alloc(4);
+  const buffer = Buffer.alloc(4);
 
-    buffer.writeUInt32LE(value, 0);
+  buffer.writeUInt32LE(value, 0);
 
-    return buffer;
+  return buffer;
 }
 
 export function readUInt32(buffer: Buffer) {
-    return buffer.readUInt32LE(0);
+  return buffer.readUInt32LE(0);
 }
 
 export function writeUInt16(value: number) {
-    const buffer = Buffer.alloc(2);
+  const buffer = Buffer.alloc(2);
 
-    buffer.writeUInt16LE(value, 0);
+  buffer.writeUInt16LE(value, 0);
 
-    return buffer;
+  return buffer;
 }
 
 export function readUInt16(buffer: Buffer) {
-    return buffer.readUInt16LE(0);
+  return buffer.readUInt16LE(0);
 }
