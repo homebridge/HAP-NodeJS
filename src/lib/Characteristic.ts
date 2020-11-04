@@ -719,7 +719,15 @@ export class Characteristic extends EventEmitter {
   public UUID: string;
   iid: Nullable<number> = null;
   value: Nullable<CharacteristicValue> = null;
-  status: HAPStatus = HAPStatus.SUCCESS;
+  /**
+   * @deprecated replaced by {@link statusCode}
+   * @internal
+   */
+  status: Nullable<Error> = null;
+  /**
+   * @internal
+   */
+  statusCode: HAPStatus = HAPStatus.SUCCESS;
   props: CharacteristicProps;
 
   /**
@@ -924,6 +932,18 @@ export class Characteristic extends EventEmitter {
    */
   setValue(value: CharacteristicValue): Characteristic
   /**
+   * Sets the state of the characteristic to an errored state.
+   * If a onGet or GET handler is set up, the errored state will be ignored and the characteristic
+   * will always query the latest state by calling the provided handler.
+   *
+   * If a generic error object is supplied, the characteristic tries to extract a {@link HAPStatus} code
+   * from the error message string. If not possible a generic {@link HAPStatus.SERVICE_COMMUNICATION_FAILURE} will be used.
+   * If the supplied error object is an instance of {@link HapStatusError} the corresponding status will be used.
+   *
+   * @param error - The error object
+   */
+  setValue(error: HapStatusError | Error): Characteristic;
+  /**
    * This updates the value by calling the {@link CharacteristicEventTypes.SET} event handler associated with the characteristic.
    * This acts the same way as when a HomeKit controller sends a /characteristics request to update the characteristic.
    * A event notification will be sent to all connected HomeKit controllers which are registered
@@ -940,7 +960,18 @@ export class Characteristic extends EventEmitter {
    * @deprecated Parameters callback and context are deprecated.
    */
   setValue(value: CharacteristicValue, callback?: CharacteristicSetCallback, context?: any): Characteristic
-  setValue(value: CharacteristicValue, callback?: CharacteristicSetCallback, context?: any): Characteristic {
+  setValue(value: CharacteristicValue | Error, callback?: CharacteristicSetCallback, context?: any): Characteristic {
+    if (value instanceof Error) {
+      this.statusCode = value instanceof HapStatusError? value.hapStatus: extractHAPStatusFromError(value);
+      // noinspection JSDeprecatedSymbols
+      this.status = value;
+
+      if (callback) {
+        callback();
+      }
+      return this;
+    }
+
     value = this.validateUserInput(value)!;
     this.handleSetRequest(value, undefined, context).then(value => {
       if (callback) {
@@ -967,6 +998,18 @@ export class Characteristic extends EventEmitter {
    */
   updateValue(value: Nullable<CharacteristicValue>): Characteristic;
   /**
+   * Sets the state of the characteristic to an errored state.
+   * If a onGet or GET handler is set up, the errored state will be ignored and the characteristic
+   * will always query the latest state by calling the provided handler.
+   *
+   * If a generic error object is supplied, the characteristic tries to extract a {@link HAPStatus} code
+   * from the error message string. If not possible a generic {@link HAPStatus.SERVICE_COMMUNICATION_FAILURE} will be used.
+   * If the supplied error object is an instance of {@link HapStatusError} the corresponding status will be used.
+   *
+   * @param error - The error object
+   */
+  updateValue(error: Error | HapStatusError): Characteristic;
+  /**
    * This updates the value of the characteristic. A event notification will be sent to all connected
    * HomeKit controllers which are registered to receive event notifications for this characteristic.
    *
@@ -976,8 +1019,21 @@ export class Characteristic extends EventEmitter {
    * @deprecated Parameters callback and context are deprecated.
    */
   updateValue(value: Nullable<CharacteristicValue>, callback?: () => void, context?: any): Characteristic;
-  updateValue(value: Nullable<CharacteristicValue>, callback?: () => void, context?: any): Characteristic {
-    this.status = HAPStatus.SUCCESS;
+  updateValue(value: Nullable<CharacteristicValue> | Error | HapStatusError, callback?: () => void, context?: any): Characteristic {
+    if (value instanceof Error) {
+      this.statusCode = value instanceof HapStatusError? value.hapStatus: extractHAPStatusFromError(value);
+      // noinspection JSDeprecatedSymbols
+      this.status = value;
+
+      if (callback) {
+        callback();
+      }
+      return this;
+    }
+
+    this.statusCode = HAPStatus.SUCCESS;
+    // noinspection JSDeprecatedSymbols
+    this.status = null;
 
     value = this.validateUserInput(value);
     const oldValue = this.value;
@@ -1018,13 +1074,17 @@ export class Characteristic extends EventEmitter {
 
       try {
         let value = await this.getHandler();
-        this.status = HAPStatus.SUCCESS;
+        this.statusCode = HAPStatus.SUCCESS;
+        // noinspection JSDeprecatedSymbols
+        this.status = null;
 
         try {
           value = this.validateUserInput(value);
         } catch (error) {
           this.characteristicWarning(`An illegal value was supplied by the read handler for characteristic: ${error.message}`);
-          this.status = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+          this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+          // noinspection JSDeprecatedSymbols
+          this.status = error;
           return Promise.reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
         }
 
@@ -1036,20 +1096,26 @@ export class Characteristic extends EventEmitter {
         }
       } catch (error) {
         if (typeof error === "number") {
-          this.status = error;
+          this.statusCode = error;
+          // noinspection JSDeprecatedSymbols
+          this.status = new HapStatusError(error);
         } else if (error instanceof HapStatusError) {
-          this.status = error.hapStatus;
+          this.statusCode = error.hapStatus;
+          // noinspection JSDeprecatedSymbols
+          this.status = error;
         } else {
           this.characteristicWarning(`Unhandled error thrown inside read handler for characteristic: ${error.stack}`);
-          this.status = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+          this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+          // noinspection JSDeprecatedSymbols
+          this.status = error;
         }
-        throw this.status;
+        throw this.statusCode;
       }
     }
 
     if (this.listeners(CharacteristicEventTypes.GET).length === 0) {
-      if (this.status) {
-        throw this.status;
+      if (this.statusCode) {
+        throw this.statusCode;
       } else {
         return this.value;
       }
@@ -1060,18 +1126,26 @@ export class Characteristic extends EventEmitter {
         this.emit(CharacteristicEventTypes.GET, once((status?: Error | HAPStatus | null, value?: Nullable<CharacteristicValue>) => {
           if (status) {
             if (typeof status === "number") {
-              this.status = status;
+              this.statusCode = status;
+              // noinspection JSDeprecatedSymbols
+              this.status = new HapStatusError(status);
             } else if (status instanceof HapStatusError) {
-              this.status = status.hapStatus;
+              this.statusCode = status.hapStatus;
+              // noinspection JSDeprecatedSymbols
+              this.status = status;
             } else {
-              this.status = extractHAPStatusFromError(status);
               debug("[%s] Received error from get handler %s", this.displayName, status.stack);
+              this.statusCode = extractHAPStatusFromError(status);
+              // noinspection JSDeprecatedSymbols
+              this.status = status;
             }
-            reject(this.status);
+            reject(this.statusCode);
             return;
           }
 
-          this.status = HAPStatus.SUCCESS;
+          this.statusCode = HAPStatus.SUCCESS;
+          // noinspection JSDeprecatedSymbols
+          this.status = null;
 
           value = this.validateUserInput(value);
           const oldValue = this.value;
@@ -1085,7 +1159,9 @@ export class Characteristic extends EventEmitter {
         }), context, connection);
       } catch (error) {
         this.characteristicWarning(`Unhandled error thrown inside read handler for characteristic: ${error.stack}`);
-        this.status = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+        this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+        // noinspection JSDeprecatedSymbols
+        this.status = error;
         reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       }
     });
@@ -1103,7 +1179,9 @@ export class Characteristic extends EventEmitter {
    * @internal
    */
   async handleSetRequest(value: CharacteristicValue, connection?: HAPConnection, context?: any): Promise<CharacteristicValue | void> {
-    this.status = HAPStatus.SUCCESS;
+    this.statusCode = HAPStatus.SUCCESS;
+    // noinspection JSDeprecatedSymbols
+    this.status = null;
 
     if (connection !== undefined && !this.validClientSuppliedValue(value)) {
       // if connection is undefined, the set "request" comes from the setValue method.
@@ -1127,7 +1205,9 @@ export class Characteristic extends EventEmitter {
 
       try {
         const writeResponse = await this.setHandler(value);
-        this.status = HAPStatus.SUCCESS;
+        this.statusCode = HAPStatus.SUCCESS;
+        // noinspection JSDeprecatedSymbols
+        this.status = null;
 
         if (writeResponse != null && this.props.perms.includes(Perms.WRITE_RESPONSE)) {
           this.value = writeResponse;
@@ -1145,14 +1225,20 @@ export class Characteristic extends EventEmitter {
         return this.value;
       } catch (error) {
         if (typeof error === "number") {
-          this.status = error;
+          this.statusCode = error;
+          // noinspection JSDeprecatedSymbols
+          this.status = new HapStatusError(error);
         } else if (error instanceof HapStatusError) {
-          this.status = error.hapStatus;
+          this.statusCode = error.hapStatus;
+          // noinspection JSDeprecatedSymbols
+          this.status = error;
         } else {
           this.characteristicWarning(`Unhandled error thrown inside write handler for characteristic: ${error.stack}`);
-          this.status = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+          this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+          // noinspection JSDeprecatedSymbols
+          this.status = error;
         }
-        throw this.status;
+        throw this.statusCode;
       }
     }
 
@@ -1168,18 +1254,26 @@ export class Characteristic extends EventEmitter {
           this.emit(CharacteristicEventTypes.SET, value, once((status?: Error | HAPStatus | null, writeResponse?: Nullable<CharacteristicValue>) => {
             if (status) {
               if (typeof status === "number") {
-                this.status = status;
+                this.statusCode = status;
+                // noinspection JSDeprecatedSymbols
+                this.status = new HapStatusError(status);
               } else if (status instanceof HapStatusError) {
-                this.status = status.hapStatus;
+                this.statusCode = status.hapStatus;
+                // noinspection JSDeprecatedSymbols
+                this.status = status;
               } else {
-                this.status = extractHAPStatusFromError(status);
                 debug("[%s] Received error from set handler %s", this.displayName, status.stack);
+                this.statusCode = extractHAPStatusFromError(status);
+                // noinspection JSDeprecatedSymbols
+                this.status = status;
               }
-              reject(this.status);
+              reject(this.statusCode);
               return;
             }
 
-            this.status = HAPStatus.SUCCESS;
+            this.statusCode = HAPStatus.SUCCESS;
+            // noinspection JSDeprecatedSymbols
+            this.status = null;
 
             if (writeResponse != null && this.props.perms.includes(Perms.WRITE_RESPONSE)) {
               // support write response simply by letting the implementor pass the response as second argument to the callback
@@ -1199,7 +1293,9 @@ export class Characteristic extends EventEmitter {
           }), context, connection);
         } catch (error) {
           this.characteristicWarning(`Unhandled error thrown inside write handler for characteristic: ${error.stack}`);
-          this.status = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+          this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+          // noinspection JSDeprecatedSymbols
+          this.status = error;
           reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
         }
       });
