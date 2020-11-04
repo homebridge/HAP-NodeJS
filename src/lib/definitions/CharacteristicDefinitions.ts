@@ -3530,6 +3530,30 @@ export class TargetAirPurifierState extends Characteristic {
 Characteristic.TargetAirPurifierState = TargetAirPurifierState;
 
 /**
+ * Characteristic "Target Air Quality"
+ * @deprecated Removed and not used anymore
+ */
+export class TargetAirQuality extends Characteristic {
+
+  public static readonly UUID: string = "000000AE-0000-1000-8000-0026BB765291";
+
+  public static readonly EXCELLENT = 0;
+  public static readonly GOOD = 1;
+  public static readonly FAIR = 2;
+
+  constructor() {
+    super("Target Air Quality", TargetAirQuality.UUID, {
+      format: Formats.UINT8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      minValue: 0,
+      maxValue: 2,
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.TargetAirQuality = TargetAirQuality;
+
+/**
  * Characteristic "Target Control List"
  */
 export class TargetControlList extends Characteristic {
