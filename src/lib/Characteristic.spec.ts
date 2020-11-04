@@ -117,7 +117,7 @@ describe('Characteristic', () => {
       const characteristic = createCharacteristic(Formats.BOOL, Characteristic.ProgrammableSwitchEvent.UUID);
 
       characteristic.handleGetRequest().then(() => {
-        expect(characteristic.status).toEqual(HAPStatus.SUCCESS);
+        expect(characteristic.statusCode).toEqual(HAPStatus.SUCCESS);
         expect(characteristic.value).toEqual(null);
         callback();
       });
@@ -127,7 +127,7 @@ describe('Characteristic', () => {
       const characteristic = createCharacteristic(Formats.BOOL);
 
       characteristic.handleGetRequest().then(() => {
-        expect(characteristic.status).toEqual(HAPStatus.SUCCESS);
+        expect(characteristic.statusCode).toEqual(HAPStatus.SUCCESS);
         expect(characteristic.value).toEqual(null);
         callback();
       });
