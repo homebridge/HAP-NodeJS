@@ -1064,15 +1064,17 @@ export class Accessory extends EventEmitter {
       this.controllerStorage.purgeUnidentifiedAccessoryData = false;
     }
 
+    this.controllerStorage.load(info.username); // initializing controller data
+
     // assign aid/iid
     this._assignIDs(this._identifierCache);
-
-    this.controllerStorage.load(info.username); // initializing controller data
 
     // get our accessory information in HAP format and determine if our configuration (that is, our
     // Accessories/Services/Characteristics) has changed since the last time we were published. make
     // sure to omit actual values since these are not part of the "configuration".
     const config = this.internalHAPRepresentation(false); // TODO ensure this stuff is ordered
+    // TODO queue this check until about 5 seconds after startup, allowing some last changes after the publish call
+    //   without constantly incrementing the current config number
     this._accessoryInfo.checkForCurrentConfigurationNumberIncrement(config, true);
 
     this.validateAccessory(true);
