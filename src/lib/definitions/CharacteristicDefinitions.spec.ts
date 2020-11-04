@@ -1056,6 +1056,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("TargetAirQuality", () => {
+    it("should be able to construct", () => {
+      new Characteristic.TargetAirQuality();
+    });
+  });
+
   describe("TargetControlList", () => {
     it("should be able to construct", () => {
       new Characteristic.TargetControlList();

@@ -82,7 +82,24 @@ export const CharacteristicManualAdditions: Map<string, GeneratedCharacteristic>
     format: "string",
     properties: 2, // paired read
     maxLength: 64,
-  }]
+  }],
+  ["target-air-quality", { // some legacy characteristic, don't know where it comes from or where it was used
+    id: "target-air-quality",
+    UUID: "000000AE-0000-1000-8000-0026BB765291",
+    name: "Target Air Quality",
+    className: "TargetAirQuality",
+    deprecatedNotice: "Removed and not used anymore",
+
+    format: "uint8",
+    properties: 7, // read, write, notify
+    minValue: 0,
+    maxValue: 2,
+    validValues: {
+      "0": "EXCELLENT",
+      "1": "GOOD",
+      "2": "FAIR",
+    },
+  }],
 ]);
 
 export const ServiceNameOverrides: Map<string, string> = new Map([

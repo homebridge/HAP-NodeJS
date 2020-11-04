@@ -180,6 +180,7 @@ import {
   SupportedVideoStreamConfiguration,
   SwingMode,
   TargetAirPurifierState,
+  TargetAirQuality,
   TargetControlList,
   TargetControlSupportedConfiguration,
   TargetDoorState,
@@ -672,6 +673,10 @@ export class Characteristic extends EventEmitter {
   public static SupportedVideoStreamConfiguration: typeof SupportedVideoStreamConfiguration;
   public static SwingMode: typeof SwingMode;
   public static TargetAirPurifierState: typeof TargetAirPurifierState;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static TargetAirQuality: typeof TargetAirQuality;
   public static TargetControlList: typeof TargetControlList;
   public static TargetControlSupportedConfiguration: typeof TargetControlSupportedConfiguration;
   public static TargetDoorState: typeof TargetDoorState;
