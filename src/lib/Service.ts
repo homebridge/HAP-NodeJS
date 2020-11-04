@@ -1,4 +1,5 @@
 import assert from "assert";
+import createDebug from "debug";
 import { EventEmitter } from "events";
 import { ServiceJsonObject } from "../internal-types";
 import { CharacteristicValue, Nullable, WithUUID } from '../types';
@@ -81,6 +82,8 @@ import { IdentifierCache } from './model/IdentifierCache';
 import { HAPConnection } from "./util/eventedhttp";
 import { toShortForm } from './util/uuid';
 import Timeout = NodeJS.Timeout;
+
+const debug = createDebug("HAP-NodeJS:Service");
 
 /**
  * HAP spec allows a maximum of 100 characteristics per service!
@@ -576,7 +579,15 @@ export class Service extends EventEmitter {
       if (this.linkedServices.length) {
         service.linked = [];
         for (const linked of this.linkedServices) {
-          assert(linked.iid, "iid of linked service '" + linked.displayName + "' is undefined on service '" + this.displayName + "'");
+          if (!linked.iid) {
+            // we got a linked service which is not added to the accessory
+            // as it doesn't "exists" we just ignore it.
+            // we have some (at least one) plugins on homebridge which link to the AccessoryInformation service.
+            // homebridge always creates it's own AccessoryInformation service and ignores the user supplied one
+            // thus the link is automatically broken.
+            debug(`iid of linked service '${linked.displayName}' ${linked.UUID} is undefined on service '${this.displayName}'`);
+            continue;
+          }
           service.linked.push(linked.iid!);
         }
       }
@@ -642,7 +653,15 @@ export class Service extends EventEmitter {
     if (this.linkedServices.length) {
       service.linked = [];
       for (const linked of this.linkedServices) {
-        assert(linked.iid, "iid of linked service '" + linked.displayName + "' is undefined on service '" + this.displayName + "'");
+        if (!linked.iid) {
+          // we got a linked service which is not added to the accessory
+          // as it doesn't "exists" we just ignore it.
+          // we have some (at least one) plugins on homebridge which link to the AccessoryInformation service.
+          // homebridge always creates it's own AccessoryInformation service and ignores the user supplied one
+          // thus the link is automatically broken.
+          debug(`iid of linked service '${linked.displayName}' ${linked.UUID} is undefined on service '${this.displayName}'`);
+          continue;
+        }
         service.linked.push(linked.iid!);
       }
     }

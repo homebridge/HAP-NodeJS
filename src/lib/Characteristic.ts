@@ -1744,6 +1744,7 @@ export class Characteristic extends EventEmitter {
    */
   internalHAPRepresentation(): CharacteristicJsonObject {
     assert(this.iid,"iid cannot be undefined for characteristic '" + this.displayName + "'");
+    // TODO include the value for characteristics of the AccessoryInformation service
     return {
       type: toShortForm(this.UUID),
       iid: this.iid!,
