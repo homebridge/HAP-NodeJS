@@ -1923,34 +1923,34 @@ export class Accessory extends EventEmitter {
         if (entries.size) {
           advertiserAddress = Array.from(entries);
         }
-      } else {
+      } else if (entries.size === 1) {
         advertiserAddress = Array.from(entries);
 
-        if (entries.size === 1) {
-          const entry = entries.values().next().value; // grab the first one
+        const entry = entries.values().next().value; // grab the first one
 
-          const version = net.isIP(entry); // check if ip address was specified or a interface name
-          if (version) {
-            serverAddress = version === 4? "0.0.0.0": "::"; // we currently bind to unspecified addresses so config-ui always has a connection via loopback
-          } else {
-            serverAddress = "::"; // the interface could have both ipv4 and ipv6 addresses
-          }
-        } else if (entries.size > 1) {
-          let bindUnspecifiedIpv6 = false; // we bind on "::" if there are interface names, or we detect ipv6 addresses
+        const version = net.isIP(entry); // check if ip address was specified or a interface name
+        if (version) {
+          serverAddress = version === 4? "0.0.0.0": "::"; // we currently bind to unspecified addresses so config-ui always has a connection via loopback
+        } else {
+          serverAddress = "::"; // the interface could have both ipv4 and ipv6 addresses
+        }
+      } else if (entries.size > 1) {
+        advertiserAddress = Array.from(entries);
 
-          for (const entry of entries) {
-            const version = net.isIP(entry);
-            if (version === 0 || version === 6) {
-              bindUnspecifiedIpv6 = true;
-              break;
-            }
-          }
+        let bindUnspecifiedIpv6 = false; // we bind on "::" if there are interface names, or we detect ipv6 addresses
 
-          if (bindUnspecifiedIpv6) {
-            serverAddress = "::";
-          } else {
-            serverAddress = "0.0.0.0";
+        for (const entry of entries) {
+          const version = net.isIP(entry);
+          if (version === 0 || version === 6) {
+            bindUnspecifiedIpv6 = true;
+            break;
           }
+        }
+
+        if (bindUnspecifiedIpv6) {
+          serverAddress = "::";
+        } else {
+          serverAddress = "0.0.0.0";
         }
       }
     }
