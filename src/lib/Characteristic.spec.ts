@@ -352,6 +352,28 @@ describe('Characteristic', () => {
     });
   });
 
+  describe("onGet handler", () => {
+    it("should ignore GET event handler when onGet was specified", async () => {
+      const characteristic = createCharacteristic(Formats.STRING);
+
+      const listenerCallback = jest.fn().mockImplementation((callback) => {
+        callback(undefined, "OddValue");
+      });
+      const handlerMock = jest.fn();
+
+      characteristic.onGet(() => {
+        handlerMock();
+        return "CurrentValue";
+      });
+      characteristic.on(CharacteristicEventTypes.GET, listenerCallback);
+      const value = await characteristic.handleGetRequest();
+
+      expect(value).toEqual("CurrentValue");
+      expect(handlerMock).toHaveBeenCalledTimes(1);
+      expect(listenerCallback).toHaveBeenCalledTimes(0);
+    });
+  });
+
   describe(`@${CharacteristicEventTypes.SET}`, () => {
 
     it('should call any listeners for the event', () => {
@@ -365,6 +387,26 @@ describe('Characteristic', () => {
       characteristic.handleSetRequest(VALUE);
 
       expect(listenerCallback).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("onSet handler", () => {
+    it("should ignore SET event handler when onSet was specified", () => {
+      const characteristic = createCharacteristic(Formats.STRING);
+
+      const listenerCallback = jest.fn();
+      const handlerMock = jest.fn();
+
+      characteristic.onSet(value => {
+        handlerMock(value);
+        expect(value).toEqual("NewValue");
+        return;
+      });
+      characteristic.on(CharacteristicEventTypes.SET, listenerCallback);
+      characteristic.handleSetRequest("NewValue");
+
+      expect(handlerMock).toHaveBeenCalledTimes(1);
+      expect(listenerCallback).toHaveBeenCalledTimes(0);
     });
   });
 

@@ -1099,6 +1099,8 @@ export class Characteristic extends EventEmitter {
         if (oldValue !== value) { // emit a change event if necessary
           this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
         }
+
+        return value;
       } catch (error) {
         if (typeof error === "number") {
           this.statusCode = error;
@@ -1216,6 +1218,7 @@ export class Characteristic extends EventEmitter {
 
         if (writeResponse != null && this.props.perms.includes(Perms.WRITE_RESPONSE)) {
           this.value = writeResponse;
+          return writeResponse;
         } else {
           if (writeResponse != null) {
             this.characteristicWarning(`SET handler returned write response value, though the characteristic doesn't support write response!`);
@@ -1225,9 +1228,9 @@ export class Characteristic extends EventEmitter {
           if (oldValue !== value || this.UUID === Characteristic.ProgrammableSwitchEvent.UUID) {
             this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
           }
-        }
 
-        return this.value;
+          return;
+        }
       } catch (error) {
         if (typeof error === "number") {
           this.statusCode = error;
@@ -1713,7 +1716,7 @@ export class Characteristic extends EventEmitter {
   characteristicWarning(message: string, type = CharacteristicWarningType.WARN_MESSAGE): void {
     const emitted = this.emit(CharacteristicEventTypes.CHARACTERISTIC_WARNING, type, message);
     if (!emitted) {
-      if (type === CharacteristicWarningType.ERROR_MESSAGE || type === CharacteristicWarningType.TIMEOUT_READ || CharacteristicWarningType.TIMEOUT_WRITE) {
+      if (type === CharacteristicWarningType.ERROR_MESSAGE || type === CharacteristicWarningType.TIMEOUT_READ || type === CharacteristicWarningType.TIMEOUT_WRITE) {
         console.error(`[${this.displayName}] ${message}`);
       } else {
         console.warn(`[${this.displayName}] ${message}`);
