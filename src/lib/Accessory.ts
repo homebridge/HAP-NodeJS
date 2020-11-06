@@ -32,7 +32,14 @@ import {
 import { Advertiser, AdvertiserEvent } from './Advertiser';
 // noinspection JSDeprecatedSymbols
 import { LegacyCameraSource, LegacyCameraSourceAdapter, StreamController } from './camera';
-import { Access, Characteristic, CharacteristicEventTypes, CharacteristicSetCallback, Perms } from './Characteristic';
+import {
+  Access,
+  ChangeReason,
+  Characteristic,
+  CharacteristicEventTypes, CharacteristicOperationContext,
+  CharacteristicSetCallback,
+  Perms
+} from './Characteristic';
 import {
   CameraController,
   CameraControllerOptions,
@@ -719,7 +726,7 @@ export class Accessory extends EventEmitter {
       controller.configureServices(); // let the controller setup all its handlers
 
       Object.values(serviceMap).forEach(service => {
-        if (service) {
+        if (service && !this.services.includes(service)) {
           this.addService(service);
         }
       });
@@ -1388,7 +1395,7 @@ export class Accessory extends EventEmitter {
     }
 
     return characteristic.handleGetRequest(connection).then(value => {
-      debug('[%s] Got Characteristic "%s" value: %s', this.displayName, characteristic!.displayName, value);
+      debug('[%s] Got Characteristic "%s" value: "%s"', this.displayName, characteristic!.displayName, value);
 
       const data: PartialCharacteristicReadData = {
         value: value == undefined? null: value,
@@ -1713,6 +1720,21 @@ export class Accessory extends EventEmitter {
 
       if (accessory.aid == undefined || change.characteristic.iid == undefined) {
         debug("[%s] Muting event notification for %s as ids aren't yet assigned!", accessory.displayName, change.characteristic.displayName);
+        return;
+      }
+
+      if (typeof change.context === "object" && (change.context as CharacteristicOperationContext).omitEventUpdate) {
+        debug("[%s] Omitting event updates for %s as specified in the context object!", accessory.displayName, change.characteristic.displayName);
+        return;
+      }
+
+      if (!(change.reason === ChangeReason.EVENT || change.oldValue !== change.newValue
+        || change.characteristic.UUID === Characteristic.ProgrammableSwitchEvent.UUID // those specific checks are out of backwards compatibility
+        || change.characteristic.UUID === Characteristic.ButtonEvent.UUID // new characteristics should use sendEventNotification call
+      )) {
+        // we only emit a change event if the reason was a call to sendEventNotification, if the value changed
+        // as of a write request or a read request or if the change happened on dedicated event characteristics
+        // otherwise we ignore this change event (with the return below)
         return;
       }
 

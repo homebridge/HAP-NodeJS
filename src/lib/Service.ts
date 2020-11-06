@@ -384,19 +384,9 @@ export class Service extends EventEmitter {
   }
 
   public removeCharacteristic(characteristic: Characteristic): void {
-    let targetCharacteristicIndex;
-
-    for (let index in this.characteristics) {
-      const existingCharacteristic = this.characteristics[index];
-
-      if (existingCharacteristic === characteristic) {
-        targetCharacteristicIndex = index;
-        break;
-      }
-    }
-
-    if (targetCharacteristicIndex) {
-      this.characteristics.splice(Number.parseInt(targetCharacteristicIndex), 1);
+    const index = this.characteristics.indexOf(characteristic);
+    if (index !== -1) {
+      this.characteristics.splice(index, 1);
       characteristic.removeAllListeners();
 
       this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
@@ -700,7 +690,7 @@ export class Service extends EventEmitter {
   static serialize(service: Service): SerializedService {
     let constructorName: string | undefined;
     if (service.constructor.name !== "Service") {
-      constructorName = service.constructor.name; // TODO test
+      constructorName = service.constructor.name;
     }
 
     return {
@@ -724,7 +714,6 @@ export class Service extends EventEmitter {
   static deserialize(json: SerializedService): Service {
     let service: Service;
 
-    // TODO test
     if (json.constructorName && json.constructorName.charAt(0).toUpperCase() === json.constructorName.charAt(0)
       && Service[json.constructorName as keyof (typeof Service)]) { // MUST start with uppercase character and must exist on Service object
       const constructor = Service[json.constructorName as keyof (typeof Service)] as { new(displayName?: string, subtype?: string): Service };

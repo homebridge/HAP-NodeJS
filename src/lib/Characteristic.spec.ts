@@ -1,6 +1,6 @@
 import {
   Access,
-  Characteristic,
+  Characteristic, CharacteristicChange,
   CharacteristicEventTypes,
   CharacteristicProps,
   Formats,
@@ -447,6 +447,40 @@ describe('Characteristic', () => {
 
       expect(listenerCallback).toHaveBeenCalledTimes(1);
       expect(updateValueCallback).toHaveBeenCalledTimes(1);
+    });
+
+    it("should call the change listener with proper context when supplied as second argument to updateValue", () => {
+      const characteristic = createCharacteristic(Formats.STRING);
+
+      const VALUE = "NewValue";
+      const CONTEXT = "Context";
+
+      const listener = jest.fn().mockImplementation((change: CharacteristicChange) => {
+        expect(change.newValue).toEqual(VALUE);
+        expect(change.context).toEqual(CONTEXT);
+      });
+
+      characteristic.on(CharacteristicEventTypes.CHANGE, listener);
+      characteristic.updateValue(VALUE, CONTEXT);
+
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
+
+    it("should call the change listener with proper context when supplied as second argument to setValue", () => {
+      const characteristic = createCharacteristic(Formats.STRING);
+
+      const VALUE = "NewValue";
+      const CONTEXT = "Context";
+
+      const listener = jest.fn().mockImplementation((change: CharacteristicChange) => {
+        expect(change.newValue).toEqual(VALUE);
+        expect(change.context).toEqual(CONTEXT);
+      });
+
+      characteristic.on(CharacteristicEventTypes.CHANGE, listener);
+      characteristic.setValue(VALUE, CONTEXT);
+
+      expect(listener).toHaveBeenCalledTimes(1);
     });
   });
 

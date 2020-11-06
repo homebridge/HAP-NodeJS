@@ -22,6 +22,7 @@ export const enum DefaultControllerType {
     TV = "tv",
     ROUTER = "router",
     LOCK = "lock",
+    CHARACTERISTIC_TRANSITION = "characteristic-transition",
 }
 
 export type StateChangeDelegate = () => void;

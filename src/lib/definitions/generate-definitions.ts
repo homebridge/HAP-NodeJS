@@ -10,7 +10,7 @@ import {
   CharacteristicDeprecatedNames,
   CharacteristicHidden,
   CharacteristicManualAdditions,
-  CharacteristicNameOverrides,
+  CharacteristicNameOverrides, CharacteristicPermissionOverrides,
   CharacteristicSinceInformation,
   CharacteristicValidValuesOverride, ServiceCharacteristicConfigurationOverrides,
   ServiceDeprecatedNames,
@@ -343,7 +343,7 @@ for (const generated of Object.values(generatedCharacteristics)
     characteristicOutput.write("  constructor() {\n");
     characteristicOutput.write("    super(\"" + generated.name + "\", " + generated.className + ".UUID, {\n");
     characteristicOutput.write("      format: Formats." + characteristicFormat(generated.format) + ",\n");
-    characteristicOutput.write("      perms: [" + generatePermsString(generated.properties) + "],\n")
+    characteristicOutput.write("      perms: [" + generatePermsString(generated.id, generated.properties) + "],\n")
     if (generated.units && !undefinedUnits.includes(generated.units)) {
       characteristicOutput.write("      unit: Units." + characteristicUnit(generated.units) + ",\n");
     }
@@ -594,7 +594,7 @@ function characteristicPerm(id: string): string | undefined {
   }
 }
 
-function generatePermsString(propertiesBitMap: number): string {
+function generatePermsString(id: string, propertiesBitMap: number): string {
   const perms: string [] = [];
 
   for (const [bitMap, name] of properties) {
@@ -604,6 +604,21 @@ function generatePermsString(propertiesBitMap: number): string {
     }
     if ((propertiesBitMap | bitMap) === propertiesBitMap) { // if it stays the same the bit is set
       perms.push("Perms." + name);
+    }
+  }
+
+  const override = CharacteristicPermissionOverrides.get(id);
+  if (override) {
+    if (override.added) {
+      perms.push(...override.added);
+    }
+    if (override.removed) {
+      for (const removed of override.removed) {
+        const index = perms.indexOf(removed);
+        if (index !== -1) {
+          perms.splice(index, 1);
+        }
+      }
     }
   }
 
