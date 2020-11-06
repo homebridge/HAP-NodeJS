@@ -3,8 +3,9 @@ import {
   AccessoryEventTypes,
   Categories,
   Characteristic,
-  CharacteristicEventTypes, CharacteristicSetCallback,
-  CharacteristicValue,
+  CharacteristicEventTypes,
+  CharacteristicSetCallback,
+  CharacteristicValue, ColorUtils,
   NodeCallback,
   Service,
   uuid,
@@ -25,7 +26,7 @@ class LightControllerClass {
   hue: CharacteristicValue = 0; //current hue
   saturation: CharacteristicValue = 0; //current saturation
 
-  outputLogs = false; //output logs
+  outputLogs = true; //output logs
 
   setPower(status: CharacteristicValue) { //set power of accessory
     if(this.outputLogs) console.log("Turning the '%s' %s", this.name, status ? "on" : "off");
@@ -103,10 +104,9 @@ lightAccessory.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: Void
   callback();
 });
 
-// Add the actual Lightbulb Service and listen for change events from iOS.
-lightAccessory
-  .addService(Service.Lightbulb, LightController.name) // services exposed to the user should have "names" like "Light" for this case
-  .getCharacteristic(Characteristic.On)!
+const lightbulb = lightAccessory.addService(Service.Lightbulb, LightController.name); // services exposed to the user should have "names" like "Light" for this case
+
+lightbulb.getCharacteristic(Characteristic.On)
   .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
     LightController.setPower(value);
 
@@ -132,9 +132,7 @@ lightAccessory
 //   .updateValue(true);
 
 // also add an "optional" Characteristic for Brightness
-lightAccessory
-  .getService(Service.Lightbulb)!
-  .addCharacteristic(Characteristic.Brightness)
+lightbulb.addCharacteristic(Characteristic.Brightness)
   .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
     LightController.setBrightness(value);
     callback();
@@ -143,10 +141,9 @@ lightAccessory
     callback(null, LightController.getBrightness());
   });
 
+
 // also add an "optional" Characteristic for Saturation
-lightAccessory
-  .getService(Service.Lightbulb)!
-  .addCharacteristic(Characteristic.Saturation)!
+lightbulb.addCharacteristic(Characteristic.Saturation)
   .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
     LightController.setSaturation(value);
     callback();
@@ -156,9 +153,7 @@ lightAccessory
   });
 
 // also add an "optional" Characteristic for Hue
-lightAccessory
-  .getService(Service.Lightbulb)!
-  .addCharacteristic(Characteristic.Hue)
+lightbulb.addCharacteristic(Characteristic.Hue)
   .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
     LightController.setHue(value);
     callback();

@@ -365,8 +365,42 @@ export type CharacteristicChange = {
   originator?: HAPConnection,
   newValue: Nullable<CharacteristicValue>;
   oldValue: Nullable<CharacteristicValue>;
+  reason: ChangeReason,
   context?: any;
 };
+
+export const enum ChangeReason {
+  /**
+   * Reason used when HomeKit writes a value or the API user calls {@link Characteristic.setValue}.
+   */
+  WRITE = "write",
+  /**
+   * Reason used when the API user calls the method {@link Characteristic.updateValue}.
+   */
+  UPDATE = "update",
+  /**
+   * Used when when HomeKit reads a value or the API user calls the deprecated metho {@link Characteristic.getValue}.
+   */
+  READ = "read",
+  /**
+   * Used when call to {@link Characteristic.sendEventNotification} was made.
+   */
+  EVENT = "event",
+}
+
+/**
+ * This format for a context object can be used to pass to any characteristic write operation.
+ * It can contain additional information used by the internal event handlers of hap-nodejs.
+ * The context object can be combined with any custom data for own use.
+ */
+export interface CharacteristicOperationContext {
+  /**
+   * If set to true for any characteristic write operation
+   * the Accessory won't send any event notifications to HomeKit controllers
+   * for that particular change.
+   */
+  omitEventUpdate?: boolean;
+}
 
 export interface SerializedCharacteristic {
   displayName: string,
@@ -960,11 +994,23 @@ export class Characteristic extends EventEmitter {
    * @param value - The new value.
    * @param callback - Deprecated parameter there to provide backwards compatibility. Called once the
    *   {@link CharacteristicEventTypes.SET} event handler returns.
-   * @param context - Deprecated parameter there to provide backwards compatibility. Passed to the
-   *   {@link CharacteristicEventTypes.SET} event handler.
-   * @deprecated Parameters callback and context are deprecated.
+   * @param context - Passed to the {@link CharacteristicEventTypes.SET} and {@link CharacteristicEventTypes.CHANGE} event handler.
+   * @deprecated Parameter callback is deprecated.
    */
   setValue(value: CharacteristicValue, callback?: CharacteristicSetCallback, context?: any): Characteristic
+  /**
+   * This updates the value by calling the {@link CharacteristicEventTypes.SET} event handler associated with the characteristic.
+   * This acts the same way as when a HomeKit controller sends a /characteristics request to update the characteristic.
+   * A event notification will be sent to all connected HomeKit controllers which are registered
+   * to receive event notifications for this characteristic.
+   *
+   * This method behaves like a {@link updateValue} call with the addition that the own {@link CharacteristicEventTypes.SET}
+   * event handler is called.
+   *
+   * @param value - The new value.
+   * @param context - Passed to the {@link CharacteristicEventTypes.SET} and {@link CharacteristicEventTypes.CHANGE} event handler.
+   */
+  setValue(value: CharacteristicValue, context?: any): Characteristic;
   setValue(value: CharacteristicValue | Error, callback?: CharacteristicSetCallback, context?: any): Characteristic {
     if (value instanceof Error) {
       this.statusCode = value instanceof HapStatusError? value.hapStatus: extractHAPStatusFromError(value);
@@ -975,6 +1021,11 @@ export class Characteristic extends EventEmitter {
         callback();
       }
       return this;
+    }
+
+    if (callback && !context && typeof callback !== "function") {
+      context = callback;
+      callback = undefined;
     }
 
     value = this.validateUserInput(value)!;
@@ -996,7 +1047,7 @@ export class Characteristic extends EventEmitter {
   }
 
   /**
-   * This updates the value of the characteristic. A event notification will be sent to all connected
+   * This updates the value of the characteristic. If the value changed, a event notification will be sent to all connected
    * HomeKit controllers which are registered to receive event notifications for this characteristic.
    *
    * @param value - The new value.
@@ -1015,15 +1066,23 @@ export class Characteristic extends EventEmitter {
    */
   updateValue(error: Error | HapStatusError): Characteristic;
   /**
-   * This updates the value of the characteristic. A event notification will be sent to all connected
+   * This updates the value of the characteristic. If the value changed, a event notification will be sent to all connected
    * HomeKit controllers which are registered to receive event notifications for this characteristic.
    *
    * @param value - The new value.
    * @param callback - Deprecated parameter there to provide backwards compatibility. Callback is called instantly.
-   * @param context - Deprecated parameter there to provide backwards compatibility.
-   * @deprecated Parameters callback and context are deprecated.
+   * @param context - Passed to the {@link CharacteristicEventTypes.CHANGE} event handler.
+   * @deprecated Parameter callback is deprecated.
    */
   updateValue(value: Nullable<CharacteristicValue>, callback?: () => void, context?: any): Characteristic;
+  /**
+   * This updates the value of the characteristic. If the value changed, a event notification will be sent to all connected
+   * HomeKit controllers which are registered to receive event notifications for this characteristic.
+   *
+   * @param value - The new value.
+   * @param context - Passed to the {@link CharacteristicEventTypes.CHANGE} event handler.
+   */
+  updateValue(value: Nullable<CharacteristicValue>, context?: any): Characteristic;
   updateValue(value: Nullable<CharacteristicValue> | Error | HapStatusError, callback?: () => void, context?: any): Characteristic {
     if (value instanceof Error) {
       this.statusCode = value instanceof HapStatusError? value.hapStatus: extractHAPStatusFromError(value);
@@ -1034,6 +1093,11 @@ export class Characteristic extends EventEmitter {
         callback();
       }
       return this;
+    }
+
+    if (callback && !context && typeof callback !== "function") {
+      context = callback;
+      callback = undefined;
     }
 
     this.statusCode = HAPStatus.SUCCESS;
@@ -1048,9 +1112,30 @@ export class Characteristic extends EventEmitter {
       callback();
     }
 
-    if (oldValue !== value || this.UUID === Characteristic.ProgrammableSwitchEvent.UUID) {
-      this.emit(CharacteristicEventTypes.CHANGE, { originator: undefined, oldValue: oldValue, newValue: value, context: context });
-    }
+    this.emit(CharacteristicEventTypes.CHANGE, { originator: undefined, oldValue: oldValue, newValue: value, reason: ChangeReason.UPDATE, context: context });
+
+    return this; // for chaining
+  }
+
+  /**
+   * This method acts similarly to {@link updateValue} by setting the current value of the characteristic
+   * without calling any {@link CharacteristicEventTypes.SET} or {@link onSet} handlers.
+   * The difference is that this method forces a event notification sent (updateValue only sends one if the value changed).
+   * This is especially useful for characteristics like {@link Characteristic.ButtonEvent} or {@link Characteristic.ProgrammableSwitchEvent}.
+   *
+   * @param value - The new value.
+   * @param context - Passed to the {@link CharacteristicEventTypes.CHANGE} event handler.
+   */
+  public sendEventNotification(value: CharacteristicValue, context?: any): Characteristic {
+    this.statusCode = HAPStatus.SUCCESS;
+    // noinspection JSDeprecatedSymbols
+    this.status = null;
+
+    value = this.validateUserInput(value)!;
+    const oldValue = this.value;
+    this.value = value;
+
+    this.emit(CharacteristicEventTypes.CHANGE, { originator: undefined, oldValue: oldValue, newValue: value, reason: ChangeReason.EVENT, context: context });
 
     return this; // for chaining
   }
@@ -1097,7 +1182,7 @@ export class Characteristic extends EventEmitter {
         this.value = value;
 
         if (oldValue !== value) { // emit a change event if necessary
-          this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
+          this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, reason: ChangeReason.READ, context: context });
         }
 
         return value;
@@ -1161,7 +1246,7 @@ export class Characteristic extends EventEmitter {
           resolve(value);
 
           if (oldValue !== value) { // emit a change event if necessary
-            this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
+            this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, reason: ChangeReason.READ, context: context });
           }
         }), context, connection);
       } catch (error) {
@@ -1225,10 +1310,7 @@ export class Characteristic extends EventEmitter {
           }
           this.value = value;
 
-          if (oldValue !== value || this.UUID === Characteristic.ProgrammableSwitchEvent.UUID) {
-            this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
-          }
-
+          this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, reason: ChangeReason.WRITE, context: context });
           return;
         }
       } catch (error) {
@@ -1252,9 +1334,7 @@ export class Characteristic extends EventEmitter {
 
     if (this.listeners(CharacteristicEventTypes.SET).length === 0) {
       this.value = value;
-      if (oldValue !== value || this.UUID === Characteristic.ProgrammableSwitchEvent.UUID) {
-        this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
-      }
+      this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, reason: ChangeReason.WRITE, context: context });
       return Promise.resolve();
     } else {
       return new Promise((resolve, reject) => {
@@ -1294,9 +1374,7 @@ export class Characteristic extends EventEmitter {
               this.value = value;
               resolve();
 
-              if (oldValue !== value || this.UUID === Characteristic.ProgrammableSwitchEvent.UUID) {
-                this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, context: context });
-              }
+              this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, reason: ChangeReason.WRITE, context: context });
             }
           }), context, connection);
         } catch (error) {
@@ -1650,7 +1728,7 @@ export class Characteristic extends EventEmitter {
           return this.value; // just return the current value
         }
 
-        const maxLength = this.props.maxLen != null? this.props.maxLen: 64; // default is 64 (max is 256 which is set in setProps)
+        const maxLength = this.props.maxLen ?? 64; // default is 64 (max is 256 which is set in setProps)
         if (value.length > maxLength) {
           this.characteristicWarning(`characteristic was supplied illegal value: string '${value}' exceeded max length of ${maxLength}.`);
           value = value.substring(0, maxLength);

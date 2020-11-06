@@ -114,7 +114,7 @@ export function decodeWithLists(buffer: Buffer): Record<number, Buffer | Buffer[
 
     if (type === 0 && length === 0) {
       lastItemWasDelimiter = true;
-      break;
+      continue;
     }
 
     const existing = result[type];
@@ -201,9 +201,19 @@ export function writeUInt64(value: number) {
   return buffer;
 }
 
+// noinspection JSUnusedGlobalSymbols
+/**
+ * @param buffer
+ * @deprecated This is pretty much broken
+ */
 export function readUInt64(buffer: Buffer) {
   const float64 = new Float64Array(buffer);
   return float64[0];
+}
+
+export function readUInt64BE(buffer: Buffer, offset: number = 0) {
+  const low = buffer.readUInt32LE(offset);
+  return buffer.readUInt32LE(offset + 4) * 0x100000000 + low;
 }
 
 export function writeUInt32(value: number) {

@@ -303,7 +303,7 @@ export declare interface RemoteController {
     emit(event: "targets-reset"): boolean;
 }
 
-export interface RemoteControllerServiceMap extends ControllerServiceMap {
+interface RemoteControllerServiceMap extends ControllerServiceMap {
     targetControlManagement: TargetControlManagement,
     targetControl: TargetControl,
 
@@ -312,7 +312,7 @@ export interface RemoteControllerServiceMap extends ControllerServiceMap {
     dataStreamTransportManagement?: DataStreamTransportManagement
 }
 
-export interface SerializedControllerState {
+interface SerializedControllerState {
     activeIdentifier: number,
     targetConfigurations: Record<number, TargetConfiguration>;
 }
@@ -350,7 +350,7 @@ export interface SerializedControllerState {
 export class RemoteController extends EventEmitter implements SerializableController<RemoteControllerServiceMap, SerializedControllerState>, DataStreamProtocolHandler {
 
     readonly controllerType = DefaultControllerType.REMOTE;
-    stateChangeDelegate?: StateChangeDelegate;
+    private stateChangeDelegate?: StateChangeDelegate;
 
     audioSupported: boolean;
     audioProducerConstructor?: SiriAudioStreamProducerConstructor;
@@ -825,7 +825,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
         this.lastButtonEvent = Buffer.concat([
             buttonIdTlv, buttonStateTlv, timestampTlv, activeIdentifierTlv
         ]).toString('base64');
-        this.targetControlService!.getCharacteristic(Characteristic.ButtonEvent)!.updateValue(this.lastButtonEvent);
+        this.targetControlService!.getCharacteristic(Characteristic.ButtonEvent)!.sendEventNotification(this.lastButtonEvent);
     };
 
     private parseTargetConfigurationTLV(data: Buffer): TargetConfiguration {

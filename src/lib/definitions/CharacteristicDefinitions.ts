@@ -510,7 +510,7 @@ export class CharacteristicValueTransitionControl extends Characteristic {
   constructor() {
     super("Characteristic Value Transition Control", CharacteristicValueTransitionControl.UUID, {
       format: Formats.TLV8,
-      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
     });
     this.value = this.getDefaultValue();
   }

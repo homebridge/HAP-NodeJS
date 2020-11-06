@@ -1,3 +1,4 @@
+import { Perms } from "../Characteristic";
 import { GeneratedCharacteristic, GeneratedService } from "./generate-definitions";
 
 export const CharacteristicHidden: Set<string> = new Set([
@@ -57,6 +58,15 @@ export const CharacteristicValidValuesOverride: Map<string, Record<string, strin
 
 export const CharacteristicClassAdditions: Map<string, string[]> = new Map([
   ["humidifier-dehumidifier.state.target", ["/**\n   * @deprecated Removed in iOS 11. Use {@link HUMIDIFIER_OR_DEHUMIDIFIER} instead.\n   */\n  public static readonly AUTO = 0;"]]
+]);
+
+interface CharacteristicPermissionOverride {
+  added?: string[], // for now its a string to make things easier
+  removed?: string[],
+}
+
+export const CharacteristicPermissionOverrides: Map<string, CharacteristicPermissionOverride> = new Map([
+  ["characteristic-value-transition-control", { added: ["Perms.WRITE_RESPONSE"] }],
 ]);
 
 export const CharacteristicManualAdditions: Map<string, GeneratedCharacteristic> = new Map([
