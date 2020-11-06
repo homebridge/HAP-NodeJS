@@ -122,6 +122,9 @@ export const enum Categories {
   TV_STREAMING_STICK = 36,
 }
 
+/**
+ * @internal
+ */
 export interface SerializedAccessory {
   displayName: string,
   UUID: string,
@@ -133,6 +136,9 @@ export interface SerializedAccessory {
   controllers?: SerializedControllerContext[],
 }
 
+/**
+ * @internal
+ */
 export interface SerializedControllerContext {
   type: ControllerType,
   services: SerializedServiceMap,

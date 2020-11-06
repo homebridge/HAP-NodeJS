@@ -402,6 +402,9 @@ export interface CharacteristicOperationContext {
   omitEventUpdate?: boolean;
 }
 
+/**
+ * @internal
+ */
 export interface SerializedCharacteristic {
   displayName: string,
   UUID: string,
