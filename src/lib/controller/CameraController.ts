@@ -72,6 +72,9 @@ export interface CameraStreamingDelegate {
 
 }
 
+/**
+ * @internal
+ */
 export interface CameraControllerServiceMap extends ControllerServiceMap {
   // "streamManagement%d": CameraRTPStreamManagement, // format to map all stream management services; indexed by zero
 
