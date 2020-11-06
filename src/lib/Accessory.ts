@@ -257,9 +257,20 @@ const enum WriteRequestState {
 export type EventAccessory = "identify" | "listening" | "service-configurationChange" | "service-characteristic-change";
 
 export const enum AccessoryEventTypes {
+  /**
+   * Emitted when an iOS device wishes for this Accessory to identify itself. If `paired` is false, then
+   * this device is currently browsing for Accessories in the system-provided "Add Accessory" screen. If
+   * `paired` is true, then this is a device that has already paired with us. Note that if `paired` is true,
+   * listening for this event is a shortcut for the underlying mechanism of setting the `Identify` Characteristic:
+   * `getService(Service.AccessoryInformation).getCharacteristic(Characteristic.Identify).on('set', ...)`
+   * You must call the callback for identification to be successful.
+   */
   IDENTIFY = "identify",
   LISTENING = "listening",
   SERVICE_CONFIGURATION_CHANGE = "service-configurationChange",
+  /**
+   * Emitted after a change in the value of one of the provided Service's Characteristics.
+   */
   SERVICE_CHARACTERISTIC_CHANGE = "service-characteristic-change",
   PAIRED = "paired",
   UNPAIRED = "unpaired",
@@ -300,17 +311,6 @@ export declare interface Accessory {
  * are hosted by the Bridge. This UUID must be "stable" and unchanging, even when the server is restarted. This
  * is required so that the Bridge can provide consistent "Accessory IDs" (aid) and "Instance IDs" (iid) for all
  * Accessories, Services, and Characteristics for iOS clients to reference later.
- *
- * @event 'identify' => function(paired, callback(err)) { }
- *        Emitted when an iOS device wishes for this Accessory to identify itself. If `paired` is false, then
- *        this device is currently browsing for Accessories in the system-provided "Add Accessory" screen. If
- *        `paired` is true, then this is a device that has already paired with us. Note that if `paired` is true,
- *        listening for this event is a shortcut for the underlying mechanism of setting the `Identify` Characteristic:
- *        `getService(Service.AccessoryInformation).getCharacteristic(Characteristic.Identify).on('set', ...)`
- *        You must call the callback for identification to be successful.
- *
- * @event 'service-characteristic-change' => function({service, characteristic, oldValue, newValue, context}) { }
- *        Emitted after a change in the value of one of the provided Service's Characteristics.
  */
 export class Accessory extends EventEmitter {
 

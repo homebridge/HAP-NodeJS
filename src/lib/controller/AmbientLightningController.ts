@@ -200,8 +200,18 @@ export interface AmbientLightningOptions {
   controllerMode: AmbientLightningControllerMode,
 }
 
+/**
+ * Defines in which mode the {@link AmbientLightningController} will operate in.
+ */
 export const enum AmbientLightningControllerMode {
+  /**
+   * In automatic mode pretty much everything from setup to transition scheduling is done by the controller.
+   */
   AUTOMATIC = 1,
+  /**
+   * In manual mode setup is done by the controller but the actual transition must be done by the user.
+   * This is useful for lights which natively support transitions.
+   */
   MANUAL = 2,
 }
 
@@ -221,7 +231,19 @@ export const enum AmbientLightningControllerEvents {
 }
 
 export declare interface AmbientLightningController {
+  /**
+   * See {@link AmbientLightningControllerEvents.UPDATE}
+   *
+   * @param event
+   * @param listener
+   */
   on(event: "update", listener: () => void): this;
+  /**
+   * See {@link AmbientLightningControllerEvents.DISABLED}
+   *
+   * @param event
+   * @param listener
+   */
   on(event: "disable", listener: () => void): this;
 
   emit(event: "update"): boolean;
@@ -255,10 +277,13 @@ interface SerializedAmbientLightningControllerState {
  * additional/heavy traffic on the network.
  * So if your light hardware/API supports transitions please go the extra mile and use MANUAL mode.
  *
+ *
+ *
  * Below is an overview what you need to or consider when enabling AmbientLighting (categorized by mode).
  * The {@link AmbientLightningControllerMode} can be defined with the second constructor argument.
  *
- * AUTOMATIC (Default mode):
+ * <b>AUTOMATIC (Default mode):</b>
+ *
  *  This is the easiest mode to setup and needs less to no work form your side for AmbientLightning to work.
  *  The AmbientLightningController will go through setup procedure with HomeKit and automatically update
  *  the color temperature characteristic base on the current transition schedule.
@@ -266,8 +291,7 @@ interface SerializedAmbientLightningControllerState {
  *  It will also handle turning of AmbientLightning when it detects a write happening to the
  *  ColorTemperature, Hue or Saturation characteristic.
  *
- *  So what do you need to consider:
- *  AUTOMATIC mode:
+ *  So what do you need to consider in automatic mode:
  *   - Brightness and ColorTemperature characteristics MUST be set up. Hue and Saturation may be added for color support.
  *   - Color temperature will be updated all 60 seconds by calling the SET handler of the ColorTemperature characteristic.
  *    So every transition behaves like a regular write to the ColorTemperature characteristic.
@@ -292,7 +316,9 @@ interface SerializedAmbientLightningControllerState {
  *    You can and SHOULD use the supplied utility method {@link ColorUtils.colorTemperatureToHueAndSaturation}
  *    for converting mired to hue and saturation values.
  *
- * MANUAL mode:
+ *
+ * <b>MANUAL mode:</b>
+ *
  *  Manual mode is recommended for any accessories which support transitions natively on the devices end.
  *  Like for example ZigBee lights which support sending transitions directly to the lightbulb which
  *  then get executed ON the lightbulb itself reducing unnecessary network traffic.
@@ -323,6 +349,9 @@ interface SerializedAmbientLightningControllerState {
  */
 export class AmbientLightningController extends EventEmitter implements SerializableController<ControllerServiceMap, SerializedAmbientLightningControllerState> {
 
+  /**
+   * @internal
+   */
   readonly controllerType: ControllerType = DefaultControllerType.CHARACTERISTIC_TRANSITION;
   private stateChangeDelegate?: StateChangeDelegate;
 

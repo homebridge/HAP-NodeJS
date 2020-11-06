@@ -276,12 +276,38 @@ export const enum TargetUpdates {
 }
 
 export const enum RemoteControllerEvents {
+    /**
+     * This event is emitted when the active state of the remote has changed.
+     * active = true indicates that there is currently an apple tv listening of button presses and audio streams.
+     */
     ACTIVE_CHANGE = "active-change",
+    /**
+     * This event is emitted when the currently selected target has changed.
+     * Possible reasons for a changed active identifier: manual change via api call, first target configuration
+     * gets added, active target gets removed, accessory gets unpaired, reset request was sent.
+     * An activeIdentifier of 0 indicates that no target is selected.
+     */
     ACTIVE_IDENTIFIER_CHANGE = "active-identifier-change",
 
+    /**
+     * This event is emitted when a new target configuration is received. As we currently do not persistently store
+     * configured targets, this will be called at every startup for every Apple TV configured in the home.
+     */
     TARGET_ADDED = "target-add",
+    /**
+     * This event is emitted when a existing target was updated.
+     * The 'updates' array indicates what exactly was changed for the target.
+     */
     TARGET_UPDATED = "target-update",
+    /**
+     * This event is emitted when a existing configuration for a target was removed.
+     */
     TARGET_REMOVED = "target-remove",
+    /**
+     * This event is emitted when a reset of the target configuration is requested.
+     * With this event every configuration made should be reset. This event is also called
+     * when the accessory gets unpaired.
+     */
     TARGETS_RESET = "targets-reset",
 }
 
@@ -319,48 +345,48 @@ interface SerializedControllerState {
 
 /**
  * Handles everything needed to implement a fully working HomeKit remote controller.
- *
- * @event 'active-change': (active: boolean) => void
- *        This event is emitted when the active state of the remote has changed.
- *        active = true indicates that there is currently an apple tv listening of button presses and audio streams.
- *
- * @event 'active-identifier-change': (activeIdentifier: number) => void
- *        This event is emitted when the currently selected target has changed.
- *        Possible reasons for a changed active identifier: manual change via api call, first target configuration
- *        gets added, active target gets removed, accessory gets unpaired, reset request was sent.
- *        An activeIdentifier of 0 indicates that no target is selected.
- *
- *
- * @event 'target-add': (targetConfiguration: TargetConfiguration) => void
- *        This event is emitted when a new target configuration is received. As we currently do not persistently store
- *        configured targets, this will be called at every startup for every Apple TV configured in the home.
- *
- * @event 'target-update': (targetConfiguration: TargetConfiguration, updates: TargetUpdates[]) => void
- *        This event is emitted when a existing target was updated.
- *        The 'updates' array indicates what exactly was changed for the target.
- *
- * @event 'target-remove': (targetIdentifier: number) => void
- *        This event is emitted when a existing configuration for a target was removed.
- *
- * @event 'targets-reset': () => void
- *        This event is emitted when a reset of the target configuration is requested.
- *        With this event every configuration made should be reset. This event is also called
- *        when the accessory gets unpaired.
  */
 export class RemoteController extends EventEmitter implements SerializableController<RemoteControllerServiceMap, SerializedControllerState>, DataStreamProtocolHandler {
 
+    /**
+     * @internal
+     */
     readonly controllerType = DefaultControllerType.REMOTE;
     private stateChangeDelegate?: StateChangeDelegate;
 
+    /**
+     * @internal
+     */
     audioSupported: boolean;
+    /**
+     * @internal
+     */
     audioProducerConstructor?: SiriAudioStreamProducerConstructor;
+    /**
+     * @internal
+     */
     audioProducerOptions?: any;
 
+    /**
+     * @internal
+     */
     targetControlManagementService?: TargetControlManagement;
+    /**
+     * @internal
+     */
     targetControlService?: TargetControl;
 
+    /**
+     * @internal
+     */
     siriService?: Siri;
+    /**
+     * @internal
+     */
     audioStreamManagementService?: AudioStreamManagement;
+    /**
+     * @internal
+     */
     dataStreamManagement?: DataStreamManagement;
 
     private buttons: Record<number, number> = {}; // internal mapping of buttonId to buttonType for supported buttons
@@ -374,15 +400,39 @@ export class RemoteController extends EventEmitter implements SerializableContro
     private activeConnection?: HAPConnection; // session which marked this remote as active and listens for events and siri
     private activeConnectionDisconnectListener?: () => void;
 
+    /**
+     * @internal
+     */
     supportedAudioConfiguration: string;
+    /**
+     * @internal
+     */
     selectedAudioConfiguration: AudioCodecConfiguration;
+    /**
+     * @internal
+     */
     selectedAudioConfigurationString: string;
 
+    /**
+     * @internal
+     */
     dataStreamConnections: Record<number, DataStreamConnection> = {}; // maps targetIdentifiers to active data stream connections
+    /**
+     * @internal
+     */
     activeAudioSession?: SiriAudioSession;
+    /**
+     * @internal
+     */
     nextAudioSession?: SiriAudioSession;
 
+    /**
+     * @internal
+     */
     eventHandler?: Record<string, EventHandler>;
+    /**
+     * @internal
+     */
     requestHandler?: Record<string, RequestHandler>;
 
     /**

@@ -1,8 +1,13 @@
-import { Accessory, Categories, Characteristic, ColorUtils, Service, uuid } from "..";
 import {
+  Accessory,
   AmbientLightningController,
-  AmbientLightningControllerMode
-} from "../lib/controller/AmbientLightningController";
+  AmbientLightningControllerMode,
+  Categories,
+  Characteristic,
+  ColorUtils,
+  Service,
+  uuid
+} from "..";
 
 /**
  * This example light gives an example how a light with AmbientLightning (in AUTOMATIC mode) support
