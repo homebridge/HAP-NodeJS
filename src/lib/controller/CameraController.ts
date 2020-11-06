@@ -86,7 +86,16 @@ export interface CameraControllerServiceMap extends ControllerServiceMap {
 }
 
 export const enum CameraControllerEvents {
+  /**
+   *  Emitted when the mute state or the volume changed. The Apple Home App typically does not set those values
+   *  except the mute state. When you adjust the volume in the Camera view it will reset the muted state if it was set previously.
+   *  The value of volume has nothing to do with the volume slider in the Camera view of the Home app.
+   */
   MICROPHONE_PROPERTIES_CHANGED = "microphone-change",
+  /**
+   * Emitted when the mute state or the volume changed. The Apple Home App typically does not set those values
+   * except the mute state. When you unmute the device microphone it will reset the mute state if it was set previously.
+   */
   SPEAKER_PROPERTIES_CHANGED = "speaker-change",
 }
 
@@ -100,19 +109,14 @@ export declare interface CameraController {
 
 /**
  * Everything needed to expose a HomeKit Camera.
- *
- * @event 'microphone-change' => (muted: boolean, volume: number) => void
- *      Emitted when the mute state or the volume changed. The Apple Home App typically does not set those values
- *      except the mute state. When you adjust the volume in the Camera view it will reset the muted state if it was set previously.
- *      The value of volume has nothing to do with the volume slider in the Camera view of the Home app.
- * @event 'speaker-change' => (muted: boolean, volume: number) => void
- *      Emitted when the mute state or the volume changed. The Apple Home App typically does not set those values
- *      except the mute state. When you unmute the device microphone it will reset the mute state if it was set previously.
  */
 export class CameraController extends EventEmitter implements Controller<CameraControllerServiceMap> {
 
   private static readonly STREAM_MANAGEMENT = "streamManagement"; // key to index all RTPStreamManagement services
 
+  /**
+   * @internal
+   */
   readonly controllerType: ControllerType = DefaultControllerType.CAMERA;
 
   private readonly streamCount: number;
@@ -121,6 +125,9 @@ export class CameraController extends EventEmitter implements Controller<CameraC
   // private readonly recordingOptions: CameraRecordingOptions, // soon
   private readonly legacyMode: boolean = false;
 
+  /**
+   * @internal
+   */
   streamManagements: RTPStreamManagement[] = [];
 
   private microphoneService?: Microphone;

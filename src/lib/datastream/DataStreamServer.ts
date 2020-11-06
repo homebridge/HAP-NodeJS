@@ -397,8 +397,20 @@ export class DataStreamServer extends EventEmitter { // TODO removeAllEvent hand
 export type IdentificationCallback = (identifiedSession?: PreparedDataStreamSession) => void;
 
 export const enum DataStreamConnectionEvents {
+    /**
+     * This event is emitted when the first HDSFrame is received from a new connection.
+     * The connection expects the handler to identify the connection by trying to match the decryption keys.
+     * If identification was successful the PreparedDataStreamSession should be supplied to the callback,
+     * otherwise undefined should be supplied.
+     */
     IDENTIFICATION = "identification",
+    /**
+     * This event is emitted when no handler could be found for the given protocol of a event or request message.
+     */
     HANDLE_MESSAGE_GLOBALLY = "handle-message-globally",
+    /**
+     * This event is emitted when the socket of the connection was closed.
+     */
     CLOSED = "closed",
 }
 
@@ -415,18 +427,6 @@ export declare interface DataStreamConnection {
 /**
  * DataStream connection which holds any necessary state information, encryption an decryption keys, manages
  * protocol handlers and also handles sending and receiving of data stream frames.
- *
- * @event 'identification': (frame: HDSFrame, callback: IdentificationCallback) => void
- *        This event is emitted when the first HDSFrame is received from a new connection.
- *        The connection expects the handler to identify the connection by trying to match the decryption keys.
- *        If identification was successful the PreparedDataStreamSession should be supplied to the callback,
- *        otherwise undefined should be supplied.
- *
- * @event 'handle-message-globally': (message: DataStreamMessage) => void
- *        This event is emitted when no handler could be found for the given protocol of a event or request message.
- *
- * @event 'closed': () => void
- *        This event is emitted when the socket of the connection was closed.
  */
 export class DataStreamConnection extends EventEmitter {
 
