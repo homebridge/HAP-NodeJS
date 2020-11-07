@@ -69,8 +69,8 @@ const enum ValueTransitionConfigurationTypes {
 
 const enum ValueTransitionParametersTypes {
   UNKNOWN_1 = 0x01, // 16 bytes id or something (same for multiple writes)
-  START_TIME = 0x02, // the start time for the provided schedule, millis since 2001/01/01 00:00:000
-  UNKNOWN_3 = 0x03, // same as first
+  START_TIME = 0x02, // 8 bytes the start time for the provided schedule, millis since 2001/01/01 00:00:000
+  UNKNOWN_3 = 0x03, // 8 bytes, id or something (same for multiple writes)
 }
 
 const enum TransitionCurveConfigurationTypes {
@@ -514,13 +514,12 @@ export class AmbientLightningController extends EventEmitter implements Serializ
   private handleActiveTransitionUpdated(calledFromDeserializer: boolean = false): void {
     this.activeTransitionCount.sendEventNotification(1);
 
-    switch (this.mode) {
-      case AmbientLightningControllerMode.AUTOMATIC:
-        this.scheduleNextUpdate();
-        break;
-      case AmbientLightningControllerMode.MANUAL:
-        this.emit(AmbientLightningControllerEvents.UPDATE);
-        break;
+    if (this.mode === AmbientLightningControllerMode.AUTOMATIC) {
+      this.scheduleNextUpdate();
+    } else if (this.mode === AmbientLightningControllerMode.MANUAL) {
+      this.emit(AmbientLightningControllerEvents.UPDATE);
+    } else {
+      throw new Error("Unsupported ambient lightning controller mode: " + this.mode);
     }
 
     if (!calledFromDeserializer) {
@@ -547,6 +546,13 @@ export class AmbientLightningController extends EventEmitter implements Serializ
       this.saturationCharacteristic = this.lightbulb.getCharacteristic(Characteristic.Saturation)
         .on(CharacteristicEventTypes.CHANGE, this.characteristicManualWrittenChangeListener);
     }
+  }
+
+  private handleAmbientLightningDisabled(): void {
+    if (this.mode === AmbientLightningControllerMode.MANUAL && this.activeTransition) { // only emit the event if a transition is actually enabled
+      this.emit(AmbientLightningControllerEvents.DISABLED);
+    }
+    this.disableAmbientLightning();
   }
 
   private handleAdjustmentFactorChanged(): void {
@@ -748,7 +754,7 @@ export class AmbientLightningController extends EventEmitter implements Serializ
    * @internal
    */
   handleFactoryReset(): void {
-    this.disableAmbientLightning();
+    this.handleAmbientLightningDisabled();
   }
 
   /**
@@ -769,7 +775,12 @@ export class AmbientLightningController extends EventEmitter implements Serializ
    */
   deserialize(serialized: SerializedAmbientLightningControllerState): void {
     this.activeTransition = serialized.activeTransition;
-    this.handleActiveTransitionUpdated(true);
+    try {
+      this.handleActiveTransitionUpdated(true);
+    } catch (error) {
+      console.log("Could not enable ambient lightning when restoring from disk: " + error.stack);
+      this.disableAmbientLightning(); // ensure it's disabled
+    }
   }
 
   /**
@@ -840,10 +851,7 @@ export class AmbientLightningController extends EventEmitter implements Serializ
 
     const param3 = transitionConfiguration[ValueTransitionConfigurationTypes.UNKNOWN_3]?.readUInt8(0); // when present it is always 1
     if (!param3) { // if HomeKit just sends the iid, we consider that as "disable ambient lightning" (assumption)
-      if (this.activeTransition) { // only emit the event if a transition is actually enabled
-        this.emit(AmbientLightningControllerEvents.DISABLED);
-      }
-      this.disableAmbientLightning();
+      this.handleAmbientLightningDisabled();
       return tlv.encode(TransitionControlTypes.COLOR_TEMPERATURE, Buffer.alloc(0)).toString("base64");
     }
 
