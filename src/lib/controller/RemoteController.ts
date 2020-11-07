@@ -349,43 +349,43 @@ interface SerializedControllerState {
 export class RemoteController extends EventEmitter implements SerializableController<RemoteControllerServiceMap, SerializedControllerState>, DataStreamProtocolHandler {
 
     /**
-     * @internal
+     * @private
      */
     readonly controllerType = DefaultControllerType.REMOTE;
     private stateChangeDelegate?: StateChangeDelegate;
 
     /**
-     * @internal
+     * @private
      */
     audioSupported: boolean;
     /**
-     * @internal
+     * @private
      */
     audioProducerConstructor?: SiriAudioStreamProducerConstructor;
     /**
-     * @internal
+     * @private
      */
     audioProducerOptions?: any;
 
     /**
-     * @internal
+     * @private
      */
     targetControlManagementService?: TargetControlManagement;
     /**
-     * @internal
+     * @private
      */
     targetControlService?: TargetControl;
 
     /**
-     * @internal
+     * @private
      */
     siriService?: Siri;
     /**
-     * @internal
+     * @private
      */
     audioStreamManagementService?: AudioStreamManagement;
     /**
-     * @internal
+     * @private
      */
     dataStreamManagement?: DataStreamManagement;
 
@@ -401,37 +401,37 @@ export class RemoteController extends EventEmitter implements SerializableContro
     private activeConnectionDisconnectListener?: () => void;
 
     /**
-     * @internal
+     * @private
      */
     supportedAudioConfiguration: string;
     /**
-     * @internal
+     * @private
      */
     selectedAudioConfiguration: AudioCodecConfiguration;
     /**
-     * @internal
+     * @private
      */
     selectedAudioConfigurationString: string;
 
     /**
-     * @internal
+     * @private
      */
     dataStreamConnections: Record<number, DataStreamConnection> = {}; // maps targetIdentifiers to active data stream connections
     /**
-     * @internal
+     * @private
      */
     activeAudioSession?: SiriAudioSession;
     /**
-     * @internal
+     * @private
      */
     nextAudioSession?: SiriAudioSession;
 
     /**
-     * @internal
+     * @private
      */
     eventHandler?: Record<string, EventHandler>;
     /**
-     * @internal
+     * @private
      */
     requestHandler?: Record<string, RequestHandler>;
 

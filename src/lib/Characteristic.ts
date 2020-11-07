@@ -403,7 +403,7 @@ export interface CharacteristicOperationContext {
 }
 
 /**
- * @internal
+ * @private
  */
 export interface SerializedCharacteristic {
   displayName: string,
@@ -436,15 +436,15 @@ export const enum CharacteristicEventTypes {
    */
   CHANGE = "change",
   /**
-   * @internal
+   * @private
    */
   SUBSCRIBE = "subscribe",
   /**
-   * @internal
+   * @private
    */
   UNSUBSCRIBE = "unsubscribe",
   /**
-   * @internal
+   * @private
    */
   CHARACTERISTIC_WARNING = "characteristic-warning",
 }
@@ -462,40 +462,40 @@ export declare interface Characteristic {
   on(event: "set", listener: (value: CharacteristicValue, callback: CharacteristicSetCallback, context: any, connection?: HAPConnection) => void): this
   on(event: "change", listener: (change: CharacteristicChange) => void): this;
   /**
-   * @internal
+   * @private
    */
   on(event: "subscribe", listener: VoidCallback): this;
   /**
-   * @internal
+   * @private
    */
   on(event: "unsubscribe", listener: VoidCallback): this;
   /**
-   * @internal
+   * @private
    */
   on(event: "characteristic-warning", listener: (type: CharacteristicWarningType, message: string) => void): this;
 
   /**
-   * @internal
+   * @private
    */
   emit(event: "get", callback: CharacteristicGetCallback, context: any, connection?: HAPConnection): boolean;
   /**
-   * @internal
+   * @private
    */
   emit(event: "set", value: CharacteristicValue, callback: CharacteristicSetCallback, context: any, connection?: HAPConnection): boolean;
   /**
-   * @internal
+   * @private
    */
   emit(event: "change", change: CharacteristicChange): boolean;
   /**
-   * @internal
+   * @private
    */
   emit(event: "subscribe"): boolean;
   /**
-   * @internal
+   * @private
    */
   emit(event: "unsubscribe"): boolean;
   /**
-   * @internal
+   * @private
    */
   emit(event: "characteristic-warning", type: CharacteristicWarningType, message: string): boolean;
 
@@ -763,11 +763,11 @@ export class Characteristic extends EventEmitter {
   value: Nullable<CharacteristicValue> = null;
   /**
    * @deprecated replaced by {@link statusCode}
-   * @internal
+   * @private
    */
   status: Nullable<Error> = null;
   /**
-   * @internal
+   * @private
    */
   statusCode: HAPStatus = HAPStatus.SUCCESS;
   props: CharacteristicProps;
@@ -784,7 +784,7 @@ export class Characteristic extends EventEmitter {
 
   private subscriptions: number = 0;
   /**
-   * @internal
+   * @private
    */
   additionalAuthorizationHandler?: AdditionalAuthorizationHandler;
 
@@ -945,7 +945,7 @@ export class Characteristic extends EventEmitter {
    *
    * @param callback
    * @param context
-   * @internal use to return the current value on HAP requests
+   * @private use to return the current value on HAP requests
    *
    * @deprecated
    */
@@ -1148,7 +1148,7 @@ export class Characteristic extends EventEmitter {
    *
    * @param connection - The HAP connection from which the request originated from.
    * @param context - Deprecated parameter. There for backwards compatibility.
-   * @internal Used by the Accessory to load the characteristic value
+   * @private Used by the Accessory to load the characteristic value
    */
   async handleGetRequest(connection?: HAPConnection, context?: any): Promise<Nullable<CharacteristicValue>> {
     if (!this.props.perms.includes(Perms.PAIRED_READ)) { // check if we are allowed to read from this characteristic
@@ -1271,7 +1271,7 @@ export class Characteristic extends EventEmitter {
    * @returns Promise resolve to void in normal operation. When characteristic supports write response, the
    *  HAP request requests write response and the set handler returns a write response value, the respective
    *  write response value is resolved.
-   * @internal
+   * @private
    */
   async handleSetRequest(value: CharacteristicValue, connection?: HAPConnection, context?: any): Promise<CharacteristicValue | void> {
     this.statusCode = HAPStatus.SUCCESS;
@@ -1393,7 +1393,7 @@ export class Characteristic extends EventEmitter {
 
   /**
    * Called once a HomeKit controller subscribes to events of this characteristics.
-   * @internal
+   * @private
    */
   subscribe(): void {
     if (this.subscriptions === 0) {
@@ -1405,7 +1405,7 @@ export class Characteristic extends EventEmitter {
   /**
    * Called once a HomeKit controller unsubscribe to events of this characteristics or a HomeKit controller
    * which was subscribed to this characteristic disconnects.
-   * @internal
+   * @private
    */
   unsubscribe(): void {
     const wasOne = this.subscriptions === 1;
@@ -1784,7 +1784,7 @@ export class Characteristic extends EventEmitter {
   }
 
   /**
-   * @internal used to assign iid to characteristic
+   * @private used to assign iid to characteristic
    */
   _assignID(identifierCache: IdentifierCache, accessoryName: string, serviceUUID: string, serviceSubtype?: string): void {
     // generate our IID based on our UUID
@@ -1792,7 +1792,7 @@ export class Characteristic extends EventEmitter {
   }
 
   /**
-   * @internal
+   * @private
    */
   characteristicWarning(message: string, type = CharacteristicWarningType.WARN_MESSAGE): void {
     const emitted = this.emit(CharacteristicEventTypes.CHARACTERISTIC_WARNING, type, message);
@@ -1807,7 +1807,7 @@ export class Characteristic extends EventEmitter {
 
   /**
    * Returns a JSON representation of this characteristic suitable for delivering to HAP clients.
-   * @internal used to generate response to /accessories query
+   * @private used to generate response to /accessories query
    */
   async toHAP(connection: HAPConnection): Promise<CharacteristicJsonObject> {
     const object = this.internalHAPRepresentation();
@@ -1829,7 +1829,7 @@ export class Characteristic extends EventEmitter {
 
   /**
    * Returns a JSON representation of this characteristic without the value.
-   * @internal used to generate the config hash
+   * @private used to generate the config hash
    */
   internalHAPRepresentation(): CharacteristicJsonObject {
     assert(this.iid,"iid cannot be undefined for characteristic '" + this.displayName + "'");
@@ -1856,7 +1856,7 @@ export class Characteristic extends EventEmitter {
    * Serialize characteristic into json string.
    *
    * @param characteristic - Characteristic object.
-   * @internal used to store characteristic on disk
+   * @private used to store characteristic on disk
    */
   static serialize(characteristic: Characteristic): SerializedCharacteristic {
     let constructorName: string | undefined;
@@ -1878,7 +1878,7 @@ export class Characteristic extends EventEmitter {
    * Deserialize characteristic from json string.
    *
    * @param json - Json string representing a characteristic.
-   * @internal used to recreate characteristic from disk
+   * @private used to recreate characteristic from disk
    */
   static deserialize(json: SerializedCharacteristic): Characteristic {
     let characteristic: Characteristic;

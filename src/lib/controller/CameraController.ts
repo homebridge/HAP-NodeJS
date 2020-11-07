@@ -73,7 +73,7 @@ export interface CameraStreamingDelegate {
 }
 
 /**
- * @internal
+ * @private
  */
 export interface CameraControllerServiceMap extends ControllerServiceMap {
   // "streamManagement%d": CameraRTPStreamManagement, // format to map all stream management services; indexed by zero
@@ -118,7 +118,7 @@ export class CameraController extends EventEmitter implements Controller<CameraC
   private static readonly STREAM_MANAGEMENT = "streamManagement"; // key to index all RTPStreamManagement services
 
   /**
-   * @internal
+   * @private
    */
   readonly controllerType: ControllerType = DefaultControllerType.CAMERA;
 
@@ -129,7 +129,7 @@ export class CameraController extends EventEmitter implements Controller<CameraC
   private readonly legacyMode: boolean = false;
 
   /**
-   * @internal
+   * @private
    */
   streamManagements: RTPStreamManagement[] = [];
 
