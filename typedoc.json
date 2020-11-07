@@ -1,14 +1,12 @@
 {
-  "mode": "library",
   "out": "docs",
   "includes": "src",
   "exclude": ["src/**/*.spec.ts"],
 
   "excludePrivate": true,
   "excludeProtected": true,
-  "excludeNotExported": true,
   "excludeExternals": true,
-  "stripInternal": true,
   "hideGenerator": true,
-  "includeVersion": false
+  "includeVersion": false,
+  "listInvalidSymbolLinks": true
 }

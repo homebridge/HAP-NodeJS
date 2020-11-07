@@ -253,7 +253,7 @@ export class EventedHTTPServer extends EventEmitter {
 }
 
 /**
- * @internal
+ * @private
  */
 export const enum HAPConnectionState {
   CONNECTING, // initial state, setup is going on
@@ -285,7 +285,7 @@ export declare interface HAPConnection {
 
 /**
  * Manages a single iOS-initiated HTTP connection during its lifetime.
- * @internal
+ * @private
  */
 export class HAPConnection extends EventEmitter {
 

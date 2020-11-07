@@ -123,7 +123,7 @@ export const enum Categories {
 }
 
 /**
- * @internal
+ * @private
  */
 export interface SerializedAccessory {
   displayName: string,
@@ -137,7 +137,7 @@ export interface SerializedAccessory {
 }
 
 /**
- * @internal
+ * @private
  */
 export interface SerializedControllerContext {
   type: ControllerType,

@@ -350,7 +350,7 @@ interface SerializedAmbientLightningControllerState {
 export class AmbientLightningController extends EventEmitter implements SerializableController<ControllerServiceMap, SerializedAmbientLightningControllerState> {
 
   /**
-   * @internal
+   * @private
    */
   readonly controllerType: ControllerType = DefaultControllerType.CHARACTERISTIC_TRANSITION;
   private stateChangeDelegate?: StateChangeDelegate;
@@ -716,21 +716,21 @@ export class AmbientLightningController extends EventEmitter implements Serializ
   }
 
   /**
-   * @internal
+   * @private
    */
   constructServices(): ControllerServiceMap {
     return {};
   }
 
   /**
-   * @internal
+   * @private
    */
   initWithServices(serviceMap: ControllerServiceMap): void | ControllerServiceMap {
     // do nothing
   }
 
   /**
-   * @internal
+   * @private
    */
   configureServices(): void {
     this.supportedTransitionConfiguration
@@ -751,14 +751,14 @@ export class AmbientLightningController extends EventEmitter implements Serializ
   }
 
   /**
-   * @internal
+   * @private
    */
   handleFactoryReset(): void {
     this.handleAmbientLightningDisabled();
   }
 
   /**
-   * @internal
+   * @private
    */
   serialize(): SerializedAmbientLightningControllerState | undefined {
     if (!this.activeTransition) {
@@ -771,7 +771,7 @@ export class AmbientLightningController extends EventEmitter implements Serializ
   }
 
   /**
-   * @internal
+   * @private
    */
   deserialize(serialized: SerializedAmbientLightningControllerState): void {
     this.activeTransition = serialized.activeTransition;
@@ -784,7 +784,7 @@ export class AmbientLightningController extends EventEmitter implements Serializ
   }
 
   /**
-   * @internal
+   * @private
    */
   setupStateChangeDelegate(delegate: StateChangeDelegate): void {
     this.stateChangeDelegate = delegate;

@@ -91,7 +91,7 @@ const debug = createDebug("HAP-NodeJS:Service");
 const MAX_CHARACTERISTICS = 100;
 
 /**
- * @internal
+ * @private
  */
 export interface SerializedService {
   displayName: string,
@@ -257,15 +257,15 @@ export class Service extends EventEmitter {
   characteristics: Characteristic[] = [];
   optionalCharacteristics: Characteristic[] = [];
   /**
-   * @internal
+   * @private
    */
   isHiddenService: boolean = false;
   /**
-   * @internal
+   * @private
    */
   isPrimaryService: boolean = false; // do not write to this directly
   /**
-   * @internal
+   * @private
    */
   linkedServices: Service[] = [];
 
@@ -475,7 +475,7 @@ export class Service extends EventEmitter {
    * It will not remove characteristics which are present currently but not added on the other characteristic.
    * It will not replace the characteristic if the value is falsy (except of '0' or 'false')
    * @param service
-   * @internal used by homebridge
+   * @private used by homebridge
    */
   replaceCharacteristicsFromService(service: Service): void {
     if (this.UUID !== service.UUID) {
@@ -520,7 +520,7 @@ export class Service extends EventEmitter {
   }
 
   /**
-   * @internal
+   * @private
    */
   getCharacteristicByIID(iid: number): Characteristic | undefined {
     for (let index in this.characteristics) {
@@ -531,7 +531,7 @@ export class Service extends EventEmitter {
   }
 
   /**
-   * @internal
+   * @private
    */
   _assignIDs(identifierCache: IdentifierCache, accessoryName: string, baseIID: number = 0): void {
     // the Accessory Information service must have a (reserved by IdentifierCache) ID of 1
@@ -551,7 +551,7 @@ export class Service extends EventEmitter {
 
   /**
    * Returns a JSON representation of this service suitable for delivering to HAP clients.
-   * @internal used to generate response to /accessories query
+   * @private used to generate response to /accessories query
    */
   toHAP(connection: HAPConnection): Promise<ServiceJsonObject> {
     return new Promise(resolve => {
@@ -626,7 +626,7 @@ export class Service extends EventEmitter {
 
   /**
    * Returns a JSON representation of this service without characteristic values.
-   * @internal used to generate the config hash
+   * @private used to generate the config hash
    */
   internalHAPRepresentation(): ServiceJsonObject {
     assert(this.iid, "iid cannot be undefined for service '" + this.displayName + "'");
@@ -660,7 +660,7 @@ export class Service extends EventEmitter {
   }
 
   /**
-   * @internal
+   * @private
    */
   private setupCharacteristicEventHandlers(characteristic: Characteristic): void {
     // listen for changes in characteristics and bubble them up
@@ -674,7 +674,7 @@ export class Service extends EventEmitter {
   }
 
   /**
-   * @internal
+   * @private
    */
   private _sideloadCharacteristics(targetCharacteristics: Characteristic[]): void {
     for (const target of targetCharacteristics) {
@@ -685,7 +685,7 @@ export class Service extends EventEmitter {
   }
 
   /**
-   * @internal
+   * @private
    */
   static serialize(service: Service): SerializedService {
     let constructorName: string | undefined;
@@ -709,7 +709,7 @@ export class Service extends EventEmitter {
   };
 
   /**
-   * @internal
+   * @private
    */
   static deserialize(json: SerializedService): Service {
     let service: Service;
