@@ -1699,7 +1699,19 @@ export class Characteristic extends EventEmitter {
         return this.value; // don't change the value
       }
 
-      return null; // null is allowed
+      /**
+       * A short disclaimer here.
+       * null is actually a perfectly valid value for characteristics to have.
+       * The Home app will show "no response" for some characteristics for which it can't handle null
+       * but ultimately its valid and the developers decision what the return.
+       * BUT: out of history hap-nodejs did replaced null with the last known value and thus
+       * homebridge devs started to adopting this method as a way of not changing the value in a GET handler.
+       * As an intermediate step we kept the behavior but added a warning printed to the console.
+       * In a future update we will do the breaking change of return null below!
+       */
+
+      this.characteristicWarning(`characteristic was supplied illegal value: null! `);
+      return this.value;
     }
 
 
