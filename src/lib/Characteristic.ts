@@ -1031,7 +1031,16 @@ export class Characteristic extends EventEmitter {
       callback = undefined;
     }
 
-    value = this.validateUserInput(value)!;
+    try {
+      value = this.validateUserInput(value)!;
+    } catch (e) {
+      this.characteristicWarning(e.message);
+      if (callback) {
+        callback(e);
+      }
+      return this;
+    }
+
     this.handleSetRequest(value, undefined, context).then(value => {
       if (callback) {
         if (value) { // possible write response
@@ -1107,7 +1116,16 @@ export class Characteristic extends EventEmitter {
     // noinspection JSDeprecatedSymbols
     this.status = null;
 
-    value = this.validateUserInput(value);
+    try {
+      value = this.validateUserInput(value)!;
+    } catch (e) {
+      this.characteristicWarning(e.message);
+      if (callback) {
+        callback();
+      }
+      return this;
+    }
+
     const oldValue = this.value;
     this.value = value;
 
