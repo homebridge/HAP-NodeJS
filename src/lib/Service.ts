@@ -423,7 +423,8 @@ export class Service extends EventEmitter {
       const instance = this.addCharacteristic(name);
       // Not found in optional Characteristics. Adding anyway, but warning about it if it isn't the Name.
       if (name.UUID !== Characteristic.Name.UUID) {
-        instance.characteristicWarning("Characteristic not in required or optional characteristic section for service " + this.constructor.name + ". Adding anyway.");
+        this.emit(ServiceEventTypes.CHARACTERISTIC_WARNING, instance, CharacteristicWarningType.WARN_MESSAGE,
+          "Characteristic not in required or optional characteristic section for service " + this.constructor.name + ". Adding anyway.");
       }
 
       return instance;
@@ -585,15 +586,17 @@ export class Service extends EventEmitter {
       const missingCharacteristics: Set<Characteristic> = new Set();
       let timeout: Timeout | undefined = setTimeout(() => {
         for (const characteristic of missingCharacteristics) {
-          characteristic.characteristicWarning(`The read handler for the characteristic '${characteristic.displayName}' was slow to respond!`, CharacteristicWarningType.SLOW_READ);
+          this.emit(ServiceEventTypes.CHARACTERISTIC_WARNING, characteristic, CharacteristicWarningType.SLOW_READ,
+            `The read handler for the characteristic '${characteristic.displayName}' was slow to respond!`);
         }
 
         timeout = setTimeout(() => {
           timeout = undefined;
 
           for (const characteristic of missingCharacteristics) {
-            characteristic.characteristicWarning("The read handler for the characteristic '" + characteristic?.displayName + "' didn't respond at all!. " +
-              "Please check that you properly call the callback!", CharacteristicWarningType.TIMEOUT_READ);
+            this.emit(ServiceEventTypes.CHARACTERISTIC_WARNING, characteristic, CharacteristicWarningType.TIMEOUT_READ,
+              "The read handler for the characteristic '" + characteristic?.displayName +
+              "' didn't respond at all!. Please check that you properly call the callback!");
             service.characteristics.push(characteristic.internalHAPRepresentation()); // value is set to null
           }
 

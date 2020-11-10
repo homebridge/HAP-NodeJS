@@ -1880,18 +1880,8 @@ export class Characteristic extends EventEmitter {
     this.iid = identifierCache.getIID(accessoryName, serviceUUID, serviceSubtype, this.UUID);
   }
 
-  /**
-   * @private
-   */
-  characteristicWarning(message: string, type = CharacteristicWarningType.WARN_MESSAGE): void {
-    const emitted = this.emit(CharacteristicEventTypes.CHARACTERISTIC_WARNING, type, message);
-    if (!emitted) {
-      if (type === CharacteristicWarningType.ERROR_MESSAGE || type === CharacteristicWarningType.TIMEOUT_READ || type === CharacteristicWarningType.TIMEOUT_WRITE) {
-        console.error(`[${this.displayName}] ${message}`);
-      } else {
-        console.warn(`[${this.displayName}] ${message}`);
-      }
-    }
+  private characteristicWarning(message: string, type = CharacteristicWarningType.WARN_MESSAGE): void {
+    this.emit(CharacteristicEventTypes.CHARACTERISTIC_WARNING, type, message);
   }
 
   /**

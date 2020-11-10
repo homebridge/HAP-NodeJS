@@ -532,6 +532,7 @@ export class Accessory extends EventEmitter {
     // listen for changes in ANY characteristics of ANY services on this Accessory
     accessory.on(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, change => this.handleCharacteristicChangeEvent(accessory, change.service, change));
     accessory.on(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, this.enqueueConfigurationUpdate.bind(this));
+    accessory.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, this.handleCharacteristicWarning.bind(this));
 
     accessory.bridged = true;
     accessory.bridge = this;
@@ -1308,8 +1309,8 @@ export class Accessory extends EventEmitter {
 
         const accessory = this.getAccessoryByAID(aid)!;
         const characteristic = accessory.getCharacteristicByIID(iid)!;
-        characteristic.characteristicWarning("The read handler for the characteristic '" + characteristic.displayName +
-          "' on the accessory '" + accessory.displayName + "' was slow to respond!", CharacteristicWarningType.SLOW_READ);
+        this.handleCharacteristicWarning(characteristic, CharacteristicWarningType.SLOW_READ, "The read handler for the characteristic '" +
+          characteristic.displayName + "' on the accessory '" + accessory.displayName + "' was slow to respond!");
       }
 
       // after a total of 10s we do not longer wait for a request to appear and just return status code timeout
@@ -1323,8 +1324,8 @@ export class Accessory extends EventEmitter {
 
           const accessory = this.getAccessoryByAID(aid)!;
           const characteristic = accessory.getCharacteristicByIID(iid)!;
-          characteristic.characteristicWarning("The read handler for the characteristic '" + characteristic.displayName + "' on the accessory '" + accessory.displayName +
-            "' didn't respond at all!. Please check that you properly call the callback!", CharacteristicWarningType.TIMEOUT_READ);
+          this.handleCharacteristicWarning(characteristic, CharacteristicWarningType.TIMEOUT_READ, "The read handler for the characteristic '" +
+            characteristic.displayName + "' on the accessory '" + accessory.displayName + "' didn't respond at all!. Please check that you properly call the callback!");
 
           characteristics.push({
             aid: aid,
@@ -1472,8 +1473,8 @@ export class Accessory extends EventEmitter {
 
         const accessory = this.getAccessoryByAID(aid)!;
         const characteristic = accessory.getCharacteristicByIID(iid)!;
-        characteristic.characteristicWarning("The write handler for the characteristic '" + characteristic.displayName +
-          "' on the accessory '" + accessory.displayName + "' was slow to respond!", CharacteristicWarningType.SLOW_WRITE);
+        this.handleCharacteristicWarning(characteristic, CharacteristicWarningType.SLOW_WRITE, "The write handler for the characteristic '" +
+          characteristic.displayName + "' on the accessory '" + accessory.displayName + "' was slow to respond!");
       }
 
       // after a total of 10s we do not longer wait for a request to appear and just return status code timeout
@@ -1487,8 +1488,8 @@ export class Accessory extends EventEmitter {
 
           const accessory = this.getAccessoryByAID(aid)!;
           const characteristic = accessory.getCharacteristicByIID(iid)!;
-          characteristic.characteristicWarning("The write handler for the characteristic '" + characteristic.displayName + "' on the accessory '" + accessory.displayName +
-            "' didn't respond at all!. Please check that you properly call the callback!", CharacteristicWarningType.TIMEOUT_WRITE);
+          this.handleCharacteristicWarning(characteristic, CharacteristicWarningType.TIMEOUT_WRITE, "The write handler for the characteristic '" +
+            characteristic.displayName + "' on the accessory '" + accessory.displayName + "' didn't respond at all!. Please check that you properly call the callback!");
 
           characteristics.push({
             aid: aid,
@@ -1752,12 +1753,21 @@ export class Accessory extends EventEmitter {
     }
   }
 
+  private handleCharacteristicWarning(characteristic: Characteristic, type: CharacteristicWarningType, message: string): void {
+    const emitted = this.emit(AccessoryEventTypes.CHARACTERISTIC_WARNING, characteristic, type, message);
+    if (!emitted) {
+      if (type === CharacteristicWarningType.ERROR_MESSAGE || type === CharacteristicWarningType.TIMEOUT_READ || type === CharacteristicWarningType.TIMEOUT_WRITE) {
+        console.error(`[${characteristic.displayName}@${this.displayName}] ${message}`);
+      } else {
+        console.warn(`[${characteristic.displayName}@${this.displayName}] ${message}`);
+      }
+    }
+  }
+
   private setupServiceEventHandlers(service: Service): void {
     service.on(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, this.handleServiceConfigurationChangeEvent.bind(this, service));
     service.on(ServiceEventTypes.CHARACTERISTIC_CHANGE, this.handleCharacteristicChangeEvent.bind(this, this, service));
-    service.on(ServiceEventTypes.CHARACTERISTIC_WARNING, (characteristic, type, message) => {
-      this.emit(AccessoryEventTypes.CHARACTERISTIC_WARNING, characteristic, type, message);
-    });
+    service.on(ServiceEventTypes.CHARACTERISTIC_WARNING, this.handleCharacteristicWarning.bind(this));
   }
 
   private _sideloadServices(targetServices: Service[]): void {
