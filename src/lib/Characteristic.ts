@@ -1120,7 +1120,16 @@ export class Characteristic extends EventEmitter {
       callback = undefined;
     }
 
-    value = this.validateUserInput(value)!;
+    try {
+      value = this.validateUserInput(value)!;
+    } catch (error) {
+      this.characteristicWarning(error.stack + "", CharacteristicWarningType.ERROR_MESSAGE);
+      if (callback) {
+        callback(error);
+      }
+      return this;
+    }
+
     this.handleSetRequest(value, undefined, context).then(value => {
       if (callback) {
         if (value) { // possible write response
@@ -1192,11 +1201,20 @@ export class Characteristic extends EventEmitter {
       callback = undefined;
     }
 
+    try {
+      value = this.validateUserInput(value);
+    } catch (error) {
+      this.characteristicWarning(error.stack + "");
+      if (callback) {
+        callback();
+      }
+      return this;
+    }
+
     this.statusCode = HAPStatus.SUCCESS;
     // noinspection JSDeprecatedSymbols
     this.status = null;
 
-    value = this.validateUserInput(value);
     const oldValue = this.value;
     this.value = value;
 
@@ -1263,7 +1281,7 @@ export class Characteristic extends EventEmitter {
         try {
           value = this.validateUserInput(value);
         } catch (error) {
-          this.characteristicWarning(`An illegal value was supplied by the read handler for characteristic: ${error.message}`);
+          this.characteristicWarning(`An illegal value was supplied by the read handler for characteristic: ${error.stack}`);
           this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
           // noinspection JSDeprecatedSymbols
           this.status = error;
@@ -1394,8 +1412,8 @@ export class Characteristic extends EventEmitter {
         this.status = null;
 
         if (writeResponse != null && this.props.perms.includes(Perms.WRITE_RESPONSE)) {
-          this.value = writeResponse;
-          return writeResponse;
+          this.value = this.validateUserInput(writeResponse);
+          return this.value!;
         } else {
           if (writeResponse != null) {
             this.characteristicWarning(`SET handler returned write response value, though the characteristic doesn't support write response!`);
@@ -1457,8 +1475,8 @@ export class Characteristic extends EventEmitter {
 
             if (writeResponse != null && this.props.perms.includes(Perms.WRITE_RESPONSE)) {
               // support write response simply by letting the implementor pass the response as second argument to the callback
-              this.value = writeResponse;
-              resolve(writeResponse);
+              this.value = this.validateUserInput(writeResponse);
+              resolve(this.value!);
             } else {
               if (writeResponse != null) {
                 this.characteristicWarning(`SET handler returned write response value, though the characteristic doesn't support write response!`);
@@ -1842,12 +1860,12 @@ export class Characteristic extends EventEmitter {
       }
       case Formats.DATA:
         if (typeof value !== "string") {
-          throw new Error("characteristic with data format must have string value");
+          throw new Error("characteristic with DATA format must have string value");
         }
 
         if (this.props.maxDataLen != null && value.length > this.props.maxDataLen) {
           // can't cut it as we would basically yet binary rubbish afterwards
-          throw new Error("characteristic with data format exceeds specified maxDataLen!");
+          throw new Error("characteristic with DATA format exceeds specified maxDataLen!");
         }
         return value;
       case Formats.TLV8:
