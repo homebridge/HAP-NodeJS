@@ -1,6 +1,7 @@
 import {
   Access,
-  Characteristic, CharacteristicChange,
+  Characteristic,
+  CharacteristicChange,
   CharacteristicEventTypes,
   CharacteristicProps,
   Formats,
@@ -15,9 +16,9 @@ function createCharacteristic(type: Formats, customUUID?: string): Characteristi
   return new Characteristic('Test', customUUID || uuid.generate('Foo'), { format: type, perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE] });
 }
 
-const createCharacteristicWithProps = (props: CharacteristicProps, customUUID?: string) => {
+function createCharacteristicWithProps(props: CharacteristicProps, customUUID?: string): Characteristic {
   return new Characteristic('Test', customUUID || uuid.generate('Foo'), props);
-};
+}
 
 describe('Characteristic', () => {
 
@@ -48,6 +49,65 @@ describe('Characteristic', () => {
       setProps(0, 0);
       setProps(3, 3);
     });
+  });
+
+  describe("validValuesIterator", () => {
+    it ("should iterate over min/max value definition", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.INT,
+        perms: [Perms.PAIRED_READ],
+        minValue: 2,
+        maxValue: 5,
+      });
+
+      const result = Array.from(characteristic.validValuesIterator());
+      expect(result).toEqual([2, 3, 4, 5]);
+    });
+
+    it ("should iterate over min/max value definition with minStep defined", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.INT,
+        perms: [Perms.PAIRED_READ],
+        minValue: 2,
+        maxValue: 10,
+        minStep: 2, // can't really test with .x precision as of floating point precision
+      });
+
+      const result = Array.from(characteristic.validValuesIterator());
+      expect(result).toEqual([2, 4, 6, 8, 10]);
+    });
+
+    it ("should iterate over validValues array definition", () => {
+      const validValues = [1, 3, 4, 5, 8];
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.INT,
+        perms: [Perms.PAIRED_READ],
+        validValues: validValues
+      });
+
+      const result = Array.from(characteristic.validValuesIterator());
+      expect(result).toEqual(validValues);
+    });
+
+    it ("should iterate over validValueRanges definition", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.INT,
+        perms: [Perms.PAIRED_READ],
+        validValueRanges: [2, 5],
+      });
+
+      const result = Array.from(characteristic.validValuesIterator());
+      expect(result).toEqual([2, 3, 4, 5]);
+    });
+
+    it("should iterate over UINT8 definition", () => {
+      const characteristic = createCharacteristic(Formats.UINT8);
+
+      const result = Array.from(characteristic.validValuesIterator());
+      expect(result).toEqual(Array.from(new Uint8Array(256).map((value, i) => i)))
+    });
+
+    // we could do the same for UINT16, UINT32 and UINT64 but i think thats kind of pointless and takes to long
   });
 
   describe('#subscribe()', () => {

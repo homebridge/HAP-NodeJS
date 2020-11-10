@@ -333,7 +333,13 @@ export interface CharacteristicProps {
   perms: Perms[];
   unit?: Units | string;
   description?: string;
+  /**
+   * Defines the minimum value for a numeric characteristic
+   */
   minValue?: number;
+  /**
+   * Defines the maximum value for a numeric characteristic
+   */
   maxValue?: number;
   minStep?: number;
   /**
@@ -346,6 +352,9 @@ export interface CharacteristicProps {
    * Default is 2097152 characters.
    */
   maxDataLen?: number;
+  /**
+   * Defines a array of valid values to be used for the characteristic.
+   */
   validValues?: number[];
   /**
    * Two element array where the first value specifies the lowest valid value and
@@ -379,7 +388,7 @@ export const enum ChangeReason {
    */
   UPDATE = "update",
   /**
-   * Used when when HomeKit reads a value or the API user calls the deprecated metho {@link Characteristic.getValue}.
+   * Used when when HomeKit reads a value or the API user calls the deprecated method {@link Characteristic.getValue}.
    */
   READ = "read",
   /**
@@ -498,6 +507,54 @@ export declare interface Characteristic {
    * @private
    */
   emit(event: "characteristic-warning", type: CharacteristicWarningType, message: string): boolean;
+
+}
+
+class ValidValuesIterable implements Iterable<number> {
+
+  private readonly props: CharacteristicProps;
+
+  constructor(props: CharacteristicProps) {
+    assert(isNumericFormat(props.format), "Cannot instantiate valid values iterable when format is not numeric. Found " + props.format);
+    this.props = props;
+  }
+
+  *[Symbol.iterator](): Iterator<number> {
+    if (this.props.validValues) {
+      for (const value of this.props.validValues) {
+        yield value;
+      }
+    } else {
+      let min: number = 0; // default is zero for all the uint types
+      let max: number;
+      let stepValue = 1;
+
+      if (this.props.validValueRanges) {
+        min = this.props.validValueRanges[0];
+        max = this.props.validValueRanges[1];
+      } else if (this.props.minValue != null && this.props.maxValue != null) {
+        min = this.props.minValue;
+        max = this.props.maxValue;
+        if (this.props.minStep != null) {
+          stepValue = this.props.minStep;
+        }
+      } else if (this.props.format === Formats.UINT8) {
+        max = 255;
+      } else if (this.props.format === Formats.UINT16) {
+        max = 65535;
+      } else if (this.props.format === Formats.UINT32) {
+        max = 4294967295;
+      } else if (this.props.format === Formats.UINT64) {
+        max = 18446744073709551615; // don't get fooled, javascript uses 18446744073709552000 here as number isn 64 bit integer
+      } else {
+        throw new Error("Could not find valid iterator strategy for props: " + JSON.stringify(this.props));
+      }
+
+      for (let i = min; i <= max; i += stepValue) {
+        yield i;
+      }
+    }
+  }
 
 }
 
@@ -914,6 +971,38 @@ export class Characteristic extends EventEmitter {
     }
 
     return this;
+  }
+
+  /**
+   * This method can be used to gain a Iterator to loop over all valid values defined for this characteristic.
+   *
+   * The range of valid values can be defined using three different ways via the {@link CharacteristicProps} object
+   * (set via the {@link setProps} method):
+   *  * First method is to specifically list every valid value inside {@link CharacteristicProps.validValues}
+   *  * Second you can specify a range via {@link CharacteristicProps.minValue} and {@link CharacteristicProps.maxValue} (with optionally defining
+   *    {@link CharacteristicProps.minStep})
+   *  * And lastly you can specify a range via {@link CharacteristicProps.validValueRanges}
+   *  * Implicitly a valid value range is predefined for characteristics with Format {@link Formats.UINT8}, {@link Formats.UINT16},
+   *    {@link Formats.UINT32} and {@link Formats.UINT64}: starting by zero to their respective maximum number
+   *
+   * The method will automatically detect which type of valid values definition is used and provide
+   * the correct Iterator for that case.
+   *
+   * Note: This method is (obviously) only valid for numeric characteristics.
+   *
+   * @example
+   * ```ts
+   * // use the iterator to loop over every valid value...
+   * for (const value of characteristic.validValuesIterator()) {
+   *   // Insert logic to run for every
+   * }
+   *
+   * // ... or collect them in an array for storage or manipulation
+   * const validValues = Array.from(characteristic.validValuesIterator());
+   * ```
+   */
+  public validValuesIterator(): Iterable<number> {
+    return new ValidValuesIterable(this.props);
   }
 
   // noinspection JSUnusedGlobalSymbols
