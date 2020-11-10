@@ -359,6 +359,9 @@ for (const generated of Object.values(generatedCharacteristics)
     if (generated.maxLength != null) {
       characteristicOutput.write("      maxLen: " + generated.maxLength + ",\n");
     }
+    if (generated.validValues) {
+      characteristicOutput.write("      validValues: [" + Object.keys(generated.validValues).join(", ") + "],\n")
+    }
     characteristicOutput.write("    });\n");
     characteristicOutput.write("    this.value = this.getDefaultValue();\n");
     characteristicOutput.write("  }\n");

@@ -76,6 +76,7 @@ export class Active extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -173,6 +174,7 @@ export class AirParticulateSize extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -200,6 +202,7 @@ export class AirQuality extends Characteristic {
       minValue: 0,
       maxValue: 5,
       minStep: 1,
+      validValues: [0, 1, 2, 3, 4, 5],
     });
     this.value = this.getDefaultValue();
   }
@@ -313,6 +316,7 @@ export class CameraOperatingModeIndicator extends Characteristic {
     super("Camera Operating Mode Indicator", CameraOperatingModeIndicator.UUID, {
       format: Formats.BOOL,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.TIMED_WRITE],
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -336,6 +340,7 @@ export class CarbonDioxideDetected extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -399,6 +404,7 @@ export class CarbonMonoxideDetected extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -535,6 +541,7 @@ export class ChargingState extends Characteristic {
       minValue: 0,
       maxValue: 2,
       minStep: 1,
+      validValues: [0, 1, 2],
     });
     this.value = this.getDefaultValue();
   }
@@ -558,6 +565,7 @@ export class ClosedCaptions extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -618,6 +626,7 @@ export class ContactSensorState extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -663,6 +672,7 @@ export class CurrentAirPurifierState extends Characteristic {
       minValue: 0,
       maxValue: 2,
       minStep: 1,
+      validValues: [0, 1, 2],
     });
     this.value = this.getDefaultValue();
   }
@@ -709,6 +719,7 @@ export class CurrentDoorState extends Characteristic {
       minValue: 0,
       maxValue: 4,
       minStep: 1,
+      validValues: [0, 1, 2, 3, 4],
     });
     this.value = this.getDefaultValue();
   }
@@ -733,6 +744,7 @@ export class CurrentFanState extends Characteristic {
       minValue: 0,
       maxValue: 2,
       minStep: 1,
+      validValues: [0, 1, 2],
     });
     this.value = this.getDefaultValue();
   }
@@ -758,6 +770,7 @@ export class CurrentHeaterCoolerState extends Characteristic {
       minValue: 0,
       maxValue: 3,
       minStep: 1,
+      validValues: [0, 1, 2, 3],
     });
     this.value = this.getDefaultValue();
   }
@@ -782,6 +795,7 @@ export class CurrentHeatingCoolingState extends Characteristic {
       minValue: 0,
       maxValue: 2,
       minStep: 1,
+      validValues: [0, 1, 2],
     });
     this.value = this.getDefaultValue();
   }
@@ -828,6 +842,7 @@ export class CurrentHumidifierDehumidifierState extends Characteristic {
       minValue: 0,
       maxValue: 3,
       minStep: 1,
+      validValues: [0, 1, 2, 3],
     });
     this.value = this.getDefaultValue();
   }
@@ -854,6 +869,7 @@ export class CurrentMediaState extends Characteristic {
       minValue: 0,
       maxValue: 5,
       minStep: 1,
+      validValues: [0, 1, 2, 4, 5],
     });
     this.value = this.getDefaultValue();
   }
@@ -920,6 +936,7 @@ export class CurrentSlatState extends Characteristic {
       minValue: 0,
       maxValue: 3,
       minStep: 1,
+      validValues: [0, 1, 2],
     });
     this.value = this.getDefaultValue();
   }
@@ -1024,6 +1041,7 @@ export class CurrentVisibilityState extends Characteristic {
       minValue: 0,
       maxValue: 3,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -1154,6 +1172,7 @@ export class EventSnapshotsActive extends Characteristic {
     super("Event Snapshots Active", EventSnapshotsActive.UUID, {
       format: Formats.BOOL,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.TIMED_WRITE],
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -1195,6 +1214,7 @@ export class FilterChangeIndication extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -1325,6 +1345,7 @@ export class HomeKitCameraActive extends Characteristic {
     super("HomeKit Camera Active", HomeKitCameraActive.UUID, {
       format: Formats.BOOL,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.TIMED_WRITE],
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -1446,6 +1467,7 @@ export class InputDeviceType extends Characteristic {
       minValue: 0,
       maxValue: 6,
       minStep: 1,
+      validValues: [0, 1, 2, 3, 4, 5],
     });
     this.value = this.getDefaultValue();
   }
@@ -1478,6 +1500,7 @@ export class InputSourceType extends Characteristic {
       minValue: 0,
       maxValue: 10,
       minStep: 1,
+      validValues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
     });
     this.value = this.getDefaultValue();
   }
@@ -1501,6 +1524,7 @@ export class InUse extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -1524,6 +1548,7 @@ export class IsConfigured extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -1547,6 +1572,7 @@ export class LeakDetected extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -1608,6 +1634,7 @@ export class LockCurrentState extends Characteristic {
       minValue: 0,
       maxValue: 3,
       minStep: 1,
+      validValues: [0, 1, 2, 3],
     });
     this.value = this.getDefaultValue();
   }
@@ -1638,6 +1665,7 @@ export class LockLastKnownAction extends Characteristic {
       minValue: 0,
       maxValue: 8,
       minStep: 1,
+      validValues: [0, 1, 2, 3, 4, 5, 6, 7, 8],
     });
     this.value = this.getDefaultValue();
   }
@@ -1679,6 +1707,7 @@ export class LockPhysicalControls extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -1702,6 +1731,7 @@ export class LockTargetState extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -1776,6 +1806,7 @@ export class ManagedNetworkEnable extends Characteristic {
       perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.TIMED_WRITE],
       minValue: 0,
       maxValue: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -1796,6 +1827,7 @@ export class ManuallyDisabled extends Characteristic {
     super("Manually Disabled", ManuallyDisabled.UUID, {
       format: Formats.BOOL,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -2030,6 +2062,7 @@ export class OccupancyDetected extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -2208,6 +2241,7 @@ export class PeriodicSnapshotsActive extends Characteristic {
     super("Periodic Snapshots Active", PeriodicSnapshotsActive.UUID, {
       format: Formats.BOOL,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.TIMED_WRITE],
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -2237,6 +2271,7 @@ export class PictureMode extends Characteristic {
       minValue: 0,
       maxValue: 13,
       minStep: 1,
+      validValues: [0, 1, 2, 3, 4, 5, 6, 7],
     });
     this.value = this.getDefaultValue();
   }
@@ -2319,6 +2354,7 @@ export class PositionState extends Characteristic {
       minValue: 0,
       maxValue: 2,
       minStep: 1,
+      validValues: [0, 1, 2],
     });
     this.value = this.getDefaultValue();
   }
@@ -2342,6 +2378,7 @@ export class PowerModeSelection extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -2383,6 +2420,7 @@ export class ProgrammableSwitchEvent extends Characteristic {
       minValue: 0,
       maxValue: 2,
       minStep: 1,
+      validValues: [0, 1, 2],
     });
     this.value = this.getDefaultValue();
   }
@@ -2427,6 +2465,7 @@ export class ProgramMode extends Characteristic {
       minValue: 0,
       maxValue: 2,
       minStep: 1,
+      validValues: [0, 1, 2],
     });
     this.value = this.getDefaultValue();
   }
@@ -2483,6 +2522,7 @@ export class RecordingAudioActive extends Characteristic {
     super("Recording Audio Active", RecordingAudioActive.UUID, {
       format: Formats.UINT8,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.TIMED_WRITE],
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -2634,6 +2674,7 @@ export class RemoteKey extends Characteristic {
       minValue: 0,
       maxValue: 16,
       minStep: 1,
+      validValues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15],
     });
     this.value = this.getDefaultValue();
   }
@@ -2677,6 +2718,7 @@ export class RotationDirection extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -2719,6 +2761,7 @@ export class RouterStatus extends Characteristic {
       perms: [Perms.NOTIFY, Perms.PAIRED_READ],
       minValue: 0,
       maxValue: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -2786,6 +2829,7 @@ export class SecuritySystemCurrentState extends Characteristic {
       minValue: 0,
       maxValue: 4,
       minStep: 1,
+      validValues: [0, 1, 2, 3, 4],
     });
     this.value = this.getDefaultValue();
   }
@@ -2811,6 +2855,7 @@ export class SecuritySystemTargetState extends Characteristic {
       minValue: 0,
       maxValue: 3,
       minStep: 1,
+      validValues: [0, 1, 2, 3],
     });
     this.value = this.getDefaultValue();
   }
@@ -2923,6 +2968,7 @@ export class ServiceLabelNamespace extends Characteristic {
       minValue: 0,
       maxValue: 4,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -3035,6 +3081,7 @@ export class SiriInputType extends Characteristic {
       perms: [Perms.PAIRED_READ],
       minValue: 0,
       maxValue: 1,
+      validValues: [0],
     });
     this.value = this.getDefaultValue();
   }
@@ -3058,6 +3105,7 @@ export class SlatType extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -3081,6 +3129,7 @@ export class SleepDiscoveryMode extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -3124,6 +3173,7 @@ export class SmokeDetected extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -3181,6 +3231,7 @@ export class StatusFault extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -3204,6 +3255,7 @@ export class StatusJammed extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -3227,6 +3279,7 @@ export class StatusLowBattery extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -3250,6 +3303,7 @@ export class StatusTampered extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -3500,6 +3554,7 @@ export class SwingMode extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -3523,6 +3578,7 @@ export class TargetAirPurifierState extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -3547,6 +3603,7 @@ export class TargetAirQuality extends Characteristic {
       perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
       minValue: 0,
       maxValue: 2,
+      validValues: [0, 1, 2],
     });
     this.value = this.getDefaultValue();
   }
@@ -3604,6 +3661,7 @@ export class TargetDoorState extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -3627,6 +3685,7 @@ export class TargetFanState extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -3651,6 +3710,7 @@ export class TargetHeaterCoolerState extends Characteristic {
       minValue: 0,
       maxValue: 2,
       minStep: 1,
+      validValues: [0, 1, 2],
     });
     this.value = this.getDefaultValue();
   }
@@ -3676,6 +3736,7 @@ export class TargetHeatingCoolingState extends Characteristic {
       minValue: 0,
       maxValue: 3,
       minStep: 1,
+      validValues: [0, 1, 2, 3],
     });
     this.value = this.getDefaultValue();
   }
@@ -3726,6 +3787,7 @@ export class TargetHumidifierDehumidifierState extends Characteristic {
       minValue: 0,
       maxValue: 2,
       minStep: 1,
+      validValues: [0, 1, 2],
     });
     this.value = this.getDefaultValue();
   }
@@ -3750,6 +3812,7 @@ export class TargetMediaState extends Characteristic {
       minValue: 0,
       maxValue: 2,
       minStep: 1,
+      validValues: [0, 1, 2],
     });
     this.value = this.getDefaultValue();
   }
@@ -3878,6 +3941,7 @@ export class TargetVisibilityState extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -3901,6 +3965,7 @@ export class TemperatureDisplayUnits extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -3921,6 +3986,7 @@ export class ThirdPartyCameraActive extends Characteristic {
     super("Third Party Camera Active", ThirdPartyCameraActive.UUID, {
       format: Formats.BOOL,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -4106,6 +4172,7 @@ export class ValveType extends Characteristic {
       minValue: 0,
       maxValue: 3,
       minStep: 1,
+      validValues: [0, 1, 2, 3],
     });
     this.value = this.getDefaultValue();
   }
@@ -4208,6 +4275,7 @@ export class VolumeControlType extends Characteristic {
       minValue: 0,
       maxValue: 3,
       minStep: 1,
+      validValues: [0, 1, 2, 3],
     });
     this.value = this.getDefaultValue();
   }
@@ -4231,6 +4299,7 @@ export class VolumeSelector extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -4363,6 +4432,7 @@ export class WiFiSatelliteStatus extends Characteristic {
       perms: [Perms.NOTIFY, Perms.PAIRED_READ],
       minValue: 0,
       maxValue: 2,
+      validValues: [0, 1, 2],
     });
     this.value = this.getDefaultValue();
   }
