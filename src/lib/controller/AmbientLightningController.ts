@@ -1,19 +1,15 @@
 import assert from "assert";
 import createDebug from "debug";
 import { EventEmitter } from "events";
+import { ColorUtils, epochMillisFromMillisSince2001_01_01Buffer, HAPStatus, HapStatusError } from "../..";
+import { CharacteristicValue } from "../../types";
 import {
   ChangeReason,
+  Characteristic,
   CharacteristicChange,
   CharacteristicEventTypes,
-  CharacteristicOperationContext,
-  ColorUtils,
-  epochMillisFromMillisSince2001_01_01Buffer,
-  HAPStatus,
-  HapStatusError,
-  SerializableController
-} from "../..";
-import { CharacteristicValue } from "../../types";
-import { Characteristic } from "../Characteristic";
+  CharacteristicOperationContext
+} from "../Characteristic";
 import {
   Brightness,
   CharacteristicValueActiveTransitionCount,
@@ -25,7 +21,13 @@ import {
   SupportedCharacteristicValueTransitionConfiguration
 } from "../definitions";
 import * as tlv from "../util/tlv";
-import { ControllerServiceMap, ControllerType, DefaultControllerType, StateChangeDelegate } from "./Controller";
+import {
+  ControllerIdentifier,
+  ControllerServiceMap,
+  DefaultControllerType,
+  SerializableController,
+  StateChangeDelegate
+} from "./Controller";
 import Timeout = NodeJS.Timeout;
 
 const debug = createDebug("HAP-NodeJS:Controller:TransitionControl");
@@ -349,10 +351,6 @@ interface SerializedAmbientLightningControllerState {
  */
 export class AmbientLightningController extends EventEmitter implements SerializableController<ControllerServiceMap, SerializedAmbientLightningControllerState> {
 
-  /**
-   * @private
-   */
-  readonly controllerType: ControllerType = DefaultControllerType.CHARACTERISTIC_TRANSITION;
   private stateChangeDelegate?: StateChangeDelegate;
 
   private readonly lightbulb: Lightbulb;
@@ -402,6 +400,13 @@ export class AmbientLightningController extends EventEmitter implements Serializ
       .updateValue("");
     this.activeTransitionCount = this.lightbulb.getCharacteristic(Characteristic.CharacteristicValueActiveTransitionCount)
       .updateValue(0);
+  }
+
+  /**
+   * @private
+   */
+  controllerId(): ControllerIdentifier {
+    return DefaultControllerType.CHARACTERISTIC_TRANSITION + "-" + this.lightbulb.getServiceId();
   }
 
   // ----------- PUBLIC API START -----------
@@ -454,6 +459,8 @@ export class AmbientLightningController extends EventEmitter implements Serializ
     this.activeTransitionCount.sendEventNotification(0);
 
     debug("[%s] Disabling ambient lightning", this.lightbulb.displayName);
+
+    this.stateChangeDelegate && this.stateChangeDelegate();
   }
 
   /**

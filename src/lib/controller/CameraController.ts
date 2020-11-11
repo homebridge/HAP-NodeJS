@@ -1,25 +1,26 @@
 import crypto from 'crypto';
 import createDebug from "debug";
 import { EventEmitter } from "events";
+import { CharacteristicValue, SessionIdentifier } from "../../types";
 import {
   CameraStreamingOptions,
-  Characteristic,
-  CharacteristicEventTypes,
-  CharacteristicGetCallback,
-  CharacteristicSetCallback,
-  CharacteristicValue,
-  HAPStatus,
   LegacyCameraSourceAdapter,
   PrepareStreamRequest,
   PrepareStreamResponse,
   RTPStreamManagement,
-  Service,
   SnapshotRequest,
   StreamingRequest
-} from "../..";
-import { SessionIdentifier } from "../../types";
+} from "../camera";
+import {
+  Characteristic,
+  CharacteristicEventTypes,
+  CharacteristicGetCallback,
+  CharacteristicSetCallback
+} from "../Characteristic";
 import type { Doorbell, Microphone, Speaker } from "../definitions";
-import { Controller, ControllerServiceMap, ControllerType, DefaultControllerType } from "./Controller";
+import { HAPStatus } from "../HAPServer";
+import { Service } from "../Service";
+import { Controller, ControllerIdentifier, ControllerServiceMap, DefaultControllerType } from "./Controller";
 import Timeout = NodeJS.Timeout;
 
 const debug = createDebug("HAP-NodeJS:Camera:Controller")
@@ -117,11 +118,6 @@ export class CameraController extends EventEmitter implements Controller<CameraC
 
   private static readonly STREAM_MANAGEMENT = "streamManagement"; // key to index all RTPStreamManagement services
 
-  /**
-   * @private
-   */
-  readonly controllerType: ControllerType = DefaultControllerType.CAMERA;
-
   private readonly streamCount: number;
   private readonly delegate: CameraStreamingDelegate;
   private readonly streamingOptions: CameraStreamingOptions;
@@ -148,6 +144,13 @@ export class CameraController extends EventEmitter implements Controller<CameraC
     this.streamingOptions = options.streamingOptions;
 
     this.legacyMode = legacyMode; // legacy mode will prent from Microphone and Speaker services to get created to avoid collisions
+  }
+
+  /**
+   * @private
+   */
+  controllerId(): ControllerIdentifier {
+    return DefaultControllerType.CAMERA;
   }
 
   // ----------------------------------- STREAM API ------------------------------------

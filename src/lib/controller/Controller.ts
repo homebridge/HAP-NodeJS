@@ -24,6 +24,7 @@ export const enum DefaultControllerType {
     LOCK = "lock",
     CHARACTERISTIC_TRANSITION = "characteristic-transition",
 }
+export type ControllerIdentifier = string | ControllerType;
 
 export type StateChangeDelegate = () => void;
 
@@ -51,12 +52,15 @@ export interface ControllerConstructor {
 export interface Controller<M extends ControllerServiceMap = ControllerServiceMap> {
 
     /**
-     * Every instance of a Controller must expose the respective type see {@see ControllerType}.
-     * The type of a Controller implementation MUST NEVER change.
+     * Every instance of a Controller must define appropriate identifying material.
+     * The returned identifier MUST NOT change over the lifetime of the Controller object.
      *
-     * This property must stay readonly. Controllers can be inherited from, but even then the type must not change.
+     * Note: The controller can choose to return the same identifier for all controllers of the same type.
+     * This will result in the user only being able to add ONE instance of an Controller to an accessory.
+     *
+     * Some predefined identifiers can be found in {@link ControllerIdentifier}.
      */
-    readonly controllerType: ControllerType;
+    controllerId(): ControllerIdentifier;
 
     /**
      * This method is called by the accessory the controller is added to. This method is only called if a new controller

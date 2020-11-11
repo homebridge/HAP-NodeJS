@@ -35,7 +35,13 @@ import { HAPStatus } from "../HAPServer";
 import { Service } from "../Service";
 import { HAPConnection, HAPConnectionEvent } from "../util/eventedhttp";
 import * as tlv from '../util/tlv';
-import { ControllerServiceMap, DefaultControllerType, SerializableController, StateChangeDelegate } from "./Controller";
+import {
+    ControllerIdentifier,
+    ControllerServiceMap,
+    DefaultControllerType,
+    SerializableController,
+    StateChangeDelegate
+} from "./Controller";
 import Timeout = NodeJS.Timeout;
 
 const debug = createDebug('HAP-NodeJS:Remote:Controller');
@@ -348,10 +354,6 @@ interface SerializedControllerState {
  */
 export class RemoteController extends EventEmitter implements SerializableController<RemoteControllerServiceMap, SerializedControllerState>, DataStreamProtocolHandler {
 
-    /**
-     * @private
-     */
-    readonly controllerType = DefaultControllerType.REMOTE;
     private stateChangeDelegate?: StateChangeDelegate;
 
     /**
@@ -470,6 +472,13 @@ export class RemoteController extends EventEmitter implements SerializableContro
         this.selectedAudioConfigurationString = RemoteController.buildSelectedAudioConfigurationTLV({
             audioCodecConfiguration: this.selectedAudioConfiguration,
         });
+    }
+
+    /**
+     * @private
+     */
+    controllerId(): ControllerIdentifier {
+        return DefaultControllerType.REMOTE;
     }
 
     /**

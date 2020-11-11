@@ -46,7 +46,7 @@ import {
   Controller,
   ControllerConstructor,
   ControllerServiceMap,
-  ControllerType,
+  ControllerIdentifier,
   isSerializableController,
 } from "./controller";
 import {
@@ -140,7 +140,7 @@ export interface SerializedAccessory {
  * @private
  */
 export interface SerializedControllerContext {
-  type: ControllerType,
+  type: ControllerIdentifier, // this field is called type out of history
   services: SerializedServiceMap,
 }
 
@@ -338,8 +338,9 @@ export class Accessory extends EventEmitter {
   services: Service[] = [];
   private primaryService?: Service;
   shouldPurgeUnusedIDs: boolean = true; // Purge unused ids by default
-  private controllers: Record<ControllerType, ControllerContext> = {};
-  private serializedControllers?: Record<ControllerType, ControllerServiceMap>; // store uninitialized controller data after a Accessory.deserialize call
+
+  private controllers: Record<ControllerIdentifier, ControllerContext> = {};
+  private serializedControllers?: Record<ControllerIdentifier, ControllerServiceMap>; // store uninitialized controller data after a Accessory.deserialize call
   private activeCameraController?: CameraController;
 
   _accessoryInfo?: Nullable<AccessoryInfo>;
@@ -691,10 +692,10 @@ export class Accessory extends EventEmitter {
    *
    * The controller can be passed as an instance of the class or as a constructor (without any necessary parameters)
    * for a new Controller.
-   * Only one Controller of a given {@link ControllerType} can be configured for a given Accessory.
+   * Only one Controller of a given {@link ControllerIdentifier} can be configured for a given Accessory.
    *
    * When called, it will be checked if there are any services and persistent data the Controller (for the given
-   * {@link ControllerType}) can be restored from. Otherwise the Controller will be created with new services.
+   * {@link ControllerIdentifier}) can be restored from. Otherwise the Controller will be created with new services.
    *
    *
    * @param controllerConstructor {Controller | ControllerConstructor}
@@ -703,12 +704,13 @@ export class Accessory extends EventEmitter {
     const controller = typeof controllerConstructor === "function"
         ? new controllerConstructor() // any custom constructor arguments should be passed before using .bind(...)
         : controllerConstructor;
+    const id = controller.controllerId();
 
-    if (this.controllers[controller.controllerType]) {
-      throw new Error(`A Controller with the type '${controller.controllerType}' was already added to the accessory ${this.displayName}`);
+    if (this.controllers[id]) {
+      throw new Error(`A Controller with the type/id '${id}' was already added to the accessory ${this.displayName}`);
     }
 
-    const savedServiceMap = this.serializedControllers && this.serializedControllers[controller.controllerType];
+    const savedServiceMap = this.serializedControllers && this.serializedControllers[id];
     let serviceMap: ControllerServiceMap;
 
     if (savedServiceMap) { // we found data to restore from
@@ -724,7 +726,7 @@ export class Accessory extends EventEmitter {
       controller.configureServices(); // let the controller setup all its handlers
 
       // remove serialized data from our dictionary:
-      delete this.serializedControllers![controller.controllerType];
+      delete this.serializedControllers![id];
       if (Object.entries(this.serializedControllers!).length === 0) {
         this.serializedControllers = undefined;
       }
@@ -750,7 +752,7 @@ export class Accessory extends EventEmitter {
       this.controllerStorage.trackController(controller);
     }
 
-    this.controllers[controller.controllerType] = context;
+    this.controllers[id] = context;
 
     if (controller instanceof CameraController) { // save CameraController for Snapshot handling
       this.activeCameraController = controller;
@@ -1839,15 +1841,15 @@ export class Accessory extends EventEmitter {
     // save controllers
     Object.values(accessory.controllers).forEach((context: ControllerContext)  => {
       controllers.push({
-        type: context.controller.controllerType,
+        type: context.controller.controllerId(),
         services: Accessory.serializeServiceMap(context.serviceMap),
       });
     });
 
     // also save controller which didn't get initialized (could lead to service duplication if we throw that data away)
-    accessory.serializedControllers && Object.entries(accessory.serializedControllers).forEach(([type, serviceMap]) => {
+    accessory.serializedControllers && Object.entries(accessory.serializedControllers).forEach(([id, serviceMap]) => {
       controllers.push({
-        type: type,
+        type: id,
         services: Accessory.serializeServiceMap(serviceMap),
       });
     });

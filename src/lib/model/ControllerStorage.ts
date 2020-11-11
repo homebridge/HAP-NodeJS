@@ -1,9 +1,10 @@
 import {MacAddress} from "../../types";
 import util from "util";
 import createDebug from "debug";
-import {ControllerType, SerializableController} from "../controller";
+import {ControllerIdentifier, SerializableController} from "../controller";
 import {Accessory} from "../Accessory";
 import { HAPStorage } from "./HAPStorage";
+import Timeout = NodeJS.Timeout;
 
 const debug = createDebug("HAP-NodeJS:ControllerStorage");
 
@@ -12,7 +13,7 @@ interface StorageLayout {
 }
 
 interface StoredControllerData {
-    type: ControllerType,
+    type: ControllerIdentifier, // this field is called type out of history
     controllerData: ControllerData,
 }
 
@@ -38,16 +39,42 @@ export class ControllerStorage {
     // ---------------------------------------------------------
 
     private trackedControllers: SerializableController[] = []; // used to track controllers before data was loaded from disk
-    private controllerData: Record<ControllerType, ControllerData> = {};
+    private controllerData: Record<ControllerIdentifier, ControllerData> = {};
     private restoredAccessories?: Record<string, StoredControllerData[]>; // indexed by accessory UUID
 
     private parent?: ControllerStorage;
     private linkedAccessories?: ControllerStorage[]; // indexed by accessory UUID
 
+    private queuedSaveTimeout?: Timeout;
+    private queuedSaveTime?: number;
+
     public constructor(accessory: Accessory) {
         this.accessoryUUID = accessory.UUID;
     }
 
+    private enqueueSaveRequest(timeout: number = 0): void {
+        const plannedTime = Date.now() + timeout;
+
+        if (this.queuedSaveTimeout) {
+            if (plannedTime <= (this.queuedSaveTime ?? 0)) {
+                return;
+            }
+
+            clearTimeout(this.queuedSaveTimeout);
+        }
+
+        this.queuedSaveTimeout = setTimeout(() => {
+            this.queuedSaveTimeout = this.queuedSaveTime = undefined;
+            this.save();
+        }, timeout).unref();
+        this.queuedSaveTime = Date.now() + timeout;
+    }
+
+    /**
+     * Links a bridged accessory to the ControllerStorage of the bridge accessory.
+     *
+     * @param accessory
+     */
     public linkAccessory(accessory: Accessory) {
         if (!this.linkedAccessories) {
             this.linkedAccessories = [];
@@ -74,23 +101,24 @@ export class ControllerStorage {
     }
 
     public purgeControllerData(controller: SerializableController) {
-        delete this.controllerData[controller.controllerType];
+        delete this.controllerData[controller.controllerId()];
 
         if (this.initialized) {
-            setTimeout(() => this.save(), 0);
+            this.enqueueSaveRequest(100);
         }
     }
 
     private handleStateChange(controller: SerializableController) {
+        const id = controller.controllerId();
         const serialized = controller.serialize();
 
         if (!serialized) { // can be undefined when controller wishes to delete data
-            delete this.controllerData[controller.controllerType];
+            delete this.controllerData[id];
         } else {
-            let controllerData = this.controllerData[controller.controllerType];
+            let controllerData = this.controllerData[id];
 
             if (!controllerData) {
-                this.controllerData[controller.controllerType] = {
+                this.controllerData[id] = {
                     data: serialized,
                 };
             } else {
@@ -101,7 +129,7 @@ export class ControllerStorage {
         if (this.initialized) { // only save if data was loaded
             // run save data "async", as handleStateChange call will probably always be caused by a http request
             // this should improve our response time
-            setTimeout(() => this.save(), 0);
+            this.enqueueSaveRequest(100);
         }
     }
 
@@ -111,10 +139,10 @@ export class ControllerStorage {
             throw new Error("Illegal state. Controller data wasn't loaded yet!");
         }
 
-        const controllerData = this.controllerData[controller.controllerType];
+        const controllerData = this.controllerData[controller.controllerId()];
         if (controllerData) {
             controller.deserialize(controllerData.data);
-            controllerData.purgeOnNextLoad = false;
+            controllerData.purgeOnNextLoad = undefined;
         }
     }
 
@@ -133,23 +161,29 @@ export class ControllerStorage {
         // storing data into our local controllerData Record
         data && data.forEach(saved => this.controllerData[saved.type] = saved.controllerData);
 
-        const restoredControllers: ControllerType[] = [];
+        const restoredControllers: ControllerIdentifier[] = [];
         this.trackedControllers.forEach(controller => {
             this.restoreController(controller);
-            restoredControllers.push(controller.controllerType);
+            restoredControllers.push(controller.controllerId());
         });
         this.trackedControllers = []; // clear tracking list
 
-        Object.entries(this.controllerData).forEach(([type, data]) => {
+        let purgedData = false;
+        Object.entries(this.controllerData).forEach(([id, data]) => {
             if (data.purgeOnNextLoad) {
-                delete this.controllerData[type];
+                delete this.controllerData[id];
+                purgedData = true;
                 return;
             }
 
-            if (!restoredControllers.includes(type)) {
+            if (!restoredControllers.includes(id)) {
                 data.purgeOnNextLoad = true;
             }
         });
+
+        if (purgedData) {
+            this.enqueueSaveRequest(500);
+        }
     }
 
     public load(username: MacAddress) { // will be called once accessory gets published
@@ -204,7 +238,7 @@ export class ControllerStorage {
             throw new Error("Cannot save controllerData for a storage without a username!");
         }
 
-        const accessories: Record<string, Record<ControllerType, ControllerData>> = {
+        const accessories: Record<string, Record<ControllerIdentifier, ControllerData>> = {
             [this.accessoryUUID]: this.controllerData,
         };
         if (this.linkedAccessories) { // grab data from all linked storage objects
@@ -216,8 +250,8 @@ export class ControllerStorage {
             const entries = Object.entries(controllerData);
 
             if (entries.length > 0) {
-                accessoryData[uuid] = entries.map(([type, data]) => ({
-                    type: type,
+                accessoryData[uuid] = entries.map(([id, data]) => ({
+                    type: id,
                     controllerData: data,
                 }));
             }
