@@ -3,8 +3,9 @@ import {
   Categories,
   Characteristic,
   CharacteristicEventTypes,
-  Controller, ControllerServiceMap,
+  Controller,
   ControllerIdentifier,
+  ControllerServiceMap,
   Service,
   uuid
 } from '..';
@@ -12,7 +13,9 @@ import {
 
 class TestController implements Controller {
 
-  readonly controllerType: ControllerIdentifier = "test-type";
+  controllerId(): ControllerIdentifier {
+    return "test-id";
+  }
 
   constructServices(): ControllerServiceMap {
     const lightService = new Service.Lightbulb('', '');
