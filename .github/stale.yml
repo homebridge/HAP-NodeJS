@@ -6,7 +6,7 @@ daysUntilStale: 60
 daysUntilClose: 7
 # Issues or Pull Requests with these labels will never be considered stale. Set to `[]` to disable
 exemptLabels:
-  - pinned
+  - long running
 # Label to use when marking as stale
 staleLabel: stale
 # Comment to post when marking as stale. Set to `false` to disable
