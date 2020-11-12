@@ -1053,6 +1053,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
             this.nextAudioSession = audioSession;
         }
 
+        // TODO properly remove that
         audioSession.on(SiriAudioSessionEvents.CLOSE, this.handleSiriAudioSessionClosed.bind(this, audioSession));
         audioSession.start();
     };
@@ -1191,6 +1192,9 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
     // -----------------------------------------------------------------------------------
 
+    /**
+     * @private
+     */
     constructServices(): RemoteControllerServiceMap {
         this.targetControlManagementService = new Service.TargetControlManagement('', '');
         this.targetControlManagementService.setCharacteristic(Characteristic.TargetControlSupportedConfiguration, this.supportedConfiguration);
@@ -1228,6 +1232,9 @@ export class RemoteController extends EventEmitter implements SerializableContro
         };
     }
 
+    /**
+     * @private
+     */
     initWithServices(serviceMap: RemoteControllerServiceMap): void | RemoteControllerServiceMap {
         this.targetControlManagementService = serviceMap.targetControlManagement;
         this.targetControlService = serviceMap.targetControl;
@@ -1237,6 +1244,9 @@ export class RemoteController extends EventEmitter implements SerializableContro
         this.dataStreamManagement = new DataStreamManagement(serviceMap.dataStreamTransportManagement);
     }
 
+    /**
+     * @private
+     */
     configureServices(): void {
         if (!this.targetControlManagementService || !this.targetControlService) {
             throw new Error("Unexpected state: Services not configured!"); // playing it save
@@ -1288,11 +1298,30 @@ export class RemoteController extends EventEmitter implements SerializableContro
         }
     }
 
+    /**
+     * @private
+     */
+    handleControllerRemoved(): void {
+        // TODO revise the whole thing: RemoteController is quite complicated
+        //  and is strongly tight to the DataStreamManagement (and thus the DataStreamServer)
+        //  which are currently all not built to be reset.
+        //  I know supporting removal of controllers only on a subset of all controllers is quite whack
+        //  but its the beta :shrug:
+        throw new Error("Removing RemoteController isn't supported yet!");
+        // TODO should we aim to call handleFactoryReset don't trigger state change delegate
+    }
+
+    /**
+     * @private
+     */
     handleFactoryReset(): void {
         debug("Accessory was unpaired. Resetting targets...");
         this.handleResetTargets(undefined);
     }
 
+    /**
+     * @private
+     */
     serialize(): SerializedControllerState | undefined {
         if (!this.activeIdentifier && Object.keys(this.targetConfigurations).length === 0) {
             return undefined;
@@ -1304,13 +1333,19 @@ export class RemoteController extends EventEmitter implements SerializableContro
         };
     }
 
+    /**
+     * @private
+     */
     deserialize(serialized: SerializedControllerState): void {
         this.activeIdentifier = serialized.activeIdentifier;
         this.targetConfigurations = serialized.targetConfigurations;
         this.updatedTargetConfiguration();
     }
 
-    setupStateChangeDelegate(delegate: StateChangeDelegate): void {
+    /**
+     * @private
+     */
+    setupStateChangeDelegate(delegate?: StateChangeDelegate): void {
         this.stateChangeDelegate = delegate;
     }
 
@@ -1452,7 +1487,7 @@ export class SiriAudioSession extends EventEmitter {
         }
     }
 
-    private handleSiriAudioFrame = (frame?: AudioFrame) => { // called from audio producer
+    private handleSiriAudioFrame(frame?: AudioFrame): void { // called from audio producer
         if (this.state >= SiriAudioSessionState.CLOSING) {
             return;
         }

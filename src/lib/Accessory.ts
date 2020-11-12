@@ -457,7 +457,7 @@ export class Accessory extends EventEmitter {
         this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, { service: service });
       }
 
-      service.removeAllListeners();
+      service.removeAllListeners(); // TODO this should probably also call removeAllListeners on every characteristic? Shouldn't matter right, cause reference is removed?
     }
   }
 
@@ -700,7 +700,7 @@ export class Accessory extends EventEmitter {
    *
    * @param controllerConstructor {Controller | ControllerConstructor}
    */
-  public configureController(controllerConstructor: Controller | ControllerConstructor) { // TODO add support to remove controllers
+  public configureController(controllerConstructor: Controller | ControllerConstructor) {
     const controller = typeof controllerConstructor === "function"
         ? new controllerConstructor() // any custom constructor arguments should be passed before using .bind(...)
         : controllerConstructor;
@@ -756,6 +756,45 @@ export class Accessory extends EventEmitter {
 
     if (controller instanceof CameraController) { // save CameraController for Snapshot handling
       this.activeCameraController = controller;
+    }
+  }
+
+  /**
+   * This method will remove a given Controller from this accessory.
+   * The controller object will be restored to its initial state.
+   * This also means that any event handlers setup for the controller will be removed.
+   *
+   * @param controller - The controller which should be removed from the accessory.
+   */
+  public removeController(controller: Controller): void {
+    const id = controller.controllerId();
+
+    const storedController = this.controllers[id];
+    if (storedController) {
+      if (storedController.controller !== controller) {
+        throw new Error("[" + this.displayName + "] tried removing a controller with the id/type '" + id + "' though provided controller isn't the same which is registered!");
+      }
+
+      controller.handleControllerRemoved();
+      if (isSerializableController(controller)) {
+        this.controllerStorage.untrackController(controller);
+      }
+
+      delete this.controllers[id];
+
+      if (this.activeCameraController === controller) {
+        this.activeCameraController = undefined;
+      }
+
+      Object.values(storedController.serviceMap).forEach(service => {
+        if (service) {
+          this.removeService(service);
+        }
+      });
+    }
+
+    if (this.serializedControllers) {
+      delete this.serializedControllers[id];
     }
   }
 

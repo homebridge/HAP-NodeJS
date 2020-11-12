@@ -74,6 +74,9 @@ export interface Controller<M extends ControllerServiceMap = ControllerServiceMa
      * A {@link ControllerServiceMap} basically maps a name to every service on the controller.
      * It is used to potentially recreate a controller for a given ServiceMap using {@link initWithServices}.
      *
+     * The set of services represented by the Controller MUST remain static and can only change over new version of
+     * the Controller implementation (see {@link initWithServices})
+     *
      * @returns a {@link ControllerServiceMap} representing all services of a controller indexed by a controller chosen name.
      */
     constructServices(): M;
@@ -102,10 +105,23 @@ export interface Controller<M extends ControllerServiceMap = ControllerServiceMa
     configureServices(): void;
 
     /**
+     * This method is called once the Controller is removed from the accessory.
+     * The controller MUST reset everything to its initial state (just as it would have been constructed freshly)
+     * form the constructor.
+     * Adding the Controller back to an accessory after it was removed MUST be supported!
+     * If the controller is a {@link SerializableController} it MUST NOT call the {@link StateChangeDelegate}
+     * as a result of a call to this method.
+     *
+     * All service contained in the {@link ControllerServiceMap} returned by {@link constructServices}
+     * will be automatically removed from the Accessory. The Controller MUST remove any references to those services.
+     */
+    handleControllerRemoved(): void;
+
+    /**
      * This method is called to signal a factory reset of the controller and its services and characteristics.
      * A controller MUST reset any configuration or states to default values.
      *
-     * This method is currently only called when the Accessory gets unpaired.
+     * This method is called once the accessory gets unpaired or the Controller gets removed from the Accessory.
      */
     handleFactoryReset?(): void;
 
@@ -140,10 +156,11 @@ export interface SerializableController<M extends ControllerServiceMap = Control
      * The implementing controller SHOULD store the function and call it every time the internal controller state changes.
      * It should be expected that the {@link serialize} method will be called next and that the state will be stored
      * to disk.
+     * The delegate parameter can be undefined when the controller is removed and the state change delegate is reset.
      *
      * @param delegate {StateChangeDelegate} - the delegate to call when controller state has changed
      */
-    setupStateChangeDelegate(delegate: StateChangeDelegate): void;
+    setupStateChangeDelegate(delegate?: StateChangeDelegate): void;
 
 }
 

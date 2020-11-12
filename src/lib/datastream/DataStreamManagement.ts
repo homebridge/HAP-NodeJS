@@ -59,12 +59,12 @@ export const enum DataStreamStatus {
 export class DataStreamManagement {
 
     // one server per accessory is probably the best practice
-    private readonly dataStreamServer: DataStreamServer = new DataStreamServer();
+    private readonly dataStreamServer: DataStreamServer = new DataStreamServer(); // TODO how to handle Remote+future HKSV controller at the same time?
 
     private readonly dataStreamTransportManagementService: DataStreamTransportManagement;
 
-    readonly supportedDataStreamTransportConfiguration: string;
-    lastSetupDataStreamTransportResponse: string = ""; // stripped. excludes ACCESSORY_KEY_SALT
+    private readonly supportedDataStreamTransportConfiguration: string;
+    private lastSetupDataStreamTransportResponse: string = ""; // stripped. excludes ACCESSORY_KEY_SALT
 
     constructor(service?: DataStreamTransportManagement) {
         const supportedConfiguration: TransportType[] = [TransportType.HOMEKIT_DATA_STREAM];

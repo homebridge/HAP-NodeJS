@@ -359,9 +359,9 @@ export class AmbientLightningController extends EventEmitter implements Serializ
   private readonly adjustmentFactorChangedListener: (change: CharacteristicChange) => void;
   private readonly characteristicManualWrittenChangeListener: (change: CharacteristicChange) => void;
 
-  private readonly supportedTransitionConfiguration: SupportedCharacteristicValueTransitionConfiguration;
-  private readonly transitionControl: CharacteristicValueTransitionControl;
-  private readonly activeTransitionCount: CharacteristicValueActiveTransitionCount;
+  private supportedTransitionConfiguration?: SupportedCharacteristicValueTransitionConfiguration;
+  private transitionControl?: CharacteristicValueTransitionControl;
+  private activeTransitionCount?: CharacteristicValueActiveTransitionCount;
 
   private colorTemperatureCharacteristic?: ColorTemperature;
   private brightnessCharacteristic?: Brightness;
@@ -394,12 +394,6 @@ export class AmbientLightningController extends EventEmitter implements Serializ
 
     this.adjustmentFactorChangedListener = this.handleAdjustmentFactorChanged.bind(this);
     this.characteristicManualWrittenChangeListener = this.handleCharacteristicManualWritten.bind(this);
-
-    this.supportedTransitionConfiguration = this.lightbulb.getCharacteristic(Characteristic.SupportedCharacteristicValueTransitionConfiguration);
-    this.transitionControl = this.lightbulb.getCharacteristic(Characteristic.CharacteristicValueTransitionControl)
-      .updateValue("");
-    this.activeTransitionCount = this.lightbulb.getCharacteristic(Characteristic.CharacteristicValueActiveTransitionCount)
-      .updateValue(0);
   }
 
   /**
@@ -425,7 +419,7 @@ export class AmbientLightningController extends EventEmitter implements Serializ
    * This is the case when the user manually changes the value of Hue, Saturation or ColorTemperature characteristics
    * (or if any of those values is changed by physical interaction with the lightbulb).
    */
-  public disableAmbientLightning() {
+  public disableAmbientLightning(triggerStateChange: boolean = true) {
     if (this.updateTimeout) {
       clearTimeout(this.updateTimeout);
       this.updateTimeout = undefined;
@@ -440,6 +434,10 @@ export class AmbientLightningController extends EventEmitter implements Serializ
       }
       if (this.saturationCharacteristic) {
         this.saturationCharacteristic.removeListener(CharacteristicEventTypes.CHANGE, this.characteristicManualWrittenChangeListener);
+      }
+
+      if (triggerStateChange) {
+        this.stateChangeDelegate && this.stateChangeDelegate();
       }
     }
 
@@ -456,11 +454,9 @@ export class AmbientLightningController extends EventEmitter implements Serializ
 
     this.didRunFirstInitializationStep = false;
 
-    this.activeTransitionCount.sendEventNotification(0);
+    this.activeTransitionCount!.sendEventNotification(0);
 
     debug("[%s] Disabling ambient lightning", this.lightbulb.displayName);
-
-    this.stateChangeDelegate && this.stateChangeDelegate();
   }
 
   /**
@@ -519,7 +515,7 @@ export class AmbientLightningController extends EventEmitter implements Serializ
   // ----------- PUBLIC API END -----------
 
   private handleActiveTransitionUpdated(calledFromDeserializer: boolean = false): void {
-    this.activeTransitionCount.sendEventNotification(1);
+    this.activeTransitionCount!.sendEventNotification(1);
 
     if (this.mode === AmbientLightningControllerMode.AUTOMATIC) {
       this.scheduleNextUpdate();
@@ -555,11 +551,11 @@ export class AmbientLightningController extends EventEmitter implements Serializ
     }
   }
 
-  private handleAmbientLightningDisabled(): void {
+  private handleAmbientLightningDisabled(calledFromResetHandler: boolean = false): void {
     if (this.mode === AmbientLightningControllerMode.MANUAL && this.activeTransition) { // only emit the event if a transition is actually enabled
       this.emit(AmbientLightningControllerEvents.DISABLED);
     }
-    this.disableAmbientLightning();
+    this.disableAmbientLightning(!calledFromResetHandler);
   }
 
   private handleAdjustmentFactorChanged(): void {
@@ -740,6 +736,12 @@ export class AmbientLightningController extends EventEmitter implements Serializ
    * @private
    */
   configureServices(): void {
+    this.supportedTransitionConfiguration = this.lightbulb.getCharacteristic(Characteristic.SupportedCharacteristicValueTransitionConfiguration);
+    this.transitionControl = this.lightbulb.getCharacteristic(Characteristic.CharacteristicValueTransitionControl)
+      .updateValue("");
+    this.activeTransitionCount = this.lightbulb.getCharacteristic(Characteristic.CharacteristicValueActiveTransitionCount)
+      .updateValue(0);
+
     this.supportedTransitionConfiguration
       .onGet(this.handleSupportedTransitionConfigurationRead.bind(this));
     this.transitionControl
@@ -755,6 +757,19 @@ export class AmbientLightningController extends EventEmitter implements Serializ
           throw new HapStatusError(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
         }
       });
+  }
+
+  /**
+   * @private
+   */
+  handleControllerRemoved(): void {
+    this.handleAmbientLightningDisabled(true);
+
+    this.lightbulb.removeCharacteristic(this.supportedTransitionConfiguration!);
+    this.lightbulb.removeCharacteristic(this.transitionControl!);
+    this.lightbulb.removeCharacteristic(this.activeTransitionCount!);
+
+    this.removeAllListeners();
   }
 
   /**
@@ -793,7 +808,7 @@ export class AmbientLightningController extends EventEmitter implements Serializ
   /**
    * @private
    */
-  setupStateChangeDelegate(delegate: StateChangeDelegate): void {
+  setupStateChangeDelegate(delegate?: StateChangeDelegate): void {
     this.stateChangeDelegate = delegate;
   }
 

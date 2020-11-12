@@ -223,6 +223,9 @@ export class CameraController extends EventEmitter implements Controller<CameraC
 
   // -----------------------------------------------------------------------------------
 
+  /**
+   * @private
+   */
   constructServices(): CameraControllerServiceMap {
     for (let i = 0; i < this.streamCount; i++) {
       this.streamManagements.push(new RTPStreamManagement(i, this.streamingOptions, this.delegate));
@@ -249,6 +252,9 @@ export class CameraController extends EventEmitter implements Controller<CameraC
     return serviceMap;
   }
 
+  /**
+   * @private
+   */
   initWithServices(serviceMap: CameraControllerServiceMap): void | CameraControllerServiceMap {
     let modifiedServiceMap = false;
 
@@ -331,6 +337,9 @@ export class CameraController extends EventEmitter implements Controller<CameraC
     return false;
   }
 
+  /**
+   * @private
+   */
   configureServices(): void {
     if (this.microphoneService) {
       this.microphoneService.getCharacteristic(Characteristic.Mute)!
@@ -375,10 +384,31 @@ export class CameraController extends EventEmitter implements Controller<CameraC
     }
   }
 
-  handleFactoryReset(): void {
-    this.streamManagements.forEach(management => management.handleFactoryReset());
+  /**
+   * @private
+   */
+  handleControllerRemoved(): void {
+    this.handleFactoryReset();
+
+    this.streamManagements.splice(0, this.streamManagements.length);
+    this.removeAllListeners();
   }
 
+  /**
+   * @private
+   */
+  handleFactoryReset(): void {
+    this.streamManagements.forEach(management => management.handleFactoryReset());
+
+    this.microphoneMuted = false;
+    this.microphoneVolume = 100;
+    this.speakerMuted = false;
+    this.speakerVolume = 100;
+  }
+
+  /**
+   * @private
+   */
   handleSnapshotRequest(height: number, width: number, accessoryName?: string): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       let timeout: Timeout | undefined = setTimeout(() => {
@@ -438,6 +468,9 @@ export class CameraController extends EventEmitter implements Controller<CameraC
     });
   }
 
+  /**
+   * @private
+   */
   handleCloseConnection(sessionID: SessionIdentifier): void {
     if (this.delegate instanceof LegacyCameraSourceAdapter) {
       this.delegate.forwardCloseConnection(sessionID);

@@ -43,7 +43,7 @@ export class ControllerStorage {
     private restoredAccessories?: Record<string, StoredControllerData[]>; // indexed by accessory UUID
 
     private parent?: ControllerStorage;
-    private linkedAccessories?: ControllerStorage[]; // indexed by accessory UUID
+    private linkedAccessories?: ControllerStorage[];
 
     private queuedSaveTimeout?: Timeout;
     private queuedSaveTime?: number;
@@ -98,6 +98,17 @@ export class ControllerStorage {
         } else {
             this.restoreController(controller);
         }
+    }
+
+    public untrackController(controller: SerializableController) {
+        const index = this.trackedControllers.indexOf(controller);
+        if (index !== -1) { // remove from trackedControllers if storage wasn't initialized yet
+            this.trackedControllers.splice(index, 1);
+        }
+
+        controller.setupStateChangeDelegate(undefined); // remove associating with this storage object
+
+        this.purgeControllerData(controller);
     }
 
     public purgeControllerData(controller: SerializableController) {
@@ -166,7 +177,7 @@ export class ControllerStorage {
             this.restoreController(controller);
             restoredControllers.push(controller.controllerId());
         });
-        this.trackedControllers = []; // clear tracking list
+        this.trackedControllers.splice(0, this.trackedControllers.length); // clear tracking list
 
         let purgedData = false;
         Object.entries(this.controllerData).forEach(([id, data]) => {
@@ -245,6 +256,7 @@ export class ControllerStorage {
             this.linkedAccessories.forEach(accessory => accessories[accessory.accessoryUUID] = accessory.controllerData);
         }
 
+        // TODO removed accessories won't ever be deleted?
         const accessoryData: Record<string, StoredControllerData[]> = this.restoredAccessories || {};
         Object.entries(accessories).forEach(([uuid, controllerData]) => {
             const entries = Object.entries(controllerData);

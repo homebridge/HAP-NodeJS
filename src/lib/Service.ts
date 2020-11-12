@@ -502,6 +502,7 @@ export class Service extends EventEmitter {
         if (getListeners.length) {
           // the callback can only be called once so we remove all old listeners
           characteristic.removeAllListeners(CharacteristicEventTypes.GET);
+          characteristic.removeOnGet();
           // @ts-expect-error
           getListeners.forEach(listener => characteristic.addListener(CharacteristicEventTypes.GET, listener));
         }
@@ -510,6 +511,7 @@ export class Service extends EventEmitter {
         if (setListeners.length) {
           // the callback can only be called once so we remove all old listeners
           characteristic.removeAllListeners(CharacteristicEventTypes.SET);
+          characteristic.removeOnSet();
           // @ts-expect-error
           setListeners.forEach(listener => characteristic.addListener(CharacteristicEventTypes.SET, listener));
         }

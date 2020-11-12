@@ -870,12 +870,20 @@ export class Characteristic extends EventEmitter {
    * ```
    * @param handler
    */
-  public onGet(handler: CharacteristicGetHandler) {
+  public onGet(handler: CharacteristicGetHandler): Characteristic {
     if (typeof handler !== 'function' || handler.length !== 0) {
       this.characteristicWarning(`.onGet handler must be a function with exactly zero input arguments.`);
       return this;
     }
     this.getHandler = handler;
+    return this;
+  }
+
+  /**
+   * Removes the {@link CharacteristicGetHandler} handler which was configured using {@link onGet}.
+   */
+  public removeOnGet(): Characteristic {
+    this.getHandler = undefined;
     return this;
   }
 
@@ -893,12 +901,20 @@ export class Characteristic extends EventEmitter {
    * ```
    * @param handler
    */
-  public onSet(handler: CharacteristicSetHandler) {
+  public onSet(handler: CharacteristicSetHandler): Characteristic {
     if (typeof handler !== 'function' || handler.length !== 1) {
       this.characteristicWarning(`.onSet handler must be a function with exactly one input argument.`);
       return this;
     }
     this.setHandler = handler;
+    return this;
+  }
+
+  /**
+   * Removes the {@link CharacteristicSetHandler} which was configured using {@link onSet}.
+   */
+  public removeOnSet(): Characteristic {
+    this.setHandler = undefined;
     return this;
   }
 
@@ -1912,6 +1928,18 @@ export class Characteristic extends EventEmitter {
 
   private characteristicWarning(message: string, type = CharacteristicWarningType.WARN_MESSAGE): void {
     this.emit(CharacteristicEventTypes.CHARACTERISTIC_WARNING, type, message);
+  }
+
+  /**
+   * @param event
+   * @private
+   */
+  removeAllListeners(event?: string | symbol): this {
+    if (!event) {
+      this.removeOnGet();
+      this.removeOnSet();
+    }
+    return super.removeAllListeners(event);
   }
 
   /**
