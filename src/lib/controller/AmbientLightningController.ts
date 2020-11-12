@@ -260,7 +260,7 @@ interface SerializedAmbientLightningControllerState {
  * This class allows adding Ambient Lightning support to Lightbulb services.
  * The Lightbulb service MUST have the {@link Characteristic.ColorTemperature} characteristic AND
  * the {@link Characteristic.Brightness} characteristic added.
- * The light my also have {@link Characteristic.Hue} and {@link Characteristic.Saturation} characteristics
+ * The light may also expose {@link Characteristic.Hue} and {@link Characteristic.Saturation} characteristics
  * (though additional work is required to keep them in sync with the color temperature characteristic. see below)
  *
  * How Ambient Lightning works:
@@ -305,6 +305,8 @@ interface SerializedAmbientLightningControllerState {
  *    In order to notify the AmbientLightningController of such an event happening OUTSIDE of HomeKit
  *    (like changing stuff on the physical Lightbulb) you can call {@link Characteristic.setValue} manually
  *    (keep in mind, this will fire call your SET handler) or call {@link disableAmbientLightning} directly.
+ *   - Be aware that even when the light is turned off the transition will continue to call the SET handler
+ *    of the ColorTemperature characteristic.
  *   - When using Hue/Saturation:
  *    When using Hue/Saturation in combination with the ColorTemperature characteristic you need to update the
  *    respective other in a particular way depending if being in "color mode" or "color temperature mode".
@@ -684,7 +686,7 @@ export class AmbientLightningController extends EventEmitter implements Serializ
       this.hueCharacteristic.value = color.hue;
     }
 
-    this.colorTemperatureCharacteristic!.setValue(temperature, context);
+    this.colorTemperatureCharacteristic!.setValue(temperature, context); // TODO maybe ensure this call actually succeeds?
 
     if (!this.activeTransition) {
       console.warn("[" + this.lightbulb.displayName + "] Ambient Lightning was probably disable my mistake by some call in the SET handler of the ColorTemperature characteristic! " +
@@ -848,7 +850,7 @@ export class AmbientLightningController extends EventEmitter implements Serializ
         ValueTransitionParametersTypes.START_TIME, Buffer.from(active.transitionStartBuffer, "hex"),
         ValueTransitionParametersTypes.UNKNOWN_3, Buffer.from(active.id3, "hex"),
       ),
-      ValueTransitionConfigurationStatusTypes.TIME_SINCE_START, timeSinceStartBuffer,
+      ValueTransitionConfigurationStatusTypes.TIME_SINCE_START, timeSinceStartBuffer, // TODO maybe this is actually the last transition time?
     );
 
     return tlv.encode(
