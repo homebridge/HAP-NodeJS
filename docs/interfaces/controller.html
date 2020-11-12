@@ -115,40 +115,16 @@
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
 						<section class="tsd-index-section ">
-							<h3>Properties</h3>
-							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="controller.html#controllertype" class="tsd-kind-icon">controller<wbr>Type</a></li>
-							</ul>
-						</section>
-						<section class="tsd-index-section ">
 							<h3>Methods</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="controller.html#configureservices" class="tsd-kind-icon">configure<wbr>Services</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="controller.html#constructservices" class="tsd-kind-icon">construct<wbr>Services</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="controller.html#controllerid" class="tsd-kind-icon">controller<wbr>Id</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="controller.html#handlecontrollerremoved" class="tsd-kind-icon">handle<wbr>Controller<wbr>Removed</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="controller.html#handlefactoryreset" class="tsd-kind-icon">handle<wbr>Factory<wbr>Reset</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="controller.html#initwithservices" class="tsd-kind-icon">init<wbr>With<wbr>Services</a></li>
 							</ul>
 						</section>
-					</div>
-				</section>
-			</section>
-			<section class="tsd-panel-group tsd-member-group ">
-				<h2>Properties</h2>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="controllertype" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagReadonly">Readonly</span> controller<wbr>Type</h3>
-					<div class="tsd-signature tsd-kind-icon">controller<wbr>Type<span class="tsd-signature-symbol">:</span> <a href="../modules.html#controllertype" class="tsd-signature-type">ControllerType</a></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/controller/Controller.ts#L59">src/lib/controller/Controller.ts:59</a></li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>Every instance of a Controller must expose the respective type see {@see ControllerType}.
-							The type of a Controller implementation MUST NEVER change.</p>
-						</div>
-						<p>This property must stay readonly. Controllers can be inherited from, but even then the type must not change.</p>
 					</div>
 				</section>
 			</section>
@@ -164,7 +140,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/controller/Controller.ts#L98">src/lib/controller/Controller.ts:98</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/controller/Controller.ts#L105">src/lib/controller/Controller.ts:105</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -189,7 +165,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/controller/Controller.ts#L75">src/lib/controller/Controller.ts:75</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/controller/Controller.ts#L82">src/lib/controller/Controller.ts:82</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -204,9 +180,66 @@
 								<p>The method must return all created services in a ServiceMap.
 									A <a href="controllerservicemap.html">ControllerServiceMap</a> basically maps a name to every service on the controller.
 								It is used to potentially recreate a controller for a given ServiceMap using <a href="controller.html#initwithservices">initWithServices</a>.</p>
+								<p>The set of services represented by the Controller MUST remain static and can only change over new version of
+								the Controller implementation (see <a href="controller.html#initwithservices">initWithServices</a>)</p>
 							</div>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">M</span></h4>
 							<p>a <a href="controllerservicemap.html">ControllerServiceMap</a> representing all services of a controller indexed by a controller chosen name.</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
+					<a name="controllerid" class="tsd-anchor"></a>
+					<h3>controller<wbr>Id</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
+						<li class="tsd-signature tsd-kind-icon">controller<wbr>Id<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../modules.html#controlleridentifier" class="tsd-signature-type">ControllerIdentifier</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/controller/Controller.ts#L63">src/lib/controller/Controller.ts:63</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Every instance of a Controller must define appropriate identifying material.
+									The returned identifier MUST NOT change over the lifetime of the Controller object.</p>
+								</div>
+								<p>Note: The controller can choose to return the same identifier for all controllers of the same type.
+								This will result in the user only being able to add ONE instance of an Controller to an accessory.</p>
+								<p>Some predefined identifiers can be found in <a href="../modules.html#controlleridentifier">ControllerIdentifier</a>.</p>
+							</div>
+							<h4 class="tsd-returns-title">Returns <a href="../modules.html#controlleridentifier" class="tsd-signature-type">ControllerIdentifier</a></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
+					<a name="handlecontrollerremoved" class="tsd-anchor"></a>
+					<h3>handle<wbr>Controller<wbr>Removed</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
+						<li class="tsd-signature tsd-kind-icon">handle<wbr>Controller<wbr>Removed<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/controller/Controller.ts#L118">src/lib/controller/Controller.ts:118</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>This method is called once the Controller is removed from the accessory.
+										The controller MUST reset everything to its initial state (just as it would have been constructed freshly)
+										form the constructor.
+										Adding the Controller back to an accessory after it was removed MUST be supported!
+										If the controller is a <a href="serializablecontroller.html">SerializableController</a> it MUST NOT call the <a href="../modules.html#statechangedelegate">StateChangeDelegate</a>
+									as a result of a call to this method.</p>
+								</div>
+								<p>All service contained in the <a href="controllerservicemap.html">ControllerServiceMap</a> returned by <a href="controller.html#constructservices">constructServices</a>
+								will be automatically removed from the Accessory. The Controller MUST remove any references to those services.</p>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -220,7 +253,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/controller/Controller.ts#L106">src/lib/controller/Controller.ts:106</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/controller/Controller.ts#L126">src/lib/controller/Controller.ts:126</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -228,7 +261,7 @@
 									<p>This method is called to signal a factory reset of the controller and its services and characteristics.
 									A controller MUST reset any configuration or states to default values.</p>
 								</div>
-								<p>This method is currently only called when the Accessory gets unpaired.</p>
+								<p>This method is called once the accessory gets unpaired or the Controller gets removed from the Accessory.</p>
 							</div>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
 						</li>
@@ -244,7 +277,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/controller/Controller.ts#L89">src/lib/controller/Controller.ts:89</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/controller/Controller.ts#L96">src/lib/controller/Controller.ts:96</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -288,14 +321,17 @@
 					<li class="current tsd-kind-interface tsd-has-type-parameter">
 						<a href="controller.html" class="tsd-kind-icon">Controller</a>
 						<ul>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="controller.html#controllertype" class="tsd-kind-icon">controller<wbr>Type</a>
-							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-interface">
 								<a href="controller.html#configureservices" class="tsd-kind-icon">configure<wbr>Services</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-interface">
 								<a href="controller.html#constructservices" class="tsd-kind-icon">construct<wbr>Services</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-interface">
+								<a href="controller.html#controllerid" class="tsd-kind-icon">controller<wbr>Id</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-interface">
+								<a href="controller.html#handlecontrollerremoved" class="tsd-kind-icon">handle<wbr>Controller<wbr>Removed</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-interface">
 								<a href="controller.html#handlefactoryreset" class="tsd-kind-icon">handle<wbr>Factory<wbr>Reset</a>

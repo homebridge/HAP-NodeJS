@@ -154,6 +154,7 @@
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="bridge.html#removealllisteners" class="tsd-kind-icon">remove<wbr>All<wbr>Listeners</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="bridge.html#removebridgedaccessories" class="tsd-kind-icon">remove<wbr>Bridged<wbr>Accessories</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="bridge.html#removebridgedaccessory" class="tsd-kind-icon">remove<wbr>Bridged<wbr>Accessory</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="bridge.html#removecontroller" class="tsd-kind-icon">remove<wbr>Controller</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="bridge.html#removelistener" class="tsd-kind-icon">remove<wbr>Listener</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="bridge.html#removeservice" class="tsd-kind-icon">remove<wbr>Service</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="bridge.html#setmaxlisteners" class="tsd-kind-icon">set<wbr>Max<wbr>Listeners</a></li>
@@ -176,14 +177,14 @@
 					<a name="constructor" class="tsd-anchor"></a>
 					<h3>constructor</h3>
 					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class tsd-is-overwrite">
-						<li class="tsd-signature tsd-kind-icon">new <wbr>Bridge<span class="tsd-signature-symbol">(</span>displayName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, serialNumber<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="bridge.html" class="tsd-signature-type">Bridge</a></li>
+						<li class="tsd-signature tsd-kind-icon">new <wbr>Bridge<span class="tsd-signature-symbol">(</span>displayName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, UUID<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="bridge.html" class="tsd-signature-type">Bridge</a></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<p>Overrides <a href="accessory.html">Accessory</a>.<a href="accessory.html#constructor">constructor</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Bridge.ts#L8">src/lib/Bridge.ts:8</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Bridge.ts#L8">src/lib/Bridge.ts:8</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -192,7 +193,7 @@
 									<h5>displayName: <span class="tsd-signature-type">string</span></h5>
 								</li>
 								<li>
-									<h5>serialNumber: <span class="tsd-signature-type">string</span></h5>
+									<h5>UUID: <span class="tsd-signature-type">string</span></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <a href="bridge.html" class="tsd-signature-type">Bridge</a></h4>
@@ -209,7 +210,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#uuid">UUID</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L355">src/lib/Accessory.ts:355</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L356">src/lib/Accessory.ts:356</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -220,7 +221,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#_accessoryinfo">_accessoryInfo</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L345">src/lib/Accessory.ts:345</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L346">src/lib/Accessory.ts:346</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -231,7 +232,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#_advertiser">_advertiser</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L349">src/lib/Accessory.ts:349</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L350">src/lib/Accessory.ts:350</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -242,7 +243,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#_identifiercache">_identifierCache</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L347">src/lib/Accessory.ts:347</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L348">src/lib/Accessory.ts:348</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -253,7 +254,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#_isbridge">_isBridge</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L331">src/lib/Accessory.ts:331</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L331">src/lib/Accessory.ts:331</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -264,7 +265,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#_server">_server</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L350">src/lib/Accessory.ts:350</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L351">src/lib/Accessory.ts:351</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -275,7 +276,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#_setupid">_setupID</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L346">src/lib/Accessory.ts:346</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L347">src/lib/Accessory.ts:347</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -286,7 +287,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#_setupuri">_setupURI</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L351">src/lib/Accessory.ts:351</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L352">src/lib/Accessory.ts:352</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -297,7 +298,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#aid">aid</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L330">src/lib/Accessory.ts:330</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L330">src/lib/Accessory.ts:330</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -308,7 +309,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#bridge">bridge</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L333">src/lib/Accessory.ts:333</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L333">src/lib/Accessory.ts:333</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -319,7 +320,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#bridged">bridged</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L332">src/lib/Accessory.ts:332</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L332">src/lib/Accessory.ts:332</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -330,7 +331,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#bridgedaccessories">bridgedAccessories</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L334">src/lib/Accessory.ts:334</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L334">src/lib/Accessory.ts:334</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -341,7 +342,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#category">category</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L337">src/lib/Accessory.ts:337</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L337">src/lib/Accessory.ts:337</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -352,7 +353,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#controllerstorage">controllerStorage</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L348">src/lib/Accessory.ts:348</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L349">src/lib/Accessory.ts:349</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -363,7 +364,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#displayname">displayName</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L355">src/lib/Accessory.ts:355</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L356">src/lib/Accessory.ts:356</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -374,7 +375,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#lastknownusername">lastKnownUsername</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L336">src/lib/Accessory.ts:336</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L336">src/lib/Accessory.ts:336</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -385,7 +386,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#reachable">reachable</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L335">src/lib/Accessory.ts:335</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L335">src/lib/Accessory.ts:335</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -396,7 +397,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#services">services</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L338">src/lib/Accessory.ts:338</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L338">src/lib/Accessory.ts:338</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -407,7 +408,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#shouldpurgeunusedids">shouldPurgeUnusedIDs</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L340">src/lib/Accessory.ts:340</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L340">src/lib/Accessory.ts:340</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -418,7 +419,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#categories">Categories</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L327">src/lib/Accessory.ts:327</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L327">src/lib/Accessory.ts:327</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -454,7 +455,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#_assignids">_assignIDs</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L881">src/lib/Accessory.ts:881</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L923">src/lib/Accessory.ts:923</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -484,7 +485,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#addbridgedaccessories">addBridgedAccessories</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L550">src/lib/Accessory.ts:550</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L552">src/lib/Accessory.ts:552</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -508,7 +509,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#addbridgedaccessory">addBridgedAccessory</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L516">src/lib/Accessory.ts:516</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L517">src/lib/Accessory.ts:517</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -581,7 +582,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#addservice">addService</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L390">src/lib/Accessory.ts:390</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L391">src/lib/Accessory.ts:391</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -608,7 +609,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#configurecamerasource">configureCameraSource</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L653">src/lib/Accessory.ts:653</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L655">src/lib/Accessory.ts:655</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -656,7 +657,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#configurecontroller">configureController</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L701">src/lib/Accessory.ts:701</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L703">src/lib/Accessory.ts:703</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -666,9 +667,9 @@
 								</div>
 								<p>The controller can be passed as an instance of the class or as a constructor (without any necessary parameters)
 									for a new Controller.
-								Only one Controller of a given <a href="../modules.html#controllertype">ControllerType</a> can be configured for a given Accessory.</p>
+								Only one Controller of a given <a href="../modules.html#controlleridentifier">ControllerIdentifier</a> can be configured for a given Accessory.</p>
 								<p>When called, it will be checked if there are any services and persistent data the Controller (for the given
-								<a href="../modules.html#controllertype">ControllerType</a>) can be restored from. Otherwise the Controller will be created with new services.</p>
+								<a href="../modules.html#controlleridentifier">ControllerIdentifier</a>) can be restored from. Otherwise the Controller will be created with new services.</p>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
@@ -693,7 +694,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#destroy">destroy</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L1138">src/lib/Accessory.ts:1138</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L1180">src/lib/Accessory.ts:1180</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -718,7 +719,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#disableunusedidpurge">disableUnusedIDPurge</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L925">src/lib/Accessory.ts:925</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L967">src/lib/Accessory.ts:967</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
@@ -743,7 +744,7 @@
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#emit">emit</a></p>
 								<p>Overrides EventEmitter.emit</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L300">src/lib/Accessory.ts:300</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L300">src/lib/Accessory.ts:300</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -765,7 +766,7 @@
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#emit">emit</a></p>
 								<p>Overrides EventEmitter.emit</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L301">src/lib/Accessory.ts:301</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L301">src/lib/Accessory.ts:301</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -787,7 +788,7 @@
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#emit">emit</a></p>
 								<p>Overrides EventEmitter.emit</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L303">src/lib/Accessory.ts:303</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L303">src/lib/Accessory.ts:303</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -806,7 +807,7 @@
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#emit">emit</a></p>
 								<p>Overrides EventEmitter.emit</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L304">src/lib/Accessory.ts:304</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L304">src/lib/Accessory.ts:304</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -825,7 +826,7 @@
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#emit">emit</a></p>
 								<p>Overrides EventEmitter.emit</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L306">src/lib/Accessory.ts:306</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L306">src/lib/Accessory.ts:306</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -841,7 +842,7 @@
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#emit">emit</a></p>
 								<p>Overrides EventEmitter.emit</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L307">src/lib/Accessory.ts:307</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L307">src/lib/Accessory.ts:307</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -857,7 +858,7 @@
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#emit">emit</a></p>
 								<p>Overrides EventEmitter.emit</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L309">src/lib/Accessory.ts:309</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L309">src/lib/Accessory.ts:309</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -890,7 +891,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#enableunusedidpurge">enableUnusedIDPurge</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L929">src/lib/Accessory.ts:929</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L971">src/lib/Accessory.ts:971</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
@@ -946,7 +947,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#getprimaryaccessory">getPrimaryAccessory</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L501">src/lib/Accessory.ts:501</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L502">src/lib/Accessory.ts:502</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -971,7 +972,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#getservice">getService</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L469">src/lib/Accessory.ts:469</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L470">src/lib/Accessory.ts:470</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-type-parameters-title">Type parameters</h4>
@@ -1001,7 +1002,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#getservicebyid">getServiceById</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L481">src/lib/Accessory.ts:481</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L482">src/lib/Accessory.ts:482</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-type-parameters-title">Type parameters</h4>
@@ -1137,7 +1138,7 @@
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#on">on</a></p>
 								<p>Overrides EventEmitter.on</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L288">src/lib/Accessory.ts:288</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L288">src/lib/Accessory.ts:288</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1177,7 +1178,7 @@
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#on">on</a></p>
 								<p>Overrides EventEmitter.on</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L289">src/lib/Accessory.ts:289</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L289">src/lib/Accessory.ts:289</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1217,7 +1218,7 @@
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#on">on</a></p>
 								<p>Overrides EventEmitter.on</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L291">src/lib/Accessory.ts:291</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L291">src/lib/Accessory.ts:291</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1254,7 +1255,7 @@
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#on">on</a></p>
 								<p>Overrides EventEmitter.on</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L292">src/lib/Accessory.ts:292</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L292">src/lib/Accessory.ts:292</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1291,7 +1292,7 @@
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#on">on</a></p>
 								<p>Overrides EventEmitter.on</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L294">src/lib/Accessory.ts:294</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L294">src/lib/Accessory.ts:294</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1322,7 +1323,7 @@
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#on">on</a></p>
 								<p>Overrides EventEmitter.on</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L295">src/lib/Accessory.ts:295</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L295">src/lib/Accessory.ts:295</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1353,7 +1354,7 @@
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#on">on</a></p>
 								<p>Overrides EventEmitter.on</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L297">src/lib/Accessory.ts:297</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L297">src/lib/Accessory.ts:297</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1542,7 +1543,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#publish">publish</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L1013">src/lib/Accessory.ts:1013</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L1055">src/lib/Accessory.ts:1055</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1580,7 +1581,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#purgeunusedids">purgeUnusedIDs</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L937">src/lib/Accessory.ts:937</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L979">src/lib/Accessory.ts:979</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1629,7 +1630,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#removeallbridgedaccessories">removeAllBridgedAccessories</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L593">src/lib/Accessory.ts:593</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L595">src/lib/Accessory.ts:595</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
@@ -1672,7 +1673,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#removebridgedaccessories">removeBridgedAccessories</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L584">src/lib/Accessory.ts:584</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L586">src/lib/Accessory.ts:586</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1696,7 +1697,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#removebridgedaccessory">removeBridgedAccessory</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L559">src/lib/Accessory.ts:559</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L561">src/lib/Accessory.ts:561</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1706,6 +1707,40 @@
 								</li>
 								<li>
 									<h5>deferUpdate: <span class="tsd-signature-type">boolean</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<a name="removecontroller" class="tsd-anchor"></a>
+					<h3>remove<wbr>Controller</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+						<li class="tsd-signature tsd-kind-icon">remove<wbr>Controller<span class="tsd-signature-symbol">(</span>controller<span class="tsd-signature-symbol">: </span><a href="../interfaces/controller.html" class="tsd-signature-type">Controller</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#removecontroller">removeController</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L769">src/lib/Accessory.ts:769</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>This method will remove a given Controller from this accessory.
+										The controller object will be restored to its initial state.
+									This also means that any event handlers setup for the controller will be removed.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>controller: <a href="../interfaces/controller.html" class="tsd-signature-type">Controller</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The controller which should be removed from the accessory.</p>
+									</div>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
@@ -1769,7 +1804,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#removeservice">removeService</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L442">src/lib/Accessory.ts:442</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L443">src/lib/Accessory.ts:443</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1818,7 +1853,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#setprimaryservice">setPrimaryService</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L438">src/lib/Accessory.ts:438</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L439">src/lib/Accessory.ts:439</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1849,7 +1884,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#setupuri">setupURI</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L804">src/lib/Accessory.ts:804</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L846">src/lib/Accessory.ts:846</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
@@ -1867,7 +1902,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#unpublish">unpublish</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L1151">src/lib/Accessory.ts:1151</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L1193">src/lib/Accessory.ts:1193</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
@@ -1885,7 +1920,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#updatereachability">updateReachability</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L508">src/lib/Accessory.ts:508</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L509">src/lib/Accessory.ts:509</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1916,7 +1951,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#cleanupaccessorydata">cleanupAccessoryData</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L1900">src/lib/Accessory.ts:1900</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L1951">src/lib/Accessory.ts:1951</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1940,7 +1975,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#deserialize">deserialize</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L1852">src/lib/Accessory.ts:1852</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L1903">src/lib/Accessory.ts:1903</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1998,7 +2033,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="accessory.html">Accessory</a>.<a href="accessory.html#serialize">serialize</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/a4fbbdd/src/lib/Accessory.ts#L1797">src/lib/Accessory.ts:1797</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/c3aa282/src/lib/Accessory.ts#L1848">src/lib/Accessory.ts:1848</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -2183,6 +2218,9 @@
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 								<a href="bridge.html#removebridgedaccessory" class="tsd-kind-icon">remove<wbr>Bridged<wbr>Accessory</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+								<a href="bridge.html#removecontroller" class="tsd-kind-icon">remove<wbr>Controller</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited">
 								<a href="bridge.html#removelistener" class="tsd-kind-icon">remove<wbr>Listener</a>
