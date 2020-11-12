@@ -38,6 +38,9 @@ class TestController implements Controller {
 
   configureServices(): void {}
 
+  handleControllerRemoved(): void {
+  }
+
 }
 
 describe('Accessory', () => {
