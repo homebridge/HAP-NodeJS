@@ -103,15 +103,15 @@ const enum ValueTransitionConfigurationStatusTypes {
   TIME_SINCE_START = 0x03, // milliseconds since start of transition
 }
 
-interface AdaptiveLightningCharacteristicContext extends CharacteristicOperationContext {
-  controller: AdaptiveLightningController;
+interface AdaptiveLightingCharacteristicContext extends CharacteristicOperationContext {
+  controller: AdaptiveLightingController;
 }
 
-function isAdaptiveLightningContext(context: any): context is AdaptiveLightningCharacteristicContext {
+function isAdaptiveLightingContext(context: any): context is AdaptiveLightingCharacteristicContext {
   return context && "controller" in context;
 }
 
-export interface ActiveAdaptiveLightningTransition {
+export interface ActiveAdaptiveLightingTransition {
   iid: number; // color temperature characteristic
 
   transitionStartMillis: number; // start of transition in epoch time millis
@@ -120,7 +120,7 @@ export interface ActiveAdaptiveLightningTransition {
   transitionStartBuffer: string; // start of transition in milliseconds from 2001-01-01 00:00:00; unsigned 64 bit LE integer
   id3: string; // unknown hex
 
-  transitionCurve: AdaptiveLightningTransitionCurveEntry[];
+  transitionCurve: AdaptiveLightingTransitionCurveEntry[];
 
   brightnessCharacteristicIID: number;
   brightnessAdjustmentRange: BrightnessAdjustmentMultiplierRange;
@@ -139,7 +139,7 @@ export interface ActiveAdaptiveLightningTransition {
   notifyIntervalThreshold: number;
 }
 
-export interface AdaptiveLightningTransitionCurveEntry {
+export interface AdaptiveLightingTransitionCurveEntry {
   /**
    * The color temperature in mired.
    */
@@ -193,19 +193,19 @@ export interface BrightnessAdjustmentMultiplierRange {
   maxBrightnessValue: number;
 }
 
-export interface AdaptiveLightningOptions {
+export interface AdaptiveLightingOptions {
   /**
    * Defines how the controller will operate.
    * You can choose between automatic and manual mode.
-   * See {@link AdaptiveLightningControllerMode}.
+   * See {@link AdaptiveLightingControllerMode}.
    */
-  controllerMode: AdaptiveLightningControllerMode,
+  controllerMode: AdaptiveLightingControllerMode,
 }
 
 /**
- * Defines in which mode the {@link AdaptiveLightningController} will operate in.
+ * Defines in which mode the {@link AdaptiveLightingController} will operate in.
  */
-export const enum AdaptiveLightningControllerMode {
+export const enum AdaptiveLightingControllerMode {
   /**
    * In automatic mode pretty much everything from setup to transition scheduling is done by the controller.
    */
@@ -217,11 +217,11 @@ export const enum AdaptiveLightningControllerMode {
   MANUAL = 2,
 }
 
-export const enum AdaptiveLightningControllerEvents {
+export const enum AdaptiveLightingControllerEvents {
   /**
-   * This event is called once a HomeKit controller enables Adaptive Lightning
+   * This event is called once a HomeKit controller enables Adaptive Lighting
    * or a HomeHub sends a updated transition schedule for the next 24 hours.
-   * This is also called on startup when AdaptiveLightning was previously enabled.
+   * This is also called on startup when AdaptiveLighting was previously enabled.
    */
   UPDATE = "update",
   /**
@@ -232,16 +232,16 @@ export const enum AdaptiveLightningControllerEvents {
   DISABLED = "disable",
 }
 
-export declare interface AdaptiveLightningController {
+export declare interface AdaptiveLightingController {
   /**
-   * See {@link AdaptiveLightningControllerEvents.UPDATE}
+   * See {@link AdaptiveLightingControllerEvents.UPDATE}
    *
    * @param event
    * @param listener
    */
   on(event: "update", listener: () => void): this;
   /**
-   * See {@link AdaptiveLightningControllerEvents.DISABLED}
+   * See {@link AdaptiveLightingControllerEvents.DISABLED}
    *
    * @param event
    * @param listener
@@ -252,29 +252,29 @@ export declare interface AdaptiveLightningController {
   emit(event: "disable"): boolean;
 }
 
-interface SerializedAdaptiveLightningControllerState {
-  activeTransition: ActiveAdaptiveLightningTransition;
+interface SerializedAdaptiveLightingControllerState {
+  activeTransition: ActiveAdaptiveLightingTransition;
 }
 
 /**
- * This class allows adding Adaptive Lightning support to Lightbulb services.
+ * This class allows adding Adaptive Lighting support to Lightbulb services.
  * The Lightbulb service MUST have the {@link Characteristic.ColorTemperature} characteristic AND
  * the {@link Characteristic.Brightness} characteristic added.
  * The light may also expose {@link Characteristic.Hue} and {@link Characteristic.Saturation} characteristics
  * (though additional work is required to keep them in sync with the color temperature characteristic. see below)
  *
- * How Adaptive Lightning works:
- *  When enabling AdaptiveLightning the iDevice will send a transition schedule for the next 24 hours.
+ * How Adaptive Lighting works:
+ *  When enabling AdaptiveLighting the iDevice will send a transition schedule for the next 24 hours.
  *  This schedule will be renewed all 24 hours by a HomeHub in your home
  *  (updating the schedule according to your current day/night situation).
  *  Once enabled the lightbulb will execute the provided transitions. The color temperature value set is always
  *  dependent on the current brightness value. Meaning brighter light will be colder and darker light will be warmer.
- *  HomeKit considers Adaptive Lightning to be disabled as soon a write happens to either the
+ *  HomeKit considers Adaptive Lighting to be disabled as soon a write happens to either the
  *  Hue/Saturation or the ColorTemperature characteristics.
- *  The AdaptiveLightning state must persist across reboots.
+ *  The AdaptiveLighting state must persist across reboots.
  *
- * The AdaptiveLightningController can be operated in two modes: {@link AdaptiveLightningControllerMode.AUTOMATIC} and
- * {@link AdaptiveLightningControllerMode.MANUAL} with AUTOMATIC being the default.
+ * The AdaptiveLightingController can be operated in two modes: {@link AdaptiveLightingControllerMode.AUTOMATIC} and
+ * {@link AdaptiveLightingControllerMode.MANUAL} with AUTOMATIC being the default.
  * The goal would be that the color transition is done DIRECTLY on the light itself, thus not creating any
  * additional/heavy traffic on the network.
  * So if your light hardware/API supports transitions please go the extra mile and use MANUAL mode.
@@ -282,15 +282,15 @@ interface SerializedAdaptiveLightningControllerState {
  *
  *
  * Below is an overview what you need to or consider when enabling AdaptiveLighting (categorized by mode).
- * The {@link AdaptiveLightningControllerMode} can be defined with the second constructor argument.
+ * The {@link AdaptiveLightingControllerMode} can be defined with the second constructor argument.
  *
  * <b>AUTOMATIC (Default mode):</b>
  *
- *  This is the easiest mode to setup and needs less to no work form your side for AdaptiveLightning to work.
- *  The AdaptiveLightningController will go through setup procedure with HomeKit and automatically update
+ *  This is the easiest mode to setup and needs less to no work form your side for AdaptiveLighting to work.
+ *  The AdaptiveLightingController will go through setup procedure with HomeKit and automatically update
  *  the color temperature characteristic base on the current transition schedule.
  *  It is also adjusting the color temperature when a write to the brightness characteristic happens.
- *  It will also handle turning of AdaptiveLightning when it detects a write happening to the
+ *  It will also handle turning of AdaptiveLighting when it detects a write happening to the
  *  ColorTemperature, Hue or Saturation characteristic.
  *
  *  So what do you need to consider in automatic mode:
@@ -301,10 +301,10 @@ interface SerializedAdaptiveLightningControllerState {
  *    as the controller won't call the GET handler every 60 seconds.
  *    (The cache value is updated on SET/GET operations or by manually calling {@link Characteristic.updateValue}).
  *   - Detecting changes on the lightbulb side:
- *    Any manual change to ColorTemperature or Hue/Saturation is considered as a signal to turn AdaptiveLightning off.
- *    In order to notify the AdaptiveLightningController of such an event happening OUTSIDE of HomeKit
+ *    Any manual change to ColorTemperature or Hue/Saturation is considered as a signal to turn AdaptiveLighting off.
+ *    In order to notify the AdaptiveLightingController of such an event happening OUTSIDE of HomeKit
  *    (like changing stuff on the physical Lightbulb) you can call {@link Characteristic.setValue} manually
- *    (keep in mind, this will fire call your SET handler) or call {@link disableAdaptiveLightning} directly.
+ *    (keep in mind, this will fire call your SET handler) or call {@link disableAdaptiveLighting} directly.
  *   - Be aware that even when the light is turned off the transition will continue to call the SET handler
  *    of the ColorTemperature characteristic.
  *   - When using Hue/Saturation:
@@ -315,7 +315,7 @@ interface SerializedAdaptiveLightningControllerState {
  *    When a write happens to the ColorTemperature characteristic just MUST convert to a proper representation
  *    in hue and saturation values, with RAISING a event.
  *    As noted above you MUST NOT call the {@link Characteristic.setValue} method for this, as this will be considered
- *    a write to the characteristic and will turn off AdaptiveLightning. Instead you should use
+ *    a write to the characteristic and will turn off AdaptiveLighting. Instead you should use
  *    {@link Characteristic.updateValue} for this.
  *    You can and SHOULD use the supplied utility method {@link ColorUtils.colorTemperatureToHueAndSaturation}
  *    for converting mired to hue and saturation values.
@@ -326,37 +326,37 @@ interface SerializedAdaptiveLightningControllerState {
  *  Manual mode is recommended for any accessories which support transitions natively on the devices end.
  *  Like for example ZigBee lights which support sending transitions directly to the lightbulb which
  *  then get executed ON the lightbulb itself reducing unnecessary network traffic.
- *  Here is a quick overview what you have to consider to successfully implement AdaptiveLightning support.
- *  The AdaptiveLightningController will also in manual mode do all of the setup procedure.
- *  It will also save the transition schedule to disk to keep AdaptiveLightning enabled across reboots.
+ *  Here is a quick overview what you have to consider to successfully implement AdaptiveLighting support.
+ *  The AdaptiveLightingController will also in manual mode do all of the setup procedure.
+ *  It will also save the transition schedule to disk to keep AdaptiveLighting enabled across reboots.
  *  The "only" thing you have to do yourself is handling the actual transitions, check that event notifications
  *  are only sent in the defined interval threshold, adjust the color temperature when brightness is changed
- *  and signal that adaptive lightning should be disabled if ColorTemperature, Hue or Saturation is changed manually.
+ *  and signal that adaptive lighting should be disabled if ColorTemperature, Hue or Saturation is changed manually.
  *
- *  First step is to setup up a event handler for the {@link AdaptiveLightningControllerEvents.UPDATE}, which is called
- *  when AdaptiveLightning is enabled, the HomeHub updates the schedule for the next 24 hours or AdaptiveLightning
+ *  First step is to setup up a event handler for the {@link AdaptiveLightingControllerEvents.UPDATE}, which is called
+ *  when AdaptiveLighting is enabled, the HomeHub updates the schedule for the next 24 hours or AdaptiveLighting
  *  is restored from disk on startup.
- *  In the event handler you can get the current schedule via {@link AdaptiveLightningController.getAdaptiveLightningTransitionCurve},
- *  retrieve current intervals like {@link AdaptiveLightningController.getAdaptiveLightningUpdateInterval} or
- *  {@link AdaptiveLightningController.getAdaptiveLightningNotifyIntervalThreshold} and get the date in epoch millis
- *  when the current transition curve started using {@link AdaptiveLightningController.getAdaptiveLightningStartTimeOfTransition}.
- *  Additionally {@link AdaptiveLightningController.getAdaptiveLightningBrightnessMultiplierRange} can be used
+ *  In the event handler you can get the current schedule via {@link AdaptiveLightingController.getAdaptiveLightingTransitionCurve},
+ *  retrieve current intervals like {@link AdaptiveLightingController.getAdaptiveLightingUpdateInterval} or
+ *  {@link AdaptiveLightingController.getAdaptiveLightingNotifyIntervalThreshold} and get the date in epoch millis
+ *  when the current transition curve started using {@link AdaptiveLightingController.getAdaptiveLightingStartTimeOfTransition}.
+ *  Additionally {@link AdaptiveLightingController.getAdaptiveLightingBrightnessMultiplierRange} can be used
  *  to get the valid range for the brightness value to calculate the brightness adjustment factor.
- *  The method {@link AdaptiveLightningController.isAdaptiveLightningActive} can be used to check if AdaptiveLightning is enabled.
- *  Besides actually running the transition (see {@link AdaptiveLightningTransitionCurveEntry}) you must
- *  correctly update the color temperature when the brightness of the lightbulb changes (see {@link AdaptiveLightningTransitionCurveEntry.brightnessAdjustmentFactor}),
- *  and signal when AdaptiveLightning got disabled by calling {@link AdaptiveLightningController.disableAdaptiveLightning}
+ *  The method {@link AdaptiveLightingController.isAdaptiveLightingActive} can be used to check if AdaptiveLighting is enabled.
+ *  Besides actually running the transition (see {@link AdaptiveLightingTransitionCurveEntry}) you must
+ *  correctly update the color temperature when the brightness of the lightbulb changes (see {@link AdaptiveLightingTransitionCurveEntry.brightnessAdjustmentFactor}),
+ *  and signal when AdaptiveLighting got disabled by calling {@link AdaptiveLightingController.disableAdaptiveLighting}
  *  when ColorTemperature, Hue or Saturation where changed manually.
- *  Lastly you should set up a event handler for the {@link AdaptiveLightningControllerEvents.DISABLED} event.
+ *  Lastly you should set up a event handler for the {@link AdaptiveLightingControllerEvents.DISABLED} event.
  *  In yet unknown circumstances HomeKit may also send a dedicated disable command via the control point characteristic.
  *  Be prepared to handle that.
  */
-export class AdaptiveLightningController extends EventEmitter implements SerializableController<ControllerServiceMap, SerializedAdaptiveLightningControllerState> {
+export class AdaptiveLightingController extends EventEmitter implements SerializableController<ControllerServiceMap, SerializedAdaptiveLightingControllerState> {
 
   private stateChangeDelegate?: StateChangeDelegate;
 
   private readonly lightbulb: Lightbulb;
-  private readonly mode: AdaptiveLightningControllerMode;
+  private readonly mode: AdaptiveLightingControllerMode;
 
   private readonly adjustmentFactorChangedListener: (change: CharacteristicChange) => void;
   private readonly characteristicManualWrittenChangeListener: (change: CharacteristicChange) => void;
@@ -370,7 +370,7 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
   private saturationCharacteristic?: Saturation;
   private hueCharacteristic?: Hue;
 
-  private activeTransition?: ActiveAdaptiveLightningTransition;
+  private activeTransition?: ActiveAdaptiveLightingTransition;
   private didRunFirstInitializationStep = false;
   private updateTimeout?: Timeout;
 
@@ -380,16 +380,16 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
   private lastNotifiedHueValue: number = 0;
 
   /**
-   * Creates a new instance of the AdaptiveLightningController.
-   * Refer to the {@link AdaptiveLightningController} documentation on how to use it.
+   * Creates a new instance of the AdaptiveLightingController.
+   * Refer to the {@link AdaptiveLightingController} documentation on how to use it.
    *
-   * @param service - The lightbulb to which adaptive lightning support should be added.
+   * @param service - The lightbulb to which adaptive lighting support should be added.
    * @param options - Optional options to define the operating mode (automatic vs manual).
    */
-  constructor(service: Lightbulb, options?: AdaptiveLightningOptions) {
+  constructor(service: Lightbulb, options?: AdaptiveLightingOptions) {
     super();
     this.lightbulb = service;
-    this.mode = options?.controllerMode ?? AdaptiveLightningControllerMode.AUTOMATIC;
+    this.mode = options?.controllerMode ?? AdaptiveLightingControllerMode.AUTOMATIC;
 
     assert(this.lightbulb.testCharacteristic(Characteristic.ColorTemperature), "Lightbulb must have the ColorTemperature characteristic added!");
     assert(this.lightbulb.testCharacteristic(Characteristic.Brightness), "Lightbulb must have the Brightness characteristic added!");
@@ -408,20 +408,20 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
   // ----------- PUBLIC API START -----------
 
   /**
-   * Returns if a Adaptive Lightning transition is currently active.
+   * Returns if a Adaptive Lighting transition is currently active.
    */
-  public isAdaptiveLightningActive(): boolean {
+  public isAdaptiveLightingActive(): boolean {
     return !!this.activeTransition;
   }
 
   /**
-   * This method can be called to manually disable the current active Adaptive Lightning transition.
-   * When using {@link AdaptiveLightningControllerMode.AUTOMATIC} you won't need to call this method.
-   * In {@link AdaptiveLightningControllerMode.MANUAL} you must call this method when Adaptive Lightning should be disabled.
+   * This method can be called to manually disable the current active Adaptive Lighting transition.
+   * When using {@link AdaptiveLightingControllerMode.AUTOMATIC} you won't need to call this method.
+   * In {@link AdaptiveLightingControllerMode.MANUAL} you must call this method when Adaptive Lighting should be disabled.
    * This is the case when the user manually changes the value of Hue, Saturation or ColorTemperature characteristics
    * (or if any of those values is changed by physical interaction with the lightbulb).
    */
-  public disableAdaptiveLightning(triggerStateChange: boolean = true) {
+  public disableAdaptiveLighting(triggerStateChange: boolean = true) {
     if (this.updateTimeout) {
       clearTimeout(this.updateTimeout);
       this.updateTimeout = undefined;
@@ -458,28 +458,28 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
 
     this.activeTransitionCount!.sendEventNotification(0);
 
-    debug("[%s] Disabling adaptive lightning", this.lightbulb.displayName);
+    debug("[%s] Disabling adaptive lighting", this.lightbulb.displayName);
   }
 
   /**
    * Returns the time where the current transition curve was started in epoch time millis.
    * A transition curves is active for 24 hours typically and is renewed every 24 hours by a HomeHub.
    */
-  public getAdaptiveLightningStartTimeOfTransition(): number {
+  public getAdaptiveLightingStartTimeOfTransition(): number {
     if (!this.activeTransition) {
       throw new Error("There is no active transition!");
     }
     return this.activeTransition.transitionStartMillis;
   }
 
-  public getAdaptiveLightningTransitionCurve(): AdaptiveLightningTransitionCurveEntry[] {
+  public getAdaptiveLightingTransitionCurve(): AdaptiveLightingTransitionCurveEntry[] {
     if (!this.activeTransition) {
       throw new Error("There is no active transition!");
     }
     return this.activeTransition.transitionCurve;
   }
 
-  public getAdaptiveLightningBrightnessMultiplierRange(): BrightnessAdjustmentMultiplierRange {
+  public getAdaptiveLightingBrightnessMultiplierRange(): BrightnessAdjustmentMultiplierRange {
     if (!this.activeTransition) {
       throw new Error("There is no active transition!");
     }
@@ -493,7 +493,7 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
    *
    * Typically this evaluates to 60000 milliseconds (60 seconds).
    */
-  public getAdaptiveLightningUpdateInterval(): number {
+  public getAdaptiveLightingUpdateInterval(): number {
     if (!this.activeTransition) {
       throw new Error("There is no active transition!");
     }
@@ -507,7 +507,7 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
    *
    * Typically this evaluates to 600000 milliseconds (10 minutes).
    */
-  public getAdaptiveLightningNotifyIntervalThreshold(): number {
+  public getAdaptiveLightingNotifyIntervalThreshold(): number {
     if (!this.activeTransition) {
       throw new Error("There is no active transition!");
     }
@@ -519,12 +519,12 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
   private handleActiveTransitionUpdated(calledFromDeserializer: boolean = false): void {
     this.activeTransitionCount!.sendEventNotification(1);
 
-    if (this.mode === AdaptiveLightningControllerMode.AUTOMATIC) {
+    if (this.mode === AdaptiveLightingControllerMode.AUTOMATIC) {
       this.scheduleNextUpdate();
-    } else if (this.mode === AdaptiveLightningControllerMode.MANUAL) {
-      this.emit(AdaptiveLightningControllerEvents.UPDATE);
+    } else if (this.mode === AdaptiveLightingControllerMode.MANUAL) {
+      this.emit(AdaptiveLightingControllerEvents.UPDATE);
     } else {
-      throw new Error("Unsupported adaptive lightning controller mode: " + this.mode);
+      throw new Error("Unsupported adaptive lighting controller mode: " + this.mode);
     }
 
     if (!calledFromDeserializer) {
@@ -532,7 +532,7 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
     }
   }
 
-  private handleAdaptiveLightningEnabled(): void { // this method is run when the initial curve was sent
+  private handleAdaptiveLightingEnabled(): void { // this method is run when the initial curve was sent
     if (!this.activeTransition) {
       throw new Error("There is no active transition!");
     }
@@ -553,11 +553,11 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
     }
   }
 
-  private handleAdaptiveLightningDisabled(calledFromResetHandler: boolean = false): void {
-    if (this.mode === AdaptiveLightningControllerMode.MANUAL && this.activeTransition) { // only emit the event if a transition is actually enabled
-      this.emit(AdaptiveLightningControllerEvents.DISABLED);
+  private handleAdaptiveLightingDisabled(calledFromResetHandler: boolean = false): void {
+    if (this.mode === AdaptiveLightingControllerMode.MANUAL && this.activeTransition) { // only emit the event if a transition is actually enabled
+      this.emit(AdaptiveLightingControllerEvents.DISABLED);
     }
-    this.disableAdaptiveLightning(!calledFromResetHandler);
+    this.disableAdaptiveLighting(!calledFromResetHandler);
   }
 
   private handleAdjustmentFactorChanged(): void {
@@ -566,20 +566,20 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
 
   /**
    * This method is called when a change happens to the Hue/Saturation or ColorTemperature characteristic.
-   * When such a write happens (caused by the user changing the color/temperature) Adaptive Lightning must be disabled.
+   * When such a write happens (caused by the user changing the color/temperature) Adaptive Lighting must be disabled.
    *
    * @param change
    */
   private handleCharacteristicManualWritten(change: CharacteristicChange): void {
     if (change.reason === ChangeReason.EVENT || change.reason === ChangeReason.UPDATE
-      ||(isAdaptiveLightningContext(change.context) && change.context.controller === this)) {
+      ||(isAdaptiveLightingContext(change.context) && change.context.controller === this)) {
       // we ignore write request which are the result of calls made to updateValue or sendEventNotification
       // or the change was done by us
       return;
     }
 
-    debug("[%s] Receive a manual write to an characteristic (newValue: %d). Thus disabling adaptive lightning!", this.lightbulb.displayName, change.newValue);
-    this.disableAdaptiveLightning();
+    debug("[%s] Receive a manual write to an characteristic (newValue: %d). Thus disabling adaptive lighting!", this.lightbulb.displayName, change.newValue);
+    this.disableAdaptiveLighting();
   }
 
   private scheduleNextUpdate(dryRun: boolean = false): void {
@@ -593,15 +593,15 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
 
     if (!this.didRunFirstInitializationStep) {
       this.didRunFirstInitializationStep = true;
-      this.handleAdaptiveLightningEnabled();
+      this.handleAdaptiveLightingEnabled();
     }
 
     const now = Date.now();
     const offset = now - this.activeTransition.transitionStartMillis;
 
     let lowerBoundTimeOffset = 0; // time offset to the lowerBound transition entry
-    let lowerBound: AdaptiveLightningTransitionCurveEntry | undefined = undefined;
-    let upperBound: AdaptiveLightningTransitionCurveEntry | undefined = undefined;
+    let lowerBound: AdaptiveLightingTransitionCurveEntry | undefined = undefined;
+    let upperBound: AdaptiveLightingTransitionCurveEntry | undefined = undefined;
 
     for (let i = 0; i + 1 < this.activeTransition.transitionCurve.length; i++) {
       const lowerBound0 = this.activeTransition.transitionCurve[i];
@@ -623,7 +623,7 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
       debug("[%s] Reached end of transition curve!", this.lightbulb.displayName);
       if (!dryRun) {
         // the transition schedule is only for 24 hours, we reached the end?
-        this.disableAdaptiveLightning();
+        this.disableAdaptiveLighting();
       }
       return;
     }
@@ -659,7 +659,7 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
 
     debug("[%s] Next temperature value is %d (for brightness %d)", this.lightbulb.displayName, temperature, adjustmentMultiplier);
 
-    const context: AdaptiveLightningCharacteristicContext = {
+    const context: AdaptiveLightingCharacteristicContext = {
       controller: this,
       omitEventUpdate: true,
     };
@@ -667,7 +667,7 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
     /*
      * We set saturation and hue values BEFORE we call the ColorTemperature SET handler (via setValue).
      * First thought was so the API user could get the values in the SET handler of the color temperature characteristic.
-     * Do this is probably not really elegant cause this would only work when AdaptiveLightning is turned on
+     * Do this is probably not really elegant cause this would only work when AdaptiveLighting is turned on
      * an the accessory MUST in any case update the Hue/Saturation values on a ColorTemperature write
      * (obviously only if Hue/Saturation characteristics are added to the service).
      *
@@ -689,7 +689,7 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
     this.colorTemperatureCharacteristic!.setValue(temperature, context); // TODO maybe ensure this call actually succeeds?
 
     if (!this.activeTransition) {
-      console.warn("[" + this.lightbulb.displayName + "] Adaptive Lightning was probably disable my mistake by some call in the SET handler of the ColorTemperature characteristic! " +
+      console.warn("[" + this.lightbulb.displayName + "] Adaptive Lighting was probably disable my mistake by some call in the SET handler of the ColorTemperature characteristic! " +
         "Please check that you don't call setValue/setCharacteristic on the Hue, Saturation or ColorTemperature characteristic!");
       return;
     }
@@ -697,7 +697,7 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
     if (now - this.lastEventNotificationSent >= this.activeTransition.notifyIntervalThreshold) {
       this.lastEventNotificationSent = now;
 
-      const eventContext: AdaptiveLightningCharacteristicContext = {
+      const eventContext: AdaptiveLightingCharacteristicContext = {
         controller: this,
       };
 
@@ -755,7 +755,7 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
           return this.handleTransitionControlWrite(value);
         } catch (error) {
           console.warn("[%s] Encountered error on CharacteristicValueTransitionControl characteristic: " + error.stack);
-          this.disableAdaptiveLightning();
+          this.disableAdaptiveLighting();
           throw new HapStatusError(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
         }
       });
@@ -765,7 +765,7 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
    * @private
    */
   handleControllerRemoved(): void {
-    this.handleAdaptiveLightningDisabled(true);
+    this.handleAdaptiveLightingDisabled(true);
 
     this.lightbulb.removeCharacteristic(this.supportedTransitionConfiguration!);
     this.lightbulb.removeCharacteristic(this.transitionControl!);
@@ -778,13 +778,13 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
    * @private
    */
   handleFactoryReset(): void {
-    this.handleAdaptiveLightningDisabled();
+    this.handleAdaptiveLightingDisabled();
   }
 
   /**
    * @private
    */
-  serialize(): SerializedAdaptiveLightningControllerState | undefined {
+  serialize(): SerializedAdaptiveLightingControllerState | undefined {
     if (!this.activeTransition) {
       return undefined;
     }
@@ -797,13 +797,13 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
   /**
    * @private
    */
-  deserialize(serialized: SerializedAdaptiveLightningControllerState): void {
+  deserialize(serialized: SerializedAdaptiveLightingControllerState): void {
     this.activeTransition = serialized.activeTransition;
     try {
       this.handleActiveTransitionUpdated(true);
     } catch (error) {
-      console.log("Could not enable adaptive lightning when restoring from disk: " + error.stack);
-      this.disableAdaptiveLightning(); // ensure it's disabled
+      console.log("Could not enable adaptive lighting when restoring from disk: " + error.stack);
+      this.disableAdaptiveLighting(); // ensure it's disabled
     }
   }
 
@@ -874,8 +874,8 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
     }
 
     const param3 = transitionConfiguration[ValueTransitionConfigurationTypes.UNKNOWN_3]?.readUInt8(0); // when present it is always 1
-    if (!param3) { // if HomeKit just sends the iid, we consider that as "disable adaptive lightning" (assumption)
-      this.handleAdaptiveLightningDisabled();
+    if (!param3) { // if HomeKit just sends the iid, we consider that as "disable adaptive lighting" (assumption)
+      this.handleAdaptiveLightingDisabled();
       return tlv.encode(TransitionControlTypes.COLOR_TEMPERATURE, Buffer.alloc(0)).toString("base64");
     }
 
@@ -890,8 +890,8 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
 
     const startTimeMillis = epochMillisFromMillisSince2001_01_01Buffer(startTime);
 
-    const transitionCurve: AdaptiveLightningTransitionCurveEntry[] = [];
-    let previous: AdaptiveLightningTransitionCurveEntry | undefined = undefined;
+    const transitionCurve: AdaptiveLightingTransitionCurveEntry[] = [];
+    let previous: AdaptiveLightingTransitionCurveEntry | undefined = undefined;
 
     const transitions = curveConfiguration[TransitionCurveConfigurationTypes.TRANSITION_ENTRY] as Buffer[];
     for (const entry of transitions) {
@@ -952,9 +952,9 @@ export class AdaptiveLightningController extends EventEmitter implements Seriali
     if (this.updateTimeout) {
       clearTimeout(this.updateTimeout);
       this.updateTimeout = undefined;
-      debug("[%s] Adaptive lightning was renewed.", this.lightbulb.displayName);
+      debug("[%s] Adaptive lighting was renewed.", this.lightbulb.displayName);
     } else {
-      debug("[%s] Adaptive lightning was enabled.", this.lightbulb.displayName);
+      debug("[%s] Adaptive lighting was enabled.", this.lightbulb.displayName);
     }
 
     this.handleActiveTransitionUpdated();
