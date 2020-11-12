@@ -38,7 +38,7 @@ import {
   ContactSensorState,
   CoolingThresholdTemperature,
   CurrentAirPurifierState,
-  CurrentAmbientLightLevel,
+  CurrentAdaptiveLightLevel,
   CurrentDoorState,
   CurrentFanState,
   CurrentHeaterCoolerState,
@@ -621,7 +621,7 @@ export class Characteristic extends EventEmitter {
   public static ContactSensorState: typeof ContactSensorState;
   public static CoolingThresholdTemperature: typeof CoolingThresholdTemperature;
   public static CurrentAirPurifierState: typeof CurrentAirPurifierState;
-  public static CurrentAmbientLightLevel: typeof CurrentAmbientLightLevel;
+  public static CurrentAdaptiveLightLevel: typeof CurrentAdaptiveLightLevel;
   public static CurrentDoorState: typeof CurrentDoorState;
   public static CurrentFanState: typeof CurrentFanState;
   public static CurrentHeaterCoolerState: typeof CurrentHeaterCoolerState;

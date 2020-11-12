@@ -743,7 +743,7 @@ export class LightSensor extends Service {
     super(displayName, LightSensor.UUID, subtype);
 
     // Required Characteristics
-    this.addCharacteristic(Characteristic.CurrentAmbientLightLevel);
+    this.addCharacteristic(Characteristic.CurrentAdaptiveLightLevel);
 
     // Optional Characteristics
     this.addOptionalCharacteristic(Characteristic.Name);

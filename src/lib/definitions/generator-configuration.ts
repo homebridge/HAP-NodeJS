@@ -13,7 +13,7 @@ export const CharacteristicNameOverrides: Map<string, string> = new Map([
   ["cloud-relay.enabled", "Relay Enabled"],
   ["density.voc", "VOC Density"],
   ["filter.reset-indication", "Reset Filter Indication"], // Filter Reset Change Indication
-  ["light-level.current", "Current Ambient Light Level"],
+  ["light-level.current", "Current Adaptive Light Level"],
   ["network-client-control", "Network Client Profile Control"],
   ["on", "On"],
   ["selected-stream-configuration", "Selected RTP Stream Configuration"],

@@ -202,9 +202,9 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
-  describe("CurrentAmbientLightLevel", () => {
+  describe("CurrentAdaptiveLightLevel", () => {
     it("should be able to construct", () => {
-      new Characteristic.CurrentAmbientLightLevel();
+      new Characteristic.CurrentAdaptiveLightLevel();
     });
   });
 

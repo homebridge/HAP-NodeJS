@@ -680,14 +680,14 @@ export class CurrentAirPurifierState extends Characteristic {
 Characteristic.CurrentAirPurifierState = CurrentAirPurifierState;
 
 /**
- * Characteristic "Current Ambient Light Level"
+ * Characteristic "Current Adaptive Light Level"
  */
-export class CurrentAmbientLightLevel extends Characteristic {
+export class CurrentAdaptiveLightLevel extends Characteristic {
 
   public static readonly UUID: string = "0000006B-0000-1000-8000-0026BB765291";
 
   constructor() {
-    super("Current Ambient Light Level", CurrentAmbientLightLevel.UUID, {
+    super("Current Adaptive Light Level", CurrentAdaptiveLightLevel.UUID, {
       format: Formats.FLOAT,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ],
       unit: Units.LUX,
@@ -697,7 +697,7 @@ export class CurrentAmbientLightLevel extends Characteristic {
     this.value = this.getDefaultValue();
   }
 }
-Characteristic.CurrentAmbientLightLevel = CurrentAmbientLightLevel;
+Characteristic.CurrentAdaptiveLightLevel = CurrentAdaptiveLightLevel;
 
 /**
  * Characteristic "Current Door State"
