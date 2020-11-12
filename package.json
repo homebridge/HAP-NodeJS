@@ -12,14 +12,14 @@
   "homepage": "https://github.com/homebridge/HAP-NodeJS",
   "license": "Apache-2.0",
   "scripts": {
-    "clean": "rm -rf dist && rm -rf coverage",
-    "build": "rm -rf dist && tsc && node .github/workflows/node-persist-ignore.js",
+    "clean": "rimraf dist && rimraf coverage",
+    "build": "rimraf dist && tsc && node .github/workflows/node-persist-ignore.js",
     "prepublishOnly": "npm run build",
     "postpublish": "npm run clean",
     "test": "jest",
     "test-coverage": "jest --coverage",
     "start": "node dist/BridgedCore.js",
-    "docs": "rm -rf docs && typedoc src/index.ts"
+    "docs": "rimraf docs && typedoc src/index.ts"
   },
   "keywords": [
     "hap-nodejs",
