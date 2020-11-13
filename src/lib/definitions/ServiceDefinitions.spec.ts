@@ -162,6 +162,50 @@ describe("ServiceDefinitions", () => {
     });
   });
 
+  describe("BridgeConfiguration", () => {
+    it("should be able to construct", () => {
+      const service0 = new Service.BridgeConfiguration();
+      const service1 = new Service.BridgeConfiguration("test name");
+      const service2 = new Service.BridgeConfiguration("test name", "test sub type");
+
+      expect(service0.displayName).toBe("");
+      expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);
+      expect(service0.subtype).toBeUndefined();
+
+      expect(service1.displayName).toBe("test name");
+      expect(service1.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service1.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service1.subtype).toBeUndefined();
+
+      expect(service2.displayName).toBe("test name");
+      expect(service2.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service2.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service2.subtype).toBe("test sub type");
+    });
+  });
+
+  describe("BridgingState", () => {
+    it("should be able to construct", () => {
+      const service0 = new Service.BridgingState();
+      const service1 = new Service.BridgingState("test name");
+      const service2 = new Service.BridgingState("test name", "test sub type");
+
+      expect(service0.displayName).toBe("");
+      expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);
+      expect(service0.subtype).toBeUndefined();
+
+      expect(service1.displayName).toBe("test name");
+      expect(service1.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service1.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service1.subtype).toBeUndefined();
+
+      expect(service2.displayName).toBe("test name");
+      expect(service2.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service2.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service2.subtype).toBe("test sub type");
+    });
+  });
+
   describe("CameraControl", () => {
     it("should be able to construct", () => {
       const service0 = new Service.CameraControl();
@@ -1276,6 +1320,28 @@ describe("ServiceDefinitions", () => {
       const service0 = new Service.ThreadTransport();
       const service1 = new Service.ThreadTransport("test name");
       const service2 = new Service.ThreadTransport("test name", "test sub type");
+
+      expect(service0.displayName).toBe("");
+      expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);
+      expect(service0.subtype).toBeUndefined();
+
+      expect(service1.displayName).toBe("test name");
+      expect(service1.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service1.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service1.subtype).toBeUndefined();
+
+      expect(service2.displayName).toBe("test name");
+      expect(service2.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service2.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service2.subtype).toBe("test sub type");
+    });
+  });
+
+  describe("TimeInformation", () => {
+    it("should be able to construct", () => {
+      const service0 = new Service.TimeInformation();
+      const service1 = new Service.TimeInformation("test name");
+      const service2 = new Service.TimeInformation("test name", "test sub type");
 
       expect(service0.displayName).toBe("");
       expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);

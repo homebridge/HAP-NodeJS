@@ -130,6 +130,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("Category", () => {
+    it("should be able to construct", () => {
+      new Characteristic.Category();
+    });
+  });
+
   describe("CCAEnergyDetectThreshold", () => {
     it("should be able to construct", () => {
       new Characteristic.CCAEnergyDetectThreshold();
@@ -169,6 +175,18 @@ describe("CharacteristicDefinitions", () => {
   describe("ColorTemperature", () => {
     it("should be able to construct", () => {
       new Characteristic.ColorTemperature();
+    });
+  });
+
+  describe("ConfigureBridgedAccessory", () => {
+    it("should be able to construct", () => {
+      new Characteristic.ConfigureBridgedAccessory();
+    });
+  });
+
+  describe("ConfigureBridgedAccessoryStatus", () => {
+    it("should be able to construct", () => {
+      new Characteristic.ConfigureBridgedAccessoryStatus();
     });
   });
 
@@ -274,6 +292,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("CurrentTime", () => {
+    it("should be able to construct", () => {
+      new Characteristic.CurrentTime();
+    });
+  });
+
   describe("CurrentTransport", () => {
     it("should be able to construct", () => {
       new Characteristic.CurrentTransport();
@@ -304,6 +328,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("DayoftheWeek", () => {
+    it("should be able to construct", () => {
+      new Characteristic.DayoftheWeek();
+    });
+  });
+
   describe("DiagonalFieldOfView", () => {
     it("should be able to construct", () => {
       new Characteristic.DiagonalFieldOfView();
@@ -313,6 +343,18 @@ describe("CharacteristicDefinitions", () => {
   describe("DigitalZoom", () => {
     it("should be able to construct", () => {
       new Characteristic.DigitalZoom();
+    });
+  });
+
+  describe("DiscoverBridgedAccessories", () => {
+    it("should be able to construct", () => {
+      new Characteristic.DiscoverBridgedAccessories();
+    });
+  });
+
+  describe("DiscoveredBridgedAccessories", () => {
+    it("should be able to construct", () => {
+      new Characteristic.DiscoveredBridgedAccessories();
     });
   });
 
@@ -460,11 +502,15 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("LinkQuality", () => {
+    it("should be able to construct", () => {
+      new Characteristic.LinkQuality();
+    });
+  });
+
   describe("ListPairings", () => {
     it("should be able to construct", () => {
       new Characteristic.ListPairings();
-      // noinspection JSDeprecatedSymbols
-      new Characteristic.PairingPairings();
     });
   });
 
@@ -729,6 +775,12 @@ describe("CharacteristicDefinitions", () => {
   describe("ProgramMode", () => {
     it("should be able to construct", () => {
       new Characteristic.ProgramMode();
+    });
+  });
+
+  describe("Reachable", () => {
+    it("should be able to construct", () => {
+      new Characteristic.Reachable();
     });
   });
 
@@ -1146,6 +1198,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("TargetSlatState", () => {
+    it("should be able to construct", () => {
+      new Characteristic.TargetSlatState();
+    });
+  });
+
   describe("TargetTemperature", () => {
     it("should be able to construct", () => {
       new Characteristic.TargetTemperature();
@@ -1203,6 +1261,12 @@ describe("CharacteristicDefinitions", () => {
   describe("ThreadStatus", () => {
     it("should be able to construct", () => {
       new Characteristic.ThreadStatus();
+    });
+  });
+
+  describe("TimeUpdate", () => {
+    it("should be able to construct", () => {
+      new Characteristic.TimeUpdate();
     });
   });
 

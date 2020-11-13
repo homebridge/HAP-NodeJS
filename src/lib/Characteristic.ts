@@ -26,6 +26,7 @@ import {
   CarbonMonoxideDetected,
   CarbonMonoxideLevel,
   CarbonMonoxidePeakLevel,
+  Category,
   CCAEnergyDetectThreshold,
   CCASignalDetectThreshold,
   CharacteristicValueActiveTransitionCount,
@@ -33,6 +34,8 @@ import {
   ChargingState,
   ClosedCaptions,
   ColorTemperature,
+  ConfigureBridgedAccessory,
+  ConfigureBridgedAccessoryStatus,
   ConfiguredName,
   ContactSensorState,
   CoolingThresholdTemperature,
@@ -50,13 +53,17 @@ import {
   CurrentSlatState,
   CurrentTemperature,
   CurrentTiltAngle,
+  CurrentTime,
   CurrentTransport,
   CurrentVerticalTiltAngle,
   CurrentVisibilityState,
   DataStreamHAPTransport,
   DataStreamHAPTransportInterrupt,
+  DayoftheWeek,
   DiagonalFieldOfView,
   DigitalZoom,
+  DiscoverBridgedAccessories,
+  DiscoveredBridgedAccessories,
   DisplayOrder,
   EventRetransmissionMaximum,
   EventSnapshotsActive,
@@ -81,6 +88,7 @@ import {
   InUse,
   IsConfigured,
   LeakDetected,
+  LinkQuality,
   ListPairings,
   LockControlPoint,
   LockCurrentState,
@@ -126,6 +134,7 @@ import {
   ProgrammableSwitchEvent,
   ProgrammableSwitchOutputState,
   ProgramMode,
+  Reachable,
   ReceivedSignalStrengthIndication,
   ReceiverSensitivity,
   RecordingAudioActive,
@@ -195,6 +204,7 @@ import {
   TargetMediaState,
   TargetPosition,
   TargetRelativeHumidity,
+  TargetSlatState,
   TargetTemperature,
   TargetTiltAngle,
   TargetVerticalTiltAngle,
@@ -205,6 +215,7 @@ import {
   ThreadNodeCapabilities,
   ThreadOpenThreadVersion,
   ThreadStatus,
+  TimeUpdate,
   TransmitPower,
   TunnelConnectionTimeout,
   TunneledAccessoryAdvertising,
@@ -613,6 +624,10 @@ export class Characteristic extends EventEmitter {
   public static CarbonMonoxideDetected: typeof CarbonMonoxideDetected;
   public static CarbonMonoxideLevel: typeof CarbonMonoxideLevel;
   public static CarbonMonoxidePeakLevel: typeof CarbonMonoxidePeakLevel;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static Category: typeof Category;
   public static CCAEnergyDetectThreshold: typeof CCAEnergyDetectThreshold;
   public static CCASignalDetectThreshold: typeof CCASignalDetectThreshold;
   public static CharacteristicValueActiveTransitionCount: typeof CharacteristicValueActiveTransitionCount;
@@ -620,6 +635,14 @@ export class Characteristic extends EventEmitter {
   public static ChargingState: typeof ChargingState;
   public static ClosedCaptions: typeof ClosedCaptions;
   public static ColorTemperature: typeof ColorTemperature;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static ConfigureBridgedAccessory: typeof ConfigureBridgedAccessory;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static ConfigureBridgedAccessoryStatus: typeof ConfigureBridgedAccessoryStatus;
   public static ConfiguredName: typeof ConfiguredName;
   public static ContactSensorState: typeof ContactSensorState;
   public static CoolingThresholdTemperature: typeof CoolingThresholdTemperature;
@@ -637,13 +660,29 @@ export class Characteristic extends EventEmitter {
   public static CurrentSlatState: typeof CurrentSlatState;
   public static CurrentTemperature: typeof CurrentTemperature;
   public static CurrentTiltAngle: typeof CurrentTiltAngle;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static CurrentTime: typeof CurrentTime;
   public static CurrentTransport: typeof CurrentTransport;
   public static CurrentVerticalTiltAngle: typeof CurrentVerticalTiltAngle;
   public static CurrentVisibilityState: typeof CurrentVisibilityState;
   public static DataStreamHAPTransport: typeof DataStreamHAPTransport;
   public static DataStreamHAPTransportInterrupt: typeof DataStreamHAPTransportInterrupt;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static DayoftheWeek: typeof DayoftheWeek;
   public static DiagonalFieldOfView: typeof DiagonalFieldOfView;
   public static DigitalZoom: typeof DigitalZoom;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static DiscoverBridgedAccessories: typeof DiscoverBridgedAccessories;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static DiscoveredBridgedAccessories: typeof DiscoveredBridgedAccessories;
   public static DisplayOrder: typeof DisplayOrder;
   public static EventRetransmissionMaximum: typeof EventRetransmissionMaximum;
   public static EventSnapshotsActive: typeof EventSnapshotsActive;
@@ -668,6 +707,10 @@ export class Characteristic extends EventEmitter {
   public static InUse: typeof InUse;
   public static IsConfigured: typeof IsConfigured;
   public static LeakDetected: typeof LeakDetected;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static LinkQuality: typeof LinkQuality;
   public static ListPairings: typeof ListPairings;
   public static LockControlPoint: typeof LockControlPoint;
   public static LockCurrentState: typeof LockCurrentState;
@@ -699,10 +742,6 @@ export class Characteristic extends EventEmitter {
   public static OutletInUse: typeof OutletInUse;
   public static OzoneDensity: typeof OzoneDensity;
   public static PairingFeatures: typeof PairingFeatures;
-  /**
-   * @deprecated Please use {@link Characteristic.ListPairings}.
-   */
-  public static PairingPairings: typeof ListPairings;
   public static PairSetup: typeof PairSetup;
   public static PairVerify: typeof PairVerify;
   public static PasswordSetting: typeof PasswordSetting;
@@ -717,6 +756,10 @@ export class Characteristic extends EventEmitter {
   public static ProgrammableSwitchEvent: typeof ProgrammableSwitchEvent;
   public static ProgrammableSwitchOutputState: typeof ProgrammableSwitchOutputState;
   public static ProgramMode: typeof ProgramMode;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static Reachable: typeof Reachable;
   public static ReceivedSignalStrengthIndication: typeof ReceivedSignalStrengthIndication;
   public static ReceiverSensitivity: typeof ReceiverSensitivity;
   public static RecordingAudioActive: typeof RecordingAudioActive;
@@ -789,6 +832,10 @@ export class Characteristic extends EventEmitter {
   public static TargetMediaState: typeof TargetMediaState;
   public static TargetPosition: typeof TargetPosition;
   public static TargetRelativeHumidity: typeof TargetRelativeHumidity;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static TargetSlatState: typeof TargetSlatState;
   public static TargetTemperature: typeof TargetTemperature;
   public static TargetTiltAngle: typeof TargetTiltAngle;
   public static TargetVerticalTiltAngle: typeof TargetVerticalTiltAngle;
@@ -799,6 +846,10 @@ export class Characteristic extends EventEmitter {
   public static ThreadNodeCapabilities: typeof ThreadNodeCapabilities;
   public static ThreadOpenThreadVersion: typeof ThreadOpenThreadVersion;
   public static ThreadStatus: typeof ThreadStatus;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static TimeUpdate: typeof TimeUpdate;
   public static TransmitPower: typeof TransmitPower;
   public static TunnelConnectionTimeout: typeof TunnelConnectionTimeout;
   public static TunneledAccessoryAdvertising: typeof TunneledAccessoryAdvertising;

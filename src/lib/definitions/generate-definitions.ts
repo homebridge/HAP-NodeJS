@@ -370,6 +370,9 @@ for (const generated of Object.values(generatedCharacteristics)
       characteristicOutput.write("// noinspection JSDeprecatedSymbols\n");
       characteristicOutput.write("Characteristic." + generated.deprecatedClassName + " = " + generated.className + ";\n");
     }
+    if (generated.deprecatedNotice) {
+      characteristicOutput.write("// noinspection JSDeprecatedSymbols\n");
+    }
     characteristicOutput.write("Characteristic." + generated.className + " = " + generated.className + ";\n\n");
   } catch (error) {
     throw new Error("Error thrown writing characteristic '" + generated.id + "' (" + generated.className + "): " + error.message);
@@ -529,6 +532,9 @@ for (const generated of Object.values(generatedServices)
     if (generated.deprecatedClassName) {
       serviceOutput.write("// noinspection JSDeprecatedSymbols\n");
       serviceOutput.write("Service." + generated.deprecatedClassName + " = " + generated.className + ";\n");
+    }
+    if (generated.deprecatedNotice) {
+      serviceOutput.write("// noinspection JSDeprecatedSymbols\n");
     }
     serviceOutput.write("Service." + generated.className + " = " + generated.className + ";\n\n");
   } catch (error) {

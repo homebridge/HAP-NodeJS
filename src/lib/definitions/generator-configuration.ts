@@ -29,7 +29,6 @@ export const CharacteristicNameOverrides: Map<string, string> = new Map([
 ]);
 
 export const CharacteristicDeprecatedNames: Map<string, string> = new Map([ // keep in mind that the displayName will change
-  ["list-pairings", "Pairing Pairings"],
 ]);
 
 export const CharacteristicValidValuesOverride: Map<string, Record<string, string>> = new Map([
@@ -110,7 +109,132 @@ export const CharacteristicManualAdditions: Map<string, GeneratedCharacteristic>
       "0": "EXCELLENT",
       "1": "GOOD",
       "2": "FAIR",
-    },
+    } as Record<string, string>,
+  }],
+  ["target-slat-state", { // some legacy characteristic, don't know where it comes from or where it was used
+    id: "target-slat-state",
+    UUID: "000000BE-0000-1000-8000-0026BB765291",
+    name: "Target Slat State",
+    className: "TargetSlatState",
+    deprecatedNotice: "Removed and not used anymore",
+
+    format: "uint8",
+    properties: 7, // read, write, notify
+    minValue: 0,
+    maxValue: 1,
+    validValues: {
+      "0": "MANUAL",
+      "1": "AUTO",
+    } as Record<string, string>,
+  }],
+
+  ["current-time", {
+    id: "current-time",
+    UUID: "0000009B-0000-1000-8000-0026BB765291",
+    name: "Current Time",
+    className: "CurrentTime",
+    deprecatedNotice: "Removed and not used anymore",
+
+    format: "string",
+    properties: 6, // read, write
+  }],
+  ["day-of-the-week", {
+    id: "day-of-the-week",
+    UUID: "00000098-0000-1000-8000-0026BB765291",
+    name: "Day of the Week",
+    className: "DayoftheWeek",
+    deprecatedNotice: "Removed and not used anymore",
+
+    format: "uint8",
+    properties: 6, // read, write
+    minValue: 1,
+    maxValue: 7,
+  }],
+  ["time-update", {
+    id: "time-update",
+    UUID: "0000009A-0000-1000-8000-0026BB765291",
+    name: "Time Update",
+    className: "TimeUpdate",
+    deprecatedNotice: "Removed and not used anymore",
+
+    format: "bool",
+    properties: 6, // read, write
+  }],
+
+  ["reachable", {
+    id: "reachable",
+    UUID: "00000063-0000-1000-8000-0026BB765291",
+    name: "Reachable",
+    className: "Reachable",
+    deprecatedNotice: "Removed and not used anymore",
+
+    format: "bool",
+    properties: 6, // read, write
+  }],
+  ["link-quality", {
+    id: "link-quality",
+    UUID: "0000009C-0000-1000-8000-0026BB765291",
+    name: "Link Quality",
+    className: "LinkQuality",
+    deprecatedNotice: "Removed and not used anymore",
+
+    format: "uint8",
+    properties: 3, // read, notify
+    minValue: 1,
+    maxValue: 4,
+  }],
+  ["category", {
+    id: "category",
+    UUID: "000000A3-0000-1000-8000-0026BB765291",
+    name: "Category",
+    className: "Category",
+    deprecatedNotice: "Removed and not used anymore",
+
+    format: "uint16",
+    properties: 3, // read, notify
+    minValue: 1,
+    maxValue: 16,
+  }],
+
+  ["configure-bridged-accessory-status", {
+    id: "configure-bridged-accessory-status",
+    UUID: "0000009D-0000-1000-8000-0026BB765291",
+    name: "Configure Bridged Accessory Status",
+    className: "ConfigureBridgedAccessoryStatus",
+    deprecatedNotice: "Removed and not used anymore",
+
+    format: "tlv8",
+    properties: 3, // read, notify
+  }],
+  ["configure-bridged-accessory", {
+    id: "configure-bridged-accessory",
+    UUID: "000000A0-0000-1000-8000-0026BB765291",
+    name: "Configure Bridged Accessory",
+    className: "ConfigureBridgedAccessory",
+    deprecatedNotice: "Removed and not used anymore",
+
+    format: "tlv8",
+    properties: 4,
+  }],
+  ["discover-bridged-accessories", {
+    id: "discover-bridged-accessories",
+    UUID: "0000009E-0000-1000-8000-0026BB765291",
+    name: "Discover Bridged Accessories",
+    className: "DiscoverBridgedAccessories",
+    deprecatedNotice: "Removed and not used anymore",
+
+    format: "uint8",
+    properties: 7, // read, write, notify
+  }],
+  ["discovered-bridged-accessories", {
+    id: "discovered-bridged-accessories",
+    UUID: "0000009F-0000-1000-8000-0026BB765291",
+    name: "Discovered Bridged Accessories",
+    className: "DiscoveredBridgedAccessories",
+    deprecatedNotice: "Removed and not used anymore",
+
+    format: "uint16",
+    properties: 3, // read, notify
   }],
 ]);
 
@@ -163,8 +287,39 @@ export const ServiceManualAdditions: Map<string, GeneratedService> = new Map([
 
     requiredCharacteristics: ["on"],
     optionalCharacteristics: ["horizontal-tilt.current", "vertical-tilt.current", "horizontal-tilt.target", "vertical-tilt.target", "night-vision", "optical-zoom", "digital-zoom", "image-rotation", "image-mirroring", "name"]
-  }
-  ],
+  }],
+  ["time-information", {
+    id: "time-information",
+    UUID: "00000099-0000-1000-8000-0026BB765291",
+    name: "Time Information",
+    className: "TimeInformation",
+    deprecatedNotice: "Removed and not used anymore",
+
+    requiredCharacteristics: ["current-time", "day-of-the-week", "time-update"],
+    optionalCharacteristics: ["name"],
+  }],
+
+  ["bridging-state", {
+    id: "bridging-state",
+    UUID: "00000062-0000-1000-8000-0026BB765291",
+    name: "Bridging State",
+    className: "BridgingState",
+    deprecatedNotice: "Removed and not used anymore",
+
+    requiredCharacteristics: ["reachable", "link-quality", "accessory.identifier", "category"],
+    optionalCharacteristics: ["name"],
+  }],
+
+  ["bridge-configuration", {
+    id: "bridge-configuration",
+    UUID: "000000A1-0000-1000-8000-0026BB765291",
+    name: "Bridge Configuration",
+    className: "BridgeConfiguration",
+    deprecatedNotice: "Removed and not used anymore",
+
+    requiredCharacteristics: ["configure-bridged-accessory-status", "discover-bridged-accessories", "discovered-bridged-accessories", "configure-bridged-accessory"],
+    optionalCharacteristics: ["name"],
+  }],
 ]);
 
 export const CharacteristicSinceInformation: Map<string, string> = new Map([

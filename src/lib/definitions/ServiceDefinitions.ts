@@ -168,6 +168,54 @@ Service.BatteryService = Battery;
 Service.Battery = Battery;
 
 /**
+ * Service "Bridge Configuration"
+ * @deprecated Removed and not used anymore
+ */
+export class BridgeConfiguration extends Service {
+
+  public static readonly UUID: string = "000000A1-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, BridgeConfiguration.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.ConfigureBridgedAccessoryStatus);
+    this.addCharacteristic(Characteristic.DiscoverBridgedAccessories);
+    this.addCharacteristic(Characteristic.DiscoveredBridgedAccessories);
+    this.addCharacteristic(Characteristic.ConfigureBridgedAccessory);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.Name);
+  }
+}
+// noinspection JSDeprecatedSymbols
+Service.BridgeConfiguration = BridgeConfiguration;
+
+/**
+ * Service "Bridging State"
+ * @deprecated Removed and not used anymore
+ */
+export class BridgingState extends Service {
+
+  public static readonly UUID: string = "00000062-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, BridgingState.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.Reachable);
+    this.addCharacteristic(Characteristic.LinkQuality);
+    this.addCharacteristic(Characteristic.AccessoryIdentifier);
+    this.addCharacteristic(Characteristic.Category);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.Name);
+  }
+}
+// noinspection JSDeprecatedSymbols
+Service.BridgingState = BridgingState;
+
+/**
  * Service "Camera Control"
  * @deprecated This service has no usage anymore and will be ignored by iOS
  */
@@ -194,6 +242,7 @@ export class CameraControl extends Service {
     this.addOptionalCharacteristic(Characteristic.Name);
   }
 }
+// noinspection JSDeprecatedSymbols
 Service.CameraControl = CameraControl;
 
 /**
@@ -1315,6 +1364,29 @@ export class ThreadTransport extends Service {
   }
 }
 Service.ThreadTransport = ThreadTransport;
+
+/**
+ * Service "Time Information"
+ * @deprecated Removed and not used anymore
+ */
+export class TimeInformation extends Service {
+
+  public static readonly UUID: string = "00000099-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, TimeInformation.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.CurrentTime);
+    this.addCharacteristic(Characteristic.DayoftheWeek);
+    this.addCharacteristic(Characteristic.TimeUpdate);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.Name);
+  }
+}
+// noinspection JSDeprecatedSymbols
+Service.TimeInformation = TimeInformation;
 
 /**
  * Service "Transfer Transport Management"
