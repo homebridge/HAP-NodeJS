@@ -229,6 +229,7 @@ import { clone } from "./util/clone";
 import { HAPConnection } from "./util/eventedhttp";
 import { HapStatusError } from './util/hapStatusError';
 import { once } from './util/once';
+import { formatOutgoingCharacteristicValue } from "./util/request-util";
 import { toShortForm } from './util/uuid';
 
 const debug = createDebug("HAP-NodeJS:Characteristic");
@@ -1410,8 +1411,6 @@ export class Characteristic extends EventEmitter {
     if (this.props.format === Formats.BOOL && typeof value === "number") {
       // we already validate in validClientSuppliedValue that a number value can only be 0 or 1.
       value = value === 1;
-    } else if (isNumericFormat(this.props.format)) {
-      value = this.roundNumericValue(value as number);
     }
 
     const oldValue = this.value;
@@ -1568,15 +1567,6 @@ export class Characteristic extends EventEmitter {
       default:
         return this.props.minValue ?? 0;
     }
-  }
-
-  private roundNumericValue(value: number): number {
-    if (!this.props.minStep) {
-      return Math.round(value); // round to 0 decimal places
-    }
-    const base = this.props.minValue ?? 0;
-    const times = ((value - base) / this.props.minStep); // this value could become very large, so this doesn't really support little minStep values
-    return Math.round(times) * this.props.minStep + base;
   }
 
   /**
@@ -1751,6 +1741,7 @@ export class Characteristic extends EventEmitter {
 
     let numericMin: number | undefined = undefined;
     let numericMax: number | undefined = undefined;
+    let stepValue: number | undefined = undefined;
 
     switch (this.props.format) {
       case Formats.BOOL: {
@@ -1777,6 +1768,7 @@ export class Characteristic extends EventEmitter {
 
         numericMin = maxWithUndefined(this.props.minValue, -2147483648);
         numericMax = minWithUndefined(this.props.maxValue, 2147483647);
+        stepValue = maxWithUndefined(this.props.minStep, 1);
         break;
       }
       case Formats.FLOAT: {
@@ -1795,6 +1787,7 @@ export class Characteristic extends EventEmitter {
         if (this.props.maxValue != null) {
           numericMax = this.props.maxValue;
         }
+        stepValue = this.props.minStep;
         break;
       }
       case Formats.UINT8: {
@@ -1809,6 +1802,7 @@ export class Characteristic extends EventEmitter {
 
         numericMin = maxWithUndefined(this.props.minValue, 0);
         numericMax = minWithUndefined(this.props.maxValue, 255);
+        stepValue = maxWithUndefined(this.props.minStep, 1);
         break;
       }
       case Formats.UINT16: {
@@ -1823,6 +1817,7 @@ export class Characteristic extends EventEmitter {
 
         numericMin = maxWithUndefined(this.props.minValue, 0);
         numericMax = minWithUndefined(this.props.maxValue, 65535);
+        stepValue = maxWithUndefined(this.props.minStep, 1);
         break;
       }
       case Formats.UINT32: {
@@ -1837,6 +1832,7 @@ export class Characteristic extends EventEmitter {
 
         numericMin = maxWithUndefined(this.props.minValue, 0);
         numericMax = minWithUndefined(this.props.maxValue, 4294967295);
+        stepValue = maxWithUndefined(this.props.minStep, 1);
         break;
       }
       case Formats.UINT64: {
@@ -1851,6 +1847,7 @@ export class Characteristic extends EventEmitter {
 
         numericMin = maxWithUndefined(this.props.minValue, 0);
         numericMax = minWithUndefined(this.props.maxValue, 18446744073709551615); // don't get fooled, javascript uses 18446744073709552000 here
+        stepValue = maxWithUndefined(this.props.minStep, 1);
         break;
       }
       case Formats.STRING: {
@@ -1912,7 +1909,14 @@ export class Characteristic extends EventEmitter {
         }
       }
 
-      value = this.roundNumericValue(value);
+      if (stepValue != undefined) {
+        if (stepValue === 1) {
+          value = Math.round(value);
+        } else if (stepValue > 1) {
+          value = Math.round(value);
+          value = value - (value % stepValue);
+        } // for stepValue < 1 rounding is done only when formatting the response. We can't store the "perfect" .step anyways
+      }
     }
 
     return value;
@@ -1955,10 +1959,13 @@ export class Characteristic extends EventEmitter {
       // special workaround for event only programmable switch event, which must always return null
       object.value = null;
     } else { // query the current value
-      object.value = await this.handleGetRequest(connection).catch(() => {
-        debug('[%s] Error getting value for characteristic on /accessories request', this.displayName);
-        return this.value; // use cached value
-      });
+      object.value = formatOutgoingCharacteristicValue(
+        await this.handleGetRequest(connection).catch(() => {
+          debug('[%s] Error getting value for characteristic on /accessories request', this.displayName);
+          return this.value; // use cached value
+        }),
+        this.props,
+      );
     }
 
     return object;

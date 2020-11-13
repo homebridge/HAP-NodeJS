@@ -194,62 +194,6 @@ describe('Characteristic', () => {
     });
   });
 
-  describe("#roundNumericValue()", () => {
-    it("should not round valid value", () => {
-      const characteristic = createCharacteristic(Formats.INT);
-      characteristic.setProps({
-        minStep: 1,
-      })
-      // @ts-expect-error
-      const result = characteristic.roundNumericValue(4);
-      expect(result).toBe(4);
-    });
-
-    it("should round invalid value", () => {
-      const characteristic = createCharacteristic(Formats.INT);
-      characteristic.setProps({
-        minStep: 0.15,
-        minValue: 6,
-      })
-      // @ts-expect-error
-      const result = characteristic.roundNumericValue(6.1500001);
-      expect(result).toBe(6.15);
-    });
-
-    it("should round up invalid value", () => {
-      const characteristic = createCharacteristic(Formats.INT);
-      characteristic.setProps({
-        minStep: 0.1,
-        minValue: 2,
-      })
-      // @ts-expect-error
-      const result = characteristic.roundNumericValue(2.1542);
-      expect(result).toBe(2.2);
-    });
-
-    it("should round up invalid huge value", () => {
-      const characteristic = createCharacteristic(Formats.INT);
-      characteristic.setProps({
-        minStep: 90,
-      })
-      // @ts-expect-error
-      const result = characteristic.roundNumericValue(240);
-      expect(result).toBe(270);
-    });
-
-    it("should round invalid huge value", () => {
-      const characteristic = createCharacteristic(Formats.INT);
-      characteristic.setProps({
-        maxValue: 38,
-        minValue: 10,
-        minStep: 0.1,
-      })
-      // @ts-expect-error
-      const result = characteristic.roundNumericValue(36.135795);
-      expect(result).toBe(36.1);
-    });
-  });
-
   describe('#validateUserInput()', () => {
 
     it('should validate an integer property', () => {
@@ -268,17 +212,6 @@ describe('Characteristic', () => {
       });
       // @ts-expect-error
       expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
-    });
-
-    it('should round decimal places correctly', function () {
-      const VALUE = 1.5642;
-      const characteristic = createCharacteristicWithProps({
-        format: Formats.FLOAT,
-        minStep: 0.1,
-        perms: [Perms.NOTIFY],
-      });
-      // @ts-expect-error
-      expect(characteristic.validateUserInput(VALUE)).toEqual(1.6);
     });
 
     it('should validate a UINT8 property', () => {

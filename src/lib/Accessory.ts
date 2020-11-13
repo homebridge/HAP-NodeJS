@@ -71,6 +71,7 @@ import { IdentifierCache } from './model/IdentifierCache';
 import { SerializedService, Service, ServiceCharacteristicChange, ServiceEventTypes, ServiceId } from './Service';
 import { clone } from './util/clone';
 import { EventName, HAPConnection, HAPUsername } from "./util/eventedhttp";
+import { formatOutgoingCharacteristicValue } from "./util/request-util";
 import * as uuid from "./util/uuid";
 import { toShortForm } from "./util/uuid";
 import Timeout = NodeJS.Timeout;
@@ -1443,6 +1444,7 @@ export class Accessory extends EventEmitter {
     }
 
     return characteristic.handleGetRequest(connection).then(value => {
+      value = formatOutgoingCharacteristicValue(value, characteristic.props);
       debug('[%s] Got Characteristic "%s" value: "%s"', this.displayName, characteristic!.displayName, value);
 
       const data: PartialCharacteristicReadData = {
@@ -1671,7 +1673,7 @@ export class Accessory extends EventEmitter {
       return characteristic.handleSetRequest(data.value, connection).then(value => {
         debug('[%s] Setting Characteristic "%s" to value %s', this.displayName, characteristic.displayName, data.value);
         return {
-          value: data.r && value? value: undefined, // if write response is requests and value is provided, return that
+          value: data.r && value? formatOutgoingCharacteristicValue(value, characteristic.props): undefined, // if write response is requests and value is provided, return that
 
           ev: evResponse,
         };
@@ -1790,7 +1792,8 @@ export class Accessory extends EventEmitter {
       const immediateDelivery = uuid === Characteristic.ButtonEvent.UUID || uuid === Characteristic.ProgrammableSwitchEvent.UUID
         || uuid === Characteristic.MotionDetected.UUID || uuid === Characteristic.ContactSensorState.UUID;
 
-      this._server.sendEventNotifications(accessory.aid, change.characteristic.iid, change.newValue, change.originator, immediateDelivery);
+      const value = formatOutgoingCharacteristicValue(change.newValue, change.characteristic.props);
+      this._server.sendEventNotifications(accessory.aid, change.characteristic.iid, value, change.originator, immediateDelivery);
     }
   }
 
