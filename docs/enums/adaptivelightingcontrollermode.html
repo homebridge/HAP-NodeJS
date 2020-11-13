@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>AmbientLightningOptions | hap-nodejs</title>
+	<title>AdaptiveLightingControllerMode | hap-nodejs</title>
 	<meta name="description" content="Documentation for hap-nodejs">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -53,53 +53,67 @@
 					<a href="../modules.html">hap-nodejs</a>
 				</li>
 				<li>
-					<a href="ambientlightningoptions.html">AmbientLightningOptions</a>
+					<a href="adaptivelightingcontrollermode.html">AdaptiveLightingControllerMode</a>
 				</li>
 			</ul>
-			<h1>Interface AmbientLightningOptions</h1>
+			<h1>Enumeration AdaptiveLightingControllerMode</h1>
 		</div>
 	</div>
 </header>
 <div class="container container-main">
 	<div class="row">
 		<div class="col-8 col-content">
-			<section class="tsd-panel tsd-hierarchy">
-				<h3>Hierarchy</h3>
-				<ul class="tsd-hierarchy">
-					<li>
-						<span class="target">AmbientLightningOptions</span>
-					</li>
-				</ul>
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>Defines in which mode the <a href="../classes/adaptivelightingcontroller.html">AdaptiveLightingController</a> will operate in.</p>
+					</div>
+				</div>
 			</section>
 			<section class="tsd-panel-group tsd-index-group">
 				<h2>Index</h2>
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
 						<section class="tsd-index-section ">
-							<h3>Properties</h3>
+							<h3>Enumeration members</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="ambientlightningoptions.html#controllermode" class="tsd-kind-icon">controller<wbr>Mode</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="adaptivelightingcontrollermode.html#automatic" class="tsd-kind-icon">AUTOMATIC</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="adaptivelightingcontrollermode.html#manual" class="tsd-kind-icon">MANUAL</a></li>
 							</ul>
 						</section>
 					</div>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
-				<h2>Properties</h2>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="controllermode" class="tsd-anchor"></a>
-					<h3>controller<wbr>Mode</h3>
-					<div class="tsd-signature tsd-kind-icon">controller<wbr>Mode<span class="tsd-signature-symbol">:</span> <a href="../enums/ambientlightningcontrollermode.html" class="tsd-signature-type">AmbientLightningControllerMode</a></div>
+				<h2>Enumeration members</h2>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
+					<a name="automatic" class="tsd-anchor"></a>
+					<h3>AUTOMATIC</h3>
+					<div class="tsd-signature tsd-kind-icon">AUTOMATIC<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = 1</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/9fd2ffb/src/lib/controller/AmbientLightningController.ts#L202">src/lib/controller/AmbientLightningController.ts:202</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/controller/AdaptiveLightingController.ts#L212">src/lib/controller/AdaptiveLightingController.ts:212</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>Defines how the controller will operate.
-								You can choose between automatic and manual mode.
-							See <a href="../enums/ambientlightningcontrollermode.html">AmbientLightningControllerMode</a>.</p>
+							<p>In automatic mode pretty much everything from setup to transition scheduling is done by the controller.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
+					<a name="manual" class="tsd-anchor"></a>
+					<h3>MANUAL</h3>
+					<div class="tsd-signature tsd-kind-icon">MANUAL<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = 2</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/controller/AdaptiveLightingController.ts#L217">src/lib/controller/AdaptiveLightingController.ts:217</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>In manual mode setup is done by the controller but the actual transition must be done by the user.
+							This is useful for lights which natively support transitions.</p>
 						</div>
 					</div>
 				</section>
@@ -117,11 +131,14 @@
 				<ul class="before-current">
 				</ul>
 				<ul class="current">
-					<li class="current tsd-kind-interface">
-						<a href="ambientlightningoptions.html" class="tsd-kind-icon">Ambient<wbr>Lightning<wbr>Options</a>
+					<li class="current tsd-kind-enum">
+						<a href="adaptivelightingcontrollermode.html" class="tsd-kind-icon">Adaptive<wbr>Lighting<wbr>Controller<wbr>Mode</a>
 						<ul>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="ambientlightningoptions.html#controllermode" class="tsd-kind-icon">controller<wbr>Mode</a>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
+								<a href="adaptivelightingcontrollermode.html#automatic" class="tsd-kind-icon">AUTOMATIC</a>
+							</li>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
+								<a href="adaptivelightingcontrollermode.html#manual" class="tsd-kind-icon">MANUAL</a>
 							</li>
 						</ul>
 					</li>

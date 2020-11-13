@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>AmbientLightningController | hap-nodejs</title>
+	<title>AdaptiveLightingController | hap-nodejs</title>
 	<meta name="description" content="Documentation for hap-nodejs">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -53,10 +53,10 @@
 					<a href="../modules.html">hap-nodejs</a>
 				</li>
 				<li>
-					<a href="ambientlightningcontroller.html">AmbientLightningController</a>
+					<a href="adaptivelightingcontroller.html">AdaptiveLightingController</a>
 				</li>
 			</ul>
-			<h1>Class AmbientLightningController</h1>
+			<h1>Class AdaptiveLightingController</h1>
 		</div>
 	</div>
 </header>
@@ -66,34 +66,34 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>This class allows adding Ambient Lightning support to Lightbulb services.
+						<p>This class allows adding Adaptive Lighting support to Lightbulb services.
 							The Lightbulb service MUST have the <a href="characteristic.html#colortemperature">Characteristic.ColorTemperature</a> characteristic AND
 							the <a href="characteristic.html#brightness">Characteristic.Brightness</a> characteristic added.
 							The light may also expose <a href="characteristic.html#hue">Characteristic.Hue</a> and <a href="characteristic.html#saturation">Characteristic.Saturation</a> characteristics
 						(though additional work is required to keep them in sync with the color temperature characteristic. see below)</p>
 					</div>
-					<p>How Ambient Lightning works:
-						When enabling AmbientLightning the iDevice will send a transition schedule for the next 24 hours.
+					<p>How Adaptive Lighting works:
+						When enabling AdaptiveLighting the iDevice will send a transition schedule for the next 24 hours.
 						This schedule will be renewed all 24 hours by a HomeHub in your home
 						(updating the schedule according to your current day/night situation).
 						Once enabled the lightbulb will execute the provided transitions. The color temperature value set is always
 						dependent on the current brightness value. Meaning brighter light will be colder and darker light will be warmer.
-						HomeKit considers Ambient Lightning to be disabled as soon a write happens to either the
+						HomeKit considers Adaptive Lighting to be disabled as soon a write happens to either the
 						Hue/Saturation or the ColorTemperature characteristics.
-					The AmbientLightning state must persist across reboots.</p>
-					<p>The AmbientLightningController can be operated in two modes: <a href="../enums/ambientlightningcontrollermode.html#automatic">AmbientLightningControllerMode.AUTOMATIC</a> and
-						<a href="../enums/ambientlightningcontrollermode.html#manual">AmbientLightningControllerMode.MANUAL</a> with AUTOMATIC being the default.
+					The AdaptiveLighting state must persist across reboots.</p>
+					<p>The AdaptiveLightingController can be operated in two modes: <a href="../enums/adaptivelightingcontrollermode.html#automatic">AdaptiveLightingControllerMode.AUTOMATIC</a> and
+						<a href="../enums/adaptivelightingcontrollermode.html#manual">AdaptiveLightingControllerMode.MANUAL</a> with AUTOMATIC being the default.
 						The goal would be that the color transition is done DIRECTLY on the light itself, thus not creating any
 						additional/heavy traffic on the network.
 					So if your light hardware/API supports transitions please go the extra mile and use MANUAL mode.</p>
-					<p>Below is an overview what you need to or consider when enabling AmbientLighting (categorized by mode).
-					The <a href="../enums/ambientlightningcontrollermode.html">AmbientLightningControllerMode</a> can be defined with the second constructor argument.</p>
+					<p>Below is an overview what you need to or consider when enabling AdaptiveLighting (categorized by mode).
+					The <a href="../enums/adaptivelightingcontrollermode.html">AdaptiveLightingControllerMode</a> can be defined with the second constructor argument.</p>
 					<p><b>AUTOMATIC (Default mode):</b></p>
-					<p> This is the easiest mode to setup and needs less to no work form your side for AmbientLightning to work.
-						The AmbientLightningController will go through setup procedure with HomeKit and automatically update
+					<p> This is the easiest mode to setup and needs less to no work form your side for AdaptiveLighting to work.
+						The AdaptiveLightingController will go through setup procedure with HomeKit and automatically update
 						the color temperature characteristic base on the current transition schedule.
 						It is also adjusting the color temperature when a write to the brightness characteristic happens.
-						It will also handle turning of AmbientLightning when it detects a write happening to the
+						It will also handle turning of AdaptiveLighting when it detects a write happening to the
 					ColorTemperature, Hue or Saturation characteristic.</p>
 					<p> So what do you need to consider in automatic mode:</p>
 					<ul>
@@ -104,10 +104,10 @@
 							as the controller won&#39;t call the GET handler every 60 seconds.
 						(The cache value is updated on SET/GET operations or by manually calling <a href="characteristic.html#updatevalue">Characteristic.updateValue</a>).</li>
 						<li>Detecting changes on the lightbulb side:
-							Any manual change to ColorTemperature or Hue/Saturation is considered as a signal to turn AmbientLightning off.
-							In order to notify the AmbientLightningController of such an event happening OUTSIDE of HomeKit
+							Any manual change to ColorTemperature or Hue/Saturation is considered as a signal to turn AdaptiveLighting off.
+							In order to notify the AdaptiveLightingController of such an event happening OUTSIDE of HomeKit
 							(like changing stuff on the physical Lightbulb) you can call <a href="characteristic.html#setvalue">Characteristic.setValue</a> manually
-						(keep in mind, this will fire call your SET handler) or call <a href="ambientlightningcontroller.html#disableambientlightning">disableAmbientLightning</a> directly.</li>
+						(keep in mind, this will fire call your SET handler) or call <a href="adaptivelightingcontroller.html#disableadaptivelighting">disableAdaptiveLighting</a> directly.</li>
 						<li>Be aware that even when the light is turned off the transition will continue to call the SET handler
 						of the ColorTemperature characteristic.</li>
 						<li>When using Hue/Saturation:
@@ -118,7 +118,7 @@
 							When a write happens to the ColorTemperature characteristic just MUST convert to a proper representation
 							in hue and saturation values, with RAISING a event.
 							As noted above you MUST NOT call the <a href="characteristic.html#setvalue">Characteristic.setValue</a> method for this, as this will be considered
-							a write to the characteristic and will turn off AmbientLightning. Instead you should use
+							a write to the characteristic and will turn off AdaptiveLighting. Instead you should use
 							<a href="characteristic.html#updatevalue">Characteristic.updateValue</a> for this.
 							You can and SHOULD use the supplied utility method <a href="colorutils.html#colortemperaturetohueandsaturation">ColorUtils.colorTemperatureToHueAndSaturation</a>
 						for converting mired to hue and saturation values.</li>
@@ -127,27 +127,27 @@
 					<p> Manual mode is recommended for any accessories which support transitions natively on the devices end.
 						Like for example ZigBee lights which support sending transitions directly to the lightbulb which
 						then get executed ON the lightbulb itself reducing unnecessary network traffic.
-						Here is a quick overview what you have to consider to successfully implement AmbientLightning support.
-						The AmbientLightningController will also in manual mode do all of the setup procedure.
-						It will also save the transition schedule to disk to keep AmbientLightning enabled across reboots.
+						Here is a quick overview what you have to consider to successfully implement AdaptiveLighting support.
+						The AdaptiveLightingController will also in manual mode do all of the setup procedure.
+						It will also save the transition schedule to disk to keep AdaptiveLighting enabled across reboots.
 						The &quot;only&quot; thing you have to do yourself is handling the actual transitions, check that event notifications
 						are only sent in the defined interval threshold, adjust the color temperature when brightness is changed
-					and signal that ambient lightning should be disabled if ColorTemperature, Hue or Saturation is changed manually.</p>
-					<p> First step is to setup up a event handler for the <a href="../enums/ambientlightningcontrollerevents.html#update">AmbientLightningControllerEvents.UPDATE</a>, which is called
-						when AmbientLightning is enabled, the HomeHub updates the schedule for the next 24 hours or AmbientLightning
+					and signal that Adaptive Lighting should be disabled if ColorTemperature, Hue or Saturation is changed manually.</p>
+					<p> First step is to setup up a event handler for the <a href="../enums/adaptivelightingcontrollerevents.html#update">AdaptiveLightingControllerEvents.UPDATE</a>, which is called
+						when AdaptiveLighting is enabled, the HomeHub updates the schedule for the next 24 hours or AdaptiveLighting
 						is restored from disk on startup.
-						In the event handler you can get the current schedule via <a href="ambientlightningcontroller.html#getambientlightningtransitioncurve">AmbientLightningController.getAmbientLightningTransitionCurve</a>,
-						retrieve current intervals like <a href="ambientlightningcontroller.html#getambientlightningupdateinterval">AmbientLightningController.getAmbientLightningUpdateInterval</a> or
-						<a href="ambientlightningcontroller.html#getambientlightningnotifyintervalthreshold">AmbientLightningController.getAmbientLightningNotifyIntervalThreshold</a> and get the date in epoch millis
-						when the current transition curve started using <a href="ambientlightningcontroller.html#getambientlightningstarttimeoftransition">AmbientLightningController.getAmbientLightningStartTimeOfTransition</a>.
-						Additionally <a href="ambientlightningcontroller.html#getambientlightningbrightnessmultiplierrange">AmbientLightningController.getAmbientLightningBrightnessMultiplierRange</a> can be used
+						In the event handler you can get the current schedule via <a href="adaptivelightingcontroller.html#getadaptivelightingtransitioncurve">AdaptiveLightingController.getAdaptiveLightingTransitionCurve</a>,
+						retrieve current intervals like <a href="adaptivelightingcontroller.html#getadaptivelightingupdateinterval">AdaptiveLightingController.getAdaptiveLightingUpdateInterval</a> or
+						<a href="adaptivelightingcontroller.html#getadaptivelightingnotifyintervalthreshold">AdaptiveLightingController.getAdaptiveLightingNotifyIntervalThreshold</a> and get the date in epoch millis
+						when the current transition curve started using <a href="adaptivelightingcontroller.html#getadaptivelightingstarttimeoftransition">AdaptiveLightingController.getAdaptiveLightingStartTimeOfTransition</a>.
+						Additionally <a href="adaptivelightingcontroller.html#getadaptivelightingbrightnessmultiplierrange">AdaptiveLightingController.getAdaptiveLightingBrightnessMultiplierRange</a> can be used
 						to get the valid range for the brightness value to calculate the brightness adjustment factor.
-						The method <a href="ambientlightningcontroller.html#isambientlightningactive">AmbientLightningController.isAmbientLightningActive</a> can be used to check if AmbientLightning is enabled.
-						Besides actually running the transition (see <a href="../interfaces/ambientlightningtransitioncurveentry.html">AmbientLightningTransitionCurveEntry</a>) you must
-						correctly update the color temperature when the brightness of the lightbulb changes (see <a href="../interfaces/ambientlightningtransitioncurveentry.html#brightnessadjustmentfactor">AmbientLightningTransitionCurveEntry.brightnessAdjustmentFactor</a>),
-						and signal when AmbientLightning got disabled by calling <a href="ambientlightningcontroller.html#disableambientlightning">AmbientLightningController.disableAmbientLightning</a>
+						The method <a href="adaptivelightingcontroller.html#isadaptivelightingactive">AdaptiveLightingController.isAdaptiveLightingActive</a> can be used to check if AdaptiveLighting is enabled.
+						Besides actually running the transition (see <a href="../interfaces/adaptivelightingtransitioncurveentry.html">AdaptiveLightingTransitionCurveEntry</a>) you must
+						correctly update the color temperature when the brightness of the lightbulb changes (see <a href="../interfaces/adaptivelightingtransitioncurveentry.html#brightnessadjustmentfactor">AdaptiveLightingTransitionCurveEntry.brightnessAdjustmentFactor</a>),
+						and signal when AdaptiveLighting got disabled by calling <a href="adaptivelightingcontroller.html#disableadaptivelighting">AdaptiveLightingController.disableAdaptiveLighting</a>
 						when ColorTemperature, Hue or Saturation where changed manually.
-						Lastly you should set up a event handler for the <a href="../enums/ambientlightningcontrollerevents.html#disabled">AmbientLightningControllerEvents.DISABLED</a> event.
+						Lastly you should set up a event handler for the <a href="../enums/adaptivelightingcontrollerevents.html#disabled">AdaptiveLightingControllerEvents.DISABLED</a> event.
 						In yet unknown circumstances HomeKit may also send a dedicated disable command via the control point characteristic.
 					Be prepared to handle that.</p>
 				</div>
@@ -159,7 +159,7 @@
 						<span class="tsd-signature-type">EventEmitter</span>
 						<ul class="tsd-hierarchy">
 							<li>
-								<span class="target">AmbientLightningController</span>
+								<span class="target">AdaptiveLightingController</span>
 							</li>
 						</ul>
 					</li>
@@ -168,7 +168,7 @@
 			<section class="tsd-panel">
 				<h3>Implements</h3>
 				<ul class="tsd-hierarchy">
-					<li><a href="../interfaces/serializablecontroller.html" class="tsd-signature-type">SerializableController</a><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/controllerservicemap.html" class="tsd-signature-type">ControllerServiceMap</a><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">SerializedAmbientLightningControllerState</span><span class="tsd-signature-symbol">&gt;</span></li>
+					<li><a href="../interfaces/serializablecontroller.html" class="tsd-signature-type">SerializableController</a><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/controllerservicemap.html" class="tsd-signature-type">ControllerServiceMap</a><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">SerializedAdaptiveLightingControllerState</span><span class="tsd-signature-symbol">&gt;</span></li>
 				</ul>
 			</section>
 			<section class="tsd-panel-group tsd-index-group">
@@ -178,41 +178,41 @@
 						<section class="tsd-index-section ">
 							<h3>Constructors</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-constructor tsd-parent-kind-class"><a href="ambientlightningcontroller.html#constructor" class="tsd-kind-icon">constructor</a></li>
+								<li class="tsd-kind-constructor tsd-parent-kind-class"><a href="adaptivelightingcontroller.html#constructor" class="tsd-kind-icon">constructor</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section tsd-is-inherited">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-static"><a href="ambientlightningcontroller.html#defaultmaxlisteners" class="tsd-kind-icon">default<wbr>Max<wbr>Listeners</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-static"><a href="adaptivelightingcontroller.html#defaultmaxlisteners" class="tsd-kind-icon">default<wbr>Max<wbr>Listeners</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
 							<h3>Methods</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="ambientlightningcontroller.html#addlistener" class="tsd-kind-icon">add<wbr>Listener</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="ambientlightningcontroller.html#disableambientlightning" class="tsd-kind-icon">disable<wbr>Ambient<wbr>Lightning</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite"><a href="ambientlightningcontroller.html#emit" class="tsd-kind-icon">emit</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="ambientlightningcontroller.html#eventnames" class="tsd-kind-icon">event<wbr>Names</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="ambientlightningcontroller.html#getambientlightningbrightnessmultiplierrange" class="tsd-kind-icon">get<wbr>Ambient<wbr>Lightning<wbr>Brightness<wbr>Multiplier<wbr>Range</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="ambientlightningcontroller.html#getambientlightningnotifyintervalthreshold" class="tsd-kind-icon">get<wbr>Ambient<wbr>Lightning<wbr>Notify<wbr>Interval<wbr>Threshold</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="ambientlightningcontroller.html#getambientlightningstarttimeoftransition" class="tsd-kind-icon">get<wbr>Ambient<wbr>Lightning<wbr>Start<wbr>Time<wbr>OfTransition</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="ambientlightningcontroller.html#getambientlightningtransitioncurve" class="tsd-kind-icon">get<wbr>Ambient<wbr>Lightning<wbr>Transition<wbr>Curve</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="ambientlightningcontroller.html#getambientlightningupdateinterval" class="tsd-kind-icon">get<wbr>Ambient<wbr>Lightning<wbr>Update<wbr>Interval</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="ambientlightningcontroller.html#getmaxlisteners" class="tsd-kind-icon">get<wbr>Max<wbr>Listeners</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="ambientlightningcontroller.html#isambientlightningactive" class="tsd-kind-icon">is<wbr>Ambient<wbr>Lightning<wbr>Active</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="ambientlightningcontroller.html#listenercount" class="tsd-kind-icon">listener<wbr>Count</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="ambientlightningcontroller.html#listeners" class="tsd-kind-icon">listeners</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="ambientlightningcontroller.html#off" class="tsd-kind-icon">off</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite"><a href="ambientlightningcontroller.html#on" class="tsd-kind-icon">on</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="ambientlightningcontroller.html#once" class="tsd-kind-icon">once</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="ambientlightningcontroller.html#prependlistener" class="tsd-kind-icon">prepend<wbr>Listener</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="ambientlightningcontroller.html#prependoncelistener" class="tsd-kind-icon">prepend<wbr>Once<wbr>Listener</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="ambientlightningcontroller.html#rawlisteners" class="tsd-kind-icon">raw<wbr>Listeners</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="ambientlightningcontroller.html#removealllisteners" class="tsd-kind-icon">remove<wbr>All<wbr>Listeners</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="ambientlightningcontroller.html#removelistener" class="tsd-kind-icon">remove<wbr>Listener</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="ambientlightningcontroller.html#setmaxlisteners" class="tsd-kind-icon">set<wbr>Max<wbr>Listeners</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-static"><a href="ambientlightningcontroller.html#listenercount-1" class="tsd-kind-icon">listener<wbr>Count</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="adaptivelightingcontroller.html#addlistener" class="tsd-kind-icon">add<wbr>Listener</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="adaptivelightingcontroller.html#disableadaptivelighting" class="tsd-kind-icon">disable<wbr>Adaptive<wbr>Lighting</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite"><a href="adaptivelightingcontroller.html#emit" class="tsd-kind-icon">emit</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="adaptivelightingcontroller.html#eventnames" class="tsd-kind-icon">event<wbr>Names</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="adaptivelightingcontroller.html#getadaptivelightingbrightnessmultiplierrange" class="tsd-kind-icon">get<wbr>Adaptive<wbr>Lighting<wbr>Brightness<wbr>Multiplier<wbr>Range</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="adaptivelightingcontroller.html#getadaptivelightingnotifyintervalthreshold" class="tsd-kind-icon">get<wbr>Adaptive<wbr>Lighting<wbr>Notify<wbr>Interval<wbr>Threshold</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="adaptivelightingcontroller.html#getadaptivelightingstarttimeoftransition" class="tsd-kind-icon">get<wbr>Adaptive<wbr>Lighting<wbr>Start<wbr>Time<wbr>OfTransition</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="adaptivelightingcontroller.html#getadaptivelightingtransitioncurve" class="tsd-kind-icon">get<wbr>Adaptive<wbr>Lighting<wbr>Transition<wbr>Curve</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="adaptivelightingcontroller.html#getadaptivelightingupdateinterval" class="tsd-kind-icon">get<wbr>Adaptive<wbr>Lighting<wbr>Update<wbr>Interval</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="adaptivelightingcontroller.html#getmaxlisteners" class="tsd-kind-icon">get<wbr>Max<wbr>Listeners</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="adaptivelightingcontroller.html#isadaptivelightingactive" class="tsd-kind-icon">is<wbr>Adaptive<wbr>Lighting<wbr>Active</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="adaptivelightingcontroller.html#listenercount" class="tsd-kind-icon">listener<wbr>Count</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="adaptivelightingcontroller.html#listeners" class="tsd-kind-icon">listeners</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="adaptivelightingcontroller.html#off" class="tsd-kind-icon">off</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite"><a href="adaptivelightingcontroller.html#on" class="tsd-kind-icon">on</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="adaptivelightingcontroller.html#once" class="tsd-kind-icon">once</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="adaptivelightingcontroller.html#prependlistener" class="tsd-kind-icon">prepend<wbr>Listener</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="adaptivelightingcontroller.html#prependoncelistener" class="tsd-kind-icon">prepend<wbr>Once<wbr>Listener</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="adaptivelightingcontroller.html#rawlisteners" class="tsd-kind-icon">raw<wbr>Listeners</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="adaptivelightingcontroller.html#removealllisteners" class="tsd-kind-icon">remove<wbr>All<wbr>Listeners</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="adaptivelightingcontroller.html#removelistener" class="tsd-kind-icon">remove<wbr>Listener</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="adaptivelightingcontroller.html#setmaxlisteners" class="tsd-kind-icon">set<wbr>Max<wbr>Listeners</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-static"><a href="adaptivelightingcontroller.html#listenercount-1" class="tsd-kind-icon">listener<wbr>Count</a></li>
 							</ul>
 						</section>
 					</div>
@@ -224,19 +224,19 @@
 					<a name="constructor" class="tsd-anchor"></a>
 					<h3>constructor</h3>
 					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">new <wbr>Ambient<wbr>Lightning<wbr>Controller<span class="tsd-signature-symbol">(</span>service<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Lightbulb</span>, options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/ambientlightningoptions.html" class="tsd-signature-type">AmbientLightningOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="ambientlightningcontroller.html" class="tsd-signature-type">AmbientLightningController</a></li>
+						<li class="tsd-signature tsd-kind-icon">new <wbr>Adaptive<wbr>Lighting<wbr>Controller<span class="tsd-signature-symbol">(</span>service<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Lightbulb</span>, options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/adaptivelightingoptions.html" class="tsd-signature-type">AdaptiveLightingOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="adaptivelightingcontroller.html" class="tsd-signature-type">AdaptiveLightingController</a></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/9fd2ffb/src/lib/controller/AmbientLightningController.ts#L380">src/lib/controller/AmbientLightningController.ts:380</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/controller/AdaptiveLightingController.ts#L380">src/lib/controller/AdaptiveLightingController.ts:380</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
-									<p>Creates a new instance of the AmbientLightningController.
-									Refer to the <a href="ambientlightningcontroller.html">AmbientLightningController</a> documentation on how to use it.</p>
+									<p>Creates a new instance of the AdaptiveLightingController.
+									Refer to the <a href="adaptivelightingcontroller.html">AdaptiveLightingController</a> documentation on how to use it.</p>
 								</div>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -245,12 +245,12 @@
 									<h5>service: <span class="tsd-signature-type">Lightbulb</span></h5>
 									<div class="tsd-comment tsd-typography">
 										<div class="lead">
-											<p>The lightbulb to which ambient lightning support should be added.</p>
+											<p>The lightbulb to which Adaptive Lighting support should be added.</p>
 										</div>
 									</div>
 								</li>
 								<li>
-									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="../interfaces/ambientlightningoptions.html" class="tsd-signature-type">AmbientLightningOptions</a></h5>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="../interfaces/adaptivelightingoptions.html" class="tsd-signature-type">AdaptiveLightingOptions</a></h5>
 									<div class="tsd-comment tsd-typography">
 										<div class="lead">
 											<p>Optional options to define the operating mode (automatic vs manual).</p>
@@ -258,7 +258,7 @@
 									</div>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <a href="ambientlightningcontroller.html" class="tsd-signature-type">AmbientLightningController</a></h4>
+							<h4 class="tsd-returns-title">Returns <a href="adaptivelightingcontroller.html" class="tsd-signature-type">AdaptiveLightingController</a></h4>
 						</li>
 					</ul>
 				</section>
@@ -326,23 +326,23 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-					<a name="disableambientlightning" class="tsd-anchor"></a>
-					<h3>disable<wbr>Ambient<wbr>Lightning</h3>
+					<a name="disableadaptivelighting" class="tsd-anchor"></a>
+					<h3>disable<wbr>Adaptive<wbr>Lighting</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">disable<wbr>Ambient<wbr>Lightning<span class="tsd-signature-symbol">(</span>triggerStateChange<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+						<li class="tsd-signature tsd-kind-icon">disable<wbr>Adaptive<wbr>Lighting<span class="tsd-signature-symbol">(</span>triggerStateChange<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/9fd2ffb/src/lib/controller/AmbientLightningController.ts#L424">src/lib/controller/AmbientLightningController.ts:424</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/controller/AdaptiveLightingController.ts#L424">src/lib/controller/AdaptiveLightingController.ts:424</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
-									<p>This method can be called to manually disable the current active Ambient Lightning transition.
-										When using <a href="../enums/ambientlightningcontrollermode.html#automatic">AmbientLightningControllerMode.AUTOMATIC</a> you won&#39;t need to call this method.
-										In <a href="../enums/ambientlightningcontrollermode.html#manual">AmbientLightningControllerMode.MANUAL</a> you must call this method when Ambient Lightning should be disabled.
+									<p>This method can be called to manually disable the current active Adaptive Lighting transition.
+										When using <a href="../enums/adaptivelightingcontrollermode.html#automatic">AdaptiveLightingControllerMode.AUTOMATIC</a> you won&#39;t need to call this method.
+										In <a href="../enums/adaptivelightingcontrollermode.html#manual">AdaptiveLightingControllerMode.MANUAL</a> you must call this method when Adaptive Lighting should be disabled.
 										This is the case when the user manually changes the value of Hue, Saturation or ColorTemperature characteristics
 									(or if any of those values is changed by physical interaction with the lightbulb).</p>
 								</div>
@@ -369,7 +369,7 @@
 							<aside class="tsd-sources">
 								<p>Overrides EventEmitter.emit</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/9fd2ffb/src/lib/controller/AmbientLightningController.ts#L251">src/lib/controller/AmbientLightningController.ts:251</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/controller/AdaptiveLightingController.ts#L251">src/lib/controller/AdaptiveLightingController.ts:251</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -384,7 +384,7 @@
 							<aside class="tsd-sources">
 								<p>Overrides EventEmitter.emit</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/9fd2ffb/src/lib/controller/AmbientLightningController.ts#L252">src/lib/controller/AmbientLightningController.ts:252</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/controller/AdaptiveLightingController.ts#L252">src/lib/controller/AdaptiveLightingController.ts:252</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -417,16 +417,16 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-					<a name="getambientlightningbrightnessmultiplierrange" class="tsd-anchor"></a>
-					<h3>get<wbr>Ambient<wbr>Lightning<wbr>Brightness<wbr>Multiplier<wbr>Range</h3>
+					<a name="getadaptivelightingbrightnessmultiplierrange" class="tsd-anchor"></a>
+					<h3>get<wbr>Adaptive<wbr>Lighting<wbr>Brightness<wbr>Multiplier<wbr>Range</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">get<wbr>Ambient<wbr>Lightning<wbr>Brightness<wbr>Multiplier<wbr>Range<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/brightnessadjustmentmultiplierrange.html" class="tsd-signature-type">BrightnessAdjustmentMultiplierRange</a></li>
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Adaptive<wbr>Lighting<wbr>Brightness<wbr>Multiplier<wbr>Range<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/brightnessadjustmentmultiplierrange.html" class="tsd-signature-type">BrightnessAdjustmentMultiplierRange</a></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/9fd2ffb/src/lib/controller/AmbientLightningController.ts#L482">src/lib/controller/AmbientLightningController.ts:482</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/controller/AdaptiveLightingController.ts#L482">src/lib/controller/AdaptiveLightingController.ts:482</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <a href="../interfaces/brightnessadjustmentmultiplierrange.html" class="tsd-signature-type">BrightnessAdjustmentMultiplierRange</a></h4>
@@ -434,16 +434,16 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-					<a name="getambientlightningnotifyintervalthreshold" class="tsd-anchor"></a>
-					<h3>get<wbr>Ambient<wbr>Lightning<wbr>Notify<wbr>Interval<wbr>Threshold</h3>
+					<a name="getadaptivelightingnotifyintervalthreshold" class="tsd-anchor"></a>
+					<h3>get<wbr>Adaptive<wbr>Lighting<wbr>Notify<wbr>Interval<wbr>Threshold</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">get<wbr>Ambient<wbr>Lightning<wbr>Notify<wbr>Interval<wbr>Threshold<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Adaptive<wbr>Lighting<wbr>Notify<wbr>Interval<wbr>Threshold<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/9fd2ffb/src/lib/controller/AmbientLightningController.ts#L510">src/lib/controller/AmbientLightningController.ts:510</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/controller/AdaptiveLightingController.ts#L510">src/lib/controller/AdaptiveLightingController.ts:510</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -459,16 +459,16 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-					<a name="getambientlightningstarttimeoftransition" class="tsd-anchor"></a>
-					<h3>get<wbr>Ambient<wbr>Lightning<wbr>Start<wbr>Time<wbr>OfTransition</h3>
+					<a name="getadaptivelightingstarttimeoftransition" class="tsd-anchor"></a>
+					<h3>get<wbr>Adaptive<wbr>Lighting<wbr>Start<wbr>Time<wbr>OfTransition</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">get<wbr>Ambient<wbr>Lightning<wbr>Start<wbr>Time<wbr>OfTransition<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Adaptive<wbr>Lighting<wbr>Start<wbr>Time<wbr>OfTransition<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/9fd2ffb/src/lib/controller/AmbientLightningController.ts#L468">src/lib/controller/AmbientLightningController.ts:468</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/controller/AdaptiveLightingController.ts#L468">src/lib/controller/AdaptiveLightingController.ts:468</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -482,33 +482,33 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-					<a name="getambientlightningtransitioncurve" class="tsd-anchor"></a>
-					<h3>get<wbr>Ambient<wbr>Lightning<wbr>Transition<wbr>Curve</h3>
+					<a name="getadaptivelightingtransitioncurve" class="tsd-anchor"></a>
+					<h3>get<wbr>Adaptive<wbr>Lighting<wbr>Transition<wbr>Curve</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">get<wbr>Ambient<wbr>Lightning<wbr>Transition<wbr>Curve<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/ambientlightningtransitioncurveentry.html" class="tsd-signature-type">AmbientLightningTransitionCurveEntry</a><span class="tsd-signature-symbol">[]</span></li>
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Adaptive<wbr>Lighting<wbr>Transition<wbr>Curve<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/adaptivelightingtransitioncurveentry.html" class="tsd-signature-type">AdaptiveLightingTransitionCurveEntry</a><span class="tsd-signature-symbol">[]</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/9fd2ffb/src/lib/controller/AmbientLightningController.ts#L475">src/lib/controller/AmbientLightningController.ts:475</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/controller/AdaptiveLightingController.ts#L475">src/lib/controller/AdaptiveLightingController.ts:475</a></li>
 								</ul>
 							</aside>
-							<h4 class="tsd-returns-title">Returns <a href="../interfaces/ambientlightningtransitioncurveentry.html" class="tsd-signature-type">AmbientLightningTransitionCurveEntry</a><span class="tsd-signature-symbol">[]</span></h4>
+							<h4 class="tsd-returns-title">Returns <a href="../interfaces/adaptivelightingtransitioncurveentry.html" class="tsd-signature-type">AdaptiveLightingTransitionCurveEntry</a><span class="tsd-signature-symbol">[]</span></h4>
 						</li>
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-					<a name="getambientlightningupdateinterval" class="tsd-anchor"></a>
-					<h3>get<wbr>Ambient<wbr>Lightning<wbr>Update<wbr>Interval</h3>
+					<a name="getadaptivelightingupdateinterval" class="tsd-anchor"></a>
+					<h3>get<wbr>Adaptive<wbr>Lighting<wbr>Update<wbr>Interval</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">get<wbr>Ambient<wbr>Lightning<wbr>Update<wbr>Interval<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Adaptive<wbr>Lighting<wbr>Update<wbr>Interval<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/9fd2ffb/src/lib/controller/AmbientLightningController.ts#L496">src/lib/controller/AmbientLightningController.ts:496</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/controller/AdaptiveLightingController.ts#L496">src/lib/controller/AdaptiveLightingController.ts:496</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -543,21 +543,21 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-					<a name="isambientlightningactive" class="tsd-anchor"></a>
-					<h3>is<wbr>Ambient<wbr>Lightning<wbr>Active</h3>
+					<a name="isadaptivelightingactive" class="tsd-anchor"></a>
+					<h3>is<wbr>Adaptive<wbr>Lighting<wbr>Active</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">is<wbr>Ambient<wbr>Lightning<wbr>Active<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
+						<li class="tsd-signature tsd-kind-icon">is<wbr>Adaptive<wbr>Lighting<wbr>Active<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/9fd2ffb/src/lib/controller/AmbientLightningController.ts#L413">src/lib/controller/AmbientLightningController.ts:413</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/controller/AdaptiveLightingController.ts#L413">src/lib/controller/AdaptiveLightingController.ts:413</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
-									<p>Returns if a Ambient Lightning transition is currently active.</p>
+									<p>Returns if a Adaptive Lighting transition is currently active.</p>
 								</div>
 							</div>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
@@ -672,12 +672,12 @@
 							<aside class="tsd-sources">
 								<p>Overrides EventEmitter.on</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/9fd2ffb/src/lib/controller/AmbientLightningController.ts#L242">src/lib/controller/AmbientLightningController.ts:242</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/controller/AdaptiveLightingController.ts#L242">src/lib/controller/AdaptiveLightingController.ts:242</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
-									<p>See <a href="../enums/ambientlightningcontrollerevents.html#update">AmbientLightningControllerEvents.UPDATE</a></p>
+									<p>See <a href="../enums/adaptivelightingcontrollerevents.html#update">AdaptiveLightingControllerEvents.UPDATE</a></p>
 								</div>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -709,12 +709,12 @@
 							<aside class="tsd-sources">
 								<p>Overrides EventEmitter.on</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/9fd2ffb/src/lib/controller/AmbientLightningController.ts#L249">src/lib/controller/AmbientLightningController.ts:249</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/controller/AdaptiveLightingController.ts#L249">src/lib/controller/AdaptiveLightingController.ts:249</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
-									<p>See <a href="../enums/ambientlightningcontrollerevents.html#disabled">AmbientLightningControllerEvents.DISABLED</a></p>
+									<p>See <a href="../enums/adaptivelightingcontrollerevents.html#disabled">AdaptiveLightingControllerEvents.DISABLED</a></p>
 								</div>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1052,82 +1052,82 @@
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-class">
-						<a href="ambientlightningcontroller.html" class="tsd-kind-icon">Ambient<wbr>Lightning<wbr>Controller</a>
+						<a href="adaptivelightingcontroller.html" class="tsd-kind-icon">Adaptive<wbr>Lighting<wbr>Controller</a>
 						<ul>
 							<li class=" tsd-kind-constructor tsd-parent-kind-class">
-								<a href="ambientlightningcontroller.html#constructor" class="tsd-kind-icon">constructor</a>
+								<a href="adaptivelightingcontroller.html#constructor" class="tsd-kind-icon">constructor</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-static">
-								<a href="ambientlightningcontroller.html#defaultmaxlisteners" class="tsd-kind-icon">default<wbr>Max<wbr>Listeners</a>
+								<a href="adaptivelightingcontroller.html#defaultmaxlisteners" class="tsd-kind-icon">default<wbr>Max<wbr>Listeners</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited">
-								<a href="ambientlightningcontroller.html#addlistener" class="tsd-kind-icon">add<wbr>Listener</a>
+								<a href="adaptivelightingcontroller.html#addlistener" class="tsd-kind-icon">add<wbr>Listener</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
-								<a href="ambientlightningcontroller.html#disableambientlightning" class="tsd-kind-icon">disable<wbr>Ambient<wbr>Lightning</a>
+								<a href="adaptivelightingcontroller.html#disableadaptivelighting" class="tsd-kind-icon">disable<wbr>Adaptive<wbr>Lighting</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite">
-								<a href="ambientlightningcontroller.html#emit" class="tsd-kind-icon">emit</a>
+								<a href="adaptivelightingcontroller.html#emit" class="tsd-kind-icon">emit</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited">
-								<a href="ambientlightningcontroller.html#eventnames" class="tsd-kind-icon">event<wbr>Names</a>
+								<a href="adaptivelightingcontroller.html#eventnames" class="tsd-kind-icon">event<wbr>Names</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
-								<a href="ambientlightningcontroller.html#getambientlightningbrightnessmultiplierrange" class="tsd-kind-icon">get<wbr>Ambient<wbr>Lightning<wbr>Brightness<wbr>Multiplier<wbr>Range</a>
+								<a href="adaptivelightingcontroller.html#getadaptivelightingbrightnessmultiplierrange" class="tsd-kind-icon">get<wbr>Adaptive<wbr>Lighting<wbr>Brightness<wbr>Multiplier<wbr>Range</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
-								<a href="ambientlightningcontroller.html#getambientlightningnotifyintervalthreshold" class="tsd-kind-icon">get<wbr>Ambient<wbr>Lightning<wbr>Notify<wbr>Interval<wbr>Threshold</a>
+								<a href="adaptivelightingcontroller.html#getadaptivelightingnotifyintervalthreshold" class="tsd-kind-icon">get<wbr>Adaptive<wbr>Lighting<wbr>Notify<wbr>Interval<wbr>Threshold</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
-								<a href="ambientlightningcontroller.html#getambientlightningstarttimeoftransition" class="tsd-kind-icon">get<wbr>Ambient<wbr>Lightning<wbr>Start<wbr>Time<wbr>OfTransition</a>
+								<a href="adaptivelightingcontroller.html#getadaptivelightingstarttimeoftransition" class="tsd-kind-icon">get<wbr>Adaptive<wbr>Lighting<wbr>Start<wbr>Time<wbr>OfTransition</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
-								<a href="ambientlightningcontroller.html#getambientlightningtransitioncurve" class="tsd-kind-icon">get<wbr>Ambient<wbr>Lightning<wbr>Transition<wbr>Curve</a>
+								<a href="adaptivelightingcontroller.html#getadaptivelightingtransitioncurve" class="tsd-kind-icon">get<wbr>Adaptive<wbr>Lighting<wbr>Transition<wbr>Curve</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
-								<a href="ambientlightningcontroller.html#getambientlightningupdateinterval" class="tsd-kind-icon">get<wbr>Ambient<wbr>Lightning<wbr>Update<wbr>Interval</a>
+								<a href="adaptivelightingcontroller.html#getadaptivelightingupdateinterval" class="tsd-kind-icon">get<wbr>Adaptive<wbr>Lighting<wbr>Update<wbr>Interval</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited">
-								<a href="ambientlightningcontroller.html#getmaxlisteners" class="tsd-kind-icon">get<wbr>Max<wbr>Listeners</a>
+								<a href="adaptivelightingcontroller.html#getmaxlisteners" class="tsd-kind-icon">get<wbr>Max<wbr>Listeners</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
-								<a href="ambientlightningcontroller.html#isambientlightningactive" class="tsd-kind-icon">is<wbr>Ambient<wbr>Lightning<wbr>Active</a>
+								<a href="adaptivelightingcontroller.html#isadaptivelightingactive" class="tsd-kind-icon">is<wbr>Adaptive<wbr>Lighting<wbr>Active</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited">
-								<a href="ambientlightningcontroller.html#listenercount" class="tsd-kind-icon">listener<wbr>Count</a>
+								<a href="adaptivelightingcontroller.html#listenercount" class="tsd-kind-icon">listener<wbr>Count</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited">
-								<a href="ambientlightningcontroller.html#listeners" class="tsd-kind-icon">listeners</a>
+								<a href="adaptivelightingcontroller.html#listeners" class="tsd-kind-icon">listeners</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited">
-								<a href="ambientlightningcontroller.html#off" class="tsd-kind-icon">off</a>
+								<a href="adaptivelightingcontroller.html#off" class="tsd-kind-icon">off</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite">
-								<a href="ambientlightningcontroller.html#on" class="tsd-kind-icon">on</a>
+								<a href="adaptivelightingcontroller.html#on" class="tsd-kind-icon">on</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited">
-								<a href="ambientlightningcontroller.html#once" class="tsd-kind-icon">once</a>
+								<a href="adaptivelightingcontroller.html#once" class="tsd-kind-icon">once</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited">
-								<a href="ambientlightningcontroller.html#prependlistener" class="tsd-kind-icon">prepend<wbr>Listener</a>
+								<a href="adaptivelightingcontroller.html#prependlistener" class="tsd-kind-icon">prepend<wbr>Listener</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited">
-								<a href="ambientlightningcontroller.html#prependoncelistener" class="tsd-kind-icon">prepend<wbr>Once<wbr>Listener</a>
+								<a href="adaptivelightingcontroller.html#prependoncelistener" class="tsd-kind-icon">prepend<wbr>Once<wbr>Listener</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited">
-								<a href="ambientlightningcontroller.html#rawlisteners" class="tsd-kind-icon">raw<wbr>Listeners</a>
+								<a href="adaptivelightingcontroller.html#rawlisteners" class="tsd-kind-icon">raw<wbr>Listeners</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited">
-								<a href="ambientlightningcontroller.html#removealllisteners" class="tsd-kind-icon">remove<wbr>All<wbr>Listeners</a>
+								<a href="adaptivelightingcontroller.html#removealllisteners" class="tsd-kind-icon">remove<wbr>All<wbr>Listeners</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited">
-								<a href="ambientlightningcontroller.html#removelistener" class="tsd-kind-icon">remove<wbr>Listener</a>
+								<a href="adaptivelightingcontroller.html#removelistener" class="tsd-kind-icon">remove<wbr>Listener</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited">
-								<a href="ambientlightningcontroller.html#setmaxlisteners" class="tsd-kind-icon">set<wbr>Max<wbr>Listeners</a>
+								<a href="adaptivelightingcontroller.html#setmaxlisteners" class="tsd-kind-icon">set<wbr>Max<wbr>Listeners</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-static">
-								<a href="ambientlightningcontroller.html#listenercount-1" class="tsd-kind-icon">listener<wbr>Count</a>
+								<a href="adaptivelightingcontroller.html#listenercount-1" class="tsd-kind-icon">listener<wbr>Count</a>
 							</li>
 						</ul>
 					</li>

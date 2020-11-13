@@ -1,7 +1,7 @@
 import {
   Accessory,
-  AmbientLightningController,
-  AmbientLightningControllerMode,
+  AdaptiveLightingController,
+  AdaptiveLightingControllerMode,
   Categories,
   Characteristic,
   ColorUtils,
@@ -10,7 +10,7 @@ import {
 } from "..";
 
 /**
- * This example light gives an example how a light with AmbientLightning (in AUTOMATIC mode) support
+ * This example light gives an example how a light with AdaptiveLighting (in AUTOMATIC mode) support
  * can look like.
  * This example not only exposes the ColorTemperature characteristic but also shows how
  * ColorTemperature and Hue/Saturation characteristics can be combined on a Lightbulb service.
@@ -18,10 +18,10 @@ import {
  * The example also uses the new Promise based onGet and onSet handlers instead of the "old"
  * SET/GET event handlers.
  *
- * AmbientLightning setup is pretty much at the end of the file, don't miss it.
+ * AdaptiveLighting setup is pretty much at the end of the file, don't miss it.
  */
 
-const lightUUID = uuid.generate('hap-nodejs:accessories:light-ambient-lightning');
+const lightUUID = uuid.generate('hap-nodejs:accessories:light-adaptive-lighting');
 const accessory = exports.accessory = new Accessory("Light Example", lightUUID);
 
 // this section stores the basic state of the lightbulb
@@ -41,7 +41,7 @@ accessory.category = Categories.LIGHTBULB;
 
 accessory.getService(Service.AccessoryInformation)!
   .setCharacteristic(Characteristic.Manufacturer, "HAP-NodeJS")
-  .setCharacteristic(Characteristic.Model, "Light with AmbientLightning")
+  .setCharacteristic(Characteristic.Model, "Light with AdaptiveLighting")
   .setCharacteristic(Characteristic.FirmwareRevision, "1.0.0");
 
 const lightbulbService = accessory.addService(Service.Lightbulb, "Light Example");
@@ -56,7 +56,7 @@ lightbulbService.getCharacteristic(Characteristic.On)
     on = value as boolean;
   });
 
-lightbulbService.getCharacteristic(Characteristic.Brightness) // Brightness characteristic is required for ambient lightning
+lightbulbService.getCharacteristic(Characteristic.Brightness) // Brightness characteristic is required for adaptive lighting
   .onGet(() => {
     console.log("Light brightness is currently " + brightness);
     return brightness;
@@ -66,7 +66,7 @@ lightbulbService.getCharacteristic(Characteristic.Brightness) // Brightness char
     brightness = value as number;
   });
 
-lightbulbService.getCharacteristic(Characteristic.ColorTemperature) // ColorTemperature characteristic is required for ambient lightning
+lightbulbService.getCharacteristic(Characteristic.ColorTemperature) // ColorTemperature characteristic is required for adaptive lighting
   .onGet(() => {
     console.log("Light color temperature is currently " + colorTemperature);
     return colorTemperature;
@@ -108,9 +108,9 @@ lightbulbService.getCharacteristic(Characteristic.Saturation)
     colorTemperature = 140; // setting color temperature to lowest possible value
   });
 
-const ambientLightningController = new AmbientLightningController(lightbulbService, {
+const adaptiveLightingController = new AdaptiveLightingController(lightbulbService, {
   // options object is optional, default mode is AUTOMATIC, can be set to MANUAL to do transitions yourself
   // look into the docs for more information
-  controllerMode: AmbientLightningControllerMode.AUTOMATIC,
+  controllerMode: AdaptiveLightingControllerMode.AUTOMATIC,
 });
-accessory.configureController(ambientLightningController);
+accessory.configureController(adaptiveLightingController);

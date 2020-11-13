@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>AmbientLightningControllerMode | hap-nodejs</title>
+	<title>AdaptiveLightingControllerEvents | hap-nodejs</title>
 	<meta name="description" content="Documentation for hap-nodejs">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -53,23 +53,16 @@
 					<a href="../modules.html">hap-nodejs</a>
 				</li>
 				<li>
-					<a href="ambientlightningcontrollermode.html">AmbientLightningControllerMode</a>
+					<a href="adaptivelightingcontrollerevents.html">AdaptiveLightingControllerEvents</a>
 				</li>
 			</ul>
-			<h1>Enumeration AmbientLightningControllerMode</h1>
+			<h1>Enumeration AdaptiveLightingControllerEvents</h1>
 		</div>
 	</div>
 </header>
 <div class="container container-main">
 	<div class="row">
 		<div class="col-8 col-content">
-			<section class="tsd-panel tsd-comment">
-				<div class="tsd-comment tsd-typography">
-					<div class="lead">
-						<p>Defines in which mode the <a href="../classes/ambientlightningcontroller.html">AmbientLightningController</a> will operate in.</p>
-					</div>
-				</div>
-			</section>
 			<section class="tsd-panel-group tsd-index-group">
 				<h2>Index</h2>
 				<section class="tsd-panel tsd-index-panel">
@@ -77,8 +70,8 @@
 						<section class="tsd-index-section ">
 							<h3>Enumeration members</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="ambientlightningcontrollermode.html#automatic" class="tsd-kind-icon">AUTOMATIC</a></li>
-								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="ambientlightningcontrollermode.html#manual" class="tsd-kind-icon">MANUAL</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="adaptivelightingcontrollerevents.html#disabled" class="tsd-kind-icon">DISABLED</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="adaptivelightingcontrollerevents.html#update" class="tsd-kind-icon">UPDATE</a></li>
 							</ul>
 						</section>
 					</div>
@@ -87,33 +80,36 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Enumeration members</h2>
 				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
-					<a name="automatic" class="tsd-anchor"></a>
-					<h3>AUTOMATIC</h3>
-					<div class="tsd-signature tsd-kind-icon">AUTOMATIC<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = 1</span></div>
+					<a name="disabled" class="tsd-anchor"></a>
+					<h3>DISABLED</h3>
+					<div class="tsd-signature tsd-kind-icon">DISABLED<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = &quot;disable&quot;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/9fd2ffb/src/lib/controller/AmbientLightningController.ts#L212">src/lib/controller/AmbientLightningController.ts:212</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/controller/AdaptiveLightingController.ts#L232">src/lib/controller/AdaptiveLightingController.ts:232</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>In automatic mode pretty much everything from setup to transition scheduling is done by the controller.</p>
+							<p>In yet unknown circumstances HomeKit may also send a dedicated disable command
+								via the control point characteristic. You may want to handle that in manual mode as well.
+							The current transition will still be associated with the controller object when this event is called.</p>
 						</div>
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
-					<a name="manual" class="tsd-anchor"></a>
-					<h3>MANUAL</h3>
-					<div class="tsd-signature tsd-kind-icon">MANUAL<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = 2</span></div>
+					<a name="update" class="tsd-anchor"></a>
+					<h3>UPDATE</h3>
+					<div class="tsd-signature tsd-kind-icon">UPDATE<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = &quot;update&quot;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/9fd2ffb/src/lib/controller/AmbientLightningController.ts#L217">src/lib/controller/AmbientLightningController.ts:217</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/controller/AdaptiveLightingController.ts#L226">src/lib/controller/AdaptiveLightingController.ts:226</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>In manual mode setup is done by the controller but the actual transition must be done by the user.
-							This is useful for lights which natively support transitions.</p>
+							<p>This event is called once a HomeKit controller enables Adaptive Lighting
+								or a HomeHub sends a updated transition schedule for the next 24 hours.
+							This is also called on startup when AdaptiveLighting was previously enabled.</p>
 						</div>
 					</div>
 				</section>
@@ -132,13 +128,13 @@
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-enum">
-						<a href="ambientlightningcontrollermode.html" class="tsd-kind-icon">Ambient<wbr>Lightning<wbr>Controller<wbr>Mode</a>
+						<a href="adaptivelightingcontrollerevents.html" class="tsd-kind-icon">Adaptive<wbr>Lighting<wbr>Controller<wbr>Events</a>
 						<ul>
 							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
-								<a href="ambientlightningcontrollermode.html#automatic" class="tsd-kind-icon">AUTOMATIC</a>
+								<a href="adaptivelightingcontrollerevents.html#disabled" class="tsd-kind-icon">DISABLED</a>
 							</li>
 							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
-								<a href="ambientlightningcontrollermode.html#manual" class="tsd-kind-icon">MANUAL</a>
+								<a href="adaptivelightingcontrollerevents.html#update" class="tsd-kind-icon">UPDATE</a>
 							</li>
 						</ul>
 					</li>
