@@ -1,5 +1,5 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=856
+// V=858
 
 import { Characteristic, Formats, Perms, Units } from "../Characteristic";
 
@@ -100,26 +100,6 @@ export class ActiveIdentifier extends Characteristic {
   }
 }
 Characteristic.ActiveIdentifier = ActiveIdentifier;
-
-/**
- * Characteristic "Activity Interval"
- * @since iOS 14
- */
-export class ActivityInterval extends Characteristic {
-
-  public static readonly UUID: string = "0000023B-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Activity Interval", ActivityInterval.UUID, {
-      format: Formats.UINT32,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
-      minValue: 0,
-      minStep: 1,
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-Characteristic.ActivityInterval = ActivityInterval;
 
 /**
  * Characteristic "Administrator Only Access"
@@ -1257,6 +1237,40 @@ export class FirmwareRevision extends Characteristic {
   }
 }
 Characteristic.FirmwareRevision = FirmwareRevision;
+
+/**
+ * Characteristic "Firmware Update Readiness"
+ */
+export class FirmwareUpdateReadiness extends Characteristic {
+
+  public static readonly UUID: string = "00000234-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Firmware Update Readiness", FirmwareUpdateReadiness.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.FirmwareUpdateReadiness = FirmwareUpdateReadiness;
+
+/**
+ * Characteristic "Firmware Update Status"
+ */
+export class FirmwareUpdateStatus extends Characteristic {
+
+  public static readonly UUID: string = "00000235-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Firmware Update Status", FirmwareUpdateStatus.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.FirmwareUpdateStatus = FirmwareUpdateStatus;
 
 /**
  * Characteristic "Hardware Revision"
@@ -3198,6 +3212,23 @@ export class SoftwareRevision extends Characteristic {
 Characteristic.SoftwareRevision = SoftwareRevision;
 
 /**
+ * Characteristic "Staged Firmware Version"
+ */
+export class StagedFirmwareVersion extends Characteristic {
+
+  public static readonly UUID: string = "00000249-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Staged Firmware Version", StagedFirmwareVersion.UUID, {
+      format: Formats.STRING,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.StagedFirmwareVersion = StagedFirmwareVersion;
+
+/**
  * Characteristic "Status Active"
  */
 export class StatusActive extends Characteristic {
@@ -3450,6 +3481,23 @@ export class SupportedDiagnosticsSnapshot extends Characteristic {
   }
 }
 Characteristic.SupportedDiagnosticsSnapshot = SupportedDiagnosticsSnapshot;
+
+/**
+ * Characteristic "Supported Firmware Update Configuration"
+ */
+export class SupportedFirmwareUpdateConfiguration extends Characteristic {
+
+  public static readonly UUID: string = "00000233-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Supported Firmware Update Configuration", SupportedFirmwareUpdateConfiguration.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SupportedFirmwareUpdateConfiguration = SupportedFirmwareUpdateConfiguration;
 
 /**
  * Characteristic "Supported Router Configuration"

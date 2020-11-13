@@ -34,12 +34,6 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
-  describe("ActivityInterval", () => {
-    it("should be able to construct", () => {
-      new Characteristic.ActivityInterval();
-    });
-  });
-
   describe("AdministratorOnlyAccess", () => {
     it("should be able to construct", () => {
       new Characteristic.AdministratorOnlyAccess();
@@ -361,6 +355,18 @@ describe("CharacteristicDefinitions", () => {
   describe("FirmwareRevision", () => {
     it("should be able to construct", () => {
       new Characteristic.FirmwareRevision();
+    });
+  });
+
+  describe("FirmwareUpdateReadiness", () => {
+    it("should be able to construct", () => {
+      new Characteristic.FirmwareUpdateReadiness();
+    });
+  });
+
+  describe("FirmwareUpdateStatus", () => {
+    it("should be able to construct", () => {
+      new Characteristic.FirmwareUpdateStatus();
     });
   });
 
@@ -936,6 +942,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("StagedFirmwareVersion", () => {
+    it("should be able to construct", () => {
+      new Characteristic.StagedFirmwareVersion();
+    });
+  });
+
   describe("StatusActive", () => {
     it("should be able to construct", () => {
       new Characteristic.StatusActive();
@@ -1011,6 +1023,12 @@ describe("CharacteristicDefinitions", () => {
   describe("SupportedDiagnosticsSnapshot", () => {
     it("should be able to construct", () => {
       new Characteristic.SupportedDiagnosticsSnapshot();
+    });
+  });
+
+  describe("SupportedFirmwareUpdateConfiguration", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SupportedFirmwareUpdateConfiguration();
     });
   });
 

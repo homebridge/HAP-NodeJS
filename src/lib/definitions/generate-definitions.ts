@@ -513,7 +513,7 @@ for (const generated of Object.values(generatedServices)
       }
     }
 
-    if (generated.optionalCharacteristics) {
+    if (generated.optionalCharacteristics?.length) {
       serviceOutput.write("\n    // Optional Characteristics\n");
       for (const optional of generated.optionalCharacteristics) {
         const characteristic = generatedCharacteristics[optional];

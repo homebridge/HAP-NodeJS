@@ -67,6 +67,8 @@ interface CharacteristicPermissionOverride {
 
 export const CharacteristicPermissionOverrides: Map<string, CharacteristicPermissionOverride> = new Map([
   ["characteristic-value-transition-control", { added: ["Perms.WRITE_RESPONSE"] }],
+  ["setup-data-stream-transport", { added: ["Perms.WRITE_RESPONSE"] }],
+  ["data-stream-hap-transport", { added: ["Perms.WRITE_RESPONSE"], }]
 ]);
 
 export const CharacteristicManualAdditions: Map<string, GeneratedCharacteristic> = new Map([

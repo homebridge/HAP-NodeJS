@@ -10,7 +10,6 @@ import {
   AccessoryIdentifier,
   Active,
   ActiveIdentifier,
-  ActivityInterval,
   AdministratorOnlyAccess,
   AirParticulateDensity,
   AirParticulateSize,
@@ -65,6 +64,8 @@ import {
   FilterChangeIndication,
   FilterLifeLevel,
   FirmwareRevision,
+  FirmwareUpdateReadiness,
+  FirmwareUpdateStatus,
   HardwareRevision,
   HeartBeat,
   HeatingThresholdTemperature,
@@ -160,6 +161,7 @@ import {
   SleepInterval,
   SmokeDetected,
   SoftwareRevision,
+  StagedFirmwareVersion,
   StatusActive,
   StatusFault,
   StatusJammed,
@@ -173,6 +175,7 @@ import {
   SupportedCharacteristicValueTransitionConfiguration,
   SupportedDataStreamTransportConfiguration,
   SupportedDiagnosticsSnapshot,
+  SupportedFirmwareUpdateConfiguration,
   SupportedRouterConfiguration,
   SupportedRTPConfiguration,
   SupportedTransferTransportConfiguration,
@@ -594,7 +597,6 @@ export class Characteristic extends EventEmitter {
   public static AccessoryIdentifier: typeof AccessoryIdentifier;
   public static Active: typeof Active;
   public static ActiveIdentifier: typeof ActiveIdentifier;
-  public static ActivityInterval: typeof ActivityInterval;
   public static AdministratorOnlyAccess: typeof AdministratorOnlyAccess;
   public static AirParticulateDensity: typeof AirParticulateDensity;
   public static AirParticulateSize: typeof AirParticulateSize;
@@ -649,6 +651,8 @@ export class Characteristic extends EventEmitter {
   public static FilterChangeIndication: typeof FilterChangeIndication;
   public static FilterLifeLevel: typeof FilterLifeLevel;
   public static FirmwareRevision: typeof FirmwareRevision;
+  public static FirmwareUpdateReadiness: typeof FirmwareUpdateReadiness;
+  public static FirmwareUpdateStatus: typeof FirmwareUpdateStatus;
   public static HardwareRevision: typeof HardwareRevision;
   public static HeartBeat: typeof HeartBeat;
   public static HeatingThresholdTemperature: typeof HeatingThresholdTemperature;
@@ -748,6 +752,7 @@ export class Characteristic extends EventEmitter {
   public static SleepInterval: typeof SleepInterval;
   public static SmokeDetected: typeof SmokeDetected;
   public static SoftwareRevision: typeof SoftwareRevision;
+  public static StagedFirmwareVersion: typeof StagedFirmwareVersion;
   public static StatusActive: typeof StatusActive;
   public static StatusFault: typeof StatusFault;
   public static StatusJammed: typeof StatusJammed;
@@ -761,6 +766,7 @@ export class Characteristic extends EventEmitter {
   public static SupportedCharacteristicValueTransitionConfiguration: typeof SupportedCharacteristicValueTransitionConfiguration;
   public static SupportedDataStreamTransportConfiguration: typeof SupportedDataStreamTransportConfiguration;
   public static SupportedDiagnosticsSnapshot: typeof SupportedDiagnosticsSnapshot;
+  public static SupportedFirmwareUpdateConfiguration: typeof SupportedFirmwareUpdateConfiguration;
   public static SupportedRouterConfiguration: typeof SupportedRouterConfiguration;
   public static SupportedRTPConfiguration: typeof SupportedRTPConfiguration;
   public static SupportedTransferTransportConfiguration: typeof SupportedTransferTransportConfiguration;
