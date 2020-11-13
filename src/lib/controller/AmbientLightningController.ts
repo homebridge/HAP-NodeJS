@@ -560,7 +560,11 @@ export class AmbientLightningController extends EventEmitter implements Serializ
     this.disableAmbientLightning(!calledFromResetHandler);
   }
 
-  private handleAdjustmentFactorChanged(): void {
+  private handleAdjustmentFactorChanged(change: CharacteristicChange): void {
+    if (change.newValue === change.oldValue) {
+      return;
+    }
+
     this.scheduleNextUpdate(true); // run a dry scheduleNextUpdate to adjust the colorTemperature using the new brightness value
   }
 
