@@ -241,6 +241,11 @@ export interface PublishInfo {
    * @deprecated
    */
   mdns?: MDNSServerOptions;
+  /**
+   * If this option is set to true, HAP-NodeJS will add identifying material (based on {@link username})
+   * to the end of the accessory display name (and bonjour instance name).
+   */
+  addIdentifyingMaterial?: boolean;
 }
 
 export type AccessoryCharacteristicChange = ServiceCharacteristicChange &  {
@@ -1070,11 +1075,13 @@ export class Accessory extends EventEmitter {
       Accessory.cleanupAccessoryData(this.lastKnownUsername); // delete old Accessory data
     }
 
-    // adding some identifying material to our displayName
-    this.displayName = this.displayName + " " + crypto.createHash('sha512')
-      .update(info.username, 'utf8')
-      .digest('hex').slice(0, 4).toUpperCase();
-    this.getService(Service.AccessoryInformation)!.updateCharacteristic(Characteristic.Name, this.displayName);
+    if (info.addIdentifyingMaterial) {
+      // adding some identifying material to our displayName
+      this.displayName = this.displayName + " " + crypto.createHash('sha512')
+        .update(info.username, 'utf8')
+        .digest('hex').slice(0, 4).toUpperCase();
+      this.getService(Service.AccessoryInformation)!.updateCharacteristic(Characteristic.Name, this.displayName);
+    }
 
     // attempt to load existing AccessoryInfo from disk
     this._accessoryInfo = AccessoryInfo.load(info.username);
