@@ -64,7 +64,10 @@ export class Advertiser extends EventEmitter {
     this.accessoryInfo = accessoryInfo;
     this.setupHash = this.computeSetupHash();
 
-    this.responder = ciao.getResponder(responderOptions);
+    this.responder = ciao.getResponder({
+      periodicBroadcasts: !accessoryInfo.disablePeriodicBroadcasts,
+      ...responderOptions
+    });
     this.advertisedService = this.responder.createService({
       name: this.accessoryInfo.displayName,
       type: ServiceType.HAP,

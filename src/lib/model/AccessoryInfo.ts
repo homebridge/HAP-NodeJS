@@ -44,6 +44,7 @@ export class AccessoryInfo {
   private configHash: string;
   setupID: string;
   private lastFirmwareVersion: string = "";
+  disablePeriodicBroadcasts: boolean = false;
 
   private constructor(username: MacAddress) {
     this.username = username;
@@ -222,6 +223,7 @@ export class AccessoryInfo {
       configHash: this.configHash,
       setupID: this.setupID,
       lastFirmwareVersion: this.lastFirmwareVersion,
+      disablePeriodicBroadcasts: this.disablePeriodicBroadcasts? true: undefined,
     };
 
     for (let username in this.pairedClients) {
@@ -293,6 +295,7 @@ export class AccessoryInfo {
       info.setupID = saved.setupID || "";
 
       info.lastFirmwareVersion = saved.lastFirmwareVersion || packageJson.version;
+      info.disablePeriodicBroadcasts = !!saved.disablePeriodicBroadcasts;
 
       info.ensureConfigVersionBounds();
 
