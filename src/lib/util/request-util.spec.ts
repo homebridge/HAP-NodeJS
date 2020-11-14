@@ -30,7 +30,7 @@ describe("request-util", () => {
       minStep: 0.15,
       minValue: 6,
     });
-    expect(formatOutgoingCharacteristicValue(6.1500001, props)).toBe("6.15");
+    expect(formatOutgoingCharacteristicValue(6.1500001, props)).toBe(6.15);
   });
 
   it("should round up invalid value", () => {
@@ -38,7 +38,7 @@ describe("request-util", () => {
       minStep: 0.1,
       minValue: 2,
     });
-    expect(formatOutgoingCharacteristicValue(2.1542, props)).toBe("2.2");
+    expect(formatOutgoingCharacteristicValue(2.1542, props)).toBe(2.2);
   });
 
   it("should round invalid huge value", () => {
@@ -47,6 +47,6 @@ describe("request-util", () => {
       minValue: 10,
       maxValue: 38,
     });
-    expect(formatOutgoingCharacteristicValue(36.135795, props)).toBe("36.1");
+    expect(formatOutgoingCharacteristicValue(36.135795, props)).toBe(36.1);
   });
 });
