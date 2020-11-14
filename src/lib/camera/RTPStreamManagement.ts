@@ -488,7 +488,7 @@ export class RTPStreamManagement {
   streamStatus: StreamingStatus = StreamingStatus.AVAILABLE; // use _updateStreamStatus to update this property
   private ipVersion?: "ipv4" | "ipv6"; // ip version for the current session
 
-  selectedConfiguration: Nullable<string> = null; // base64 representation of the currently selected configuration
+  selectedConfiguration: string; // base64 representation of the currently selected configuration
   setupEndpointsResponse: string; // response of the SetupEndpoints Characteristic
 
   audioProxy?: RTPProxy;
@@ -516,6 +516,7 @@ export class RTPStreamManagement {
     this.supportedRTPConfiguration = RTPStreamManagement._supportedRTPConfiguration(this.supportedCryptoSuites);
     this.supportedVideoStreamConfiguration = RTPStreamManagement._supportedVideoStreamConfiguration(options.video);
     this.supportedAudioStreamConfiguration = this._supportedAudioStreamConfiguration(options.audio);
+    this.selectedConfiguration = RTPStreamManagement.initialSelectedStreamConfiguration();
     this.setupEndpointsResponse = RTPStreamManagement.initialSetupEndpointsResponse();
 
     this.service = service || this.constructService(id);
@@ -541,7 +542,7 @@ export class RTPStreamManagement {
   }
 
   handleFactoryReset() {
-    this.selectedConfiguration = null;
+    this.selectedConfiguration = RTPStreamManagement.initialSelectedStreamConfiguration();
     this.setupEndpointsResponse = RTPStreamManagement.initialSetupEndpointsResponse();
     // on a factory reset the assumption is that all connections were already terminated and thus "handleStopStream" was already called
   }
@@ -582,11 +583,7 @@ export class RTPStreamManagement {
   }
 
   private handleSessionClosed(): void { // called when the streaming was ended or aborted and needs to be cleaned up
-    this.selectedConfiguration = tlv.encode(
-        SelectedRTPStreamConfigurationTypes.SESSION_CONTROL, tlv.encode(
-            SessionControlTypes.COMMAND, SessionControlCommand.SUSPEND_SESSION,
-        ),
-    ).toString("base64");
+    this.selectedConfiguration = RTPStreamManagement.initialSelectedStreamConfiguration();
     this.setupEndpointsResponse = tlv.encode(
         SetupEndpointsResponseTypes.STATUS, SetupEndpointsStatus.ERROR,
     ).toString("base64");
@@ -1314,6 +1311,14 @@ export class RTPStreamManagement {
   private static initialSetupEndpointsResponse(): string {
     return tlv.encode(
         SetupEndpointsResponseTypes.STATUS, SetupEndpointsStatus.ERROR,
+    ).toString("base64");
+  }
+
+  private static initialSelectedStreamConfiguration(): string {
+    return tlv.encode(
+      SelectedRTPStreamConfigurationTypes.SESSION_CONTROL, tlv.encode(
+        SessionControlTypes.COMMAND, SessionControlCommand.SUSPEND_SESSION,
+      ),
     ).toString("base64");
   }
 
