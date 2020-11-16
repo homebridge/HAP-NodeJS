@@ -1,5 +1,15 @@
-import { Perms } from "../Characteristic";
 import { GeneratedCharacteristic, GeneratedService } from "./generate-definitions";
+
+const enum PropertyId {
+  NOTIFY = 0x01,
+  READ = 0x02,
+  WRITE = 0x04,
+  BROADCAST = 0x08, // BLE
+  ADDITIONAL_AUTHORIZATION = 0x10,
+  TIMED_WRITE = 0x20,
+  HIDDEN = 0x40,
+  WRITE_RESPONSE = 0x80,
+}
 
 export const CharacteristicHidden: Set<string> = new Set([
   "service-signature", // BLE
@@ -59,16 +69,20 @@ export const CharacteristicClassAdditions: Map<string, string[]> = new Map([
   ["humidifier-dehumidifier.state.target", ["/**\n   * @deprecated Removed in iOS 11. Use {@link HUMIDIFIER_OR_DEHUMIDIFIER} instead.\n   */\n  public static readonly AUTO = 0;"]]
 ]);
 
-interface CharacteristicPermissionOverride {
-  added?: string[], // for now its a string to make things easier
-  removed?: string[],
-}
-
-export const CharacteristicPermissionOverrides: Map<string, CharacteristicPermissionOverride> = new Map([
-  ["characteristic-value-transition-control", { added: ["Perms.WRITE_RESPONSE"] }],
-  ["setup-data-stream-transport", { added: ["Perms.WRITE_RESPONSE"] }],
-  ["data-stream-hap-transport", { added: ["Perms.WRITE_RESPONSE"], }]
-]);
+export const CharacteristicOverriding: Map<string, (generated: GeneratedCharacteristic) => void> = new Map([
+  ["rotation.speed", generated => {
+    generated.units = "percentage";
+  }],
+  ["characteristic-value-transition-control", generated => {
+    generated.properties |= PropertyId.WRITE_RESPONSE;
+  }],
+  ["setup-data-stream-transport", generated => {
+    generated.properties |= PropertyId.WRITE_RESPONSE;
+  }],
+  ["data-stream-hap-transport", generated => {
+    generated.properties |= PropertyId.WRITE_RESPONSE;
+  }]
+])
 
 export const CharacteristicManualAdditions: Map<string, GeneratedCharacteristic> = new Map([
   ["diagonal-field-of-view", {

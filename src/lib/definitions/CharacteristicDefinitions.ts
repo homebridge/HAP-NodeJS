@@ -2925,6 +2925,7 @@ export class RotationSpeed extends Characteristic {
     super("Rotation Speed", RotationSpeed.UUID, {
       format: Formats.FLOAT,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      unit: Units.PERCENTAGE,
       minValue: 0,
       maxValue: 100,
       minStep: 1,

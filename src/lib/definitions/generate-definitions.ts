@@ -10,9 +10,11 @@ import {
   CharacteristicDeprecatedNames,
   CharacteristicHidden,
   CharacteristicManualAdditions,
-  CharacteristicNameOverrides, CharacteristicPermissionOverrides,
+  CharacteristicNameOverrides,
+  CharacteristicOverriding,
   CharacteristicSinceInformation,
-  CharacteristicValidValuesOverride, ServiceCharacteristicConfigurationOverrides,
+  CharacteristicValidValuesOverride,
+  ServiceCharacteristicConfigurationOverrides,
   ServiceDeprecatedNames,
   ServiceManualAdditions,
   ServiceNameOverrides,
@@ -282,10 +284,14 @@ for (const [id, definition] of Object.entries(characteristics)) {
 
       maxLength: definition.MaxLength,
 
-      validValues: Object.entries(validValues).length? validValues: undefined,
+      validValues: validValues,
       validBitMasks: validBitMasks,
       classAdditions: CharacteristicClassAdditions.get(id),
     };
+
+    // call any handler which wants to manually override properties of the generated characteristic
+    CharacteristicOverriding.get(id)?.(generatedCharacteristic)
+
     generatedCharacteristics[id] = generatedCharacteristic;
     writtenCharacteristicEntries[className] = generatedCharacteristic;
     if (deprecatedClassName) {
@@ -327,8 +333,9 @@ for (const generated of Object.values(generatedCharacteristics)
       characteristicOutput.write(classAdditions.map(line => "  " + line + "\n").join("") + "\n");
     }
 
-    if (generated.validValues) {
-      for (let [value, name] of Object.entries(generated.validValues)) {
+    let validValuesEntries = Object.entries(generated.validValues ?? {})
+    if (validValuesEntries.length) {
+      for (let [value, name] of validValuesEntries) {
         characteristicOutput.write(`  public static readonly ${name} = ${value};\n`);
       }
       characteristicOutput.write("\n");
@@ -359,8 +366,8 @@ for (const generated of Object.values(generatedCharacteristics)
     if (generated.maxLength != null) {
       characteristicOutput.write("      maxLen: " + generated.maxLength + ",\n");
     }
-    if (generated.validValues) {
-      characteristicOutput.write("      validValues: [" + Object.keys(generated.validValues).join(", ") + "],\n")
+    if (validValuesEntries.length) {
+      characteristicOutput.write("      validValues: [" + Object.keys(generated.validValues!).join(", ") + "],\n")
     }
     characteristicOutput.write("    });\n");
     characteristicOutput.write("    this.value = this.getDefaultValue();\n");
@@ -613,21 +620,6 @@ function generatePermsString(id: string, propertiesBitMap: number): string {
     }
     if ((propertiesBitMap | bitMap) === propertiesBitMap) { // if it stays the same the bit is set
       perms.push("Perms." + name);
-    }
-  }
-
-  const override = CharacteristicPermissionOverrides.get(id);
-  if (override) {
-    if (override.added) {
-      perms.push(...override.added);
-    }
-    if (override.removed) {
-      for (const removed of override.removed) {
-        const index = perms.indexOf(removed);
-        if (index !== -1) {
-          perms.splice(index, 1);
-        }
-      }
     }
   }
 
