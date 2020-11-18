@@ -827,11 +827,11 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
 
     return tlv.encode(SupportedCharacteristicValueTransitionConfigurationsTypes.SUPPORTED_TRANSITION_CONFIGURATION, [
       tlv.encode(
-        SupportedValueTransitionConfigurationTypes.CHARACTERISTIC_IID, brightnessIID!,
+        SupportedValueTransitionConfigurationTypes.CHARACTERISTIC_IID, tlv.writeVariableUIntLE(brightnessIID!),
         SupportedValueTransitionConfigurationTypes.TRANSITION_TYPE, TransitionType.BRIGHTNESS,
       ),
       tlv.encode(
-        SupportedValueTransitionConfigurationTypes.CHARACTERISTIC_IID, temperatureIID!,
+        SupportedValueTransitionConfigurationTypes.CHARACTERISTIC_IID, tlv.writeVariableUIntLE(temperatureIID!),
         SupportedValueTransitionConfigurationTypes.TRANSITION_TYPE, TransitionType.COLOR_TEMPERATURE,
       ),
     ]).toString("base64");
@@ -845,11 +845,10 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     const active = this.activeTransition;
 
     const timeSinceStart = time ?? (Date.now() - active.transitionStartMillis);
-    const timeSinceStartBuffer = Buffer.alloc(4);
-    timeSinceStartBuffer.writeUInt32LE(timeSinceStart, 0); // we could use dynamic buffer sizes depending on the size needed
+    const timeSinceStartBuffer = tlv.writeVariableUIntLE(timeSinceStart);
 
     const status = tlv.encode(
-      ValueTransitionConfigurationStatusTypes.CHARACTERISTIC_IID, active.iid!,
+      ValueTransitionConfigurationStatusTypes.CHARACTERISTIC_IID, tlv.writeVariableUIntLE(active.iid!),
       ValueTransitionConfigurationStatusTypes.TRANSITION_PARAMETERS, tlv.encode(
         ValueTransitionParametersTypes.UNKNOWN_1, Buffer.from(active.id1, "hex"),
         ValueTransitionParametersTypes.START_TIME, Buffer.from(active.transitionStartBuffer, "hex"),
@@ -873,7 +872,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
 
     const transitionConfiguration = tlv.decode(valueTransitionConfigurations[ValueTransitionConfigurationsTypes.VALUE_TRANSITION_CONFIGURATION]);
 
-    const iid = transitionConfiguration[ValueTransitionConfigurationTypes.CHARACTERISTIC_IID].readUInt8(0);
+    const iid = tlv.readVariableUIntLE(transitionConfiguration[ValueTransitionConfigurationTypes.CHARACTERISTIC_IID]);
     if (!this.lightbulb.getCharacteristicByIID(iid)) {
       throw new HapStatusError(HAPStatus.INVALID_VALUE_IN_REQUEST);
     }
@@ -905,15 +904,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
       const adjustmentFactor = tlvEntry[TransitionEntryTypes.ADJUSTMENT_FACTOR].readFloatLE(0);
       const value = tlvEntry[TransitionEntryTypes.VALUE].readFloatLE(0);
 
-      const transitionOffsetBuffer = tlvEntry[TransitionEntryTypes.TRANSITION_OFFSET];
-      let transitionOffset = -1;
-      if (transitionOffsetBuffer.length === 1) {
-        transitionOffset = transitionOffsetBuffer.readUInt8(0);
-      } else if (transitionOffsetBuffer.length === 2) {
-        transitionOffset = transitionOffsetBuffer.readUInt16LE(0);
-      } else if (transitionOffsetBuffer.length === 4) {
-        transitionOffset = transitionOffsetBuffer.readUInt32LE(0);
-      }
+      const transitionOffset = tlv.readVariableUIntLE(tlvEntry[TransitionEntryTypes.TRANSITION_OFFSET]);
       const duration = tlvEntry[TransitionEntryTypes.DURATION]?.readUInt32LE(0);
 
       if (previous) {
@@ -928,7 +919,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
       transitionCurve.push(previous);
     }
 
-    const adjustmentIID = (curveConfiguration[TransitionCurveConfigurationTypes.ADJUSTMENT_CHARACTERISTIC_IID] as Buffer).readUInt8(0);
+    const adjustmentIID = tlv.readVariableUIntLE((curveConfiguration[TransitionCurveConfigurationTypes.ADJUSTMENT_CHARACTERISTIC_IID] as Buffer));
     const adjustmentMultiplierRange = tlv.decode(curveConfiguration[TransitionCurveConfigurationTypes.ADJUSTMENT_MULTIPLIER_RANGE] as Buffer);
     const minAdjustmentMultiplier = adjustmentMultiplierRange[TransitionAdjustmentMultiplierRange.MINIMUM_ADJUSTMENT_MULTIPLIER].readUInt32LE(0);
     const maxAdjustmentMultiplier = adjustmentMultiplierRange[TransitionAdjustmentMultiplierRange.MAXIMUM_ADJUSTMENT_MULTIPLIER].readUInt32LE(0);

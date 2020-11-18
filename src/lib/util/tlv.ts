@@ -1,3 +1,5 @@
+import assert from "assert";
+import * as hapCrypto from "../util/hapCrypto"
 /**
  * Type Length Value encoding/decoding, used by HAP as a wire format.
  * https://en.wikipedia.org/wiki/Type-length-value
@@ -238,4 +240,40 @@ export function writeUInt16(value: number) {
 
 export function readUInt16(buffer: Buffer) {
   return buffer.readUInt16LE(0);
+}
+export function readVariableUIntLE(buffer: Buffer, offset = 0): number {
+  switch (buffer.length) {
+    case 1:
+      return buffer.readUInt8(offset);
+    case 2:
+      return buffer.readUInt16LE(offset);
+    case 4:
+      return buffer.readUInt32LE(offset);
+    case 8:
+      return readUInt64BE(buffer, offset);
+    default:
+      throw new Error("Can't read uint LE with length " + buffer.length);
+  }
+}
+
+export function writeVariableUIntLE(number: number, offset = 0): Buffer {
+  assert(number >= 0, "Can't encode a negative integer as unsigned integer");
+
+  if (number <= 255) {
+    const buffer = Buffer.alloc(1);
+    buffer.writeUInt8(number, offset);
+    return buffer;
+  } else if (number <= 65535) {
+    const buffer = Buffer.alloc(2);
+    buffer.writeUInt16LE(number, offset);
+    return buffer;
+  } else if (number <= 4294967295) {
+    const buffer = Buffer.alloc(4);
+    buffer.writeUInt32LE(number, offset);
+    return buffer;
+  } else {
+    const buffer = Buffer.alloc(8);
+    hapCrypto.writeUInt64LE(number, buffer, offset);
+    return buffer;
+  }
 }
