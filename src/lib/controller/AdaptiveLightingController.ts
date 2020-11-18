@@ -48,13 +48,16 @@ const enum TransitionType {
 
 
 const enum TransitionControlTypes {
-  // noinspection JSUnusedGlobalSymbols
-  UNKNOWN_1 = 0x01,
-  COLOR_TEMPERATURE = 0x02,
+  READ_CURRENT_VALUE_TRANSITION_CONFIGURATION = 0x01, // could probably a list of ValueTransitionConfigurationTypes
+  UPDATE_VALUE_TRANSITION_CONFIGURATION = 0x02,
 }
 
-const enum ValueTransitionConfigurationsTypes {
-  VALUE_TRANSITION_CONFIGURATION = 0x01,
+const enum ReadValueTransitionConfiguration {
+  CHARACTERISTIC_IID = 0x01,
+}
+
+const enum UpdateValueTransitionConfigurationsTypes {
+  VALUE_TRANSITION_CONFIGURATION = 0x01, // this type could be a tlv8 list
 }
 
 const enum ValueTransitionConfigurationTypes {
@@ -517,7 +520,11 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
   // ----------- PUBLIC API END -----------
 
   private handleActiveTransitionUpdated(calledFromDeserializer: boolean = false): void {
-    this.activeTransitionCount!.sendEventNotification(1);
+    if (!calledFromDeserializer) {
+      this.activeTransitionCount!.sendEventNotification(1);
+    } else {
+      this.activeTransitionCount!.value = 1;
+    }
 
     if (this.mode === AdaptiveLightingControllerMode.AUTOMATIC) {
       this.scheduleNextUpdate();
@@ -868,9 +875,75 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     }
 
     const tlvData = tlv.decode(Buffer.from(value, "base64"));
-    const valueTransitionConfigurations = tlv.decode(tlvData[TransitionControlTypes.COLOR_TEMPERATURE]);
+    const responseBuffers: Buffer[] = [];
 
-    const transitionConfiguration = tlv.decode(valueTransitionConfigurations[ValueTransitionConfigurationsTypes.VALUE_TRANSITION_CONFIGURATION]);
+    const readTransition = tlvData[TransitionControlTypes.READ_CURRENT_VALUE_TRANSITION_CONFIGURATION];
+    if (readTransition) {
+      const readTransitionResponse = this.handleTransitionControlReadTransition(readTransition);
+      if (readTransitionResponse) {
+        responseBuffers.push(readTransitionResponse);
+      }
+    }
+    const updateTransition = tlvData[TransitionControlTypes.UPDATE_VALUE_TRANSITION_CONFIGURATION];
+    if (updateTransition) {
+      const updateTransitionResponse = this.handleTransitionControlUpdateTransition(updateTransition);
+      if (updateTransitionResponse) {
+        responseBuffers.push(updateTransitionResponse);
+      }
+    }
+
+    return Buffer.concat(responseBuffers).toString("base64");
+  }
+
+  private handleTransitionControlReadTransition(buffer: Buffer): Buffer | undefined {
+    const readTransition = tlv.decode(buffer);
+
+    const iid = tlv.readVariableUIntLE(readTransition[ReadValueTransitionConfiguration.CHARACTERISTIC_IID]);
+
+    if (this.activeTransition) {
+      if (this.activeTransition.iid !== iid) {
+        console.warn("[" + this.lightbulb.displayName + "] iid of current adaptive lighting transition (" + this.activeTransition.iid + ") doesn't match the requested one " + iid);
+        throw new HapStatusError(HAPStatus.INVALID_VALUE_IN_REQUEST);
+      }
+
+      return tlv.encode(
+        TransitionControlTypes.READ_CURRENT_VALUE_TRANSITION_CONFIGURATION, tlv.encode(
+          ValueTransitionConfigurationTypes.CHARACTERISTIC_IID, tlv.writeVariableUIntLE(this.activeTransition.iid),
+          ValueTransitionConfigurationTypes.TRANSITION_PARAMETERS, tlv.encode(
+            ValueTransitionParametersTypes.UNKNOWN_1, Buffer.from(this.activeTransition.id1, "hex"),
+            ValueTransitionParametersTypes.START_TIME, Buffer.from(this.activeTransition.transitionStartBuffer, "hex"),
+            ValueTransitionParametersTypes.UNKNOWN_3, Buffer.from(this.activeTransition.id3, "hex"),
+          ),
+          ValueTransitionConfigurationTypes.UNKNOWN_3, 1,
+          ValueTransitionConfigurationTypes.TRANSITION_CURVE_CONFIGURATION, tlv.encode(
+            TransitionCurveConfigurationTypes.TRANSITION_ENTRY, this.activeTransition.transitionCurve.map((entry, index, array) => {
+              let duration = array[index - 1]?.duration ?? 0; // we store stuff differently :sweat_smile:
+
+              return tlv.encode(
+                TransitionEntryTypes.ADJUSTMENT_FACTOR, tlv.writeFloat32LE(entry.brightnessAdjustmentFactor),
+                TransitionEntryTypes.VALUE, tlv.writeFloat32LE(entry.temperature),
+                TransitionEntryTypes.TRANSITION_OFFSET, tlv.writeVariableUIntLE(entry.transitionTime),
+                TransitionEntryTypes.DURATION, tlv.writeVariableUIntLE(duration),
+              );
+            }),
+            TransitionCurveConfigurationTypes.ADJUSTMENT_CHARACTERISTIC_IID, tlv.writeVariableUIntLE(this.activeTransition.brightnessCharacteristicIID),
+            TransitionCurveConfigurationTypes.ADJUSTMENT_MULTIPLIER_RANGE, tlv.encode(
+              TransitionAdjustmentMultiplierRange.MINIMUM_ADJUSTMENT_MULTIPLIER, tlv.writeUInt32(this.activeTransition.brightnessAdjustmentRange.minBrightnessValue),
+              TransitionAdjustmentMultiplierRange.MAXIMUM_ADJUSTMENT_MULTIPLIER, tlv.writeUInt32(this.activeTransition.brightnessAdjustmentRange.maxBrightnessValue),
+            ),
+          ),
+          ValueTransitionConfigurationTypes.UPDATE_INTERVAL, tlv.writeUInt16(this.activeTransition.updateInterval),
+          ValueTransitionConfigurationTypes.NOTIFY_INTERVAL_THRESHOLD, tlv.writeUInt16(this.activeTransition.notifyIntervalThreshold),
+        ),
+      );
+    } else {
+      return undefined; // returns empty string
+    }
+  }
+
+  private handleTransitionControlUpdateTransition(buffer: Buffer): Buffer {
+    const updateTransition = tlv.decode(buffer);
+    const transitionConfiguration = tlv.decode(updateTransition[UpdateValueTransitionConfigurationsTypes.VALUE_TRANSITION_CONFIGURATION]);
 
     const iid = tlv.readVariableUIntLE(transitionConfiguration[ValueTransitionConfigurationTypes.CHARACTERISTIC_IID]);
     if (!this.lightbulb.getCharacteristicByIID(iid)) {
@@ -880,7 +953,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     const param3 = transitionConfiguration[ValueTransitionConfigurationTypes.UNKNOWN_3]?.readUInt8(0); // when present it is always 1
     if (!param3) { // if HomeKit just sends the iid, we consider that as "disable adaptive lighting" (assumption)
       this.handleAdaptiveLightingDisabled();
-      return tlv.encode(TransitionControlTypes.COLOR_TEMPERATURE, Buffer.alloc(0)).toString("base64");
+      return tlv.encode(TransitionControlTypes.UPDATE_VALUE_TRANSITION_CONFIGURATION, Buffer.alloc(0));
     }
 
     const parametersTLV = tlv.decode(transitionConfiguration[ValueTransitionConfigurationTypes.TRANSITION_PARAMETERS]);
@@ -956,8 +1029,8 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     this.handleActiveTransitionUpdated();
 
     return tlv.encode(
-      TransitionControlTypes.COLOR_TEMPERATURE, this.buildTransitionControlResponseBuffer(0),
-    ).toString("base64");
+      TransitionControlTypes.UPDATE_VALUE_TRANSITION_CONFIGURATION, this.buildTransitionControlResponseBuffer(0),
+    );
   }
 
 }

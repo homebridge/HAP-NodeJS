@@ -230,6 +230,12 @@ export function readUInt32(buffer: Buffer) {
   return buffer.readUInt32LE(0);
 }
 
+export function writeFloat32LE(value: number) {
+  const buffer = Buffer.alloc(4);
+  buffer.writeFloatLE(value, 0);
+  return buffer;
+}
+
 export function writeUInt16(value: number) {
   const buffer = Buffer.alloc(2);
 
