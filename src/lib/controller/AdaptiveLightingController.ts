@@ -758,6 +758,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
         try {
           return this.handleTransitionControlWrite(value);
         } catch (error) {
+          console.warn(`[%s] DEBUG: '${value}'`);
           console.warn("[%s] Encountered error on CharacteristicValueTransitionControl characteristic: " + error.stack);
           this.disableAdaptiveLighting();
           throw new HapStatusError(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
