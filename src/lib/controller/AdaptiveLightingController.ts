@@ -861,7 +861,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
         ValueTransitionParametersTypes.START_TIME, Buffer.from(active.transitionStartBuffer, "hex"),
         ValueTransitionParametersTypes.UNKNOWN_3, Buffer.from(active.id3, "hex"),
       ),
-      ValueTransitionConfigurationStatusTypes.TIME_SINCE_START, timeSinceStartBuffer, // TODO maybe this is actually the last transition time?
+      ValueTransitionConfigurationStatusTypes.TIME_SINCE_START, timeSinceStartBuffer,
     );
 
     return tlv.encode(
@@ -932,8 +932,8 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
               TransitionAdjustmentMultiplierRange.MAXIMUM_ADJUSTMENT_MULTIPLIER, tlv.writeUInt32(this.activeTransition.brightnessAdjustmentRange.maxBrightnessValue),
             ),
           ),
-          ValueTransitionConfigurationTypes.UPDATE_INTERVAL, tlv.writeUInt16(this.activeTransition.updateInterval),
-          ValueTransitionConfigurationTypes.NOTIFY_INTERVAL_THRESHOLD, tlv.writeUInt16(this.activeTransition.notifyIntervalThreshold),
+          ValueTransitionConfigurationTypes.UPDATE_INTERVAL, tlv.writeVariableUIntLE(this.activeTransition.updateInterval),
+          ValueTransitionConfigurationTypes.NOTIFY_INTERVAL_THRESHOLD, tlv.writeVariableUIntLE(this.activeTransition.notifyIntervalThreshold),
         ),
       );
     } else {
@@ -965,7 +965,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     const startTime = parametersTLV[ValueTransitionParametersTypes.START_TIME];
     const id3 = parametersTLV[ValueTransitionParametersTypes.UNKNOWN_3];
 
-    const startTimeMillis = epochMillisFromMillisSince2001_01_01Buffer(startTime);
+    const startTimeMillis = epochMillisFromMillisSince2001_01_01Buffer(startTime); // TODO compare this to Date.now()?
 
     const transitionCurve: AdaptiveLightingTransitionCurveEntry[] = [];
     let previous: AdaptiveLightingTransitionCurveEntry | undefined = undefined;
