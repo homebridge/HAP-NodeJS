@@ -244,6 +244,7 @@ export interface PublishInfo {
   /**
    * If this option is set to true, HAP-NodeJS will add identifying material (based on {@link username})
    * to the end of the accessory display name (and bonjour instance name).
+   * Default: true
    */
   addIdentifyingMaterial?: boolean;
 }
@@ -1075,7 +1076,7 @@ export class Accessory extends EventEmitter {
       Accessory.cleanupAccessoryData(this.lastKnownUsername); // delete old Accessory data
     }
 
-    if (info.addIdentifyingMaterial) {
+    if (info.addIdentifyingMaterial ?? true) {
       // adding some identifying material to our displayName
       this.displayName = this.displayName + " " + crypto.createHash('sha512')
         .update(info.username, 'utf8')
