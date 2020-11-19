@@ -697,7 +697,9 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
       this.hueCharacteristic.value = color.hue;
     }
 
-    this.colorTemperatureCharacteristic!.setValue(temperature, context); // TODO maybe ensure this call actually succeeds?
+    this.colorTemperatureCharacteristic!.handleSetRequest(temperature, undefined, context).catch(reason => { // reason is HAPStatus code
+      debug("[%s] Failed to next adaptive lighting transition point: %d", this.lightbulb.displayName, reason);
+    });
 
     if (!this.activeTransition) {
       console.warn("[" + this.lightbulb.displayName + "] Adaptive Lighting was probably disable my mistake by some call in the SET handler of the ColorTemperature characteristic! " +
