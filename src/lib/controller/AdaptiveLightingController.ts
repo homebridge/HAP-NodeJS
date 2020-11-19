@@ -121,7 +121,7 @@ export interface ActiveAdaptiveLightingTransition {
 
   id1: string; // unknown hex
   transitionStartBuffer: string; // start of transition in milliseconds from 2001-01-01 00:00:00; unsigned 64 bit LE integer
-  id3: string; // unknown hex
+  id3?: string; // unknown hex
 
   transitionCurve: AdaptiveLightingTransitionCurveEntry[];
 
@@ -854,13 +854,20 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     const timeSinceStart = time ?? (Date.now() - active.transitionStartMillis);
     const timeSinceStartBuffer = tlv.writeVariableUIntLE(timeSinceStart);
 
+    let parameters = tlv.encode(
+      ValueTransitionParametersTypes.UNKNOWN_1, Buffer.from(active.id1, "hex"),
+      ValueTransitionParametersTypes.START_TIME, Buffer.from(active.transitionStartBuffer, "hex"),
+    );
+    if (active.id3) {
+      parameters = Buffer.concat([
+        parameters,
+        tlv.encode(ValueTransitionParametersTypes.UNKNOWN_3, Buffer.from(active.id3, "hex")),
+      ]);
+    }
+
     const status = tlv.encode(
       ValueTransitionConfigurationStatusTypes.CHARACTERISTIC_IID, tlv.writeVariableUIntLE(active.iid!),
-      ValueTransitionConfigurationStatusTypes.TRANSITION_PARAMETERS, tlv.encode(
-        ValueTransitionParametersTypes.UNKNOWN_1, Buffer.from(active.id1, "hex"),
-        ValueTransitionParametersTypes.START_TIME, Buffer.from(active.transitionStartBuffer, "hex"),
-        ValueTransitionParametersTypes.UNKNOWN_3, Buffer.from(active.id3, "hex"),
-      ),
+      ValueTransitionConfigurationStatusTypes.TRANSITION_PARAMETERS, parameters,
       ValueTransitionConfigurationStatusTypes.TIME_SINCE_START, timeSinceStartBuffer,
     );
 
@@ -906,14 +913,21 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
         throw new HapStatusError(HAPStatus.INVALID_VALUE_IN_REQUEST);
       }
 
+      let parameters = tlv.encode(
+        ValueTransitionParametersTypes.UNKNOWN_1, Buffer.from(this.activeTransition.id1, "hex"),
+        ValueTransitionParametersTypes.START_TIME, Buffer.from(this.activeTransition.transitionStartBuffer, "hex"),
+      );
+      if (this.activeTransition.id3) {
+        parameters = Buffer.concat([
+          parameters,
+          tlv.encode(ValueTransitionParametersTypes.UNKNOWN_3, Buffer.from(this.activeTransition.id3, "hex")),
+        ]);
+      }
+
       return tlv.encode(
         TransitionControlTypes.READ_CURRENT_VALUE_TRANSITION_CONFIGURATION, tlv.encode(
           ValueTransitionConfigurationTypes.CHARACTERISTIC_IID, tlv.writeVariableUIntLE(this.activeTransition.iid),
-          ValueTransitionConfigurationTypes.TRANSITION_PARAMETERS, tlv.encode(
-            ValueTransitionParametersTypes.UNKNOWN_1, Buffer.from(this.activeTransition.id1, "hex"),
-            ValueTransitionParametersTypes.START_TIME, Buffer.from(this.activeTransition.transitionStartBuffer, "hex"),
-            ValueTransitionParametersTypes.UNKNOWN_3, Buffer.from(this.activeTransition.id3, "hex"),
-          ),
+          ValueTransitionConfigurationTypes.TRANSITION_PARAMETERS, parameters,
           ValueTransitionConfigurationTypes.UNKNOWN_3, 1,
           ValueTransitionConfigurationTypes.TRANSITION_CURVE_CONFIGURATION, tlv.encode(
             TransitionCurveConfigurationTypes.TRANSITION_ENTRY, this.activeTransition.transitionCurve.map((entry, index, array) => {
@@ -963,7 +977,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
 
     const id1 = parametersTLV[ValueTransitionParametersTypes.UNKNOWN_1];
     const startTime = parametersTLV[ValueTransitionParametersTypes.START_TIME];
-    const id3 = parametersTLV[ValueTransitionParametersTypes.UNKNOWN_3];
+    const id3 = parametersTLV[ValueTransitionParametersTypes.UNKNOWN_3]; // this may be undefined
 
     const startTimeMillis = epochMillisFromMillisSince2001_01_01Buffer(startTime); // TODO compare this to Date.now()?
 
@@ -978,7 +992,8 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
       const value = tlvEntry[TransitionEntryTypes.VALUE].readFloatLE(0);
 
       const transitionOffset = tlv.readVariableUIntLE(tlvEntry[TransitionEntryTypes.TRANSITION_OFFSET]);
-      const duration = tlvEntry[TransitionEntryTypes.DURATION]?.readUInt32LE(0);
+
+      const duration = tlvEntry[TransitionEntryTypes.DURATION]? tlv.readVariableUIntLE(tlvEntry[TransitionEntryTypes.DURATION]): undefined;
 
       if (previous) {
         previous.duration = duration;
@@ -1004,7 +1019,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
 
       id1: id1.toString("hex"),
       transitionStartBuffer: startTime.toString("hex"),
-      id3: id3.toString("hex"),
+      id3: id3?.toString("hex"),
 
       brightnessCharacteristicIID: adjustmentIID,
       brightnessAdjustmentRange: {
