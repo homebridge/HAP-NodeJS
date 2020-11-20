@@ -57,6 +57,7 @@ lightbulbService.getCharacteristic(Characteristic.On)
   });
 
 lightbulbService.getCharacteristic(Characteristic.Brightness) // Brightness characteristic is required for adaptive lighting
+  .updateValue(brightness) // ensure default value is set
   .onGet(() => {
     console.log("Light brightness is currently " + brightness);
     return brightness;

@@ -114,6 +114,11 @@ function isAdaptiveLightingContext(context: any): context is AdaptiveLightingCha
   return context && "controller" in context;
 }
 
+interface SavedLastTransitionPointInfo {
+  curveIndex: number;
+  lowerBoundTimeOffset: number;
+}
+
 export interface ActiveAdaptiveLightingTransition {
   /**
    * The instance id for the characteristic for which this transition applies to (aka the ColorTemperature characteristic).
@@ -169,6 +174,19 @@ export interface ActiveAdaptiveLightingTransition {
    * Typically this is 600000 aka 600 seconds aka 10 minutes.
    */
   notifyIntervalThreshold: number;
+}
+
+export interface AdaptiveLightingTransitionPoint {
+  /**
+   * This is the time offset from the transition start to the {@link lowerBound}.
+   */
+  lowerBoundTimeOffset: number;
+
+
+  transitionOffset: number;
+
+  lowerBound: AdaptiveLightingTransitionCurveEntry;
+  upperBound: AdaptiveLightingTransitionCurveEntry;
 }
 
 export interface AdaptiveLightingTransitionCurveEntry {
@@ -406,6 +424,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
   private didRunFirstInitializationStep = false;
   private updateTimeout?: Timeout;
 
+  private lastTransitionPointInfo?: SavedLastTransitionPointInfo;
   private lastEventNotificationSent: number = 0;
   private lastNotifiedTemperatureValue: number = 0;
   private lastNotifiedSaturationValue: number = 0;
@@ -470,17 +489,19 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
         this.saturationCharacteristic.removeListener(CharacteristicEventTypes.CHANGE, this.characteristicManualWrittenChangeListener);
       }
 
+      this.activeTransition = undefined;
+
       if (triggerStateChange) {
         this.stateChangeDelegate && this.stateChangeDelegate();
       }
     }
 
-    this.activeTransition = undefined;
     this.colorTemperatureCharacteristic = undefined;
     this.brightnessCharacteristic = undefined;
     this.hueCharacteristic = undefined;
     this.saturationCharacteristic = undefined;
 
+    this.lastTransitionPointInfo = undefined;
     this.lastEventNotificationSent = 0;
     this.lastNotifiedTemperatureValue = 0;
     this.lastNotifiedSaturationValue = 0;
@@ -617,7 +638,26 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
       return;
     }
 
-    this.scheduleNextUpdate(true); // run a dry scheduleNextUpdate to adjust the colorTemperature using the new brightness value
+    // consider the following scenario:
+    // a HomeKit controller queries the light (meaning e.g. Brightness, Hue and Saturation characteristics).
+    // As of the implementation of the light the brightness characteristic get handler returns first
+    // (and returns a value different than the cached value).
+    // This change handler gets called and we will update the color temperature accordingly
+    // (which also adjusts the internal cached values for Hue and Saturation).
+    // After some short time the Hue or Saturation get handler return with the last known value to the plugin.
+    // As those values now differ from the cached values (we already updated) we get a call to handleCharacteristicManualWritten
+    // which again disables adaptive lighting.
+
+    if (change.reason === ChangeReason.READ) {
+      // if the reason is a read request, we expect that Hue/Saturation are also read
+      // thus we postpone our update to ColorTemperature a bit.
+      // It doesn't ensure that those race conditions do not happen anymore, but with a 1s delay it reduces the possibility by a bit
+      setTimeout(() => {
+        this.scheduleNextUpdate(true);
+      }, 1000).unref();
+    } else {
+      this.scheduleNextUpdate(true); // run a dry scheduleNextUpdate to adjust the colorTemperature using the new brightness value
+    }
   }
 
   /**
@@ -634,8 +674,63 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
       return;
     }
 
-    debug("[%s] Receive a manual write to an characteristic (newValue: %d). Thus disabling adaptive lighting!", this.lightbulb.displayName, change.newValue);
+    debug("[%s] Received a manual write to an characteristic (newValue: %d). Thus disabling adaptive lighting!", this.lightbulb.displayName, change.newValue);
     this.disableAdaptiveLighting();
+  }
+
+  public getCurrentAdaptiveLightingTransitionPoint(): AdaptiveLightingTransitionPoint | undefined {
+    if (!this.activeTransition) {
+      throw new Error("Cannot calculate current transition point if no transition is active!");
+    }
+
+    const adjustedNow = Date.now() - this.activeTransition.timeMillisOffset;
+    const offset = adjustedNow - this.activeTransition.transitionStartMillis;
+
+    let i = this.lastTransitionPointInfo?.curveIndex ?? 0;
+    let lowerBoundTimeOffset = this.lastTransitionPointInfo?.lowerBoundTimeOffset ?? 0; // time offset to the lowerBound transition entry
+    let lowerBound: AdaptiveLightingTransitionCurveEntry | undefined = undefined;
+    let upperBound: AdaptiveLightingTransitionCurveEntry | undefined = undefined;
+
+    for (; i + 1 < this.activeTransition.transitionCurve.length; i++) {
+      const lowerBound0 = this.activeTransition.transitionCurve[i];
+      const upperBound0 = this.activeTransition.transitionCurve[i + 1];
+
+      const lowerBoundDuration = lowerBound0.duration ?? 0;
+      lowerBoundTimeOffset += lowerBound0.transitionTime;
+
+      if (offset >= lowerBoundTimeOffset) {
+        if (offset <= lowerBoundTimeOffset + lowerBoundDuration + upperBound0.transitionTime) {
+          lowerBound = lowerBound0;
+          upperBound = upperBound0;
+          break;
+        }
+      } else if (this.lastTransitionPointInfo) {
+        // if we reached here the entry in the transitionCurve we are searching for is somewhere before current i.
+        // This can only happen when we have a faulty lastTransitionPointInfo (otherwise we would start from i=0).
+        // Thus we try again by searching from i=0
+        this.lastTransitionPointInfo = undefined;
+        return this.getCurrentAdaptiveLightingTransitionPoint();
+      }
+
+      lowerBoundTimeOffset += lowerBoundDuration;
+    }
+
+    if (!lowerBound || !upperBound) {
+      this.lastTransitionPointInfo = undefined;
+      return undefined;
+    }
+
+    this.lastTransitionPointInfo = {
+      curveIndex: i,
+      lowerBoundTimeOffset: lowerBoundTimeOffset,
+    };
+
+    return {
+      lowerBoundTimeOffset: lowerBoundTimeOffset,
+      transitionOffset: offset - lowerBoundTimeOffset,
+      lowerBound: lowerBound,
+      upperBound: upperBound,
+    };
   }
 
   private scheduleNextUpdate(dryRun: boolean = false): void {
@@ -652,36 +747,28 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
       this.handleAdaptiveLightingEnabled();
     }
 
-    const now = Date.now() - this.activeTransition.timeMillisOffset;
-    const offset = now - this.activeTransition.transitionStartMillis;
-
-    let lowerBoundTimeOffset = 0; // time offset to the lowerBound transition entry
-    let lowerBound: AdaptiveLightingTransitionCurveEntry | undefined = undefined;
-    let upperBound: AdaptiveLightingTransitionCurveEntry | undefined = undefined;
-
-    for (let i = 0; i + 1 < this.activeTransition.transitionCurve.length; i++) {
-      const lowerBound0 = this.activeTransition.transitionCurve[i];
-      const upperBound0 = this.activeTransition.transitionCurve[i + 1];
-
-      const lowerBoundDuration = lowerBound0.duration ?? 0;
-      lowerBoundTimeOffset += lowerBound0.transitionTime;
-
-      if (offset >= lowerBoundTimeOffset && offset <= lowerBoundTimeOffset + lowerBoundDuration + upperBound0.transitionTime) {
-        lowerBound = lowerBound0;
-        upperBound = upperBound0;
-        break;
-      }
-
-      lowerBoundTimeOffset += lowerBoundDuration;
-    }
-
-    if (!lowerBound || !upperBound) {
+    const transitionPoint = this.getCurrentAdaptiveLightingTransitionPoint();
+    if (!transitionPoint) {
       debug("[%s] Reached end of transition curve!", this.lightbulb.displayName);
       if (!dryRun) {
         // the transition schedule is only for 24 hours, we reached the end?
         this.disableAdaptiveLighting();
       }
       return;
+    }
+
+    const lowerBound = transitionPoint.lowerBound;
+    const upperBound = transitionPoint.upperBound;
+
+    let interpolatedTemperature: number;
+    let interpolatedAdjustmentFactor: number;
+    if (lowerBound.duration && transitionPoint.transitionOffset  <= lowerBound.duration) {
+      interpolatedTemperature = lowerBound.temperature;
+      interpolatedAdjustmentFactor = lowerBound.brightnessAdjustmentFactor;
+    } else {
+      const timePercentage = (transitionPoint.transitionOffset - (lowerBound.duration ?? 0)) / upperBound.transitionTime;
+      interpolatedTemperature = lowerBound.temperature + (upperBound.temperature - lowerBound.temperature) * timePercentage;
+      interpolatedAdjustmentFactor = lowerBound.brightnessAdjustmentFactor + (upperBound.brightnessAdjustmentFactor - lowerBound.brightnessAdjustmentFactor) * timePercentage;
     }
 
     const adjustmentMultiplier = Math.max(
@@ -691,20 +778,6 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
         this.brightnessCharacteristic!.value as number // get handler is not called for optimal performance
       )
     );
-
-    let transitionOffset = offset - lowerBoundTimeOffset;
-
-    let interpolatedTemperature: number;
-    let interpolatedAdjustmentFactor: number;
-    if (lowerBound.duration && transitionOffset  <= lowerBound.duration) {
-      interpolatedTemperature = lowerBound.temperature;
-      interpolatedAdjustmentFactor = lowerBound.brightnessAdjustmentFactor;
-    } else {
-      transitionOffset -= lowerBound.duration ?? 0;
-      const timePercentage = transitionOffset / upperBound.transitionTime;
-      interpolatedTemperature = lowerBound.temperature + (upperBound.temperature - lowerBound.temperature) * timePercentage;
-      interpolatedAdjustmentFactor = lowerBound.brightnessAdjustmentFactor + (upperBound.brightnessAdjustmentFactor - lowerBound.brightnessAdjustmentFactor) * timePercentage;
-    }
 
     let temperature = Math.round(interpolatedTemperature + interpolatedAdjustmentFactor * adjustmentMultiplier);
 
@@ -752,7 +825,9 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
       return;
     }
 
-    if (now - this.lastEventNotificationSent >= this.activeTransition.notifyIntervalThreshold) {
+    const now = Date.now();
+    if (!dryRun && now - this.lastEventNotificationSent >= this.activeTransition.notifyIntervalThreshold) {
+      debug("[%s] Sending event notifications for current transition!", this.lightbulb.displayName);
       this.lastEventNotificationSent = now;
 
       const eventContext: AdaptiveLightingCharacteristicContext = {
@@ -858,6 +933,9 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
    */
   deserialize(serialized: SerializedAdaptiveLightingControllerState): void {
     this.activeTransition = serialized.activeTransition;
+    if (!this.activeTransition.timeMillisOffset) { // compatibility to data produced by early betas
+      this.activeTransition.timeMillisOffset = 0;
+    }
     try {
       this.handleActiveTransitionUpdated(true);
     } catch (error) {
@@ -898,7 +976,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
 
     const active = this.activeTransition;
 
-    const timeSinceStart = time ?? (Date.now() - active.transitionStartMillis);
+    const timeSinceStart = time ?? (Date.now() - active.timeMillisOffset - active.transitionStartMillis);
     const timeSinceStartBuffer = tlv.writeVariableUIntLE(timeSinceStart);
 
     let parameters = tlv.encode(
