@@ -53,6 +53,11 @@ export class ControllerStorage {
     }
 
     private enqueueSaveRequest(timeout: number = 0): void {
+        if (this.parent) {
+            this.parent.enqueueSaveRequest(timeout);
+            return;
+        }
+
         const plannedTime = Date.now() + timeout;
 
         if (this.queuedSaveTimeout) {
