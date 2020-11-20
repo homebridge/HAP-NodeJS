@@ -571,7 +571,7 @@ export class Service extends EventEmitter {
    * Returns a JSON representation of this service suitable for delivering to HAP clients.
    * @private used to generate response to /accessories query
    */
-  toHAP(connection: HAPConnection): Promise<ServiceJsonObject> {
+  toHAP(connection: HAPConnection, contactGetHandlers = true): Promise<ServiceJsonObject> {
     return new Promise(resolve => {
       assert(this.iid, "iid cannot be undefined for service '" + this.displayName + "'");
       assert(this.characteristics.length, "service '" + this.displayName + "' does not have any characteristics!");
@@ -624,7 +624,7 @@ export class Service extends EventEmitter {
 
       for (const characteristic of this.characteristics) {
         missingCharacteristics.add(characteristic);
-        characteristic.toHAP(connection).then(value => {
+        characteristic.toHAP(connection, contactGetHandlers).then(value => {
           if (!timeout) {
             return; // if timeout is undefined, response was already sent out
           }

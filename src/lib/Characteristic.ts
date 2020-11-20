@@ -2007,7 +2007,7 @@ export class Characteristic extends EventEmitter {
    * Returns a JSON representation of this characteristic suitable for delivering to HAP clients.
    * @private used to generate response to /accessories query
    */
-  async toHAP(connection: HAPConnection): Promise<CharacteristicJsonObject> {
+  async toHAP(connection: HAPConnection, contactGetHandlers = true): Promise<CharacteristicJsonObject> {
     const object = this.internalHAPRepresentation();
 
     if (!this.props.perms.includes(Perms.PAIRED_READ)) {
@@ -2016,13 +2016,14 @@ export class Characteristic extends EventEmitter {
       // special workaround for event only programmable switch event, which must always return null
       object.value = null;
     } else { // query the current value
-      object.value = formatOutgoingCharacteristicValue(
-        await this.handleGetRequest(connection).catch(() => {
+      const value = contactGetHandlers
+        ? await this.handleGetRequest(connection).catch(() => {
           debug('[%s] Error getting value for characteristic on /accessories request', this.displayName);
           return this.value; // use cached value
-        }),
-        this.props,
-      );
+        })
+        : this.value;
+
+      object.value = formatOutgoingCharacteristicValue(value, this.props);
     }
 
     return object;

@@ -359,6 +359,11 @@ export class Accessory extends EventEmitter {
   _setupURI?: string;
 
   private configurationChangeDebounceTimeout?: Timeout;
+  /**
+   * This property captures the time when we last server a /accessories request.
+   * For multiple bursts of /accessories request we don't want to always contact GET handlers
+   */
+  private lastAccessoriesRequest: number = 0;
 
   constructor(public displayName: string, public UUID: string) {
     super();
@@ -998,13 +1003,13 @@ export class Accessory extends EventEmitter {
   /**
    * Returns a JSON representation of this accessory suitable for delivering to HAP clients.
    */
-  private async toHAP(connection: HAPConnection): Promise<AccessoryJsonObject[]> {
+  private async toHAP(connection: HAPConnection, contactGetHandlers = true): Promise<AccessoryJsonObject[]> {
     assert(this.aid, "aid cannot be undefined for accessory '" + this.displayName + "'");
     assert(this.services.length, "accessory '" + this.displayName + "' does not have any services!");
 
     const accessory: AccessoryJsonObject = {
       aid: this.aid!,
-      services: await Promise.all(this.services.map(service => service.toHAP(connection))),
+      services: await Promise.all(this.services.map(service => service.toHAP(connection, contactGetHandlers))),
     };
 
     const accessories: AccessoryJsonObject[] = [accessory];
@@ -1012,7 +1017,7 @@ export class Accessory extends EventEmitter {
     if (!this.bridged) {
       accessories.push(... await Promise.all(
         this.bridgedAccessories
-          .map(accessory => accessory.toHAP(connection).then(value => value[0]))
+          .map(accessory => accessory.toHAP(connection, contactGetHandlers).then(value => value[0]))
       ));
     }
 
@@ -1330,7 +1335,11 @@ export class Accessory extends EventEmitter {
   private handleAccessories(connection: HAPConnection, callback: AccessoriesCallback): void {
     this._assignIDs(this._identifierCache!); // make sure our aid/iid's are all assigned
 
-    this.toHAP(connection).then(value => {
+    const now = Date.now();
+    const contactGetHandlers = now - this.lastAccessoriesRequest > 40_000; // we query latest value if last /accessories was more than 40s ago
+    this.lastAccessoriesRequest = now;
+
+    this.toHAP(connection, contactGetHandlers).then(value => {
       callback(undefined, {
         accessories: value,
       });
