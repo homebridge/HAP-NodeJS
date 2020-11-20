@@ -115,13 +115,42 @@ function isAdaptiveLightingContext(context: any): context is AdaptiveLightingCha
 }
 
 export interface ActiveAdaptiveLightingTransition {
-  iid: number; // color temperature characteristic
+  /**
+   * The instance id for the characteristic for which this transition applies to (aka the ColorTemperature characteristic).
+   */
+  iid: number;
 
-  transitionStartMillis: number; // start of transition in epoch time millis
+  /**
+   * Start of the transition in epoch time millis (as sent from the HomeKit controller).
+   * Additionally see {@link timeMillisOffset}.
+   */
+  transitionStartMillis: number;
+  /**
+   * It is not necessarily given, that we have the same time (or rather the correct time) as the HomeKit controller
+   * who set up the transition schedule.
+   * Thus we record the delta between our current time and the the time send with the setup request.
+   * <code>timeMillisOffset</code> is defined as <code>Date.now() - transitionStartMillis;</code>.
+   * So in the case were we actually have a correct local time, it most likely will be positive (due to network latency).
+   * But of course it can also be negative.
+   */
+  timeMillisOffset: number;
 
-  id1: string; // unknown hex
-  transitionStartBuffer: string; // start of transition in milliseconds from 2001-01-01 00:00:00; unsigned 64 bit LE integer
-  id3?: string; // unknown hex
+  /**
+   * Hex string of 16 bytes. Value is the same for ALL control write requests I have seen (even on other homes).
+   * Purpose unknown.
+   * @private
+   */
+  id1: string;
+  /**
+   * Start of transition in milliseconds from 2001-01-01 00:00:00; unsigned 64 bit LE integer
+   * @private as it is a 64 bit integer, we just store the buffer to not have the struggle to encode/decode 64 bit int in JavaScript
+   */
+  transitionStartBuffer: string;
+  /**
+   * Hex string of 8 bytes. Some kind of id (?). Sometimes it isn't supplied. Don't know the use for that.
+   * @private
+   */
+  id3?: string;
 
   transitionCurve: AdaptiveLightingTransitionCurveEntry[];
 
@@ -467,12 +496,28 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
   /**
    * Returns the time where the current transition curve was started in epoch time millis.
    * A transition curves is active for 24 hours typically and is renewed every 24 hours by a HomeHub.
+   * Additionally see {@link getAdaptiveLightingTimeOffset}.
    */
   public getAdaptiveLightingStartTimeOfTransition(): number {
     if (!this.activeTransition) {
       throw new Error("There is no active transition!");
     }
     return this.activeTransition.transitionStartMillis;
+  }
+
+  /**
+   * It is not necessarily given, that we have the same time (or rather the correct time) as the HomeKit controller
+   * who set up the transition schedule.
+   * Thus we record the delta between our current time and the the time send with the setup request.
+   * <code>timeOffset</code> is defined as <code>Date.now() - getAdaptiveLightingStartTimeOfTransition();</code>.
+   * So in the case were we actually have a correct local time, it most likely will be positive (due to network latency).
+   * But of course it can also be negative.
+   */
+  public getAdaptiveLightingTimeOffset(): number {
+    if (!this.activeTransition) {
+      throw new Error("There is no active transition!");
+    }
+    return this.activeTransition.timeMillisOffset;
   }
 
   public getAdaptiveLightingTransitionCurve(): AdaptiveLightingTransitionCurveEntry[] {
@@ -607,7 +652,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
       this.handleAdaptiveLightingEnabled();
     }
 
-    const now = Date.now();
+    const now = Date.now() - this.activeTransition.timeMillisOffset;
     const offset = now - this.activeTransition.transitionStartMillis;
 
     let lowerBoundTimeOffset = 0; // time offset to the lowerBound transition entry
@@ -981,7 +1026,8 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     const startTime = parametersTLV[ValueTransitionParametersTypes.START_TIME];
     const id3 = parametersTLV[ValueTransitionParametersTypes.UNKNOWN_3]; // this may be undefined
 
-    const startTimeMillis = epochMillisFromMillisSince2001_01_01Buffer(startTime); // TODO compare this to Date.now()?
+    const startTimeMillis = epochMillisFromMillisSince2001_01_01Buffer(startTime);
+    const timeMillisOffset = Date.now() - startTimeMillis;
 
     const transitionCurve: AdaptiveLightingTransitionCurveEntry[] = [];
     let previous: AdaptiveLightingTransitionCurveEntry | undefined = undefined;
@@ -1018,6 +1064,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
       iid: iid,
 
       transitionStartMillis: startTimeMillis,
+      timeMillisOffset: timeMillisOffset,
 
       id1: id1.toString("hex"),
       transitionStartBuffer: startTime.toString("hex"),
