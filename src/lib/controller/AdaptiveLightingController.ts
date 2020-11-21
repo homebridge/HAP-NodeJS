@@ -653,6 +653,9 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
       // thus we postpone our update to ColorTemperature a bit.
       // It doesn't ensure that those race conditions do not happen anymore, but with a 1s delay it reduces the possibility by a bit
       setTimeout(() => {
+        if (!this.activeTransition) {
+          return; // was disabled in the mean time
+        }
         this.scheduleNextUpdate(true);
       }, 1000).unref();
     } else {
