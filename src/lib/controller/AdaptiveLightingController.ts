@@ -674,7 +674,8 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
       return;
     }
 
-    debug("[%s] Received a manual write to an characteristic (newValue: %d). Thus disabling adaptive lighting!", this.lightbulb.displayName, change.newValue);
+    debug("[%s] Received a manual write to an characteristic (newValue: %d, oldValue: %d, reason: %s). Thus disabling adaptive lighting!",
+      this.lightbulb.displayName, change.newValue, change.oldValue, change.reason);
     this.disableAdaptiveLighting();
   }
 
