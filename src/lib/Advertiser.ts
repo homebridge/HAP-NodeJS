@@ -65,7 +65,7 @@ export class Advertiser extends EventEmitter {
     this.setupHash = this.computeSetupHash();
 
     this.responder = ciao.getResponder({
-      periodicBroadcasts: !accessoryInfo.disablePeriodicBroadcasts,
+      ignoreUnicastResponseFlag: true, // used for debugging
       ...responderOptions
     });
     this.advertisedService = this.responder.createService({
