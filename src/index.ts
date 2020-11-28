@@ -22,6 +22,8 @@ export * from './lib/controller';
 
 export * from './lib/util/clone';
 export * from './lib/util/once';
+export * from './lib/util/setupcode';
+export * from './lib/util/setupid';
 export * from './lib/util/tlv';
 export * from './lib/util/hapStatusError';
 export * from './lib/util/color-utils';

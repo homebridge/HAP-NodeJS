@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import createDebug from 'debug';
 import { EventEmitter } from "events";
-import { SRP, SrpServer } from "fast-srp-hap";
+import { SRP, SrpServer, Identity } from "fast-srp-hap";
 import { IncomingMessage, ServerResponse } from "http";
 import tweetnacl from 'tweetnacl';
 import { URL } from 'url';
@@ -16,7 +16,7 @@ import {
   PrepareWriteRequest,
   ResourceRequest
 } from "../internal-types";
-import { CharacteristicValue, Nullable, VoidCallback } from '../types';
+import { CharacteristicValue, Nullable, VoidCallback, NodeCallback } from '../types';
 import { AccessoryInfo, PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
 import {
   EventedHTTPServer,
@@ -51,6 +51,7 @@ const enum TLVValues {
   PERMISSIONS = 0x0B, // None (0x00): regular user, 0x01: Admin (able to add/remove/list pairings)
   FRAGMENT_DATA = 0x0C,
   FRAGMENT_LAST = 0x0D,
+  FLAGS = 0x13,
   SEPARATOR = 0x0FF // Zero-length TLV that separates different TLVs in a list.
 }
 
@@ -89,6 +90,11 @@ export const enum TLVErrorCode {
   MAX_TRIES = 0x05, // server reached maximum number of authentication attempts
   UNAVAILABLE = 0x06, // server pairing method is unavailable
   BUSY = 0x07 // cannot accept pairing request at this time
+}
+
+export enum PairingFlags {
+  TRANSIENT = 0x10,
+  SPLIT = 0x01000000,
 }
 
 export const enum HAPStatus {
@@ -175,6 +181,8 @@ export const enum HAPPairingHTTPCode {
   INTERNAL_SERVER_ERROR = 500,
 }
 
+export type PairIdentity = Identity & {setupcode: string | null};
+
 type HAPRequestHandler = (connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse) => void;
 
 export type IdentifyCallback = VoidCallback;
@@ -204,6 +212,9 @@ export const enum HAPServerEventTypes {
   ADD_PAIRING = "add-pairing",
   REMOVE_PAIRING = "remove-pairing",
   LIST_PAIRINGS = "list-pairings",
+  GENERATE_SETUP_CODE = 'generate-setup-code',
+  PAIR_SETUP_STARTED = 'pair-setup-started',
+  PAIR_SETUP_FINISHED = 'pair-setup-finished',
   /**
    * This event is emitted when a client completes the "pairing" process and exchanges encryption keys.
    * Note that this does not mean the "Add Accessory" process in iOS has completed.
@@ -242,6 +253,9 @@ export declare interface HAPServer {
   on(event: "add-pairing", listener: (connection: HAPConnection, username: HAPUsername, publicKey: Buffer, permission: PermissionTypes, callback: AddPairingCallback) => void): this;
   on(event: "remove-pairing", listener: (connection: HAPConnection, username: HAPUsername, callback: RemovePairingCallback) => void): this;
   on(event: "list-pairings", listener: (connection: HAPConnection, callback: ListPairingsCallback) => void): this;
+  on(event: "generate-setup-code", listener: (callback: NodeCallback<string>, connection: HAPConnection) => void): this;
+  on(event: "pair-setup-started", listener: (pairIdentity: PairIdentity, connection: HAPConnection) => void): this;
+  on(event: "pair-setup-finished", listener: (err: Error | null, clientUsername: string | null, connection: HAPConnection) => void): this;
   on(event: "pair", listener: (username: HAPUsername, clientLTPK: Buffer, callback: PairCallback) => void): this;
 
   on(event: "accessories", listener: (connection: HAPConnection, callback: AccessoriesCallback) => void): this;
@@ -258,6 +272,9 @@ export declare interface HAPServer {
   emit(event: "add-pairing", connection: HAPConnection, username: HAPUsername, publicKey: Buffer, permission: PermissionTypes, callback: AddPairingCallback): boolean;
   emit(event: "remove-pairing", connection: HAPConnection, username: HAPUsername, callback: RemovePairingCallback): boolean;
   emit(event: "list-pairings", connection: HAPConnection, callback: ListPairingsCallback): boolean;
+  emit(event: "generate-setup-code", callback: NodeCallback<string>, connection: HAPConnection): boolean;
+  emit(event: "pair-setup-started", pairIdentity: PairIdentity, connection: HAPConnection): boolean;
+  emit(event: "pair-setup-finished", err: Error | null, clientUsername: string | null, connection: HAPConnection): boolean;
   emit(event: "pair", username: HAPUsername, clientLTPK: Buffer, callback: PairCallback): boolean;
 
   emit(event: "accessories", connection: HAPConnection, callback : AccessoriesCallback): boolean;
@@ -292,6 +309,10 @@ export class HAPServer extends EventEmitter {
   private accessoryInfo: AccessoryInfo;
   private httpServer: EventedHTTPServer;
   private unsuccessfulPairAttempts: number = 0; // after 100 unsuccessful attempts the server won't accept any further attempts. Will currently be reset on a reboot
+
+  /** Session currently trying to pair with the server */
+  _pairing: HAPConnection | null = null;
+  _setupCodeIdentity: PairIdentity | null = null;
 
   allowInsecureRequest: boolean;
 
@@ -427,13 +448,21 @@ export class HAPServer extends EventEmitter {
     }));
   }
 
-  private handlePairSetup(connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse): void {
+  private async handlePairSetup(connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse) {
     // Can only be directly paired with one iOS device
     if (!this.allowInsecureRequest && this.accessoryInfo.paired()) {
       response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
       response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.UNAVAILABLE));
       return;
     }
+
+    if (this._pairing && this._pairing !== connection && this._pairing.connected) {
+      response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
+      response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, Codes.BUSY));
+      return;
+    }
+    this._pairing = connection;
+
     if (this.unsuccessfulPairAttempts > 100) {
       debug("[%s] Reached maximum amount of unsuccessful pair attempts!", this.accessoryInfo.username);
       response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
@@ -443,39 +472,110 @@ export class HAPServer extends EventEmitter {
 
     const tlvData = tlv.decode(data);
     const sequence = tlvData[TLVValues.SEQUENCE_NUM][0]; // value is single byte with sequence number
-    if (sequence == PairingStates.M1) {
-      this.handlePairSetupM1(connection, request, response);
-    } else if (sequence == PairingStates.M3 && connection._pairSetupState === PairingStates.M2) {
-      this.handlePairSetupM3(connection, request, response, tlvData);
-    } else if (sequence == PairingStates.M5 && connection._pairSetupState === PairingStates.M4) {
-      this.handlePairSetupM5(connection, request, response, tlvData);
-    } else {
-      // Invalid state/sequence number
+
+    try {
+      if (sequence == PairingStates.M1) {
+        await this.handlePairSetupM1(connection, request, response, tlvData);
+      } else if (sequence == PairingStates.M3 && connection._pairSetupState === PairingStates.M2) {
+        this.handlePairSetupM3(connection, request, response, tlvData);
+      } else if (sequence == PairingStates.M5 && connection._pairSetupState === PairingStates.M4) {
+        this.handlePairSetupM5(connection, request, response, tlvData);
+      } else throw new Error('Invalid state/sequence number');
+    } catch (error) {
+      debug("[%s] Error occurred during pairing: %s", this.accessoryInfo.username, error.message);
       response.writeHead(HAPPairingHTTPCode.BAD_REQUEST, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.STATE, sequence + 1, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
-      return;
+      response.end(tlv.encode(TLVValues.STATE, sequence + 1, TLVValues.ERROR_CODE, Codes.UNKNOWN));
+      this._pairing = null;
     }
   }
 
-  private handlePairSetupM1(connection: HAPConnection, request: IncomingMessage, response: ServerResponse): void {
+  private async handlePairSetupM1(connection: HAPConnection, request: IncomingMessage, response: ServerResponse, tlvData: Record<number, Buffer>) {
     debug("[%s] Pair step 1/5", this.accessoryInfo.username);
-    const salt = crypto.randomBytes(16, );
 
-    const srpParams = SRP.params.hap;
-    SRP.genKey(32).then(key => {
-      // create a new SRP server
-      const srpServer = new SrpServer(srpParams, salt, Buffer.from("Pair-Setup"), Buffer.from(this.accessoryInfo.pincode), key)
-      const srpB = srpServer.computeB();
-      // attach it to the current TCP session
-      connection.srpServer = srpServer;
-      response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M2, TLVValues.SALT, salt, TLVValues.PUBLIC_KEY, srpB));
-      connection._pairSetupState = PairingStates.M2;
-    }).catch(error => {
-      debug("[%s] Error occurred when generating srp key: %s", this.accessoryInfo.username, error.message);
-      response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
+    if (tlvData[TLVValues.METHOD][0] !== PairMethods.PAIR_SETUP) {
+      response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
+      response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.UNAVAILABLE));
       return;
+    }
+
+    const flags = tlvData[TLVValues.FLAGS];
+    const decodedFlags = flags && flags.length === 4 ? tlv.readUInt32(flags) : null;
+    const transient = !!decodedFlags && !!(decodedFlags & PairingFlags.TRANSIENT);
+    const split = !!decodedFlags && !!(decodedFlags & PairingFlags.SPLIT);
+    connection._pairSetupFlags = {
+      raw: flags, flags: decodedFlags, transient, split,
+    };
+
+    if ((!decodedFlags || (transient && split)) && this.listenerCount(HAPServerEventTypes.GENERATE_SETUP_CODE)) {
+      try {
+        const setupcode = await this._getSetupCodeForPairing(connection);
+
+        const salt = crypto.randomBytes(16);
+        const verifier = SRP.computeVerifier(SRP.params.hap, salt, Buffer.from('Pair-Setup'), Buffer.from(setupcode));
+        this._setupCodeIdentity = {username: 'Pair-Setup', salt, verifier, setupcode};
+
+        debug('[%s] Starting standard pairing with generated setup code: %s', this.accessoryInfo.username, setupcode);
+      } catch (err) {
+        debug("[%s] Error occurred when generating setup code: %s", this.accessoryInfo.username, err.message);
+        response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
+        response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, Codes.UNAVAILABLE));
+        this._pairing = null;
+        return;
+      }
+    } else if (split && this._setupCodeIdentity) {
+      // Nothing to do here
+      debug('[%s] Starting split pairing', this.accessoryInfo.username);
+    } else if (typeof this.accessoryInfo.pincode === 'object' && this.accessoryInfo.pincode) {
+      this._setupCodeIdentity = {...this.accessoryInfo.pincode, username: 'Pair-Setup', setupcode: null};
+      debug('[%s] Starting standard pairing with saved verifier', this.accessoryInfo.username);
+    } else if (typeof this.accessoryInfo.pincode === 'string') {
+      const setupcode = this.accessoryInfo.pincode;
+      const salt = crypto.randomBytes(16);
+      const verifier = SRP.computeVerifier(SRP.params.hap, salt, Buffer.from('Pair-Setup'), Buffer.from(setupcode));
+      this._setupCodeIdentity = {username: 'Pair-Setup', salt, verifier, setupcode};
+
+      debug('[%s] Starting standard pairing with fixed setup code: %s', this.accessoryInfo.username, setupcode);
+    } else {
+      if (!decodedFlags || (transient && split)) {
+        debug('[%s] No setup code configured', this.accessoryInfo.username);
+      }
+
+      response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
+      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M2, TLVValues.ERROR_CODE, Codes.AUTHENTICATION));
+      this._pairing = null;
+      return;
+    }
+
+    const salt = this._setupCodeIdentity.salt;
+    const key = await SRP.genKey(32);
+
+    // create a new SRP server
+    const srpServer = new SrpServer(SRP.params.hap, this._setupCodeIdentity, key);
+    const srpB = srpServer.computeB();
+    // attach it to the current TCP session
+    connection.srpServer = srpServer;
+
+    const responseTLV = tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M2, TLVValues.SALT, salt, TLVValues.PUBLIC_KEY, srpB);
+    response.writeHead(200, {"Content-Type": "application/pairing+tlv8"});
+    response.end(flags ? Buffer.concat([responseTLV, tlv.encode(TLVValues.FLAGS, flags)]) : responseTLV);
+
+    connection._pairSetupState = PairingStates.M2;
+    this.emit(HAPServerEventTypes.PAIR_SETUP_STARTED, this._setupCodeIdentity, connection);
+  }
+
+  private _getSetupCodeForPairing(connection: HAPConnection) {
+    if (!this.listenerCount(HAPServerEventTypes.GENERATE_SETUP_CODE)) {
+      throw new Error('No setup code handler');
+    }
+
+    return new Promise<string>((resolve, reject) => {
+      this.emit(HAPServerEventTypes.GENERATE_SETUP_CODE, once((err: Error | null | undefined, setupCode: string) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(setupCode);
+        }
+      }), connection);
     });
   }
 
@@ -486,6 +586,7 @@ export class HAPServer extends EventEmitter {
     // pull the SRP server we created in stepOne out of the current session
     const srpServer = connection.srpServer!;
     srpServer.setA(A);
+
     try {
       srpServer.checkM1(M1);
     } catch (err) {
@@ -494,14 +595,31 @@ export class HAPServer extends EventEmitter {
       debug("[%s] Error while checking pincode: %s", this.accessoryInfo.username, err.message);
       response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
       response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M4, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
-      connection._pairSetupState = undefined;
+      this._handlePairFinished([PairingStates.M4, TLVErrorCode.AUTHENTICATION], null, connection);
       return;
     }
+  
     // "M2 is the proof that the server actually knows your password."
     const M2 = srpServer.computeM2();
     response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
     response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M4, TLVValues.PASSWORD_PROOF, M2));
     connection._pairSetupState = PairingStates.M4;
+
+    if (connection._pairSetupFlags!.transient) {
+      this._handlePairFinished(null, null, connection);
+
+      // For transient pair setup we should enable session encryption now
+      const sharedSec = srpServer.computeK();
+      const enc = connection.encryption = new HAPEncryption(Buffer.alloc(0), Buffer.alloc(0), Buffer.alloc(0), sharedSec, Buffer.alloc(0));
+
+      const encSalt = Buffer.from("SplitSetupSalt");
+      const infoRead = Buffer.from("ControllerEncrypt-Control");
+      const infoWrite = Buffer.from("AccessoryEncrypt-Control");
+      enc.controllerToAccessoryKey = hapCrypto.HKDF("sha512", encSalt, sharedSec, infoRead, 32);
+      enc.accessoryToControllerKey = hapCrypto.HKDF("sha512", encSalt, sharedSec, infoWrite, 32);
+
+      // TODO: how should the session be authenticated? We don't have any identification here.
+    }
   }
 
   private handlePairSetupM5(connection: HAPConnection, request: IncomingMessage, response: ServerResponse, tlvData: Record<number, Buffer>): void {
@@ -524,8 +642,8 @@ export class HAPServer extends EventEmitter {
     } catch (error) {
       debug("[%s] Error while decrypting and verifying M5 subTlv: %s", this.accessoryInfo.username);
       response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M4, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
-      connection._pairSetupState = undefined;
+      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M6, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
+      this._handlePairFinished([PairingStates.M6, TLVErrorCode.AUTHENTICATION], null, connection);
       return;
     }
     // decode the client payload and pass it on to the next step
@@ -548,7 +666,7 @@ export class HAPServer extends EventEmitter {
       debug("[%s] Invalid signature", this.accessoryInfo.username);
       response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
       response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M6, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
-      connection._pairSetupState = undefined;
+      this._handlePairFinished([PairingStates.M6, TLVErrorCode.AUTHENTICATION], null, connection);
       return;
     }
     this.handlePairSetupM5_3(connection, request, response, clientUsername, clientLTPK, hkdfEncKey);
@@ -576,14 +694,24 @@ export class HAPServer extends EventEmitter {
         debug("[%s] Error adding pairing info: %s", this.accessoryInfo.username, err.message);
         response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
         response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M6, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
-        connection._pairSetupState = undefined;
+        this._handlePairFinished(err, null, connection);
         return;
       }
+
       // send final pairing response to client
       response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
       response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M6, TLVValues.ENCRYPTED_DATA, Buffer.concat([encrypted.ciphertext, encrypted.authTag])));
-      connection._pairSetupState = undefined;
+      this._handlePairFinished(null, clientUsername.toString(), connection);
     }));
+  }
+
+  // It's possible for both err and clientUsername to be null (transient pair setup)
+  private _handlePairFinished(err: Error | [number, number] | null, clientUsername: string | null, connection: HAPConnection) {
+    this._pairing = null;
+    connection._pairSetupState = undefined;
+    connection._pairSetupFlags = undefined;
+
+    this.emit(HAPServerEventTypes.PAIR_SETUP_FINISHED, err && err instanceof Array ? new Error(`${err[1]}`) : err, clientUsername, connection);
   }
 
   private handlePairVerify(connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse): void {

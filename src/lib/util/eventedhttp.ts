@@ -24,7 +24,6 @@ export type EventName = string; // "<aid>.<iid>"
  */
 
 export class HAPEncryption {
-
   readonly clientPublicKey: Buffer;
   readonly secretKey: Buffer;
   readonly publicKey: Buffer;
@@ -33,8 +32,8 @@ export class HAPEncryption {
 
   accessoryToControllerCount: number = 0;
   controllerToAccessoryCount: number = 0;
-  accessoryToControllerKey: Buffer;
-  controllerToAccessoryKey: Buffer;
+  accessoryToControllerKey = Buffer.alloc(0);
+  controllerToAccessoryKey = Buffer.alloc(0);
 
   incompleteFrame?: Buffer;
 
@@ -44,9 +43,6 @@ export class HAPEncryption {
     this.publicKey = publicKey;
     this.sharedSecret = sharedSecret;
     this.hkdfPairEncryptionKey = hkdfPairEncryptionKey;
-
-    this.accessoryToControllerKey = Buffer.alloc(0);
-    this.controllerToAccessoryKey = Buffer.alloc(0);
   }
 }
 
@@ -293,7 +289,6 @@ export declare interface HAPConnection {
  * @private
  */
 export class HAPConnection extends EventEmitter {
-
   readonly server: EventedHTTPServer;
 
   readonly sessionID: SessionIdentifier; // uuid unique to every HAP connection
@@ -318,6 +313,12 @@ export class HAPConnection extends EventEmitter {
   encryption?: HAPEncryption; // created in handlePairVerifyStepOne
   srpServer?: SrpServer;
   _pairSetupState?: number; // TODO ensure those two states are always correctly reset?
+  _pairSetupFlags?: {
+    raw: Buffer | undefined;
+    flags: number | null;
+    transient: boolean;
+    split: boolean;
+  };
   _pairVerifyState?: number;
 
   private registeredEvents: Set<EventName> = new Set();
@@ -356,6 +357,10 @@ export class HAPConnection extends EventEmitter {
     this.internalHttpServer.on('error', this.onHttpServerError.bind(this));
     // close event is added later on the "connect" event as possible listen retries would throw unnecessary close events
     this.internalHttpServer.listen(0, this.internalHttpServerAddress = getOSLoopbackAddressIfAvailable());
+  }
+
+  get connected() {
+    return this.state !== HAPConnectionState.CONNECTING && this.state !== HAPConnectionState.CLOSED;
   }
 
   /**

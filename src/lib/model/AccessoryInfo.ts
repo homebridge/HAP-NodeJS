@@ -35,7 +35,7 @@ export class AccessoryInfo {
   displayName: string;
   model: string; // this property is currently not saved to disk
   category: Categories;
-  pincode: string;
+  pincode: string | {salt: Buffer; verifier: Buffer} | null;
   signSk: Buffer;
   signPk: Buffer;
   pairedClients: Record<HAPUsername, PairingInformation>;
@@ -209,7 +209,9 @@ export class AccessoryInfo {
     const saved = {
       displayName: this.displayName,
       category: this.category,
-      pincode: this.pincode,
+      pincode: typeof this.pincode === 'object' && this.pincode ?
+        {salt: this.pincode.salt.toString('hex'), verifier: this.pincode.verifier.toString('hex')} :
+        this.pincode,
       signSk: this.signSk.toString('hex'),
       signPk: this.signPk.toString('hex'),
       pairedClients: {},
@@ -265,7 +267,9 @@ export class AccessoryInfo {
       const info = new AccessoryInfo(username);
       info.displayName = saved.displayName || "";
       info.category = saved.category || "";
-      info.pincode = saved.pincode || "";
+      info.pincode = saved.pincode && typeof saved.pincode === 'object' && 'verifier' in saved.pincode && 'salt' in saved.pincode ?
+        {salt: Buffer.from(saved.pincode.salt, 'hex'), verifier: Buffer.from(saved.pincode.verifier, 'hex')} :
+        saved.pincode || "";
       info.signSk = Buffer.from(saved.signSk || '', 'hex');
       info.signPk = Buffer.from(saved.signPk || '', 'hex');
 

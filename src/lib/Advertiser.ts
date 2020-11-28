@@ -10,9 +10,9 @@ import ciao, {
 import { InterfaceName, IPAddress } from "@homebridge/ciao/lib/NetworkManager";
 import assert from "assert";
 import bonjour, { BonjourHAP, BonjourHAPService, MulticastOptions } from "bonjour-hap";
-import crypto from 'crypto';
 import { EventEmitter } from "events";
 import { AccessoryInfo } from './model/AccessoryInfo';
+import { generateSetupHash } from "./util/setupid";
 
 /**
  * This enum lists all bitmasks for all known status flags.
@@ -101,7 +101,7 @@ export class CiaoAdvertiser extends EventEmitter implements Advertiser {
   constructor(accessoryInfo: AccessoryInfo, responderOptions?: MDNSServerOptions, serviceOptions?: ServiceNetworkOptions) {
     super();
     this.accessoryInfo = accessoryInfo;
-    this.setupHash = CiaoAdvertiser.computeSetupHash(accessoryInfo);
+    this.setupHash = generateSetupHash(this.accessoryInfo.username, this.accessoryInfo.setupID).toString('base64');
 
     this.responder = ciao.getResponder({
       ...responderOptions
@@ -157,12 +157,6 @@ export class CiaoAdvertiser extends EventEmitter implements Advertiser {
     };
   }
 
-  static computeSetupHash(accessoryInfo: AccessoryInfo): string {
-    const hash = crypto.createHash('sha512');
-    hash.update(accessoryInfo.setupID + accessoryInfo.username.toUpperCase());
-    return hash.digest().slice(0, 4).toString('base64');
-  }
-
   public static ff(...flags: PairingFeatureFlag[]): number {
     let value = 0;
     flags.forEach(flag => value |= flag);
@@ -195,7 +189,7 @@ export class BonjourHAPAdvertiser extends EventEmitter implements Advertiser {
   constructor(accessoryInfo: AccessoryInfo, responderOptions?: MulticastOptions, serviceOptions?: ServiceNetworkOptions) {
     super();
     this.accessoryInfo = accessoryInfo;
-    this.setupHash = CiaoAdvertiser.computeSetupHash(accessoryInfo);
+    this.setupHash = generateSetupHash(this.accessoryInfo.username, this.accessoryInfo.setupID).toString('base64');
     this.serviceOptions = serviceOptions;
 
     this.bonjour = bonjour(responderOptions);

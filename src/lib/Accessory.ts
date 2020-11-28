@@ -28,6 +28,7 @@ import {
   Nullable,
   VoidCallback,
   WithUUID,
+  NodeCallback,
 } from '../types';
 import { Advertiser, AdvertiserEvent, BonjourHAPAdvertiser, CiaoAdvertiser } from './Advertiser';
 // noinspection JSDeprecatedSymbols
@@ -60,11 +61,12 @@ import {
   IdentifyCallback,
   ListPairingsCallback,
   PairCallback,
+  PairIdentity,
   ReadCharacteristicsCallback,
   RemovePairingCallback,
   ResourceRequestCallback,
   TLVErrorCode,
-  WriteCharacteristicsCallback
+  WriteCharacteristicsCallback,
 } from './HAPServer';
 import { AccessoryInfo, PermissionTypes } from './model/AccessoryInfo';
 import { ControllerStorage } from "./model/ControllerStorage";
@@ -75,7 +77,10 @@ import { EventName, HAPConnection, HAPUsername } from "./util/eventedhttp";
 import { formatOutgoingCharacteristicValue } from "./util/request-util";
 import * as uuid from "./util/uuid";
 import { toShortForm } from "./util/uuid";
+import { generateSetupId, generateSetupUri } from './util/setupid';
+import { generateSetupCode } from './util/setupcode';
 import Timeout = NodeJS.Timeout;
+import { Identity } from 'fast-srp-hap';
 
 const debug = createDebug('HAP-NodeJS:Accessory');
 const MAX_ACCESSORIES = 149; // Maximum number of bridged accessories per bridge.
@@ -178,7 +183,9 @@ export type CharacteristicEvents = Record<string, any>;
 
 export interface PublishInfo {
   username: MacAddress;
-  pincode: HAPPincode;
+  pincode?: HAPPincode
+    | ((callback: NodeCallback<string>, connection: HAPConnection) => void)
+    | {salt: Buffer; verifier: Buffer};
   /**
    * Specify the category for the HomeKit accessory.
    * The category is used only in the mdns advertisement and specifies the devices type
@@ -293,6 +300,8 @@ const enum WriteRequestState {
   TIMED_WRITE_REJECTED
 }
 
+export type SetupCode = Identity & {setupcode: string | null; setupuri: string | null};
+
 // noinspection JSUnusedGlobalSymbols
 /**
  * @deprecated Use AccessoryEventTypes instead
@@ -310,6 +319,8 @@ export const enum AccessoryEventTypes {
    */
   IDENTIFY = "identify",
   LISTENING = "listening",
+  PAIR_SETUP_STARTED = 'pair-setup-started',
+  PAIR_SETUP_FINISHED = 'pair-setup-finished',
   SERVICE_CONFIGURATION_CHANGE = "service-configurationChange",
   /**
    * Emitted after a change in the value of one of the provided Service's Characteristics.
@@ -328,6 +339,9 @@ export declare interface Accessory {
   on(event: "service-configurationChange", listener: (change: ServiceConfigurationChange) => void): this;
   on(event: "service-characteristic-change", listener: (change: AccessoryCharacteristicChange) => void): this;
 
+  on(event: "pair-setup-started", listener: (setupcode: SetupCode, connection: HAPConnection) => void): this;
+  on(event: "pair-setup-finished", listener: (err: Error | null, clientUsername: string | null, connection: HAPConnection) => void): this;
+
   on(event: "paired", listener: () => void): this;
   on(event: "unpaired", listener: () => void): this;
 
@@ -339,6 +353,9 @@ export declare interface Accessory {
 
   emit(event: "service-configurationChange", change: ServiceConfigurationChange): boolean;
   emit(event: "service-characteristic-change", change: AccessoryCharacteristicChange): boolean;
+
+  emit(event: "pair-setup-started", setupcode: SetupCode, connection: HAPConnection): boolean;
+  emit(event: "pair-setup-finished", err: Error | null, clientUsername: string | null, connection: HAPConnection): boolean;
 
   emit(event: "paired"): boolean;
   emit(event: "unpaired"): boolean;
@@ -880,39 +897,6 @@ export class Accessory extends EventEmitter {
     });
   }
 
-  setupURI(): string {
-    if (this._setupURI) {
-      return this._setupURI;
-    }
-
-    const buffer = Buffer.alloc(8);
-    const setupCode = this._accessoryInfo && parseInt(this._accessoryInfo.pincode.replace(/-/g, ''), 10);
-
-    let value_low = setupCode!;
-    const value_high = this._accessoryInfo && this._accessoryInfo.category >> 1;
-
-    value_low |= 1 << 28; // Supports IP;
-
-    buffer.writeUInt32BE(value_low, 4);
-
-    if (this._accessoryInfo && this._accessoryInfo.category & 1) {
-      buffer[4] = buffer[4] | 1 << 7;
-    }
-
-    buffer.writeUInt32BE(value_high!, 0);
-
-    let encodedPayload = (buffer.readUInt32BE(4) + (buffer.readUInt32BE(0) * Math.pow(2, 32))).toString(36).toUpperCase();
-
-    if (encodedPayload.length != 9) {
-      for (let i = 0; i <= 9 - encodedPayload.length; i++) {
-        encodedPayload = "0" + encodedPayload;
-      }
-    }
-
-    this._setupURI = "X-HM://" + encodedPayload + this._setupID;
-    return this._setupURI;
-  }
-
   /**
    * This method is called right before the accessory is published. It should be used to check for common
    * mistakes in Accessory structured, which may lead to HomeKit rejecting the accessory when pairing.
@@ -1080,8 +1064,9 @@ export class Accessory extends EventEmitter {
    * @param allowInsecureRequest - Will allow unencrypted and unauthenticated access to the http server
    * @param {string} info.username - The "username" (formatted as a MAC address - like "CC:22:3D:E3:CE:F6") of
    *                                this Accessory. Must be globally unique from all Accessories on your local network.
-   * @param {string} info.pincode - The 8-digit pincode for clients to use when pairing this Accessory. Must be formatted
-   *                               as a string like "031-45-154".
+   * @param {string|function} info.pincode - The 8-digit pincode for clients to use when pairing this Accessory. Must
+   *                                be formatted as a string like "031-45-154". You can also provide a function that
+   *                                generates a random setup code and presents it to the user.
    * @param {string} info.category - One of the values of the Accessory.Category enum, like Accessory.Category.SWITCH.
    *                                This is a hint to iOS clients about what "type" of Accessory this represents, so
    *                                that for instance an appropriate icon can be drawn for the user while adding a
@@ -1132,7 +1117,7 @@ export class Accessory extends EventEmitter {
     if (info.setupID) {
       this._setupID = info.setupID;
     } else if (this._accessoryInfo.setupID === undefined || this._accessoryInfo.setupID === "") {
-      this._setupID = Accessory._generateSetupID();
+      this._setupID = generateSetupId();
     } else {
       this._setupID = this._accessoryInfo.setupID;
     }
@@ -1143,7 +1128,7 @@ export class Accessory extends EventEmitter {
     this._accessoryInfo.displayName = this.displayName;
     this._accessoryInfo.model = this.getService(Service.AccessoryInformation)!.getCharacteristic(Characteristic.Model).value as string;
     this._accessoryInfo.category = info.category || Categories.OTHER;
-    this._accessoryInfo.pincode = info.pincode;
+    this._accessoryInfo.pincode = info.pincode && typeof info.pincode !== 'function' ? info.pincode : null;
     this._accessoryInfo.save();
 
     // create our IdentifierCache so we can provide clients with stable aid/iid's
@@ -1218,6 +1203,8 @@ export class Accessory extends EventEmitter {
     this._server.allowInsecureRequest = !!allowInsecureRequest;
     this._server.on(HAPServerEventTypes.LISTENING, this.onListening.bind(this));
     this._server.on(HAPServerEventTypes.IDENTIFY, this.identificationRequest.bind(this, false));
+    this._server.on(HAPServerEventTypes.PAIR_SETUP_STARTED, this._handlePairSetupStarted.bind(this));
+    this._server.on(HAPServerEventTypes.PAIR_SETUP_FINISHED, this._handlePairSetupFinished.bind(this));
     this._server.on(HAPServerEventTypes.PAIR, this.handleInitialPairSetupFinished.bind(this));
     this._server.on(HAPServerEventTypes.ADD_PAIRING, this.handleAddPairing.bind(this));
     this._server.on(HAPServerEventTypes.REMOVE_PAIRING, this.handleRemovePairing.bind(this));
@@ -1227,6 +1214,12 @@ export class Accessory extends EventEmitter {
     this._server.on(HAPServerEventTypes.SET_CHARACTERISTICS, this.handleSetCharacteristics.bind(this));
     this._server.on(HAPServerEventTypes.CONNECTION_CLOSED, this.handleHAPConnectionClosed.bind(this));
     this._server.on(HAPServerEventTypes.REQUEST_RESOURCE, this.handleResource.bind(this));
+
+    if (typeof info.pincode === 'function') {
+      this._server.on(HAPServerEventTypes.GENERATE_SETUP_CODE, info.pincode);
+    } else if (typeof info.pincode !== 'string' && typeof info.pincode !== 'object') {
+      this._server.on(HAPServerEventTypes.GENERATE_SETUP_CODE, generateSetupCode);
+    }
 
     this._server.listen(info.port, parsed.serverAddress);
   }
@@ -1292,6 +1285,23 @@ export class Accessory extends EventEmitter {
     // noinspection JSIgnoredPromiseFromCall
     this._advertiser!.startAdvertising();
     this.emit(AccessoryEventTypes.LISTENING, port, hostname);
+  }
+
+  /** Called when starting the pair setup process after a setup code has been generated */
+  private _handlePairSetupStarted(i: PairIdentity, connection: HAPConnection) {
+    if (this.listenerCount(AccessoryEventTypes.PAIR_SETUP_STARTED)) {
+      if (!this._setupID) this._setupID = generateSetupId();
+      const setupuri = i.setupcode ? generateSetupUri(i.setupcode, this._setupID, this.category) : null;
+      this.emit(AccessoryEventTypes.PAIR_SETUP_STARTED, {...i, setupuri}, connection);
+    } else if (!this._accessoryInfo!.pincode) {
+      // If we're using random setup codes and there's nothing listening for the setup code print it to the console
+      console.log('[%s] Received pair request from %s', this.displayName, connection.remoteAddress, i.setupcode);
+    }
+  }
+
+  /** Called when the pair setup process has finished with the error or paired client username */
+  private _handlePairSetupFinished(err: Nullable<Error>, clientUsername: Nullable<string>, connection: HAPConnection) {
+    this.emit(AccessoryEventTypes.PAIR_SETUP_FINISHED, err, clientUsername, connection);
   }
 
   private handleInitialPairSetupFinished(username: string, publicKey: Buffer, callback: PairCallback): void {
@@ -1915,19 +1925,6 @@ export class Accessory extends EventEmitter {
           this.identificationRequest(paired, callback);
         }
       });
-  }
-
-  private static _generateSetupID(): string {
-    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const max = chars.length;
-    let setupID = '';
-
-    for (let i = 0; i < 4; i++) {
-      const index = Math.floor(Math.random() * max)
-      setupID += chars.charAt(index);
-    }
-
-    return setupID;
   }
 
   // serialization and deserialization functions, mainly designed for homebridge to create a json copy to store on disk
