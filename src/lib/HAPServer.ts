@@ -300,6 +300,10 @@ export class HAPServer extends EventEmitter {
 
   public stop(): void {
     this.httpServer.stop();
+  }
+
+  public destroy(): void {
+    this.stop();
     this.removeAllListeners();
   }
 

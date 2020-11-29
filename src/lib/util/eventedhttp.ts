@@ -165,7 +165,10 @@ export class EventedHTTPServer extends EventEmitter {
     for (const connection of this.connections) {
       connection.close();
     }
+  }
 
+  public destroy(): void {
+    this.stop();
     this.removeAllListeners();
   }
 
@@ -640,8 +643,7 @@ export class HAPConnection extends EventEmitter {
     }
     this.internalHttpServer.close();
 
-    this.emit(HAPConnectionEvent.CLOSED);
-
+    this.emit(HAPConnectionEvent.CLOSED); // sending final closed event
     this.removeAllListeners(); // cleanup listeners, we are officially dead now
   }
 

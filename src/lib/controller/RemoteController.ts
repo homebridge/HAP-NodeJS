@@ -12,10 +12,10 @@ import {
 import {
     DataSendCloseReason,
     DataStreamConnection,
-    DataStreamConnectionEvents,
+    DataStreamConnectionEvent,
     DataStreamManagement,
     DataStreamProtocolHandler,
-    DataStreamServerEvents,
+    DataStreamServerEvent,
     EventHandler,
     Float32,
     HDSStatus,
@@ -356,40 +356,16 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
     private stateChangeDelegate?: StateChangeDelegate;
 
-    /**
-     * @private
-     */
-    audioSupported: boolean;
-    /**
-     * @private
-     */
-    audioProducerConstructor?: SiriAudioStreamProducerConstructor;
-    /**
-     * @private
-     */
-    audioProducerOptions?: any;
+    private readonly audioSupported: boolean;
+    private readonly audioProducerConstructor?: SiriAudioStreamProducerConstructor;
+    private readonly audioProducerOptions?: any;
 
-    /**
-     * @private
-     */
-    targetControlManagementService?: TargetControlManagement;
-    /**
-     * @private
-     */
-    targetControlService?: TargetControl;
+    private targetControlManagementService?: TargetControlManagement;
+    private targetControlService?: TargetControl;
 
-    /**
-     * @private
-     */
-    siriService?: Siri;
-    /**
-     * @private
-     */
-    audioStreamManagementService?: AudioStreamManagement;
-    /**
-     * @private
-     */
-    dataStreamManagement?: DataStreamManagement;
+    private siriService?: Siri;
+    private audioStreamManagementService?: AudioStreamManagement;
+    private dataStreamManagement?: DataStreamManagement;
 
     private buttons: Record<number, number> = {}; // internal mapping of buttonId to buttonType for supported buttons
     private readonly supportedConfiguration: string;
@@ -402,31 +378,13 @@ export class RemoteController extends EventEmitter implements SerializableContro
     private activeConnection?: HAPConnection; // session which marked this remote as active and listens for events and siri
     private activeConnectionDisconnectListener?: () => void;
 
-    /**
-     * @private
-     */
-    supportedAudioConfiguration: string;
-    /**
-     * @private
-     */
-    selectedAudioConfiguration: AudioCodecConfiguration;
-    /**
-     * @private
-     */
-    selectedAudioConfigurationString: string;
+    private readonly supportedAudioConfiguration: string;
+    private selectedAudioConfiguration: AudioCodecConfiguration;
+    private selectedAudioConfigurationString: string;
 
-    /**
-     * @private
-     */
-    dataStreamConnections: Record<number, DataStreamConnection> = {}; // maps targetIdentifiers to active data stream connections
-    /**
-     * @private
-     */
-    activeAudioSession?: SiriAudioSession;
-    /**
-     * @private
-     */
-    nextAudioSession?: SiriAudioSession;
+    private dataStreamConnections: Record<number, DataStreamConnection> = {}; // maps targetIdentifiers to active data stream connections
+    private activeAudioSession?: SiriAudioSession;
+    private nextAudioSession?: SiriAudioSession;
 
     /**
      * @private
@@ -505,14 +463,14 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
         setTimeout(() => this.emit(RemoteControllerEvents.ACTIVE_IDENTIFIER_CHANGE, activeIdentifier), 0);
         this.setInactive();
-    };
+    }
 
     /**
      * @returns if the current target is active, meaning the active device is listening for button events or audio sessions
      */
     public isActive(): boolean {
         return !!this.activeConnection;
-    };
+    }
 
     /**
      * Checks if the supplied targetIdentifier is configured.
@@ -521,7 +479,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
      */
     public isConfigured(targetIdentifier: number): boolean {
         return this.targetConfigurations[targetIdentifier] !== undefined;
-    };
+    }
 
     /**
      * Returns the targetIdentifier for a give device name
@@ -537,7 +495,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
             }
         }
         return undefined;
-    };
+    }
 
     /**
      * Sends a button event to press the supplied button.
@@ -546,7 +504,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
      */
     public pushButton(button: ButtonType): void {
         this.sendButtonEvent(button, ButtonState.DOWN);
-    };
+    }
 
     /**
      * Sends a button event that the supplied button was released.
@@ -555,7 +513,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
      */
     public releaseButton(button: ButtonType): void {
         this.sendButtonEvent(button, ButtonState.UP);
-    };
+    }
 
     /**
      * Presses a supplied button for a given time.
@@ -566,7 +524,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
     public pushAndReleaseButton(button: ButtonType, time: number = 200): void {
         this.pushButton(button);
         setTimeout(() => this.releaseButton(button), time);
-    };
+    }
 
     /**
      * This method adds and configures the remote services for a give accessory.
@@ -576,7 +534,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
      */
     addServicesToAccessory(accessory: Accessory): void {
         accessory.configureController(this);
-    };
+    }
 
     // ---------------------------------- CONFIGURATION ----------------------------------
     // override methods if you would like to change anything (but should not be necessary most likely)
@@ -608,7 +566,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
         });
 
         return configuration;
-    };
+    }
 
     protected constructSupportedAudioConfiguration(): SupportedAudioStreamConfiguration {
         // the following parameters are expected from HomeKit for a remote
@@ -622,7 +580,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
                 }
             },
         }
-    };
+    }
 
     // --------------------------------- TARGET CONTROL ----------------------------------
 
@@ -642,19 +600,19 @@ export class RemoteController extends EventEmitter implements SerializableContro
         let handler: (targetConfiguration?: TargetConfiguration) => HAPStatus;
         switch (operation) {
             case Operation.ADD:
-                handler = this.handleAddTarget;
+                handler = this.handleAddTarget.bind(this);
                 break;
             case Operation.UPDATE:
-                handler = this.handleUpdateTarget;
+                handler = this.handleUpdateTarget.bind(this);
                 break;
             case Operation.REMOVE:
-                handler = this.handleRemoveTarget;
+                handler = this.handleRemoveTarget.bind(this);
                 break;
             case Operation.RESET:
-                handler = this.handleResetTargets;
+                handler = this.handleResetTargets.bind(this);
                 break;
             case Operation.LIST:
-                handler = this.handleListTargets;
+                handler = this.handleListTargets.bind(this);
                 break;
             default:
                 callback(HAPStatus.INVALID_VALUE_IN_REQUEST, undefined);
@@ -671,7 +629,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
         } else {
             callback(new Error(status + ""));
         }
-    };
+    }
 
     private handleAddTarget(targetConfiguration?: TargetConfiguration): HAPStatus {
         if (!targetConfiguration) {
@@ -686,7 +644,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
         this.updatedTargetConfiguration(); // set response
         return HAPStatus.SUCCESS;
-    };
+    }
 
     private handleUpdateTarget(targetConfiguration?: TargetConfiguration): HAPStatus {
         if (!targetConfiguration) {
@@ -730,7 +688,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
         this.updatedTargetConfiguration(); // set response
         return HAPStatus.SUCCESS;
-    };
+    }
 
     private handleRemoveTarget(targetConfiguration?: TargetConfiguration): HAPStatus {
         if (!targetConfiguration) {
@@ -762,7 +720,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
         this.updatedTargetConfiguration(); // set response
         return HAPStatus.SUCCESS;
-    };
+    }
 
     private handleResetTargets(targetConfiguration?: TargetConfiguration): HAPStatus {
         if (targetConfiguration) {
@@ -777,7 +735,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
         this.setActiveIdentifier(0); // resetting active identifier (also sets active to false)
 
         return HAPStatus.SUCCESS;
-    };
+    }
 
     private handleListTargets(targetConfiguration?: TargetConfiguration): HAPStatus {
         if (targetConfiguration) {
@@ -787,7 +745,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
         // this.targetConfigurationsString is updated after each change, so we basically don't need to do anything here
         debug("Returning " + Object.keys(this.targetConfigurations).length + " target configurations");
         return HAPStatus.SUCCESS;
-    };
+    }
 
     private handleActiveWrite(value: CharacteristicValue, callback: CharacteristicSetCallback, connection: HAPConnection): void {
         if (this.activeIdentifier === 0) {
@@ -814,7 +772,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
         callback();
 
         this.emit(RemoteControllerEvents.ACTIVE_CHANGE, value as boolean);
-    };
+    }
 
     private setInactive(): void {
         if (this.activeConnection === undefined) {
@@ -829,7 +787,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
         debug("Remote was set to INACTIVE");
 
         setTimeout(() => this.emit(RemoteControllerEvents.ACTIVE_CHANGE, false), 0);
-    };
+    }
 
     private handleActiveSessionDisconnected(connection: HAPConnection): void {
         if (connection !== this.activeConnection) {
@@ -838,7 +796,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
         debug("Active hap session disconnected!");
         this.setInactive();
-    };
+    }
 
     private sendButtonEvent(button: ButtonType, buttonState: ButtonState) {
         const buttonID = this.buttons[button];
@@ -885,7 +843,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
             buttonIdTlv, buttonStateTlv, timestampTlv, activeIdentifierTlv
         ]).toString('base64');
         this.targetControlService!.getCharacteristic(Characteristic.ButtonEvent)!.sendEventNotification(this.lastButtonEvent);
-    };
+    }
 
     private parseTargetConfigurationTLV(data: Buffer): TargetConfiguration {
         const configTLV = tlv.decode(data);
@@ -929,7 +887,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
             targetCategory: category,
             buttonConfiguration: buttonConfiguration
         };
-    };
+    }
 
     private updatedTargetConfiguration(): void {
         const bufferList = [];
@@ -981,7 +939,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
         this.targetConfigurationsString = Buffer.concat(bufferList).toString('base64');
         this.stateChangeDelegate && this.stateChangeDelegate();
-    };
+    }
 
     private buildTargetControlSupportedConfigurationTLV(configuration: SupportedConfiguration): string {
         const maximumTargets = tlv.encode(
@@ -1009,7 +967,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
         return Buffer.concat(
             [maximumTargets, ticksPerSecond, supportedButtonConfiguration, type]
         ).toString('base64');
-    };
+    }
 
     // --------------------------------- SIRI/DATA STREAM --------------------------------
 
@@ -1019,7 +977,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
         debug("Discovered HDS connection for targetIdentifier %s", targetIdentifier);
 
         connection.addProtocolHandler(Protocols.DATA_SEND, this);
-    };
+    }
 
     private handleSiriAudioStart(): void {
         if (!this.audioSupported) {
@@ -1053,10 +1011,9 @@ export class RemoteController extends EventEmitter implements SerializableContro
             this.nextAudioSession = audioSession;
         }
 
-        // TODO properly remove that
         audioSession.on(SiriAudioSessionEvents.CLOSE, this.handleSiriAudioSessionClosed.bind(this, audioSession));
         audioSession.start();
-    };
+    }
 
     private handleSiriAudioStop(): void {
         if (this.activeAudioSession) {
@@ -1070,7 +1027,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
         }
 
         debug("handleSiriAudioStop called although no audio session was started");
-    };
+    }
 
     private handleDataSendAckEvent(message: Record<any, any>): void { // transfer was successful
         const streamId = message["streamId"];
@@ -1083,7 +1040,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
         } else {
             debug("Received dataSend acknowledgment event for unknown streamId '%s'", streamId);
         }
-    };
+    }
 
     private handleDataSendCloseEvent(message: Record<any, any>): void { // controller indicates he can't handle audio request currently
         const streamId = message["streamId"];
@@ -1096,7 +1053,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
         } else {
             debug("Received dataSend close event for unknown streamId '%s'", streamId);
         }
-    };
+    }
 
     private handleSiriAudioSessionClosed(session: SiriAudioSession): void {
         if (session === this.activeAudioSession) {
@@ -1105,7 +1062,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
         } else if (session === this.nextAudioSession) {
             this.nextAudioSession = undefined;
         }
-    };
+    }
 
     private handleDataStreamConnectionClosed(connection: DataStreamConnection): void {
         for (const targetIdentifier in this.dataStreamConnections) {
@@ -1116,7 +1073,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
                 break;
             }
         }
-    };
+    }
 
     // ------------------------------- AUDIO CONFIGURATION -------------------------------
 
@@ -1149,7 +1106,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
         });
 
         callback();
-    };
+    }
 
     private static buildSupportedAudioConfigurationTLV(configuration: SupportedAudioStreamConfiguration): string {
         const codecConfigurationTLV = RemoteController.buildCodecConfigurationTLV(configuration.audioCodecConfiguration);
@@ -1158,7 +1115,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
             SupportedAudioStreamConfigurationTypes.AUDIO_CODEC_CONFIGURATION, codecConfigurationTLV
         );
         return supportedAudioStreamConfiguration.toString('base64');
-    };
+    }
 
     private static buildSelectedAudioConfigurationTLV(configuration: SelectedAudioStreamConfiguration): string {
         const codecConfigurationTLV = RemoteController.buildCodecConfigurationTLV(configuration.audioCodecConfiguration);
@@ -1167,7 +1124,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
             SelectedAudioInputStreamConfigurationTypes.SELECTED_AUDIO_INPUT_STREAM_CONFIGURATION, codecConfigurationTLV,
         );
         return supportedAudioStreamConfiguration.toString('base64');
-    };
+    }
 
     private static buildCodecConfigurationTLV(codecConfiguration: AudioCodecConfiguration): Buffer {
         const parameters = codecConfiguration.parameters;
@@ -1188,7 +1145,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
             AudioCodecConfigurationTypes.CODEC_TYPE, codecConfiguration.codecType,
             AudioCodecConfigurationTypes.CODEC_PARAMETERS, parametersTLV
         );
-    };
+    }
 
     // -----------------------------------------------------------------------------------
 
@@ -1228,7 +1185,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
             siri: this.siriService,
             audioStreamManagement: this.audioStreamManagementService,
-            dataStreamTransportManagement: this.dataStreamManagement && this.dataStreamManagement.getService()
+            dataStreamTransportManagement: this.dataStreamManagement?.getService()
         };
     }
 
@@ -1289,7 +1246,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
             this.dataStreamManagement!
                 .onEventMessage(Protocols.TARGET_CONTROL, Topics.WHOAMI, this.handleTargetControlWhoAmI.bind(this))
-                .onServerEvent(DataStreamServerEvents.CONNECTION_CLOSED, this.handleDataStreamConnectionClosed.bind(this));
+                .onServerEvent(DataStreamServerEvent.CONNECTION_CLOSED, this.handleDataStreamConnectionClosed.bind(this));
 
             this.eventHandler = { // eventHandlers which gets subscribed to on open connections on whoami
                 [Topics.ACK]: this.handleDataSendAckEvent.bind(this),
@@ -1302,13 +1259,23 @@ export class RemoteController extends EventEmitter implements SerializableContro
      * @private
      */
     handleControllerRemoved(): void {
-        // TODO revise the whole thing: RemoteController is quite complicated
-        //  and is strongly tight to the DataStreamManagement (and thus the DataStreamServer)
-        //  which are currently all not built to be reset.
-        //  I know supporting removal of controllers only on a subset of all controllers is quite whack
-        //  but its the beta :shrug:
-        throw new Error("Removing RemoteController isn't supported yet!");
-        // TODO should we aim to call handleFactoryReset don't trigger state change delegate
+        this.handleFactoryReset();
+
+        this.targetControlManagementService = undefined;
+        this.targetControlService = undefined;
+        this.siriService = undefined;
+        this.audioStreamManagementService = undefined;
+
+        this.eventHandler = undefined;
+        this.requestHandler = undefined;
+
+        this.dataStreamManagement?.destroy();
+        this.dataStreamManagement = undefined;
+
+        // the call to dataStreamManagement.destroy will close any open data stream connection
+        // which will result in a call to this.handleDataStreamConnectionClosed, cleaning up this.dataStreamConnections.
+        // It will also result in a call to SiriAudioSession.handleDataStreamConnectionClosed (if there are any open session)
+        // which again results in a call to this.handleSiriAudioSessionClosed,cleaning up this.activeAudioSession and this.nextAudioSession.
     }
 
     /**
@@ -1317,6 +1284,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
     handleFactoryReset(): void {
         debug("Accessory was unpaired. Resetting targets...");
         this.handleResetTargets(undefined);
+        this.lastButtonEvent = "";
     }
 
     /**
@@ -1395,7 +1363,7 @@ export class SiriAudioSession extends EventEmitter {
 
         this.producer = new producerConstructor(this.handleSiriAudioFrame.bind(this), this.handleProducerError.bind(this), producerOptions);
 
-        this.connection.on(DataStreamConnectionEvents.CLOSED, this.closeListener = this.handleDataStreamConnectionClosed.bind(this));
+        this.connection.on(DataStreamConnectionEvent.CLOSED, this.closeListener = this.handleDataStreamConnectionClosed.bind(this));
     }
 
     /**
@@ -1538,7 +1506,7 @@ export class SiriAudioSession extends EventEmitter {
                 break; // popSome() returns empty list if endOfStream=true
             }
         }
-    };
+    }
 
     private handleProducerError(error: DataSendCloseReason): void { // called from audio producer
         if (this.state >= SiriAudioSessionState.CLOSING) {
@@ -1549,7 +1517,7 @@ export class SiriAudioSession extends EventEmitter {
         if (this.state === SiriAudioSessionState.SENDING) { // if state is less than sending dataSend isn't open (yet)
             this.sendDataSendCloseEvent(error); // cancel submission
         }
-    };
+    }
 
     handleDataSendAckEvent(endOfStream: boolean): void { // transfer was successful
         assert.strictEqual(endOfStream, true);
@@ -1557,7 +1525,7 @@ export class SiriAudioSession extends EventEmitter {
         debug("Received acknowledgment for siri audio stream with streamId %s, closing it now", this.streamId);
 
         this.sendDataSendCloseEvent(DataSendCloseReason.NORMAL);
-    };
+    }
 
     handleDataSendCloseEvent(reason: DataSendCloseReason): void { // controller indicates he can't handle audio request currently
         debug("Received close event from controller with reason %s for stream with streamId %s", DataSendCloseReason[reason], this.streamId);
@@ -1566,7 +1534,7 @@ export class SiriAudioSession extends EventEmitter {
         }
 
         this.closed();
-    };
+    }
 
     private sendDataSendCloseEvent(reason: DataSendCloseReason): void {
         assert(this.state >= SiriAudioSessionState.SENDING, "state was less than SENDING");
@@ -1578,7 +1546,7 @@ export class SiriAudioSession extends EventEmitter {
         });
 
         this.closed();
-    };
+    }
 
     private handleDataStreamConnectionClosed(): void {
         debug("Closing audio session with streamId %d", this.streamId);
@@ -1588,7 +1556,7 @@ export class SiriAudioSession extends EventEmitter {
         }
 
         this.closed();
-    };
+    }
 
     private closed(): void {
         const lastState = this.state;
@@ -1596,9 +1564,10 @@ export class SiriAudioSession extends EventEmitter {
 
         if (lastState !== SiriAudioSessionState.CLOSED) {
             this.emit(SiriAudioSessionEvents.CLOSE);
-            this.connection.removeListener(DataStreamConnectionEvents.CLOSED, this.closeListener);
+            this.connection.removeListener(DataStreamConnectionEvent.CLOSED, this.closeListener);
         }
-    };
+        this.removeAllListeners();
+    }
 
     private popSome() { // tries to return 5 elements from the queue, if endOfStream=true also less than 5
         if (this.audioFrameQueue.length < 5 && !this.endOfStream) {

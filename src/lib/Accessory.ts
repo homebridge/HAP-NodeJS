@@ -469,7 +469,7 @@ export class Accessory extends EventEmitter {
         this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, { service: service });
       }
 
-      service.removeAllListeners(); // TODO this should probably also call removeAllListeners on every characteristic? Shouldn't matter right, cause reference is removed?
+      service.removeAllListeners();
     }
   }
 
@@ -588,7 +588,7 @@ export class Accessory extends EventEmitter {
     if (!foundMatchAccessory)
       throw new Error("Cannot find the bridged Accessory to remove.");
 
-    accessory.removeAllListeners(); // TODO remove all listeners from services and characteristics as well
+    accessory.removeAllListeners();
 
     if(!deferUpdate) {
       this.enqueueConfigurationUpdate();
@@ -787,10 +787,12 @@ export class Accessory extends EventEmitter {
         throw new Error("[" + this.displayName + "] tried removing a controller with the id/type '" + id + "' though provided controller isn't the same which is registered!");
       }
 
-      controller.handleControllerRemoved();
       if (isSerializableController(controller)) {
+        // this will reset the state change delegate before we call handleControllerRemoved()
         this.controllerStorage.untrackController(controller);
       }
+
+      controller.handleControllerRemoved();
 
       delete this.controllers[id];
 
@@ -1206,12 +1208,12 @@ export class Accessory extends EventEmitter {
 
   public unpublish(): void {
     if (this._server) {
-      this._server.stop();
+      this._server.destroy();
       this._server = undefined;
     }
     if (this._advertiser) {
       // noinspection JSIgnoredPromiseFromCall
-      this._advertiser.shutdown();
+      this._advertiser.destroy();
       this._advertiser = undefined;
     }
   }

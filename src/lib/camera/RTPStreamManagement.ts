@@ -547,6 +547,12 @@ export class RTPStreamManagement {
     // on a factory reset the assumption is that all connections were already terminated and thus "handleStopStream" was already called
   }
 
+  public destroy() {
+    if (this.activeConnection) {
+      this._handleStopStream();
+    }
+  }
+
   private constructService(id: number): CameraRTPStreamManagement {
     const managementService = new Service.CameraRTPStreamManagement('', id.toString());
 
@@ -584,9 +590,7 @@ export class RTPStreamManagement {
 
   private handleSessionClosed(): void { // called when the streaming was ended or aborted and needs to be cleaned up
     this.selectedConfiguration = RTPStreamManagement.initialSelectedStreamConfiguration();
-    this.setupEndpointsResponse = tlv.encode(
-        SetupEndpointsResponseTypes.STATUS, SetupEndpointsStatus.ERROR,
-    ).toString("base64");
+    this.setupEndpointsResponse = RTPStreamManagement.initialSetupEndpointsResponse();
 
     if (this.activeConnectionClosedListener && this.activeConnection) {
       this.activeConnection.removeListener(HAPConnectionEvent.CLOSED, this.activeConnectionClosedListener);

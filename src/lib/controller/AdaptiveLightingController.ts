@@ -472,7 +472,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
    * This is the case when the user manually changes the value of Hue, Saturation or ColorTemperature characteristics
    * (or if any of those values is changed by physical interaction with the lightbulb).
    */
-  public disableAdaptiveLighting(triggerStateChange: boolean = true) {
+  public disableAdaptiveLighting() {
     if (this.updateTimeout) {
       clearTimeout(this.updateTimeout);
       this.updateTimeout = undefined;
@@ -491,9 +491,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
 
       this.activeTransition = undefined;
 
-      if (triggerStateChange) {
-        this.stateChangeDelegate && this.stateChangeDelegate();
-      }
+      this.stateChangeDelegate && this.stateChangeDelegate();
     }
 
     this.colorTemperatureCharacteristic = undefined;
@@ -626,11 +624,11 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     }
   }
 
-  private handleAdaptiveLightingDisabled(calledFromResetHandler: boolean = false): void {
+  private handleAdaptiveLightingDisabled(): void {
     if (this.mode === AdaptiveLightingControllerMode.MANUAL && this.activeTransition) { // only emit the event if a transition is actually enabled
       this.emit(AdaptiveLightingControllerEvents.DISABLED);
     }
-    this.disableAdaptiveLighting(!calledFromResetHandler);
+    this.disableAdaptiveLighting();
   }
 
   private handleAdjustmentFactorChanged(change: CharacteristicChange): void {
@@ -903,11 +901,15 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
    * @private
    */
   handleControllerRemoved(): void {
-    this.handleAdaptiveLightingDisabled(true);
+    this.handleFactoryReset();
 
     this.lightbulb.removeCharacteristic(this.supportedTransitionConfiguration!);
     this.lightbulb.removeCharacteristic(this.transitionControl!);
     this.lightbulb.removeCharacteristic(this.activeTransitionCount!);
+
+    this.supportedTransitionConfiguration = undefined;
+    this.transitionControl = undefined;
+    this.activeTransitionCount = undefined;
 
     this.removeAllListeners();
   }

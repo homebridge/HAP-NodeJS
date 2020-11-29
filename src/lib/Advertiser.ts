@@ -90,12 +90,8 @@ export class Advertiser extends EventEmitter {
     this.advertisedService!.updateTxt(this.createTxt());
   }
 
-  public destroyAdvertising(): Promise<void> {
-    return this.advertisedService!.destroy();
-  }
-
-  public async shutdown(): Promise<void> {
-    await this.destroyAdvertising(); // would also be done by the shutdown method below
+  public async destroy(): Promise<void> {
+    await this.advertisedService!.destroy();
     await this.responder.shutdown();
     this.removeAllListeners();
   }

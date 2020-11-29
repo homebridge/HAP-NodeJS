@@ -53,13 +53,17 @@ export class DoorbellController extends CameraController { // TODO optional name
         return false;
     }
 
+    handleControllerRemoved() {
+        super.handleControllerRemoved();
+
+        this.doorbellService = undefined;
+    }
+
     configureServices(): void {
         super.configureServices();
 
-        this.doorbellService!.getCharacteristic(Characteristic.ProgrammableSwitchEvent)!
-            .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-                callback(null, null); // a value of null represent nothing is pressed
-            });
+        this.doorbellService!.getCharacteristic(Characteristic.ProgrammableSwitchEvent)
+          .onGet(() => null); // a value of null represent nothing is pressed
     }
 
 }

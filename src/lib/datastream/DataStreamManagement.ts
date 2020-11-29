@@ -8,7 +8,7 @@ import * as tlv from '../util/tlv';
 import {
     DataStreamConnection,
     DataStreamServer,
-    DataStreamServerEvents,
+    DataStreamServerEvent,
     GlobalEventHandler,
     GlobalRequestHandler
 } from "./DataStreamServer";
@@ -72,6 +72,14 @@ export class DataStreamManagement {
 
         this.dataStreamTransportManagementService = service || this.constructService();
         this.setupServiceHandlers();
+    }
+
+    public destroy(): void {
+        this.dataStreamServer.destroy(); // removes ALL listeners
+        this.dataStreamTransportManagementService.getCharacteristic(Characteristic.SetupDataStreamTransport)
+          .removeOnGet()
+          .removeAllListeners(CharacteristicEventTypes.SET);
+        this.lastSetupDataStreamTransportResponse = "";
     }
 
     /**
@@ -139,7 +147,7 @@ export class DataStreamManagement {
      * @param event - the event to register for
      * @param listener - the event handler
      */
-    onServerEvent(event: DataStreamServerEvents, listener: (connection: DataStreamConnection) => void): this {
+    onServerEvent(event: DataStreamServerEvent, listener: (connection: DataStreamConnection) => void): this {
         // @ts-expect-error
         this.dataStreamServer.on(event, listener);
         return this;
@@ -161,7 +169,12 @@ export class DataStreamManagement {
                 return;
             }
 
-            this.dataStreamServer.prepareSession(connection, controllerKeySalt, preparedSession => {
+            this.dataStreamServer.prepareSession(connection, controllerKeySalt, (error, preparedSession) => {
+                if (error || !preparedSession) {
+                    callback(error ?? new Error("PreparedSession was undefined!"));
+                    return;
+                }
+
                 const listeningPort = tlv.encode(TransportSessionConfiguration.TCP_LISTENING_PORT, tlv.writeUInt16(preparedSession.port!));
 
                 let response: Buffer = Buffer.concat([
@@ -204,19 +217,17 @@ export class DataStreamManagement {
     }
 
     private setupServiceHandlers() {
-        this.dataStreamTransportManagementService.getCharacteristic(Characteristic.SetupDataStreamTransport)!
-            .on(CharacteristicEventTypes.GET, callback => {
-                callback(null, this.lastSetupDataStreamTransportResponse);
-            })
-            .on(CharacteristicEventTypes.SET, (value, callback, context, connection) => {
-                if (!connection) {
-                    debug("Set event handler for SetupDataStreamTransport cannot be called from plugin! Connection undefined!");
-                    callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
-                    return;
-                }
-                this.handleSetupDataStreamTransportWrite(value, callback, connection);
-            })
-            .updateValue(this.lastSetupDataStreamTransportResponse);
+        this.dataStreamTransportManagementService.getCharacteristic(Characteristic.SetupDataStreamTransport)
+          .onGet(() => this.lastSetupDataStreamTransportResponse)
+          .on(CharacteristicEventTypes.SET, (value, callback, context, connection) => {
+              if (!connection) {
+                  debug("Set event handler for SetupDataStreamTransport cannot be called from plugin! Connection undefined!");
+                  callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
+                  return;
+              }
+              this.handleSetupDataStreamTransportWrite(value, callback, connection);
+          })
+          .updateValue(this.lastSetupDataStreamTransportResponse);
     }
 
 }

@@ -25,6 +25,7 @@ export type PreparedDataStreamSession = {
 
 }
 
+export type PrepareSessionCallback = (error?: Error, preparedSession?: PreparedDataStreamSession) => void;
 export type EventHandler = (message: Record<any, any>) => void;
 export type RequestHandler = (id: number, message: Record<any, any>) => void;
 export type ResponseHandler = (error: Error | undefined, status: HDSStatus | undefined, message: Record<any, any>) => void;
@@ -122,7 +123,7 @@ type DataStreamMessage = {
     message: Record<any, any>,
 }
 
-export const enum DataStreamServerEvents {
+export const enum DataStreamServerEvent {
     /**
      * This event is emitted when a new client socket is received. At this point we have no idea to what
      * hap session this connection will be matched.
@@ -145,7 +146,7 @@ export declare interface DataStreamServer {
 /**
  * DataStreamServer which listens for incoming tcp connections and handles identification of new connections
  */
-export class DataStreamServer extends EventEmitter { // TODO removeAllEvent handlers on closing
+export class DataStreamServer extends EventEmitter {
 
     static readonly version = "1.0";
 
@@ -157,15 +158,14 @@ export class DataStreamServer extends EventEmitter { // TODO removeAllEvent hand
     private tcpServer?: net.Server;
     private tcpPort?: number;
 
-    preparedSessions: PreparedDataStreamSession[];
-    private connections: DataStreamConnection[];
+    preparedSessions: PreparedDataStreamSession[] = [];
+    private readonly connections: DataStreamConnection[] = [];
+    private removeListenersOnceClosed = false;
 
     private readonly internalEventEmitter: NodeEventEmitter = new NodeEventEmitter(); // used for message event and message request handlers
 
-    constructor() {
+    public constructor() {
         super();
-        this.preparedSessions = [];
-        this.connections = [];
     }
 
     /**
@@ -177,7 +177,7 @@ export class DataStreamServer extends EventEmitter { // TODO removeAllEvent hand
      * @param event {string | Topics} - name of the event (also referred to as topic. See {Topics} for some known ones)
      * @param handler {GlobalEventHandler} - function to be called for every occurring event
      */
-    onEventMessage(protocol: string | Protocols, event: string | Topics, handler: GlobalEventHandler): this {
+    public onEventMessage(protocol: string | Protocols, event: string | Topics, handler: GlobalEventHandler): this {
         this.internalEventEmitter.on(protocol + "-e-" + event, handler);
         return this;
     }
@@ -189,7 +189,7 @@ export class DataStreamServer extends EventEmitter { // TODO removeAllEvent hand
      * @param event {string | Topics} - name of the event (also referred to as topic. See {Topics} for some known ones)
      * @param handler {GlobalEventHandler} - registered event handler
      */
-    removeEventHandler(protocol: string | Protocols, event: string | Topics, handler: GlobalEventHandler): this {
+    public removeEventHandler(protocol: string | Protocols, event: string | Topics, handler: GlobalEventHandler): this {
         this.internalEventEmitter.removeListener(protocol + "-e-" + event, handler);
         return this;
     }
@@ -203,7 +203,7 @@ export class DataStreamServer extends EventEmitter { // TODO removeAllEvent hand
      * @param request {string | Topics} - name of the request (also referred to as topic. See {Topics} for some known ones)
      * @param handler {GlobalRequestHandler} - function to be called for every occurring request
      */
-    onRequestMessage(protocol: string | Protocols, request: string | Topics, handler: GlobalRequestHandler): this {
+    public onRequestMessage(protocol: string | Protocols, request: string | Topics, handler: GlobalRequestHandler): this {
         this.internalEventEmitter.on(protocol + "-r-" + request, handler);
         return this;
     }
@@ -215,12 +215,12 @@ export class DataStreamServer extends EventEmitter { // TODO removeAllEvent hand
      * @param request {string | Topics} - name of the request (also referred to as topic. See {Topics} for some known ones)
      * @param handler {GlobalRequestHandler} - registered request handler
      */
-    removeRequestHandler(protocol: string | Protocols, request: string | Topics, handler: GlobalRequestHandler): this {
+    public removeRequestHandler(protocol: string | Protocols, request: string | Topics, handler: GlobalRequestHandler): this {
         this.internalEventEmitter.removeListener(protocol + "-r-" + request, handler);
         return this;
     }
 
-    prepareSession(connection: HAPConnection, controllerKeySalt: Buffer, callback: (preparedSession: PreparedDataStreamSession) => void) {
+    public prepareSession(connection: HAPConnection, controllerKeySalt: Buffer, callback: PrepareSessionCallback) {
         debug("Preparing for incoming HDS connection from %s", connection.sessionID);
         const accessoryKeySalt = crypto.randomBytes(32);
         const salt = Buffer.concat([controllerKeySalt, accessoryKeySalt]);
@@ -238,7 +238,13 @@ export class DataStreamServer extends EventEmitter { // TODO removeAllEvent hand
         preparedSession.connectTimeout!.unref();
         this.preparedSessions.push(preparedSession);
 
-        this.checkTCPServerEstablished(preparedSession, () => callback(preparedSession));
+        this.checkTCPServerEstablished(preparedSession, (error) => {
+            if (error) {
+                callback(error);
+            } else {
+                callback(undefined, preparedSession);
+            }
+        });
     }
 
     private timeoutPreparedSession(preparedSession: PreparedDataStreamSession) {
@@ -251,7 +257,7 @@ export class DataStreamServer extends EventEmitter { // TODO removeAllEvent hand
         this.checkCloseable();
     }
 
-    private checkTCPServerEstablished(preparedSession: PreparedDataStreamSession, callback: () => void) {
+    private checkTCPServerEstablished(preparedSession: PreparedDataStreamSession, callback: (error?: Error) => void) {
         switch (this.state) {
             case ServerState.UNINITIALIZED:
                 debug("Starting up TCP server.");
@@ -280,7 +286,7 @@ export class DataStreamServer extends EventEmitter { // TODO removeAllEvent hand
         }
     }
 
-    private listening(preparedSession: PreparedDataStreamSession, callback: () => void) {
+    private listening(preparedSession: PreparedDataStreamSession, callback: (error?: Error) => void) {
         this.state = ServerState.LISTENING;
 
         const address = this.tcpServer!.address();
@@ -297,13 +303,13 @@ export class DataStreamServer extends EventEmitter { // TODO removeAllEvent hand
         debug("[%s] New DataStream connection was established", socket.remoteAddress);
         const connection = new DataStreamConnection(socket);
 
-        connection.on(DataStreamConnectionEvents.IDENTIFICATION, this.handleSessionIdentification.bind(this, connection));
-        connection.on(DataStreamConnectionEvents.HANDLE_MESSAGE_GLOBALLY, this.handleMessageGlobally.bind(this, connection));
-        connection.on(DataStreamConnectionEvents.CLOSED, this.connectionClosed.bind(this, connection));
+        connection.on(DataStreamConnectionEvent.IDENTIFICATION, this.handleSessionIdentification.bind(this, connection));
+        connection.on(DataStreamConnectionEvent.HANDLE_MESSAGE_GLOBALLY, this.handleMessageGlobally.bind(this, connection));
+        connection.on(DataStreamConnectionEvent.CLOSED, this.connectionClosed.bind(this, connection));
 
         this.connections.push(connection);
 
-        this.emit(DataStreamServerEvents.CONNECTION_OPENED, connection);
+        this.emit(DataStreamServerEvent.CONNECTION_OPENED, connection);
     }
 
     private handleSessionIdentification(connection: DataStreamConnection, firstFrame: HDSFrame, callback: IdentificationCallback) {
@@ -370,19 +376,39 @@ export class DataStreamServer extends EventEmitter { // TODO removeAllEvent hand
         debug("[%s] DataStream connection closed", connection.remoteAddress);
 
         this.connections.splice(this.connections.indexOf(connection), 1);
-        this.emit(DataStreamServerEvents.CONNECTION_CLOSED, connection);
+        this.emit(DataStreamServerEvent.CONNECTION_CLOSED, connection);
 
         this.checkCloseable();
+
+        if (this.state === ServerState.CLOSING && this.removeListenersOnceClosed && this.connections.length === 0) {
+            this.removeAllListeners(); // see this.destroy()
+        }
     }
 
     private checkCloseable() {
-        if (this.connections.length === 0 && this.preparedSessions.length === 0) {
+        if (this.connections.length === 0 && this.preparedSessions.length === 0 && this.state < ServerState.CLOSING) {
             debug("Last connection disconnected. Closing the server now.");
 
             this.state = ServerState.CLOSING;
-            // noinspection JSIgnoredPromiseFromCall
             this.tcpServer!.close();
         }
+    }
+
+    /**
+     * This method will fully stop the DataStreamServer
+     */
+    public destroy(): void {
+        if (this.state > ServerState.UNINITIALIZED && this.state < ServerState.CLOSING) {
+            this.tcpServer!.close();
+            for (const connection of this.connections) {
+                connection.close();
+            }
+        }
+
+        this.state = ServerState.CLOSING;
+
+        this.removeListenersOnceClosed = true;
+        this.internalEventEmitter.removeAllListeners();
     }
 
     private closed() {
@@ -396,7 +422,7 @@ export class DataStreamServer extends EventEmitter { // TODO removeAllEvent hand
 
 export type IdentificationCallback = (identifiedSession?: PreparedDataStreamSession) => void;
 
-export const enum DataStreamConnectionEvents {
+export const enum DataStreamConnectionEvent {
     /**
      * This event is emitted when the first HDSFrame is received from a new connection.
      * The connection expects the handler to identify the connection by trying to match the decryption keys.
@@ -453,6 +479,7 @@ export class DataStreamConnection extends EventEmitter {
 
     private frameBuffer?: Buffer; // used to store incomplete HDS frames
 
+    private readonly hapConnectionClosedListener: () => void;
     private protocolHandlers: Record<string, DataStreamProtocolHandler> = {}; // used to store protocolHandlers identified by their protocol name
 
     private responseHandlers: Record<number, ResponseHandler> = {}; // used to store responseHandlers indexed by their respective requestId
@@ -473,6 +500,8 @@ export class DataStreamConnection extends EventEmitter {
         this.controllerToAccessoryNonce = 0;
         this.controllerToAccessoryNonceBuffer = Buffer.alloc(8);
 
+        this.hapConnectionClosedListener = this.onHAPSessionClosed.bind(this);
+
         this.addProtocolHandler(Protocols.CONTROL, {
            requestHandler: {
                [Topics.HELLO]: this.handleHello.bind(this)
@@ -486,7 +515,7 @@ export class DataStreamConnection extends EventEmitter {
 
         this.socket.on('data', this.onSocketData.bind(this));
         this.socket.on('error', this.onSocketError.bind(this));
-        this.socket.on('close', this.onSocketClose.bind(this)); // we MUST register for this event, otherwise the error will bubble up to the top and crash the node process entirely.
+        this.socket.on('close', this.onSocketClose.bind(this));
     }
 
     private handleHello(id: number, _message: Record<any, any>) {
@@ -617,7 +646,7 @@ export class DataStreamConnection extends EventEmitter {
         if (this.state === ConnectionState.UNIDENTIFIED) {
             // at the beginning we are only interested in trying to decrypt the first frame in order to test decryption keys
             const firstFrame = frames[frameIndex++];
-            this.emit(DataStreamConnectionEvents.IDENTIFICATION, firstFrame, (identifiedSession?: PreparedDataStreamSession) => {
+            this.emit(DataStreamConnectionEvent.IDENTIFICATION, firstFrame, (identifiedSession?: PreparedDataStreamSession) => {
                if (identifiedSession) {
                    // horray, we found our connection
                    this.connection = identifiedSession.connection;
@@ -625,8 +654,8 @@ export class DataStreamConnection extends EventEmitter {
                    this.controllerToAccessoryEncryptionKey = identifiedSession.controllerToAccessoryEncryptionKey;
                    this.state = ConnectionState.EXPECTING_HELLO;
 
-                   // TODO unregister event again
-                   this.connection.on(HAPConnectionEvent.CLOSED, this.onHAPSessionClosed.bind(this)); // register close listener
+                   // below listener is removed in .close()
+                   this.connection.on(HAPConnectionEvent.CLOSED, this.hapConnectionClosedListener); // register close listener
                }
             });
 
@@ -686,7 +715,7 @@ export class DataStreamConnection extends EventEmitter {
                 const handler = this.protocolHandlers[message.protocol];
                 if (handler === undefined) {
                     // send message to the server to check if there are some global handlers for it
-                    this.emit(DataStreamConnectionEvents.HANDLE_MESSAGE_GLOBALLY, message);
+                    this.emit(DataStreamConnectionEvent.HANDLE_MESSAGE_GLOBALLY, message);
                     return;
                 }
 
@@ -919,6 +948,8 @@ export class DataStreamConnection extends EventEmitter {
             return; // connection is already closing/closed
         }
 
+        this.connection?.removeListener(HAPConnectionEvent.CLOSED, this.hapConnectionClosedListener);
+
         this.state = ConnectionState.CLOSING;
         this.socket.end();
     }
@@ -935,8 +966,10 @@ export class DataStreamConnection extends EventEmitter {
     }
 
     private onSocketClose() {
+        // this instance is now considered completely dead
         this.state = ConnectionState.CLOSED;
-        this.emit(DataStreamConnectionEvents.CLOSED);
+        this.emit(DataStreamConnectionEvent.CLOSED);
+        this.removeAllListeners();
     }
 
 }

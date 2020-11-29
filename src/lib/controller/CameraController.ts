@@ -390,7 +390,14 @@ export class CameraController extends EventEmitter implements Controller<CameraC
   handleControllerRemoved(): void {
     this.handleFactoryReset();
 
+    for (const management of this.streamManagements) {
+      management.destroy();
+    }
     this.streamManagements.splice(0, this.streamManagements.length);
+
+    this.microphoneService = undefined;
+    this.speakerService = undefined;
+
     this.removeAllListeners();
   }
 
