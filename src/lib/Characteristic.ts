@@ -2004,6 +2004,41 @@ export class Characteristic extends EventEmitter {
   }
 
   /**
+   * @param characteristic
+   * @private
+   */
+  replaceBy(characteristic: Characteristic): void {
+    this.props = characteristic.props;
+    this.updateValue(characteristic.value);
+
+    const getListeners = characteristic.listeners(CharacteristicEventTypes.GET);
+    if (getListeners.length) {
+      // the callback can only be called once so we remove all old listeners
+      this.removeAllListeners(CharacteristicEventTypes.GET);
+      // @ts-expect-error
+      getListeners.forEach(listener => this.addListener(CharacteristicEventTypes.GET, listener));
+    }
+
+    this.removeOnGet();
+    if (characteristic.getHandler) {
+      this.onGet(characteristic.getHandler);
+    }
+
+    const setListeners = characteristic.listeners(CharacteristicEventTypes.SET);
+    if (setListeners.length) {
+      // the callback can only be called once so we remove all old listeners
+      this.removeAllListeners(CharacteristicEventTypes.SET);
+      // @ts-expect-error
+      setListeners.forEach(listener => this.addListener(CharacteristicEventTypes.SET, listener));
+    }
+
+    this.removeOnSet();
+    if (characteristic.setHandler) {
+      this.onSet(characteristic.setHandler);
+    }
+  }
+
+  /**
    * Returns a JSON representation of this characteristic suitable for delivering to HAP clients.
    * @private used to generate response to /accessories query
    */

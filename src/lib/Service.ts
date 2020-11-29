@@ -507,29 +507,10 @@ export class Service extends EventEmitter {
         delete foreignCharacteristics[characteristic.UUID];
 
         if (!foreignCharacteristic.value && foreignCharacteristic.value !== 0 && foreignCharacteristic.value !== false) {
-          return; // ignore falsy values expect if its the number zero or literally false
+          return; // ignore falsy values except if its the number zero or literally false
         }
 
-        characteristic.props = foreignCharacteristic.props;
-        characteristic.updateValue(foreignCharacteristic.value);
-
-        const getListeners = foreignCharacteristic.listeners(CharacteristicEventTypes.GET);
-        if (getListeners.length) {
-          // the callback can only be called once so we remove all old listeners
-          characteristic.removeAllListeners(CharacteristicEventTypes.GET);
-          characteristic.removeOnGet();
-          // @ts-expect-error
-          getListeners.forEach(listener => characteristic.addListener(CharacteristicEventTypes.GET, listener));
-        }
-
-        const setListeners = foreignCharacteristic.listeners(CharacteristicEventTypes.SET);
-        if (setListeners.length) {
-          // the callback can only be called once so we remove all old listeners
-          characteristic.removeAllListeners(CharacteristicEventTypes.SET);
-          characteristic.removeOnSet();
-          // @ts-expect-error
-          setListeners.forEach(listener => characteristic.addListener(CharacteristicEventTypes.SET, listener));
-        }
+        characteristic.replaceBy(foreignCharacteristic);
       }
     });
 
