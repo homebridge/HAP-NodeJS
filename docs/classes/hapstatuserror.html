@@ -70,7 +70,8 @@
 					</div>
 					<dl class="tsd-comment-tags">
 						<dt>example</dt>
-						<dd><pre><code class="language-ts"><span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> HapStatusError(HAPStatus.OPERATION_TIMED_OUT);</code></pre>
+						<dd><pre><code class="language-ts"><span style="color: #AF00DB">throw</span><span style="color: #000000"> </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #267F99">HapStatusError</span><span style="color: #000000">(</span><span style="color: #001080">HAPStatus</span><span style="color: #000000">.</span><span style="color: #0070C1">OPERATION_TIMED_OUT</span><span style="color: #000000">);</span>
+</code></pre>
 						</dd>
 					</dl>
 				</div>
@@ -79,7 +80,7 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<a href="hapstatuserror.html#error" class="tsd-signature-type">Error</a>
+						<span class="tsd-signature-type">Error</span>
 						<ul class="tsd-hierarchy">
 							<li>
 								<span class="target">HapStatusError</span>
@@ -102,10 +103,6 @@
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="hapstatuserror.html#hapstatus" class="tsd-kind-icon">hap<wbr>Status</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><a href="hapstatuserror.html#message" class="tsd-kind-icon">message</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><a href="hapstatuserror.html#name" class="tsd-kind-icon">name</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited"><a href="hapstatuserror.html#stack" class="tsd-kind-icon">stack</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><a href="hapstatuserror.html#error" class="tsd-kind-icon">Error</a></li>
 							</ul>
 						</section>
 					</div>
@@ -123,7 +120,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/util/hapStatusError.ts#L12">src/lib/util/hapStatusError.ts:12</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/util/hapStatusError.ts#L12">lib/util/hapStatusError.ts:12</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -145,51 +142,7 @@
 					<div class="tsd-signature tsd-kind-icon">hap<wbr>Status<span class="tsd-signature-symbol">:</span> <a href="../enums/hapstatus.html" class="tsd-signature-type">HAPStatus</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/util/hapStatusError.ts#L12">src/lib/util/hapStatusError.ts:12</a></li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
-					<a name="message" class="tsd-anchor"></a>
-					<h3>message</h3>
-					<div class="tsd-signature tsd-kind-icon">message<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
-					<aside class="tsd-sources">
-						<p>Inherited from <a href="hapstatuserror.html">HapStatusError</a>.<a href="hapstatuserror.html#message">message</a></p>
-						<ul>
-							<li>Defined in node_modules/typescript/lib/lib.es5.d.ts:974</li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
-					<a name="name" class="tsd-anchor"></a>
-					<h3>name</h3>
-					<div class="tsd-signature tsd-kind-icon">name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
-					<aside class="tsd-sources">
-						<p>Inherited from <a href="hapstatuserror.html">HapStatusError</a>.<a href="hapstatuserror.html#name">name</a></p>
-						<ul>
-							<li>Defined in node_modules/typescript/lib/lib.es5.d.ts:973</li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited">
-					<a name="stack" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> stack</h3>
-					<div class="tsd-signature tsd-kind-icon">stack<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
-					<aside class="tsd-sources">
-						<p>Inherited from Error.stack</p>
-						<p>Overrides Error.stack</p>
-						<ul>
-							<li>Defined in node_modules/typescript/lib/lib.es5.d.ts:975</li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-static">
-					<a name="error" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagStatic">Static</span> Error</h3>
-					<div class="tsd-signature tsd-kind-icon">Error<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">ErrorConstructor</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in node_modules/typescript/lib/lib.es5.d.ts:984</li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/util/hapStatusError.ts#L12">lib/util/hapStatusError.ts:12</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -215,18 +168,6 @@
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="hapstatuserror.html#hapstatus" class="tsd-kind-icon">hap<wbr>Status</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
-								<a href="hapstatuserror.html#message" class="tsd-kind-icon">message</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
-								<a href="hapstatuserror.html#name" class="tsd-kind-icon">name</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited">
-								<a href="hapstatuserror.html#stack" class="tsd-kind-icon">stack</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-static">
-								<a href="hapstatuserror.html#error" class="tsd-kind-icon">Error</a>
 							</li>
 						</ul>
 					</li>

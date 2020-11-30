@@ -78,6 +78,7 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="publishinfo.html#addidentifyingmaterial" class="tsd-kind-icon">add<wbr>Identifying<wbr>Material</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="publishinfo.html#bind" class="tsd-kind-icon">bind</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="publishinfo.html#category" class="tsd-kind-icon">category</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="publishinfo.html#mdns" class="tsd-kind-icon">mdns</a></li>
@@ -93,12 +94,29 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="addidentifyingmaterial" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> add<wbr>Identifying<wbr>Material</h3>
+					<div class="tsd-signature tsd-kind-icon">add<wbr>Identifying<wbr>Material<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/Accessory.ts#L249">lib/Accessory.ts:249</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>If this option is set to true, HAP-NodeJS will add identifying material (based on <a href="publishinfo.html#username">username</a>)
+								to the end of the accessory display name (and bonjour instance name).
+							Default: true</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="bind" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagOptional">Optional</span> bind</h3>
 					<div class="tsd-signature tsd-kind-icon">bind<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span><a href="../modules.html#interfacename" class="tsd-signature-type">InterfaceName</a><span class="tsd-signature-symbol"> | </span><a href="../modules.html#ipaddress" class="tsd-signature-type">IPAddress</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-symbol">(</span><a href="../modules.html#interfacename" class="tsd-signature-type">InterfaceName</a><span class="tsd-signature-symbol"> | </span><a href="../modules.html#ipaddress" class="tsd-signature-type">IPAddress</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/Accessory.ts#L232">src/lib/Accessory.ts:232</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/Accessory.ts#L233">lib/Accessory.ts:233</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -159,7 +177,7 @@
 					<div class="tsd-signature tsd-kind-icon">category<span class="tsd-signature-symbol">:</span> <a href="../enums/categories.html" class="tsd-signature-type">Categories</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/Accessory.ts#L179">src/lib/Accessory.ts:179</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/Accessory.ts#L180">lib/Accessory.ts:180</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -179,7 +197,7 @@
 					<div class="tsd-signature tsd-kind-icon">mdns<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">MDNSServerOptions</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/Accessory.ts#L242">src/lib/Accessory.ts:242</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/Accessory.ts#L243">lib/Accessory.ts:243</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -198,7 +216,7 @@
 					<div class="tsd-signature tsd-kind-icon">pincode<span class="tsd-signature-symbol">:</span> <a href="../modules.html#happincode" class="tsd-signature-type">HAPPincode</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/Accessory.ts#L170">src/lib/Accessory.ts:170</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/Accessory.ts#L171">lib/Accessory.ts:171</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -208,7 +226,7 @@
 					<div class="tsd-signature tsd-kind-icon">port<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/Accessory.ts#L237">src/lib/Accessory.ts:237</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/Accessory.ts#L238">lib/Accessory.ts:238</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -224,7 +242,7 @@
 					<div class="tsd-signature tsd-kind-icon">setupID<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/Accessory.ts#L180">src/lib/Accessory.ts:180</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/Accessory.ts#L181">lib/Accessory.ts:181</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -234,7 +252,7 @@
 					<div class="tsd-signature tsd-kind-icon">username<span class="tsd-signature-symbol">:</span> <a href="../modules.html#macaddress" class="tsd-signature-type">MacAddress</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/Accessory.ts#L169">src/lib/Accessory.ts:169</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/Accessory.ts#L170">lib/Accessory.ts:170</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -255,6 +273,9 @@
 					<li class="current tsd-kind-interface">
 						<a href="publishinfo.html" class="tsd-kind-icon">Publish<wbr>Info</a>
 						<ul>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="publishinfo.html#addidentifyingmaterial" class="tsd-kind-icon">add<wbr>Identifying<wbr>Material</a>
+							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="publishinfo.html#bind" class="tsd-kind-icon">bind</a>
 							</li>

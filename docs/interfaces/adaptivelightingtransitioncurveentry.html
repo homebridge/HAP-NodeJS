@@ -95,7 +95,7 @@
 					<div class="tsd-signature tsd-kind-icon">brightness<wbr>Adjustment<wbr>Factor<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/controller/AdaptiveLightingController.ts#L171">src/lib/controller/AdaptiveLightingController.ts:171</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/controller/AdaptiveLightingController.ts#L221">lib/controller/AdaptiveLightingController.ts:221</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -111,12 +111,13 @@
 						<p>To calculate the resulting color temperature you will need to do the following.</p>
 						<p>In short: temperature + brightnessAdjustmentFactor * currentBrightness</p>
 						<p>Complete example:</p>
-						<pre><code class="language-js"><span class="hljs-keyword">const</span> temperature = ...; <span class="hljs-comment">// next transition value, the above property</span>
-<span class="hljs-comment">// below query the current brightness while staying the the min/max brightness range (typically between 10-100 percent)</span>
-<span class="hljs-keyword">const</span> currentBrightness = <span class="hljs-built_in">Math</span>.max(minBrightnessValue, <span class="hljs-built_in">Math</span>.min(maxBrightnessValue, CHARACTERISTIC_BRIGHTNESS_VALUE));
+						<pre><code class="language-js"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">temperature</span><span style="color: #000000"> = ...; </span><span style="color: #008000">// next transition value, the above property</span>
+<span style="color: #008000">// below query the current brightness while staying the the min/max brightness range (typically between 10-100 percent)</span>
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">currentBrightness</span><span style="color: #000000"> = </span><span style="color: #267F99">Math</span><span style="color: #000000">.</span><span style="color: #795E26">max</span><span style="color: #000000">(</span><span style="color: #001080">minBrightnessValue</span><span style="color: #000000">, </span><span style="color: #267F99">Math</span><span style="color: #000000">.</span><span style="color: #795E26">min</span><span style="color: #000000">(</span><span style="color: #001080">maxBrightnessValue</span><span style="color: #000000">, </span><span style="color: #0070C1">CHARACTERISTIC_BRIGHTNESS_VALUE</span><span style="color: #000000">));</span>
 
-<span class="hljs-comment">// as both temperature and brightnessAdjustmentFactor are floating point values it is advised to round to the next integer</span>
-<span class="hljs-keyword">const</span> resultTemperature = <span class="hljs-built_in">Math</span>.round(temperature + brightnessAdjustmentFactor * currentBrightness);</code></pre>
+<span style="color: #008000">// as both temperature and brightnessAdjustmentFactor are floating point values it is advised to round to the next integer</span>
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">resultTemperature</span><span style="color: #000000"> = </span><span style="color: #267F99">Math</span><span style="color: #000000">.</span><span style="color: #795E26">round</span><span style="color: #000000">(</span><span style="color: #001080">temperature</span><span style="color: #000000"> + </span><span style="color: #001080">brightnessAdjustmentFactor</span><span style="color: #000000"> * </span><span style="color: #001080">currentBrightness</span><span style="color: #000000">);</span>
+</code></pre>
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
@@ -125,7 +126,7 @@
 					<div class="tsd-signature tsd-kind-icon">duration<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/controller/AdaptiveLightingController.ts#L178">src/lib/controller/AdaptiveLightingController.ts:178</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/controller/AdaptiveLightingController.ts#L228">lib/controller/AdaptiveLightingController.ts:228</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -143,7 +144,7 @@
 					<div class="tsd-signature tsd-kind-icon">temperature<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/controller/AdaptiveLightingController.ts#L146">src/lib/controller/AdaptiveLightingController.ts:146</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/controller/AdaptiveLightingController.ts#L196">lib/controller/AdaptiveLightingController.ts:196</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -158,7 +159,7 @@
 					<div class="tsd-signature tsd-kind-icon">transition<wbr>Time<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/f685c5b/src/lib/controller/AdaptiveLightingController.ts#L188">src/lib/controller/AdaptiveLightingController.ts:188</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/controller/AdaptiveLightingController.ts#L238">lib/controller/AdaptiveLightingController.ts:238</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
