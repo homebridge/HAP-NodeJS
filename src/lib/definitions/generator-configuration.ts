@@ -1,3 +1,4 @@
+import assert from "assert";
 import { GeneratedCharacteristic, GeneratedService } from "./generate-definitions";
 
 const enum PropertyId {
@@ -81,7 +82,13 @@ export const CharacteristicOverriding: Map<string, (generated: GeneratedCharacte
   }],
   ["data-stream-hap-transport", generated => {
     generated.properties |= PropertyId.WRITE_RESPONSE;
-  }]
+  }],
+  ["lock-mechanism.last-known-action", generated => {
+    assert(generated.maxValue === 8, "LockLastKnownAction seems to have changed in metadata!");
+    generated.maxValue = 10;
+    generated.validValues!["9"] = "SECURED_PHYSICALLY";
+    generated.validValues!["10"] = "UNSECURED_PHYSICALLY";
+  }],
 ])
 
 export const CharacteristicManualAdditions: Map<string, GeneratedCharacteristic> = new Map([

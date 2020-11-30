@@ -1827,15 +1827,17 @@ export class LockLastKnownAction extends Characteristic {
   public static readonly SECURED_REMOTELY = 6;
   public static readonly UNSECURED_REMOTELY = 7;
   public static readonly SECURED_BY_AUTO_SECURE_TIMEOUT = 8;
+  public static readonly SECURED_PHYSICALLY = 9;
+  public static readonly UNSECURED_PHYSICALLY = 10;
 
   constructor() {
     super("Lock Last Known Action", LockLastKnownAction.UUID, {
       format: Formats.UINT8,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ],
       minValue: 0,
-      maxValue: 8,
+      maxValue: 10,
       minStep: 1,
-      validValues: [0, 1, 2, 3, 4, 5, 6, 7, 8],
+      validValues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
     });
     this.value = this.getDefaultValue();
   }
