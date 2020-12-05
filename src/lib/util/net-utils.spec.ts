@@ -28,17 +28,9 @@ describe("net-utils", () => {
       expect(findLoopbackAddress()).toBe("127.0.0.1");
     });
 
-    it("should prioritize ipv6 link local loopback address", () => {
+    it("should properly format ipv6 link local loopback address", () => {
       mock.mockImplementationOnce(() => ({
         "lo": [
-          {
-            address: "127.0.0.1",
-            netmask: "255.0.0.0",
-            family: "IPv4",
-            mac: "00:00:00:00:00:00",
-            internal: true,
-            cidr: "127.0.0.1/8",
-          },
           {
             address: "fe80::1",
             netmask: 'ffff:ffff:ffff:ffff::',
@@ -55,6 +47,33 @@ describe("net-utils", () => {
     });
 
     it("should prioritize ipv6 loopback address", () => {
+      mock.mockImplementationOnce(() => ({
+        "lo": [
+          {
+            address: '::1',
+            netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff',
+            family: 'IPv6',
+            mac: '00:00:00:00:00:00',
+            internal: true,
+            cidr: '::1/128',
+            scopeid: 0
+          },
+          {
+            address: "fe80::1",
+            netmask: 'ffff:ffff:ffff:ffff::',
+            family: 'IPv6',
+            mac: '00:00:00:00:00:00',
+            internal: true,
+            cidr: 'fe80::1/64',
+            scopeid: 1
+          },
+        ],
+      }));
+
+      expect(findLoopbackAddress()).toBe("::1");
+    });
+
+    it("should prioritize ipv4 loopback address", () => {
       mock.mockImplementationOnce(() => ({
         "lo": [
           {
@@ -86,7 +105,7 @@ describe("net-utils", () => {
         ],
       }));
 
-      expect(findLoopbackAddress()).toBe("::1");
+      expect(findLoopbackAddress()).toBe("127.0.0.1");
     });
 
     it("should throw an error if it can't find one", () => {
