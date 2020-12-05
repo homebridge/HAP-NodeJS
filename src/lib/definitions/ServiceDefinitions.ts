@@ -1,5 +1,5 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=858
+// V=859
 
 import { Characteristic } from "../Characteristic";
 import { Service } from "../Service";
@@ -68,6 +68,7 @@ export class AccessoryRuntimeInformation extends Service {
     this.addCharacteristic(Characteristic.Ping);
 
     // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.ActivityInterval);
     this.addOptionalCharacteristic(Characteristic.HeartBeat);
     this.addOptionalCharacteristic(Characteristic.SleepInterval);
   }

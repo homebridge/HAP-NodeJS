@@ -34,6 +34,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("ActivityInterval", () => {
+    it("should be able to construct", () => {
+      new Characteristic.ActivityInterval();
+    });
+  });
+
   describe("AdministratorOnlyAccess", () => {
     it("should be able to construct", () => {
       new Characteristic.AdministratorOnlyAccess();

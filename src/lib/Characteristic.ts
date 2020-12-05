@@ -10,6 +10,7 @@ import {
   AccessoryIdentifier,
   Active,
   ActiveIdentifier,
+  ActivityInterval,
   AdministratorOnlyAccess,
   AirParticulateDensity,
   AirParticulateSize,
@@ -608,6 +609,7 @@ export class Characteristic extends EventEmitter {
   public static AccessoryIdentifier: typeof AccessoryIdentifier;
   public static Active: typeof Active;
   public static ActiveIdentifier: typeof ActiveIdentifier;
+  public static ActivityInterval: typeof ActivityInterval;
   public static AdministratorOnlyAccess: typeof AdministratorOnlyAccess;
   public static AirParticulateDensity: typeof AirParticulateDensity;
   public static AirParticulateSize: typeof AirParticulateSize;

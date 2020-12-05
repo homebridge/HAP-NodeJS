@@ -1,5 +1,5 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=858
+// V=859
 
 import { Characteristic, Formats, Perms, Units } from "../Characteristic";
 
@@ -100,6 +100,26 @@ export class ActiveIdentifier extends Characteristic {
   }
 }
 Characteristic.ActiveIdentifier = ActiveIdentifier;
+
+/**
+ * Characteristic "Activity Interval"
+ * @since iOS 14
+ */
+export class ActivityInterval extends Characteristic {
+
+  public static readonly UUID: string = "0000023B-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Activity Interval", ActivityInterval.UUID, {
+      format: Formats.UINT32,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      minValue: 0,
+      minStep: 1,
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.ActivityInterval = ActivityInterval;
 
 /**
  * Characteristic "Administrator Only Access"
