@@ -89,6 +89,12 @@ export const CharacteristicOverriding: Map<string, (generated: GeneratedCharacte
     generated.validValues!["9"] = "SECURED_PHYSICALLY";
     generated.validValues!["10"] = "UNSECURED_PHYSICALLY";
   }],
+  ["configured-name", generated => {
+    // the write permission on the configured name characteristic is actually optional and should only be supported
+    // if a HomeKit controller should be able to change the name (e.g. for a TV Input).
+    // As of legacy compatibility we just add that permission and tackle that problem later in a TVController (or something).
+    generated.properties |= PropertyId.WRITE;
+  }],
 ])
 
 export const CharacteristicManualAdditions: Map<string, GeneratedCharacteristic> = new Map([

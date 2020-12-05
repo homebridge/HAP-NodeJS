@@ -661,7 +661,7 @@ export class ConfiguredName extends Characteristic {
   constructor() {
     super("Configured Name", ConfiguredName.UUID, {
       format: Formats.STRING,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
     });
     this.value = this.getDefaultValue();
   }
