@@ -62,7 +62,10 @@ export class Advertiser extends EventEmitter {
   constructor(accessoryInfo: AccessoryInfo, options?: MDNSServerOptions) {
     super();
     this.accessoryInfo = accessoryInfo;
-    this.responder = ciao.getResponder(options);
+    this.responder = ciao.getResponder({
+      ignoreUnicastResponseFlag: true,
+      ...options
+    });
     this.setupHash = this.computeSetupHash();
   }
 
