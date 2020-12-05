@@ -9,11 +9,12 @@ import os from "os";
 import { CharacteristicEventNotification, EventNotification } from "../../internal-types";
 import { CharacteristicValue, Nullable, SessionIdentifier } from '../../types';
 import * as hapCrypto from "./hapCrypto";
-import { getOSLoopbackAddress } from "./net-utils";
+import { getOSLoopbackAddressIfAvailable } from "./net-utils";
 import * as uuid from './uuid';
 import Timeout = NodeJS.Timeout;
 
 const debug = createDebug('HAP-NodeJS:EventedHTTPServer');
+const debugCon = createDebug("HAP-NodeJS:EventedHTTPServer:Connection")
 
 export type HAPUsername = string;
 export type EventName = string; // "<aid>.<iid>"
@@ -116,7 +117,7 @@ export class EventedHTTPServer extends EventEmitter {
         }
         connectionString += connection.remoteAddress + ":" + connection.remotePort;
       }
-      debug("Current " + this.connections.size + " hap connections open: " + connectionString);
+      debug("Currently " + this.connections.size + " hap connections open: " + connectionString);
     }, 60000);
     interval.unref();
   }
@@ -304,6 +305,7 @@ export class HAPConnection extends EventEmitter {
   private readonly internalHttpServer: http.Server;
   private httpSocket?: Socket; // set when in state FULLY_SET_UP
   private internalHttpServerPort?: number;
+  private internalHttpServerAddress?: string;
 
   lastSocketOperation: number = new Date().getTime();
 
@@ -350,7 +352,7 @@ export class HAPConnection extends EventEmitter {
     this.internalHttpServer.on('request', this.handleHttpServerRequest.bind(this));
     this.internalHttpServer.on('error', this.onHttpServerError.bind(this));
     // close event is added later on the "connect" event as possible listen retries would throw unnecessary close events
-    this.internalHttpServer.listen(0, getOSLoopbackAddress);
+    this.internalHttpServer.listen(0, this.internalHttpServerAddress = getOSLoopbackAddressIfAvailable());
   }
 
   /**
@@ -468,7 +470,7 @@ export class HAPConnection extends EventEmitter {
    * @param notification - The event which should be sent out
    */
   private writeEventNotification(notification: EventNotification): void {
-    debug("[%s] Sending HAP event notifications %o", this.remoteAddress, notification.characteristics);
+    debugCon("[%s] Sending HAP event notifications %o", this.remoteAddress, notification.characteristics);
 
     const dataBuffer = Buffer.from(JSON.stringify(notification), "utf8");
     const header = Buffer.from(
@@ -532,12 +534,12 @@ export class HAPConnection extends EventEmitter {
     const addressString = addressInfo.family === "IPv6"? `[${addressInfo.address}]`: addressInfo.address;
     this.internalHttpServerPort = addressInfo.port;
 
-    debug("[%s] Internal HTTP server listening on %s:%s", this.remoteAddress, addressString, addressInfo.port);
+    debugCon("[%s] Internal HTTP server listening on %s:%s", this.remoteAddress, addressString, addressInfo.port);
 
     this.internalHttpServer.on('close', this.onHttpServerClose.bind(this));
 
     // now we can establish a connection to this running HTTP server for proxying data
-    this.httpSocket = net.createConnection(this.internalHttpServerPort, getOSLoopbackAddress()); // previously we used addressInfo.address
+    this.httpSocket = net.createConnection(this.internalHttpServerPort, this.internalHttpServerAddress); // previously we used addressInfo.address
     this.httpSocket.setNoDelay(true); // disable Nagle algorithm
 
     this.httpSocket.on('data', this.handleHttpServerResponse.bind(this));
@@ -549,6 +551,7 @@ export class HAPConnection extends EventEmitter {
       //  - serverSocket is connected to the httpServer
       //  - ready to proxy data!
       this.state = HAPConnectionState.FULLY_SET_UP;
+      debugCon("[%s] Internal HTTP socket connected. HAPConnection now fully set up!", this.remoteAddress)
 
       // start by flushing any pending buffered data received from the client while we were setting up
       if (this.pendingClientSocketData && this.pendingClientSocketData.length > 0) {
@@ -574,7 +577,7 @@ export class HAPConnection extends EventEmitter {
     try {
       data = this.decrypt(data);
     } catch (error) { // decryption and/or verification failed, disconnect the client
-      debug("[%s] Error occurred trying to decrypt incoming packet: %s", this.remoteAddress, error.message);
+      debugCon("[%s] Error occurred trying to decrypt incoming packet: %s", this.remoteAddress, error.message);
       this.close();
       return;
     }
@@ -600,7 +603,7 @@ export class HAPConnection extends EventEmitter {
     request.socket.setNoDelay(true);
     response.connection.setNoDelay(true); // deprecated since 13.0.0
 
-    debug("[%s] HTTP request: %s", this.remoteAddress, request.url);
+    debugCon("[%s] HTTP request: %s", this.remoteAddress, request.url);
     this.emit(HAPConnectionEvent.REQUEST, request, response);
   }
 
@@ -613,7 +616,7 @@ export class HAPConnection extends EventEmitter {
     data = this.encrypt(data);
     this.tcpSocket.write(data, this.handleTCPSocketWriteFulfilled.bind(this));
 
-    debug("[%s] HTTP Response is finished", this.remoteAddress);
+    debugCon("[%s] HTTP Response is finished", this.remoteAddress);
     this.handlingRequest = false;
 
     if (this.state === HAPConnectionState.TO_BE_TEARED_DOWN) {
@@ -629,14 +632,14 @@ export class HAPConnection extends EventEmitter {
   }
 
   private onTCPSocketError(err: Error): void {
-    debug("[%s] Client connection error: %s", this.remoteAddress, err.message);
+    debugCon("[%s] Client connection error: %s", this.remoteAddress, err.message);
     // onTCPSocketClose will be called next
   }
 
   private onTCPSocketClose(): void {
     this.state = HAPConnectionState.CLOSED;
 
-    debug("[%s] Client connection closed", this.remoteAddress);
+    debugCon("[%s] Client connection closed", this.remoteAddress);
 
     if (this.httpSocket) {
       this.httpSocket.destroy();
@@ -648,28 +651,28 @@ export class HAPConnection extends EventEmitter {
   }
 
   private onHttpServerError(err: Error & { code?: string }): void {
-    debug("[%s] HTTP server error: %s", this.remoteAddress, err.message);
+    debugCon("[%s] HTTP server error: %s", this.remoteAddress, err.message);
     if (err.code === 'EADDRINUSE') {
       this.internalHttpServerPort = undefined;
 
       this.internalHttpServer.close();
-      this.internalHttpServer.listen(0, getOSLoopbackAddress);
+      this.internalHttpServer.listen(0, this.internalHttpServerAddress = getOSLoopbackAddressIfAvailable());
     }
   }
 
   private onHttpServerClose(): void {
-    debug("[%s] HTTP server was closed", this.remoteAddress);
+    debugCon("[%s] HTTP server was closed", this.remoteAddress);
     // make sure the iOS side is closed as well
     this.close();
   }
 
   private onHttpSocketError(err: Error): void {
-    debug("[%s] HTTP connection error: ", this.remoteAddress, err.message);
+    debugCon("[%s] HTTP connection error: ", this.remoteAddress, err.message);
     // onHttpSocketClose will be called next
   }
 
   private onHttpSocketClose(): void {
-    debug("[%s] HTTP connection was closed", this.remoteAddress);
+    debugCon("[%s] HTTP connection was closed", this.remoteAddress);
     // we only support a single long-lived connection to our internal HTTP server. Since it's closed,
     // we'll need to shut it down entirely.
     this.internalHttpServer.close();
