@@ -44,6 +44,7 @@ export class AccessoryInfo {
   private configHash: string;
   setupID: string;
   private lastFirmwareVersion: string = "";
+  enableUnicastResponse: boolean = false;
 
   private constructor(username: MacAddress) {
     this.username = username;
@@ -222,6 +223,7 @@ export class AccessoryInfo {
       configHash: this.configHash,
       setupID: this.setupID,
       lastFirmwareVersion: this.lastFirmwareVersion,
+      enableUnicastResponse: this.enableUnicastResponse,
     };
 
     for (let username in this.pairedClients) {
@@ -293,6 +295,7 @@ export class AccessoryInfo {
       info.setupID = saved.setupID || "";
 
       info.lastFirmwareVersion = saved.lastFirmwareVersion || packageJson.version;
+      info.enableUnicastResponse = saved.enableUnicastResponse ?? false;
 
       info.ensureConfigVersionBounds();
 
