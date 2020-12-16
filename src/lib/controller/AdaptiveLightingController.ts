@@ -340,8 +340,9 @@ interface SerializedAdaptiveLightingControllerState {
  *  The AdaptiveLightingController will go through setup procedure with HomeKit and automatically update
  *  the color temperature characteristic base on the current transition schedule.
  *  It is also adjusting the color temperature when a write to the brightness characteristic happens.
- *  It will also handle turning of AdaptiveLighting when it detects a write happening to the
- *  ColorTemperature, Hue or Saturation characteristic.
+ *  Additionally it will also handle turning off AdaptiveLighting, when it detects a write happening to the
+ *  ColorTemperature, Hue or Saturation characteristic (though it can only detect writes coming from HomeKit and
+ *  can't detect changes done to the physical devices directly! See below).
  *
  *  So what do you need to consider in automatic mode:
  *   - Brightness and ColorTemperature characteristics MUST be set up. Hue and Saturation may be added for color support.
@@ -349,12 +350,12 @@ interface SerializedAdaptiveLightingControllerState {
  *    So every transition behaves like a regular write to the ColorTemperature characteristic.
  *   - Every transition step is dependent on the current brightness value. Try to keep the internal cache updated
  *    as the controller won't call the GET handler every 60 seconds.
- *    (The cache value is updated on SET/GET operations or by manually calling {@link Characteristic.updateValue}).
+ *    (The cached brightness value is updated on SET/GET operations or by manually calling {@link Characteristic.updateValue}
+ *    on the brightness characteristic).
  *   - Detecting changes on the lightbulb side:
  *    Any manual change to ColorTemperature or Hue/Saturation is considered as a signal to turn AdaptiveLighting off.
  *    In order to notify the AdaptiveLightingController of such an event happening OUTSIDE of HomeKit
- *    (like changing stuff on the physical Lightbulb) you can call {@link Characteristic.setValue} manually
- *    (keep in mind, this will fire call your SET handler) or call {@link disableAdaptiveLighting} directly.
+ *    you must call {@link disableAdaptiveLighting} manually!
  *   - Be aware that even when the light is turned off the transition will continue to call the SET handler
  *    of the ColorTemperature characteristic.
  *   - When using Hue/Saturation:
@@ -668,16 +669,15 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
    * @param change
    */
   private handleCharacteristicManualWritten(change: CharacteristicChange): void {
-    if (change.reason === ChangeReason.EVENT || change.reason === ChangeReason.UPDATE
-      ||(isAdaptiveLightingContext(change.context) && change.context.controller === this)) {
+    if (change.reason === ChangeReason.WRITE && !(isAdaptiveLightingContext(change.context) && change.context.controller === this)) {
       // we ignore write request which are the result of calls made to updateValue or sendEventNotification
-      // or the change was done by us
-      return;
-    }
+      // or the result of a changed value returned by a read handler
+      // or the change was done by the controller itself
 
-    debug("[%s] Received a manual write to an characteristic (newValue: %d, oldValue: %d, reason: %s). Thus disabling adaptive lighting!",
-      this.lightbulb.displayName, change.newValue, change.oldValue, change.reason);
-    this.disableAdaptiveLighting();
+      debug("[%s] Received a manual write to an characteristic (newValue: %d, oldValue: %d, reason: %s). Thus disabling adaptive lighting!",
+        this.lightbulb.displayName, change.newValue, change.oldValue, change.reason);
+      this.disableAdaptiveLighting();
+    }
   }
 
   public getCurrentAdaptiveLightingTransitionPoint(): AdaptiveLightingTransitionPoint | undefined {
