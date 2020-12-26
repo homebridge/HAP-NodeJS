@@ -109,7 +109,8 @@ export class EventedHTTPServer extends EventEmitter {
   constructor() {
     super();
     this.tcpServer = net.createServer();
-    const interval = setInterval(() => { // TODO to be removed
+
+    const interval = setInterval(() => {
       let connectionString = "";
       for (const connection of this.connections) {
         if (connectionString) {

@@ -1,3 +1,4 @@
+/// <reference path="../../@types/bonjour-hap.d.ts" />
 import ciao, {
   CiaoService,
   MDNSServerOptions,
@@ -6,7 +7,9 @@ import ciao, {
   ServiceTxt,
   ServiceType
 } from "@homebridge/ciao";
-import { ServiceOptions } from "@homebridge/ciao/lib/CiaoService";
+import { InterfaceName, IPAddress } from "@homebridge/ciao/lib/NetworkManager";
+import assert from "assert";
+import bonjour, { BonjourHAP, BonjourHAPService, MulticastOptions } from "bonjour-hap";
 import crypto from 'crypto';
 import { EventEmitter } from "events";
 import { AccessoryInfo } from './model/AccessoryInfo';
@@ -40,6 +43,42 @@ export declare interface Advertiser {
   emit(event: "updated-name", name: string): boolean;
 }
 
+export interface ServiceNetworkOptions {
+  /**
+   * If defined it restricts the service to be advertised on the specified
+   * ip addresses or interface names.
+   *
+   * If a interface name is specified, ANY address on that given interface will be advertised
+   * (if a IP address of the given interface is also given in the array, it will be overridden).
+   * If a IP address is specified, the service will only be advertised for the given addresses.
+   *
+   * Interface names and addresses can be mixed in the array.
+   * If an ip address is given, the ip address must be valid at the time of service creation.
+   *
+   * If the service is set to advertise on a given interface, though the MDNSServer is
+   * configured to ignore this interface, the service won't be advertised on the interface.
+   */
+  restrictedAddresses?: (InterfaceName | IPAddress)[];
+  /**
+   * The service won't advertise ipv6 address records.
+   * This can be used to simulate binding on 0.0.0.0.
+   * May be combined with {@link restrictedAddresses}.
+   */
+  disabledIpv6?: boolean;
+}
+
+export interface Advertiser {
+
+  initPort(port: number): void;
+
+  startAdvertising(): void;
+
+  updateAdvertisement(silent?: boolean): void;
+
+  destroy(): void;
+
+}
+
 /**
  * Advertiser uses mdns to broadcast the presence of an Accessory to the local network.
  *
@@ -48,7 +87,7 @@ export declare interface Advertiser {
  * To support this requirement, we provide the ability to be "discoverable" or not (via a "service flag" on the
  * mdns payload).
  */
-export class Advertiser extends EventEmitter {
+export class CiaoAdvertiser extends EventEmitter implements Advertiser {
 
   static protocolVersion: string = "1.1";
   static protocolVersionService: string = "1.1.0";
@@ -59,10 +98,10 @@ export class Advertiser extends EventEmitter {
   private readonly responder: Responder;
   private readonly advertisedService: CiaoService;
 
-  constructor(accessoryInfo: AccessoryInfo, responderOptions?: MDNSServerOptions, serviceOptions?: Partial<ServiceOptions>) {
+  constructor(accessoryInfo: AccessoryInfo, responderOptions?: MDNSServerOptions, serviceOptions?: ServiceNetworkOptions) {
     super();
     this.accessoryInfo = accessoryInfo;
-    this.setupHash = this.computeSetupHash();
+    this.setupHash = CiaoAdvertiser.computeSetupHash(accessoryInfo);
 
     this.responder = ciao.getResponder({
       ignoreUnicastResponseFlag: !accessoryInfo.enableUnicastResponse, // used for debugging
@@ -71,7 +110,7 @@ export class Advertiser extends EventEmitter {
     this.advertisedService = this.responder.createService({
       name: this.accessoryInfo.displayName,
       type: ServiceType.HAP,
-      txt: this.createTxt(),
+      txt: CiaoAdvertiser.createTxt(accessoryInfo, this.setupHash),
       // host will default now to <displayName>.local, spaces replaced with dashes
       ...serviceOptions,
     });
@@ -86,8 +125,8 @@ export class Advertiser extends EventEmitter {
     return this.advertisedService!.advertise();
   }
 
-  public updateAdvertisement(): void {
-    this.advertisedService!.updateTxt(this.createTxt());
+  public updateAdvertisement(silent?: boolean): void {
+    this.advertisedService!.updateTxt(CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash), silent);
   }
 
   public async destroy(): Promise<void> {
@@ -96,29 +135,29 @@ export class Advertiser extends EventEmitter {
     this.removeAllListeners();
   }
 
-  private createTxt(): ServiceTxt {
+  static createTxt(accessoryInfo: AccessoryInfo, setupHash: string): ServiceTxt {
     const statusFlags: StatusFlag[] = [];
 
-    if (!this.accessoryInfo.paired()) {
+    if (!accessoryInfo.paired()) {
       statusFlags.push(StatusFlag.NOT_PAIRED);
     }
 
     return {
-      "c#": this.accessoryInfo.getConfigVersion(), // current configuration number
-      ff: Advertiser.ff(), // pairing feature flags
-      id: this.accessoryInfo.username, // device id
-      md: this.accessoryInfo.model, // model name
-      pv: Advertiser.protocolVersion, // protocol version
+      "c#": accessoryInfo.getConfigVersion(), // current configuration number
+      ff: CiaoAdvertiser.ff(), // pairing feature flags
+      id: accessoryInfo.username, // device id
+      md: accessoryInfo.model, // model name
+      pv: CiaoAdvertiser.protocolVersion, // protocol version
       "s#": 1, // current state number (must be 1)
-      sf: Advertiser.sf(...statusFlags), // status flags
-      ci: this.accessoryInfo.category,
-      sh: this.setupHash,
+      sf: CiaoAdvertiser.sf(...statusFlags), // status flags
+      ci: accessoryInfo.category,
+      sh: setupHash,
     };
   }
 
-  private computeSetupHash(): string {
+  static computeSetupHash(accessoryInfo: AccessoryInfo): string {
     const hash = crypto.createHash('sha512');
-    hash.update(this.accessoryInfo.setupID + this.accessoryInfo.username.toUpperCase());
+    hash.update(accessoryInfo.setupID + accessoryInfo.username.toUpperCase());
     return hash.digest().slice(0, 4).toString('base64');
   }
 
@@ -132,6 +171,77 @@ export class Advertiser extends EventEmitter {
     let value = 0;
     flags.forEach(flag => value |= flag);
     return value;
+  }
+
+}
+
+/**
+ * Advertiser base on the legacy "bonjour-hap" library.
+ */
+export class BonjourHAPAdvertiser extends EventEmitter implements Advertiser {
+
+  private readonly accessoryInfo: AccessoryInfo;
+  private readonly setupHash: string;
+  private readonly serviceOptions?: ServiceNetworkOptions;
+
+  private bonjour: BonjourHAP;
+  private advertisement?: BonjourHAPService;
+
+  private port?: number;
+  private destroyed: boolean = false;
+
+  constructor(accessoryInfo: AccessoryInfo, responderOptions?: MulticastOptions, serviceOptions?: ServiceNetworkOptions) {
+    super();
+    this.accessoryInfo = accessoryInfo;
+    this.setupHash = CiaoAdvertiser.computeSetupHash(accessoryInfo);
+    this.serviceOptions = serviceOptions;
+
+    this.bonjour = bonjour(responderOptions);
+  }
+
+  public initPort(port: number): void {
+    this.port = port;
+  }
+
+  public startAdvertising(): void {
+    assert(!this.destroyed, "Can't advertise on a destroyed bonjour instance!");
+    if (this.port == undefined) {
+      throw new Error("Tried starting bonjour-hap advertisement without initializing port!");
+    }
+
+    if (this.advertisement) {
+      this.destroy();
+    }
+
+    const hostname = this.accessoryInfo.username.replace(/:/ig, "_") + '.local';
+
+    this.advertisement = this.bonjour.publish({
+      name: this.accessoryInfo.displayName,
+      type: "hap",
+      port: this.port,
+      txt: CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash),
+      host: hostname,
+      addUnsafeServiceEnumerationRecord: true,
+      ...this.serviceOptions,
+    });
+  }
+
+  public updateAdvertisement(silent?: boolean): void {
+    if (this.advertisement) {
+      this.advertisement.updateTxt(CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash), silent);
+    }
+  }
+
+  public destroy(): void {
+    if (this.advertisement) {
+      this.advertisement.stop(() => {
+        this.advertisement!.destroy();
+        this.advertisement = undefined;
+        this.bonjour.destroy();
+      });
+    } else {
+      this.bonjour.destroy();
+    }
   }
 
 }

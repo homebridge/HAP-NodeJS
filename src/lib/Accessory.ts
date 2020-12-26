@@ -1,5 +1,6 @@
 import { MDNSServerOptions } from "@homebridge/ciao";
 import assert from "assert";
+import { MulticastOptions } from "bonjour-hap";
 import crypto from 'crypto';
 import createDebug from 'debug';
 import { EventEmitter } from "events";
@@ -29,7 +30,7 @@ import {
   VoidCallback,
   WithUUID,
 } from '../types';
-import { Advertiser, AdvertiserEvent } from './Advertiser';
+import { CiaoAdvertiser, AdvertiserEvent, Advertiser, BonjourHAPAdvertiser } from './Advertiser';
 // noinspection JSDeprecatedSymbols
 import { LegacyCameraSource, LegacyCameraSourceAdapter, StreamController } from './camera';
 import {
@@ -240,13 +241,18 @@ export interface PublishInfo {
    * Used to define custom MDNS options. Is not used anymore.
    * @deprecated
    */
-  mdns?: MDNSServerOptions;
+  mdns?: MulticastOptions;
   /**
    * If this option is set to true, HAP-NodeJS will add identifying material (based on {@link username})
    * to the end of the accessory display name (and bonjour instance name).
    * Default: true
    */
   addIdentifyingMaterial?: boolean;
+  /**
+   * Use the legacy bonjour-hap as advertiser.
+   * @private
+   */
+  useLegacyAdvertiser?: boolean;
 }
 
 export type AccessoryCharacteristicChange = ServiceCharacteristicChange &  {
@@ -1068,7 +1074,7 @@ export class Accessory extends EventEmitter {
    */
   public publish(info: PublishInfo, allowInsecureRequest?: boolean): void {
     // noinspection JSDeprecatedSymbols
-    if (info.mdns) {
+    if (info.mdns && !info.useLegacyAdvertiser) {
       console.log("DEPRECATED user supplied a custom 'mdns' option. This option is deprecated and ignored. " +
         "Please move to the new 'bind' option.");
     }
@@ -1077,7 +1083,7 @@ export class Accessory extends EventEmitter {
     if (!service) {
       service = this.addService(Service.ProtocolInformation) // add the protocol information service to the primary accessory
     }
-    service.setCharacteristic(Characteristic.Version, Advertiser.protocolVersionService);
+    service.setCharacteristic(Characteristic.Version, CiaoAdvertiser.protocolVersionService);
 
     if (this.lastKnownUsername && this.lastKnownUsername !== info.username) { // username changed since last publish
       Accessory.cleanupAccessoryData(this.lastKnownUsername); // delete old Accessory data
@@ -1152,12 +1158,19 @@ export class Accessory extends EventEmitter {
 
     // create our Advertiser which broadcasts our presence over mdns
     const parsed = Accessory.parseBindOption(info);
-    this._advertiser = new Advertiser(this._accessoryInfo, {
-      interface: parsed.advertiserAddress
-    }, {
-      restrictedAddresses: parsed.serviceRestrictedAddress,
-      disabledIpv6: parsed.serviceDisableIpv6,
-    });
+    if (info.useLegacyAdvertiser) {
+      this._advertiser = new BonjourHAPAdvertiser(this._accessoryInfo, info.mdns, {
+        restrictedAddresses: parsed.serviceRestrictedAddress,
+        disabledIpv6: parsed.serviceDisableIpv6,
+      });
+    } else {
+      this._advertiser = new CiaoAdvertiser(this._accessoryInfo, {
+        interface: parsed.advertiserAddress
+      }, {
+        restrictedAddresses: parsed.serviceRestrictedAddress,
+        disabledIpv6: parsed.serviceDisableIpv6,
+      });
+    }
     this._advertiser.on(AdvertiserEvent.UPDATED_NAME, name => {
       this.displayName = name;
       if (this._accessoryInfo) {
