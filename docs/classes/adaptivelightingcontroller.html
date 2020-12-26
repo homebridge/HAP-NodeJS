@@ -93,8 +93,9 @@
 						The AdaptiveLightingController will go through setup procedure with HomeKit and automatically update
 						the color temperature characteristic base on the current transition schedule.
 						It is also adjusting the color temperature when a write to the brightness characteristic happens.
-						It will also handle turning of AdaptiveLighting when it detects a write happening to the
-					ColorTemperature, Hue or Saturation characteristic.</p>
+						Additionally it will also handle turning off AdaptiveLighting, when it detects a write happening to the
+						ColorTemperature, Hue or Saturation characteristic (though it can only detect writes coming from HomeKit and
+					can&#39;t detect changes done to the physical devices directly! See below).</p>
 					<p> So what do you need to consider in automatic mode:</p>
 					<ul>
 						<li>Brightness and ColorTemperature characteristics MUST be set up. Hue and Saturation may be added for color support.</li>
@@ -102,12 +103,12 @@
 						So every transition behaves like a regular write to the ColorTemperature characteristic.</li>
 						<li>Every transition step is dependent on the current brightness value. Try to keep the internal cache updated
 							as the controller won&#39;t call the GET handler every 60 seconds.
-						(The cache value is updated on SET/GET operations or by manually calling <a href="characteristic.html#updatevalue">Characteristic.updateValue</a>).</li>
+							(The cached brightness value is updated on SET/GET operations or by manually calling <a href="characteristic.html#updatevalue">Characteristic.updateValue</a>
+						on the brightness characteristic).</li>
 						<li>Detecting changes on the lightbulb side:
 							Any manual change to ColorTemperature or Hue/Saturation is considered as a signal to turn AdaptiveLighting off.
 							In order to notify the AdaptiveLightingController of such an event happening OUTSIDE of HomeKit
-							(like changing stuff on the physical Lightbulb) you can call <a href="characteristic.html#setvalue">Characteristic.setValue</a> manually
-						(keep in mind, this will fire call your SET handler) or call <a href="adaptivelightingcontroller.html#disableadaptivelighting">disableAdaptiveLighting</a> directly.</li>
+						you must call <a href="adaptivelightingcontroller.html#disableadaptivelighting">disableAdaptiveLighting</a> manually!</li>
 						<li>Be aware that even when the light is turned off the transition will continue to call the SET handler
 						of the ColorTemperature characteristic.</li>
 						<li>When using Hue/Saturation:
@@ -212,7 +213,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/controller/AdaptiveLightingController.ts#L431">lib/controller/AdaptiveLightingController.ts:431</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/db30f83/src/lib/controller/AdaptiveLightingController.ts#L432">lib/controller/AdaptiveLightingController.ts:432</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -253,7 +254,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/controller/AdaptiveLightingController.ts#L475">lib/controller/AdaptiveLightingController.ts:475</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/db30f83/src/lib/controller/AdaptiveLightingController.ts#L476">lib/controller/AdaptiveLightingController.ts:476</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -280,7 +281,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/controller/AdaptiveLightingController.ts#L301">lib/controller/AdaptiveLightingController.ts:301</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/db30f83/src/lib/controller/AdaptiveLightingController.ts#L301">lib/controller/AdaptiveLightingController.ts:301</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -294,7 +295,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/controller/AdaptiveLightingController.ts#L302">lib/controller/AdaptiveLightingController.ts:302</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/db30f83/src/lib/controller/AdaptiveLightingController.ts#L302">lib/controller/AdaptiveLightingController.ts:302</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -317,7 +318,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/controller/AdaptiveLightingController.ts#L549">lib/controller/AdaptiveLightingController.ts:549</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/db30f83/src/lib/controller/AdaptiveLightingController.ts#L550">lib/controller/AdaptiveLightingController.ts:550</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <a href="../interfaces/brightnessadjustmentmultiplierrange.html" class="tsd-signature-type">BrightnessAdjustmentMultiplierRange</a></h4>
@@ -334,7 +335,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/controller/AdaptiveLightingController.ts#L577">lib/controller/AdaptiveLightingController.ts:577</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/db30f83/src/lib/controller/AdaptiveLightingController.ts#L578">lib/controller/AdaptiveLightingController.ts:578</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -359,7 +360,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/controller/AdaptiveLightingController.ts#L520">lib/controller/AdaptiveLightingController.ts:520</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/db30f83/src/lib/controller/AdaptiveLightingController.ts#L521">lib/controller/AdaptiveLightingController.ts:521</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -383,7 +384,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/controller/AdaptiveLightingController.ts#L535">lib/controller/AdaptiveLightingController.ts:535</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/db30f83/src/lib/controller/AdaptiveLightingController.ts#L536">lib/controller/AdaptiveLightingController.ts:536</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -410,7 +411,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/controller/AdaptiveLightingController.ts#L542">lib/controller/AdaptiveLightingController.ts:542</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/db30f83/src/lib/controller/AdaptiveLightingController.ts#L543">lib/controller/AdaptiveLightingController.ts:543</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <a href="../interfaces/adaptivelightingtransitioncurveentry.html" class="tsd-signature-type">AdaptiveLightingTransitionCurveEntry</a><span class="tsd-signature-symbol">[]</span></h4>
@@ -427,7 +428,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/controller/AdaptiveLightingController.ts#L563">lib/controller/AdaptiveLightingController.ts:563</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/db30f83/src/lib/controller/AdaptiveLightingController.ts#L564">lib/controller/AdaptiveLightingController.ts:564</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -452,7 +453,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/controller/AdaptiveLightingController.ts#L683">lib/controller/AdaptiveLightingController.ts:683</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/db30f83/src/lib/controller/AdaptiveLightingController.ts#L683">lib/controller/AdaptiveLightingController.ts:683</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <a href="../interfaces/adaptivelightingtransitionpoint.html" class="tsd-signature-type">AdaptiveLightingTransitionPoint</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span></h4>
@@ -469,7 +470,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/controller/AdaptiveLightingController.ts#L464">lib/controller/AdaptiveLightingController.ts:464</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/db30f83/src/lib/controller/AdaptiveLightingController.ts#L465">lib/controller/AdaptiveLightingController.ts:465</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -492,7 +493,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/controller/AdaptiveLightingController.ts#L292">lib/controller/AdaptiveLightingController.ts:292</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/db30f83/src/lib/controller/AdaptiveLightingController.ts#L292">lib/controller/AdaptiveLightingController.ts:292</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -528,7 +529,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/608e41a/src/lib/controller/AdaptiveLightingController.ts#L299">lib/controller/AdaptiveLightingController.ts:299</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/db30f83/src/lib/controller/AdaptiveLightingController.ts#L299">lib/controller/AdaptiveLightingController.ts:299</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
