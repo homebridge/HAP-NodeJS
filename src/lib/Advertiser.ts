@@ -63,7 +63,6 @@ export class Advertiser extends EventEmitter {
     super();
     this.accessoryInfo = accessoryInfo;
     this.responder = ciao.getResponder({
-      ignoreUnicastResponseFlag: true,
       ...options
     });
     this.setupHash = this.computeSetupHash();
