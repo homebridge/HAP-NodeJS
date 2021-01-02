@@ -104,7 +104,6 @@ export class CiaoAdvertiser extends EventEmitter implements Advertiser {
     this.setupHash = CiaoAdvertiser.computeSetupHash(accessoryInfo);
 
     this.responder = ciao.getResponder({
-      // ignoreUnicastResponseFlag: !accessoryInfo.enableUnicastResponse, // used for debugging
       ...responderOptions
     });
     this.advertisedService = this.responder.createService({
