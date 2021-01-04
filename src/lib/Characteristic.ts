@@ -1911,7 +1911,6 @@ export class Characteristic extends EventEmitter {
       }
       case Formats.STRING: {
         if (typeof value === "number") {
-          // TODO didn't include plugin info https://www.reddit.com/r/homebridge/comments/kol1el/testers_wanted_homebridge_v130_beta/ghsz3r6/?utm_source=share&utm_medium=ios_app&utm_name=iossmf&context=3
           this.characteristicWarning(`characteristic was supplied illegal value: number instead of string. Supplying illegal values will throw errors in the future!`);
           value = String(value);
         } else if (typeof value !== "string") {
@@ -1951,7 +1950,6 @@ export class Characteristic extends EventEmitter {
         value = numericMin;
       }
       if (numericMax != null && value > numericMax) {
-        // TODO didn't include plugin info https://www.reddit.com/r/homebridge/comments/kol1el/testers_wanted_homebridge_v130_beta/ghsz3r6/?utm_source=share&utm_medium=ios_app&utm_name=iossmf&context=3
         this.characteristicWarning(`characteristic was supplied illegal value: number ${value} exceeded maximum of ${numericMax}.`);
         value = numericMax;
       }

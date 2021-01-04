@@ -1851,9 +1851,8 @@ export class Accessory extends EventEmitter {
   }
 
   private _sideloadServices(targetServices: Service[]): void {
-    for (let index in targetServices) {
-      const target = targetServices[index];
-      this.setupServiceEventHandlers(target);
+    for (const service of targetServices) {
+      this.setupServiceEventHandlers(service);
     }
 
     this.services = targetServices.slice();
