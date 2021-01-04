@@ -207,7 +207,7 @@ export class EventedHTTPServer extends EventEmitter {
 
     this.connections.add(connection);
 
-    debug("[%s] New connection from client on interface %s", connection.remoteAddress, connection.networkInterface);
+    debug("[%s] New connection from client on interface %s (%s)", connection.remoteAddress, connection.networkInterface, connection.localAddress);
 
     this.emit(EventedHTTPServerEvent.CONNECTION_OPENED, connection);
 
@@ -298,6 +298,7 @@ export class HAPConnection extends EventEmitter {
 
   readonly sessionID: SessionIdentifier; // uuid unique to every HAP connection
   private state: HAPConnectionState = HAPConnectionState.CONNECTING;
+  readonly localAddress: string;
   readonly remoteAddress: string; // cache because it becomes undefined in 'onClientSocketClose'
   readonly remotePort: number;
   readonly networkInterface: string;
@@ -332,6 +333,7 @@ export class HAPConnection extends EventEmitter {
 
     this.server = server;
     this.sessionID = uuid.generate(clientSocket.remoteAddress + ':' + clientSocket.remotePort);
+    this.localAddress = clientSocket.localAddress;
     this.remoteAddress = clientSocket.remoteAddress!; // cache because it becomes undefined in 'onClientSocketClose'
     this.remotePort = clientSocket.remotePort!;
     this.networkInterface = HAPConnection.getLocalNetworkInterface(clientSocket);
