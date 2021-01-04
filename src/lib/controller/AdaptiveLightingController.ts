@@ -1,4 +1,5 @@
 import assert from "assert";
+import * as uuid from "../util/uuid"
 import createDebug from "debug";
 import { EventEmitter } from "events";
 import { ColorUtils, epochMillisFromMillisSince2001_01_01Buffer, HAPStatus, HapStatusError } from "../..";
@@ -73,7 +74,7 @@ const enum ValueTransitionConfigurationTypes {
 }
 
 const enum ValueTransitionParametersTypes {
-  UNKNOWN_1 = 0x01, // 16 bytes id or something (same for multiple writes)
+  TRANSITION_ID = 0x01, // 16 bytes
   START_TIME = 0x02, // 8 bytes the start time for the provided schedule, millis since 2001/01/01 00:00:000
   UNKNOWN_3 = 0x03, // 8 bytes, id or something (same for multiple writes)
 }
@@ -141,11 +142,10 @@ export interface ActiveAdaptiveLightingTransition {
   timeMillisOffset: number;
 
   /**
-   * Hex string of 16 bytes. Value is the same for ALL control write requests I have seen (even on other homes).
-   * Purpose unknown.
+   * Value is the same for ALL control write requests I have seen (even on other homes).
    * @private
    */
-  id1: string;
+  transitionId: string;
   /**
    * Start of transition in milliseconds from 2001-01-01 00:00:00; unsigned 64 bit LE integer
    * @private as it is a 64 bit integer, we just store the buffer to not have the struggle to encode/decode 64 bit int in JavaScript
@@ -994,7 +994,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     const timeSinceStartBuffer = tlv.writeVariableUIntLE(timeSinceStart);
 
     let parameters = tlv.encode(
-      ValueTransitionParametersTypes.UNKNOWN_1, Buffer.from(active.id1, "hex"),
+      ValueTransitionParametersTypes.TRANSITION_ID, uuid.write(active.transitionId),
       ValueTransitionParametersTypes.START_TIME, Buffer.from(active.transitionStartBuffer, "hex"),
     );
     if (active.id3) {
@@ -1053,7 +1053,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
       }
 
       let parameters = tlv.encode(
-        ValueTransitionParametersTypes.UNKNOWN_1, Buffer.from(this.activeTransition.id1, "hex"),
+        ValueTransitionParametersTypes.TRANSITION_ID, uuid.write(this.activeTransition.transitionId),
         ValueTransitionParametersTypes.START_TIME, Buffer.from(this.activeTransition.transitionStartBuffer, "hex"),
       );
       if (this.activeTransition.id3) {
@@ -1114,7 +1114,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     const updateInterval = transitionConfiguration[ValueTransitionConfigurationTypes.UPDATE_INTERVAL].readUInt16LE(0);
     const notifyIntervalThreshold = transitionConfiguration[ValueTransitionConfigurationTypes.NOTIFY_INTERVAL_THRESHOLD].readUInt32LE(0);
 
-    const id1 = parametersTLV[ValueTransitionParametersTypes.UNKNOWN_1];
+    const transitionId = parametersTLV[ValueTransitionParametersTypes.TRANSITION_ID];
     const startTime = parametersTLV[ValueTransitionParametersTypes.START_TIME];
     const id3 = parametersTLV[ValueTransitionParametersTypes.UNKNOWN_3]; // this may be undefined
 
@@ -1158,7 +1158,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
       transitionStartMillis: startTimeMillis,
       timeMillisOffset: timeMillisOffset,
 
-      id1: id1.toString("hex"),
+      transitionId: uuid.unparse(transitionId),
       transitionStartBuffer: startTime.toString("hex"),
       id3: id3?.toString("hex"),
 

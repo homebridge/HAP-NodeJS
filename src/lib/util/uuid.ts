@@ -56,14 +56,7 @@ export function unparse(buf: Buffer | string, offset: number = 0) {
 }
 
 export function write(uuid: string, buf: Buffer = Buffer.alloc(16), offset: number = 0): Buffer {
-  uuid = uuid.replace(/-/g, "");
-
-  for (let i = 0; i < uuid.length; i += 2) {
-    const octet = uuid.substring(i, i + 2);
-    buf.write(octet, offset++, undefined, "hex");
-  }
-
-  return buf;
+  return Buffer.from(uuid.replace(/-/g, ""), "hex");
 }
 
 const SHORT_FORM_REGEX = /^0*([0-9a-f]{1,8})-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
