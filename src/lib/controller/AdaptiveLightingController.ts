@@ -171,7 +171,7 @@ export interface ActiveAdaptiveLightingTransition {
   /**
    * Defines the interval in milliseconds on how often the accessory may send even notifications
    * to subscribed HomeKit controllers (aka call {@link Characteristic.updateValue}.
-   * Typically this is 600000 aka 600 seconds aka 10 minutes.
+   * Typically this is 600000 aka 600 seconds aka 10 minutes or 300000 aka 300 seconds aka 5 minutes.
    */
   notifyIntervalThreshold: number;
 }
@@ -1111,7 +1111,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
 
     const parametersTLV = tlv.decode(transitionConfiguration[ValueTransitionConfigurationTypes.TRANSITION_PARAMETERS]);
     const curveConfiguration = tlv.decodeWithLists(transitionConfiguration[ValueTransitionConfigurationTypes.TRANSITION_CURVE_CONFIGURATION]);
-    const updateInterval = transitionConfiguration[ValueTransitionConfigurationTypes.UPDATE_INTERVAL].readUInt16LE(0);
+    const updateInterval = transitionConfiguration[ValueTransitionConfigurationTypes.UPDATE_INTERVAL]?.readUInt16LE(0);
     const notifyIntervalThreshold = transitionConfiguration[ValueTransitionConfigurationTypes.NOTIFY_INTERVAL_THRESHOLD].readUInt32LE(0);
 
     const transitionId = parametersTLV[ValueTransitionParametersTypes.TRANSITION_ID];
@@ -1170,7 +1170,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
 
       transitionCurve: transitionCurve,
 
-      updateInterval: updateInterval,
+      updateInterval: updateInterval ?? 60000,
       notifyIntervalThreshold: notifyIntervalThreshold,
     };
 
