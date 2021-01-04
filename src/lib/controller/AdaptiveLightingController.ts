@@ -947,6 +947,15 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
    */
   deserialize(serialized: SerializedAdaptiveLightingControllerState): void {
     this.activeTransition = serialized.activeTransition;
+
+    // Data migrations from beta builds
+    if (!this.activeTransition.transitionId) {
+      // @ts-ignore
+      this.activeTransition.transitionId = this.activeTransition.id1
+      // @ts-ignore
+      delete this.activeTransition.id1
+    }
+
     if (!this.activeTransition.timeMillisOffset) { // compatibility to data produced by early betas
       this.activeTransition.timeMillisOffset = 0;
     }
