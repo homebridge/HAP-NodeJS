@@ -1230,8 +1230,6 @@ export class RTPStreamManagement {
     const supportedCodecs: AudioStreamingCodec[] = (audioOptions && audioOptions.codecs) || [];
     this.checkForLegacyAudioCodecRepresentation(supportedCodecs);
 
-    //const codecConfigurationsBuffers: Buffer[] = [];
-
     if (supportedCodecs.length === 0) { // Fake a Codec if we haven't got anything
       debug("Client doesn't support any audio codec that HomeKit supports.");
       this.videoOnly = true;
