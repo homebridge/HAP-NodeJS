@@ -47,14 +47,12 @@ export function unparse(buf: Buffer | string, offset: number = 0) {
   }
 
   let i = offset;
-  return buf[i++].toString(16) + buf[i++].toString(16) +
-         buf[i++].toString(16) + buf[i++].toString(16) + '-' +
-         buf[i++].toString(16) + buf[i++].toString(16) + '-' +
-         buf[i++].toString(16) + buf[i++].toString(16) + '-' +
-         buf[i++].toString(16) + buf[i++].toString(16) + '-' +
-         buf[i++].toString(16) + buf[i++].toString(16) +
-         buf[i++].toString(16) + buf[i++].toString(16) +
-         buf[i++].toString(16) + buf[i++].toString(16);
+
+  return buf.toString("hex", 0, 4) + "-" +
+    buf.toString("hex", 4, 6) + "-" +
+    buf.toString("hex", 6, 8) + "-" +
+    buf.toString("hex", 8, 10) + "-" +
+    buf.toString("hex", 10, 16);
 }
 
 export function write(uuid: string, buf: Buffer = Buffer.alloc(16), offset: number = 0): Buffer {
