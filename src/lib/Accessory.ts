@@ -1074,7 +1074,7 @@ export class Accessory extends EventEmitter {
    */
   public publish(info: PublishInfo, allowInsecureRequest?: boolean): void {
     // noinspection JSDeprecatedSymbols
-    if (info.mdns && info.useLegacyAdvertiser == undefined) {
+    if (info.mdns?.interface && info.useLegacyAdvertiser) {
       console.log("DEPRECATED user supplied a custom 'mdns' option. This option is deprecated and ignored. " +
         "Please move to the new 'bind' option.");
     }
