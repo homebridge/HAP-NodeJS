@@ -1805,7 +1805,7 @@ export class Accessory extends EventEmitter {
         return;
       }
 
-      if (typeof change.context === "object" && (change.context as CharacteristicOperationContext).omitEventUpdate) {
+      if (change.context != undefined && typeof change.context === "object" && (change.context as CharacteristicOperationContext).omitEventUpdate) {
         debug("[%s] Omitting event updates for %s as specified in the context object!", accessory.displayName, change.characteristic.displayName);
         return;
       }
