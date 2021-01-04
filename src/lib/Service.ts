@@ -128,11 +128,11 @@ export const enum ServiceEventTypes {
 export declare interface Service {
   on(event: "characteristic-change", listener: (change: ServiceCharacteristicChange) => void): this;
   on(event: "service-configurationChange", listener: () => void): this;
-  on(event: "characteristic-warning", listener: (characteristic: Characteristic, type: CharacteristicWarningType, message: string) => void): this;
+  on(event: "characteristic-warning", listener: (characteristic: Characteristic, type: CharacteristicWarningType, message: string, originatorChain: string[]) => void): this;
 
   emit(event: "characteristic-change", change: ServiceCharacteristicChange): boolean;
   emit(event: "service-configurationChange"): boolean;
-  emit(event: "characteristic-warning", characteristic: Characteristic, type: CharacteristicWarningType, message: string): boolean;
+  emit(event: "characteristic-warning", characteristic: Characteristic, type: CharacteristicWarningType, message: string, originatorChain: string[]): boolean;
 }
 
 /**
@@ -438,7 +438,7 @@ export class Service extends EventEmitter {
       const instance = this.addCharacteristic(name);
       // Not found in optional Characteristics. Adding anyway, but warning about it if it isn't the Name.
       if (name.UUID !== Characteristic.Name.UUID) {
-        this.emit(ServiceEventTypes.CHARACTERISTIC_WARNING, instance, CharacteristicWarningType.WARN_MESSAGE,
+        this.emitCharacteristicWarningEvent(instance, CharacteristicWarningType.WARN_MESSAGE,
           "Characteristic not in required or optional characteristic section for service " + this.constructor.name + ". Adding anyway.");
       }
 
@@ -584,7 +584,7 @@ export class Service extends EventEmitter {
       const missingCharacteristics: Set<Characteristic> = new Set();
       let timeout: Timeout | undefined = setTimeout(() => {
         for (const characteristic of missingCharacteristics) {
-          this.emit(ServiceEventTypes.CHARACTERISTIC_WARNING, characteristic, CharacteristicWarningType.SLOW_READ,
+          this.emitCharacteristicWarningEvent(characteristic, CharacteristicWarningType.SLOW_READ,
             `The read handler for the characteristic '${characteristic.displayName}' was slow to respond!`);
         }
 
@@ -592,7 +592,7 @@ export class Service extends EventEmitter {
           timeout = undefined;
 
           for (const characteristic of missingCharacteristics) {
-            this.emit(ServiceEventTypes.CHARACTERISTIC_WARNING, characteristic, CharacteristicWarningType.TIMEOUT_READ,
+            this.emitCharacteristicWarningEvent(characteristic, CharacteristicWarningType.TIMEOUT_READ,
               "The read handler for the characteristic '" + characteristic?.displayName +
               "' didn't respond at all!. Please check that you properly call the callback!");
             service.characteristics.push(characteristic.internalHAPRepresentation()); // value is set to null
@@ -669,9 +669,14 @@ export class Service extends EventEmitter {
       this.emit(ServiceEventTypes.CHARACTERISTIC_CHANGE, { ...change, characteristic: characteristic });
     });
 
-    characteristic.on(CharacteristicEventTypes.CHARACTERISTIC_WARNING, (type, message) => {
-      this.emit(ServiceEventTypes.CHARACTERISTIC_WARNING, characteristic, type, message);
-    });
+    characteristic.on(CharacteristicEventTypes.CHARACTERISTIC_WARNING, this.emitCharacteristicWarningEvent.bind(this, characteristic));
+  }
+
+  /**
+   * @private
+   */
+  private emitCharacteristicWarningEvent(characteristic: Characteristic, type: CharacteristicWarningType, message: string): void {
+    this.emit(ServiceEventTypes.CHARACTERISTIC_WARNING, characteristic, type, message, [this.displayName, characteristic.displayName]);
   }
 
   /**

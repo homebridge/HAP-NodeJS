@@ -1,4 +1,3 @@
-import { MDNSServerOptions } from "@homebridge/ciao";
 import assert from "assert";
 import { MulticastOptions } from "bonjour-hap";
 import crypto from 'crypto';
@@ -30,14 +29,15 @@ import {
   VoidCallback,
   WithUUID,
 } from '../types';
-import { CiaoAdvertiser, AdvertiserEvent, Advertiser, BonjourHAPAdvertiser } from './Advertiser';
+import { Advertiser, AdvertiserEvent, BonjourHAPAdvertiser, CiaoAdvertiser } from './Advertiser';
 // noinspection JSDeprecatedSymbols
 import { LegacyCameraSource, LegacyCameraSourceAdapter, StreamController } from './camera';
 import {
   Access,
   ChangeReason,
   Characteristic,
-  CharacteristicEventTypes, CharacteristicOperationContext,
+  CharacteristicEventTypes,
+  CharacteristicOperationContext,
   CharacteristicSetCallback,
   Perms
 } from './Characteristic';
@@ -46,8 +46,8 @@ import {
   CameraControllerOptions,
   Controller,
   ControllerConstructor,
-  ControllerServiceMap,
   ControllerIdentifier,
+  ControllerServiceMap,
   isSerializableController,
 } from "./controller";
 import {
@@ -307,7 +307,7 @@ export declare interface Accessory {
   on(event: "paired", listener: () => void): this;
   on(event: "unpaired", listener: () => void): this;
 
-  on(event: "characteristic-warning-v2", listener: (characteristic: Characteristic, type: CharacteristicWarningType, message: string) => void): this;
+  on(event: "characteristic-warning-v2", listener: (characteristic: Characteristic, type: CharacteristicWarningType, message: string, originatorChain: string[]) => void): this;
 
 
   emit(event: "identify", paired: boolean, callback: VoidCallback): boolean;
@@ -319,7 +319,7 @@ export declare interface Accessory {
   emit(event: "paired"): boolean;
   emit(event: "unpaired"): boolean;
 
-  emit(event: "characteristic-warning-v2", characteristic: Characteristic, type: CharacteristicWarningType, message: string): boolean;
+  emit(event: "characteristic-warning-v2", characteristic: Characteristic, type: CharacteristicWarningType, message: string, originatorChain: string[]): boolean;
 }
 
 /**
@@ -1829,13 +1829,17 @@ export class Accessory extends EventEmitter {
     }
   }
 
-  private handleCharacteristicWarning(characteristic: Characteristic, type: CharacteristicWarningType, message: string): void {
-    const emitted = this.emit(AccessoryEventTypes.CHARACTERISTIC_WARNING, characteristic, type, message);
+  private handleCharacteristicWarning(characteristic: Characteristic, type: CharacteristicWarningType, message: string, originatorChain?: string[]): void {
+    if (!originatorChain) {
+      originatorChain = [characteristic.displayName]; // we are missing the service displayName, but that's okay
+    }
+
+    const emitted = this.emit(AccessoryEventTypes.CHARACTERISTIC_WARNING, characteristic, type, message, [this.displayName, ...originatorChain]);
     if (!emitted) {
       if (type === CharacteristicWarningType.ERROR_MESSAGE || type === CharacteristicWarningType.TIMEOUT_READ || type === CharacteristicWarningType.TIMEOUT_WRITE) {
-        console.error(`[${characteristic.displayName}@${this.displayName}] ${message}`);
+        console.error(`[${originatorChain.join("@")}] ${message}`);
       } else {
-        console.warn(`[${characteristic.displayName}@${this.displayName}] ${message}`);
+        console.warn(`[${originatorChain.join("@")}] ${message}`);
       }
     }
   }
