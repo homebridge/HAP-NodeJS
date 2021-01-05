@@ -134,7 +134,7 @@ export interface ActiveAdaptiveLightingTransition {
   /**
    * It is not necessarily given, that we have the same time (or rather the correct time) as the HomeKit controller
    * who set up the transition schedule.
-   * Thus we record the delta between our current time and the the time send with the setup request.
+   * Thus we record the delta between our current time and the the time sent with the setup request.
    * <code>timeMillisOffset</code> is defined as <code>Date.now() - transitionStartMillis;</code>.
    * So in the case were we actually have a correct local time, it most likely will be positive (due to network latency).
    * But of course it can also be negative.
@@ -680,12 +680,18 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     }
   }
 
+  /**
+   * Retrieve the {@link AdaptiveLightingTransitionPoint} for the current timestamp.
+   * Returns undefined if the current transition schedule reached its end.
+   */
   public getCurrentAdaptiveLightingTransitionPoint(): AdaptiveLightingTransitionPoint | undefined {
     if (!this.activeTransition) {
       throw new Error("Cannot calculate current transition point if no transition is active!");
     }
 
+    // adjustedNow is the now() date corrected to the time of the initiating controller
     const adjustedNow = Date.now() - this.activeTransition.timeMillisOffset;
+    // "offset" since the start of the transition schedule
     const offset = adjustedNow - this.activeTransition.transitionStartMillis;
 
     let i = this.lastTransitionPointInfo?.curveIndex ?? 0;
@@ -708,7 +714,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
         if (offset <= lowerBoundTimeOffset + lowerBoundDuration + upperBound0.transitionTime) {
           lowerBound = lowerBound0;
           upperBound = upperBound0;
-          debug("[%s] Found transition point bounds: lower: " + lowerBound + " upper: " + upperBound, this.lightbulb.displayName);
+          debug("[%s] Found transition point bounds: lower: %o upper: %o", this.lightbulb.displayName, lowerBound, upperBound);
           break;
         }
       } else if (this.lastTransitionPointInfo) {
@@ -730,7 +736,10 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
 
     this.lastTransitionPointInfo = {
       curveIndex: i,
-      lowerBoundTimeOffset: lowerBoundTimeOffset,
+      // we need to subtract lowerBound.transitionTime. When we start the loop above
+      // with a saved transition point, we will always add lowerBound.transitionTime as first step.
+      // Otherwise our calculations are simply wrong.
+      lowerBoundTimeOffset: lowerBoundTimeOffset - lowerBound.transitionTime,
     };
 
     debug("[%s] Saved last transition point info: %o", this.lightbulb.displayName, JSON.stringify(this.lastTransitionPointInfo));
