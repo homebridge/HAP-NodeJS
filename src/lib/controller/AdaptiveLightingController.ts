@@ -699,10 +699,6 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     let lowerBound: AdaptiveLightingTransitionCurveEntry | undefined = undefined;
     let upperBound: AdaptiveLightingTransitionCurveEntry | undefined = undefined;
 
-    if (this.lastTransitionPointInfo) {
-      debug("[%s] We got a last transition point info: %o", this.lightbulb.displayName, this.lastTransitionPointInfo);
-    }
-
     for (; i + 1 < this.activeTransition.transitionCurve.length; i++) {
       const lowerBound0 = this.activeTransition.transitionCurve[i];
       const upperBound0 = this.activeTransition.transitionCurve[i + 1];
@@ -714,7 +710,6 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
         if (offset <= lowerBoundTimeOffset + lowerBoundDuration + upperBound0.transitionTime) {
           lowerBound = lowerBound0;
           upperBound = upperBound0;
-          debug("[%s] Found transition point bounds: lower: %o upper: %o", this.lightbulb.displayName, lowerBound, upperBound);
           break;
         }
       } else if (this.lastTransitionPointInfo) {
@@ -722,7 +717,6 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
         // This can only happen when we have a faulty lastTransitionPointInfo (otherwise we would start from i=0).
         // Thus we try again by searching from i=0
         this.lastTransitionPointInfo = undefined;
-        debug("[%s] Need to rescan adaptive lighting transition curve. Seems like searched point is before the last point!", this.lightbulb.displayName);
         return this.getCurrentAdaptiveLightingTransitionPoint();
       }
 
@@ -741,8 +735,6 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
       // Otherwise our calculations are simply wrong.
       lowerBoundTimeOffset: lowerBoundTimeOffset - lowerBound.transitionTime,
     };
-
-    debug("[%s] Saved last transition point info: %o", this.lightbulb.displayName, JSON.stringify(this.lastTransitionPointInfo));
 
     return {
       lowerBoundTimeOffset: lowerBoundTimeOffset,
