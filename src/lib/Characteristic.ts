@@ -237,7 +237,7 @@ import {
   WiFiConfigurationControl,
   WiFiSatelliteStatus,
 } from "./definitions";
-import { HAPStatus } from "./HAPServer";
+import { HAPStatus, IsKnownHAPStatusError } from "./HAPServer";
 import { IdentifierCache } from './model/IdentifierCache';
 import { Service } from "./Service";
 import { clone } from "./util/clone";
@@ -2146,7 +2146,7 @@ function extractHAPStatusFromError(error: Error) {
   if (numberPattern.test(error.message)) {
     const value = parseInt(error.message);
 
-    if (value >= HAPStatus.INSUFFICIENT_PRIVILEGES && value <= HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE) {
+	if (IsKnownHAPStatusError(value)) {
       errorValue = value;
     }
   }

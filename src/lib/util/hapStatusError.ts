@@ -1,4 +1,4 @@
-import { HAPStatus } from "../HAPServer";
+import { HAPStatus, IsKnownHAPStatusError } from "../HAPServer";
 
 /**
  * Throws a HAP status error that is sent back to HomeKit.
@@ -16,7 +16,7 @@ export class HapStatusError extends Error {
 
     Object.setPrototypeOf(this, HapStatusError.prototype);
 
-    if (status >= HAPStatus.INSUFFICIENT_PRIVILEGES && status <= HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE) {
+    if (IsKnownHAPStatusError(status)) {
       this.hapStatus = status;
     } else {
       this.hapStatus = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
