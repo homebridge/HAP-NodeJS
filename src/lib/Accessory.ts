@@ -1629,35 +1629,41 @@ export class Accessory extends EventEmitter {
     }
 
     if (data.ev != undefined) { // register/unregister event notifications
-      if (!characteristic.props.perms.includes(Perms.NOTIFY)) { // check if notify is allowed for this characteristic
-        debug('[%s] Tried enabling notifications for Characteristic which does not allow notify (aid of %s and iid of %s)', this.displayName, data.aid, data.iid);
-        return { status: HAPStatus.NOTIFICATION_NOT_SUPPORTED };
-      }
+      const notificationsEnabled = connection.hasEventNotifications(data.aid, data.iid);
 
-      if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.NOTIFY)) {
-        let verifiable = true;
-        if (!connection.username || !this._accessoryInfo) {
-          verifiable = false;
-          debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for notify (aid of %s and iid of %s)', this.displayName, data.aid, data.iid)
+      // it seems like the Home App sends unregister requests for characteristics which don't have notify permissions
+      // see https://github.com/homebridge/HAP-NodeJS/issues/868
+      if (notificationsEnabled != data.ev) {
+        if (!characteristic.props.perms.includes(Perms.NOTIFY)) { // check if notify is allowed for this characteristic
+          debug('[%s] Tried %s notifications for Characteristic which does not allow notify (aid of %s and iid of %s)',
+            this.displayName, data.ev? "enabling": "disabling", data.aid, data.iid);
+          return { status: HAPStatus.NOTIFICATION_NOT_SUPPORTED };
         }
 
-        if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(connection.username!)) {
-          return { status: HAPStatus.INSUFFICIENT_PRIVILEGES };
+        if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.NOTIFY)) {
+          let verifiable = true;
+          if (!connection.username || !this._accessoryInfo) {
+            verifiable = false;
+            debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for notify (aid of %s and iid of %s)', this.displayName, data.aid, data.iid)
+          }
+
+          if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(connection.username!)) {
+            return { status: HAPStatus.INSUFFICIENT_PRIVILEGES };
+          }
         }
-      }
 
-      if (data.ev && !connection.hasEventNotifications(data.aid, data.iid)) {
-        connection.enableEventNotifications(data.aid, data.iid);
-        characteristic.subscribe();
-        evResponse = true;
-        debug('[%s] Registered Characteristic "%s" on "%s" for events', connection.remoteAddress, characteristic.displayName, this.displayName);
-      }
-
-      if (!data.ev && connection.hasEventNotifications(data.aid, data.iid)) {
-        characteristic.unsubscribe();
-        connection.disableEventNotifications(data.aid, data.iid);
-        evResponse = false;
-        debug('[%s] Unregistered Characteristic "%s" on "%s" for events', connection.remoteAddress, characteristic.displayName, this.displayName);
+        // we already checked that data.ev != notificationsEnabled, thus just do whatever the connection asks for
+        if (data.ev) {
+          connection.enableEventNotifications(data.aid, data.iid);
+          characteristic.subscribe();
+          evResponse = true;
+          debug('[%s] Registered Characteristic "%s" on "%s" for events', connection.remoteAddress, characteristic.displayName, this.displayName);
+        } else {
+          characteristic.unsubscribe();
+          connection.disableEventNotifications(data.aid, data.iid);
+          evResponse = false;
+          debug('[%s] Unregistered Characteristic "%s" on "%s" for events', connection.remoteAddress, characteristic.displayName, this.displayName);
+        }
       }
       // response is returned below in the else block
     }
