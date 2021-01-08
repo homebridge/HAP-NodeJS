@@ -797,7 +797,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     temperature = Math.max(min, Math.min(max, temperature));
     const color = ColorUtils.colorTemperatureToHueAndSaturation(temperature);
 
-    debug("[%s] Next temperature value is %d (for brightness %d); transition point %o", this.lightbulb.displayName, temperature, adjustmentMultiplier, transitionPoint);
+    debug("[%s] Next temperature value is %d (for brightness %d)", this.lightbulb.displayName, temperature, adjustmentMultiplier);
 
     const context: AdaptiveLightingCharacteristicContext = {
       controller: this,
