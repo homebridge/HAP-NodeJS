@@ -107,7 +107,19 @@ export const enum HAPStatus {
   INSUFFICIENT_AUTHORIZATION = -70411,
   NOT_ALLOWED_IN_CURRENT_STATE = -70412,
 
-  // when adding new status codes, remember to change upper bound in extractHAPStatusFromError
+  // when adding new status codes, remember to update bounds in IsKnownHAPStatusError below
+}
+
+/**
+ * Determines if the given status code is a known {@link HAPStatus} error code.
+ */
+export function IsKnownHAPStatusError(status: HAPStatus): boolean {
+  return (
+    // Lower bound (most negative error code)
+    status >= HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE &&
+    // Upper bound (negative error code closest to zero)
+    status <= HAPStatus.INSUFFICIENT_PRIVILEGES
+  );
 }
 
 // noinspection JSUnusedGlobalSymbols
