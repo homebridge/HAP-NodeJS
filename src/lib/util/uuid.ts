@@ -29,8 +29,23 @@ export function isValid(UUID: string) {
   return VALID_UUID_REGEX.test(UUID);
 }
 
-// https://github.com/defunctzombie/node-uuid/blob/master/uuid.js
-export function unparse(buf: Buffer | string, offset: number = 0) {
+
+/**
+ * Returns the identity of the passed argument.
+ *
+ * @param buf - The string argument which is returned
+ * @deprecated Most certainly the API you are using this function with changed from returning a Buffer to returning
+ *  the actual uuid string. You can safely remove the call to unparse. Most certainly this call to unparse
+ *  is located in you CameraSource which you converted from the old style CameraSource API to the new CameraControllers.
+ */
+export function unparse(buf: string): string
+/**
+ * Parses the uuid as a string from the given Buffer.
+ *
+ * @param buf - The buffer to read from.
+ */
+export function unparse(buf: Buffer): string
+export function unparse(buf: Buffer | string): string {
   if (typeof buf === "string" && isValid(buf)) {
     /*
       This check was added to fix backwards compatibility with the old style CameraSource API.
@@ -45,8 +60,6 @@ export function unparse(buf: Buffer | string, offset: number = 0) {
      */
     return buf;
   }
-
-  let i = offset;
 
   return buf.toString("hex", 0, 4) + "-" +
     buf.toString("hex", 4, 6) + "-" +
