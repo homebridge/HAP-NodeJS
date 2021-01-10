@@ -40,11 +40,20 @@ describe("uuid", () => {
     });
 
     it("should read/write uuids from Buffer", () => {
-        let uuid = unparse(uuidBuffer);
+        const uuid = unparse(uuidBuffer);
         expect(uuid).toBe(uuidString);
 
-        let buffer = write(uuid);
+        const buffer = write(uuid);
         expect(buffer.toString("hex")).toBe(uuidBuffer.toString("hex"));
         expect(unparse(buffer)).toBe(uuid);
+    });
+
+    it("should read/write uuids from Buffer with offset", () => {
+        const buffer = Buffer.concat([Buffer.alloc(5, "A"), uuidBuffer]);
+        const uuid = unparse(buffer, 5);
+
+        const resultBuffer = Buffer.alloc(21, "FF", "hex")
+        write(uuid, resultBuffer, 5);
+        expect(resultBuffer.toString("hex")).toBe("ffffffffff" + uuidBuffer.toString("hex"));
     });
 })

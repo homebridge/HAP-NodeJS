@@ -41,11 +41,18 @@ export function isValid(UUID: string) {
 export function unparse(buf: string): string
 /**
  * Parses the uuid as a string from the given Buffer.
+ * The parser will use the first 8 bytes.
  *
  * @param buf - The buffer to read from.
  */
 export function unparse(buf: Buffer): string
-export function unparse(buf: Buffer | string): string {
+/**
+ * Parses the uuid as a string from the given Buffer at the specified offset.
+ * @param buf - The buffer to read from.
+ * @param offset - The offset in the buffer to start reading from.
+ */
+export function unparse(buf: Buffer, offset: number): string
+export function unparse(buf: Buffer | string, offset: number = 0): string {
   if (typeof buf === "string" && isValid(buf)) {
     /*
       This check was added to fix backwards compatibility with the old style CameraSource API.
@@ -61,15 +68,26 @@ export function unparse(buf: Buffer | string): string {
     return buf;
   }
 
-  return buf.toString("hex", 0, 4) + "-" +
-    buf.toString("hex", 4, 6) + "-" +
-    buf.toString("hex", 6, 8) + "-" +
-    buf.toString("hex", 8, 10) + "-" +
-    buf.toString("hex", 10, 16);
+  let i = offset;
+
+  return buf.toString("hex", i, (i += 4)) + "-" +
+    buf.toString("hex", i, (i += 2)) + "-" +
+    buf.toString("hex", i, (i += 2)) + "-" +
+    buf.toString("hex", i, (i += 2)) + "-" +
+    buf.toString("hex", i, i + 6);
 }
 
-export function write(uuid: string, buf: Buffer = Buffer.alloc(16), offset: number = 0): Buffer {
-  return Buffer.from(uuid.replace(/-/g, ""), "hex");
+export function write(uuid: string): Buffer
+export function write(uuid: string, buf: Buffer, offset: number): void
+export function write(uuid: string, buf?: Buffer, offset: number = 0): Buffer {
+  const buffer = Buffer.from(uuid.replace(/-/g, ""), "hex");
+
+  if (buf) {
+    buffer.copy(buf, offset)
+    return buf
+  } else {
+    return buffer
+  }
 }
 
 const SHORT_FORM_REGEX = /^0*([0-9a-f]{1,8})-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
