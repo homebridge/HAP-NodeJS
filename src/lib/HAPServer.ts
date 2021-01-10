@@ -307,6 +307,12 @@ export class HAPServer extends EventEmitter {
   }
 
   public listen(port: number = 0, host?: string): void {
+    if (host === "::") {
+      // this will workaround "EAFNOSUPPORT: address family not supported" errors
+      // on systems where IPv6 is not supported/enabled, we just use the node default then by supplying undefined
+      host = undefined
+    }
+
     this.httpServer.listen(port, host);
   }
 

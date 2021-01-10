@@ -2034,6 +2034,8 @@ export class Accessory extends EventEmitter {
       const entries: Set<InterfaceName | IPAddress> = new Set(Array.isArray(info.bind)? info.bind: [info.bind]);
 
       if (entries.has("::")) {
+        serverAddress = "::"
+
         entries.delete("::");
         if (entries.size) {
           advertiserAddress = Array.from(entries);
