@@ -1877,11 +1877,11 @@ export class Accessory extends EventEmitter {
 
   private static _generateSetupID(): string {
     const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const bytes = crypto.randomBytes(4);
+    const max = chars.length;
     let setupID = '';
 
     for (let i = 0; i < 4; i++) {
-      const index = bytes.readUInt8(i) % 26;
+      const index = Math.floor(Math.random() * max)
       setupID += chars.charAt(index);
     }
 
