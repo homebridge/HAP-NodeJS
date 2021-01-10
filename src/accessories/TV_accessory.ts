@@ -132,7 +132,7 @@ accessControl.on(AccessControlEvent.ACCESS_LEVEL_UPDATED, (level: AccessLevel) =
 });
 accessControl.on(AccessControlEvent.PASSWORD_SETTING_UPDATED, (password: string | undefined, passwordRequired: boolean) => {
   if (passwordRequired) {
-    console.log("Required password is: " + password);
+    console.log("A required password was specified");
   } else {
     console.log("No password set!");
   }
