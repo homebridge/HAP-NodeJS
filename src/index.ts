@@ -30,6 +30,12 @@ export * from './lib/util/time';
 export * from './types';
 export const LegacyTypes = legacyTypes;
 
+function printInit() {
+  const packageJson = require("../package.json");
+  console.log("Initializing HAP-NodeJS v" + packageJson.version + "...");
+}
+printInit()
+
 /**
  *
  * @param {string} storagePath
