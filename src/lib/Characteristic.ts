@@ -476,8 +476,8 @@ export const enum CharacteristicEventTypes {
 
 export type CharacteristicGetCallback = (status?: HAPStatus | null | Error, value?: Nullable<CharacteristicValue>) => void;
 export type CharacteristicSetCallback = (error?: HAPStatus | null | Error, writeResponse?: Nullable<CharacteristicValue>) => void;
-export type CharacteristicGetHandler = () => Promise<Nullable<CharacteristicValue>> | Nullable<CharacteristicValue>;
-export type CharacteristicSetHandler = (value: CharacteristicValue) => Promise<Nullable<CharacteristicValue> | void> | Nullable<CharacteristicValue> | void;
+export type CharacteristicGetHandler = (context: any, connection?: HAPConnection) => Promise<Nullable<CharacteristicValue>> | Nullable<CharacteristicValue>;
+export type CharacteristicSetHandler = (value: CharacteristicValue, context: any, connection?: HAPConnection) => Promise<Nullable<CharacteristicValue> | void> | Nullable<CharacteristicValue> | void;
 
 export type AdditionalAuthorizationHandler = (additionalAuthorizationData: string | undefined) => boolean;
 
@@ -931,8 +931,8 @@ export class Characteristic extends EventEmitter {
    * @param handler
    */
   public onGet(handler: CharacteristicGetHandler): Characteristic {
-    if (typeof handler !== 'function' || handler.length !== 0) {
-      this.characteristicWarning(`.onGet handler must be a function with exactly zero input arguments.`);
+    if (typeof handler !== 'function') {
+      this.characteristicWarning(`.onGet handler must be a function.`);
       return this;
     }
     this.getHandler = handler;
@@ -962,8 +962,8 @@ export class Characteristic extends EventEmitter {
    * @param handler
    */
   public onSet(handler: CharacteristicSetHandler): Characteristic {
-    if (typeof handler !== 'function' || handler.length !== 1) {
-      this.characteristicWarning(`.onSet handler must be a function with exactly one input argument.`);
+    if (typeof handler !== 'function') {
+      this.characteristicWarning(`.onSet handler must be a function.`);
       return this;
     }
     this.setHandler = handler;
@@ -1349,7 +1349,7 @@ export class Characteristic extends EventEmitter {
       }
 
       try {
-        let value = await this.getHandler();
+        let value = await this.getHandler(context, connection);
         this.statusCode = HAPStatus.SUCCESS;
         // noinspection JSDeprecatedSymbols
         this.status = null;
@@ -1480,7 +1480,7 @@ export class Characteristic extends EventEmitter {
       }
 
       try {
-        const writeResponse = await this.setHandler(value);
+        const writeResponse = await this.setHandler(value, context, connection);
         this.statusCode = HAPStatus.SUCCESS;
         // noinspection JSDeprecatedSymbols
         this.status = null;
