@@ -249,7 +249,7 @@ export interface AdaptiveLightingOptions {
    * You can choose between automatic and manual mode.
    * See {@link AdaptiveLightingControllerMode}.
    */
-  controllerMode: AdaptiveLightingControllerMode,
+  controllerMode?: AdaptiveLightingControllerMode,
   /**
    * Defines a custom temperature adjustment factor.
    *
@@ -259,7 +259,7 @@ export interface AdaptiveLightingOptions {
    * For example supplying a value of `-10` will reduce the ColorTemperature, which is
    * calculated from the transition schedule, by 10 mired for every change.
    */
-  customTemperatureAdjustment: number,
+  customTemperatureAdjustment?: number,
 }
 
 /**
