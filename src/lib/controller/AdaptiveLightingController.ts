@@ -250,6 +250,16 @@ export interface AdaptiveLightingOptions {
    * See {@link AdaptiveLightingControllerMode}.
    */
   controllerMode: AdaptiveLightingControllerMode,
+  /**
+   * Defines a custom temperature adjustment factor.
+   *
+   * This can be used to define a linear deviation from the HomeKit Controller defined
+   * ColorTemperature schedule.
+   *
+   * For example supplying a value of `-10` will reduce the ColorTemperature, which is
+   * calculated from the transition schedule, by 10 mired for every change.
+   */
+  customTemperatureAdjustment: number,
 }
 
 /**
@@ -408,6 +418,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
 
   private readonly lightbulb: Lightbulb;
   private readonly mode: AdaptiveLightingControllerMode;
+  private readonly customTemperatureAdjustment: number;
 
   private readonly adjustmentFactorChangedListener: (change: CharacteristicChange) => void;
   private readonly characteristicManualWrittenChangeListener: (change: CharacteristicChange) => void;
@@ -442,6 +453,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     super();
     this.lightbulb = service;
     this.mode = options?.controllerMode ?? AdaptiveLightingControllerMode.AUTOMATIC;
+    this.customTemperatureAdjustment = options?.customTemperatureAdjustment ?? 0;
 
     assert(this.lightbulb.testCharacteristic(Characteristic.ColorTemperature), "Lightbulb must have the ColorTemperature characteristic added!");
     assert(this.lightbulb.testCharacteristic(Characteristic.Brightness), "Lightbulb must have the Brightness characteristic added!");
@@ -792,12 +804,16 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
 
     let temperature = Math.round(interpolatedTemperature + interpolatedAdjustmentFactor * adjustmentMultiplier);
 
+    // apply any manually applied temperature adjustments
+    temperature += this.customTemperatureAdjustment
+
     const min = this.colorTemperatureCharacteristic?.props.minValue ?? 140;
     const max = this.colorTemperatureCharacteristic?.props.maxValue ?? 500;
     temperature = Math.max(min, Math.min(max, temperature));
     const color = ColorUtils.colorTemperatureToHueAndSaturation(temperature);
 
-    debug("[%s] Next temperature value is %d (for brightness %d)", this.lightbulb.displayName, temperature, adjustmentMultiplier);
+    debug("[%s] Next temperature value is %d (for brightness %d adj: %s)",
+      this.lightbulb.displayName, temperature, adjustmentMultiplier, this.customTemperatureAdjustment);
 
     const context: AdaptiveLightingCharacteristicContext = {
       controller: this,
