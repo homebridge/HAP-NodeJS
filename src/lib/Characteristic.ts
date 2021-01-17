@@ -1810,7 +1810,7 @@ export class Characteristic extends EventEmitter {
         } else if (type === "number") {
           return value === 1;
         } else if (type === "string") {
-          return value === "1";
+          return value === "1" || value === "true";
         } else {
           throw new Error("characteristic value expected boolean and received " + type);
         }
@@ -1819,7 +1819,7 @@ export class Characteristic extends EventEmitter {
         if (typeof value === "boolean") {
           value = value? 1: 0;
         } if (typeof value === "string") {
-          this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
+           // this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
           value = parseInt(value, 10);
         } else if (typeof value !== "number") {
           throw new Error("characteristic value expected number and received " + typeof value);
@@ -1834,7 +1834,7 @@ export class Characteristic extends EventEmitter {
         if (typeof value === "boolean") {
           value = value? 1: 0;
         } if (typeof value === "string") {
-          this.characteristicWarning(`characteristic was supplied illegal value: string instead of float. Supplying illegal values will throw errors in the future!`);
+          // this.characteristicWarning(`characteristic was supplied illegal value: string instead of float. Supplying illegal values will throw errors in the future!`);
           value = parseFloat(value);
         } else if (typeof value !== "number") {
           throw new Error("characteristic value expected float and received " + typeof value);
@@ -1853,7 +1853,7 @@ export class Characteristic extends EventEmitter {
         if (typeof value === "boolean") {
           value = value? 1: 0;
         } if (typeof value === "string") {
-          this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
+          // this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
           value = parseInt(value, 10);
         } else if (typeof value !== "number") {
           throw new Error("characteristic value expected number and received " + typeof value);
@@ -1868,7 +1868,7 @@ export class Characteristic extends EventEmitter {
         if (typeof value === "boolean") {
           value = value? 1: 0;
         } if (typeof value === "string") {
-          this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
+          // this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
           value = parseInt(value, 10);
         } else if (typeof value !== "number") {
           throw new Error("characteristic value expected number and received " + typeof value);
@@ -1883,7 +1883,7 @@ export class Characteristic extends EventEmitter {
         if (typeof value === "boolean") {
           value = value? 1: 0;
         } if (typeof value === "string") {
-          this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
+          // this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
           value = parseInt(value, 10);
         } else if (typeof value !== "number") {
           throw new Error("characteristic value expected number and received " + typeof value);
@@ -1898,7 +1898,7 @@ export class Characteristic extends EventEmitter {
         if (typeof value === "boolean") {
           value = value? 1: 0;
         } if (typeof value === "string") {
-          this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
+          // this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
           value = parseInt(value, 10);
         } else if (typeof value !== "number") {
           throw new Error("characteristic value expected number and received " + typeof value);
