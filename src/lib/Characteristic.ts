@@ -2055,7 +2055,7 @@ export class Characteristic extends EventEmitter {
     } else { // query the current value
       const value = contactGetHandlers
         ? await this.handleGetRequest(connection).catch(() => {
-          debug('[%s] Error getting value for characteristic on /accessories request', this.displayName);
+          debug('[%s] Error getting value for characteristic on /accessories request. Returning cached value instead: %s', this.displayName, `${this.value}`);
           return this.value; // use cached value
         })
         : this.value;
