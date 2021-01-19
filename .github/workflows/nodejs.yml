@@ -22,6 +22,10 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ matrix.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
       - name: npm install, build and test
         run: |
           npm ci
