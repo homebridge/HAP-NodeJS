@@ -66,6 +66,10 @@ jobs:
         with:
           node-version: 10 # use the minimum required version
           registry-url: https://registry.npmjs.org/
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ matrix.os }}-node-10-${{ hashFiles('**/package-lock.json') }}
       - run: npm ci
       - run: npm publish
         env:
