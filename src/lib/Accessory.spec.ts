@@ -99,12 +99,13 @@ describe('Accessory', () => {
 
       let handler = jest.fn();
       bridge.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, handler);
+      accessory.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, handler);
 
       let service = accessory.addService(Service.Lightbulb, "Light");
       let on = service.getCharacteristic(Characteristic.On);
 
       on.updateValue({});
-      expect(handler).toHaveBeenCalledTimes(1)
+      expect(handler).toHaveBeenCalledTimes(2)
     });
 
     it("should run without characteristic warning handler", () => {
