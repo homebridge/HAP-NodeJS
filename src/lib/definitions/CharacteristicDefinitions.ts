@@ -1,5 +1,5 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=859
+// V=860
 
 import { Characteristic, Formats, Perms, Units } from "../Characteristic";
 

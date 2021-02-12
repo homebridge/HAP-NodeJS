@@ -1,5 +1,5 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=859
+// V=860
 
 import { Characteristic } from "../Characteristic";
 import { Service } from "../Service";
