@@ -244,7 +244,12 @@ import { clone } from "./util/clone";
 import { HAPConnection } from "./util/eventedhttp";
 import { HapStatusError } from './util/hapStatusError';
 import { once } from './util/once';
-import { formatOutgoingCharacteristicValue } from "./util/request-util";
+import {
+  formatOutgoingCharacteristicValue, isIntegerNumericFormat, isNumericFormat,
+  isUnsignedNumericFormat,
+  numericLowerBound,
+  numericUpperBound
+} from "./util/request-util";
 import { toShortForm } from './util/uuid';
 
 const debug = createDebug("HAP-NodeJS:Characteristic");
@@ -295,20 +300,6 @@ export const enum Formats {
    * @deprecated Not contained in the HAP spec
    */
   DICTIONARY = 'dict',
-}
-
-function isNumericFormat(format: Formats | string): boolean {
-  switch (format) {
-    case Formats.INT:
-    case Formats.FLOAT:
-    case Formats.UINT8:
-    case Formats.UINT16:
-    case Formats.UINT32:
-    case Formats.UINT64:
-      return true;
-    default:
-      return false;
-  }
 }
 
 export const enum Units {
@@ -554,14 +545,8 @@ class ValidValuesIterable implements Iterable<number> {
         if (this.props.minStep != null) {
           stepValue = this.props.minStep;
         }
-      } else if (this.props.format === Formats.UINT8) {
-        max = 255;
-      } else if (this.props.format === Formats.UINT16) {
-        max = 65535;
-      } else if (this.props.format === Formats.UINT32) {
-        max = 4294967295;
-      } else if (this.props.format === Formats.UINT64) {
-        max = 18446744073709551615; // don't get fooled, javascript uses 18446744073709552000 here as number isn 64 bit integer
+      } else if (isUnsignedNumericFormat(this.props.format)) {
+        max = numericUpperBound(this.props.format)
       } else {
         throw new Error("Could not find valid iterator strategy for props: " + JSON.stringify(this.props));
       }
@@ -1007,9 +992,15 @@ export class Characteristic extends EventEmitter {
     if (props.minValue !== undefined) {
       if (props.minValue === null) {
         this.props.minValue = undefined;
-      } else if (!(this.props.format === Formats.INT || this.props.format === Formats.FLOAT)) {
+      } else if (!isNumericFormat(this.props.format)) {
         this.characteristicWarning(
-          "Characteristic Property `minValue` can only be set for characteristics with format `INT` or `FLOAT`, but not for " + this.props.format,
+          "Characteristic Property `minValue` can only be set for characteristics with numeric format, but not for " + this.props.format,
+          CharacteristicWarningType.ERROR_MESSAGE
+        )
+      } else if (isUnsignedNumericFormat(this.props.format) && props.minValue < numericLowerBound(this.props.format)) {
+        this.characteristicWarning(
+          "Characteristic Property `minValue` was set to " + props.minValue + ", but for numeric format " +
+          this.props.format + " minimum possible is " + numericLowerBound(this.props.format),
           CharacteristicWarningType.ERROR_MESSAGE
         )
       } else {
@@ -1019,9 +1010,15 @@ export class Characteristic extends EventEmitter {
     if (props.maxValue !== undefined) {
       if (props.maxValue === null) {
         this.props.maxValue = undefined
-      } else if (!(this.props.format === Formats.INT || this.props.format === Formats.FLOAT)) {
+      } else if (!isNumericFormat(this.props.format)) {
         this.characteristicWarning(
-          "Characteristic Property `maxValue` can only be set for characteristics with format `INT` or `FLOAT`, but not for " + this.props.format,
+          "Characteristic Property `maxValue` can only be set for characteristics with numeric format, but not for " + this.props.format,
+          CharacteristicWarningType.ERROR_MESSAGE
+        )
+      } else if (isUnsignedNumericFormat(this.props.format) && props.maxValue > numericUpperBound(this.props.format)) {
+        this.characteristicWarning(
+          "Characteristic Property `maxValue` was set to " + props.minValue + ", but for numeric format " +
+          this.props.format + " maximum possible is " + numericLowerBound(this.props.format),
           CharacteristicWarningType.ERROR_MESSAGE
         )
       } else {
@@ -1031,14 +1028,15 @@ export class Characteristic extends EventEmitter {
     if (props.minStep !== undefined) {
       if (props.minStep === null) {
         this.props.minStep = undefined;
-      } else if (!(this.props.format === Formats.INT || this.props.format === Formats.FLOAT)) {
+      } else if (!isNumericFormat(this.props.format)) {
         this.characteristicWarning(
-          "Characteristic Property `minStep` can only be set for characteristics with format `INT` or `FLOAT`, but not for " + this.props.format,
+          "Characteristic Property `minStep` can only be set for characteristics with numeric format, but not for " + this.props.format,
           CharacteristicWarningType.ERROR_MESSAGE
         )
       } else {
-        if (this.props.format === Formats.INT && props.minStep < 1) {
-          this.characteristicWarning("Characteristic Property `minStep` was set to a value lower than 1, this will have no effect on format `INT`!")
+        if (props.minStep < 1 && isIntegerNumericFormat(this.props.format)) {
+          this.characteristicWarning("Characteristic Property `minStep` was set to a value lower than 1, " +
+            "this will have no effect on format `" + this.props.format + "`!")
         }
 
         this.props.minStep = props.minStep;
@@ -1719,8 +1717,8 @@ export class Characteristic extends EventEmitter {
           return false;
         }
 
-        numericMin = maxWithUndefined(this.props.minValue, -2147483648);
-        numericMax = minWithUndefined(this.props.maxValue, 2147483647);
+        numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.INT));
+        numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(Formats.INT));
         break;
       case Formats.FLOAT:
         if (typeof value === "boolean") {
@@ -1743,8 +1741,8 @@ export class Characteristic extends EventEmitter {
           return false;
         }
 
-        numericMin = maxWithUndefined(this.props.minValue, 0);
-        numericMax = minWithUndefined(this.props.maxValue, 255);
+        numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.UINT8));
+        numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(Formats.UINT8));
         break;
       case Formats.UINT16:
         if (typeof value === "boolean") {
@@ -1753,8 +1751,8 @@ export class Characteristic extends EventEmitter {
           return false;
         }
 
-        numericMin = maxWithUndefined(this.props.minValue, 0);
-        numericMax = minWithUndefined(this.props.maxValue, 65535);
+        numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.UINT16));
+        numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(Formats.UINT16));
         break;
       case Formats.UINT32:
         if (typeof value === "boolean") {
@@ -1763,8 +1761,8 @@ export class Characteristic extends EventEmitter {
           return false;
         }
 
-        numericMin = maxWithUndefined(this.props.minValue, 0);
-        numericMax = minWithUndefined(this.props.maxValue, 4294967295);
+        numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.UINT32));
+        numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(Formats.UINT32));
         break;
       case Formats.UINT64:
         if (typeof value === "boolean") {
@@ -1773,8 +1771,8 @@ export class Characteristic extends EventEmitter {
           return false;
         }
 
-        numericMin = maxWithUndefined(this.props.minValue, 0);
-        numericMax = minWithUndefined(this.props.maxValue, 18446744073709551615); // don't get fooled, javascript uses 18446744073709552000 here
+        numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.UINT64));
+        numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(Formats.UINT64));
         break;
       case Formats.STRING: {
         if (typeof value !== "string") {
@@ -1889,8 +1887,8 @@ export class Characteristic extends EventEmitter {
           throw new Error("characteristic value expected number and received " + typeof value);
         }
 
-        numericMin = maxWithUndefined(this.props.minValue, -2147483648);
-        numericMax = minWithUndefined(this.props.maxValue, 2147483647);
+        numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.INT));
+        numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(Formats.INT));
         stepValue = maxWithUndefined(this.props.minStep, 1);
         break;
       }
@@ -1923,8 +1921,8 @@ export class Characteristic extends EventEmitter {
           throw new Error("characteristic value expected number and received " + typeof value);
         }
 
-        numericMin = maxWithUndefined(this.props.minValue, 0);
-        numericMax = minWithUndefined(this.props.maxValue, 255);
+        numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.UINT8));
+        numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(Formats.UINT8));
         stepValue = maxWithUndefined(this.props.minStep, 1);
         break;
       }
@@ -1938,8 +1936,8 @@ export class Characteristic extends EventEmitter {
           throw new Error("characteristic value expected number and received " + typeof value);
         }
 
-        numericMin = maxWithUndefined(this.props.minValue, 0);
-        numericMax = minWithUndefined(this.props.maxValue, 65535);
+        numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.UINT16));
+        numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(Formats.UINT16));
         stepValue = maxWithUndefined(this.props.minStep, 1);
         break;
       }
@@ -1953,8 +1951,8 @@ export class Characteristic extends EventEmitter {
           throw new Error("characteristic value expected number and received " + typeof value);
         }
 
-        numericMin = maxWithUndefined(this.props.minValue, 0);
-        numericMax = minWithUndefined(this.props.maxValue, 4294967295);
+        numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.UINT32));
+        numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(Formats.UINT32));
         stepValue = maxWithUndefined(this.props.minStep, 1);
         break;
       }
@@ -1968,8 +1966,8 @@ export class Characteristic extends EventEmitter {
           throw new Error("characteristic value expected number and received " + typeof value);
         }
 
-        numericMin = maxWithUndefined(this.props.minValue, 0);
-        numericMax = minWithUndefined(this.props.maxValue, 18446744073709551615); // don't get fooled, javascript uses 18446744073709552000 here
+        numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.UINT64));
+        numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(Formats.UINT64));
         stepValue = maxWithUndefined(this.props.minStep, 1);
         break;
       }
