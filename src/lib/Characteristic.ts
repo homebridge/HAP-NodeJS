@@ -997,6 +997,7 @@ export class Characteristic extends EventEmitter {
       assert(props.perms.length > 0, "characteristic prop perms cannot be empty array");
       this.props.perms = props.perms;
     }
+
     if (props.unit !== undefined) {
       this.props.unit = props.unit != null? props.unit: undefined;
     }
@@ -1004,39 +1005,97 @@ export class Characteristic extends EventEmitter {
       this.props.description = props.description != null? props.description: undefined;
     }
     if (props.minValue !== undefined) {
-      this.props.minValue = props.minValue != null? props.minValue: undefined;
+      if (props.minValue === null) {
+        this.props.minValue = undefined;
+      } else if (!(this.props.format === Formats.INT || this.props.format === Formats.FLOAT)) {
+        this.characteristicWarning(
+          "Characteristic Property `minValue` can only be set for characteristics with format `INT` or `FLOAT`, but not for " + this.props.format,
+          CharacteristicWarningType.ERROR_MESSAGE
+        )
+      } else {
+        this.props.minValue = props.minValue;
+      }
     }
     if (props.maxValue !== undefined) {
-      this.props.maxValue = props.maxValue != null? props.maxValue: undefined;
+      if (props.maxValue === null) {
+        this.props.maxValue = undefined
+      } else if (!(this.props.format === Formats.INT || this.props.format === Formats.FLOAT)) {
+        this.characteristicWarning(
+          "Characteristic Property `maxValue` can only be set for characteristics with format `INT` or `FLOAT`, but not for " + this.props.format,
+          CharacteristicWarningType.ERROR_MESSAGE
+        )
+      } else {
+        this.props.maxValue = props.maxValue;
+      }
     }
     if (props.minStep !== undefined) {
-      this.props.minStep = props.minStep != null? props.minStep: undefined;
+      if (props.minStep === null) {
+        this.props.minStep = undefined;
+      } else if (!(this.props.format === Formats.INT || this.props.format === Formats.FLOAT)) {
+        this.characteristicWarning(
+          "Characteristic Property `minStep` can only be set for characteristics with format `INT` or `FLOAT`, but not for " + this.props.format,
+          CharacteristicWarningType.ERROR_MESSAGE
+        )
+      } else {
+        if (this.props.format === Formats.INT && props.minStep < 1) {
+          this.characteristicWarning("Characteristic Property `minStep` was set to a value lower than 1, this will have no effect on format `INT`!")
+        }
+
+        this.props.minStep = props.minStep;
+      }
     }
     if (props.maxLen !== undefined) {
-      if (props.maxLen != null) {
+      if (props.maxLen === null) {
+        this.props.maxLen = undefined;
+      } else if (this.props.format !== Formats.STRING) {
+        this.characteristicWarning(
+          "Characteristic Property `maxLen` can only be set for characteristics with format `STRING`, but not for " + this.props.format,
+          CharacteristicWarningType.ERROR_MESSAGE
+        )
+      } else {
         if (props.maxLen > 256) {
-          this.characteristicWarning("setProps: string maxLen cannot be bigger than 256!");
+          this.characteristicWarning("Characteristic Property string `maxLen` cannot be bigger than 256!");
           props.maxLen = 256;
         }
         this.props.maxLen = props.maxLen;
-      } else {
-        this.props.maxLen = undefined;
       }
     }
     if (props.maxDataLen !== undefined) {
-      this.props.maxDataLen = props.maxDataLen != null? props.maxDataLen: undefined;
+      if (props.maxDataLen === null) {
+        this.props.maxDataLen = undefined;
+      } else if (this.props.format !== Formats.DATA) {
+        this.characteristicWarning(
+          "Characteristic Property `maxDataLen` can only be set for characteristics with format `DATA`, but not for " + this.props.format,
+          CharacteristicWarningType.ERROR_MESSAGE
+        )
+      } else {
+        this.props.maxDataLen = props.maxDataLen;
+      }
     }
     if (props.validValues !== undefined) {
-      assert(props.validValues.length, "characteristic prop validValues cannot be empty array");
-      this.props.validValues = props.validValues != null? props.validValues: undefined;
+      if (props.validValues === null) {
+        this.props.validValues = undefined;
+      } else if (!isNumericFormat(this.props.format)) {
+        this.characteristicWarning("Characteristic Property `validValues` was supplied for non numeric format " + this.props.format)
+      } else {
+        assert(props.validValues.length, "characteristic prop validValues cannot be empty array");
+        this.props.validValues = props.validValues;
+      }
     }
     if (props.validValueRanges !== undefined) {
-      assert(props.validValueRanges.length === 2, "characteristic prop validValueRanges must have a length of 2");
-      this.props.validValueRanges = props.validValueRanges != null? props.validValueRanges: undefined;
+      if (props.validValueRanges === null) {
+        this.props.validValueRanges = undefined;
+      } else if (!isNumericFormat(this.props.format)) {
+        this.characteristicWarning("Characteristic Property `validValueRanges` was supplied for non numeric format " + this.props.format)
+      } else {
+        assert(props.validValueRanges.length === 2, "characteristic prop validValueRanges must have a length of 2");
+        this.props.validValueRanges = props.validValueRanges;
+      }
     }
     if (props.adminOnlyAccess !== undefined) {
       this.props.adminOnlyAccess = props.adminOnlyAccess != null? props.adminOnlyAccess: undefined;
     }
+
 
     if (this.props.minValue != null && this.props.maxValue != null) { // the eqeq instead of eqeqeq is important here
       if (this.props.minValue > this.props.maxValue) { // see https://github.com/homebridge/HAP-NodeJS/issues/690

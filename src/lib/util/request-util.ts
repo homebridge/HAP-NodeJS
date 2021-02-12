@@ -21,8 +21,6 @@ export function formatOutgoingCharacteristicValue(value: Nullable<Characteristic
       return value;
     }
 
-    let decimalLength = props.minStep.toString().split(".")[1].length;
-
     const base = props.minValue ?? 0;
     const inverse = 1 / props.minStep;
 
