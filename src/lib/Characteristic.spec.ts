@@ -520,7 +520,7 @@ describe('Characteristic', () => {
   describe('#serialize', () => {
     it('should serialize characteristic', () => {
       const props: CharacteristicProps = {
-        format: Formats.STRING,
+        format: Formats.INT,
         perms: [Perms.TIMED_WRITE, Perms.PAIRED_READ],
         unit: Units.LUX,
         maxValue: 1234,
@@ -561,7 +561,7 @@ describe('Characteristic', () => {
   describe('#deserialize', () => {
     it('should deserialize legacy json from homebridge', () => {
       const json = JSON.parse('{"displayName": "On", "UUID": "00000025-0000-1000-8000-0026BB765291", ' +
-          '"props": {"format": "bool", "unit": "seconds", "minValue": 4, "maxValue": 6, "minStep": 0.1, "perms": ["pr", "pw", "ev"]}, ' +
+          '"props": {"format": "int", "unit": "seconds", "minValue": 4, "maxValue": 6, "minStep": 0.1, "perms": ["pr", "pw", "ev"]}, ' +
           '"value": false, "eventOnlyCharacteristic": false}');
       const characteristic = Characteristic.deserialize(json);
 
@@ -576,7 +576,7 @@ describe('Characteristic', () => {
         displayName: "MyName",
         UUID: "00000001-0000-1000-8000-0026BB765291",
         props: {
-          format: Formats.STRING,
+          format: Formats.INT,
           perms: [Perms.TIMED_WRITE, Perms.PAIRED_READ],
           unit: Units.LUX,
           maxValue: 1234,
