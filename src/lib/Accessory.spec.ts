@@ -1,5 +1,5 @@
 import {
-  Accessory,
+  Accessory, AccessoryEventTypes, Bridge,
   Categories,
   Characteristic,
   CharacteristicEventTypes,
@@ -75,6 +75,44 @@ describe('Accessory', () => {
       expect(() => {
         new Accessory('Test', 'test');
       }).toThrow('not a valid UUID');
+    });
+  });
+
+  describe("characteristicWarning", () => {
+    it("should emit characteristic warning", () => {
+      let accessory = new Accessory("Test Accessory", uuid.generate("Test"));
+      let handler = jest.fn();
+      accessory.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, handler);
+
+      let service = accessory.addService(Service.Lightbulb, "Light");
+      let on = service.getCharacteristic(Characteristic.On);
+
+      on.updateValue({});
+      expect(handler).toHaveBeenCalledTimes(1)
+    });
+
+    it("should forward characteristic on bridged accessory", () => {
+      let bridge = new Bridge("Test bridge", uuid.generate("bridge test"));
+
+      let accessory = new Accessory("Test Accessory", uuid.generate("Test"));
+      bridge.addBridgedAccessory(accessory);
+
+      let handler = jest.fn();
+      bridge.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, handler);
+
+      let service = accessory.addService(Service.Lightbulb, "Light");
+      let on = service.getCharacteristic(Characteristic.On);
+
+      on.updateValue({});
+      expect(handler).toHaveBeenCalledTimes(1)
+    });
+
+    it("should run without characteristic warning handler", () => {
+      let accessory = new Accessory("Test Accessory", uuid.generate("Test"));
+      let service = accessory.addService(Service.Lightbulb, "Light");
+      let on = service.getCharacteristic(Characteristic.On);
+
+      on.updateValue({});
     });
   });
 

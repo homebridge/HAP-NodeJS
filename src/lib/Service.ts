@@ -3,7 +3,7 @@ import createDebug from "debug";
 import { EventEmitter } from "events";
 import { ServiceJsonObject } from "../internal-types";
 import { CharacteristicValue, Nullable, WithUUID } from '../types';
-import { CharacteristicWarningType } from "./Accessory";
+import { CharacteristicWarning, CharacteristicWarningType } from "./Accessory";
 import {
   Characteristic,
   CharacteristicChange,
@@ -128,11 +128,11 @@ export const enum ServiceEventTypes {
 export declare interface Service {
   on(event: "characteristic-change", listener: (change: ServiceCharacteristicChange) => void): this;
   on(event: "service-configurationChange", listener: () => void): this;
-  on(event: "characteristic-warning", listener: (characteristic: Characteristic, type: CharacteristicWarningType, message: string, originatorChain: string[]) => void): this;
+  on(event: "characteristic-warning", listener: (warning: CharacteristicWarning) => void): this;
 
   emit(event: "characteristic-change", change: ServiceCharacteristicChange): boolean;
   emit(event: "service-configurationChange"): boolean;
-  emit(event: "characteristic-warning", characteristic: Characteristic, type: CharacteristicWarningType, message: string, originatorChain: string[]): boolean;
+  emit(event: "characteristic-warning", warning: CharacteristicWarning): boolean;
 }
 
 /**
@@ -675,8 +675,14 @@ export class Service extends EventEmitter {
   /**
    * @private
    */
-  private emitCharacteristicWarningEvent(characteristic: Characteristic, type: CharacteristicWarningType, message: string): void {
-    this.emit(ServiceEventTypes.CHARACTERISTIC_WARNING, characteristic, type, message, [this.displayName, characteristic.displayName]);
+  private emitCharacteristicWarningEvent(characteristic: Characteristic, type: CharacteristicWarningType, message: string, stack?: string): void {
+    this.emit(ServiceEventTypes.CHARACTERISTIC_WARNING, {
+      characteristic: characteristic,
+      type: type,
+      message: message,
+      originatorChain: [this.displayName, characteristic.displayName],
+      stack: stack,
+    })
   }
 
   /**

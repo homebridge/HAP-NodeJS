@@ -162,6 +162,14 @@ export const enum CharacteristicWarningType {
   ERROR_MESSAGE = "error-message",
 }
 
+export interface CharacteristicWarning {
+  characteristic: Characteristic,
+  type: CharacteristicWarningType,
+  message: string,
+  originatorChain: string[],
+  stack?: string,
+}
+
 /**
  * @deprecated
  */
@@ -294,7 +302,7 @@ export const enum AccessoryEventTypes {
   PAIRED = "paired",
   UNPAIRED = "unpaired",
 
-  CHARACTERISTIC_WARNING = "characteristic-warning-v2",
+  CHARACTERISTIC_WARNING = "characteristic-warning",
 }
 
 export declare interface Accessory {
@@ -307,7 +315,7 @@ export declare interface Accessory {
   on(event: "paired", listener: () => void): this;
   on(event: "unpaired", listener: () => void): this;
 
-  on(event: "characteristic-warning-v2", listener: (characteristic: Characteristic, type: CharacteristicWarningType, message: string, originatorChain: string[]) => void): this;
+  on(event: "characteristic-warning", listener: (warning: CharacteristicWarning) => void): this;
 
 
   emit(event: "identify", paired: boolean, callback: VoidCallback): boolean;
@@ -319,7 +327,7 @@ export declare interface Accessory {
   emit(event: "paired"): boolean;
   emit(event: "unpaired"): boolean;
 
-  emit(event: "characteristic-warning-v2", characteristic: Characteristic, type: CharacteristicWarningType, message: string, originatorChain: string[]): boolean;
+  emit(event: "characteristic-warning", warning: CharacteristicWarning): boolean;
 }
 
 /**
@@ -1383,7 +1391,7 @@ export class Accessory extends EventEmitter {
 
         const accessory = this.getAccessoryByAID(aid)!;
         const characteristic = accessory.getCharacteristicByIID(iid)!;
-        this.handleCharacteristicWarning(characteristic, CharacteristicWarningType.SLOW_READ, "The read handler for the characteristic '" +
+        this.sendCharacteristicWarning(characteristic, CharacteristicWarningType.SLOW_READ, "The read handler for the characteristic '" +
           characteristic.displayName + "' on the accessory '" + accessory.displayName + "' was slow to respond!");
       }
 
@@ -1398,7 +1406,7 @@ export class Accessory extends EventEmitter {
 
           const accessory = this.getAccessoryByAID(aid)!;
           const characteristic = accessory.getCharacteristicByIID(iid)!;
-          this.handleCharacteristicWarning(characteristic, CharacteristicWarningType.TIMEOUT_READ, "The read handler for the characteristic '" +
+          this.sendCharacteristicWarning(characteristic, CharacteristicWarningType.TIMEOUT_READ, "The read handler for the characteristic '" +
             characteristic.displayName + "' on the accessory '" + accessory.displayName + "' didn't respond at all!. Please check that you properly call the callback!");
 
           characteristics.push({
@@ -1548,7 +1556,7 @@ export class Accessory extends EventEmitter {
 
         const accessory = this.getAccessoryByAID(aid)!;
         const characteristic = accessory.getCharacteristicByIID(iid)!;
-        this.handleCharacteristicWarning(characteristic, CharacteristicWarningType.SLOW_WRITE, "The write handler for the characteristic '" +
+        this.sendCharacteristicWarning(characteristic, CharacteristicWarningType.SLOW_WRITE, "The write handler for the characteristic '" +
           characteristic.displayName + "' on the accessory '" + accessory.displayName + "' was slow to respond!");
       }
 
@@ -1563,7 +1571,7 @@ export class Accessory extends EventEmitter {
 
           const accessory = this.getAccessoryByAID(aid)!;
           const characteristic = accessory.getCharacteristicByIID(iid)!;
-          this.handleCharacteristicWarning(characteristic, CharacteristicWarningType.TIMEOUT_WRITE, "The write handler for the characteristic '" +
+          this.sendCharacteristicWarning(characteristic, CharacteristicWarningType.TIMEOUT_WRITE, "The write handler for the characteristic '" +
             characteristic.displayName + "' on the accessory '" + accessory.displayName + "' didn't respond at all!. Please check that you properly call the callback!");
 
           characteristics.push({
@@ -1835,18 +1843,30 @@ export class Accessory extends EventEmitter {
     }
   }
 
-  private handleCharacteristicWarning(characteristic: Characteristic, type: CharacteristicWarningType, message: string, originatorChain?: string[]): void {
-    if (!originatorChain) {
-      originatorChain = [characteristic.displayName]; // we are missing the service displayName, but that's okay
-    }
+  private sendCharacteristicWarning(characteristic: Characteristic, type: CharacteristicWarningType, message: string): void {
+    this.handleCharacteristicWarning({
+      characteristic: characteristic,
+      type: type,
+      message: message,
+      originatorChain: [characteristic.displayName], // we are missing the service displayName, but that's okay
+      stack: new Error().stack,
+    });
+  }
 
-    const emitted = this.emit(AccessoryEventTypes.CHARACTERISTIC_WARNING, characteristic, type, message, [this.displayName, ...originatorChain]);
+  private handleCharacteristicWarning(warning: CharacteristicWarning): void {
+    warning.originatorChain = [this.displayName, ...warning.originatorChain];
+
+    const emitted = this.emit(AccessoryEventTypes.CHARACTERISTIC_WARNING, warning);
     if (!emitted) {
-      if (type === CharacteristicWarningType.ERROR_MESSAGE || type === CharacteristicWarningType.TIMEOUT_READ || type === CharacteristicWarningType.TIMEOUT_WRITE) {
-        console.error(`[${originatorChain.join("@")}] ${message}`);
+      let message = `[${warning.originatorChain.join("@")}] ${warning.message}`
+
+      if (warning.type === CharacteristicWarningType.ERROR_MESSAGE
+        || warning.type === CharacteristicWarningType.TIMEOUT_READ|| warning.type === CharacteristicWarningType.TIMEOUT_WRITE) {
+        console.error(message);
       } else {
-        console.warn(`[${originatorChain.join("@")}] ${message}`);
+        console.warn(message);
       }
+      debug("[%s] Above characteristic warning was thrown at: %s", this.displayName, warning.stack ?? "unknown")
     }
   }
 

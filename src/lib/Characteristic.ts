@@ -497,7 +497,7 @@ export declare interface Characteristic {
   /**
    * @private
    */
-  on(event: "characteristic-warning", listener: (type: CharacteristicWarningType, message: string) => void): this;
+  on(event: "characteristic-warning", listener: (type: CharacteristicWarningType, message: string, stack?: string) => void): this;
 
   /**
    * @private
@@ -522,7 +522,7 @@ export declare interface Characteristic {
   /**
    * @private
    */
-  emit(event: "characteristic-warning", type: CharacteristicWarningType, message: string): boolean;
+  emit(event: "characteristic-warning", type: CharacteristicWarningType, message: string, stack?: string): boolean;
 
 }
 
@@ -2054,7 +2054,7 @@ export class Characteristic extends EventEmitter {
   }
 
   private characteristicWarning(message: string, type = CharacteristicWarningType.WARN_MESSAGE): void {
-    this.emit(CharacteristicEventTypes.CHARACTERISTIC_WARNING, type, message);
+    this.emit(CharacteristicEventTypes.CHARACTERISTIC_WARNING, type, message, new Error().stack);
   }
 
   /**
