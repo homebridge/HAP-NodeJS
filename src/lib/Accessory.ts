@@ -1351,7 +1351,7 @@ export class Accessory extends EventEmitter {
     this._assignIDs(this._identifierCache!); // make sure our aid/iid's are all assigned
 
     const now = Date.now();
-    const contactGetHandlers = now - this.lastAccessoriesRequest > 40_000; // we query latest value if last /accessories was more than 40s ago
+    const contactGetHandlers = now - this.lastAccessoriesRequest > 5_000; // we query latest value if last /accessories was more than 5s ago
     this.lastAccessoriesRequest = now;
 
     this.toHAP(connection, contactGetHandlers).then(value => {
