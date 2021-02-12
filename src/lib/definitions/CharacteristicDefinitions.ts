@@ -1,7 +1,7 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
 // V=860
 
-import { Characteristic, Formats, Perms, Units } from "../Characteristic";
+import { Access, Characteristic, Formats, Perms, Units } from "../Characteristic";
 
 /**
  * Characteristic "Access Control Level"
@@ -94,7 +94,6 @@ export class ActiveIdentifier extends Characteristic {
     super("Active Identifier", ActiveIdentifier.UUID, {
       format: Formats.UINT32,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-      minValue: 0,
     });
     this.value = this.getDefaultValue();
   }
@@ -296,6 +295,7 @@ export class ButtonEvent extends Characteristic {
     super("Button Event", ButtonEvent.UUID, {
       format: Formats.TLV8,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      adminOnlyAccess: [Access.NOTIFY],
     });
     this.value = this.getDefaultValue();
   }
@@ -993,7 +993,7 @@ export class CurrentSlatState extends Characteristic {
       format: Formats.UINT8,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ],
       minValue: 0,
-      maxValue: 3,
+      maxValue: 2,
       minStep: 1,
       validValues: [0, 1, 2],
     });
@@ -1117,7 +1117,7 @@ export class CurrentVisibilityState extends Characteristic {
       format: Formats.UINT8,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ],
       minValue: 0,
-      maxValue: 3,
+      maxValue: 1,
       minStep: 1,
       validValues: [0, 1],
     });
@@ -1270,7 +1270,7 @@ export class DisplayOrder extends Characteristic {
   constructor() {
     super("Display Order", DisplayOrder.UUID, {
       format: Formats.TLV8,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
     });
     this.value = this.getDefaultValue();
   }
@@ -1307,8 +1307,10 @@ export class EventSnapshotsActive extends Characteristic {
 
   constructor() {
     super("Event Snapshots Active", EventSnapshotsActive.UUID, {
-      format: Formats.BOOL,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.TIMED_WRITE],
+      format: Formats.UINT8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      minValue: 0,
+      maxValue: 1,
       validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
@@ -1514,8 +1516,10 @@ export class HomeKitCameraActive extends Characteristic {
 
   constructor() {
     super("HomeKit Camera Active", HomeKitCameraActive.UUID, {
-      format: Formats.BOOL,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.TIMED_WRITE],
+      format: Formats.UINT8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      minValue: 0,
+      maxValue: 1,
       validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
@@ -1555,7 +1559,6 @@ export class Identifier extends Characteristic {
     super("Identifier", Identifier.UUID, {
       format: Formats.UINT32,
       perms: [Perms.PAIRED_READ],
-      minValue: 0,
     });
     this.value = this.getDefaultValue();
   }
@@ -1638,7 +1641,7 @@ export class InputDeviceType extends Characteristic {
       minValue: 0,
       maxValue: 6,
       minStep: 1,
-      validValues: [0, 1, 2, 3, 4, 5],
+      validValues: [0, 1, 2, 3, 4, 5, 6],
     });
     this.value = this.getDefaultValue();
   }
@@ -1715,7 +1718,7 @@ export class IsConfigured extends Characteristic {
   constructor() {
     super("Is Configured", IsConfigured.UUID, {
       format: Formats.UINT8,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
       minValue: 0,
       maxValue: 1,
       minStep: 1,
@@ -2361,7 +2364,7 @@ export class PairingFeatures extends Characteristic {
   constructor() {
     super("Pairing Features", PairingFeatures.UUID, {
       format: Formats.UINT8,
-      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      perms: [Perms.PAIRED_READ],
     });
     this.value = this.getDefaultValue();
   }
@@ -2431,8 +2434,8 @@ export class PeriodicSnapshotsActive extends Characteristic {
 
   constructor() {
     super("Periodic Snapshots Active", PeriodicSnapshotsActive.UUID, {
-      format: Formats.BOOL,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.TIMED_WRITE],
+      format: Formats.UINT8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
       validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
@@ -2463,7 +2466,7 @@ export class PictureMode extends Characteristic {
       minValue: 0,
       maxValue: 13,
       minStep: 1,
-      validValues: [0, 1, 2, 3, 4, 5, 6, 7],
+      validValues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
     });
     this.value = this.getDefaultValue();
   }
@@ -2885,7 +2888,7 @@ export class RemoteKey extends Characteristic {
       minValue: 0,
       maxValue: 16,
       minStep: 1,
-      validValues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15],
+      validValues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
     });
     this.value = this.getDefaultValue();
   }
@@ -3178,7 +3181,7 @@ export class ServiceLabelNamespace extends Characteristic {
       format: Formats.UINT8,
       perms: [Perms.PAIRED_READ],
       minValue: 0,
-      maxValue: 4,
+      maxValue: 1,
       minStep: 1,
       validValues: [0, 1],
     });
@@ -3292,7 +3295,7 @@ export class SiriInputType extends Characteristic {
       format: Formats.UINT8,
       perms: [Perms.PAIRED_READ],
       minValue: 0,
-      maxValue: 1,
+      maxValue: 0,
       validValues: [0],
     });
     this.value = this.getDefaultValue();
@@ -3868,6 +3871,7 @@ export class TargetControlList extends Characteristic {
     super("Target Control List", TargetControlList.UUID, {
       format: Formats.TLV8,
       perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
+      adminOnlyAccess: [Access.READ, Access.WRITE],
     });
     this.value = this.getDefaultValue();
   }
@@ -4256,7 +4260,7 @@ export class ThirdPartyCameraActive extends Characteristic {
 
   constructor() {
     super("Third Party Camera Active", ThirdPartyCameraActive.UUID, {
-      format: Formats.BOOL,
+      format: Formats.UINT8,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ],
       validValues: [0, 1],
     });

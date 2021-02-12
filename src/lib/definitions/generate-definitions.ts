@@ -3,7 +3,7 @@ import { Command } from "commander";
 import fs from "fs";
 import path from "path";
 import plist from "simple-plist";
-import { Characteristic, Formats, Units } from "../Characteristic";
+import { Access, Characteristic, Formats, Units } from "../Characteristic";
 import { toLongForm } from "../util/uuid";
 import {
   CharacteristicClassAdditions,
@@ -126,6 +126,8 @@ export interface GeneratedCharacteristic {
   validValues?: Record<string, string>; // <value, key>
   validBitMasks?: Record<string, string>;
 
+  adminOnlyAccess?: Access[],
+
   classAdditions?: string[],
 }
 
@@ -214,7 +216,7 @@ characteristicOutput.write("// THIS FILE IS AUTO-GENERATED - DO NOT MODIFY\n");
 characteristicOutput.write(`// V=${plistData.Version}\n`);
 characteristicOutput.write("\n");
 
-characteristicOutput.write("import { Characteristic, Formats, Perms, Units } from \"../Characteristic\";\n\n");
+characteristicOutput.write("import { Access, Characteristic, Formats, Perms, Units } from \"../Characteristic\";\n\n");
 
 /**
  * Characteristics
@@ -336,6 +338,9 @@ for (const generated of Object.values(generatedCharacteristics)
     let validValuesEntries = Object.entries(generated.validValues ?? {})
     if (validValuesEntries.length) {
       for (let [value, name] of validValuesEntries) {
+        if (!name) {
+          continue
+        }
         characteristicOutput.write(`  public static readonly ${name} = ${value};\n`);
       }
       characteristicOutput.write("\n");
@@ -368,6 +373,10 @@ for (const generated of Object.values(generatedCharacteristics)
     }
     if (validValuesEntries.length) {
       characteristicOutput.write("      validValues: [" + Object.keys(generated.validValues!).join(", ") + "],\n")
+    }
+    if (generated.adminOnlyAccess) {
+      characteristicOutput.write("      adminOnlyAccess: ["
+        + generated.adminOnlyAccess.map(value => "Access." + characteristicAccess(value)).join(", ") + "],\n")
     }
     characteristicOutput.write("    });\n");
     characteristicOutput.write("    this.value = this.getDefaultValue();\n");
@@ -585,6 +594,17 @@ function characteristicUnit(unit: string): string {
   }
 
   throw new Error("Unknown characteristic format '" + unit + "'");
+}
+
+function characteristicAccess(access: number): string {
+  // @ts-expect-error
+  for (const [key, value] of Object.entries(Access)) {
+    if (value === access) {
+      return key;
+    }
+  }
+
+  throw new Error("Unknown access for '" + access + "'");
 }
 
 function characteristicPerm(id: string): string | undefined {

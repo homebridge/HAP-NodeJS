@@ -1,4 +1,5 @@
 import assert from "assert";
+import { Access } from "../Characteristic";
 import { GeneratedCharacteristic, GeneratedService } from "./generate-definitions";
 
 const enum PropertyId {
@@ -95,6 +96,91 @@ export const CharacteristicOverriding: Map<string, (generated: GeneratedCharacte
     // As of legacy compatibility we just add that permission and tackle that problem later in a TVController (or something).
     generated.properties |= PropertyId.WRITE;
   }],
+  ["is-configured", generated => {
+    // write permission on is configured is optional (out of history it was present with HAP-NodeJS)
+    // if the HomeKit controller is able to change the configured state, it can be set to write.
+    generated.properties |= PropertyId.WRITE;
+  }],
+  ["display-order", generated => {
+    // write permission on display order is optional (out of history it was present with HAP-NodeJS)
+    // if the HomeKit controller is able to change the configured state, it can be set to write.
+    generated.properties |= PropertyId.WRITE;
+  }],
+  ["button-event", generated => {
+    generated.adminOnlyAccess = [Access.NOTIFY];
+  }],
+  ["target-list", generated => {
+    generated.adminOnlyAccess = [Access.READ, Access.WRITE];
+  }],
+  ["slat.state.current", generated => {
+    generated.maxValue = 2
+  }],
+  ["event-snapshots-active", generated => {
+    generated.format = "uint8";
+    generated.minValue = 0;
+    generated.maxValue = 1;
+    generated.properties &= ~PropertyId.TIMED_WRITE;
+  }],
+  ["homekit-camera-active", generated => {
+    generated.format = "uint8";
+    generated.minValue = 0;
+    generated.maxValue = 1;
+    generated.properties &= ~PropertyId.TIMED_WRITE;
+  }],
+  ["periodic-snapshots-active", generated => {
+    generated.format = "uint8";
+    generated.properties &= ~PropertyId.TIMED_WRITE;
+  }],
+  ["third-party-camera-active", generated => {
+    generated.format = "uint8";
+
+  }],
+  ["input-device-type", generated => {
+    // @ts-ignore
+    generated.validValues[6] = null;
+  }],
+  ["pairing-features", generated => {
+    generated.properties &= ~PropertyId.WRITE;
+  }],
+  ["picture-mode", generated => {
+    // @ts-ignore
+    generated.validValues[8] = null;
+    // @ts-ignore
+    generated.validValues[9] = null;
+    // @ts-ignore
+    generated.validValues[10] = null;
+    // @ts-ignore
+    generated.validValues[11] = null;
+    // @ts-ignore
+    generated.validValues[12] = null;
+    // @ts-ignore
+    generated.validValues[13] = null;
+  }],
+  ["remote-key", generated => {
+    // @ts-ignore
+    generated.validValues[12] = null;
+    // @ts-ignore
+    generated.validValues[13] = null;
+    // @ts-ignore
+    generated.validValues[14] = null;
+    // @ts-ignore
+    generated.validValues[16] = null;
+  }],
+  ["service-label-namespace", generated => {
+    generated.maxValue = 1;
+  }],
+  ["siri-input-type", generated => {
+    generated.maxValue = 0;
+  }],
+  ["visibility-state.current", generated => {
+    generated.maxValue = 1;
+  }],
+  ["active-identifier", generated => {
+    generated.minValue = undefined;
+  }],
+  ["identifier", generated => {
+    generated.minValue = undefined;
+  }]
 ])
 
 export const CharacteristicManualAdditions: Map<string, GeneratedCharacteristic> = new Map([
