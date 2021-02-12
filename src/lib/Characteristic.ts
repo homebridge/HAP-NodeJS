@@ -1361,7 +1361,7 @@ export class Characteristic extends EventEmitter {
           this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
           // noinspection JSDeprecatedSymbols
           this.status = error;
-          return Promise.reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+          return Promise.reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
         }
 
         const oldValue = this.value;
@@ -1394,8 +1394,13 @@ export class Characteristic extends EventEmitter {
     if (this.listeners(CharacteristicEventTypes.GET).length === 0) {
       if (this.statusCode) {
         throw this.statusCode;
-      } else {
-        return this.value;
+      }
+
+      try {
+        return this.validateUserInput(this.value);
+      } catch (error) {
+        this.characteristicWarning(`An illegal value was supplied by setting \`value\` for characteristic: ${error.stack}`);
+        return Promise.reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       }
     }
 
