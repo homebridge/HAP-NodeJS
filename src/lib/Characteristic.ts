@@ -1227,9 +1227,9 @@ export class Characteristic extends EventEmitter {
    * This updates the value of the characteristic. If the value changed, a event notification will be sent to all connected
    * HomeKit controllers which are registered to receive event notifications for this characteristic.
    *
-   * @param value - The new value.
+   * @param value - The new value or a `Error` or {@link HapStatusError}.
    */
-  updateValue(value: Nullable<CharacteristicValue>): Characteristic;
+  updateValue(value: Nullable<CharacteristicValue> | Error | HapStatusError): Characteristic;
   /**
    * Sets the state of the characteristic to an errored state.
    * If a onGet or GET handler is set up, the errored state will be ignored and the characteristic
