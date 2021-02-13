@@ -257,10 +257,25 @@ export interface PublishInfo {
    */
   addIdentifyingMaterial?: boolean;
   /**
+   * Defines the advertiser used with the published Accessory.
+   */
+  advertiser?: MDNSAdvertiser;
+  /**
    * Use the legacy bonjour-hap as advertiser.
-   * @private
+   * @deprecated
    */
   useLegacyAdvertiser?: boolean;
+}
+
+export const enum MDNSAdvertiser {
+  /**
+   * Use the `@homebridge/ciao` module as advertiser.
+   */
+  CIAO = "ciao",
+  /**
+   * Use the `bonjour-hap` module as advertiser.
+   */
+  BONJOUR = "bonjour-hap",
 }
 
 export type AccessoryCharacteristicChange = ServiceCharacteristicChange &  {
@@ -1082,7 +1097,15 @@ export class Accessory extends EventEmitter {
    */
   public publish(info: PublishInfo, allowInsecureRequest?: boolean): void {
     // noinspection JSDeprecatedSymbols
-    if (info.mdns?.interface && info.useLegacyAdvertiser) {
+    if (!info.advertiser && info.useLegacyAdvertiser != null) {
+      // noinspection JSDeprecatedSymbols
+      info.advertiser = info.useLegacyAdvertiser? MDNSAdvertiser.BONJOUR: MDNSAdvertiser.CIAO;
+      console.warn('DEPRECATED The PublishInfo.useLegacyAdvertiser option has been removed. Please use the PublishInfo.advertiser property to enable "ciao" (useLegacyAdvertiser=false) ' +
+        'or "bonjour-hap" (useLegacyAdvertiser=true) mdns advertiser libraries!')
+    }
+
+    // noinspection JSDeprecatedSymbols
+    if (info.mdns && info.advertiser !== MDNSAdvertiser.BONJOUR) {
       console.log("DEPRECATED user supplied a custom 'mdns' option. This option is deprecated and ignored. " +
         "Please move to the new 'bind' option.");
     }
@@ -1166,18 +1189,25 @@ export class Accessory extends EventEmitter {
 
     // create our Advertiser which broadcasts our presence over mdns
     const parsed = Accessory.parseBindOption(info);
-    if (info.useLegacyAdvertiser) {
-      this._advertiser = new BonjourHAPAdvertiser(this._accessoryInfo, info.mdns, {
-        restrictedAddresses: parsed.serviceRestrictedAddress,
-        disabledIpv6: parsed.serviceDisableIpv6,
-      });
-    } else {
-      this._advertiser = new CiaoAdvertiser(this._accessoryInfo, {
-        interface: parsed.advertiserAddress
-      }, {
-        restrictedAddresses: parsed.serviceRestrictedAddress,
-        disabledIpv6: parsed.serviceDisableIpv6,
-      });
+
+    switch (info.advertiser ?? MDNSAdvertiser.BONJOUR) {
+      case MDNSAdvertiser.CIAO:
+        this._advertiser = new CiaoAdvertiser(this._accessoryInfo, {
+          interface: parsed.advertiserAddress
+        }, {
+          restrictedAddresses: parsed.serviceRestrictedAddress,
+          disabledIpv6: parsed.serviceDisableIpv6,
+        });
+        break;
+      case MDNSAdvertiser.BONJOUR:
+        // noinspection JSDeprecatedSymbols
+        this._advertiser = new BonjourHAPAdvertiser(this._accessoryInfo, info.mdns, {
+          restrictedAddresses: parsed.serviceRestrictedAddress,
+          disabledIpv6: parsed.serviceDisableIpv6,
+        });
+        break;
+      default:
+        throw new Error("Unsupported advertiser setting: '" + info.advertiser + "'");
     }
     this._advertiser.on(AdvertiserEvent.UPDATED_NAME, name => {
       this.displayName = name;
