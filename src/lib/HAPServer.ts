@@ -808,8 +808,8 @@ export class HAPServer extends EventEmitter {
       for (const entry of idParam.split(",")) { // ["1.9","2.14"]
         const split = entry.split(".") // ["1","9"]
         ids.push({
-          aid: parseInt(split[0]), // accessory Id
-          iid: parseInt(split[1]), // (characteristic) instance Id
+          aid: parseInt(split[0], 10), // accessory Id
+          iid: parseInt(split[1], 10), // (characteristic) instance Id
         });
       }
 
@@ -946,7 +946,7 @@ export class HAPServer extends EventEmitter {
       response.writeHead(HAPHTTPCode.BAD_REQUEST, {"Content-Type": "application/hap+json"});
       response.end(JSON.stringify({ status: HAPStatus.INVALID_VALUE_IN_REQUEST }));
     }
-  };
+  }
 
   private handleResource(connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse): void {
     if (!connection.isAuthenticated()) {

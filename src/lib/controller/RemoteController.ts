@@ -488,12 +488,12 @@ export class RemoteController extends EventEmitter implements SerializableContro
      * @returns the targetIdentifier of the device or undefined if not existent
      */
     public getTargetIdentifierByName(name: string): number | undefined {
-        for (const activeIdentifier in this.targetConfigurations) {
-            const configuration = this.targetConfigurations[activeIdentifier];
+        for (const [ activeIdentifier, configuration ] of Object.entries(this.targetConfigurations)) {
             if (configuration.targetName === name) {
-                return parseInt(activeIdentifier);
+                return parseInt(activeIdentifier, 10);
             }
         }
+
         return undefined;
     }
 
@@ -674,8 +674,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
                 Object.keys(targetConfiguration.buttonConfiguration).length,
                 configuredTarget.targetName, configuredTarget.targetIdentifier);
 
-            for (const key in targetConfiguration.buttonConfiguration) {
-                const configuration = targetConfiguration.buttonConfiguration[key];
+            for (const configuration of Object.values(targetConfiguration.buttonConfiguration)) {
                 const savedConfiguration = configuredTarget.buttonConfiguration[configuration.buttonID];
 
                 savedConfiguration.buttonType = configuration.buttonType;
@@ -702,7 +701,9 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
         if (targetConfiguration.buttonConfiguration) {
             for (const key in targetConfiguration.buttonConfiguration) {
-                delete configuredTarget.buttonConfiguration[key];
+                if (Object.prototype.hasOwnProperty.call(targetConfiguration.buttonConfiguration, key)) {
+                    delete configuredTarget.buttonConfiguration[key];
+                }
             }
 
             debug("Removed %d button configurations of target '%s' (%d)",
@@ -715,7 +716,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
             setTimeout(() => this.emit(RemoteControllerEvents.TARGET_REMOVED, targetConfiguration.targetIdentifier), 0);
 
             const keys = Object.keys(this.targetConfigurations);
-            this.setActiveIdentifier(keys.length === 0? 0: parseInt(keys[0])); // switch to next available remote
+            this.setActiveIdentifier(keys.length === 0? 0: parseInt(keys[0], 10)); // switch to next available remote
         }
 
         this.updatedTargetConfiguration(); // set response
@@ -891,10 +892,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
     private updatedTargetConfiguration(): void {
         const bufferList = [];
-        for (const key in this.targetConfigurations) {
-            // noinspection JSUnfilteredForInLoop
-            const configuration = this.targetConfigurations[key];
-
+        for (const configuration of Object.values(this.targetConfigurations)) {
             const targetIdentifier = tlv.encode(
                 TargetConfigurationTypes.TARGET_IDENTIFIER, tlv.writeUInt32(configuration.targetIdentifier)
             );
@@ -1066,11 +1064,13 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
     private handleDataStreamConnectionClosed(connection: DataStreamConnection): void {
         for (const targetIdentifier in this.dataStreamConnections) {
-            const connection0 = this.dataStreamConnections[targetIdentifier];
-            if (connection === connection0) {
-                debug("HDS connection disconnected for targetIdentifier %s", targetIdentifier);
-                delete this.dataStreamConnections[targetIdentifier];
-                break;
+            if (Object.prototype.hasOwnProperty.call(this.dataStreamConnections, targetIdentifier)) {
+                const connection0 = this.dataStreamConnections[targetIdentifier];
+                if (connection === connection0) {
+                    debug("HDS connection disconnected for targetIdentifier %s", targetIdentifier);
+                    delete this.dataStreamConnections[targetIdentifier];
+                    break;
+                }
             }
         }
     }
