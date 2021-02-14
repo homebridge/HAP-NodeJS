@@ -346,7 +346,7 @@ interface RemoteControllerServiceMap extends ControllerServiceMap {
 
 interface SerializedControllerState {
     activeIdentifier: number,
-    targetConfigurations: [number, TargetConfiguration][];
+    targetConfigurations: Record<number, TargetConfiguration>;
 }
 
 /**
@@ -1303,7 +1303,10 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
         return {
             activeIdentifier: this.activeIdentifier,
-            targetConfigurations: [...this.targetConfigurations],
+            targetConfigurations: [...this.targetConfigurations].reduce((obj: Record<number, TargetConfiguration>, [ key, value ]) => {
+                obj[key] = value;
+                return obj;
+            }, {}),
         };
     }
 
@@ -1312,7 +1315,11 @@ export class RemoteController extends EventEmitter implements SerializableContro
      */
     deserialize(serialized: SerializedControllerState): void {
         this.activeIdentifier = serialized.activeIdentifier;
-        this.targetConfigurations = new Map(serialized.targetConfigurations);
+        this.targetConfigurations = Object.entries(serialized.targetConfigurations).reduce((map: Map<number, TargetConfiguration>, [ key, value ]) => {
+            const identifier = parseInt(key, 10);
+            map.set(identifier, value);
+            return map;
+        }, new Map());
         this.updatedTargetConfiguration();
     }
 
