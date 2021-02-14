@@ -270,7 +270,6 @@ export class AccessoryInfo {
       info.signPk = Buffer.from(saved.signPk || '', 'hex');
 
       info.pairedClients = {};
-      // TODO: switch to Object.entries
       for (const username of Object.keys(saved.pairedClients || {})) {
         const publicKey = saved.pairedClients[username];
         let permission = saved.pairedClientsPermission? saved.pairedClientsPermission[username]: undefined;

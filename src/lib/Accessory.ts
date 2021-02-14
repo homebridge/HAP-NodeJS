@@ -437,7 +437,7 @@ export class Accessory extends EventEmitter {
         : serviceParam;
 
     // check for UUID+subtype conflict
-    for (let existing of this.services) {
+    for (const existing of this.services) {
       if (existing.UUID === service.UUID) {
         // OK we have two Services with the same UUID. Check that each defines a `subtype` property and that each is unique.
         if (!service.subtype)

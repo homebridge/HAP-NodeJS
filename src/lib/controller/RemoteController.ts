@@ -58,7 +58,7 @@ const enum SupportedButtonConfigurationTypes {
     BUTTON_TYPE = 0x02
 }
 
-export const enum ButtonType {
+export enum ButtonType {
     // noinspection JSUnusedGlobalSymbols
     UNDEFINED = 0x00,
     MENU = 0x01,
@@ -346,7 +346,7 @@ interface RemoteControllerServiceMap extends ControllerServiceMap {
 
 interface SerializedControllerState {
     activeIdentifier: number,
-    targetConfigurations: Record<number, TargetConfiguration>;
+    targetConfigurations: Map<number, TargetConfiguration>;
 }
 
 /**
@@ -369,7 +369,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
     private buttons: Record<number, number> = {}; // internal mapping of buttonId to buttonType for supported buttons
     private readonly supportedConfiguration: string;
-    targetConfigurations: Record<number, TargetConfiguration> = {};
+    targetConfigurations: Map<number, TargetConfiguration> = new Map();
     private  targetConfigurationsString: string = "";
 
     private lastButtonEvent: string = "";
@@ -382,7 +382,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
     private selectedAudioConfiguration: AudioCodecConfiguration;
     private selectedAudioConfigurationString: string;
 
-    private dataStreamConnections: Record<number, DataStreamConnection> = {}; // maps targetIdentifiers to active data stream connections
+    private dataStreamConnections: Map<number, DataStreamConnection> = new Map(); // maps targetIdentifiers to active data stream connections
     private activeAudioSession?: SiriAudioSession;
     private nextAudioSession?: SiriAudioSession;
 
@@ -449,7 +449,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
             return;
         }
 
-        if (activeIdentifier !== 0 && !this.targetConfigurations[activeIdentifier]) {
+        if (activeIdentifier !== 0 && !this.targetConfigurations.has(activeIdentifier)) {
             throw Error("Tried setting unconfigured targetIdentifier to active");
         }
 
@@ -478,7 +478,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
      * @param targetIdentifier {number}
      */
     public isConfigured(targetIdentifier: number): boolean {
-        return this.targetConfigurations[targetIdentifier] !== undefined;
+        return this.targetConfigurations.has(targetIdentifier);
     }
 
     /**
@@ -636,7 +636,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
             return HAPStatus.INVALID_VALUE_IN_REQUEST;
         }
 
-        this.targetConfigurations[targetConfiguration.targetIdentifier] = targetConfiguration;
+        this.targetConfigurations.set(targetConfiguration.targetIdentifier, targetConfiguration);
 
         debug("Configured new target '" + targetConfiguration.targetName + "' with targetIdentifier '" + targetConfiguration.targetIdentifier + "'");
 
@@ -653,7 +653,11 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
         const updates: TargetUpdates[] = [];
 
-        const configuredTarget = this.targetConfigurations[targetConfiguration.targetIdentifier];
+        const configuredTarget = this.targetConfigurations.get(targetConfiguration.targetIdentifier);
+        if (!configuredTarget) {
+            return HAPStatus.INVALID_VALUE_IN_REQUEST;
+        }
+
         if (targetConfiguration.targetName) {
             debug("Target name was updated '%s' => '%s' (%d)",
                 configuredTarget.targetName, targetConfiguration.targetName, configuredTarget.targetIdentifier);
@@ -694,7 +698,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
             return HAPStatus.INVALID_VALUE_IN_REQUEST;
         }
 
-        const configuredTarget = this.targetConfigurations[targetConfiguration.targetIdentifier];
+        const configuredTarget = this.targetConfigurations.get(targetConfiguration.targetIdentifier);
         if (!configuredTarget) {
             return HAPStatus.INVALID_VALUE_IN_REQUEST;
         }
@@ -710,7 +714,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
                 Object.keys(targetConfiguration.buttonConfiguration).length, configuredTarget.targetName, configuredTarget.targetIdentifier);
             setTimeout(() => this.emit(RemoteControllerEvents.TARGET_UPDATED, configuredTarget, [TargetUpdates.REMOVED_BUTTONS]), 0);
         } else {
-            delete this.targetConfigurations[targetConfiguration.targetIdentifier];
+            this.targetConfigurations.delete(targetConfiguration.targetIdentifier);
 
             debug ("Target '%s' (%d) was removed", configuredTarget.targetName, configuredTarget.targetIdentifier);
             setTimeout(() => this.emit(RemoteControllerEvents.TARGET_REMOVED, targetConfiguration.targetIdentifier), 0);
@@ -729,7 +733,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
         }
 
         debug("Resetting all target configurations");
-        this.targetConfigurations = {};
+        this.targetConfigurations = new Map();
         this.updatedTargetConfiguration(); // set response
 
         setTimeout(() => this.emit(RemoteControllerEvents.TARGETS_RESET), 0);
@@ -767,8 +771,13 @@ export class RemoteController extends EventEmitter implements SerializableContro
             this.activeConnection.on(HAPConnectionEvent.CLOSED, this.activeConnectionDisconnectListener);
         }
 
-        const activeName = this.targetConfigurations[this.activeIdentifier].targetName;
-        debug("Remote with activeTarget '%s' (%d) was set to %s", activeName, this.activeIdentifier, value ? "ACTIVE" : "INACTIVE");
+        const activeTarget = this.targetConfigurations.get(this.activeIdentifier);
+        if (!activeTarget) {
+            callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
+            return;
+        }
+
+        debug("Remote with activeTarget '%s' (%d) was set to %s", activeTarget.targetName, this.activeIdentifier, value ? "ACTIVE" : "INACTIVE");
 
         callback();
 
@@ -870,8 +879,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
                 if (entry[ButtonConfigurationTypes.BUTTON_NAME]) {
                     buttonName = entry[ButtonConfigurationTypes.BUTTON_NAME].toString();
                 } else {
-                    // @ts-ignore
-                    buttonName = ButtonType[buttonType as ButtonType];
+                    buttonName = ButtonType[buttonType];
                 }
 
                 buttonConfiguration[buttonId] = {
@@ -906,7 +914,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
             );
 
             const buttonConfigurationBuffers: Buffer[] = [];
-            Object.values(configuration.buttonConfiguration).forEach(value => {
+            for (const value of configuration.buttonConfiguration.values()) {
                 let tlvBuffer = tlv.encode(
                     ButtonConfigurationTypes.BUTTON_ID, value.buttonID,
                     ButtonConfigurationTypes.BUTTON_TYPE, tlv.writeUInt16(value.buttonType)
@@ -922,7 +930,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
                 }
 
                 buttonConfigurationBuffers.push(tlvBuffer);
-            });
+            }
 
             const buttonConfiguration = tlv.encode(
                 TargetConfigurationTypes.BUTTON_CONFIGURATION, Buffer.concat(buttonConfigurationBuffers)
@@ -971,7 +979,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
     private handleTargetControlWhoAmI(connection: DataStreamConnection, message: Record<any, any>): void {
         const targetIdentifier = message["identifier"];
-        this.dataStreamConnections[targetIdentifier] = connection;
+        this.dataStreamConnections.set(targetIdentifier, connection);
         debug("Discovered HDS connection for targetIdentifier %s", targetIdentifier);
 
         connection.addProtocolHandler(Protocols.DATA_SEND, this);
@@ -994,7 +1002,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
             return;
         }
 
-        const connection = this.dataStreamConnections[this.activeIdentifier]; // get connection for current target
+        const connection = this.dataStreamConnections.get(this.activeIdentifier); // get connection for current target
         if (connection === undefined) { // target seems not connected, ignore it
             debug("Tried opening Siri audio stream however target is not connected via HDS");
             return;
@@ -1063,14 +1071,11 @@ export class RemoteController extends EventEmitter implements SerializableContro
     }
 
     private handleDataStreamConnectionClosed(connection: DataStreamConnection): void {
-        for (const targetIdentifier in this.dataStreamConnections) {
-            if (Object.prototype.hasOwnProperty.call(this.dataStreamConnections, targetIdentifier)) {
-                const connection0 = this.dataStreamConnections[targetIdentifier];
-                if (connection === connection0) {
-                    debug("HDS connection disconnected for targetIdentifier %s", targetIdentifier);
-                    delete this.dataStreamConnections[targetIdentifier];
-                    break;
-                }
+        for (const [ targetIdentifier, connection0 ] of this.dataStreamConnections) {
+            if (connection === connection0) {
+                debug("HDS connection disconnected for targetIdentifier %s", targetIdentifier);
+                this.dataStreamConnections.delete(targetIdentifier);
+                break;
             }
         }
     }
