@@ -58,7 +58,7 @@ const enum SupportedButtonConfigurationTypes {
     BUTTON_TYPE = 0x02
 }
 
-export enum ButtonType {
+export const enum ButtonType {
     // noinspection JSUnusedGlobalSymbols
     UNDEFINED = 0x00,
     MENU = 0x01,
@@ -879,7 +879,8 @@ export class RemoteController extends EventEmitter implements SerializableContro
                 if (entry[ButtonConfigurationTypes.BUTTON_NAME]) {
                     buttonName = entry[ButtonConfigurationTypes.BUTTON_NAME].toString();
                 } else {
-                    buttonName = ButtonType[buttonType];
+                    // @ts-ignore
+                    buttonName = ButtonType[buttonType as ButtonType];
                 }
 
                 buttonConfiguration[buttonId] = {
