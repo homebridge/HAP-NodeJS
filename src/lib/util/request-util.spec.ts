@@ -49,4 +49,22 @@ describe("request-util", () => {
     });
     expect(formatOutgoingCharacteristicValue(36.135795, props)).toBe(36.1);
   });
+
+  it("should handle negative minumum values", () => {
+    const props = createProps(Formats.INT, {
+      minStep: 0.1,
+      minValue: -100,
+      maxValue: 100,
+    });
+    expect(formatOutgoingCharacteristicValue(25.1, props)).toBe(25.1);
+  });
+
+  it("should handle small minumum values", () => {
+    const props = createProps(Formats.INT, {
+      minStep: 0.1,
+      minValue: 0.1,
+      maxValue: 10000,
+    });
+    expect(formatOutgoingCharacteristicValue(2.3, props)).toBe(2.3);
+  });
 });
