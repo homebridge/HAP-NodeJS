@@ -1017,8 +1017,8 @@ export class Characteristic extends EventEmitter {
         )
       } else if (isUnsignedNumericFormat(this.props.format) && props.maxValue > numericUpperBound(this.props.format)) {
         this.characteristicWarning(
-          "Characteristic Property `maxValue` was set to " + props.minValue + ", but for numeric format " +
-          this.props.format + " maximum possible is " + numericLowerBound(this.props.format),
+          "Characteristic Property `maxValue` was set to " + props.maxValue + ", but for numeric format " +
+          this.props.format + " maximum possible is " + numericUpperBound(this.props.format),
           CharacteristicWarningType.ERROR_MESSAGE
         )
       } else {
