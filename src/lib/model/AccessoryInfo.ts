@@ -77,7 +77,7 @@ export class AccessoryInfo {
     if (permission === PermissionTypes.ADMIN) {
       this.pairedAdminClients++;
     }
-  };
+  }
 
   public updatePermission(username: HAPUsername, permission: PermissionTypes): void {
     const pairingInformation = this.pairedClients[username];
@@ -92,18 +92,17 @@ export class AccessoryInfo {
         this.pairedAdminClients++;
       }
     }
-  };
+  }
 
   public listPairings(): PairingInformation[] {
     const array: PairingInformation[] = [];
 
-    for (const username in this.pairedClients) {
-      const pairingInformation = this.pairedClients[username] as PairingInformation;
+    for (const pairingInformation of Object.values(this.pairedClients)) {
       array.push(pairingInformation);
     }
 
     return array;
-  };
+  }
 
   /**
    * Remove a paired client from memory.
@@ -114,11 +113,11 @@ export class AccessoryInfo {
     this._removePairedClient0(connection, username);
 
     if (this.pairedAdminClients === 0) { // if we don't have any admin clients left paired it is required to kill all normal clients
-      for (const username0 in this.pairedClients) {
+      for (const username0 of Object.keys(this.pairedClients)) {
         this._removePairedClient0(connection, username0);
       }
     }
-  };
+  }
 
   private _removePairedClient0(connection: HAPConnection, username: HAPUsername): void {
     if (this.pairedClients[username] && this.pairedClients[username].permission === PermissionTypes.ADMIN)
@@ -126,7 +125,7 @@ export class AccessoryInfo {
     delete this.pairedClients[username];
 
     EventedHTTPServer.destroyExistingConnectionsAfterUnpair(connection, username);
-  };
+  }
 
   /**
    * Check if username is paired
@@ -134,13 +133,13 @@ export class AccessoryInfo {
    */
   public isPaired(username: HAPUsername): boolean {
     return !!this.pairedClients[username];
-  };
+  }
 
   public hasAdminPermissions(username: HAPUsername): boolean {
     if (!username) return false;
     const pairingInformation = this.pairedClients[username];
     return !!pairingInformation && pairingInformation.permission === PermissionTypes.ADMIN;
-  };
+  }
 
   // Gets the public key for a paired client as a Buffer, or falsy value if not paired.
   public getClientPublicKey(username: HAPUsername): Buffer | undefined {
@@ -150,7 +149,7 @@ export class AccessoryInfo {
     } else {
       return undefined;
     }
-  };
+  }
 
   // Returns a boolean indicating whether this accessory has been paired with a client.
   paired = (): boolean => {
@@ -224,8 +223,7 @@ export class AccessoryInfo {
       lastFirmwareVersion: this.lastFirmwareVersion,
     };
 
-    for (let username in this.pairedClients) {
-      const pairingInformation: PairingInformation = this.pairedClients[username];
+    for (const [ username, pairingInformation ] of Object.entries(this.pairedClients)) {
       //@ts-ignore
       saved.pairedClients[username] = pairingInformation.publicKey.toString("hex");
       // @ts-ignore
@@ -272,7 +270,7 @@ export class AccessoryInfo {
       info.signPk = Buffer.from(saved.signPk || '', 'hex');
 
       info.pairedClients = {};
-      for (let username in saved.pairedClients || {}) {
+      for (const username of Object.keys(saved.pairedClients || {})) {
         const publicKey = saved.pairedClients[username];
         let permission = saved.pairedClientsPermission? saved.pairedClientsPermission[username]: undefined;
         if (permission === undefined)

@@ -52,7 +52,7 @@ export function unparse(buf: Buffer): string
  * @param offset - The offset in the buffer to start reading from.
  */
 export function unparse(buf: Buffer, offset: number): string
-export function unparse(buf: Buffer | string, offset: number = 0): string {
+export function unparse(buf: Buffer | string, offset = 0): string {
   if (typeof buf === "string" && isValid(buf)) {
     /*
       This check was added to fix backwards compatibility with the old style CameraSource API.

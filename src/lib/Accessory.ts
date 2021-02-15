@@ -437,8 +437,7 @@ export class Accessory extends EventEmitter {
         : serviceParam;
 
     // check for UUID+subtype conflict
-    for (let index in this.services) {
-      const existing = this.services[index];
+    for (const existing of this.services) {
       if (existing.UUID === service.UUID) {
         // OK we have two Services with the same UUID. Check that each defines a `subtype` property and that each is unique.
         if (!service.subtype)
@@ -521,9 +520,7 @@ export class Accessory extends EventEmitter {
   }
 
   public getServiceById<T extends WithUUID<typeof Service>>(uuid: string | T, subType: string): Service | undefined {
-    for (const index in this.services) {
-      const service = this.services[index];
-
+    for (const service of this.services) {
       if (typeof uuid === "string" && (service.displayName === uuid || service.name === uuid) && service.subtype === subType) {
         return service;
       } else if (typeof uuid === "function" && ((service instanceof uuid) || (uuid.UUID === service.UUID)) && service.subtype === subType) {
@@ -591,8 +588,7 @@ export class Accessory extends EventEmitter {
   }
 
   public addBridgedAccessories(accessories: Accessory[]): void {
-    for (let index in accessories) {
-      const accessory = accessories[index];
+    for (const accessory of accessories) {
       this.addBridgedAccessory(accessory, true);
     }
 
@@ -603,19 +599,15 @@ export class Accessory extends EventEmitter {
     if (accessory._isBridge)
       throw new Error("Cannot Bridge another Bridge!");
 
-    let foundMatchAccessory = false;
     // check for UUID conflict
-    for (let index in this.bridgedAccessories) {
-      const existing = this.bridgedAccessories[index];
-      if (existing.UUID === accessory.UUID) {
-        foundMatchAccessory = true;
-        this.bridgedAccessories.splice(Number.parseInt(index), 1);
-        break;
-      }
-    }
+    const foundMatchAccessory = this.bridgedAccessories.findIndex((existing) => {
+      return existing.UUID === accessory.UUID
+    });
 
-    if (!foundMatchAccessory)
+    if (foundMatchAccessory === -1)
       throw new Error("Cannot find the bridged Accessory to remove.");
+
+    this.bridgedAccessories.splice(foundMatchAccessory, 1);
 
     accessory.removeAllListeners();
 
@@ -625,8 +617,7 @@ export class Accessory extends EventEmitter {
   }
 
   public removeBridgedAccessories(accessories: Accessory[]): void {
-    for (let index in accessories) {
-      const accessory = accessories[index];
+    for (const accessory of accessories) {
       this.removeBridgedAccessory(accessory, true);
     }
 
@@ -641,8 +632,7 @@ export class Accessory extends EventEmitter {
   }
 
   private getCharacteristicByIID(iid: number): Characteristic | undefined {
-    for (let index in this.services) {
-      const service = this.services[index];
+    for (const service of this.services) {
       const characteristic = service.getCharacteristicByIID(iid);
 
       if (characteristic) {
@@ -993,9 +983,7 @@ export class Accessory extends EventEmitter {
     }
 
     // now assign IDs for any Accessories we are bridging
-    for (let index in this.bridgedAccessories) {
-      const accessory = this.bridgedAccessories[index];
-
+    for (const accessory of this.bridgedAccessories) {
       accessory._assignIDs(identifierCache);
     }
 
@@ -1345,7 +1333,7 @@ export class Accessory extends EventEmitter {
     this._accessoryInfo.save();
     // there should be no need to update advertisement
     callback(0);
-  };
+  }
 
   private handleRemovePairing(connection: HAPConnection, username: HAPUsername, callback: RemovePairingCallback): void {
     if (!this._accessoryInfo) {
@@ -1372,7 +1360,7 @@ export class Accessory extends EventEmitter {
         accessory.handleAccessoryUnpairedForControllers();
       }
     }
-  };
+  }
 
   private handleListPairings(connection: HAPConnection, callback: ListPairingsCallback): void {
     if (!this._accessoryInfo) {
@@ -1386,7 +1374,7 @@ export class Accessory extends EventEmitter {
     }
 
     callback(0, this._accessoryInfo.listPairings());
-  };
+  }
 
   private handleAccessories(connection: HAPConnection, callback: AccessoriesCallback): void {
     this._assignIDs(this._identifierCache!); // make sure our aid/iid's are all assigned
@@ -1419,8 +1407,8 @@ export class Accessory extends EventEmitter {
     let timeout: Timeout | undefined = setTimeout(() => {
       for (const id of missingCharacteristics) {
         const split = id.split(".");
-        const aid = parseInt(split[0]);
-        const iid = parseInt(split[1]);
+        const aid = parseInt(split[0], 10);
+        const iid = parseInt(split[1], 10);
 
         const accessory = this.getAccessoryByAID(aid)!;
         const characteristic = accessory.getCharacteristicByIID(iid)!;
@@ -1434,8 +1422,8 @@ export class Accessory extends EventEmitter {
 
         for (const id of missingCharacteristics) {
           const split = id.split(".");
-          const aid = parseInt(split[0]);
-          const iid = parseInt(split[1]);
+          const aid = parseInt(split[0], 10);
+          const iid = parseInt(split[1], 10);
 
           const accessory = this.getAccessoryByAID(aid)!;
           const characteristic = accessory.getCharacteristicByIID(iid)!;
@@ -1584,8 +1572,8 @@ export class Accessory extends EventEmitter {
     let timeout: Timeout | undefined = setTimeout(() => {
       for (const id of missingCharacteristics) {
         const split = id.split(".");
-        const aid = parseInt(split[0]);
-        const iid = parseInt(split[1]);
+        const aid = parseInt(split[0], 10);
+        const iid = parseInt(split[1], 10);
 
         const accessory = this.getAccessoryByAID(aid)!;
         const characteristic = accessory.getCharacteristicByIID(iid)!;
@@ -1599,8 +1587,8 @@ export class Accessory extends EventEmitter {
 
         for (const id of missingCharacteristics) {
           const split = id.split(".");
-          const aid = parseInt(split[0]);
-          const iid = parseInt(split[1]);
+          const aid = parseInt(split[0], 10);
+          const iid = parseInt(split[1], 10);
 
           const accessory = this.getAccessoryByAID(aid)!;
           const characteristic = accessory.getCharacteristicByIID(iid)!;
@@ -1808,8 +1796,8 @@ export class Accessory extends EventEmitter {
 
     for (const event of connection.getRegisteredEvents()) {
       const ids = event.split(".");
-      const aid = parseInt(ids[0]);
-      const iid = parseInt(ids[1]);
+      const aid = parseInt(ids[0], 10);
+      const iid = parseInt(ids[1], 10);
 
       const characteristic = this.findCharacteristic(aid, iid);
       if (characteristic) {
@@ -2014,9 +2002,8 @@ export class Accessory extends EventEmitter {
     });
 
     if (json.linkedServices) {
-      for (let serviceId in json.linkedServices) {
+      for (const [ serviceId, linkedServicesKeys ] of Object.entries(json.linkedServices)) {
         const primaryService = servicesMap[serviceId];
-        const linkedServicesKeys = json.linkedServices[serviceId];
 
         if (!primaryService) {
           continue

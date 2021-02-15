@@ -2173,7 +2173,7 @@ export class Characteristic extends EventEmitter {
       value: characteristic.value,
       props: clone({}, characteristic.props),
     }
-  };
+  }
 
   /**
    * Deserialize characteristic from json string.
@@ -2197,7 +2197,7 @@ export class Characteristic extends EventEmitter {
     characteristic.value = json.value;
 
     return characteristic;
-  };
+  }
 
 }
 
@@ -2206,7 +2206,7 @@ function extractHAPStatusFromError(error: Error) {
   let errorValue = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
 
   if (numberPattern.test(error.message)) {
-    const value = parseInt(error.message);
+    const value = parseInt(error.message, 10);
 
 	if (IsKnownHAPStatusError(value)) {
       errorValue = value;

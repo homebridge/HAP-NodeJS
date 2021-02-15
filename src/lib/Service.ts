@@ -323,8 +323,7 @@ export class Service extends EventEmitter {
     let characteristic = typeof input === "function"? new input(...constructorArgs): input;
 
     // check for UUID conflict
-    for (let index in this.characteristics) {
-      const existing = this.characteristics[index];
+    for (const existing of this.characteristics) {
       if (existing.UUID === characteristic.UUID) {
         if (characteristic.UUID === '00000052-0000-1000-8000-0026BB765291') {
           //This is a special workaround for the Firmware Revision characteristic.
@@ -358,7 +357,7 @@ export class Service extends EventEmitter {
   public setPrimaryService(isPrimary: boolean = true): void {
     this.isPrimaryService = isPrimary;
     this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
-  };
+  }
 
   /**
    * Marks the service as hidden
@@ -419,8 +418,7 @@ export class Service extends EventEmitter {
     // but the type is in optionalCharacteristics, it adds the characteristic.type to the service and returns it.
 
     let index, characteristic: Characteristic;
-    for (index in this.characteristics) {
-      characteristic = this.characteristics[index] as Characteristic;
+    for (const characteristic of this.characteristics) {
       if (typeof name === 'string' && characteristic.displayName === name) {
         return characteristic;
       } else if (typeof name === 'function' && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
@@ -428,8 +426,7 @@ export class Service extends EventEmitter {
       }
     }
     if (typeof name === 'function') {
-      for (index in this.optionalCharacteristics) {
-        characteristic = this.optionalCharacteristics[index];
+      for (const characteristic of this.optionalCharacteristics) {
         if ((characteristic instanceof name) || (name.UUID === characteristic.UUID)) {
           return this.addCharacteristic(name);
         }
@@ -448,9 +445,7 @@ export class Service extends EventEmitter {
 
   public testCharacteristic<T extends WithUUID<typeof Characteristic>>(name: string | T): boolean {
     // checks for the existence of a characteristic object in the service
-    let index, characteristic;
-    for (index in this.characteristics) {
-      characteristic = this.characteristics[index];
+    for (const characteristic of this.characteristics) {
       if (typeof name === 'string' && characteristic.displayName === name) {
         return true;
       } else if (typeof name === 'function' && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
@@ -522,8 +517,7 @@ export class Service extends EventEmitter {
    * @private
    */
   getCharacteristicByIID(iid: number): Characteristic | undefined {
-    for (let index in this.characteristics) {
-      const characteristic = this.characteristics[index];
+    for (const characteristic of this.characteristics) {
       if (characteristic.iid === iid)
         return characteristic;
     }
@@ -542,8 +536,7 @@ export class Service extends EventEmitter {
     }
 
     // assign IIDs to our Characteristics
-    for (let index in this.characteristics) {
-      const characteristic = this.characteristics[index];
+    for (const characteristic of this.characteristics) {
       characteristic._assignID(identifierCache, accessoryName, this.UUID, this.subtype);
     }
   }
@@ -718,7 +711,7 @@ export class Service extends EventEmitter {
       characteristics: service.characteristics.map(characteristic => Characteristic.serialize(characteristic)),
       optionalCharacteristics: service.optionalCharacteristics.map(characteristic => Characteristic.serialize(characteristic)),
     };
-  };
+  }
 
   /**
    * @private
@@ -745,6 +738,6 @@ export class Service extends EventEmitter {
     }
 
     return service;
-  };
+  }
 
 }

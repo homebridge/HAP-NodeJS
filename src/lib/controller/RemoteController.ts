@@ -369,7 +369,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
     private buttons: Record<number, number> = {}; // internal mapping of buttonId to buttonType for supported buttons
     private readonly supportedConfiguration: string;
-    targetConfigurations: Record<number, TargetConfiguration> = {};
+    targetConfigurations: Map<number, TargetConfiguration> = new Map();
     private  targetConfigurationsString: string = "";
 
     private lastButtonEvent: string = "";
@@ -382,7 +382,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
     private selectedAudioConfiguration: AudioCodecConfiguration;
     private selectedAudioConfigurationString: string;
 
-    private dataStreamConnections: Record<number, DataStreamConnection> = {}; // maps targetIdentifiers to active data stream connections
+    private dataStreamConnections: Map<number, DataStreamConnection> = new Map(); // maps targetIdentifiers to active data stream connections
     private activeAudioSession?: SiriAudioSession;
     private nextAudioSession?: SiriAudioSession;
 
@@ -449,7 +449,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
             return;
         }
 
-        if (activeIdentifier !== 0 && !this.targetConfigurations[activeIdentifier]) {
+        if (activeIdentifier !== 0 && !this.targetConfigurations.has(activeIdentifier)) {
             throw Error("Tried setting unconfigured targetIdentifier to active");
         }
 
@@ -478,7 +478,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
      * @param targetIdentifier {number}
      */
     public isConfigured(targetIdentifier: number): boolean {
-        return this.targetConfigurations[targetIdentifier] !== undefined;
+        return this.targetConfigurations.has(targetIdentifier);
     }
 
     /**
@@ -488,12 +488,12 @@ export class RemoteController extends EventEmitter implements SerializableContro
      * @returns the targetIdentifier of the device or undefined if not existent
      */
     public getTargetIdentifierByName(name: string): number | undefined {
-        for (const activeIdentifier in this.targetConfigurations) {
-            const configuration = this.targetConfigurations[activeIdentifier];
+        for (const [ activeIdentifier, configuration ] of Object.entries(this.targetConfigurations)) {
             if (configuration.targetName === name) {
-                return parseInt(activeIdentifier);
+                return parseInt(activeIdentifier, 10);
             }
         }
+
         return undefined;
     }
 
@@ -636,7 +636,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
             return HAPStatus.INVALID_VALUE_IN_REQUEST;
         }
 
-        this.targetConfigurations[targetConfiguration.targetIdentifier] = targetConfiguration;
+        this.targetConfigurations.set(targetConfiguration.targetIdentifier, targetConfiguration);
 
         debug("Configured new target '" + targetConfiguration.targetName + "' with targetIdentifier '" + targetConfiguration.targetIdentifier + "'");
 
@@ -653,7 +653,11 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
         const updates: TargetUpdates[] = [];
 
-        const configuredTarget = this.targetConfigurations[targetConfiguration.targetIdentifier];
+        const configuredTarget = this.targetConfigurations.get(targetConfiguration.targetIdentifier);
+        if (!configuredTarget) {
+            return HAPStatus.INVALID_VALUE_IN_REQUEST;
+        }
+
         if (targetConfiguration.targetName) {
             debug("Target name was updated '%s' => '%s' (%d)",
                 configuredTarget.targetName, targetConfiguration.targetName, configuredTarget.targetIdentifier);
@@ -674,8 +678,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
                 Object.keys(targetConfiguration.buttonConfiguration).length,
                 configuredTarget.targetName, configuredTarget.targetIdentifier);
 
-            for (const key in targetConfiguration.buttonConfiguration) {
-                const configuration = targetConfiguration.buttonConfiguration[key];
+            for (const configuration of Object.values(targetConfiguration.buttonConfiguration)) {
                 const savedConfiguration = configuredTarget.buttonConfiguration[configuration.buttonID];
 
                 savedConfiguration.buttonType = configuration.buttonType;
@@ -695,27 +698,29 @@ export class RemoteController extends EventEmitter implements SerializableContro
             return HAPStatus.INVALID_VALUE_IN_REQUEST;
         }
 
-        const configuredTarget = this.targetConfigurations[targetConfiguration.targetIdentifier];
+        const configuredTarget = this.targetConfigurations.get(targetConfiguration.targetIdentifier);
         if (!configuredTarget) {
             return HAPStatus.INVALID_VALUE_IN_REQUEST;
         }
 
         if (targetConfiguration.buttonConfiguration) {
             for (const key in targetConfiguration.buttonConfiguration) {
-                delete configuredTarget.buttonConfiguration[key];
+                if (Object.prototype.hasOwnProperty.call(targetConfiguration.buttonConfiguration, key)) {
+                    delete configuredTarget.buttonConfiguration[key];
+                }
             }
 
             debug("Removed %d button configurations of target '%s' (%d)",
                 Object.keys(targetConfiguration.buttonConfiguration).length, configuredTarget.targetName, configuredTarget.targetIdentifier);
             setTimeout(() => this.emit(RemoteControllerEvents.TARGET_UPDATED, configuredTarget, [TargetUpdates.REMOVED_BUTTONS]), 0);
         } else {
-            delete this.targetConfigurations[targetConfiguration.targetIdentifier];
+            this.targetConfigurations.delete(targetConfiguration.targetIdentifier);
 
             debug ("Target '%s' (%d) was removed", configuredTarget.targetName, configuredTarget.targetIdentifier);
             setTimeout(() => this.emit(RemoteControllerEvents.TARGET_REMOVED, targetConfiguration.targetIdentifier), 0);
 
             const keys = Object.keys(this.targetConfigurations);
-            this.setActiveIdentifier(keys.length === 0? 0: parseInt(keys[0])); // switch to next available remote
+            this.setActiveIdentifier(keys.length === 0? 0: parseInt(keys[0], 10)); // switch to next available remote
         }
 
         this.updatedTargetConfiguration(); // set response
@@ -728,7 +733,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
         }
 
         debug("Resetting all target configurations");
-        this.targetConfigurations = {};
+        this.targetConfigurations = new Map();
         this.updatedTargetConfiguration(); // set response
 
         setTimeout(() => this.emit(RemoteControllerEvents.TARGETS_RESET), 0);
@@ -766,8 +771,13 @@ export class RemoteController extends EventEmitter implements SerializableContro
             this.activeConnection.on(HAPConnectionEvent.CLOSED, this.activeConnectionDisconnectListener);
         }
 
-        const activeName = this.targetConfigurations[this.activeIdentifier].targetName;
-        debug("Remote with activeTarget '%s' (%d) was set to %s", activeName, this.activeIdentifier, value ? "ACTIVE" : "INACTIVE");
+        const activeTarget = this.targetConfigurations.get(this.activeIdentifier);
+        if (!activeTarget) {
+            callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
+            return;
+        }
+
+        debug("Remote with activeTarget '%s' (%d) was set to %s", activeTarget.targetName, this.activeIdentifier, value ? "ACTIVE" : "INACTIVE");
 
         callback();
 
@@ -891,10 +901,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
     private updatedTargetConfiguration(): void {
         const bufferList = [];
-        for (const key in this.targetConfigurations) {
-            // noinspection JSUnfilteredForInLoop
-            const configuration = this.targetConfigurations[key];
-
+        for (const configuration of Object.values(this.targetConfigurations)) {
             const targetIdentifier = tlv.encode(
                 TargetConfigurationTypes.TARGET_IDENTIFIER, tlv.writeUInt32(configuration.targetIdentifier)
             );
@@ -908,7 +915,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
             );
 
             const buttonConfigurationBuffers: Buffer[] = [];
-            Object.values(configuration.buttonConfiguration).forEach(value => {
+            for (const value of configuration.buttonConfiguration.values()) {
                 let tlvBuffer = tlv.encode(
                     ButtonConfigurationTypes.BUTTON_ID, value.buttonID,
                     ButtonConfigurationTypes.BUTTON_TYPE, tlv.writeUInt16(value.buttonType)
@@ -924,7 +931,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
                 }
 
                 buttonConfigurationBuffers.push(tlvBuffer);
-            });
+            }
 
             const buttonConfiguration = tlv.encode(
                 TargetConfigurationTypes.BUTTON_CONFIGURATION, Buffer.concat(buttonConfigurationBuffers)
@@ -973,7 +980,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
     private handleTargetControlWhoAmI(connection: DataStreamConnection, message: Record<any, any>): void {
         const targetIdentifier = message["identifier"];
-        this.dataStreamConnections[targetIdentifier] = connection;
+        this.dataStreamConnections.set(targetIdentifier, connection);
         debug("Discovered HDS connection for targetIdentifier %s", targetIdentifier);
 
         connection.addProtocolHandler(Protocols.DATA_SEND, this);
@@ -996,7 +1003,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
             return;
         }
 
-        const connection = this.dataStreamConnections[this.activeIdentifier]; // get connection for current target
+        const connection = this.dataStreamConnections.get(this.activeIdentifier); // get connection for current target
         if (connection === undefined) { // target seems not connected, ignore it
             debug("Tried opening Siri audio stream however target is not connected via HDS");
             return;
@@ -1065,11 +1072,10 @@ export class RemoteController extends EventEmitter implements SerializableContro
     }
 
     private handleDataStreamConnectionClosed(connection: DataStreamConnection): void {
-        for (const targetIdentifier in this.dataStreamConnections) {
-            const connection0 = this.dataStreamConnections[targetIdentifier];
+        for (const [ targetIdentifier, connection0 ] of this.dataStreamConnections) {
             if (connection === connection0) {
                 debug("HDS connection disconnected for targetIdentifier %s", targetIdentifier);
-                delete this.dataStreamConnections[targetIdentifier];
+                this.dataStreamConnections.delete(targetIdentifier);
                 break;
             }
         }
@@ -1295,7 +1301,10 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
         return {
             activeIdentifier: this.activeIdentifier,
-            targetConfigurations: this.targetConfigurations,
+            targetConfigurations: [...this.targetConfigurations].reduce((obj: Record<number, TargetConfiguration>, [ key, value ]) => {
+                obj[key] = value;
+                return obj;
+            }, {}),
         };
     }
 
@@ -1304,7 +1313,11 @@ export class RemoteController extends EventEmitter implements SerializableContro
      */
     deserialize(serialized: SerializedControllerState): void {
         this.activeIdentifier = serialized.activeIdentifier;
-        this.targetConfigurations = serialized.targetConfigurations;
+        this.targetConfigurations = Object.entries(serialized.targetConfigurations).reduce((map: Map<number, TargetConfiguration>, [ key, value ]) => {
+            const identifier = parseInt(key, 10);
+            map.set(identifier, value);
+            return map;
+        }, new Map());
         this.updatedTargetConfiguration();
     }
 

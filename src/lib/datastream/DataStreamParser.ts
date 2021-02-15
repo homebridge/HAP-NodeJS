@@ -92,9 +92,8 @@ export const enum DataFormatTags {
     DICTIONARY_TERMINATED = 0xEF,
 }
 
-export namespace DataStreamParser {
-
-    export function decode(buffer: DataStreamReader): any {
+export class DataStreamParser {
+    public static decode(buffer: DataStreamReader): any {
         const tag = buffer.readTag();
 
         if (tag === DataFormatTags.INVALID) {
@@ -161,7 +160,7 @@ export namespace DataStreamParser {
             const array = [];
 
             for (let i = 0; i < length; i++) {
-                array.push(decode(buffer));
+                array.push(this.decode(buffer));
             }
 
             return array;
@@ -169,7 +168,7 @@ export namespace DataStreamParser {
             const array = [];
 
             let element;
-            while ((element = decode(buffer)) != Magics.TERMINATOR) {
+            while ((element = this.decode(buffer)) != Magics.TERMINATOR) {
                 array.push(element);
             }
 
@@ -179,8 +178,8 @@ export namespace DataStreamParser {
             const dictionary: Record<any, any> = {};
 
             for (let i = 0; i < length; i++) {
-                const key = decode(buffer);
-                dictionary[key] = decode(buffer);
+                const key = this.decode(buffer);
+                dictionary[key] = this.decode(buffer);
             }
 
             return dictionary;
@@ -188,8 +187,8 @@ export namespace DataStreamParser {
             const dictionary: Record<any, any> = {};
 
             let key;
-            while ((key = decode(buffer)) != Magics.TERMINATOR) {
-                dictionary[key] = decode(buffer); // decode value
+            while ((key = this.decode(buffer)) != Magics.TERMINATOR) {
+                dictionary[key] = this.decode(buffer); // decode value
             }
 
             return dictionary;
@@ -198,7 +197,7 @@ export namespace DataStreamParser {
         }
     }
 
-    export function encode(data: any, buffer: DataStreamWriter): void {
+    public static encode(data: any, buffer: DataStreamWriter): void {
         if (data === undefined) {
             throw new Error("HDSEncoder: cannot encode undefined");
         }
@@ -237,7 +236,7 @@ export namespace DataStreamParser {
                     }
 
                     data.forEach(element => {
-                        encode(element, buffer);
+                        this.encode(element, buffer);
                     });
 
                     if (length > 12) {
@@ -275,8 +274,8 @@ export namespace DataStreamParser {
                     }
 
                     entries.forEach(entry => {
-                        encode(entry[0], buffer); // encode key
-                        encode(entry[1], buffer); // encode value
+                        this.encode(entry[0], buffer); // encode key
+                        this.encode(entry[1], buffer); // encode value
                     });
 
                     if (entries.length > 14) {
@@ -288,7 +287,6 @@ export namespace DataStreamParser {
                 throw new Error("HDSEncoder: no idea how to encode value of type '" + (typeof data) +"': " + data);
         }
     }
-
 }
 
 export class DataStreamReader {

@@ -253,7 +253,7 @@ export class EventedHTTPServer extends EventEmitter {
         connection.closeConnectionAsOfUnpair(initiator);
       }
     }
-  };
+  }
 
 }
 
@@ -370,7 +370,7 @@ export class HAPConnection extends EventEmitter {
     this.username = username;
 
     this.emit(HAPConnectionEvent.AUTHENTICATED, username);
-  };
+  }
 
   public isAuthenticated(): boolean {
     return this.state === HAPConnectionState.AUTHENTICATED;

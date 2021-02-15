@@ -62,9 +62,11 @@ export class GStreamerAudioProducer implements SiriAudioStreamProducer {
         this.frameHandler = frameHandler;
         this.errorHandler = errorHandler;
 
-        for (const key in options) {
-            // @ts-ignore
-            GStreamerAudioProducer.options[key] = options[key];
+        if (options) {
+            for (const [ key, value ] of Object.entries(options)) {
+                // @ts-ignore
+                GStreamerAudioProducer.options[key] = value;
+            }
         }
     }
 

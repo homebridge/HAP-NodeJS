@@ -236,8 +236,8 @@ for (const [id, definition] of Object.entries(characteristics)) {
     const deprecatedName = CharacteristicDeprecatedNames.get(id);
 
     // "Target Door State" -> "TargetDoorState", "PM2.5" -> "PM2_5"
-    const className = name.replace(/[\s\-]/g, "").replace(/[.]/g, "_");
-    const deprecatedClassName = deprecatedName?.replace(/[\s\-]/g, "").replace(/[.]/g, "_");
+    const className = name.replace(/[\s-]/g, "").replace(/[.]/g, "_");
+    const deprecatedClassName = deprecatedName?.replace(/[\s-]/g, "").replace(/[.]/g, "_");
     const longUUID = toLongForm(definition.ShortUUID);
 
     const simulatorCharacteristic = simulatorCharacteristics.get(longUUID);
@@ -265,7 +265,7 @@ for (const [id, definition] of Object.entries(characteristics)) {
         if (/^[1-9]/.test(constName)) {
           constName = "_" + constName; // variables can't start with a number
         }
-        validBitMasks["" + (1 << parseInt(value))] = constName + "_BIT_MASK";
+        validBitMasks["" + (1 << parseInt(value, 10))] = constName + "_BIT_MASK";
       }
     }
 
@@ -423,8 +423,8 @@ for (const [id, definition] of Object.entries(services)) {
     const name = (ServiceNameOverrides.get(id) ?? definition.DefaultDescription).split(" ").map(entry => entry[0].toUpperCase() + entry.slice(1)).join(" ");
     const deprecatedName = ServiceDeprecatedNames.get(id);
 
-    const className = name.replace(/[\s\-]/g, "").replace(/[.]/g, "_");
-    const deprecatedClassName = deprecatedName?.replace(/[\s\-]/g, "").replace(/[.]/g, "_");
+    const className = name.replace(/[\s-]/g, "").replace(/[.]/g, "_");
+    const deprecatedClassName = deprecatedName?.replace(/[\s-]/g, "").replace(/[.]/g, "_");
 
     const longUUID = toLongForm(definition.ShortUUID);
 
@@ -657,7 +657,7 @@ function checkWrittenVersion(filePath: string, parsingVersion: number): boolean 
     throw new Error("Could not detect definition version for '" + filePath + "'");
   }
 
-  const version = parseInt(v.replace("// V=", ""));
+  const version = parseInt(v.replace("// V=", ""), 10);
   return parsingVersion >= version;
 }
 
