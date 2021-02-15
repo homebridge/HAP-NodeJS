@@ -132,7 +132,6 @@ export interface Controller<M extends ControllerServiceMap = ControllerServiceMa
  * which needs to be persistently stored. For example current target configuration for an AppleTV remote.
  */
 export interface SerializableController<M extends ControllerServiceMap = ControllerServiceMap, S = any> extends Controller<M> {
-
     /**
      * This method can be used to persistently save controller related configuration across reboots.
      * It should return undefined, if the controller data was reset to default values and nothing needs to be stored anymore.
@@ -152,6 +151,11 @@ export interface SerializableController<M extends ControllerServiceMap = Control
     deserialize(serialized: S): void;
 
     /**
+     * This method is inherited from {@link Controller.handleFactoryReset} though is required with {@link SerializableController}.
+     */
+    handleFactoryReset(): void;
+
+    /**
      * This method is called once upon setup. It supplies a function used by the Controller to signal state changes.
      * The implementing controller SHOULD store the function and call it every time the internal controller state changes.
      * It should be expected that the {@link serialize} method will be called next and that the state will be stored
@@ -161,7 +165,6 @@ export interface SerializableController<M extends ControllerServiceMap = Control
      * @param delegate {StateChangeDelegate} - the delegate to call when controller state has changed
      */
     setupStateChangeDelegate(delegate?: StateChangeDelegate): void;
-
 }
 
 export function isSerializableController(controller: Controller): controller is SerializableController {

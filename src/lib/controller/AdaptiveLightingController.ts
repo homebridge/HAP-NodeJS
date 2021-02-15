@@ -976,12 +976,8 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     if (!this.activeTransition.timeMillisOffset) { // compatibility to data produced by early betas
       this.activeTransition.timeMillisOffset = 0;
     }
-    try {
-      this.handleActiveTransitionUpdated(true);
-    } catch (error) {
-      console.log("Could not enable adaptive lighting when restoring from disk: " + error.stack);
-      this.disableAdaptiveLighting(); // ensure it's disabled
-    }
+
+    this.handleActiveTransitionUpdated(true);
   }
 
   /**

@@ -1282,7 +1282,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
      * @private
      */
     handleFactoryReset(): void {
-        debug("Accessory was unpaired. Resetting targets...");
+        debug("Running factory reset. Resetting targets...");
         this.handleResetTargets(undefined);
         this.lastButtonEvent = "";
     }

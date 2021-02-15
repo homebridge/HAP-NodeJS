@@ -157,7 +157,12 @@ export class ControllerStorage {
 
         const controllerData = this.controllerData[controller.controllerId()];
         if (controllerData) {
-            controller.deserialize(controllerData.data);
+            try {
+                controller.deserialize(controllerData.data);
+            } catch (error) {
+                console.warn(`Could not initialize controller of type '${controller.controllerId()}' from data stored on disk. Resetting to default: ${error.stack}`);
+                controller.handleFactoryReset();
+            }
             controllerData.purgeOnNextLoad = undefined;
         }
     }
