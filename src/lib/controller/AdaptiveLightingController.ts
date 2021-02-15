@@ -926,8 +926,6 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
    * @private
    */
   handleControllerRemoved(): void {
-    this.handleFactoryReset();
-
     this.lightbulb.removeCharacteristic(this.supportedTransitionConfiguration!);
     this.lightbulb.removeCharacteristic(this.transitionControl!);
     this.lightbulb.removeCharacteristic(this.activeTransitionCount!);

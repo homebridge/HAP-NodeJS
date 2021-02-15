@@ -821,6 +821,9 @@ export class Accessory extends EventEmitter {
         this.controllerStorage.untrackController(controller);
       }
 
+      if (controller.handleFactoryReset) {
+        controller.handleFactoryReset();
+      }
       controller.handleControllerRemoved();
 
       delete this.controllers[id];

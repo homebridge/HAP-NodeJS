@@ -1259,8 +1259,6 @@ export class RemoteController extends EventEmitter implements SerializableContro
      * @private
      */
     handleControllerRemoved(): void {
-        this.handleFactoryReset();
-
         this.targetControlManagementService = undefined;
         this.targetControlService = undefined;
         this.siriService = undefined;
