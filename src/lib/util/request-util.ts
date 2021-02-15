@@ -24,7 +24,7 @@ export function formatOutgoingCharacteristicValue(value: Nullable<Characteristic
     const base = props.minValue ?? 0;
     const inverse = 1 / props.minStep;
 
-    return (Math.round((value - base) * inverse) / inverse) + base;
+    return (Math.round(value * inverse) / inverse);
   }
 
   return value;
