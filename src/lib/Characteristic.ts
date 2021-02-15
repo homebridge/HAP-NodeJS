@@ -250,7 +250,7 @@ import {
   numericLowerBound,
   numericUpperBound
 } from "./util/request-util";
-import { toShortForm } from './util/uuid';
+import { BASE_UUID, toShortForm } from './util/uuid';
 
 const debug = createDebug("HAP-NodeJS:Characteristic");
 
@@ -1855,7 +1855,15 @@ export class Characteristic extends EventEmitter {
        * In a future update we will do the breaking change of return null below!
        */
 
-      this.characteristicWarning(`characteristic was supplied illegal value: null! `);
+      if (this.UUID.endsWith(BASE_UUID)) { // we have a apple defined characteristic (at least assuming nobody else uses the UUID namespace)
+        if (this.UUID === ProgrammableSwitchEvent.UUID) {
+          return value; // null is allowed as a value for ProgrammableSwitchEvent
+        }
+
+        this.characteristicWarning(`characteristic was supplied illegal value: null! Home App will reject null for Apple defined characteristics`);
+      }
+
+      // we currently allow null for any non custom defined characteristics
       return this.value;
     }
 
