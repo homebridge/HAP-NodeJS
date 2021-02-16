@@ -53,7 +53,7 @@
     "@homebridge/ciao": "~1.1.2",
     "bonjour-hap": "~3.6.2",
     "debug": "^4.3.1",
-    "fast-srp-hap": "2.0.2",
+    "fast-srp-hap": "2.0.3",
     "futoin-hkdf": "~1.3.2",
     "ip": "^1.1.3",
     "node-persist": "^0.0.11",
@@ -74,7 +74,7 @@
     "simple-plist": "^1.1.1",
     "ts-jest": "^26.4.4",
     "ts-node": "^9.1.1",
-    "typedoc": "0.20.14",
+    "typedoc": "0.20.25",
     "typescript": "^4.1.3"
   }
 }
