@@ -48,7 +48,7 @@
 	</div>
 	<div class="tsd-page-title">
 		<div class="container">
-			<h1>Project hap-nodejs</h1>
+			<h1>hap-nodejs</h1>
 		</div>
 	</div>
 </header>
@@ -59,12 +59,6 @@
 				<h2>Index</h2>
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
-						<section class="tsd-index-section ">
-							<h3>Namespaces</h3>
-							<ul class="tsd-index-list">
-								<li class="tsd-kind-namespace"><a href="modules/datastreamparser.html" class="tsd-kind-icon">Data<wbr>Stream<wbr>Parser</a></li>
-							</ul>
-						</section>
 						<section class="tsd-index-section ">
 							<h3>Enumerations</h3>
 							<ul class="tsd-index-list">
@@ -100,6 +94,7 @@
 								<li class="tsd-kind-enum"><a href="enums/hapservereventtypes.html" class="tsd-kind-icon">HAPServer<wbr>Event<wbr>Types</a></li>
 								<li class="tsd-kind-enum"><a href="enums/hapstatus.html" class="tsd-kind-icon">HAPStatus</a></li>
 								<li class="tsd-kind-enum"><a href="enums/hdsstatus.html" class="tsd-kind-icon">HDSStatus</a></li>
+								<li class="tsd-kind-enum"><a href="enums/mdnsadvertiser.html" class="tsd-kind-icon">MDNSAdvertiser</a></li>
 								<li class="tsd-kind-enum"><a href="enums/perms.html" class="tsd-kind-icon">Perms</a></li>
 								<li class="tsd-kind-enum"><a href="enums/protocols.html" class="tsd-kind-icon">Protocols</a></li>
 								<li class="tsd-kind-enum"><a href="enums/remotecontrollerevents.html" class="tsd-kind-icon">Remote<wbr>Controller<wbr>Events</a></li>
@@ -126,6 +121,7 @@
 								<li class="tsd-kind-class"><a href="classes/colorutils.html" class="tsd-kind-icon">Color<wbr>Utils</a></li>
 								<li class="tsd-kind-class"><a href="classes/datastreamconnection.html" class="tsd-kind-icon">Data<wbr>Stream<wbr>Connection</a></li>
 								<li class="tsd-kind-class"><a href="classes/datastreammanagement.html" class="tsd-kind-icon">Data<wbr>Stream<wbr>Management</a></li>
+								<li class="tsd-kind-class"><a href="classes/datastreamparser.html" class="tsd-kind-icon">Data<wbr>Stream<wbr>Parser</a></li>
 								<li class="tsd-kind-class"><a href="classes/datastreamreader.html" class="tsd-kind-icon">Data<wbr>Stream<wbr>Reader</a></li>
 								<li class="tsd-kind-class"><a href="classes/datastreamserver.html" class="tsd-kind-icon">Data<wbr>Stream<wbr>Server</a></li>
 								<li class="tsd-kind-class"><a href="classes/datastreamwriter.html" class="tsd-kind-icon">Data<wbr>Stream<wbr>Writer</a></li>
@@ -163,6 +159,7 @@
 								<li class="tsd-kind-interface"><a href="interfaces/camerastreamingdelegate.html" class="tsd-kind-icon">Camera<wbr>Streaming<wbr>Delegate</a></li>
 								<li class="tsd-kind-interface"><a href="interfaces/characteristicoperationcontext.html" class="tsd-kind-icon">Characteristic<wbr>Operation<wbr>Context</a></li>
 								<li class="tsd-kind-interface"><a href="interfaces/characteristicprops.html" class="tsd-kind-icon">Characteristic<wbr>Props</a></li>
+								<li class="tsd-kind-interface"><a href="interfaces/characteristicwarning.html" class="tsd-kind-icon">Characteristic<wbr>Warning</a></li>
 								<li class="tsd-kind-interface tsd-has-type-parameter"><a href="interfaces/controller.html" class="tsd-kind-icon">Controller</a></li>
 								<li class="tsd-kind-interface"><a href="interfaces/controllerconstructor.html" class="tsd-kind-icon">Controller<wbr>Constructor</a></li>
 								<li class="tsd-kind-interface"><a href="interfaces/controllercontext.html" class="tsd-kind-icon">Controller<wbr>Context</a></li>
@@ -288,6 +285,7 @@
 						<section class="tsd-index-section ">
 							<h3>Functions</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-function"><a href="modules.html#isknownhapstatuserror" class="tsd-kind-icon">Is<wbr>KnownHAPStatus<wbr>Error</a></li>
 								<li class="tsd-kind-function tsd-has-type-parameter"><a href="modules.html#clone" class="tsd-kind-icon">clone</a></li>
 								<li class="tsd-kind-function"><a href="modules.html#decode" class="tsd-kind-icon">decode</a></li>
 								<li class="tsd-kind-function"><a href="modules.html#decodelist" class="tsd-kind-icon">decode<wbr>List</a></li>
@@ -325,7 +323,7 @@
 					<div class="tsd-signature tsd-kind-icon">Accessories<wbr>Callback<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>error<span class="tsd-signature-symbol">: </span><a href="modules.html#haphttperror" class="tsd-signature-type" data-tsd-kind="Type alias">HAPHttpError</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span>, result<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">AccessoriesResponse</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/HAPServer.ts#L177">lib/HAPServer.ts:177</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/HAPServer.ts#L189">lib/HAPServer.ts:189</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -359,7 +357,7 @@
 					<div class="tsd-signature tsd-kind-icon">Accessory<wbr>Characteristic<wbr>Change<span class="tsd-signature-symbol">:</span> <a href="modules.html#servicecharacteristicchange" class="tsd-signature-type" data-tsd-kind="Type alias">ServiceCharacteristicChange</a><span class="tsd-signature-symbol"> &amp; </span><span class="tsd-signature-symbol">{ </span>service<span class="tsd-signature-symbol">: </span><a href="classes/service.html" class="tsd-signature-type" data-tsd-kind="Class">Service</a><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/Accessory.ts#L258">lib/Accessory.ts:258</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/Accessory.ts#L281">lib/Accessory.ts:281</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -369,7 +367,7 @@
 					<div class="tsd-signature tsd-kind-icon">Add<wbr>Pairing<wbr>Callback<span class="tsd-signature-symbol">:</span> <a href="modules.html#pairingscallback" class="tsd-signature-type" data-tsd-kind="Type alias">PairingsCallback</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/HAPServer.ts#L173">lib/HAPServer.ts:173</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/HAPServer.ts#L185">lib/HAPServer.ts:185</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -379,7 +377,7 @@
 					<div class="tsd-signature tsd-kind-icon">Additional<wbr>Authorization<wbr>Handler<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>additionalAuthorizationData<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/Characteristic.ts#L482">lib/Characteristic.ts:482</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/Characteristic.ts#L473">lib/Characteristic.ts:473</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -410,7 +408,7 @@
 					<div class="tsd-signature tsd-kind-icon">Address<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>address<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">&quot;v4&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;v6&quot;</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/RTPStreamManagement.ts#L353">lib/camera/RTPStreamManagement.ts:353</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/RTPStreamManagement.ts#L353">lib/camera/RTPStreamManagement.ts:353</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -438,7 +436,7 @@
 					<div class="tsd-signature tsd-kind-icon">Audio<wbr>Codec<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>samplerate<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/types.ts#L32">types.ts:32</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/types.ts#L32">types.ts:32</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -466,7 +464,7 @@
 					<div class="tsd-signature tsd-kind-icon">Audio<wbr>Codec<wbr>Configuration<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>codecType<span class="tsd-signature-symbol">: </span><a href="enums/audiocodectypes.html" class="tsd-signature-type" data-tsd-kind="Enumeration">AudioCodecTypes</a><span class="tsd-signature-symbol">; </span>parameters<span class="tsd-signature-symbol">: </span><a href="modules.html#audiocodecparameters" class="tsd-signature-type" data-tsd-kind="Type alias">AudioCodecParameters</a><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/controller/RemoteController.ts#L211">lib/controller/RemoteController.ts:211</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/controller/RemoteController.ts#L211">lib/controller/RemoteController.ts:211</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -487,7 +485,7 @@
 					<div class="tsd-signature tsd-kind-icon">Audio<wbr>Codec<wbr>Parameters<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>bitrate<span class="tsd-signature-symbol">: </span><a href="enums/audiobitrate.html" class="tsd-signature-type" data-tsd-kind="Enumeration">AudioBitrate</a><span class="tsd-signature-symbol">; </span>channels<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>rtpTime<span class="tsd-signature-symbol">?: </span><a href="modules.html#rtptime" class="tsd-signature-type" data-tsd-kind="Type alias">RTPTime</a><span class="tsd-signature-symbol">; </span>samplerate<span class="tsd-signature-symbol">: </span><a href="enums/audiosamplerate.html" class="tsd-signature-type" data-tsd-kind="Enumeration">AudioSamplerate</a><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/controller/RemoteController.ts#L216">lib/controller/RemoteController.ts:216</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/controller/RemoteController.ts#L216">lib/controller/RemoteController.ts:216</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -514,7 +512,7 @@
 					<div class="tsd-signature tsd-kind-icon">Audio<wbr>Frame<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>data<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">; </span>rms<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/controller/RemoteController.ts#L239">lib/controller/RemoteController.ts:239</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/controller/RemoteController.ts#L239">lib/controller/RemoteController.ts:239</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -535,7 +533,7 @@
 					<div class="tsd-signature tsd-kind-icon">Audio<wbr>Info<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>bit_rate<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>channel<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>codec<span class="tsd-signature-symbol">: </span><a href="enums/audiostreamingcodectype.html" class="tsd-signature-type" data-tsd-kind="Enumeration">AudioStreamingCodecType</a><span class="tsd-signature-symbol">; </span>comfortNoiseEnabled<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>comfort_pt<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>max_bit_rate<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>packet_time<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>pt<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>rtcp_interval<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>sample_rate<span class="tsd-signature-symbol">: </span><a href="enums/audiostreamingsamplerate.html" class="tsd-signature-type" data-tsd-kind="Enumeration">AudioStreamingSamplerate</a><span class="tsd-signature-symbol">; </span>ssrc<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/RTPStreamManagement.ts#L408">lib/camera/RTPStreamManagement.ts:408</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/RTPStreamManagement.ts#L408">lib/camera/RTPStreamManagement.ts:408</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -583,7 +581,7 @@
 					<div class="tsd-signature tsd-kind-icon">Audio<wbr>Streaming<wbr>Codec<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>audioChannels<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>bitrate<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">AudioBitrate</span><span class="tsd-signature-symbol">; </span>samplerate<span class="tsd-signature-symbol">: </span><a href="enums/audiostreamingsamplerate.html" class="tsd-signature-type" data-tsd-kind="Enumeration">AudioStreamingSamplerate</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> | </span><a href="enums/audiostreamingsamplerate.html" class="tsd-signature-type" data-tsd-kind="Enumeration">AudioStreamingSamplerate</a><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><a href="enums/audiostreamingcodectype.html" class="tsd-signature-type" data-tsd-kind="Enumeration">AudioStreamingCodecType</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/RTPStreamManagement.ts#L283">lib/camera/RTPStreamManagement.ts:283</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/RTPStreamManagement.ts#L283">lib/camera/RTPStreamManagement.ts:283</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -610,7 +608,7 @@
 					<div class="tsd-signature tsd-kind-icon">Audio<wbr>Streaming<wbr>Options<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>codecs<span class="tsd-signature-symbol">: </span><a href="modules.html#audiostreamingcodec" class="tsd-signature-type" data-tsd-kind="Type alias">AudioStreamingCodec</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span>comfort_noise<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>twoWayAudio<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/RTPStreamManagement.ts#L277">lib/camera/RTPStreamManagement.ts:277</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/RTPStreamManagement.ts#L277">lib/camera/RTPStreamManagement.ts:277</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -634,7 +632,7 @@
 					<div class="tsd-signature tsd-kind-icon">Button<wbr>Configuration<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>buttonID<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>buttonName<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>buttonType<span class="tsd-signature-symbol">: </span><a href="enums/buttontype.html" class="tsd-signature-type" data-tsd-kind="Enumeration">ButtonType</a><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/controller/RemoteController.ts#L146">lib/controller/RemoteController.ts:146</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/controller/RemoteController.ts#L146">lib/controller/RemoteController.ts:146</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -658,7 +656,7 @@
 					<div class="tsd-signature tsd-kind-icon">Callback<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">...</span>args<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/types.ts#L24">types.ts:24</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/types.ts#L24">types.ts:24</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -689,7 +687,7 @@
 					<div class="tsd-signature tsd-kind-icon">Camera<span class="tsd-signature-symbol">:</span> <a href="interfaces/legacycamerasource.html" class="tsd-signature-type" data-tsd-kind="Interface">LegacyCameraSource</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/Camera.ts#L28">lib/camera/Camera.ts:28</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/Camera.ts#L28">lib/camera/Camera.ts:28</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -699,7 +697,7 @@
 					<div class="tsd-signature tsd-kind-icon">Camera<wbr>Streaming<wbr>Options<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">CameraStreamingOptionsBase</span><span class="tsd-signature-symbol"> &amp; </span><span class="tsd-signature-type">CameraStreamingOptionsLegacySRTP</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">CameraStreamingOptionsSupportedCryptoSuites</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/RTPStreamManagement.ts#L239">lib/camera/RTPStreamManagement.ts:239</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/RTPStreamManagement.ts#L239">lib/camera/RTPStreamManagement.ts:239</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -709,7 +707,7 @@
 					<div class="tsd-signature tsd-kind-icon">Characteristic<wbr>Change<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>context<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">; </span>newValue<span class="tsd-signature-symbol">: </span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span>oldValue<span class="tsd-signature-symbol">: </span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span>originator<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">HAPConnection</span><span class="tsd-signature-symbol">; </span>reason<span class="tsd-signature-symbol">: </span><a href="enums/changereason.html" class="tsd-signature-type" data-tsd-kind="Enumeration">ChangeReason</a><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/Characteristic.ts#L389">lib/Characteristic.ts:389</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/Characteristic.ts#L380">lib/Characteristic.ts:380</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -739,7 +737,7 @@
 					<div class="tsd-signature tsd-kind-icon">Characteristic<wbr>Events<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Record</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/Accessory.ts#L168">lib/Accessory.ts:168</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/Accessory.ts#L176">lib/Accessory.ts:176</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -755,7 +753,7 @@
 					<div class="tsd-signature tsd-kind-icon">Characteristic<wbr>Get<wbr>Callback<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>status<span class="tsd-signature-symbol">?: </span><a href="enums/hapstatus.html" class="tsd-signature-type" data-tsd-kind="Enumeration">HAPStatus</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Error</span>, value<span class="tsd-signature-symbol">?: </span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/Characteristic.ts#L477">lib/Characteristic.ts:477</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/Characteristic.ts#L468">lib/Characteristic.ts:468</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -786,10 +784,10 @@
 				<section class="tsd-panel tsd-member tsd-kind-type-alias">
 					<a name="characteristicgethandler" class="tsd-anchor"></a>
 					<h3>Characteristic<wbr>Get<wbr>Handler</h3>
-					<div class="tsd-signature tsd-kind-icon">Characteristic<wbr>Get<wbr>Handler<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span></div>
+					<div class="tsd-signature tsd-kind-icon">Characteristic<wbr>Get<wbr>Handler<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>context<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span>, connection<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">HAPConnection</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/Characteristic.ts#L479">lib/Characteristic.ts:479</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/Characteristic.ts#L470">lib/Characteristic.ts:470</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -797,10 +795,19 @@
 						<ul class="tsd-parameters">
 							<li class="tsd-parameter-signature">
 								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-type-alias">
-									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span></li>
+									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>context<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span>, connection<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">HAPConnection</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span></li>
 								</ul>
 								<ul class="tsd-descriptions">
 									<li class="tsd-description">
+										<h4 class="tsd-parameters-title">Parameters</h4>
+										<ul class="tsd-parameters">
+											<li>
+												<h5>context: <span class="tsd-signature-type">any</span></h5>
+											</li>
+											<li>
+												<h5><span class="tsd-flag ts-flagOptional">Optional</span> connection: <span class="tsd-signature-type">HAPConnection</span></h5>
+											</li>
+										</ul>
 										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span></h4>
 									</li>
 								</ul>
@@ -814,7 +821,7 @@
 					<div class="tsd-signature tsd-kind-icon">Characteristic<wbr>Set<wbr>Callback<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>error<span class="tsd-signature-symbol">?: </span><a href="enums/hapstatus.html" class="tsd-signature-type" data-tsd-kind="Enumeration">HAPStatus</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Error</span>, writeResponse<span class="tsd-signature-symbol">?: </span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/Characteristic.ts#L478">lib/Characteristic.ts:478</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/Characteristic.ts#L469">lib/Characteristic.ts:469</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -845,10 +852,10 @@
 				<section class="tsd-panel tsd-member tsd-kind-type-alias">
 					<a name="characteristicsethandler" class="tsd-anchor"></a>
 					<h3>Characteristic<wbr>Set<wbr>Handler</h3>
-					<div class="tsd-signature tsd-kind-icon">Characteristic<wbr>Set<wbr>Handler<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">void</span></div>
+					<div class="tsd-signature tsd-kind-icon">Characteristic<wbr>Set<wbr>Handler<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a>, context<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span>, connection<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">HAPConnection</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/Characteristic.ts#L480">lib/Characteristic.ts:480</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/Characteristic.ts#L471">lib/Characteristic.ts:471</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -856,7 +863,7 @@
 						<ul class="tsd-parameters">
 							<li class="tsd-parameter-signature">
 								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-type-alias">
-									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">void</span></li>
+									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a>, context<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span>, connection<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">HAPConnection</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">void</span></li>
 								</ul>
 								<ul class="tsd-descriptions">
 									<li class="tsd-description">
@@ -864,6 +871,12 @@
 										<ul class="tsd-parameters">
 											<li>
 												<h5>value: <a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a></h5>
+											</li>
+											<li>
+												<h5>context: <span class="tsd-signature-type">any</span></h5>
+											</li>
+											<li>
+												<h5><span class="tsd-flag ts-flagOptional">Optional</span> connection: <span class="tsd-signature-type">HAPConnection</span></h5>
 											</li>
 										</ul>
 										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#characteristicvalue" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicValue</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">void</span></h4>
@@ -879,7 +892,7 @@
 					<div class="tsd-signature tsd-kind-icon">Characteristic<wbr>Value<span class="tsd-signature-symbol">:</span> <a href="modules.html#primitivetypes" class="tsd-signature-type" data-tsd-kind="Type alias">PrimitiveTypes</a><span class="tsd-signature-symbol"> | </span><a href="modules.html#primitivetypes" class="tsd-signature-type" data-tsd-kind="Type alias">PrimitiveTypes</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-symbol">{}</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/types.ts#L28">types.ts:28</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/types.ts#L28">types.ts:28</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -889,7 +902,7 @@
 					<div class="tsd-signature tsd-kind-icon">Controller<wbr>Identifier<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><a href="modules.html#controllertype" class="tsd-signature-type" data-tsd-kind="Type alias">ControllerType</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/controller/Controller.ts#L27">lib/controller/Controller.ts:27</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/controller/Controller.ts#L27">lib/controller/Controller.ts:27</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -899,7 +912,7 @@
 					<div class="tsd-signature tsd-kind-icon">Controller<wbr>Type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><a href="enums/defaultcontrollertype.html" class="tsd-signature-type" data-tsd-kind="Enumeration">DefaultControllerType</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/controller/Controller.ts#L18">lib/controller/Controller.ts:18</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/controller/Controller.ts#L18">lib/controller/Controller.ts:18</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -917,7 +930,7 @@
 					<div class="tsd-signature tsd-kind-icon">Error<wbr>Handler<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>error<span class="tsd-signature-symbol">: </span><a href="enums/datasendclosereason.html" class="tsd-signature-type" data-tsd-kind="Enumeration">DataSendCloseReason</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/controller/RemoteController.ts#L254">lib/controller/RemoteController.ts:254</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/controller/RemoteController.ts#L254">lib/controller/RemoteController.ts:254</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -948,7 +961,7 @@
 					<div class="tsd-signature tsd-kind-icon">Event<wbr>Accessory<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">&quot;identify&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;listening&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;service-configurationChange&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;service-characteristic-change&quot;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/Accessory.ts#L276">lib/Accessory.ts:276</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/Accessory.ts#L299">lib/Accessory.ts:299</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -965,7 +978,7 @@
 					<div class="tsd-signature tsd-kind-icon">Event<wbr>Handler<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>message<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Record</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/datastream/DataStreamServer.ts#L29">lib/datastream/DataStreamServer.ts:29</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/datastream/DataStreamServer.ts#L29">lib/datastream/DataStreamServer.ts:29</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -996,7 +1009,7 @@
 					<div class="tsd-signature tsd-kind-icon">Event<wbr>Service<span class="tsd-signature-symbol">:</span> <a href="enums/serviceeventtypes.html#characteristic_change" class="tsd-signature-type" data-tsd-kind="Enumeration member">CHARACTERISTIC_CHANGE</a><span class="tsd-signature-symbol"> | </span><a href="enums/serviceeventtypes.html#service_configuration_change" class="tsd-signature-type" data-tsd-kind="Enumeration member">SERVICE_CONFIGURATION_CHANGE</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/Service.ts#L120">lib/Service.ts:120</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/Service.ts#L120">lib/Service.ts:120</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -1013,7 +1026,7 @@
 					<div class="tsd-signature tsd-kind-icon">Frame<wbr>Handler<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>frame<span class="tsd-signature-symbol">: </span><a href="modules.html#audioframe" class="tsd-signature-type" data-tsd-kind="Type alias">AudioFrame</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/controller/RemoteController.ts#L253">lib/controller/RemoteController.ts:253</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/controller/RemoteController.ts#L253">lib/controller/RemoteController.ts:253</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1044,7 +1057,7 @@
 					<div class="tsd-signature tsd-kind-icon">Global<wbr>Event<wbr>Handler<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>connection<span class="tsd-signature-symbol">: </span><a href="classes/datastreamconnection.html" class="tsd-signature-type" data-tsd-kind="Class">DataStreamConnection</a>, message<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Record</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/datastream/DataStreamServer.ts#L32">lib/datastream/DataStreamServer.ts:32</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/datastream/DataStreamServer.ts#L32">lib/datastream/DataStreamServer.ts:32</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1078,7 +1091,7 @@
 					<div class="tsd-signature tsd-kind-icon">Global<wbr>Request<wbr>Handler<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>connection<span class="tsd-signature-symbol">: </span><a href="classes/datastreamconnection.html" class="tsd-signature-type" data-tsd-kind="Class">DataStreamConnection</a>, id<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, message<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Record</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/datastream/DataStreamServer.ts#L33">lib/datastream/DataStreamServer.ts:33</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/datastream/DataStreamServer.ts#L33">lib/datastream/DataStreamServer.ts:33</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1115,7 +1128,7 @@
 					<div class="tsd-signature tsd-kind-icon">H264<wbr>Codec<wbr>Parameters<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>levels<span class="tsd-signature-symbol">: </span><a href="enums/h264level.html" class="tsd-signature-type" data-tsd-kind="Enumeration">H264Level</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span>profiles<span class="tsd-signature-symbol">: </span><a href="enums/h264profile.html" class="tsd-signature-type" data-tsd-kind="Enumeration">H264Profile</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/RTPStreamManagement.ts#L270">lib/camera/RTPStreamManagement.ts:270</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/RTPStreamManagement.ts#L270">lib/camera/RTPStreamManagement.ts:270</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1136,7 +1149,7 @@
 					<div class="tsd-signature tsd-kind-icon">HAPHttp<wbr>Error<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>httpCode<span class="tsd-signature-symbol">: </span><a href="enums/haphttpcode.html" class="tsd-signature-type" data-tsd-kind="Enumeration">HAPHTTPCode</a><span class="tsd-signature-symbol">; </span>status<span class="tsd-signature-symbol">: </span><a href="enums/hapstatus.html" class="tsd-signature-type" data-tsd-kind="Enumeration">HAPStatus</a><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/HAPServer.ts#L170">lib/HAPServer.ts:170</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/HAPServer.ts#L182">lib/HAPServer.ts:182</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1157,7 +1170,7 @@
 					<div class="tsd-signature tsd-kind-icon">HAPPincode<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/types.ts#L18">types.ts:18</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/types.ts#L18">types.ts:18</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -1173,7 +1186,7 @@
 					<div class="tsd-signature tsd-kind-icon">IPAddress<span class="tsd-signature-symbol">:</span> <a href="modules.html#ipv4address" class="tsd-signature-type" data-tsd-kind="Type alias">IPv4Address</a><span class="tsd-signature-symbol"> | </span><a href="modules.html#ipv6address" class="tsd-signature-type" data-tsd-kind="Type alias">IPv6Address</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/types.ts#L22">types.ts:22</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/types.ts#L22">types.ts:22</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -1183,7 +1196,7 @@
 					<div class="tsd-signature tsd-kind-icon">IPv4<wbr>Address<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/types.ts#L20">types.ts:20</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/types.ts#L20">types.ts:20</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -1193,7 +1206,7 @@
 					<div class="tsd-signature tsd-kind-icon">IPv6<wbr>Address<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/types.ts#L21">types.ts:21</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/types.ts#L21">types.ts:21</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -1203,7 +1216,7 @@
 					<div class="tsd-signature tsd-kind-icon">Identification<wbr>Callback<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>identifiedSession<span class="tsd-signature-symbol">?: </span><a href="modules.html#prepareddatastreamsession" class="tsd-signature-type" data-tsd-kind="Type alias">PreparedDataStreamSession</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/datastream/DataStreamServer.ts#L423">lib/datastream/DataStreamServer.ts:423</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/datastream/DataStreamServer.ts#L423">lib/datastream/DataStreamServer.ts:423</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1234,7 +1247,7 @@
 					<div class="tsd-signature tsd-kind-icon">Identify<wbr>Callback<span class="tsd-signature-symbol">:</span> <a href="modules.html#voidcallback" class="tsd-signature-type" data-tsd-kind="Type alias">VoidCallback</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/HAPServer.ts#L168">lib/HAPServer.ts:168</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/HAPServer.ts#L180">lib/HAPServer.ts:180</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -1244,7 +1257,7 @@
 					<div class="tsd-signature tsd-kind-icon">Interface<wbr>Name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/types.ts#L19">types.ts:19</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/types.ts#L19">types.ts:19</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -1254,7 +1267,7 @@
 					<div class="tsd-signature tsd-kind-icon">List<wbr>Pairings<wbr>Callback<span class="tsd-signature-symbol">:</span> <a href="modules.html#pairingscallback" class="tsd-signature-type" data-tsd-kind="Type alias">PairingsCallback</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">PairingInformation</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/HAPServer.ts#L175">lib/HAPServer.ts:175</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/HAPServer.ts#L187">lib/HAPServer.ts:187</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -1264,7 +1277,7 @@
 					<div class="tsd-signature tsd-kind-icon">Mac<wbr>Address<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/types.ts#L13">types.ts:13</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/types.ts#L13">types.ts:13</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -1280,7 +1293,7 @@
 					<div class="tsd-signature tsd-kind-icon">Node<wbr>Callback&lt;T&gt;<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>err<span class="tsd-signature-symbol">: </span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Error</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span>, data<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/types.ts#L25">types.ts:25</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/types.ts#L25">types.ts:25</a></li>
 						</ul>
 					</aside>
 					<h4 class="tsd-type-parameters-title">Type parameters</h4>
@@ -1320,7 +1333,7 @@
 					<div class="tsd-signature tsd-kind-icon">Nullable&lt;T&gt;<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">T</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/types.ts#L1">types.ts:1</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/types.ts#L1">types.ts:1</a></li>
 						</ul>
 					</aside>
 					<h4 class="tsd-type-parameters-title">Type parameters</h4>
@@ -1336,7 +1349,7 @@
 					<div class="tsd-signature tsd-kind-icon">Pair<wbr>Callback<span class="tsd-signature-symbol">:</span> <a href="modules.html#voidcallback" class="tsd-signature-type" data-tsd-kind="Type alias">VoidCallback</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/HAPServer.ts#L176">lib/HAPServer.ts:176</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/HAPServer.ts#L188">lib/HAPServer.ts:188</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -1346,7 +1359,7 @@
 					<div class="tsd-signature tsd-kind-icon">Pairings<wbr>Callback&lt;T&gt;<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>error<span class="tsd-signature-symbol">: </span><a href="enums/tlverrorcode.html" class="tsd-signature-type" data-tsd-kind="Enumeration">TLVErrorCode</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">0</span>, data<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/HAPServer.ts#L172">lib/HAPServer.ts:172</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/HAPServer.ts#L184">lib/HAPServer.ts:184</a></li>
 						</ul>
 					</aside>
 					<h4 class="tsd-type-parameters-title">Type parameters</h4>
@@ -1386,7 +1399,7 @@
 					<div class="tsd-signature tsd-kind-icon">Prepare<wbr>Session<wbr>Callback<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>error<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Error</span>, preparedSession<span class="tsd-signature-symbol">?: </span><a href="modules.html#prepareddatastreamsession" class="tsd-signature-type" data-tsd-kind="Type alias">PreparedDataStreamSession</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/datastream/DataStreamServer.ts#L28">lib/datastream/DataStreamServer.ts:28</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/datastream/DataStreamServer.ts#L28">lib/datastream/DataStreamServer.ts:28</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1420,7 +1433,7 @@
 					<div class="tsd-signature tsd-kind-icon">Prepare<wbr>Stream<wbr>Callback<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>error<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Error</span>, response<span class="tsd-signature-symbol">?: </span><a href="modules.html#preparestreamresponse" class="tsd-signature-type" data-tsd-kind="Type alias">PrepareStreamResponse</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/controller/CameraController.ts#L54">lib/controller/CameraController.ts:54</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/controller/CameraController.ts#L54">lib/controller/CameraController.ts:54</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1454,7 +1467,7 @@
 					<div class="tsd-signature tsd-kind-icon">Prepare<wbr>Stream<wbr>Request<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>addressVersion<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">&quot;ipv4&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;ipv6&quot;</span><span class="tsd-signature-symbol">; </span>audio<span class="tsd-signature-symbol">: </span><a href="modules.html#source" class="tsd-signature-type" data-tsd-kind="Type alias">Source</a><span class="tsd-signature-symbol">; </span>sessionID<span class="tsd-signature-symbol">: </span><a href="modules.html#streamsessionidentifier" class="tsd-signature-type" data-tsd-kind="Type alias">StreamSessionIdentifier</a><span class="tsd-signature-symbol">; </span>targetAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>video<span class="tsd-signature-symbol">: </span><a href="modules.html#source" class="tsd-signature-type" data-tsd-kind="Type alias">Source</a><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/RTPStreamManagement.ts#L314">lib/camera/RTPStreamManagement.ts:314</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/RTPStreamManagement.ts#L314">lib/camera/RTPStreamManagement.ts:314</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1484,7 +1497,7 @@
 					<div class="tsd-signature tsd-kind-icon">Prepare<wbr>Stream<wbr>Response<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>address<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><a href="modules.html#address" class="tsd-signature-type" data-tsd-kind="Type alias">Address</a><span class="tsd-signature-symbol">; </span>addressOverride<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>audio<span class="tsd-signature-symbol">?: </span><a href="interfaces/sourceresponse.html" class="tsd-signature-type" data-tsd-kind="Interface">SourceResponse</a><span class="tsd-signature-symbol"> | </span><a href="interfaces/proxiedsourceresponse.html" class="tsd-signature-type" data-tsd-kind="Interface">ProxiedSourceResponse</a><span class="tsd-signature-symbol">; </span>video<span class="tsd-signature-symbol">: </span><a href="interfaces/sourceresponse.html" class="tsd-signature-type" data-tsd-kind="Interface">SourceResponse</a><span class="tsd-signature-symbol"> | </span><a href="interfaces/proxiedsourceresponse.html" class="tsd-signature-type" data-tsd-kind="Interface">ProxiedSourceResponse</a><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/RTPStreamManagement.ts#L333">lib/camera/RTPStreamManagement.ts:333</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/RTPStreamManagement.ts#L333">lib/camera/RTPStreamManagement.ts:333</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1525,7 +1538,7 @@
 					<div class="tsd-signature tsd-kind-icon">Prepared<wbr>Data<wbr>Stream<wbr>Session<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>accessoryKeySalt<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">; </span>accessoryToControllerEncryptionKey<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">; </span>connectTimeout<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Timeout</span><span class="tsd-signature-symbol">; </span>connection<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">HAPConnection</span><span class="tsd-signature-symbol">; </span>controllerToAccessoryEncryptionKey<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">; </span>port<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/datastream/DataStreamServer.ts#L14">lib/datastream/DataStreamServer.ts:14</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/datastream/DataStreamServer.ts#L14">lib/datastream/DataStreamServer.ts:14</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1558,7 +1571,7 @@
 					<div class="tsd-signature tsd-kind-icon">Prepared<wbr>Stream<wbr>Request<wbr>Callback<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>response<span class="tsd-signature-symbol">: </span><a href="modules.html#preparedstreamresponse" class="tsd-signature-type" data-tsd-kind="Type alias">PreparedStreamResponse</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/Camera.ts#L21">lib/camera/Camera.ts:21</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/Camera.ts#L21">lib/camera/Camera.ts:21</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -1595,7 +1608,7 @@
 					<div class="tsd-signature tsd-kind-icon">Prepared<wbr>Stream<wbr>Response<span class="tsd-signature-symbol">:</span> <a href="modules.html#preparestreamresponse" class="tsd-signature-type" data-tsd-kind="Type alias">PrepareStreamResponse</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/Camera.ts#L25">lib/camera/Camera.ts:25</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/Camera.ts#L25">lib/camera/Camera.ts:25</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -1611,7 +1624,7 @@
 					<div class="tsd-signature tsd-kind-icon">Primitive<wbr>Types<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/types.ts#L27">types.ts:27</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/types.ts#L27">types.ts:27</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -1621,7 +1634,7 @@
 					<div class="tsd-signature tsd-kind-icon">RTPTime<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">20</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">30</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">40</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">60</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/controller/RemoteController.ts#L223">lib/controller/RemoteController.ts:223</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/controller/RemoteController.ts#L223">lib/controller/RemoteController.ts:223</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -1631,7 +1644,7 @@
 					<div class="tsd-signature tsd-kind-icon">Read<wbr>Characteristics<wbr>Callback<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>error<span class="tsd-signature-symbol">: </span><a href="modules.html#haphttperror" class="tsd-signature-type" data-tsd-kind="Type alias">HAPHttpError</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span>, response<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">CharacteristicsReadResponse</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/HAPServer.ts#L178">lib/HAPServer.ts:178</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/HAPServer.ts#L190">lib/HAPServer.ts:190</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1665,7 +1678,7 @@
 					<div class="tsd-signature tsd-kind-icon">Reconfigure<wbr>Stream<wbr>Request<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>sessionID<span class="tsd-signature-symbol">: </span><a href="modules.html#streamsessionidentifier" class="tsd-signature-type" data-tsd-kind="Type alias">StreamSessionIdentifier</a><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><a href="enums/streamrequesttypes.html#reconfigure" class="tsd-signature-type" data-tsd-kind="Enumeration member">RECONFIGURE</a><span class="tsd-signature-symbol">; </span>video<span class="tsd-signature-symbol">: </span><a href="modules.html#reconfiguredvideoinfo" class="tsd-signature-type" data-tsd-kind="Type alias">ReconfiguredVideoInfo</a><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/RTPStreamManagement.ts#L397">lib/camera/RTPStreamManagement.ts:397</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/RTPStreamManagement.ts#L397">lib/camera/RTPStreamManagement.ts:397</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1689,7 +1702,7 @@
 					<div class="tsd-signature tsd-kind-icon">Reconfigured<wbr>Video<wbr>Info<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>fps<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>height<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>max_bit_rate<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>rtcp_interval<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>width<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/RTPStreamManagement.ts#L442">lib/camera/RTPStreamManagement.ts:442</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/RTPStreamManagement.ts#L442">lib/camera/RTPStreamManagement.ts:442</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1719,7 +1732,7 @@
 					<div class="tsd-signature tsd-kind-icon">Remove<wbr>Pairing<wbr>Callback<span class="tsd-signature-symbol">:</span> <a href="modules.html#pairingscallback" class="tsd-signature-type" data-tsd-kind="Type alias">PairingsCallback</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/HAPServer.ts#L174">lib/HAPServer.ts:174</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/HAPServer.ts#L186">lib/HAPServer.ts:186</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -1729,7 +1742,7 @@
 					<div class="tsd-signature tsd-kind-icon">Request<wbr>Handler<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>id<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, message<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Record</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/datastream/DataStreamServer.ts#L30">lib/datastream/DataStreamServer.ts:30</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/datastream/DataStreamServer.ts#L30">lib/datastream/DataStreamServer.ts:30</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1763,7 +1776,7 @@
 					<div class="tsd-signature tsd-kind-icon">Resolution<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/RTPStreamManagement.ts#L275">lib/camera/RTPStreamManagement.ts:275</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/RTPStreamManagement.ts#L275">lib/camera/RTPStreamManagement.ts:275</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -1773,7 +1786,7 @@
 					<div class="tsd-signature tsd-kind-icon">Resource<wbr>Request<wbr>Callback<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>error<span class="tsd-signature-symbol">: </span><a href="modules.html#haphttperror" class="tsd-signature-type" data-tsd-kind="Type alias">HAPHttpError</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span>, resource<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/HAPServer.ts#L180">lib/HAPServer.ts:180</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/HAPServer.ts#L192">lib/HAPServer.ts:192</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1807,7 +1820,7 @@
 					<div class="tsd-signature tsd-kind-icon">Response<wbr>Handler<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>error<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Error</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span>, status<span class="tsd-signature-symbol">: </span><a href="enums/hdsstatus.html" class="tsd-signature-type" data-tsd-kind="Enumeration">HDSStatus</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span>, message<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Record</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/datastream/DataStreamServer.ts#L31">lib/datastream/DataStreamServer.ts:31</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/datastream/DataStreamServer.ts#L31">lib/datastream/DataStreamServer.ts:31</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1844,7 +1857,7 @@
 					<div class="tsd-signature tsd-kind-icon">Serialized<wbr>Service<wbr>Map<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Record</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><a href="modules.html#serviceid" class="tsd-signature-type" data-tsd-kind="Type alias">ServiceId</a><span class="tsd-signature-symbol">&gt;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/Accessory.ts#L149">lib/Accessory.ts:149</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/Accessory.ts#L149">lib/Accessory.ts:149</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -1854,7 +1867,7 @@
 					<div class="tsd-signature tsd-kind-icon">Service<wbr>Characteristic<wbr>Change<span class="tsd-signature-symbol">:</span> <a href="modules.html#characteristicchange" class="tsd-signature-type" data-tsd-kind="Type alias">CharacteristicChange</a><span class="tsd-signature-symbol"> &amp; </span><span class="tsd-signature-symbol">{ </span>characteristic<span class="tsd-signature-symbol">: </span><a href="classes/characteristic.html" class="tsd-signature-type" data-tsd-kind="Class">Characteristic</a><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/Service.ts#L114">lib/Service.ts:114</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/Service.ts#L114">lib/Service.ts:114</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -1864,7 +1877,7 @@
 					<div class="tsd-signature tsd-kind-icon">Service<wbr>Id<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/Service.ts#L112">lib/Service.ts:112</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/Service.ts#L112">lib/Service.ts:112</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -1874,7 +1887,7 @@
 					<div class="tsd-signature tsd-kind-icon">Session<wbr>Identifier<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/types.ts#L8">types.ts:8</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/types.ts#L8">types.ts:8</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -1889,7 +1902,7 @@
 					<div class="tsd-signature tsd-kind-icon">Snapshot<wbr>Request<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>height<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>width<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/RTPStreamManagement.ts#L309">lib/camera/RTPStreamManagement.ts:309</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/RTPStreamManagement.ts#L309">lib/camera/RTPStreamManagement.ts:309</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1910,7 +1923,7 @@
 					<div class="tsd-signature tsd-kind-icon">Snapshot<wbr>Request<wbr>Callback<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>error<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Error</span><span class="tsd-signature-symbol"> | </span><a href="enums/hapstatus.html" class="tsd-signature-type" data-tsd-kind="Enumeration">HAPStatus</a>, buffer<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/controller/CameraController.ts#L53">lib/controller/CameraController.ts:53</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/controller/CameraController.ts#L53">lib/controller/CameraController.ts:53</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1944,7 +1957,7 @@
 					<div class="tsd-signature tsd-kind-icon">Source<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>port<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>proxy_rtcp<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>proxy_rtp<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>srtpCryptoSuite<span class="tsd-signature-symbol">: </span><a href="enums/srtpcryptosuites.html" class="tsd-signature-type" data-tsd-kind="Enumeration">SRTPCryptoSuites</a><span class="tsd-signature-symbol">; </span>srtp_key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">; </span>srtp_salt<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/RTPStreamManagement.ts#L322">lib/camera/RTPStreamManagement.ts:322</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/RTPStreamManagement.ts#L322">lib/camera/RTPStreamManagement.ts:322</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1977,7 +1990,7 @@
 					<div class="tsd-signature tsd-kind-icon">Start<wbr>Stream<wbr>Request<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>audio<span class="tsd-signature-symbol">: </span><a href="modules.html#audioinfo" class="tsd-signature-type" data-tsd-kind="Type alias">AudioInfo</a><span class="tsd-signature-symbol">; </span>sessionID<span class="tsd-signature-symbol">: </span><a href="modules.html#streamsessionidentifier" class="tsd-signature-type" data-tsd-kind="Type alias">StreamSessionIdentifier</a><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><a href="enums/streamrequesttypes.html#start" class="tsd-signature-type" data-tsd-kind="Enumeration member">START</a><span class="tsd-signature-symbol">; </span>video<span class="tsd-signature-symbol">: </span><a href="modules.html#videoinfo" class="tsd-signature-type" data-tsd-kind="Type alias">VideoInfo</a><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/RTPStreamManagement.ts#L390">lib/camera/RTPStreamManagement.ts:390</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/RTPStreamManagement.ts#L390">lib/camera/RTPStreamManagement.ts:390</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -2004,7 +2017,7 @@
 					<div class="tsd-signature tsd-kind-icon">State<wbr>Change<wbr>Delegate<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/controller/Controller.ts#L29">lib/controller/Controller.ts:29</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/controller/Controller.ts#L29">lib/controller/Controller.ts:29</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -2029,7 +2042,7 @@
 					<div class="tsd-signature tsd-kind-icon">Stop<wbr>Stream<wbr>Request<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>sessionID<span class="tsd-signature-symbol">: </span><a href="modules.html#streamsessionidentifier" class="tsd-signature-type" data-tsd-kind="Type alias">StreamSessionIdentifier</a><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><a href="enums/streamrequesttypes.html#stop" class="tsd-signature-type" data-tsd-kind="Enumeration member">STOP</a><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/RTPStreamManagement.ts#L403">lib/camera/RTPStreamManagement.ts:403</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/RTPStreamManagement.ts#L403">lib/camera/RTPStreamManagement.ts:403</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -2050,7 +2063,7 @@
 					<div class="tsd-signature tsd-kind-icon">Stream<wbr>Audio<wbr>Params<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>codecs<span class="tsd-signature-symbol">: </span><a href="modules.html#audiocodec" class="tsd-signature-type" data-tsd-kind="Type alias">AudioCodec</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span>comfort_noise<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/types.ts#L46">types.ts:46</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/types.ts#L46">types.ts:46</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -2078,7 +2091,7 @@
 					<div class="tsd-signature tsd-kind-icon">Stream<wbr>Controller<wbr>Options<span class="tsd-signature-symbol">:</span> <a href="modules.html#camerastreamingoptions" class="tsd-signature-type" data-tsd-kind="Type alias">CameraStreamingOptions</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/RTPStreamManagement.ts#L238">lib/camera/RTPStreamManagement.ts:238</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/RTPStreamManagement.ts#L238">lib/camera/RTPStreamManagement.ts:238</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -2095,7 +2108,7 @@
 					<div class="tsd-signature tsd-kind-icon">Stream<wbr>Request<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>audio<span class="tsd-signature-symbol">?: </span><a href="modules.html#audioinfo" class="tsd-signature-type" data-tsd-kind="Type alias">AudioInfo</a><span class="tsd-signature-symbol">; </span>sessionID<span class="tsd-signature-symbol">: </span><a href="modules.html#sessionidentifier" class="tsd-signature-type" data-tsd-kind="Type alias">SessionIdentifier</a><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><a href="enums/streamrequesttypes.html" class="tsd-signature-type" data-tsd-kind="Enumeration">StreamRequestTypes</a><span class="tsd-signature-symbol">; </span>video<span class="tsd-signature-symbol">?: </span><a href="modules.html#videoinfo" class="tsd-signature-type" data-tsd-kind="Type alias">VideoInfo</a><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/RTPStreamManagement.ts#L383">lib/camera/RTPStreamManagement.ts:383</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/RTPStreamManagement.ts#L383">lib/camera/RTPStreamManagement.ts:383</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -2129,7 +2142,7 @@
 					<div class="tsd-signature tsd-kind-icon">Stream<wbr>Request<wbr>Callback<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>error<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Error</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/controller/CameraController.ts#L55">lib/controller/CameraController.ts:55</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/controller/CameraController.ts#L55">lib/controller/CameraController.ts:55</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -2160,7 +2173,7 @@
 					<div class="tsd-signature tsd-kind-icon">Stream<wbr>Session<wbr>Identifier<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/RTPStreamManagement.ts#L307">lib/camera/RTPStreamManagement.ts:307</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/RTPStreamManagement.ts#L307">lib/camera/RTPStreamManagement.ts:307</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -2170,7 +2183,7 @@
 					<div class="tsd-signature tsd-kind-icon">Stream<wbr>Video<wbr>Params<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>codec<span class="tsd-signature-symbol">?: </span><a href="modules.html#videocodec" class="tsd-signature-type" data-tsd-kind="Type alias">VideoCodec</a><span class="tsd-signature-symbol">; </span>resolutions<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/types.ts#L54">types.ts:54</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/types.ts#L54">types.ts:54</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -2198,7 +2211,7 @@
 					<div class="tsd-signature tsd-kind-icon">Streaming<wbr>Request<span class="tsd-signature-symbol">:</span> <a href="modules.html#startstreamrequest" class="tsd-signature-type" data-tsd-kind="Type alias">StartStreamRequest</a><span class="tsd-signature-symbol"> | </span><a href="modules.html#reconfigurestreamrequest" class="tsd-signature-type" data-tsd-kind="Type alias">ReconfigureStreamRequest</a><span class="tsd-signature-symbol"> | </span><a href="modules.html#stopstreamrequest" class="tsd-signature-type" data-tsd-kind="Type alias">StopStreamRequest</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/RTPStreamManagement.ts#L379">lib/camera/RTPStreamManagement.ts:379</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/RTPStreamManagement.ts#L379">lib/camera/RTPStreamManagement.ts:379</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -2208,7 +2221,7 @@
 					<div class="tsd-signature tsd-kind-icon">Supported<wbr>Button<wbr>Configuration<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>buttonID<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>buttonType<span class="tsd-signature-symbol">: </span><a href="enums/buttontype.html" class="tsd-signature-type" data-tsd-kind="Enumeration">ButtonType</a><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/controller/RemoteController.ts#L134">lib/controller/RemoteController.ts:134</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/controller/RemoteController.ts#L134">lib/controller/RemoteController.ts:134</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -2229,7 +2242,7 @@
 					<div class="tsd-signature tsd-kind-icon">Supported<wbr>Configuration<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>hardwareImplemented<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>maximumTargets<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>supportedButtonConfiguration<span class="tsd-signature-symbol">: </span><a href="modules.html#supportedbuttonconfiguration" class="tsd-signature-type" data-tsd-kind="Type alias">SupportedButtonConfiguration</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span>ticksPerSecond<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/controller/RemoteController.ts#L127">lib/controller/RemoteController.ts:127</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/controller/RemoteController.ts#L127">lib/controller/RemoteController.ts:127</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -2256,7 +2269,7 @@
 					<div class="tsd-signature tsd-kind-icon">TLVEncodable<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/util/tlv.ts#L10">lib/util/tlv.ts:10</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/util/tlv.ts#L10">lib/util/tlv.ts:10</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -2266,7 +2279,7 @@
 					<div class="tsd-signature tsd-kind-icon">Target<wbr>Configuration<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>buttonConfiguration<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Record</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">, </span><a href="modules.html#buttonconfiguration" class="tsd-signature-type" data-tsd-kind="Type alias">ButtonConfiguration</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span>targetCategory<span class="tsd-signature-symbol">?: </span><a href="enums/targetcategory.html" class="tsd-signature-type" data-tsd-kind="Enumeration">TargetCategory</a><span class="tsd-signature-symbol">; </span>targetIdentifier<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>targetName<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/controller/RemoteController.ts#L139">lib/controller/RemoteController.ts:139</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/controller/RemoteController.ts#L139">lib/controller/RemoteController.ts:139</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -2293,7 +2306,7 @@
 					<div class="tsd-signature tsd-kind-icon">Video<wbr>Codec<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>levels<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span>profiles<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/types.ts#L39">types.ts:39</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/types.ts#L39">types.ts:39</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -2321,7 +2334,7 @@
 					<div class="tsd-signature tsd-kind-icon">Video<wbr>Info<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>cvoId<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>fps<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>height<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>level<span class="tsd-signature-symbol">: </span><a href="enums/h264level.html" class="tsd-signature-type" data-tsd-kind="Enumeration">H264Level</a><span class="tsd-signature-symbol">; </span>max_bit_rate<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>mtu<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>packetizationMode<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">VideoCodecPacketizationMode</span><span class="tsd-signature-symbol">; </span>profile<span class="tsd-signature-symbol">: </span><a href="enums/h264profile.html" class="tsd-signature-type" data-tsd-kind="Enumeration">H264Profile</a><span class="tsd-signature-symbol">; </span>pt<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>rtcp_interval<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>ssrc<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>width<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/RTPStreamManagement.ts#L425">lib/camera/RTPStreamManagement.ts:425</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/RTPStreamManagement.ts#L425">lib/camera/RTPStreamManagement.ts:425</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -2372,7 +2385,7 @@
 					<div class="tsd-signature tsd-kind-icon">Video<wbr>Streaming<wbr>Options<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>codec<span class="tsd-signature-symbol">: </span><a href="modules.html#h264codecparameters" class="tsd-signature-type" data-tsd-kind="Type alias">H264CodecParameters</a><span class="tsd-signature-symbol">; </span>cvoId<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>resolutions<span class="tsd-signature-symbol">: </span><a href="modules.html#resolution" class="tsd-signature-type" data-tsd-kind="Type alias">Resolution</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/RTPStreamManagement.ts#L264">lib/camera/RTPStreamManagement.ts:264</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/RTPStreamManagement.ts#L264">lib/camera/RTPStreamManagement.ts:264</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -2396,7 +2409,7 @@
 					<div class="tsd-signature tsd-kind-icon">Void<wbr>Callback<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>err<span class="tsd-signature-symbol">?: </span><a href="modules.html#nullable" class="tsd-signature-type" data-tsd-kind="Type alias">Nullable</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Error</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/types.ts#L26">types.ts:26</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/types.ts#L26">types.ts:26</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -2427,7 +2440,7 @@
 					<div class="tsd-signature tsd-kind-icon">WithUUID&lt;T&gt;<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">T</span><span class="tsd-signature-symbol"> &amp; </span><span class="tsd-signature-symbol">{ </span>UUID<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/types.ts#L3">types.ts:3</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/types.ts#L3">types.ts:3</a></li>
 						</ul>
 					</aside>
 					<h4 class="tsd-type-parameters-title">Type parameters</h4>
@@ -2443,7 +2456,7 @@
 					<div class="tsd-signature tsd-kind-icon">Write<wbr>Characteristics<wbr>Callback<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>error<span class="tsd-signature-symbol">: </span><a href="modules.html#haphttperror" class="tsd-signature-type" data-tsd-kind="Type alias">HAPHttpError</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span>, response<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">CharacteristicsWriteResponse</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/HAPServer.ts#L179">lib/HAPServer.ts:179</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/HAPServer.ts#L191">lib/HAPServer.ts:191</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -2477,10 +2490,10 @@
 				<section class="tsd-panel tsd-member tsd-kind-variable">
 					<a name="accessoryloader" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagConst">Const</span> Accessory<wbr>Loader</h3>
-					<div class="tsd-signature tsd-kind-icon">Accessory<wbr>Loader<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">typeof import(&quot;/Users/andi/Documents/WebstormProjects/HAP-NodeJS/src/lib/AccessoryLoader&quot;)</span><span class="tsd-signature-symbol"> = ...</span></div>
+					<div class="tsd-signature tsd-kind-icon">Accessory<wbr>Loader<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">__module</span><span class="tsd-signature-symbol"> = ...</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/index.ts#L8">index.ts:8</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/index.ts#L8">index.ts:8</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -2490,7 +2503,7 @@
 					<div class="tsd-signature tsd-kind-icon">Codes<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">typeof </span><a href="enums/tlverrorcode.html" class="tsd-signature-type" data-tsd-kind="Enumeration">TLVErrorCode</a><span class="tsd-signature-symbol"> = ...</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/HAPServer.ts#L118">lib/HAPServer.ts:118</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/HAPServer.ts#L130">lib/HAPServer.ts:130</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -2504,10 +2517,10 @@
 				<section class="tsd-panel tsd-member tsd-kind-variable">
 					<a name="legacytypes" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagConst">Const</span> Legacy<wbr>Types</h3>
-					<div class="tsd-signature tsd-kind-icon">Legacy<wbr>Types<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">typeof import(&quot;/Users/andi/Documents/WebstormProjects/HAP-NodeJS/src/accessories/types&quot;)</span><span class="tsd-signature-symbol"> = ...</span></div>
+					<div class="tsd-signature tsd-kind-icon">Legacy<wbr>Types<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">__module</span><span class="tsd-signature-symbol"> = ...</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/index.ts#L31">index.ts:31</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/index.ts#L31">index.ts:31</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -2517,7 +2530,7 @@
 					<div class="tsd-signature tsd-kind-icon">Status<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">typeof </span><a href="enums/hapstatus.html" class="tsd-signature-type" data-tsd-kind="Enumeration">HAPStatus</a><span class="tsd-signature-symbol"> = ...</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/HAPServer.ts#L124">lib/HAPServer.ts:124</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/HAPServer.ts#L136">lib/HAPServer.ts:136</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -2531,16 +2544,44 @@
 				<section class="tsd-panel tsd-member tsd-kind-variable">
 					<a name="uuid" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagConst">Const</span> uuid</h3>
-					<div class="tsd-signature tsd-kind-icon">uuid<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">typeof import(&quot;/Users/andi/Documents/WebstormProjects/HAP-NodeJS/src/lib/util/uuid&quot;)</span><span class="tsd-signature-symbol"> = ...</span></div>
+					<div class="tsd-signature tsd-kind-icon">uuid<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">__module</span><span class="tsd-signature-symbol"> = ...</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/index.ts#L9">index.ts:9</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/index.ts#L9">index.ts:9</a></li>
 						</ul>
 					</aside>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Functions</h2>
+				<section class="tsd-panel tsd-member tsd-kind-function">
+					<a name="isknownhapstatuserror" class="tsd-anchor"></a>
+					<h3>Is<wbr>KnownHAPStatus<wbr>Error</h3>
+					<ul class="tsd-signatures tsd-kind-function">
+						<li class="tsd-signature tsd-kind-icon">Is<wbr>KnownHAPStatus<wbr>Error<span class="tsd-signature-symbol">(</span>status<span class="tsd-signature-symbol">: </span><a href="enums/hapstatus.html" class="tsd-signature-type" data-tsd-kind="Enumeration">HAPStatus</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/HAPServer.ts#L116">lib/HAPServer.ts:116</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Determines if the given status code is a known <a href="enums/hapstatus.html">HAPStatus</a> error code.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>status: <a href="enums/hapstatus.html" class="tsd-signature-type" data-tsd-kind="Enumeration">HAPStatus</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
+						</li>
+					</ul>
+				</section>
 				<section class="tsd-panel tsd-member tsd-kind-function tsd-has-type-parameter">
 					<a name="clone" class="tsd-anchor"></a>
 					<h3>clone</h3>
@@ -2551,7 +2592,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/util/clone.ts#L5">lib/util/clone.ts:5</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/util/clone.ts#L5">lib/util/clone.ts:5</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -2592,7 +2633,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/util/tlv.ts#L71">lib/util/tlv.ts:71</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/util/tlv.ts#L71">lib/util/tlv.ts:71</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -2625,7 +2666,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/util/tlv.ts#L153">lib/util/tlv.ts:153</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/util/tlv.ts#L153">lib/util/tlv.ts:153</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -2651,7 +2692,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/util/tlv.ts#L98">lib/util/tlv.ts:98</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/util/tlv.ts#L98">lib/util/tlv.ts:98</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -2668,13 +2709,13 @@
 					<a name="encode" class="tsd-anchor"></a>
 					<h3>encode</h3>
 					<ul class="tsd-signatures tsd-kind-function">
-						<li class="tsd-signature tsd-kind-icon">encode<span class="tsd-signature-symbol">(</span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, data<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol"> | </span><a href="modules.html#tlvencodable" class="tsd-signature-type" data-tsd-kind="Type alias">TLVEncodable</a><span class="tsd-signature-symbol">[]</span>, <span class="tsd-signature-symbol">...</span>args<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Buffer</span></li>
+						<li class="tsd-signature tsd-kind-icon">encode<span class="tsd-signature-symbol">(</span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, data<span class="tsd-signature-symbol">: </span><a href="modules.html#tlvencodable" class="tsd-signature-type" data-tsd-kind="Type alias">TLVEncodable</a><span class="tsd-signature-symbol"> | </span><a href="modules.html#tlvencodable" class="tsd-signature-type" data-tsd-kind="Type alias">TLVEncodable</a><span class="tsd-signature-symbol">[]</span>, <span class="tsd-signature-symbol">...</span>args<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Buffer</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/util/tlv.ts#L12">lib/util/tlv.ts:12</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/util/tlv.ts#L12">lib/util/tlv.ts:12</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -2683,7 +2724,7 @@
 									<h5>type: <span class="tsd-signature-type">number</span></h5>
 								</li>
 								<li>
-									<h5>data: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol"> | </span><a href="modules.html#tlvencodable" class="tsd-signature-type" data-tsd-kind="Type alias">TLVEncodable</a><span class="tsd-signature-symbol">[]</span></h5>
+									<h5>data: <a href="modules.html#tlvencodable" class="tsd-signature-type" data-tsd-kind="Type alias">TLVEncodable</a><span class="tsd-signature-symbol"> | </span><a href="modules.html#tlvencodable" class="tsd-signature-type" data-tsd-kind="Type alias">TLVEncodable</a><span class="tsd-signature-symbol">[]</span></h5>
 								</li>
 								<li>
 									<h5><span class="tsd-flag ts-flagRest">Rest</span> <span class="tsd-signature-symbol">...</span>args: <span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span></h5>
@@ -2703,7 +2744,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/util/time.ts#L12">lib/util/time.ts:12</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/util/time.ts#L12">lib/util/time.ts:12</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -2726,7 +2767,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/util/time.ts#L6">lib/util/time.ts:6</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/util/time.ts#L6">lib/util/time.ts:6</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -2749,7 +2790,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/index.ts#L39">index.ts:39</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/index.ts#L45">index.ts:45</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -2774,19 +2815,19 @@
 					<a name="isserializablecontroller" class="tsd-anchor"></a>
 					<h3>is<wbr>Serializable<wbr>Controller</h3>
 					<ul class="tsd-signatures tsd-kind-function">
-						<li class="tsd-signature tsd-kind-icon">is<wbr>Serializable<wbr>Controller<span class="tsd-signature-symbol">(</span>controller<span class="tsd-signature-symbol">: </span><a href="interfaces/controller.html" class="tsd-signature-type" data-tsd-kind="Interface">Controller</a><span class="tsd-signature-symbol">&lt;</span><a href="interfaces/controllerservicemap.html" class="tsd-signature-type" data-tsd-kind="Interface">ControllerServiceMap</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">controller</span><span class="tsd-signature-symbol"> is </span><a href="interfaces/serializablecontroller.html" class="tsd-signature-type" data-tsd-kind="Interface">SerializableController</a><span class="tsd-signature-symbol">&lt;</span><a href="interfaces/controllerservicemap.html" class="tsd-signature-type" data-tsd-kind="Interface">ControllerServiceMap</a><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">is<wbr>Serializable<wbr>Controller<span class="tsd-signature-symbol">(</span>controller<span class="tsd-signature-symbol">: </span><a href="interfaces/controller.html" class="tsd-signature-type" data-tsd-kind="Interface">Controller</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">controller</span><span class="tsd-signature-symbol"> is </span><a href="interfaces/serializablecontroller.html" class="tsd-signature-type" data-tsd-kind="Interface">SerializableController</a><span class="tsd-signature-symbol">&lt;</span><a href="interfaces/controllerservicemap.html" class="tsd-signature-type" data-tsd-kind="Interface">ControllerServiceMap</a><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/controller/Controller.ts#L167">lib/controller/Controller.ts:167</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/controller/Controller.ts#L170">lib/controller/Controller.ts:170</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>controller: <a href="interfaces/controller.html" class="tsd-signature-type" data-tsd-kind="Interface">Controller</a><span class="tsd-signature-symbol">&lt;</span><a href="interfaces/controllerservicemap.html" class="tsd-signature-type" data-tsd-kind="Interface">ControllerServiceMap</a><span class="tsd-signature-symbol">&gt;</span></h5>
+									<h5>controller: <a href="interfaces/controller.html" class="tsd-signature-type" data-tsd-kind="Interface">Controller</a></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">controller</span><span class="tsd-signature-symbol"> is </span><a href="interfaces/serializablecontroller.html" class="tsd-signature-type" data-tsd-kind="Interface">SerializableController</a><span class="tsd-signature-symbol">&lt;</span><a href="interfaces/controllerservicemap.html" class="tsd-signature-type" data-tsd-kind="Interface">ControllerServiceMap</a><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -2803,7 +2844,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/AccessoryLoader.ts#L22">lib/AccessoryLoader.ts:22</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/AccessoryLoader.ts#L22">lib/AccessoryLoader.ts:22</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -2832,7 +2873,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/util/once.ts#L1">lib/util/once.ts:1</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/util/once.ts#L1">lib/util/once.ts:1</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-type-parameters-title">Type parameters</h4>
@@ -2879,7 +2920,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/AccessoryLoader.ts#L63">lib/AccessoryLoader.ts:63</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/AccessoryLoader.ts#L63">lib/AccessoryLoader.ts:63</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -2908,7 +2949,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/AccessoryLoader.ts#L134">lib/AccessoryLoader.ts:134</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/AccessoryLoader.ts#L134">lib/AccessoryLoader.ts:134</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -2931,7 +2972,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/AccessoryLoader.ts#L104">lib/AccessoryLoader.ts:104</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/AccessoryLoader.ts#L104">lib/AccessoryLoader.ts:104</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -2954,7 +2995,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/util/tlv.ts#L247">lib/util/tlv.ts:247</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/util/tlv.ts#L247">lib/util/tlv.ts:247</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -2977,7 +3018,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/util/tlv.ts#L229">lib/util/tlv.ts:229</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/util/tlv.ts#L229">lib/util/tlv.ts:229</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -3000,7 +3041,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/util/tlv.ts#L211">lib/util/tlv.ts:211</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/util/tlv.ts#L211">lib/util/tlv.ts:211</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -3030,7 +3071,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/util/tlv.ts#L216">lib/util/tlv.ts:216</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/util/tlv.ts#L216">lib/util/tlv.ts:216</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -3056,7 +3097,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/util/tlv.ts#L250">lib/util/tlv.ts:250</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/util/tlv.ts#L250">lib/util/tlv.ts:250</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -3082,7 +3123,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/util/tlv.ts#L233">lib/util/tlv.ts:233</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/util/tlv.ts#L233">lib/util/tlv.ts:233</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -3105,7 +3146,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/util/tlv.ts#L239">lib/util/tlv.ts:239</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/util/tlv.ts#L239">lib/util/tlv.ts:239</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -3128,7 +3169,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/util/tlv.ts#L221">lib/util/tlv.ts:221</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/util/tlv.ts#L221">lib/util/tlv.ts:221</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -3151,7 +3192,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/util/tlv.ts#L193">lib/util/tlv.ts:193</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/util/tlv.ts#L193">lib/util/tlv.ts:193</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -3174,7 +3215,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/util/tlv.ts#L265">lib/util/tlv.ts:265</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/util/tlv.ts#L265">lib/util/tlv.ts:265</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -3197,9 +3238,6 @@
 				<ul>
 					<li class="current ">
 						<a href="modules.html">Exports</a>
-					</li>
-					<li class=" tsd-kind-namespace">
-						<a href="modules/datastreamparser.html">Data<wbr>Stream<wbr>Parser</a>
 					</li>
 				</ul>
 			</nav>
@@ -3302,6 +3340,9 @@
 						<a href="enums/hdsstatus.html" class="tsd-kind-icon">HDSStatus</a>
 					</li>
 					<li class=" tsd-kind-enum">
+						<a href="enums/mdnsadvertiser.html" class="tsd-kind-icon">MDNSAdvertiser</a>
+					</li>
+					<li class=" tsd-kind-enum">
 						<a href="enums/perms.html" class="tsd-kind-icon">Perms</a>
 					</li>
 					<li class=" tsd-kind-enum">
@@ -3363,6 +3404,9 @@
 					</li>
 					<li class=" tsd-kind-class">
 						<a href="classes/datastreammanagement.html" class="tsd-kind-icon">Data<wbr>Stream<wbr>Management</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="classes/datastreamparser.html" class="tsd-kind-icon">Data<wbr>Stream<wbr>Parser</a>
 					</li>
 					<li class=" tsd-kind-class">
 						<a href="classes/datastreamreader.html" class="tsd-kind-icon">Data<wbr>Stream<wbr>Reader</a>
@@ -3459,6 +3503,9 @@
 					</li>
 					<li class=" tsd-kind-interface">
 						<a href="interfaces/characteristicprops.html" class="tsd-kind-icon">Characteristic<wbr>Props</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/characteristicwarning.html" class="tsd-kind-icon">Characteristic<wbr>Warning</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-has-type-parameter">
 						<a href="interfaces/controller.html" class="tsd-kind-icon">Controller</a>
@@ -3789,6 +3836,9 @@
 					</li>
 					<li class=" tsd-kind-variable">
 						<a href="modules.html#uuid" class="tsd-kind-icon">uuid</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#isknownhapstatuserror" class="tsd-kind-icon">Is<wbr>KnownHAPStatus<wbr>Error</a>
 					</li>
 					<li class=" tsd-kind-function tsd-has-type-parameter">
 						<a href="modules.html#clone" class="tsd-kind-icon">clone</a>

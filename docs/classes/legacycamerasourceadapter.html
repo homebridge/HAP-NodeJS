@@ -111,7 +111,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/Camera.ts#L52">lib/camera/Camera.ts:52</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/Camera.ts#L52">lib/camera/Camera.ts:52</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -137,7 +137,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/Camera.ts#L76">lib/camera/Camera.ts:76</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/Camera.ts#L76">lib/camera/Camera.ts:76</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -161,9 +161,17 @@
 							<aside class="tsd-sources">
 								<p>Implementation of <a href="../interfaces/camerastreamingdelegate.html">CameraStreamingDelegate</a>.<a href="../interfaces/camerastreamingdelegate.html#handlesnapshotrequest">handleSnapshotRequest</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/Camera.ts#L58">lib/camera/Camera.ts:58</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/Camera.ts#L58">lib/camera/Camera.ts:58</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>This method is called when a HomeKit controller requests a snapshot image for the given camera.
+										The handler must respect the desired image height and width given in the <a href="../modules.html#snapshotrequest">SnapshotRequest</a>.
+									The returned Buffer (via the callback) must be encoded in jpeg.</p>
+								</div>
+								<p>HAP-NodeJS will complain about slow running handlers after 5 seconds and terminate the request after 15 seconds.</p>
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
@@ -188,7 +196,7 @@
 							<aside class="tsd-sources">
 								<p>Implementation of <a href="../interfaces/camerastreamingdelegate.html">CameraStreamingDelegate</a>.<a href="../interfaces/camerastreamingdelegate.html#handlestreamrequest">handleStreamRequest</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/Camera.ts#L70">lib/camera/Camera.ts:70</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/Camera.ts#L70">lib/camera/Camera.ts:70</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -215,7 +223,7 @@
 							<aside class="tsd-sources">
 								<p>Implementation of <a href="../interfaces/camerastreamingdelegate.html">CameraStreamingDelegate</a>.<a href="../interfaces/camerastreamingdelegate.html#preparestream">prepareStream</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/camera/Camera.ts#L64">lib/camera/Camera.ts:64</a></li>
+									<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/camera/Camera.ts#L64">lib/camera/Camera.ts:64</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>

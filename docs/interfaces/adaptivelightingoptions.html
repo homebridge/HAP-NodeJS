@@ -79,6 +79,7 @@
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="adaptivelightingoptions.html#controllermode" class="tsd-kind-icon">controller<wbr>Mode</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="adaptivelightingoptions.html#customtemperatureadjustment" class="tsd-kind-icon">custom<wbr>Temperature<wbr>Adjustment</a></li>
 							</ul>
 						</section>
 					</div>
@@ -88,11 +89,11 @@
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="controllermode" class="tsd-anchor"></a>
-					<h3>controller<wbr>Mode</h3>
-					<div class="tsd-signature tsd-kind-icon">controller<wbr>Mode<span class="tsd-signature-symbol">:</span> <a href="../enums/adaptivelightingcontrollermode.html" class="tsd-signature-type" data-tsd-kind="Enumeration">AdaptiveLightingControllerMode</a></div>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> controller<wbr>Mode</h3>
+					<div class="tsd-signature tsd-kind-icon">controller<wbr>Mode<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><a href="../enums/adaptivelightingcontrollermode.html#automatic" class="tsd-signature-type" data-tsd-kind="Enumeration member">AUTOMATIC</a><span class="tsd-signature-symbol"> | </span><a href="../enums/adaptivelightingcontrollermode.html#manual" class="tsd-signature-type" data-tsd-kind="Enumeration member">MANUAL</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/24f1100/src/lib/controller/AdaptiveLightingController.ts#L252">lib/controller/AdaptiveLightingController.ts:252</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/controller/AdaptiveLightingController.ts#L252">lib/controller/AdaptiveLightingController.ts:252</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -101,6 +102,25 @@
 								You can choose between automatic and manual mode.
 							See <a href="../enums/adaptivelightingcontrollermode.html">AdaptiveLightingControllerMode</a>.</p>
 						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="customtemperatureadjustment" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> custom<wbr>Temperature<wbr>Adjustment</h3>
+					<div class="tsd-signature tsd-kind-icon">custom<wbr>Temperature<wbr>Adjustment<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/b48697d/src/lib/controller/AdaptiveLightingController.ts#L262">lib/controller/AdaptiveLightingController.ts:262</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Defines a custom temperature adjustment factor.</p>
+						</div>
+						<p>This can be used to define a linear deviation from the HomeKit Controller defined
+						ColorTemperature schedule.</p>
+						<p>For example supplying a value of <code>-10</code> will reduce the ColorTemperature, which is
+						calculated from the transition schedule, by 10 mired for every change.</p>
 					</div>
 				</section>
 			</section>
@@ -122,6 +142,9 @@
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="adaptivelightingoptions.html#controllermode" class="tsd-kind-icon">controller<wbr>Mode</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="adaptivelightingoptions.html#customtemperatureadjustment" class="tsd-kind-icon">custom<wbr>Temperature<wbr>Adjustment</a>
 							</li>
 						</ul>
 					</li>
