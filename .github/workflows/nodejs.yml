@@ -69,7 +69,7 @@ jobs:
       - uses: actions/cache@v2
         with:
           path: ~/.npm
-          key: ${{ matrix.os }}-node-10-${{ hashFiles('**/package-lock.json') }}
+          key: ubuntu-latest-node-10-${{ hashFiles('**/package-lock.json') }}
       - run: npm ci
       - run: npm publish
         env:
