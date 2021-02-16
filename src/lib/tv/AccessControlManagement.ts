@@ -1,13 +1,7 @@
-import { AccessControl } from "../gen/HomeKit";
+import { EventEmitter } from "events";
+import { Characteristic } from "../Characteristic";
+import type { AccessControl } from '../definitions';
 import { Service } from "../Service";
-import { EventEmitter } from "../EventEmitter";
-import {
-  Characteristic,
-  CharacteristicEventTypes,
-  CharacteristicGetCallback,
-  CharacteristicSetCallback
-} from "../Characteristic";
-import { CharacteristicValue } from "../../types";
 import * as tlv from "../util/tlv";
 
 const enum AccessControlTypes {
@@ -20,6 +14,7 @@ const enum AccessControlTypes {
  * so this information is not really useful.
  */
 export const enum AccessLevel {
+  // noinspection JSUnusedGlobalSymbols
   /**
    * This access level is set when the users selects "Anyone" or "Anyone On The Same Network"
    * in the Access Control settings.
@@ -43,12 +38,15 @@ export const enum AccessControlEvent {
   PASSWORD_SETTING_UPDATED = "update-password",
 }
 
-export type AccessControlEventMap = {
-  [AccessControlEvent.ACCESS_LEVEL_UPDATED]: (accessLevel: AccessLevel) => void;
-  [AccessControlEvent.PASSWORD_SETTING_UPDATED]: (password: string | undefined, passwordRequired: boolean) => void;
+export declare interface AccessControlManagement {
+  on(event: "update-control-level", listener: (accessLevel: AccessLevel) => void): this;
+  on(event: "update-password", listener: (password: string | undefined, passwordRequired: boolean) => void): this;
+
+  emit(event: "update-control-level", accessLevel: AccessLevel): boolean;
+  emit(event: "update-password", password: string | undefined, passwordRequired: boolean): boolean;
 }
 
-export class AccessControlManagement extends EventEmitter<AccessControlEventMap> {
+export class AccessControlManagement extends EventEmitter {
 
   private readonly accessControlService: AccessControl;
 
@@ -57,10 +55,8 @@ export class AccessControlManagement extends EventEmitter<AccessControlEventMap>
    */
   private accessLevel: AccessLevel = 0;
 
-
   private passwordRequired: boolean = false;
   private password?: string; // undefined if passwordRequired = false
-  private lastPasswordTLVReceived: string = "";
 
   /**
    * Instantiates a new AccessControlManagement.
@@ -103,14 +99,28 @@ export class AccessControlManagement extends EventEmitter<AccessControlEventMap>
     return this.passwordRequired? this.password: undefined;
   }
 
+  /**
+   * This destroys the AccessControlManagement.
+   * It unregisters all GET or SET handler it has associated with the given AccessControl service.
+   * It removes all event handlers which were registered to this object.
+   */
+  public destroy(): void {
+    this.removeAllListeners();
+
+    this.accessControlService.getCharacteristic(Characteristic.AccessControlLevel).removeOnSet();
+    if (this.accessControlService.testCharacteristic(Characteristic.PasswordSetting)) {
+      this.accessControlService.getCharacteristic(Characteristic.PasswordSetting).removeOnSet();
+    }
+  }
+
   private handleAccessLevelChange(value: number) {
     this.accessLevel = value;
-    this.emit(AccessControlEvent.ACCESS_LEVEL_UPDATED, this.accessLevel);
+    setTimeout(() => { // timeout this so any action won't be executed on sync to the HAP request
+      this.emit(AccessControlEvent.ACCESS_LEVEL_UPDATED, this.accessLevel);
+    }, 0).unref();
   }
 
   private handlePasswordChange(value: string) {
-    this.lastPasswordTLVReceived = value;
-
     const data = Buffer.from(value, "base64");
     const objects = tlv.decode(data);
 
@@ -122,28 +132,22 @@ export class AccessControlManagement extends EventEmitter<AccessControlEventMap>
 
     this.passwordRequired = !!objects[AccessControlTypes.PASSWORD_REQUIRED][0];
 
-    this.emit(AccessControlEvent.PASSWORD_SETTING_UPDATED, this.password, this.passwordRequired);
+    setTimeout(() => { // timeout this so any action won't be executed on sync to the HAP request
+      this.emit(AccessControlEvent.PASSWORD_SETTING_UPDATED, this.password, this.passwordRequired);
+    }, 0).unref();
   }
 
   private setupServiceHandlers(enabledPasswordCharacteristics?: boolean) {
+    // perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+
     this.accessControlService.getCharacteristic(Characteristic.AccessControlLevel)
-      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-        callback(undefined, this.accessLevel);
-      })
-      .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        this.handleAccessLevelChange(value as number);
-        callback();
-      });
+      .onSet(value => this.handleAccessLevelChange(value as number))
+      .updateValue(0);
 
     if (enabledPasswordCharacteristics) {
       this.accessControlService.getCharacteristic(Characteristic.PasswordSetting)
-        .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-          callback(undefined, this.lastPasswordTLVReceived);
-        })
-        .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-          this.handlePasswordChange(value as string);
-          callback();
-        });
+        .onSet(value => this.handlePasswordChange(value as string))
+        .updateValue("");
     }
   }
 

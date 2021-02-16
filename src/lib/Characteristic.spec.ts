@@ -1,23 +1,24 @@
-import './gen';
 import {
   Access,
   Characteristic,
+  CharacteristicChange,
   CharacteristicEventTypes,
   CharacteristicProps,
   Formats,
+  HAPStatus,
   Perms,
   SerializedCharacteristic,
   Units,
   uuid
 } from '..';
 
-const createCharacteristic = (type: Formats) => {
-  return new Characteristic('Test', uuid.generate('Foo'), { format: type, perms: [] });
-};
+function createCharacteristic(type: Formats, customUUID?: string): Characteristic {
+  return new Characteristic('Test', customUUID || uuid.generate('Foo'), { format: type, perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE] });
+}
 
-const createCharacteristicWithProps = (props: CharacteristicProps) => {
-  return new Characteristic('Test', uuid.generate('Foo'), props);
-};
+function createCharacteristicWithProps(props: CharacteristicProps, customUUID?: string): Characteristic {
+  return new Characteristic('Test', customUUID || uuid.generate('Foo'), props);
+}
 
 describe('Characteristic', () => {
 
@@ -25,7 +26,7 @@ describe('Characteristic', () => {
     it('should overwrite existing properties', () => {
       const characteristic = createCharacteristic(Formats.BOOL);
 
-      const NEW_PROPS = {format: Formats.STRING, perms: []};
+      const NEW_PROPS = {format: Formats.STRING, perms: [Perms.NOTIFY]};
       characteristic.setProps(NEW_PROPS);
 
       expect(characteristic.props).toEqual(NEW_PROPS);
@@ -50,6 +51,65 @@ describe('Characteristic', () => {
     });
   });
 
+  describe("validValuesIterator", () => {
+    it ("should iterate over min/max value definition", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.INT,
+        perms: [Perms.PAIRED_READ],
+        minValue: 2,
+        maxValue: 5,
+      });
+
+      const result = Array.from(characteristic.validValuesIterator());
+      expect(result).toEqual([2, 3, 4, 5]);
+    });
+
+    it ("should iterate over min/max value definition with minStep defined", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.INT,
+        perms: [Perms.PAIRED_READ],
+        minValue: 2,
+        maxValue: 10,
+        minStep: 2, // can't really test with .x precision as of floating point precision
+      });
+
+      const result = Array.from(characteristic.validValuesIterator());
+      expect(result).toEqual([2, 4, 6, 8, 10]);
+    });
+
+    it ("should iterate over validValues array definition", () => {
+      const validValues = [1, 3, 4, 5, 8];
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.INT,
+        perms: [Perms.PAIRED_READ],
+        validValues: validValues
+      });
+
+      const result = Array.from(characteristic.validValuesIterator());
+      expect(result).toEqual(validValues);
+    });
+
+    it ("should iterate over validValueRanges definition", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.INT,
+        perms: [Perms.PAIRED_READ],
+        validValueRanges: [2, 5],
+      });
+
+      const result = Array.from(characteristic.validValuesIterator());
+      expect(result).toEqual([2, 3, 4, 5]);
+    });
+
+    it("should iterate over UINT8 definition", () => {
+      const characteristic = createCharacteristic(Formats.UINT8);
+
+      const result = Array.from(characteristic.validValuesIterator());
+      expect(result).toEqual(Array.from(new Uint8Array(256).map((value, i) => i)))
+    });
+
+    // we could do the same for UINT16, UINT32 and UINT64 but i think thats kind of pointless and takes to long
+  });
+
   describe('#subscribe()', () => {
     it('correctly adds a single subscription', () => {
       const characteristic = createCharacteristic(Formats.BOOL);
@@ -58,6 +118,7 @@ describe('Characteristic', () => {
       characteristic.subscribe();
 
       expect(subscribeSpy).toHaveBeenCalledTimes(1);
+      // @ts-expect-error
       expect(characteristic.subscriptions).toEqual(1);
     });
 
@@ -70,6 +131,7 @@ describe('Characteristic', () => {
       characteristic.subscribe();
 
       expect(subscribeSpy).toHaveBeenCalledTimes(1);
+      // @ts-expect-error
       expect(characteristic.subscriptions).toEqual(3);
     });
   });
@@ -86,6 +148,7 @@ describe('Characteristic', () => {
 
       expect(subscribeSpy).toHaveBeenCalledTimes(1);
       expect(unsubscribeSpy).toHaveBeenCalledTimes(1);
+      // @ts-expect-error
       expect(characteristic.subscriptions).toEqual(0);
     });
 
@@ -104,37 +167,40 @@ describe('Characteristic', () => {
 
       expect(subscribeSpy).toHaveBeenCalledTimes(1);
       expect(unsubscribeSpy).toHaveBeenCalledTimes(1);
+      // @ts-expect-error
       expect(characteristic.subscriptions).toEqual(0);
     });
   });
 
-  describe('#getValue()', () => {
-    it('should handle special event only characteristics', () => {
-      const characteristic = createCharacteristic(Formats.BOOL);
-      characteristic.eventOnlyCharacteristic = true;
+  describe('#handleGetRequest()', () => {
+    it('should handle special event only characteristics', (callback) => {
+      const characteristic = createCharacteristic(Formats.BOOL, Characteristic.ProgrammableSwitchEvent.UUID);
 
-      characteristic.getValue((error, value) => {
-        expect(error).toEqual(null);
-        expect(value).toEqual(null);
+      characteristic.handleGetRequest().then(() => {
+        expect(characteristic.statusCode).toEqual(HAPStatus.SUCCESS);
+        expect(characteristic.value).toEqual(null);
+        callback();
       });
     });
 
-    it('should return cached values if no listeners are registered', () => {
+    it('should return cached values if no listeners are registered', (callback) => {
       const characteristic = createCharacteristic(Formats.BOOL);
 
-      characteristic.getValue((status, value) => {
-        expect(status).toEqual(null);
-        expect(value).toEqual(null);
+      characteristic.handleGetRequest().then(() => {
+        expect(characteristic.statusCode).toEqual(HAPStatus.SUCCESS);
+        expect(characteristic.value).toEqual(null);
+        callback();
       });
     });
   });
 
-  describe('#validateValue()', () => {
+  describe('#validateUserInput()', () => {
 
     it('should validate an integer property', () => {
       const VALUE = 1024;
       const characteristic = createCharacteristic(Formats.INT);
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      // @ts-expect-error
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a float property', () => {
@@ -142,97 +208,80 @@ describe('Characteristic', () => {
       const characteristic = createCharacteristicWithProps({
         format: Formats.FLOAT,
         minStep: 0.001,
-        perms: [],
+        perms: [Perms.NOTIFY],
       });
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
-    });
-
-    it('should cut off decimal places correctly', function () {
-      const VALUE = 1.5642;
-      const characteristic = createCharacteristicWithProps({
-        format: Formats.FLOAT,
-        minStep: 0.1,
-        perms: [],
-      });
-      expect(characteristic.validateValue(VALUE)).toEqual(1.5);
+      // @ts-expect-error
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a UINT8 property', () => {
       const VALUE = 10;
       const characteristic = createCharacteristic(Formats.UINT8);
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      // @ts-expect-error
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a UINT16 property', () => {
       const VALUE = 10;
       const characteristic = createCharacteristic(Formats.UINT16);
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      // @ts-expect-error
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a UINT32 property', () => {
       const VALUE = 10;
       const characteristic = createCharacteristic(Formats.UINT32);
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      // @ts-expect-error
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a UINT64 property', () => {
       const VALUE = 10;
       const characteristic = createCharacteristic(Formats.UINT64);
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      // @ts-expect-error
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a boolean property', () => {
       const VALUE = true;
       const characteristic = createCharacteristic(Formats.BOOL);
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      // @ts-expect-error
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a string property', () => {
       const VALUE = 'Test';
       const characteristic = createCharacteristic(Formats.STRING);
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      // @ts-expect-error
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a data property', () => {
-      const VALUE = {};
+      const VALUE = Buffer.from("Hello my good friend. Have a nice day!", "ascii").toString("base64");
       const characteristic = createCharacteristic(Formats.DATA);
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      // @ts-expect-error
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a TLV8 property', () => {
       const VALUE = '';
       const characteristic = createCharacteristic(Formats.TLV8);
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      // @ts-expect-error
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
     it('should validate a dictionary property', () => {
       const VALUE = {};
       const characteristic = createCharacteristic(Formats.DICTIONARY);
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
+      // @ts-expect-error
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
     it('should validate an array property', () => {
       const VALUE = ['asd'];
       const characteristic = createCharacteristic(Formats.ARRAY);
-      expect(characteristic.validateValue(VALUE)).toEqual(VALUE);
-    });
-  });
-
-  describe('#setValue()', () => {
-    it(`should set error values as the characteristic's status property`, () => {
-      const VALUE = new Error();
-      const characteristic = createCharacteristic(Formats.DATA);
-      characteristic.setValue(VALUE);
-      expect(characteristic.status).toEqual(VALUE);
-    });
-  });
-
-  describe('#updateValue()', () => {
-    it(`should set error values as the characteristic's status property`, () => {
-      const VALUE = new Error();
-      const characteristic = createCharacteristic(Formats.DATA);
-      characteristic.setValue(VALUE);
-      expect(characteristic.status).toEqual(VALUE);
+      // @ts-expect-error
+      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
   });
 
@@ -240,31 +289,37 @@ describe('Characteristic', () => {
 
     it('should get the correct default value for a boolean property', () => {
       const characteristic = createCharacteristic(Formats.BOOL);
+      // @ts-expect-error
       expect(characteristic.getDefaultValue()).toEqual(false);
     });
 
     it('should get the correct default value for a string property', () => {
       const characteristic = createCharacteristic(Formats.STRING);
+      // @ts-expect-error
       expect(characteristic.getDefaultValue()).toEqual('');
     });
 
     it('should get the correct default value for a data property', () => {
       const characteristic = createCharacteristic(Formats.DATA);
+      // @ts-expect-error
       expect(characteristic.getDefaultValue()).toEqual(null);
     });
 
     it('should get the correct default value for a TLV8 property', () => {
       const characteristic = createCharacteristic(Formats.TLV8);
+      // @ts-expect-error
       expect(characteristic.getDefaultValue()).toEqual(null);
     });
 
     it('should get the correct default value for a dictionary property', () => {
       const characteristic = createCharacteristic(Formats.DICTIONARY);
+      // @ts-expect-error
       expect(characteristic.getDefaultValue()).toEqual({});
     });
 
     it('should get the correct default value for an array property', () => {
       const characteristic = createCharacteristic(Formats.ARRAY);
+      // @ts-expect-error
       expect(characteristic.getDefaultValue()).toEqual([]);
     });
 
@@ -276,18 +331,39 @@ describe('Characteristic', () => {
 
   describe(`@${CharacteristicEventTypes.GET}`, () => {
 
-    it('should call any listeners for the event', () => {
+    it('should call any listeners for the event', (callback) => {
       const characteristic = createCharacteristic(Formats.STRING);
 
       const listenerCallback = jest.fn();
-      const getValueCallback = jest.fn();
 
-      characteristic.getValue(getValueCallback);
+      characteristic.handleGetRequest().then(() => {
+        characteristic.on(CharacteristicEventTypes.GET, listenerCallback);
+        characteristic.handleGetRequest();
+        expect(listenerCallback).toHaveBeenCalledTimes(1);
+        callback();
+      })
+    });
+  });
+
+  describe("onGet handler", () => {
+    it("should ignore GET event handler when onGet was specified", async () => {
+      const characteristic = createCharacteristic(Formats.STRING);
+
+      const listenerCallback = jest.fn().mockImplementation((callback) => {
+        callback(undefined, "OddValue");
+      });
+      const handlerMock = jest.fn();
+
+      characteristic.onGet(() => {
+        handlerMock();
+        return "CurrentValue";
+      });
       characteristic.on(CharacteristicEventTypes.GET, listenerCallback);
-      characteristic.getValue(getValueCallback);
+      const value = await characteristic.handleGetRequest();
 
-      expect(listenerCallback).toHaveBeenCalledTimes(1);
-      expect(getValueCallback).toHaveBeenCalledTimes(1);
+      expect(value).toEqual("CurrentValue");
+      expect(handlerMock).toHaveBeenCalledTimes(1);
+      expect(listenerCallback).toHaveBeenCalledTimes(0);
     });
   });
 
@@ -298,33 +374,56 @@ describe('Characteristic', () => {
 
       const VALUE = 'NewValue';
       const listenerCallback = jest.fn();
-      const setValueCallback = jest.fn();
 
-      characteristic.setValue(VALUE, setValueCallback)
+      characteristic.handleSetRequest(VALUE);
       characteristic.on(CharacteristicEventTypes.SET, listenerCallback);
-      characteristic.setValue(VALUE, setValueCallback);
+      characteristic.handleSetRequest(VALUE);
 
       expect(listenerCallback).toHaveBeenCalledTimes(1);
-      expect(setValueCallback).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("onSet handler", () => {
+    it("should ignore SET event handler when onSet was specified", () => {
+      const characteristic = createCharacteristic(Formats.STRING);
+
+      const listenerCallback = jest.fn();
+      const handlerMock = jest.fn();
+
+      characteristic.onSet(value => {
+        handlerMock(value);
+        expect(value).toEqual("NewValue");
+        return;
+      });
+      characteristic.on(CharacteristicEventTypes.SET, listenerCallback);
+      characteristic.handleSetRequest("NewValue");
+
+      expect(handlerMock).toHaveBeenCalledTimes(1);
+      expect(listenerCallback).toHaveBeenCalledTimes(0);
     });
   });
 
   describe(`@${CharacteristicEventTypes.CHANGE}`, () => {
 
-    it('should call any listeners for the event when the characteristic is event-only, and the value is set', () => {
-      const characteristic = createCharacteristic(Formats.STRING);
-      characteristic.eventOnlyCharacteristic = true;
+    it('should call listeners for the event when the characteristic is event-only, and the value is set', (callback) => {
+      const characteristic = createCharacteristic(Formats.STRING, Characteristic.ProgrammableSwitchEvent.UUID);
 
       const VALUE = 'NewValue';
       const listenerCallback = jest.fn();
       const setValueCallback = jest.fn();
 
-      characteristic.setValue(VALUE, setValueCallback)
-      characteristic.on(CharacteristicEventTypes.CHANGE, listenerCallback);
-      characteristic.setValue(VALUE, setValueCallback)
+      characteristic.setValue(VALUE, () => {
+        setValueCallback();
 
-      expect(listenerCallback).toHaveBeenCalledTimes(1);
-      expect(setValueCallback).toHaveBeenCalledTimes(2);
+        characteristic.on(CharacteristicEventTypes.CHANGE, listenerCallback);
+        characteristic.setValue(VALUE, () => {
+          setValueCallback();
+
+          expect(listenerCallback).toHaveBeenCalledTimes(1);
+          expect(setValueCallback).toHaveBeenCalledTimes(2);
+          callback();
+        });
+      })
     });
 
     it('should call any listeners for the event when the characteristic is event-only, and the value is updated', () => {
@@ -336,10 +435,45 @@ describe('Characteristic', () => {
       const updateValueCallback = jest.fn();
 
       characteristic.on(CharacteristicEventTypes.CHANGE, listenerCallback);
+      // noinspection JSDeprecatedSymbols
       characteristic.updateValue(VALUE, updateValueCallback)
 
       expect(listenerCallback).toHaveBeenCalledTimes(1);
       expect(updateValueCallback).toHaveBeenCalledTimes(1);
+    });
+
+    it("should call the change listener with proper context when supplied as second argument to updateValue", () => {
+      const characteristic = createCharacteristic(Formats.STRING);
+
+      const VALUE = "NewValue";
+      const CONTEXT = "Context";
+
+      const listener = jest.fn().mockImplementation((change: CharacteristicChange) => {
+        expect(change.newValue).toEqual(VALUE);
+        expect(change.context).toEqual(CONTEXT);
+      });
+
+      characteristic.on(CharacteristicEventTypes.CHANGE, listener);
+      characteristic.updateValue(VALUE, CONTEXT);
+
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
+
+    it("should call the change listener with proper context when supplied as second argument to setValue", () => {
+      const characteristic = createCharacteristic(Formats.STRING);
+
+      const VALUE = "NewValue";
+      const CONTEXT = "Context";
+
+      const listener = jest.fn().mockImplementation((change: CharacteristicChange) => {
+        expect(change.newValue).toEqual(VALUE);
+        expect(change.context).toEqual(CONTEXT);
+      });
+
+      characteristic.on(CharacteristicEventTypes.CHANGE, listener);
+      characteristic.setValue(VALUE, CONTEXT);
+
+      expect(listener).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -386,8 +520,8 @@ describe('Characteristic', () => {
   describe('#serialize', () => {
     it('should serialize characteristic', () => {
       const props: CharacteristicProps = {
-        format: Formats.STRING,
-        perms: [Perms.TIMED_WRITE, Perms.READ],
+        format: Formats.INT,
+        perms: [Perms.TIMED_WRITE, Perms.PAIRED_READ],
         unit: Units.LUX,
         maxValue: 1234,
         minValue: 123,
@@ -395,9 +529,8 @@ describe('Characteristic', () => {
         adminOnlyAccess: [Access.WRITE],
       };
 
-      const characteristic = createCharacteristicWithProps(props);
+      const characteristic = createCharacteristicWithProps(props, Characteristic.ProgrammableSwitchEvent.UUID);
       characteristic.value = "TestValue";
-      characteristic.eventOnlyCharacteristic = true;
 
       const json = Characteristic.serialize(characteristic);
       expect(json).toEqual({
@@ -408,12 +541,27 @@ describe('Characteristic', () => {
         eventOnlyCharacteristic: true,
       })
     });
+
+    it("should serialize characteristic with proper constructor name", () => {
+      const characteristic = new Characteristic.Name();
+      characteristic.updateValue("New Name!");
+
+      const json = Characteristic.serialize(characteristic);
+      expect(json).toEqual({
+        displayName: 'Name',
+        UUID: '00000023-0000-1000-8000-0026BB765291',
+        eventOnlyCharacteristic: false,
+        constructorName: 'Name',
+        value: 'New Name!',
+        props: { format: 'string', perms: [ 'pr' ], maxLen: 64 }
+      });
+    });
   });
 
   describe('#deserialize', () => {
     it('should deserialize legacy json from homebridge', () => {
       const json = JSON.parse('{"displayName": "On", "UUID": "00000025-0000-1000-8000-0026BB765291", ' +
-          '"props": {"format": "bool", "unit": null, "minValue": null, "maxValue": null, "minStep": null, "perms": ["pr", "pw", "ev"]}, ' +
+          '"props": {"format": "int", "unit": "seconds", "minValue": 4, "maxValue": 6, "minStep": 0.1, "perms": ["pr", "pw", "ev"]}, ' +
           '"value": false, "eventOnlyCharacteristic": false}');
       const characteristic = Characteristic.deserialize(json);
 
@@ -421,7 +569,6 @@ describe('Characteristic', () => {
       expect(characteristic.UUID).toEqual(json.UUID);
       expect(characteristic.props).toEqual(json.props);
       expect(characteristic.value).toEqual(json.value);
-      expect(characteristic.eventOnlyCharacteristic).toEqual(json.eventOnlyCharacteristic);
     });
 
     it('should deserialize complete json', () => {
@@ -429,8 +576,8 @@ describe('Characteristic', () => {
         displayName: "MyName",
         UUID: "00000001-0000-1000-8000-0026BB765291",
         props: {
-          format: Formats.STRING,
-          perms: [Perms.TIMED_WRITE, Perms.READ],
+          format: Formats.INT,
+          perms: [Perms.TIMED_WRITE, Perms.PAIRED_READ],
           unit: Units.LUX,
           maxValue: 1234,
           minValue: 123,
@@ -438,7 +585,7 @@ describe('Characteristic', () => {
           adminOnlyAccess: [Access.NOTIFY, Access.READ],
         },
         value: "testValue",
-        eventOnlyCharacteristic: true,
+        eventOnlyCharacteristic: false,
       };
 
       const characteristic = Characteristic.deserialize(json);
@@ -447,7 +594,21 @@ describe('Characteristic', () => {
       expect(characteristic.UUID).toEqual(json.UUID);
       expect(characteristic.props).toEqual(json.props);
       expect(characteristic.value).toEqual(json.value);
-      expect(characteristic.eventOnlyCharacteristic).toEqual(json.eventOnlyCharacteristic);
+    });
+
+    it("should deserialize from json with constructor name", () => {
+      const json: SerializedCharacteristic = {
+        displayName: 'Name',
+        UUID: '00000023-0000-1000-8000-0026BB765291',
+        eventOnlyCharacteristic: false,
+        constructorName: 'Name',
+        value: 'New Name!',
+        props: { format: 'string', perms: [ Perms.PAIRED_READ ], maxLen: 64 }
+      };
+
+      const characteristic = Characteristic.deserialize(json);
+
+      expect(characteristic instanceof Characteristic.Name).toBeTruthy();
     });
   });
 });

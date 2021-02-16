@@ -1,4 +1,5 @@
 import { Service } from '../Service';
+// noinspection JSDeprecatedSymbols
 import {
   CameraStreamingDelegate,
   PrepareStreamCallback,
@@ -13,6 +14,7 @@ import {
 } from "../..";
 import { NodeCallback, SessionIdentifier } from '../../types';
 
+// noinspection JSDeprecatedSymbols
 /**
  * @deprecated
  */
@@ -22,7 +24,9 @@ export type PreparedStreamRequestCallback = (response: PreparedStreamResponse) =
  */
 export type PreparedStreamResponse = PrepareStreamResponse;
 
+// noinspection JSDeprecatedSymbols,JSUnusedGlobalSymbols
 export type Camera = LegacyCameraSource; // provide backwards compatibility
+// noinspection JSDeprecatedSymbols
 /**
  * Interface of and old style CameraSource. See {@see configureCameraSource} for more Information.
  *
@@ -42,6 +46,7 @@ export interface LegacyCameraSource {
 
 }
 
+// noinspection JSDeprecatedSymbols
 export class LegacyCameraSourceAdapter implements CameraStreamingDelegate {
 
   private readonly cameraSource: LegacyCameraSource;

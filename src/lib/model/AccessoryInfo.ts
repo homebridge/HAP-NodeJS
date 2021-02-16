@@ -1,19 +1,24 @@
-import util from 'util';
 import assert from 'assert';
+import crypto from "crypto";
 import tweetnacl from 'tweetnacl';
-
-import { Categories } from '../Accessory';
-import { Session } from "../util/eventedhttp";
+import util from 'util';
+import { AccessoryJsonObject } from "../../internal-types";
 import { MacAddress } from "../../types";
+import { Categories } from '../Accessory';
+import { EventedHTTPServer, HAPConnection, HAPUsername } from "../util/eventedhttp";
 import { HAPStorage } from "./HAPStorage";
 
+
+const packageJson = require("../../../package.json");
+
 export const enum PermissionTypes {
+  // noinspection JSUnusedGlobalSymbols
   USER = 0x00,
-  ADMIN = 0x01, // admins are the only ones who can add/remove/list pairings (also some characteristics are restricted)
+  ADMIN = 0x01, // admins are the only ones who can add/remove/list pairings (additionally some characteristics are restricted)
 }
 
 export type PairingInformation = {
-  username: string,
+  username: HAPUsername,
   publicKey: Buffer,
   permission: PermissionTypes,
 }
@@ -33,11 +38,12 @@ export class AccessoryInfo {
   pincode: string;
   signSk: Buffer;
   signPk: Buffer;
-  pairedClients: Record<string, PairingInformation>;
+  pairedClients: Record<HAPUsername, PairingInformation>;
   pairedAdminClients: number;
   private configVersion: number = 1;
-  configHash: string;
+  private configHash: string;
   setupID: string;
+  private lastFirmwareVersion: string = "";
 
   private constructor(username: MacAddress) {
     this.username = username;
@@ -57,22 +63,23 @@ export class AccessoryInfo {
 
   /**
    * Add a paired client to memory.
-   * @param {string} username
+   * @param {HAPUsername} username
    * @param {Buffer} publicKey
    * @param {PermissionTypes} permission
    */
-  addPairedClient = (username: string, publicKey: Buffer, permission: PermissionTypes) => {
+  public addPairedClient(username: HAPUsername, publicKey: Buffer, permission: PermissionTypes): void {
     this.pairedClients[username] = {
       username: username,
       publicKey: publicKey,
       permission: permission
     };
 
-    if (permission === PermissionTypes.ADMIN)
+    if (permission === PermissionTypes.ADMIN) {
       this.pairedAdminClients++;
-  };
+    }
+  }
 
-  updatePermission = (username: string, permission: PermissionTypes) => {
+  public updatePermission(username: HAPUsername, permission: PermissionTypes): void {
     const pairingInformation = this.pairedClients[username];
 
     if (pairingInformation) {
@@ -85,77 +92,104 @@ export class AccessoryInfo {
         this.pairedAdminClients++;
       }
     }
-  };
+  }
 
-  listPairings = () => {
-    const array = [] as PairingInformation[];
+  public listPairings(): PairingInformation[] {
+    const array: PairingInformation[] = [];
 
-    for (const username in this.pairedClients) {
-      const pairingInformation = this.pairedClients[username] as PairingInformation;
+    for (const pairingInformation of Object.values(this.pairedClients)) {
       array.push(pairingInformation);
     }
 
     return array;
-  };
+  }
 
   /**
    * Remove a paired client from memory.
-   * @param controller - the session of the controller initiated the removal of the pairing
+   * @param connection - the session of the connection initiated the removal of the pairing
    * @param {string} username
    */
-  removePairedClient = (controller: Session, username: string) => {
-    this._removePairedClient0(controller, username);
+  public removePairedClient(connection: HAPConnection, username: HAPUsername): void {
+    this._removePairedClient0(connection, username);
 
     if (this.pairedAdminClients === 0) { // if we don't have any admin clients left paired it is required to kill all normal clients
-      for (const username0 in this.pairedClients) {
-        this._removePairedClient0(controller, username0);
+      for (const username0 of Object.keys(this.pairedClients)) {
+        this._removePairedClient0(connection, username0);
       }
     }
-  };
+  }
 
-  _removePairedClient0 = (controller: Session, username: string) => {
+  private _removePairedClient0(connection: HAPConnection, username: HAPUsername): void {
     if (this.pairedClients[username] && this.pairedClients[username].permission === PermissionTypes.ADMIN)
       this.pairedAdminClients--;
     delete this.pairedClients[username];
 
-    Session.destroyExistingConnectionsAfterUnpair(controller, username);
-  };
+    EventedHTTPServer.destroyExistingConnectionsAfterUnpair(connection, username);
+  }
 
   /**
    * Check if username is paired
    * @param username
    */
-  isPaired = (username: string) => {
+  public isPaired(username: HAPUsername): boolean {
     return !!this.pairedClients[username];
-  };
+  }
 
-  hasAdminPermissions = (username: string) => {
+  public hasAdminPermissions(username: HAPUsername): boolean {
     if (!username) return false;
     const pairingInformation = this.pairedClients[username];
     return !!pairingInformation && pairingInformation.permission === PermissionTypes.ADMIN;
-  };
+  }
 
-  // Gets the public key for a paired client as a Buffer, or falsey value if not paired.
-  getClientPublicKey = (username: string) => {
+  // Gets the public key for a paired client as a Buffer, or falsy value if not paired.
+  public getClientPublicKey(username: HAPUsername): Buffer | undefined {
     const pairingInformation = this.pairedClients[username];
     if (pairingInformation) {
       return pairingInformation.publicKey;
     } else {
       return undefined;
     }
-  };
+  }
 
   // Returns a boolean indicating whether this accessory has been paired with a client.
   paired = (): boolean => {
     return Object.keys(this.pairedClients).length > 0; // if we have any paired clients, we're paired.
   }
 
-  public updateConfigHash(hash: string): void {
-    this.configVersion++;
-    this.ensureConfigVersionBounds();
+  /**
+   * Checks based on the current accessory configuration if the current configuration number needs to be incremented.
+   * Additionally, if desired, it checks if the firmware version was incremented (aka the HAP-NodeJS) version did grow.
+   *
+   * @param configuration - The current accessory configuration.
+   * @param checkFirmwareIncrement
+   * @returns True if the current configuration number was incremented and thus a new TXT must be advertised.
+   */
+  public checkForCurrentConfigurationNumberIncrement(configuration: AccessoryJsonObject[], checkFirmwareIncrement?: boolean): boolean {
+    const shasum = crypto.createHash('sha1');
+    shasum.update(JSON.stringify(configuration));
+    const configHash = shasum.digest('hex');
 
-    this.configHash = hash;
-    this.save();
+    let changed = false;
+
+    if (configHash !== this.configHash) {
+      this.configVersion++;
+      this.configHash = configHash;
+
+      this.ensureConfigVersionBounds();
+      changed = true;
+    }
+    if (this.lastFirmwareVersion !== packageJson.version) {
+      // we only check if it is different and not only if it is incremented
+      // HomeKit spec prohibits firmware downgrades, but with hap-nodejs it's possible lol
+      this.lastFirmwareVersion = packageJson.version;
+      changed = true;
+    }
+
+    if (changed) {
+      this.save();
+    }
+
+    return changed;
   }
 
   public getConfigVersion(): number {
@@ -172,7 +206,7 @@ export class AccessoryInfo {
   }
 
   save = () => {
-    var saved = {
+    const saved = {
       displayName: this.displayName,
       category: this.category,
       pincode: this.pincode,
@@ -186,17 +220,17 @@ export class AccessoryInfo {
       configVersion: this.configVersion,
       configHash: this.configHash,
       setupID: this.setupID,
+      lastFirmwareVersion: this.lastFirmwareVersion,
     };
 
-    for (var username in this.pairedClients) {
-      const pairingInformation = this.pairedClients[username];
+    for (const [ username, pairingInformation ] of Object.entries(this.pairedClients)) {
       //@ts-ignore
-      saved.pairedClients[username] = pairingInformation.publicKey.toString('hex');
+      saved.pairedClients[username] = pairingInformation.publicKey.toString("hex");
       // @ts-ignore
       saved.pairedClientsPermission[username] = pairingInformation.permission;
     }
 
-    var key = AccessoryInfo.persistKey(this.username);
+    const key = AccessoryInfo.persistKey(this.username);
 
     HAPStorage.storage().setItemSync(key, saved);
   }
@@ -208,10 +242,12 @@ export class AccessoryInfo {
 
   static create = (username: MacAddress) => {
     AccessoryInfo.assertValidUsername(username);
-    var accessoryInfo = new AccessoryInfo(username);
+    const accessoryInfo = new AccessoryInfo(username);
+
+    accessoryInfo.lastFirmwareVersion = packageJson.version;
 
     // Create a new unique key pair for this accessory.
-    var keyPair = tweetnacl.sign.keyPair();
+    const keyPair = tweetnacl.sign.keyPair();
 
     accessoryInfo.signSk = Buffer.from(keyPair.secretKey);
     accessoryInfo.signPk = Buffer.from(keyPair.publicKey);
@@ -222,11 +258,11 @@ export class AccessoryInfo {
   static load = (username: MacAddress) => {
     AccessoryInfo.assertValidUsername(username);
 
-    var key = AccessoryInfo.persistKey(username);
-    var saved = HAPStorage.storage().getItem(key);
+    const key = AccessoryInfo.persistKey(username);
+    const saved = HAPStorage.storage().getItem(key);
 
     if (saved) {
-      var info = new AccessoryInfo(username);
+      const info = new AccessoryInfo(username);
       info.displayName = saved.displayName || "";
       info.category = saved.category || "";
       info.pincode = saved.pincode || "";
@@ -234,8 +270,8 @@ export class AccessoryInfo {
       info.signPk = Buffer.from(saved.signPk || '', 'hex');
 
       info.pairedClients = {};
-      for (var username in saved.pairedClients || {}) {
-        var publicKey = saved.pairedClients[username];
+      for (const username of Object.keys(saved.pairedClients || {})) {
+        const publicKey = saved.pairedClients[username];
         let permission = saved.pairedClientsPermission? saved.pairedClientsPermission[username]: undefined;
         if (permission === undefined)
           permission = PermissionTypes.ADMIN; // defaulting to admin permissions is the only suitable solution, there is no way to recover permissions
@@ -254,11 +290,12 @@ export class AccessoryInfo {
 
       info.setupID = saved.setupID || "";
 
+      info.lastFirmwareVersion = saved.lastFirmwareVersion || packageJson.version;
+
       info.ensureConfigVersionBounds();
 
       return info;
-    }
-    else {
+    } else {
       return null;
     }
   }

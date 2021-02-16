@@ -41,7 +41,7 @@ export type GStreamerOptions = {
  *
  * This producer is mainly tested on a RaspberryPi, but should also work on other linux based devices using alsa.
  *
- * This producer requires some packages to be installed. It is adviced to install the following (for example via apt-get):
+ * This producer requires some packages to be installed. It is advised to install the following (for example via apt-get):
  * gstreamer1.0-plugins-base, gstreamer1.0-x, gstreamer1.0-tools, libgstreamer1.0-dev, gstreamer1.0-doc,
  * gstreamer1.0-plugins-good, gstreamer1.0-plugins- ugly, gstreamer1.0-plugins-bad, gstreamer1.0-alsa
  *
@@ -62,9 +62,11 @@ export class GStreamerAudioProducer implements SiriAudioStreamProducer {
         this.frameHandler = frameHandler;
         this.errorHandler = errorHandler;
 
-        for (const key in options) {
-            // @ts-ignore
-            GStreamerAudioProducer.options[key] = options[key];
+        if (options) {
+            for (const [ key, value ] of Object.entries(options)) {
+                // @ts-ignore
+                GStreamerAudioProducer.options[key] = value;
+            }
         }
     }
 

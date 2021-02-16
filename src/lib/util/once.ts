@@ -1,11 +1,10 @@
-export function once(func: Function) {
-  var called = false;
+export function once<T extends Function>(func: T) {
+  let called = false;
 
-  return (...args: any[]) => {
+  return (...args: unknown[]) => {
     if (called) {
       throw new Error("This callback function has already been called by someone else; it can only be called one time.");
-    }
-    else {
+    } else {
       called = true;
       return func(...args);
     }

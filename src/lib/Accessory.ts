@@ -1,46 +1,81 @@
-import { MDNSServerOptions } from "@homebridge/ciao";
+import assert from "assert";
+import { MulticastOptions } from "bonjour-hap";
 import crypto from 'crypto';
 import createDebug from 'debug';
-import assert from "assert";
-
-import * as uuid from './util/uuid';
-import { clone } from './util/clone';
-import { SerializedService, Service, ServiceConfigurationChange, ServiceEventTypes, ServiceId } from './Service';
-import { Access, Characteristic, CharacteristicEventTypes, CharacteristicSetCallback, Perms } from './Characteristic';
-import { Advertiser, AdvertiserEvent } from './Advertiser';
-import { CharacteristicsWriteRequest, Codes, HAPServer, HAPServerEventTypes, Status } from './HAPServer';
-import { AccessoryInfo, PairingInformation, PermissionTypes } from './model/AccessoryInfo';
-import { IdentifierCache } from './model/IdentifierCache';
+import { EventEmitter } from "events";
+import net from "net";
 import {
-  CharacteristicChange,
-  CharacteristicData,
-  CharacteristicValue, MacAddress,
-  NodeCallback,
+  AccessoryJsonObject,
+  CharacteristicId,
+  CharacteristicReadData,
+  CharacteristicsReadRequest,
+  CharacteristicsReadResponse,
+  CharacteristicsWriteRequest,
+  CharacteristicsWriteResponse,
+  CharacteristicWrite,
+  CharacteristicWriteData,
+  PartialCharacteristicReadData,
+  PartialCharacteristicWriteData,
+  ResourceRequest,
+  ResourceRequestType
+} from "../internal-types";
+import {
+  CharacteristicValue,
+  HAPPincode,
+  InterfaceName,
+  IPAddress,
+  MacAddress,
   Nullable,
-  PairingsCallback,
-  SessionIdentifier,
-  ToHAPOptions,
   VoidCallback,
   WithUUID,
 } from '../types';
+import { Advertiser, AdvertiserEvent, BonjourHAPAdvertiser, CiaoAdvertiser } from './Advertiser';
 // noinspection JSDeprecatedSymbols
 import { LegacyCameraSource, LegacyCameraSourceAdapter, StreamController } from './camera';
-import { EventEmitter } from './EventEmitter';
-import { Session } from "./util/eventedhttp";
+import {
+  Access,
+  ChangeReason,
+  Characteristic,
+  CharacteristicEventTypes,
+  CharacteristicOperationContext,
+  CharacteristicSetCallback,
+  Perms
+} from './Characteristic';
 import {
   CameraController,
   CameraControllerOptions,
   Controller,
   ControllerConstructor,
-  ControllerServiceMap, ControllerType,
+  ControllerIdentifier,
+  ControllerServiceMap,
   isSerializableController,
 } from "./controller";
 import {
-  CameraEventRecordingManagement,
-  CameraOperatingMode,
-  CameraRTPStreamManagement,
-} from "./gen/HomeKit";
+  AccessoriesCallback,
+  AddPairingCallback,
+  HAPHTTPCode,
+  HAPServer,
+  HAPServerEventTypes,
+  HAPStatus,
+  IdentifyCallback,
+  ListPairingsCallback,
+  PairCallback,
+  ReadCharacteristicsCallback,
+  RemovePairingCallback,
+  ResourceRequestCallback,
+  TLVErrorCode,
+  WriteCharacteristicsCallback
+} from './HAPServer';
+import { AccessoryInfo, PermissionTypes } from './model/AccessoryInfo';
 import { ControllerStorage } from "./model/ControllerStorage";
+import { IdentifierCache } from './model/IdentifierCache';
+import { SerializedService, Service, ServiceCharacteristicChange, ServiceEventTypes, ServiceId } from './Service';
+import { clone } from './util/clone';
+import { EventName, HAPConnection, HAPUsername } from "./util/eventedhttp";
+import { formatOutgoingCharacteristicValue } from "./util/request-util";
+import * as uuid from "./util/uuid";
+import { toShortForm } from "./util/uuid";
+import Timeout = NodeJS.Timeout;
 
 const debug = createDebug('HAP-NodeJS:Accessory');
 const MAX_ACCESSORIES = 149; // Maximum number of bridged accessories per bridge.
@@ -89,6 +124,9 @@ export const enum Categories {
   TV_STREAMING_STICK = 36,
 }
 
+/**
+ * @private
+ */
 export interface SerializedAccessory {
   displayName: string,
   UUID: string,
@@ -100,8 +138,11 @@ export interface SerializedAccessory {
   controllers?: SerializedControllerContext[],
 }
 
+/**
+ * @private
+ */
 export interface SerializedControllerContext {
-  type: ControllerType,
+  type: ControllerIdentifier, // this field is called type out of history
   services: SerializedServiceMap,
 }
 
@@ -112,55 +153,137 @@ export interface ControllerContext {
   serviceMap: ControllerServiceMap,
 }
 
-
-export const enum AccessoryEventTypes {
-  IDENTIFY = "identify",
-  LISTENING = "listening",
-  SERVICE_CONFIGURATION_CHANGE = "service-configurationChange",
-  SERVICE_CHARACTERISTIC_CHANGE = "service-characteristic-change",
-  PAIRED = "paired",
-  UNPAIRED = "unpaired",
+export const enum CharacteristicWarningType {
+  SLOW_WRITE = "slow-write",
+  TIMEOUT_WRITE = "timeout-write",
+  SLOW_READ = "slow-read",
+  TIMEOUT_READ = "timeout-read",
+  WARN_MESSAGE = "warn-message",
+  ERROR_MESSAGE = "error-message",
 }
 
-type Events = {
-  identify: (paired:boolean, cb: VoidCallback) => void;
-  listening: (port: number) => void;
-  "service-configurationChange": VoidCallback;
-  "service-characteristic-change": (change: ServiceCharacteristicChange) => void;
-  [AccessoryEventTypes.PAIRED]: () => void;
-  [AccessoryEventTypes.UNPAIRED]: () => void;
+export interface CharacteristicWarning {
+  characteristic: Characteristic,
+  type: CharacteristicWarningType,
+  message: string,
+  originatorChain: string[],
+  stack?: string,
 }
 
 /**
- * @deprecated Use AccessoryEventTypes instead
+ * @deprecated
  */
-export type EventAccessory = "identify" | "listening" | "service-configurationChange" | "service-characteristic-change";
-
 export type CharacteristicEvents = Record<string, any>;
 
 export interface PublishInfo {
   username: MacAddress;
-  pincode: string;
+  pincode: HAPPincode;
+  /**
+   * Specify the category for the HomeKit accessory.
+   * The category is used only in the mdns advertisement and specifies the devices type
+   * for the HomeKit controller.
+   * Currently this only affects the icon shown in the pairing screen.
+   * For the Television and Smart Speaker service it also affects the icon shown in
+   * the Home app when paired.
+   */
   category?: Categories;
   setupID?: string;
+  /**
+   * Defines the host where the HAP server will be bound to.
+   * When undefined the HAP server will bind to all available interfaces
+   * (see https://nodejs.org/api/net.html#net_server_listen_port_host_backlog_callback).
+   *
+   * This property accepts a mixture of IPAddresses and network interface names.
+   * Depending on the mixture of supplied addresses/names hap-nodejs will bind differently.
+   *
+   * It is advised to not just bind to a specific address, but specifying the interface name
+   * in oder to bind on all address records (and ip version) available.
+   *
+   * HAP-NodeJS (or the underlying ciao library) will not report about misspelled interface names,
+   * as it could be that the interface is currently just down and will come up later.
+   *
+   * Here are a few examples:
+   *  - bind: "::"
+   *      Pretty much identical to not specifying anything, as most systems (with ipv6 support)
+   *      will default to the unspecified ipv6 address (with dual stack support).
+   *
+   *  - bind: "0.0.0.0"
+   *      Binding TCP socket to the unspecified ipv4 address.
+   *      The mdns advertisement will exclude any ipv6 address records.
+   *
+   *  - bind: ["en0", "lo0"]
+   *      The mdns advertising will advertise all records of the en0 and loopback interface (if available) and
+   *      will also react to address changes on those interfaces.
+   *      In order for the HAP server to accept all those address records (which may contain ipv6 records)
+   *      it will bind on the unspecified ipv6 address "::" (assuming dual stack is supported).
+   *
+   *  - bind: ["en0", "lo0", "0.0.0.0"]
+   *      Same as above, only that the HAP server will bind on the unspecified ipv4 address "0.0.0.0".
+   *      The mdns advertisement will not advertise any ipv6 records.
+   *
+   *  - bind: "169.254.104.90"
+   *      This will bind the HAP server to the address 0.0.0.0.
+   *      The mdns advertisement will only advertise the A record 169.254.104.90.
+   *      If the given network interface of that address encounters an ip address change (to a different address),
+   *      the mdns advertisement will result in not advertising a address at all.
+   *      So it is advised to specify a interface name instead of a specific address.
+   *      This is identical with ipv6 addresses.
+   *
+   *  - bind: ["169.254.104.90", "192.168.1.4"]
+   *      As the HAP TCP socket can only bind to a single address, when specifying multiple ip addresses
+   *      the HAP server will bind to the unspecified ip address (0.0.0.0 if only ipv4 addresses are supplied,
+   *      :: if a mixture or only ipv6 addresses are supplied).
+   *      The mdns advertisement will only advertise the specified ip addresses.
+   *      If the given network interface of that address encounters an ip address change (to different addresses),
+   *      the mdns advertisement will result in not advertising a address at all.
+   *      So it is advised to specify a interface name instead of a specific address.
+   *
+   */
+  bind?: (InterfaceName | IPAddress) | (InterfaceName | IPAddress)[];
+  /**
+   * Defines the port where the HAP server will be bound to.
+   * When undefined port 0 will be used resulting in a random port.
+   */
   port?: number;
-  mdns?: MDNSServerOptions;
+  /**
+   * Used to define custom MDNS options. Is not used anymore.
+   * @deprecated
+   */
+  mdns?: MulticastOptions;
+  /**
+   * If this option is set to true, HAP-NodeJS will add identifying material (based on {@link username})
+   * to the end of the accessory display name (and bonjour instance name).
+   * Default: true
+   */
+  addIdentifyingMaterial?: boolean;
+  /**
+   * Defines the advertiser used with the published Accessory.
+   */
+  advertiser?: MDNSAdvertiser;
+  /**
+   * Use the legacy bonjour-hap as advertiser.
+   * @deprecated
+   */
+  useLegacyAdvertiser?: boolean;
 }
 
-export type ServiceCharacteristicChange = CharacteristicChange &  {
-  accessory: Accessory;
+export const enum MDNSAdvertiser {
+  /**
+   * Use the `@homebridge/ciao` module as advertiser.
+   */
+  CIAO = "ciao",
+  /**
+   * Use the `bonjour-hap` module as advertiser.
+   */
+  BONJOUR = "bonjour-hap",
+}
+
+export type AccessoryCharacteristicChange = ServiceCharacteristicChange &  {
   service: Service;
 };
 
-export const enum ResourceTypes {
-  IMAGE = 'image',
-}
-
-export type Resource = {
-  'aid'?: number;
-  'image-height': number;
-  'image-width': number;
-  'resource-type': ResourceTypes;
+export interface ServiceConfigurationChange {
+  service: Service;
 }
 
 const enum WriteRequestState {
@@ -169,14 +292,58 @@ const enum WriteRequestState {
   TIMED_WRITE_REJECTED
 }
 
-type IdentifyCallback = VoidCallback;
-type PairCallback = VoidCallback;
-type AddPairingCallback = PairingsCallback<void>;
-type RemovePairingCallback = PairingsCallback<void>;
-type ListPairingsCallback = PairingsCallback<PairingInformation[]>;
-type HandleAccessoriesCallback = NodeCallback<{ accessories: any[] }>;
-type HandleGetCharacteristicsCallback = NodeCallback<CharacteristicData[]>;
-type HandleSetCharacteristicsCallback = NodeCallback<CharacteristicData[]>;
+// noinspection JSUnusedGlobalSymbols
+/**
+ * @deprecated Use AccessoryEventTypes instead
+ */
+export type EventAccessory = "identify" | "listening" | "service-configurationChange" | "service-characteristic-change";
+
+export const enum AccessoryEventTypes {
+  /**
+   * Emitted when an iOS device wishes for this Accessory to identify itself. If `paired` is false, then
+   * this device is currently browsing for Accessories in the system-provided "Add Accessory" screen. If
+   * `paired` is true, then this is a device that has already paired with us. Note that if `paired` is true,
+   * listening for this event is a shortcut for the underlying mechanism of setting the `Identify` Characteristic:
+   * `getService(Service.AccessoryInformation).getCharacteristic(Characteristic.Identify).on('set', ...)`
+   * You must call the callback for identification to be successful.
+   */
+  IDENTIFY = "identify",
+  LISTENING = "listening",
+  SERVICE_CONFIGURATION_CHANGE = "service-configurationChange",
+  /**
+   * Emitted after a change in the value of one of the provided Service's Characteristics.
+   */
+  SERVICE_CHARACTERISTIC_CHANGE = "service-characteristic-change",
+  PAIRED = "paired",
+  UNPAIRED = "unpaired",
+
+  CHARACTERISTIC_WARNING = "characteristic-warning",
+}
+
+export declare interface Accessory {
+  on(event: "identify", listener: (paired: boolean, callback: VoidCallback) => void): this;
+  on(event: "listening", listener: (port: number, address: string) => void): this;
+
+  on(event: "service-configurationChange", listener: (change: ServiceConfigurationChange) => void): this;
+  on(event: "service-characteristic-change", listener: (change: AccessoryCharacteristicChange) => void): this;
+
+  on(event: "paired", listener: () => void): this;
+  on(event: "unpaired", listener: () => void): this;
+
+  on(event: "characteristic-warning", listener: (warning: CharacteristicWarning) => void): this;
+
+
+  emit(event: "identify", paired: boolean, callback: VoidCallback): boolean;
+  emit(event: "listening", port: number, address: string): boolean;
+
+  emit(event: "service-configurationChange", change: ServiceConfigurationChange): boolean;
+  emit(event: "service-characteristic-change", change: AccessoryCharacteristicChange): boolean;
+
+  emit(event: "paired"): boolean;
+  emit(event: "unpaired"): boolean;
+
+  emit(event: "characteristic-warning", warning: CharacteristicWarning): boolean;
+}
 
 /**
  * Accessory is a virtual HomeKit device. It can publish an associated HAP server for iOS devices to communicate
@@ -186,19 +353,8 @@ type HandleSetCharacteristicsCallback = NodeCallback<CharacteristicData[]>;
  * are hosted by the Bridge. This UUID must be "stable" and unchanging, even when the server is restarted. This
  * is required so that the Bridge can provide consistent "Accessory IDs" (aid) and "Instance IDs" (iid) for all
  * Accessories, Services, and Characteristics for iOS clients to reference later.
- *
- * @event 'identify' => function(paired, callback(err)) { }
- *        Emitted when an iOS device wishes for this Accessory to identify itself. If `paired` is false, then
- *        this device is currently browsing for Accessories in the system-provided "Add Accessory" screen. If
- *        `paired` is true, then this is a device that has already paired with us. Note that if `paired` is true,
- *        listening for this event is a shortcut for the underlying mechanism of setting the `Identify` Characteristic:
- *        `getService(Service.AccessoryInformation).getCharacteristic(Characteristic.Identify).on('set', ...)`
- *        You must call the callback for identification to be successful.
- *
- * @event 'service-characteristic-change' => function({service, characteristic, oldValue, newValue, context}) { }
- *        Emitted after a change in the value of one of the provided Service's Characteristics.
  */
-export class Accessory extends EventEmitter<Events> {
+export class Accessory extends EventEmitter {
 
   /**
    * @deprecated Please use the Categories const enum above. Scheduled to be removed in 2021-06.
@@ -218,8 +374,9 @@ export class Accessory extends EventEmitter<Events> {
   services: Service[] = [];
   private primaryService?: Service;
   shouldPurgeUnusedIDs: boolean = true; // Purge unused ids by default
-  private controllers: Record<ControllerType, ControllerContext> = {};
-  private serializedControllers?: Record<ControllerType, ControllerServiceMap>; // store uninitialized controller data after a Accessory.deserialize call
+
+  private controllers: Record<ControllerIdentifier, ControllerContext> = {};
+  private serializedControllers?: Record<ControllerIdentifier, ControllerServiceMap>; // store uninitialized controller data after a Accessory.deserialize call
   private activeCameraController?: CameraController;
 
   _accessoryInfo?: Nullable<AccessoryInfo>;
@@ -229,6 +386,13 @@ export class Accessory extends EventEmitter<Events> {
   _advertiser?: Advertiser;
   _server?: HAPServer;
   _setupURI?: string;
+
+  private configurationChangeDebounceTimeout?: Timeout;
+  /**
+   * This property captures the time when we last server a /accessories request.
+   * For multiple bursts of /accessories request we don't want to always contact GET handlers
+   */
+  private lastAccessoriesRequest: number = 0;
 
   constructor(public displayName: string, public UUID: string) {
     super();
@@ -247,12 +411,12 @@ export class Accessory extends EventEmitter<Events> {
       .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
         if (value) {
           const paired = true;
-          this._identificationRequest(paired, callback);
+          this.identificationRequest(paired, callback);
         }
       });
   }
 
-  _identificationRequest = (paired: boolean, callback: CharacteristicSetCallback) => {
+  private identificationRequest(paired: boolean, callback: IdentifyCallback) {
     debug("[%s] Identification request", this.displayName);
 
     if (this.listeners(AccessoryEventTypes.IDENTIFY).length > 0) {
@@ -265,7 +429,7 @@ export class Accessory extends EventEmitter<Events> {
     }
   }
 
-  addService = (serviceParam: Service | typeof Service, ...constructorArgs: any[]) => {
+  public addService(serviceParam: Service | typeof Service, ...constructorArgs: any[]): Service {
     // service might be a constructor like `Service.AccessoryInformation` instead of an instance
     // of Service. Coerce if necessary.
     const service: Service = typeof serviceParam === 'function'
@@ -273,8 +437,7 @@ export class Accessory extends EventEmitter<Events> {
         : serviceParam;
 
     // check for UUID+subtype conflict
-    for (var index in this.services) {
-      var existing = this.services[index];
+    for (const existing of this.services) {
       if (existing.UUID === service.UUID) {
         // OK we have two Services with the same UUID. Check that each defines a `subtype` property and that each is unique.
         if (!service.subtype)
@@ -300,40 +463,12 @@ export class Accessory extends EventEmitter<Events> {
     }
 
     if (!this.bridged) {
-      this._updateConfiguration();
+      this.enqueueConfigurationUpdate();
     } else {
-      this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({accessory:this, service:service}));
+      this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, { service: service });
     }
 
-    service.on(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, (change: ServiceConfigurationChange) => {
-      if (!service.isPrimaryService && service === this.primaryService) {
-        // service changed form primary to non primary service
-        this.primaryService = undefined;
-      } else if (service.isPrimaryService && service !== this.primaryService) {
-        // service changed from non primary to primary service
-        if (this.primaryService !== undefined) {
-          this.primaryService.isPrimaryService = false;
-        }
-
-        this.primaryService = service;
-      }
-
-      if (!this.bridged) {
-        this._updateConfiguration();
-      } else {
-        this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({accessory:this, service:service}));
-      }
-    });
-
-    // listen for changes in characteristics and bubble them up
-    service.on(ServiceEventTypes.CHARACTERISTIC_CHANGE, (change: CharacteristicChange) => {
-      this.emit(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, clone(change, {service:service as Service}));
-
-      // if we're not bridged, when we'll want to process this event through our HAPServer
-      if (!this.bridged)
-        this._handleCharacteristicChange(clone(change, {accessory:this, service:service as Service}));
-
-    });
+    this.setupServiceEventHandlers(service);
 
     return service;
   }
@@ -341,11 +476,11 @@ export class Accessory extends EventEmitter<Events> {
   /**
    * @deprecated use {@link Service.setPrimaryService} directly
    */
-  setPrimaryService = (service: Service) => {
+  public setPrimaryService(service: Service): void {
     service.setPrimaryService();
-  };
+  }
 
-  removeService = (service: Service) => {
+  public removeService(service: Service): void {
     const index = this.services.indexOf(service);
 
     if (index >= 0) {
@@ -354,32 +489,38 @@ export class Accessory extends EventEmitter<Events> {
       if (this.primaryService === service) { // check if we are removing out primary service
         this.primaryService = undefined;
       }
+      this.removeLinkedService(service); // remove it from linked service entries on the local accessory
 
       if (!this.bridged) {
-        this._updateConfiguration();
+        this.enqueueConfigurationUpdate();
       } else {
-        this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({accessory:this, service:service}));
+        this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, { service: service });
       }
 
       service.removeAllListeners();
     }
   }
 
-  getService = <T extends WithUUID<typeof Service>>(name: string | T) => {
-    for (var index in this.services) {
-      var service = this.services[index];
-
-      if (typeof name === 'string' && (service.displayName === name || service.name === name || service.subtype === name))
-        return service;
-      else if (typeof name === 'function' && ((service instanceof name) || (name.UUID === service.UUID)))
-        return service;
+  private removeLinkedService(removed: Service) {
+    for (const service of this.services) {
+      service.removeLinkedService(removed);
     }
   }
 
-  getServiceById<T extends WithUUID<typeof Service>>(uuid: string | T, subType: string): Service | undefined {
-    for (const index in this.services) {
-      const service = this.services[index];
+  public getService<T extends WithUUID<typeof Service>>(name: string | T): Service | undefined {
+    for (const service of this.services) {
+      if (typeof name === 'string' && (service.displayName === name || service.name === name || service.subtype === name)) {
+        return service;
+      } else if (typeof name === 'function' && ((service instanceof name) || (name.UUID === service.UUID))) {
+        return service;
+      }
+    }
 
+    return undefined;
+  }
+
+  public getServiceById<T extends WithUUID<typeof Service>>(uuid: string | T, subType: string): Service | undefined {
+    for (const service of this.services) {
       if (typeof uuid === "string" && (service.displayName === uuid || service.name === uuid) && service.subtype === subType) {
         return service;
       } else if (typeof uuid === "function" && ((service instanceof uuid) || (uuid.UUID === service.UUID)) && service.subtype === subType) {
@@ -396,11 +537,14 @@ export class Accessory extends EventEmitter<Events> {
    *
    * @returns the primary accessory
    */
-  getPrimaryAccessory = (): Accessory => {
+  public getPrimaryAccessory = (): Accessory => {
     return this.bridged? this.bridge!: this;
   }
 
-  updateReachability = (reachable: boolean) => {
+  /**
+   * @deprecated Not supported anymore
+   */
+  public updateReachability(reachable: boolean): void {
     if (!this.bridged)
       throw new Error("Cannot update reachability on non-bridged accessory!");
     this.reachable = reachable;
@@ -408,30 +552,26 @@ export class Accessory extends EventEmitter<Events> {
     debug('Reachability update is no longer being supported.');
   }
 
-  addBridgedAccessory = (accessory: Accessory, deferUpdate: boolean = false) => {
-    if (accessory._isBridge)
+  public addBridgedAccessory(accessory: Accessory, deferUpdate: boolean = false): Accessory {
+    if (accessory._isBridge) {
       throw new Error("Cannot Bridge another Bridge!");
-
-    // check for UUID conflict
-    for (var index in this.bridgedAccessories) {
-      var existing = this.bridgedAccessories[index];
-      if (existing.UUID === accessory.UUID)
-        throw new Error("Cannot add a bridged Accessory with the same UUID as another bridged Accessory: " + existing.UUID);
     }
 
-    // A bridge too far...
+    // check for UUID conflict
+    for (const existing of this.bridgedAccessories) {
+      if (existing.UUID === accessory.UUID) {
+        throw new Error("Cannot add a bridged Accessory with the same UUID as another bridged Accessory: " + existing.UUID);
+      }
+    }
+
     if (this.bridgedAccessories.length >= MAX_ACCESSORIES) {
       throw new Error("Cannot Bridge more than " + MAX_ACCESSORIES + " Accessories");
     }
 
     // listen for changes in ANY characteristics of ANY services on this Accessory
-    accessory.on(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, (change: ServiceCharacteristicChange) => {
-      this._handleCharacteristicChange(clone(change, {accessory:accessory}));
-    });
-
-    accessory.on(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, () => {
-      this._updateConfiguration();
-    });
+    accessory.on(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, change => this.handleCharacteristicChangeEvent(accessory, change.service, change));
+    accessory.on(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, this.enqueueConfigurationUpdate.bind(this));
+    accessory.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, this.handleCharacteristicWarning.bind(this));
 
     accessory.bridged = true;
     accessory.bridge = this;
@@ -441,86 +581,86 @@ export class Accessory extends EventEmitter<Events> {
     this.controllerStorage.linkAccessory(accessory); // init controllers of bridged accessory
 
     if(!deferUpdate) {
-      this._updateConfiguration();
+      this.enqueueConfigurationUpdate();
     }
 
     return accessory;
   }
 
-  addBridgedAccessories = (accessories: Accessory[]) => {
-    for (var index in accessories) {
-      var accessory = accessories[index];
+  public addBridgedAccessories(accessories: Accessory[]): void {
+    for (const accessory of accessories) {
       this.addBridgedAccessory(accessory, true);
     }
 
-    this._updateConfiguration();
+    this.enqueueConfigurationUpdate();
   }
 
-  removeBridgedAccessory = (accessory: Accessory, deferUpdate: boolean) => {
+  public removeBridgedAccessory(accessory: Accessory, deferUpdate: boolean): void {
     if (accessory._isBridge)
       throw new Error("Cannot Bridge another Bridge!");
 
-    var foundMatchAccessory = false;
     // check for UUID conflict
-    for (var index in this.bridgedAccessories) {
-      var existing = this.bridgedAccessories[index];
-      if (existing.UUID === accessory.UUID) {
-        foundMatchAccessory = true;
-        this.bridgedAccessories.splice(Number.parseInt(index), 1);
-        break;
-      }
-    }
+    const foundMatchAccessory = this.bridgedAccessories.findIndex((existing) => {
+      return existing.UUID === accessory.UUID
+    });
 
-    if (!foundMatchAccessory)
+    if (foundMatchAccessory === -1)
       throw new Error("Cannot find the bridged Accessory to remove.");
+
+    this.bridgedAccessories.splice(foundMatchAccessory, 1);
 
     accessory.removeAllListeners();
 
     if(!deferUpdate) {
-      this._updateConfiguration();
+      this.enqueueConfigurationUpdate();
     }
   }
 
-  removeBridgedAccessories = (accessories: Accessory[]) => {
-    for (var index in accessories) {
-      var accessory = accessories[index];
+  public removeBridgedAccessories(accessories: Accessory[]): void {
+    for (const accessory of accessories) {
       this.removeBridgedAccessory(accessory, true);
     }
 
-    this._updateConfiguration();
+    this.enqueueConfigurationUpdate();
   }
 
-  removeAllBridgedAccessories = () => {
-    for (var i = this.bridgedAccessories.length - 1; i >= 0; i --) {
+  public removeAllBridgedAccessories(): void {
+    for (let i = this.bridgedAccessories.length - 1; i >= 0; i --) {
       this.removeBridgedAccessory(this.bridgedAccessories[i], true);
     }
-    this._updateConfiguration();
+    this.enqueueConfigurationUpdate();
   }
 
-  getCharacteristicByIID = (iid: number) => {
-    for (var index in this.services) {
-      var service = this.services[index];
-      var characteristic = service.getCharacteristicByIID(iid);
-      if (characteristic) return characteristic;
+  private getCharacteristicByIID(iid: number): Characteristic | undefined {
+    for (const service of this.services) {
+      const characteristic = service.getCharacteristicByIID(iid);
+
+      if (characteristic) {
+        return characteristic;
+      }
     }
   }
 
-  getBridgedAccessoryByAID = (aid: number) => {
-    for (var index in this.bridgedAccessories) {
-      var accessory = this.bridgedAccessories[index];
-      if (accessory.aid === aid) return accessory;
+  protected getAccessoryByAID(aid: number): Accessory | undefined {
+    if (aid === 1) {
+      return this;
     }
+
+    for (const accessory of this.bridgedAccessories) {
+      if (accessory.aid === aid) {
+        return accessory;
+      }
+    }
+
+    return undefined;
   }
 
-  findCharacteristic = (aid: number, iid: number) => {
-
-    // if aid === 1, the accessory is us (because we are the server), otherwise find it among our bridged
-    // accessories (if any)
-    var accessory = (aid === 1) ? this : this.getBridgedAccessoryByAID(aid);
-
+  protected findCharacteristic(aid: number, iid: number): Characteristic | undefined {
+    const accessory = this.getAccessoryByAID(aid);
     return accessory && accessory.getCharacteristicByIID(iid);
   }
 
+  // noinspection JSDeprecatedSymbols
   /**
    * Method is used to configure an old style CameraSource.
    * The CameraSource API was fully replaced by the new Controller API used by {@link CameraController}.
@@ -543,7 +683,7 @@ export class Accessory extends EventEmitter<Events> {
    * @param cameraSource {LegacyCameraSource}
    * @deprecated please refer to the new {@see CameraController} API and {@link configureController}
    */
-  configureCameraSource(cameraSource: LegacyCameraSource): CameraController {
+  public configureCameraSource(cameraSource: LegacyCameraSource): CameraController {
     if (cameraSource.streamControllers.length === 0) {
       throw new Error("Malformed legacy CameraSource. Did not expose any StreamControllers!");
     }
@@ -560,8 +700,8 @@ export class Accessory extends EventEmitter<Events> {
 
     // we try here to be as good as possibly of keeping current behaviour
     cameraSource.services.forEach(service => {
-      if (service.UUID === CameraRTPStreamManagement.UUID || service.UUID === CameraOperatingMode.UUID
-          || service.UUID === CameraEventRecordingManagement.UUID) {
+      if (service.UUID === Service.CameraRTPStreamManagement.UUID || service.UUID === Service.CameraOperatingMode.UUID
+          || service.UUID === Service.CameraRecordingManagement.UUID) {
         return; // ignore those services, as they get replaced by the RTPStreamManagement
       }
 
@@ -571,6 +711,7 @@ export class Accessory extends EventEmitter<Events> {
     });
 
     // replace stream controllers; basically only to still support the "forceStop" call
+    // noinspection JSDeprecatedSymbols
     cameraSource.streamControllers = cameraController.streamManagements as StreamController[];
 
     return cameraController; // return the reference for the controller (maybe this could be useful?)
@@ -582,24 +723,25 @@ export class Accessory extends EventEmitter<Events> {
    *
    * The controller can be passed as an instance of the class or as a constructor (without any necessary parameters)
    * for a new Controller.
-   * Only one Controller of a given {@link ControllerType} can be configured for a given Accessory.
+   * Only one Controller of a given {@link ControllerIdentifier} can be configured for a given Accessory.
    *
    * When called, it will be checked if there are any services and persistent data the Controller (for the given
-   * {@link ControllerType}) can be restored from. Otherwise the Controller will be created with new services.
+   * {@link ControllerIdentifier}) can be restored from. Otherwise the Controller will be created with new services.
    *
    *
    * @param controllerConstructor {Controller | ControllerConstructor}
    */
-  configureController(controllerConstructor: Controller | ControllerConstructor) {
+  public configureController(controllerConstructor: Controller | ControllerConstructor) {
     const controller = typeof controllerConstructor === "function"
         ? new controllerConstructor() // any custom constructor arguments should be passed before using .bind(...)
         : controllerConstructor;
+    const id = controller.controllerId();
 
-    if (this.controllers[controller.controllerType]) {
-      throw new Error(`A Controller with the type '${controller.controllerType}' was already added to the accessory ${this.displayName}`);
+    if (this.controllers[id]) {
+      throw new Error(`A Controller with the type/id '${id}' was already added to the accessory ${this.displayName}`);
     }
 
-    const savedServiceMap = this.serializedControllers && this.serializedControllers[controller.controllerType];
+    const savedServiceMap = this.serializedControllers && this.serializedControllers[id];
     let serviceMap: ControllerServiceMap;
 
     if (savedServiceMap) { // we found data to restore from
@@ -615,7 +757,7 @@ export class Accessory extends EventEmitter<Events> {
       controller.configureServices(); // let the controller setup all its handlers
 
       // remove serialized data from our dictionary:
-      delete this.serializedControllers![controller.controllerType];
+      delete this.serializedControllers![id];
       if (Object.entries(this.serializedControllers!).length === 0) {
         this.serializedControllers = undefined;
       }
@@ -624,7 +766,7 @@ export class Accessory extends EventEmitter<Events> {
       controller.configureServices(); // let the controller setup all its handlers
 
       Object.values(serviceMap).forEach(service => {
-        if (service) {
+        if (service && !this.services.includes(service)) {
           this.addService(service);
         }
       });
@@ -641,20 +783,67 @@ export class Accessory extends EventEmitter<Events> {
       this.controllerStorage.trackController(controller);
     }
 
-    if (controller.handleFactoryReset) { // if the controller implements handleFactoryReset, setup event handlers for this controller
-      this.getPrimaryAccessory().on(AccessoryEventTypes.UNPAIRED, () => {
-        controller.handleFactoryReset!();
+    this.controllers[id] = context;
 
-        if (isSerializableController(controller)) { // we force a purge here
-          this.controllerStorage.purgeControllerData(controller);
+    if (controller instanceof CameraController) { // save CameraController for Snapshot handling
+      this.activeCameraController = controller;
+    }
+  }
+
+  /**
+   * This method will remove a given Controller from this accessory.
+   * The controller object will be restored to its initial state.
+   * This also means that any event handlers setup for the controller will be removed.
+   *
+   * @param controller - The controller which should be removed from the accessory.
+   */
+  public removeController(controller: Controller): void {
+    const id = controller.controllerId();
+
+    const storedController = this.controllers[id];
+    if (storedController) {
+      if (storedController.controller !== controller) {
+        throw new Error("[" + this.displayName + "] tried removing a controller with the id/type '" + id + "' though provided controller isn't the same which is registered!");
+      }
+
+      if (isSerializableController(controller)) {
+        // this will reset the state change delegate before we call handleControllerRemoved()
+        this.controllerStorage.untrackController(controller);
+      }
+
+      if (controller.handleFactoryReset) {
+        controller.handleFactoryReset();
+      }
+      controller.handleControllerRemoved();
+
+      delete this.controllers[id];
+
+      if (this.activeCameraController === controller) {
+        this.activeCameraController = undefined;
+      }
+
+      Object.values(storedController.serviceMap).forEach(service => {
+        if (service) {
+          this.removeService(service);
         }
       });
     }
 
-    this.controllers[controller.controllerType] = context;
+    if (this.serializedControllers) {
+      delete this.serializedControllers[id];
+    }
+  }
 
-    if (controller instanceof CameraController) { // save CameraController for Snapshot handling
-      this.activeCameraController = controller;
+  private handleAccessoryUnpairedForControllers(): void {
+    for (const context of Object.values(this.controllers)) {
+      const controller = context.controller;
+      if (controller.handleFactoryReset) { // if the controller implements handleFactoryReset, setup event handlers for this controller
+        controller.handleFactoryReset();
+      }
+
+      if (isSerializableController(controller)) {
+        this.controllerStorage.purgeControllerData(controller);
+      }
     }
   }
 
@@ -690,16 +879,16 @@ export class Accessory extends EventEmitter<Events> {
     });
   }
 
-  setupURI = () => {
+  setupURI(): string {
     if (this._setupURI) {
       return this._setupURI;
     }
 
-    var buffer = Buffer.alloc(8);
-    var setupCode = this._accessoryInfo && parseInt(this._accessoryInfo.pincode.replace(/-/g, ''), 10);
+    const buffer = Buffer.alloc(8);
+    const setupCode = this._accessoryInfo && parseInt(this._accessoryInfo.pincode.replace(/-/g, ''), 10);
 
-    var value_low = setupCode!;
-    var value_high = this._accessoryInfo && this._accessoryInfo.category >> 1;
+    let value_low = setupCode!;
+    const value_high = this._accessoryInfo && this._accessoryInfo.category >> 1;
 
     value_low |= 1 << 28; // Supports IP;
 
@@ -711,10 +900,10 @@ export class Accessory extends EventEmitter<Events> {
 
     buffer.writeUInt32BE(value_high!, 0);
 
-    var encodedPayload = (buffer.readUInt32BE(4) + (buffer.readUInt32BE(0) * Math.pow(2, 32))).toString(36).toUpperCase();
+    let encodedPayload = (buffer.readUInt32BE(4) + (buffer.readUInt32BE(0) * Math.pow(2, 32))).toString(36).toUpperCase();
 
     if (encodedPayload.length != 9) {
-      for (var i = 0; i <= 9 - encodedPayload.length; i++) {
+      for (let i = 0; i <= 9 - encodedPayload.length; i++) {
         encodedPayload = "0" + encodedPayload;
       }
     }
@@ -742,13 +931,11 @@ export class Accessory extends EventEmitter<Events> {
         }
       };
 
-      const manufacturer = service.getCharacteristic(Characteristic.Manufacturer).value;
       const model = service.getCharacteristic(Characteristic.Model).value;
       const serialNumber = service.getCharacteristic(Characteristic.SerialNumber).value;
       const firmwareRevision = service.getCharacteristic(Characteristic.FirmwareRevision).value;
       const name = service.getCharacteristic(Characteristic.Name).value;
 
-      checkValue("Manufacturer", manufacturer);
       checkValue("Model", model);
       checkValue("SerialNumber", serialNumber);
       checkValue("FirmwareRevision", firmwareRevision);
@@ -769,7 +956,7 @@ export class Accessory extends EventEmitter<Events> {
    * Assigns aid/iid to ourselves, any Accessories we are bridging, and all associated Services+Characteristics. Uses
    * the provided identifierCache to keep IDs stable.
    */
-  _assignIDs = (identifierCache: IdentifierCache) => {
+  _assignIDs(identifierCache: IdentifierCache): void {
 
     // if we are responsible for our own identifierCache, start the expiration process
     // also check weather we want to have an expiration process
@@ -787,8 +974,7 @@ export class Accessory extends EventEmitter<Events> {
       this.aid = 1;
     }
 
-    for (var index in this.services) {
-      var service = this.services[index];
+    for (const service of this.services) {
       if (this._isBridge) {
         service._assignIDs(identifierCache, this.UUID, 2000000000);
       } else {
@@ -797,9 +983,7 @@ export class Accessory extends EventEmitter<Events> {
     }
 
     // now assign IDs for any Accessories we are bridging
-    for (var index in this.bridgedAccessories) {
-      var accessory = this.bridgedAccessories[index];
-
+    for (const accessory of this.bridgedAccessories) {
       accessory._assignIDs(identifierCache);
     }
 
@@ -827,51 +1011,72 @@ export class Accessory extends EventEmitter<Events> {
    * when you have disabled auto purge so you can do it manually
    */
   purgeUnusedIDs = () => {
-    //Cache the state of the purge mechanisam and set it to true
-    var oldValue = this.shouldPurgeUnusedIDs;
+    //Cache the state of the purge mechanism and set it to true
+    const oldValue = this.shouldPurgeUnusedIDs;
     this.shouldPurgeUnusedIDs = true;
 
     //Reassign all ids
     this._assignIDs(this._identifierCache!);
 
-    //Revert back the purge mechanisam state
+    //Revert back the purge mechanism state
     this.shouldPurgeUnusedIDs = oldValue;
   }
 
   /**
-   * Returns a JSON representation of this Accessory suitable for delivering to HAP clients.
+   * Returns a JSON representation of this accessory suitable for delivering to HAP clients.
    */
-  toHAP = (opt?: ToHAPOptions) => {
+  private async toHAP(connection: HAPConnection, contactGetHandlers = true): Promise<AccessoryJsonObject[]> {
+    assert(this.aid, "aid cannot be undefined for accessory '" + this.displayName + "'");
+    assert(this.services.length, "accessory '" + this.displayName + "' does not have any services!");
 
-    var servicesHAP = [];
+    const accessory: AccessoryJsonObject = {
+      aid: this.aid!,
+      services: await Promise.all(this.services.map(service => service.toHAP(connection, contactGetHandlers))),
+    };
 
-    for (var index in this.services) {
-      var service = this.services[index];
-      servicesHAP.push(service.toHAP(opt));
+    const accessories: AccessoryJsonObject[] = [accessory];
+
+    if (!this.bridged) {
+      accessories.push(... await Promise.all(
+        this.bridgedAccessories
+          .map(accessory => accessory.toHAP(connection, contactGetHandlers).then(value => value[0]))
+      ));
     }
 
-    var accessoriesHAP = [{
-      aid: this.aid,
-      services: servicesHAP
-    }];
+    return accessories;
+  }
 
-    // now add any Accessories we are bridging
-    for (var index in this.bridgedAccessories) {
-      var accessory = this.bridgedAccessories[index];
-      var bridgedAccessoryHAP = accessory.toHAP(opt);
+  /**
+   * Returns a JSON representation of this accessory without characteristic values.
+   */
+  private internalHAPRepresentation(assignIds: boolean = true): AccessoryJsonObject[] {
+    if (assignIds) {
+      this._assignIDs(this._identifierCache!); // make sure our aid/iid's are all assigned
+    }
+    assert(this.aid, "aid cannot be undefined for accessory '" + this.displayName + "'");
+    assert(this.services.length, "accessory '" + this.displayName + "' does not have any services!");
 
-      // bridgedAccessoryHAP is an array of accessories with one item - extract it
-      // and add it to our own array
-      accessoriesHAP.push(bridgedAccessoryHAP[0])
+    const accessory: AccessoryJsonObject = {
+      aid: this.aid!,
+      services: this.services.map(service => service.internalHAPRepresentation()),
+    };
+
+    const accessories: AccessoryJsonObject[] = [accessory];
+
+    if (!this.bridged) {
+      for (const accessory of this.bridgedAccessories) {
+        accessories.push(accessory.internalHAPRepresentation(false)[0]);
+      }
     }
 
-    return accessoriesHAP;
+    return accessories;
   }
 
   /**
    * Publishes this Accessory on the local network for iOS clients to communicate with.
    *
    * @param {Object} info - Required info for publishing.
+   * @param allowInsecureRequest - Will allow unencrypted and unauthenticated access to the http server
    * @param {string} info.username - The "username" (formatted as a MAC address - like "CC:22:3D:E3:CE:F6") of
    *                                this Accessory. Must be globally unique from all Accessories on your local network.
    * @param {string} info.pincode - The 8-digit pincode for clients to use when pairing this Accessory. Must be formatted
@@ -881,24 +1086,38 @@ export class Accessory extends EventEmitter<Events> {
    *                                that for instance an appropriate icon can be drawn for the user while adding a
    *                                new Accessory.
    */
-  publish = (info: PublishInfo, allowInsecureRequest?: boolean) => {
-    // TODO maybe directly enqueue the method call on nextTick (could solve most out of order constructions)
+  public publish(info: PublishInfo, allowInsecureRequest?: boolean): void {
+    // noinspection JSDeprecatedSymbols
+    if (!info.advertiser && info.useLegacyAdvertiser != null) {
+      // noinspection JSDeprecatedSymbols
+      info.advertiser = info.useLegacyAdvertiser? MDNSAdvertiser.BONJOUR: MDNSAdvertiser.CIAO;
+      console.warn('DEPRECATED The PublishInfo.useLegacyAdvertiser option has been removed. Please use the PublishInfo.advertiser property to enable "ciao" (useLegacyAdvertiser=false) ' +
+        'or "bonjour-hap" (useLegacyAdvertiser=true) mdns advertiser libraries!')
+    }
+
+    // noinspection JSDeprecatedSymbols
+    if (info.mdns && info.advertiser !== MDNSAdvertiser.BONJOUR) {
+      console.log("DEPRECATED user supplied a custom 'mdns' option. This option is deprecated and ignored. " +
+        "Please move to the new 'bind' option.");
+    }
 
     let service = this.getService(Service.ProtocolInformation);
     if (!service) {
       service = this.addService(Service.ProtocolInformation) // add the protocol information service to the primary accessory
     }
-    service.setCharacteristic(Characteristic.Version, Advertiser.protocolVersionService);
+    service.setCharacteristic(Characteristic.Version, CiaoAdvertiser.protocolVersionService);
 
     if (this.lastKnownUsername && this.lastKnownUsername !== info.username) { // username changed since last publish
       Accessory.cleanupAccessoryData(this.lastKnownUsername); // delete old Accessory data
     }
 
-    // adding some identifying material to our displayName
-    this.displayName = this.displayName + " " + crypto.createHash('sha512')
-      .update(info.username, 'utf8')
-      .digest('hex').slice(0, 4).toUpperCase();
-    this.getService(Service.AccessoryInformation)!.updateCharacteristic(Characteristic.Name, this.displayName);
+    if (info.addIdentifyingMaterial ?? true) {
+      // adding some identifying material to our displayName
+      this.displayName = this.displayName + " " + crypto.createHash('sha512')
+        .update(info.username, 'utf8')
+        .digest('hex').slice(0, 4).toUpperCase();
+      this.getService(Service.AccessoryInformation)!.updateCharacteristic(Characteristic.Name, this.displayName);
+    }
 
     // attempt to load existing AccessoryInfo from disk
     this._accessoryInfo = AccessoryInfo.load(info.username);
@@ -912,7 +1131,7 @@ export class Accessory extends EventEmitter<Events> {
     if (info.setupID) {
       this._setupID = info.setupID;
     } else if (this._accessoryInfo.setupID === undefined || this._accessoryInfo.setupID === "") {
-      this._setupID = this._generateSetupID();
+      this._setupID = Accessory._generateSetupID();
     } else {
       this._setupID = this._accessoryInfo.setupID;
     }
@@ -937,38 +1156,50 @@ export class Accessory extends EventEmitter<Events> {
 
     //If it's bridge and there are not accessories already assigned to the bridge
     //probably purge is not needed since it's going to delete all the ids
-    //of accessories that might be added later. Usefull when dynamically adding
+    //of accessories that might be added later. Useful when dynamically adding
     //accessories.
     if (this._isBridge && this.bridgedAccessories.length == 0) {
       this.disableUnusedIDPurge();
       this.controllerStorage.purgeUnidentifiedAccessoryData = false;
     }
 
+    this.controllerStorage.load(info.username); // initializing controller data
+
     // assign aid/iid
     this._assignIDs(this._identifierCache);
-
-    this.controllerStorage.load(info.username); // initializing controller data
 
     // get our accessory information in HAP format and determine if our configuration (that is, our
     // Accessories/Services/Characteristics) has changed since the last time we were published. make
     // sure to omit actual values since these are not part of the "configuration".
-    var config = this.toHAP({omitValues:true});
-
-    // now convert it into a hash code and check it against the last one we made, if we have one
-    var shasum = crypto.createHash('sha1');
-    shasum.update(JSON.stringify(config));
-    var configHash = shasum.digest('hex');
-
-    if (configHash !== this._accessoryInfo.configHash) {
-
-      // our configuration has changed! we'll need to bump our config version number
-      this._accessoryInfo.updateConfigHash(configHash);
-    }
+    const config = this.internalHAPRepresentation(false); // TODO ensure this stuff is ordered
+    // TODO queue this check until about 5 seconds after startup, allowing some last changes after the publish call
+    //   without constantly incrementing the current config number
+    this._accessoryInfo.checkForCurrentConfigurationNumberIncrement(config, true);
 
     this.validateAccessory(true);
 
     // create our Advertiser which broadcasts our presence over mdns
-    this._advertiser = new Advertiser(this._accessoryInfo, info.mdns);
+    const parsed = Accessory.parseBindOption(info);
+
+    switch (info.advertiser ?? MDNSAdvertiser.BONJOUR) {
+      case MDNSAdvertiser.CIAO:
+        this._advertiser = new CiaoAdvertiser(this._accessoryInfo, {
+          interface: parsed.advertiserAddress
+        }, {
+          restrictedAddresses: parsed.serviceRestrictedAddress,
+          disabledIpv6: parsed.serviceDisableIpv6,
+        });
+        break;
+      case MDNSAdvertiser.BONJOUR:
+        // noinspection JSDeprecatedSymbols
+        this._advertiser = new BonjourHAPAdvertiser(this._accessoryInfo, info.mdns, {
+          restrictedAddresses: parsed.serviceRestrictedAddress,
+          disabledIpv6: parsed.serviceDisableIpv6,
+        });
+        break;
+      default:
+        throw new Error("Unsupported advertiser setting: '" + info.advertiser + "'");
+    }
     this._advertiser.on(AdvertiserEvent.UPDATED_NAME, name => {
       this.displayName = name;
       if (this._accessoryInfo) {
@@ -984,19 +1215,19 @@ export class Accessory extends EventEmitter<Events> {
     // create our HAP server which handles all communication between iOS devices and us
     this._server = new HAPServer(this._accessoryInfo);
     this._server.allowInsecureRequest = !!allowInsecureRequest;
-    this._server.on(HAPServerEventTypes.LISTENING, this._onListening.bind(this));
-    this._server.on(HAPServerEventTypes.IDENTIFY, this._handleIdentify.bind(this));
-    this._server.on(HAPServerEventTypes.PAIR, this._handlePair.bind(this));
-    this._server.on(HAPServerEventTypes.ADD_PAIRING, this._handleAddPairing.bind(this));
-    this._server.on(HAPServerEventTypes.REMOVE_PAIRING, this._handleRemovePairing.bind(this));
-    this._server.on(HAPServerEventTypes.LIST_PAIRINGS, this._handleListPairings.bind(this));
-    this._server.on(HAPServerEventTypes.ACCESSORIES, this._handleAccessories.bind(this));
-    this._server.on(HAPServerEventTypes.GET_CHARACTERISTICS, this._handleGetCharacteristics.bind(this));
-    this._server.on(HAPServerEventTypes.SET_CHARACTERISTICS, this._handleSetCharacteristics.bind(this));
-    this._server.on(HAPServerEventTypes.SESSION_CLOSE, this._handleSessionClose.bind(this));
-    this._server.on(HAPServerEventTypes.REQUEST_RESOURCE, this._handleResource.bind(this));
+    this._server.on(HAPServerEventTypes.LISTENING, this.onListening.bind(this));
+    this._server.on(HAPServerEventTypes.IDENTIFY, this.identificationRequest.bind(this, false));
+    this._server.on(HAPServerEventTypes.PAIR, this.handleInitialPairSetupFinished.bind(this));
+    this._server.on(HAPServerEventTypes.ADD_PAIRING, this.handleAddPairing.bind(this));
+    this._server.on(HAPServerEventTypes.REMOVE_PAIRING, this.handleRemovePairing.bind(this));
+    this._server.on(HAPServerEventTypes.LIST_PAIRINGS, this.handleListPairings.bind(this));
+    this._server.on(HAPServerEventTypes.ACCESSORIES, this.handleAccessories.bind(this));
+    this._server.on(HAPServerEventTypes.GET_CHARACTERISTICS, this.handleGetCharacteristics.bind(this));
+    this._server.on(HAPServerEventTypes.SET_CHARACTERISTICS, this.handleSetCharacteristics.bind(this));
+    this._server.on(HAPServerEventTypes.CONNECTION_CLOSED, this.handleHAPConnectionClosed.bind(this));
+    this._server.on(HAPServerEventTypes.REQUEST_RESOURCE, this.handleResource.bind(this));
 
-    this._server.listen(info.port || 0);
+    this._server.listen(info.port, parsed.serverAddress);
   }
 
   /**
@@ -1004,7 +1235,7 @@ export class Accessory extends EventEmitter<Events> {
    * Accessory object will no longer valid after invoking this method
    * Trying to invoke publish() on the object will result undefined behavior
    */
-  destroy = () => {
+  public destroy(): void {
     this.unpublish();
 
     if (this._accessoryInfo) {
@@ -1014,58 +1245,55 @@ export class Accessory extends EventEmitter<Events> {
       this._identifierCache = undefined;
       this.controllerStorage = new ControllerStorage(this);
     }
+    this.removeAllListeners();
   }
 
-  unpublish = () => {
+  public unpublish(): void {
     if (this._server) {
-      this._server.stop();
+      this._server.destroy();
       this._server = undefined;
     }
     if (this._advertiser) {
-      this._advertiser.shutdown();
+      // noinspection JSIgnoredPromiseFromCall
+      this._advertiser.destroy();
       this._advertiser = undefined;
     }
   }
 
-  _updateConfiguration = () => {
-    if (this._advertiser && this._advertiser.isServiceCreated()) {
-      // get our accessory information in HAP format and determine if our configuration (that is, our
-      // Accessories/Services/Characteristics) has changed since the last time we were published. make
-      // sure to omit actual values since these are not part of the "configuration".
-      var config = this.toHAP({omitValues:true});
-
-      // now convert it into a hash code and check it against the last one we made, if we have one
-      var shasum = crypto.createHash('sha1');
-      shasum.update(JSON.stringify(config));
-      var configHash = shasum.digest('hex');
-
-      if (this._accessoryInfo && configHash !== this._accessoryInfo.configHash) {
-
-        // our configuration has changed! we'll need to bump our config version number
-        this._accessoryInfo.updateConfigHash(configHash);
-      }
-
-      // update our advertisement so HomeKit on iOS can pickup new accessory
-      this._advertiser.updateAdvertisement();
+  private enqueueConfigurationUpdate(): void {
+    if (this.configurationChangeDebounceTimeout) {
+      return; // already enqueued
     }
+
+    this.configurationChangeDebounceTimeout = setTimeout(() => {
+      this.configurationChangeDebounceTimeout = undefined;
+
+      if (this._advertiser && this._advertiser) {
+        // get our accessory information in HAP format and determine if our configuration (that is, our
+        // Accessories/Services/Characteristics) has changed since the last time we were published. make
+        // sure to omit actual values since these are not part of the "configuration".
+        const config = this.internalHAPRepresentation(); // TODO ensure this stuff is ordered
+        if (this._accessoryInfo?.checkForCurrentConfigurationNumberIncrement(config)) {
+          this._advertiser.updateAdvertisement();
+        }
+      }
+    }, 1000);
+    this.configurationChangeDebounceTimeout.unref();
+    // 1d is fine, HomeKit is built that with configuration updates no iid or aid conflicts occur.
+    // Thus the only thing happening when the txt update arrives late is already removed accessories/services
+    // not responding or new accessories/services not yet shown
   }
 
-  _onListening = (port: number) => {
+  private onListening(port: number, hostname: string): void {
     assert(this._advertiser, "Advertiser wasn't created at onListening!");
     // the HAP server is listening, so we can now start advertising our presence.
-    this._advertiser!.initAdvertiser(port);
+    this._advertiser!.initPort(port);
+    // noinspection JSIgnoredPromiseFromCall
     this._advertiser!.startAdvertising();
-    this.emit(AccessoryEventTypes.LISTENING, port);
+    this.emit(AccessoryEventTypes.LISTENING, port, hostname);
   }
 
-// Called when an unpaired client wishes for us to identify ourself
-  _handleIdentify = (callback: IdentifyCallback) => {
-    this._identificationRequest(false, callback);
-  }
-
-// Called when HAPServer has completed the pairing process with a client
-  _handlePair = (username: string, publicKey: Buffer, callback: PairCallback) => {
-
+  private handleInitialPairSetupFinished(username: string, publicKey: Buffer, callback: PairCallback): void {
     debug("[%s] Paired with client %s", this.displayName, username);
 
     this._accessoryInfo && this._accessoryInfo.addPairedClient(username, publicKey, PermissionTypes.ADMIN);
@@ -1079,22 +1307,21 @@ export class Accessory extends EventEmitter<Events> {
     this.emit(AccessoryEventTypes.PAIRED);
   }
 
-// called when a controller adds an additional pairing
-  _handleAddPairing = (controller: Session, username: string, publicKey: Buffer, permission: PermissionTypes, callback: AddPairingCallback) => {
+  private handleAddPairing(connection: HAPConnection, username: string, publicKey: Buffer, permission: PermissionTypes, callback: AddPairingCallback): void {
     if (!this._accessoryInfo) {
-      callback(Codes.UNAVAILABLE);
+      callback(TLVErrorCode.UNAVAILABLE);
       return;
     }
 
-    if (!this._accessoryInfo.hasAdminPermissions(controller.username!)) {
-      callback(Codes.AUTHENTICATION);
+    if (!this._accessoryInfo.hasAdminPermissions(connection.username!)) {
+      callback(TLVErrorCode.AUTHENTICATION);
       return;
     }
 
     const existingKey = this._accessoryInfo.getClientPublicKey(username);
     if (existingKey) {
       if (existingKey.toString() !== publicKey.toString()) {
-        callback(Codes.UNKNOWN);
+        callback(TLVErrorCode.UNKNOWN);
         return;
       }
 
@@ -1106,20 +1333,20 @@ export class Accessory extends EventEmitter<Events> {
     this._accessoryInfo.save();
     // there should be no need to update advertisement
     callback(0);
-  };
+  }
 
-  _handleRemovePairing = (controller: Session, username: string, callback: RemovePairingCallback) => {
+  private handleRemovePairing(connection: HAPConnection, username: HAPUsername, callback: RemovePairingCallback): void {
     if (!this._accessoryInfo) {
-      callback(Codes.UNAVAILABLE);
+      callback(TLVErrorCode.UNAVAILABLE);
       return;
     }
 
-    if (!this._accessoryInfo.hasAdminPermissions(controller.username!)) {
-      callback(Codes.AUTHENTICATION);
+    if (!this._accessoryInfo.hasAdminPermissions(connection.username!)) {
+      callback(TLVErrorCode.AUTHENTICATION);
       return;
     }
 
-    this._accessoryInfo.removePairedClient(controller, username);
+    this._accessoryInfo.removePairedClient(connection, username);
     this._accessoryInfo.save();
 
     callback(0); // first of all ensure the pairing is removed before we advertise availability again
@@ -1127,168 +1354,200 @@ export class Accessory extends EventEmitter<Events> {
     if (!this._accessoryInfo.paired()) {
       this._advertiser && this._advertiser.updateAdvertisement();
       this.emit(AccessoryEventTypes.UNPAIRED);
-    }
-  };
 
-  _handleListPairings = (controller: Session, callback: ListPairingsCallback) => {
+      this.handleAccessoryUnpairedForControllers();
+      for (const accessory of this.bridgedAccessories) {
+        accessory.handleAccessoryUnpairedForControllers();
+      }
+    }
+  }
+
+  private handleListPairings(connection: HAPConnection, callback: ListPairingsCallback): void {
     if (!this._accessoryInfo) {
-      callback(Codes.UNAVAILABLE);
+      callback(TLVErrorCode.UNAVAILABLE);
       return;
     }
 
-    if (!this._accessoryInfo.hasAdminPermissions(controller.username!)) {
-      callback(Codes.AUTHENTICATION);
+    if (!this._accessoryInfo.hasAdminPermissions(connection.username!)) {
+      callback(TLVErrorCode.AUTHENTICATION);
       return;
     }
 
     callback(0, this._accessoryInfo.listPairings());
-  };
+  }
 
-// Called when an iOS client wishes to know all about our accessory via JSON payload
-  _handleAccessories = (callback: HandleAccessoriesCallback) => {
+  private handleAccessories(connection: HAPConnection, callback: AccessoriesCallback): void {
+    this._assignIDs(this._identifierCache!); // make sure our aid/iid's are all assigned
 
-    // make sure our aid/iid's are all assigned
-    this._assignIDs(this._identifierCache!);
+    const now = Date.now();
+    const contactGetHandlers = now - this.lastAccessoriesRequest > 5_000; // we query latest value if last /accessories was more than 5s ago
+    this.lastAccessoriesRequest = now;
 
-    // build out our JSON payload and call the callback
-    callback(null, {
-      accessories: this.toHAP() // array of Accessory HAP
+    this.toHAP(connection, contactGetHandlers).then(value => {
+      callback(undefined, {
+        accessories: value,
+      });
+    }, reason => {
+      console.error("[" + this.displayName + "] /accessories request error with: " + reason.stack);
+      callback({ httpCode: HAPHTTPCode.INTERNAL_SERVER_ERROR, status: HAPStatus.SERVICE_COMMUNICATION_FAILURE });
     });
   }
 
-// Called when an iOS client wishes to query the state of one or more characteristics, like "door open?", "light on?", etc.
-  _handleGetCharacteristics = (data: CharacteristicData[], events: CharacteristicEvents, callback: HandleGetCharacteristicsCallback, remote: boolean, session: Session) => {
+  private handleGetCharacteristics(connection: HAPConnection, request: CharacteristicsReadRequest, callback: ReadCharacteristicsCallback): void {
+    const characteristics: CharacteristicReadData[] = [];
+    const response: CharacteristicsReadResponse = { characteristics: characteristics };
 
-    // build up our array of responses to the characteristics requested asynchronously
-    var characteristics: CharacteristicData[] = [];
-    var statusKey = remote ? 's' : 'status';
-    var valueKey = remote ? 'v' : 'value';
+    const missingCharacteristics: Set<EventName> = new Set(request.ids.map(id => id.aid + "." + id.iid));
+    if (missingCharacteristics.size !== request.ids.length) {
+      // if those sizes differ, we have duplicates and can't properly handle that
+      callback({ httpCode: HAPHTTPCode.UNPROCESSABLE_ENTITY, status: HAPStatus.INVALID_VALUE_IN_REQUEST });
+      return;
+    }
 
-    data.forEach((characteristicData) => {
-      var aid = characteristicData.aid;
-      var iid = characteristicData.iid;
+    let timeout: Timeout | undefined = setTimeout(() => {
+      for (const id of missingCharacteristics) {
+        const split = id.split(".");
+        const aid = parseInt(split[0], 10);
+        const iid = parseInt(split[1], 10);
 
-      var includeEvent = characteristicData.e;
+        const accessory = this.getAccessoryByAID(aid)!;
+        const characteristic = accessory.getCharacteristicByIID(iid)!;
+        this.sendCharacteristicWarning(characteristic, CharacteristicWarningType.SLOW_READ, "The read handler for the characteristic '" +
+          characteristic.displayName + "' on the accessory '" + accessory.displayName + "' was slow to respond!");
+      }
 
-      var characteristic = this.findCharacteristic(characteristicData.aid, characteristicData.iid);
+      // after a total of 10s we do not longer wait for a request to appear and just return status code timeout
+      timeout = setTimeout(() => {
+        timeout = undefined;
 
-      if (!characteristic) {
-        debug('[%s] Could not find a Characteristic with aid of %s and iid of %s', this.displayName, characteristicData.aid, characteristicData.iid);
-        var response: any = {
-          aid: aid,
-          iid: iid
+        for (const id of missingCharacteristics) {
+          const split = id.split(".");
+          const aid = parseInt(split[0], 10);
+          const iid = parseInt(split[1], 10);
+
+          const accessory = this.getAccessoryByAID(aid)!;
+          const characteristic = accessory.getCharacteristicByIID(iid)!;
+          this.sendCharacteristicWarning(characteristic, CharacteristicWarningType.TIMEOUT_READ, "The read handler for the characteristic '" +
+            characteristic.displayName + "' on the accessory '" + accessory.displayName + "' didn't respond at all!. Please check that you properly call the callback!");
+
+          characteristics.push({
+            aid: aid,
+            iid: iid,
+            status: HAPStatus.OPERATION_TIMED_OUT,
+          });
+        }
+        missingCharacteristics.clear();
+
+        callback(undefined, response);
+      }, 7000);
+      timeout.unref();
+    }, 3000);
+    timeout.unref();
+
+    for (const id of request.ids) {
+      const name = id.aid + "." + id.iid;
+      this.handleCharacteristicRead(connection, id, request).then(value => {
+        return {
+          aid: id.aid,
+          iid: id.iid,
+          ...value,
         };
-        response[statusKey] = Status.SERVICE_COMMUNICATION_FAILURE; // generic error status
-        characteristics.push(response);
+      }, reason => { // this error block is only called if hap-nodejs itself messed up
+        console.error(`[${this.displayName}] Read request for characteristic ${name} encountered an error: ${reason.stack}`)
 
-        // have we collected all responses yet?
-        if (characteristics.length === data.length)
-          callback(null, characteristics);
-
-        return;
-      }
-
-      if (!characteristic.props.perms.includes(Perms.PAIRED_READ)) { // check if we are allowed to read from this characteristic
-        debug('[%s] Tried reading from Characteristic which does not allow reading (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid);
-        const response: any = {
-          aid: aid,
-          iid: iid
+        return {
+          aid: id.aid,
+          iid: id.iid,
+          status: HAPStatus.SERVICE_COMMUNICATION_FAILURE,
         };
-        response[statusKey] = Status.WRITE_ONLY_CHARACTERISTIC;
-        characteristics.push(response);
-
-        if (characteristics.length === data.length) {
-          callback(null, characteristics);
-        }
-        return;
-      }
-
-      if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.READ)) {
-        let verifiable = true;
-        if (!session || !session.username || !this._accessoryInfo) {
-          verifiable = false;
-          debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for reading (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid)
+      }).then(value => {
+        if (!timeout) {
+          return; // if timeout is undefined, response was already sent out
         }
 
-        if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(session.username!)) {
-          const response: any = {
-            aid: aid,
-            iid: iid
-          };
-          response[statusKey] = Status.INSUFFICIENT_PRIVILEGES;
-          characteristics.push(response);
+        missingCharacteristics.delete(name);
+        characteristics.push(value);
 
-          if (characteristics.length === data.length)
-            callback(null, characteristics);
-          return;
-        }
-      }
-
-      // Found the Characteristic! Get the value!
-      debug('[%s] Getting value for Characteristic "%s"', this.displayName, characteristic.displayName);
-
-      // we want to remember "who" made this request, so that we don't send them an event notification
-      // about any changes that occurred as a result of the request. For instance, if after querying
-      // the current value of a characteristic, the value turns out to be different than the previously
-      // cached Characteristic value, an internal 'change' event will be emitted which will cause us to
-      // notify all connected clients about that new value. But this client is about to get the new value
-      // anyway, so we don't want to notify it twice.
-      var context = events;
-
-      // set the value and wait for success
-      characteristic.getValue((err, value) => {
-        if (err) {
-          debug('[%s] Error getting value for Characteristic "%s": %s', this.displayName, characteristic!.displayName, err.message);
-          var response: any = {
-            aid: aid,
-            iid: iid
-          };
-          response[statusKey] = hapStatus(err);
-          characteristics.push(response);
-        } else {
-          debug('[%s] Got Characteristic "%s" value: %s', this.displayName, characteristic!.displayName, value);
-
-          var response: any = {
-            aid: aid,
-            iid: iid
-          };
-          response[valueKey] = value;
-
-          if (includeEvent) {
-            var eventName = aid + '.' + iid;
-            response['e'] = (events[eventName] === true);
+        if (missingCharacteristics.size === 0) {
+          if (timeout) {
+            clearTimeout(timeout);
+            timeout = undefined;
           }
-
-          // compose the response and add it to the list
-          characteristics.push(response);
+          callback(undefined, response);
         }
+      });
+    }
+  }
 
-        // have we collected all responses yet?
-        if (characteristics.length === data.length)
-          callback(null, characteristics);
+  private async handleCharacteristicRead(connection: HAPConnection, id: CharacteristicId, request: CharacteristicsReadRequest): Promise<PartialCharacteristicReadData> {
+    const characteristic = this.findCharacteristic(id.aid, id.iid);
 
-      }, context, session? session.sessionID: undefined);
+    if (!characteristic) {
+      debug('[%s] Could not find a Characteristic with aid of %s and iid of %s', this.displayName, id.aid, id.iid);
+      return { status: HAPStatus.INVALID_VALUE_IN_REQUEST };
+    }
 
+    if (!characteristic.props.perms.includes(Perms.PAIRED_READ)) { // check if read is allowed for this characteristic
+      debug('[%s] Tried reading from characteristic which does not allow reading (aid of %s and iid of %s)', this.displayName, id.aid, id.iid);
+      return { status: HAPStatus.WRITE_ONLY_CHARACTERISTIC };
+    }
+
+    if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.READ)) {
+      let verifiable = true;
+      if (!connection.username || !this._accessoryInfo) {
+        verifiable = false;
+        debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for reading (aid of %s and iid of %s)', this.displayName, id.aid, id.iid)
+      }
+
+      if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(connection.username!)) {
+        return { status: HAPStatus.INSUFFICIENT_PRIVILEGES };
+      }
+    }
+
+    return characteristic.handleGetRequest(connection).then(value => {
+      value = formatOutgoingCharacteristicValue(value, characteristic.props);
+      debug('[%s] Got Characteristic "%s" value: "%s"', this.displayName, characteristic!.displayName, value);
+
+      const data: PartialCharacteristicReadData = {
+        value: value == undefined? null: value,
+      };
+
+      if (request.includeMeta) {
+        data.format = characteristic.props.format;
+        data.unit = characteristic.props.unit;
+        data.minValue = characteristic.props.minValue;
+        data.maxValue = characteristic.props.maxValue;
+        data.minStep = characteristic.props.minStep;
+        data.maxLen = characteristic.props.maxLen || characteristic.props.maxDataLen;
+      }
+      if (request.includePerms) {
+        data.perms = characteristic.props.perms;
+      }
+      if (request.includeType) {
+        data.type = toShortForm(this.UUID);
+      }
+      if (request.includeEvent) {
+        data.ev = connection.hasEventNotifications(id.aid, id.iid);
+      }
+
+      return data;
+    }, (reason: HAPStatus) => {
+      // @ts-expect-error
+      debug('[%s] Error getting value for characteristic "%s": %s', this.displayName, characteristic.displayName, HAPStatus[reason]);
+      return { status: reason };
     });
   }
 
-// Called when an iOS client wishes to change the state of this accessory - like opening a door, or turning on a light.
-// Or, to subscribe to change events for a particular Characteristic.
-  _handleSetCharacteristics = (writeRequest: CharacteristicsWriteRequest, events: CharacteristicEvents, callback: HandleSetCharacteristicsCallback, remote: boolean, session: Session) => {
-    const data = writeRequest.characteristics;
-
-    // data is an array of characteristics and values like this:
-    // [ { aid: 1, iid: 8, value: true, ev: true } ]
-
-    debug("[%s] Processing characteristic set: %s", this.displayName, JSON.stringify(data));
+  private handleSetCharacteristics(connection: HAPConnection, writeRequest: CharacteristicsWriteRequest, callback: WriteCharacteristicsCallback): void {
+    debug("[%s] Processing characteristic set: %s", this.displayName, JSON.stringify(writeRequest));
 
     let writeState: WriteRequestState = WriteRequestState.REGULAR_REQUEST;
     if (writeRequest.pid !== undefined) { // check for timed writes
-      if (session.timedWritePid === writeRequest.pid) {
+      if (connection.timedWritePid === writeRequest.pid) {
         writeState = WriteRequestState.TIMED_WRITE_AUTHENTICATED;
-        clearTimeout(session.timedWriteTimeout!);
-        session.timedWritePid = undefined;
-        session.timedWriteTimeout = undefined;
+        clearTimeout(connection.timedWriteTimeout!);
+        connection.timedWritePid = undefined;
+        connection.timedWriteTimeout = undefined;
 
         debug("[%s] Timed write request got acknowledged for pid %d", this.displayName, writeRequest.pid);
       } else {
@@ -1297,318 +1556,350 @@ export class Accessory extends EventEmitter<Events> {
       }
     }
 
-    // build up our array of responses to the characteristics requested asynchronously
-    var characteristics: CharacteristicData[] = [];
+    const characteristics: CharacteristicWriteData[] = [];
+    const response: CharacteristicsWriteResponse = { characteristics: characteristics };
 
-    data.forEach((characteristicData) => {
-      var aid = characteristicData.aid;
-      var iid = characteristicData.iid;
-      var value = remote ? characteristicData.v : characteristicData.value;
-      var ev = remote ? characteristicData.e : characteristicData.ev;
-      var includeValue = characteristicData.r || false;
+    const missingCharacteristics: Set<EventName> = new Set(
+      writeRequest.characteristics
+        .map(characteristic => characteristic.aid + "." + characteristic.iid)
+    );
+    if (missingCharacteristics.size !== writeRequest.characteristics.length) {
+      // if those sizes differ, we have duplicates and can't properly handle that
+      callback({ httpCode: HAPHTTPCode.UNPROCESSABLE_ENTITY, status: HAPStatus.INVALID_VALUE_IN_REQUEST });
+      return;
+    }
 
-      var statusKey = remote ? 's' : 'status';
+    let timeout: Timeout | undefined = setTimeout(() => {
+      for (const id of missingCharacteristics) {
+        const split = id.split(".");
+        const aid = parseInt(split[0], 10);
+        const iid = parseInt(split[1], 10);
 
-      var characteristic = this.findCharacteristic(aid, iid);
-
-      if (!characteristic) {
-        debug('[%s] Could not find a Characteristic with iid of %s and aid of %s', this.displayName, characteristicData.aid, characteristicData.iid);
-        var response: any = {
-          aid: aid,
-          iid: iid
-        };
-        response[statusKey] = Status.SERVICE_COMMUNICATION_FAILURE; // generic error status
-        characteristics.push(response);
-
-        // have we collected all responses yet?
-        if (characteristics.length === data.length)
-          callback(null, characteristics);
-
-        return;
+        const accessory = this.getAccessoryByAID(aid)!;
+        const characteristic = accessory.getCharacteristicByIID(iid)!;
+        this.sendCharacteristicWarning(characteristic, CharacteristicWarningType.SLOW_WRITE, "The write handler for the characteristic '" +
+          characteristic.displayName + "' on the accessory '" + accessory.displayName + "' was slow to respond!");
       }
 
-      if (writeState === WriteRequestState.TIMED_WRITE_REJECTED) {
-        const response: any = {
-          aid: aid,
-          iid: iid
-        };
-        response[statusKey] = Status.INVALID_VALUE_IN_REQUEST;
-        characteristics.push(response);
+      // after a total of 10s we do not longer wait for a request to appear and just return status code timeout
+      timeout = setTimeout(() => {
+        timeout = undefined;
 
-        if (characteristics.length === data.length)
-          callback(null, characteristics);
-        return;
-      }
+        for (const id of missingCharacteristics) {
+          const split = id.split(".");
+          const aid = parseInt(split[0], 10);
+          const iid = parseInt(split[1], 10);
 
-      // we want to remember "who" initiated this change, so that we don't send them an event notification
-      // about the change they just made. We do this by leveraging the arbitrary "context" object supported
-      // by Characteristic and passed on to the corresponding 'change' events bubbled up from Characteristic
-      // through Service and Accessory. We'll assign it to the events object since it essentially represents
-      // the connection requesting the change.
-      var context = events;
+          const accessory = this.getAccessoryByAID(aid)!;
+          const characteristic = accessory.getCharacteristicByIID(iid)!;
+          this.sendCharacteristicWarning(characteristic, CharacteristicWarningType.TIMEOUT_WRITE, "The write handler for the characteristic '" +
+            characteristic.displayName + "' on the accessory '" + accessory.displayName + "' didn't respond at all!. Please check that you properly call the callback!");
 
-      // if "ev" is present, that means we need to register or unregister this client for change events for
-      // this characteristic.
-      if (typeof ev !== 'undefined') {
-        if (!characteristic.props.perms.includes(Perms.NOTIFY)) { // check if notify is allowed for this characteristic
-          debug('[%s] Tried enabling notifications for Characteristic which does not allow notify (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid);
-          const response: any = {
+          characteristics.push({
             aid: aid,
-            iid: iid
-          };
-          response[statusKey] = Status.NOTIFICATION_NOT_SUPPORTED;
-          characteristics.push(response);
+            iid: iid,
+            status: HAPStatus.OPERATION_TIMED_OUT,
+          });
+        }
+        missingCharacteristics.clear();
 
-          if (characteristics.length === data.length) {
-            callback(null, characteristics);
+        callback(undefined, response);
+      }, 7000);
+      timeout.unref();
+    }, 3000);
+    timeout.unref();
+
+    for (const data of writeRequest.characteristics) {
+      const name = data.aid + "." + data.iid;
+      this.handleCharacteristicWrite(connection, data, writeState).then(value => {
+        return {
+          aid: data.aid,
+          iid: data.iid,
+          ...value,
+        };
+      }, reason => { // this error block is only called if hap-nodejs itself messed up
+        console.error(`[${this.displayName}] Write request for characteristic ${name} encountered an error: ${reason.stack}`)
+
+        return {
+          aid: data.aid,
+          iid: data.iid,
+          status: HAPStatus.SERVICE_COMMUNICATION_FAILURE,
+        };
+      }).then(value => {
+        if (!timeout) {
+          return; // if timeout is undefined, response was already sent out
+        }
+
+        missingCharacteristics.delete(name);
+        characteristics.push(value);
+
+        if (missingCharacteristics.size === 0) { // if everything returned send the response
+          if (timeout) {
+            clearTimeout(timeout);
+            timeout = undefined;
           }
-          return;
+          callback(undefined, response);
+        }
+      })
+    }
+  }
+
+  private async handleCharacteristicWrite(connection: HAPConnection, data: CharacteristicWrite, writeState: WriteRequestState): Promise<PartialCharacteristicWriteData> {
+    const characteristic = this.findCharacteristic(data.aid, data.iid);
+    let evResponse: boolean | undefined = undefined;
+
+    if (!characteristic) {
+      debug('[%s] Could not find a Characteristic with aid of %s and iid of %s', this.displayName, data.aid, data.iid);
+      return { status: HAPStatus.INVALID_VALUE_IN_REQUEST };
+    }
+
+    if (writeState === WriteRequestState.TIMED_WRITE_REJECTED) {
+      return { status: HAPStatus.INVALID_VALUE_IN_REQUEST };
+    }
+
+    if (data.ev != undefined) { // register/unregister event notifications
+      const notificationsEnabled = connection.hasEventNotifications(data.aid, data.iid);
+
+      // it seems like the Home App sends unregister requests for characteristics which don't have notify permissions
+      // see https://github.com/homebridge/HAP-NodeJS/issues/868
+      if (notificationsEnabled != data.ev) {
+        if (!characteristic.props.perms.includes(Perms.NOTIFY)) { // check if notify is allowed for this characteristic
+          debug('[%s] Tried %s notifications for Characteristic which does not allow notify (aid of %s and iid of %s)',
+            this.displayName, data.ev? "enabling": "disabling", data.aid, data.iid);
+          return { status: HAPStatus.NOTIFICATION_NOT_SUPPORTED };
         }
 
         if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.NOTIFY)) {
           let verifiable = true;
-          if (!session || !session.username || !this._accessoryInfo) {
+          if (!connection.username || !this._accessoryInfo) {
             verifiable = false;
-            debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for notify (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid)
+            debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for notify (aid of %s and iid of %s)', this.displayName, data.aid, data.iid)
           }
 
-          if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(session.username!)) {
-            const response: any = {
-              aid: aid,
-              iid: iid
-            };
-            response[statusKey] = Status.INSUFFICIENT_PRIVILEGES;
-            characteristics.push(response);
-
-            if (characteristics.length === data.length)
-              callback(null, characteristics);
-            return;
+          if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(connection.username!)) {
+            return { status: HAPStatus.INSUFFICIENT_PRIVILEGES };
           }
         }
 
-        debug('[%s] %s Characteristic "%s" for events', this.displayName, ev ? "Registering" : "Unregistering", characteristic.displayName);
-
-        // store event registrations in the supplied "events" dict which is associated with the connection making
-        // the request.
-        var eventName = aid + '.' + iid;
-
-        if (ev === true && events[eventName] != true) {
-          events[eventName] = true; // value is arbitrary, just needs to be non-falsey
+        // we already checked that data.ev != notificationsEnabled, thus just do whatever the connection asks for
+        if (data.ev) {
+          connection.enableEventNotifications(data.aid, data.iid);
           characteristic.subscribe();
-        }
-
-        if (ev === false && events[eventName] != undefined) {
+          evResponse = true;
+          debug('[%s] Registered Characteristic "%s" on "%s" for events', connection.remoteAddress, characteristic.displayName, this.displayName);
+        } else {
           characteristic.unsubscribe();
-          delete events[eventName]; // unsubscribe by deleting name from dict
+          connection.disableEventNotifications(data.aid, data.iid);
+          evResponse = false;
+          debug('[%s] Unregistered Characteristic "%s" on "%s" for events', connection.remoteAddress, characteristic.displayName, this.displayName);
+        }
+      }
+      // response is returned below in the else block
+    }
+
+    if (data.value != undefined) {
+      if (!characteristic.props.perms.includes(Perms.PAIRED_WRITE)) { // check if write is allowed for this characteristic
+        debug('[%s] Tried writing to Characteristic which does not allow writing (aid of %s and iid of %s)', this.displayName, data.aid, data.iid);
+        return { status: HAPStatus.READ_ONLY_CHARACTERISTIC };
+      }
+
+      if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.WRITE)) {
+        let verifiable = true;
+        if (!connection.username || !this._accessoryInfo) {
+          verifiable = false;
+          debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for write (aid of %s and iid of %s)', this.displayName, data.aid, data.iid)
+        }
+
+        if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(connection.username!)) {
+          return { status: HAPStatus.INSUFFICIENT_PRIVILEGES };
         }
       }
 
-      // Found the characteristic - set the value if there is one
-      if (typeof value !== 'undefined') {
-        if (!characteristic.props.perms.includes(Perms.PAIRED_WRITE)) { // check if write is allowed for this characteristic
-          debug('[%s] Tried writing to Characteristic which does not allow writing (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid);
-          const response: any = {
-            aid: aid,
-            iid: iid
-          };
-          response[statusKey] = Status.READ_ONLY_CHARACTERISTIC;
-          characteristics.push(response);
+      if (characteristic.props.perms.includes(Perms.ADDITIONAL_AUTHORIZATION) && characteristic.additionalAuthorizationHandler) {
+        // if the characteristic "supports additional authorization" but doesn't define a handler for the check
+        // we conclude that the characteristic doesn't want to check the authData (currently) and just allows access for everybody
 
-          if (characteristics.length === data.length) {
-            callback(null, characteristics);
-          }
-          return;
+        let allowWrite;
+        try {
+          allowWrite = characteristic.additionalAuthorizationHandler(data.authData);
+        } catch (error) {
+          console.log("[" + this.displayName + "] Additional authorization handler has thrown an error when checking authData: " + error.stack);
+          allowWrite = false;
         }
 
-        if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.WRITE)) {
-          let verifiable = true;
-          if (!session || !session.username || !this._accessoryInfo) {
-            verifiable = false;
-            debug('[%s] Could not verify admin permissions for Characteristic which requires admin permissions for write (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid)
-          }
-
-          if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(session.username!)) {
-            const response: any = {
-              aid: aid,
-              iid: iid
-            };
-            response[statusKey] = Status.INSUFFICIENT_PRIVILEGES;
-            characteristics.push(response);
-
-            if (characteristics.length === data.length)
-              callback(null, characteristics);
-            return;
-          }
+        if (!allowWrite) {
+          return { status: HAPStatus.INSUFFICIENT_AUTHORIZATION };
         }
+      }
 
-        if (characteristic.props.perms.includes(Perms.TIMED_WRITE) && writeState !== WriteRequestState.TIMED_WRITE_AUTHENTICATED) {
-          debug('[%s] Tried writing to a timed write only Characteristic without properly preparing (iid of %s and aid of %s)', this.displayName, characteristicData.aid, characteristicData.iid);
-          const response: any = {
-            aid: aid,
-            iid: iid
-          };
-          response[statusKey] = Status.INVALID_VALUE_IN_REQUEST;
-          characteristics.push(response);
+      if (characteristic.props.perms.includes(Perms.TIMED_WRITE) && writeState !== WriteRequestState.TIMED_WRITE_AUTHENTICATED) {
+        debug('[%s] Tried writing to a timed write only Characteristic without properly preparing (iid of %s and aid of %s)', this.displayName, data.aid, data.iid);
+        return { status: HAPStatus.INVALID_VALUE_IN_REQUEST };
+      }
 
-          if (characteristics.length === data.length)
-            callback(null, characteristics);
-          return;
-        }
+      return characteristic.handleSetRequest(data.value, connection).then(value => {
+        debug('[%s] Setting Characteristic "%s" to value %s', this.displayName, characteristic.displayName, data.value);
+        return {
+          value: data.r && value? formatOutgoingCharacteristicValue(value, characteristic.props): undefined, // if write response is requests and value is provided, return that
 
-        debug('[%s] Setting Characteristic "%s" to value %s', this.displayName, characteristic.displayName, value);
-
-        // set the value and wait for success
-        characteristic.setValue(value, (err) => {
-
-          if (err) {
-            debug('[%s] Error setting Characteristic "%s" to value %s: ', this.displayName, characteristic!.displayName, value, err.message);
-
-            var response: any = {
-              aid: aid,
-              iid: iid
-            };
-            response[statusKey] = hapStatus(err);
-            characteristics.push(response);
-          } else {
-            var response: any = {
-              aid: aid,
-              iid: iid
-            };
-            response[statusKey] = 0;
-
-            if (includeValue)
-              response['value'] = characteristic!.value;
-
-            characteristics.push(response);
-          }
-
-          // have we collected all responses yet?
-          if (characteristics.length === data.length)
-            callback(null, characteristics);
-
-        }, context, session? session.sessionID: undefined);
-
-      } else {
-        // no value to set, so we're done (success)
-        var response: any = {
-          aid: aid,
-          iid: iid
+          ev: evResponse,
         };
-        response[statusKey] = 0;
-        characteristics.push(response);
+      }, (status: HAPStatus) => {
+        // @ts-expect-error
+        debug('[%s] Error setting Characteristic "%s" to value %s: ', this.displayName, characteristic.displayName, data.value, HAPStatus[status]);
 
-        // have we collected all responses yet?
-        if (characteristics.length === data.length)
-          callback(null, characteristics);
-      }
-
-    });
+        return { status: status };
+      });
+    } else {
+      return { ev: evResponse };
+    }
   }
 
-  _handleResource(data: Resource, callback: NodeCallback<Buffer>): void {
-    if (data["resource-type"] === ResourceTypes.IMAGE) {
+  private handleResource(data: ResourceRequest, callback: ResourceRequestCallback): void {
+    if (data["resource-type"] === ResourceRequestType.IMAGE) {
       const aid = data.aid; // aid is optionally supplied by HomeKit (for example when camera is bridged, multiple cams, etc)
 
+      let accessory: Accessory | undefined = undefined;
       let controller: CameraController | undefined = undefined;
       if (aid) {
-        if (this.aid === aid && this.activeCameraController) { // bridge is probably not a camera but it is possible in theory
-          controller = this.activeCameraController;
-        } else {
-          const accessory = this.getBridgedAccessoryByAID(aid);
-          if (accessory && accessory.activeCameraController) {
-            controller = accessory.activeCameraController;
-          }
+        accessory = this.getAccessoryByAID(aid);
+        if (accessory && accessory.activeCameraController) {
+          controller = accessory.activeCameraController;
         }
       } else if (this.activeCameraController) { // aid was not supplied, check if this accessory is a camera
+        accessory = this;
         controller = this.activeCameraController;
       }
 
       if (!controller) {
-        callback(new Error("resource not found"));
+        debug("[%s] received snapshot request though no camera controller was associated!");
+        callback({ httpCode: HAPHTTPCode.NOT_FOUND, status: HAPStatus.RESOURCE_DOES_NOT_EXIST });
         return;
       }
 
-      controller.handleSnapshotRequest(data["image-height"], data["image-width"], callback);
+      controller.handleSnapshotRequest(data["image-height"], data["image-width"], accessory?.displayName).then(buffer => {
+        callback(undefined, buffer);
+      }, (status: HAPStatus) => {
+        callback({ httpCode: HAPHTTPCode.OK, status: status });
+      });
       return;
     }
 
-    callback(new Error('unsupported image type: ' + data["resource-type"]));
+    debug("[%s] received request for unsupported image type: " + data["resource-type"], this._accessoryInfo?.username);
+    callback({ httpCode: HAPHTTPCode.NOT_FOUND, status: HAPStatus.RESOURCE_DOES_NOT_EXIST});
   }
 
-  _handleSessionClose = (sessionID: SessionIdentifier, events: CharacteristicEvents) => {
+  private handleHAPConnectionClosed(connection: HAPConnection): void {
     if (this.activeCameraController) {
-      this.activeCameraController.handleCloseConnection(sessionID);
+      this.activeCameraController.handleCloseConnection(connection.sessionID);
     }
 
-    this._unsubscribeEvents(events);
-  }
+    for (const event of connection.getRegisteredEvents()) {
+      const ids = event.split(".");
+      const aid = parseInt(ids[0], 10);
+      const iid = parseInt(ids[1], 10);
 
-  _unsubscribeEvents = (events: CharacteristicEvents) => {
-    for (var key in events) {
-      if (key.indexOf('.') !== -1) {
-        try {
-          var id = key.split('.');
-          var aid = Number.parseInt(id[0]);
-          var iid = Number.parseInt(id[1]);
-
-          var characteristic = this.findCharacteristic(aid, iid);
-          if (characteristic) {
-            characteristic.unsubscribe();
-          }
-        } catch (e) {
-        }
+      const characteristic = this.findCharacteristic(aid, iid);
+      if (characteristic) {
+        characteristic.unsubscribe();
       }
     }
+    connection.clearRegisteredEvents();
   }
 
-// Called internally above when a change was detected in one of our hosted Characteristics somewhere in our hierarchy.
-  _handleCharacteristicChange = (change: ServiceCharacteristicChange) => {
-    if (!this._server)
-      return; // we're not running a HAPServer, so there's no one to notify about this event
+  private handleServiceConfigurationChangeEvent(service: Service): void {
+    if (!service.isPrimaryService && service === this.primaryService) {
+      // service changed form primary to non primary service
+      this.primaryService = undefined;
+    } else if (service.isPrimaryService && service !== this.primaryService) {
+      // service changed from non primary to primary service
+      if (this.primaryService !== undefined) {
+        this.primaryService.isPrimaryService = false;
+      }
 
-    var data = {
-      characteristics: [{
-        aid: change.accessory.aid,
-        iid: change.characteristic.iid,
-        value: change.newValue
-      }]
-    };
+      this.primaryService = service;
+    }
 
-    // name for this event that corresponds to what we stored when the client signed up (in handleSetCharacteristics)
-    var eventName = change.accessory.aid + '.' + change.characteristic.iid;
-
-    // pull the events object associated with the original connection (if any) that initiated the change request,
-    // which we assigned in handleGetCharacteristics/handleSetCharacteristics.
-    var excludeEvents = change.context;
-
-    // pass it along to notifyClients() so that it can omit the connection where events === excludeEvents.
-    this._server.notifyClients(eventName, data, excludeEvents);
+    if (this.bridged) {
+      this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, { service: service });
+    } else {
+      this.enqueueConfigurationUpdate();
+    }
   }
 
-  _setupService = (service: Service) => {
-    service.on(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, () => {
-      if (!this.bridged) {
-        this._updateConfiguration();
+  private handleCharacteristicChangeEvent(accessory: Accessory, service: Service, change: ServiceCharacteristicChange): void {
+    if (this.bridged) { // forward this to our main accessory
+      this.emit(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, { ...change, service: service });
+    } else {
+      if (!this._server) {
+        return; // we're not running a HAPServer, so there's no one to notify about this event
+      }
+
+      if (accessory.aid == undefined || change.characteristic.iid == undefined) {
+        debug("[%s] Muting event notification for %s as ids aren't yet assigned!", accessory.displayName, change.characteristic.displayName);
+        return;
+      }
+
+      if (change.context != undefined && typeof change.context === "object" && (change.context as CharacteristicOperationContext).omitEventUpdate) {
+        debug("[%s] Omitting event updates for %s as specified in the context object!", accessory.displayName, change.characteristic.displayName);
+        return;
+      }
+
+      if (!(change.reason === ChangeReason.EVENT || change.oldValue !== change.newValue
+        || change.characteristic.UUID === Characteristic.ProgrammableSwitchEvent.UUID // those specific checks are out of backwards compatibility
+        || change.characteristic.UUID === Characteristic.ButtonEvent.UUID // new characteristics should use sendEventNotification call
+      )) {
+        // we only emit a change event if the reason was a call to sendEventNotification, if the value changed
+        // as of a write request or a read request or if the change happened on dedicated event characteristics
+        // otherwise we ignore this change event (with the return below)
+        return;
+      }
+
+      const uuid = change.characteristic.UUID;
+      const immediateDelivery = uuid === Characteristic.ButtonEvent.UUID || uuid === Characteristic.ProgrammableSwitchEvent.UUID
+        || uuid === Characteristic.MotionDetected.UUID || uuid === Characteristic.ContactSensorState.UUID;
+
+      const value = formatOutgoingCharacteristicValue(change.newValue, change.characteristic.props);
+      this._server.sendEventNotifications(accessory.aid, change.characteristic.iid, value, change.originator, immediateDelivery);
+    }
+  }
+
+  private sendCharacteristicWarning(characteristic: Characteristic, type: CharacteristicWarningType, message: string): void {
+    this.handleCharacteristicWarning({
+      characteristic: characteristic,
+      type: type,
+      message: message,
+      originatorChain: [characteristic.displayName], // we are missing the service displayName, but that's okay
+      stack: new Error().stack,
+    });
+  }
+
+  private handleCharacteristicWarning(warning: CharacteristicWarning): void {
+    warning.originatorChain = [this.displayName, ...warning.originatorChain];
+
+    const emitted = this.emit(AccessoryEventTypes.CHARACTERISTIC_WARNING, warning);
+    if (!emitted) {
+      let message = `[${warning.originatorChain.join("@")}] ${warning.message}`
+
+      if (warning.type === CharacteristicWarningType.ERROR_MESSAGE
+        || warning.type === CharacteristicWarningType.TIMEOUT_READ|| warning.type === CharacteristicWarningType.TIMEOUT_WRITE) {
+        console.error(message);
       } else {
-        this.emit(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({accessory:this, service }));
+        console.warn(message);
       }
-    });
-
-    // listen for changes in characteristics and bubble them up
-    service.on(ServiceEventTypes.CHARACTERISTIC_CHANGE, (change: any) => {
-      this.emit(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, clone(change, {service }));
-
-      // if we're not bridged, when we'll want to process this event through our HAPServer
-      if (!this.bridged)
-        this._handleCharacteristicChange(clone(change, {accessory:this, service }));
-
-    });
+      debug("[%s] Above characteristic warning was thrown at: %s", this.displayName, warning.stack ?? "unknown")
+    }
   }
 
-  _sideloadServices = (targetServices: Service[]) => {
-    for (var index in targetServices) {
-      var target = targetServices[index];
-      this._setupService(target);
+  private setupServiceEventHandlers(service: Service): void {
+    service.on(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, this.handleServiceConfigurationChangeEvent.bind(this, service));
+    service.on(ServiceEventTypes.CHARACTERISTIC_CHANGE, this.handleCharacteristicChangeEvent.bind(this, this, service));
+    service.on(ServiceEventTypes.CHARACTERISTIC_WARNING, this.handleCharacteristicWarning.bind(this));
+  }
+
+  private _sideloadServices(targetServices: Service[]): void {
+    for (const service of targetServices) {
+      this.setupServiceEventHandlers(service);
     }
 
     this.services = targetServices.slice();
@@ -1619,19 +1910,19 @@ export class Accessory extends EventEmitter<Events> {
       .getCharacteristic(Characteristic.Identify)!
       .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
         if (value) {
-          var paired = true;
-          this._identificationRequest(paired, callback);
+          const paired = true;
+          this.identificationRequest(paired, callback);
         }
       });
   }
 
-  _generateSetupID = () => {
+  private static _generateSetupID(): string {
     const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const bytes = crypto.randomBytes(4);
+    const max = chars.length;
     let setupID = '';
 
-    for (var i = 0; i < 4; i++) {
-      var index = bytes.readUInt8(i) % 26;
+    for (let i = 0; i < 4; i++) {
+      const index = Math.floor(Math.random() * max)
       setupID += chars.charAt(index);
     }
 
@@ -1672,17 +1963,17 @@ export class Accessory extends EventEmitter<Events> {
     const controllers: SerializedControllerContext[] = [];
 
     // save controllers
-    Object.entries(accessory.controllers).forEach(([key, context]: [string, ControllerContext])  => {
+    Object.values(accessory.controllers).forEach((context: ControllerContext)  => {
       controllers.push({
-        type: context.controller.controllerType,
+        type: context.controller.controllerId(),
         services: Accessory.serializeServiceMap(context.serviceMap),
       });
     });
 
     // also save controller which didn't get initialized (could lead to service duplication if we throw that data away)
-    accessory.serializedControllers && Object.entries(accessory.serializedControllers).forEach(([type, serviceMap]) => {
+    accessory.serializedControllers && Object.entries(accessory.serializedControllers).forEach(([id, serviceMap]) => {
       controllers.push({
-        type: type,
+        type: id,
         services: Accessory.serializeServiceMap(serviceMap),
       });
     });
@@ -1711,9 +2002,8 @@ export class Accessory extends EventEmitter<Events> {
     });
 
     if (json.linkedServices) {
-      for (let serviceId in json.linkedServices) {
+      for (const [ serviceId, linkedServicesKeys ] of Object.entries(json.linkedServices)) {
         const primaryService = servicesMap[serviceId];
-        const linkedServicesKeys = json.linkedServices[serviceId];
 
         if (!primaryService) {
           continue
@@ -1775,20 +2065,67 @@ export class Accessory extends EventEmitter<Events> {
     return controllerServiceMap;
   }
 
-}
+  private static parseBindOption(info: PublishInfo): { advertiserAddress?: string[], serviceRestrictedAddress?: string[], serviceDisableIpv6?: boolean, serverAddress?: string } {
+    let advertiserAddress: string[] | undefined = undefined;
+    let disableIpv6 = false;
+    let serverAddress: string | undefined = undefined;
 
-const numberPattern = /^-?\d+$/;
+    if (info.bind) {
+      const entries: Set<InterfaceName | IPAddress> = new Set(Array.isArray(info.bind)? info.bind: [info.bind]);
 
-function hapStatus(err: Error) {
-  let errorValue = Status.SERVICE_COMMUNICATION_FAILURE;
+      if (entries.has("::")) {
+        serverAddress = "::"
 
-  if (numberPattern.test(err.message)) {
-    const value = parseInt(err.message);
+        entries.delete("::");
+        if (entries.size) {
+          advertiserAddress = Array.from(entries);
+        }
+      } else if (entries.has("0.0.0.0")) {
+        disableIpv6 = true;
+        serverAddress = "0.0.0.0";
 
-    if (value >= Status.INSUFFICIENT_PRIVILEGES && value <= Status.INSUFFICIENT_AUTHORIZATION) {
-      errorValue = value;
+        entries.delete("0.0.0.0");
+        if (entries.size) {
+          advertiserAddress = Array.from(entries);
+        }
+      } else if (entries.size === 1) {
+        advertiserAddress = Array.from(entries);
+
+        const entry = entries.values().next().value; // grab the first one
+
+        const version = net.isIP(entry); // check if ip address was specified or a interface name
+        if (version) {
+          serverAddress = version === 4? "0.0.0.0": "::"; // we currently bind to unspecified addresses so config-ui always has a connection via loopback
+        } else {
+          serverAddress = "::"; // the interface could have both ipv4 and ipv6 addresses
+        }
+      } else if (entries.size > 1) {
+        advertiserAddress = Array.from(entries);
+
+        let bindUnspecifiedIpv6 = false; // we bind on "::" if there are interface names, or we detect ipv6 addresses
+
+        for (const entry of entries) {
+          const version = net.isIP(entry);
+          if (version === 0 || version === 6) {
+            bindUnspecifiedIpv6 = true;
+            break;
+          }
+        }
+
+        if (bindUnspecifiedIpv6) {
+          serverAddress = "::";
+        } else {
+          serverAddress = "0.0.0.0";
+        }
+      }
     }
+
+    return {
+      advertiserAddress: advertiserAddress,
+      serviceRestrictedAddress: advertiserAddress,
+      serviceDisableIpv6: disableIpv6,
+      serverAddress: serverAddress,
+    };
   }
 
-  return errorValue;
 }

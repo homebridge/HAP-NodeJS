@@ -1,7 +1,4 @@
-import { Socket, SocketType } from "dgram";
-
-const dgram = require('dgram');
-const EventEmitter = require('events').EventEmitter;
+import dgram, { Socket, SocketType } from "dgram";
 
 export interface RTPProxyOptions {
   disabled: boolean;
@@ -19,7 +16,7 @@ export interface RTPProxyOptions {
  * Later HomeKit removed support for unencrypted stream so it’s mostly no longer useful anymore, only really for testing
  * with a custom HAP controller.
  */
-export default class RTPProxy extends EventEmitter {
+export default class RTPProxy {
 
   startingPort: number = 10000;
   type: SocketType;
@@ -39,8 +36,6 @@ export default class RTPProxy extends EventEmitter {
   serverRTCPPort?: number;
 
   constructor(public options: RTPProxyOptions) {
-    super();
-
     this.type = options.isIPV6 ? 'udp6' : 'udp4';
 
     this.startingPort = 10000;
@@ -60,11 +55,11 @@ export default class RTPProxy extends EventEmitter {
         this.incomingRTPSocket = sockets[0];
         this.incomingRTCPSocket = sockets[1];
 
-      return this.createSocket(this.type);
-    }).then((socket) => {
+        return this.createSocket(this.type);
+      }).then((socket) => {
         this.outgoingSocket = socket;
         this.onBound();
-    });
+      });
   }
 
   destroy = () => {
@@ -147,17 +142,17 @@ export default class RTPProxy extends EventEmitter {
     if(this.disabled)
       return;
 
-    this.incomingRTPSocket.on('message', (msg, rinfo) => {
-        this.rtpMessage(msg);
-        });
+    this.incomingRTPSocket.on('message', msg => {
+      this.rtpMessage(msg);
+    });
 
-    this.incomingRTCPSocket.on('message', (msg, rinfo) => {
-        this.rtcpMessage(msg);
-        });
+    this.incomingRTCPSocket.on('message', msg => {
+      this.rtcpMessage(msg);
+    });
 
-    this.outgoingSocket.on('message', (msg, rinfo) => {
-        this.rtcpReply(msg);
-        });
+    this.outgoingSocket.on('message', msg => {
+      this.rtcpReply(msg);
+    });
   }
 
   rtpMessage = (msg: Buffer) => {
@@ -241,7 +236,7 @@ export default class RTPProxy extends EventEmitter {
   }
 
   createSocket = (type: SocketType): Promise<Socket> => {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
       const retry = () => {
         const socket = dgram.createSocket(type);
 
@@ -269,7 +264,7 @@ export default class RTPProxy extends EventEmitter {
   }
 
   createSocketPair = (type: SocketType): Promise<Socket[]> => {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
       const retry = () => {
         let socket1 = dgram.createSocket(type);
         let socket2 = dgram.createSocket(type);

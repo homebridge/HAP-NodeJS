@@ -1,3 +1,4 @@
+import escapeHTML from "escape-html";
 import { Accessory, ButtonState, ButtonType, Categories, RemoteController, uuid } from '..';
 import * as http from "http";
 import url, { UrlWithParsedQuery } from "url";
@@ -82,7 +83,7 @@ http.createServer((request, response) => {
         const targetIdentifier = controller.getTargetIdentifierByName(query.name as string);
         if (targetIdentifier === undefined) {
             response.writeHead(400, {"Content-Type": "text/html"});
-            response.end("Bad request. No target found for given name " + query.name);
+            response.end("Bad request. No target found for given name " + escapeHTML(query.name + ""));
             return;
         }
 
@@ -101,13 +102,13 @@ http.createServer((request, response) => {
         // @ts-ignore
         if (ButtonState[buttonState] === undefined) {
             response.writeHead(400, {"Content-Type": "text/html"});
-            response.end("Bad request. Unknown button state " + query.state);
+            response.end("Bad request. Unknown button state " + escapeHTML(query.state + ""));
             return;
         }
         // @ts-ignore
         if (ButtonType[button] === undefined) {
             response.writeHead(400, {"Content-Type": "text/html"});
-            response.end("Bad request. Unknown button " + query.button);
+            response.end("Bad request. Unknown button " + escapeHTML(query.button + ""));
             return;
         }
 
@@ -138,7 +139,7 @@ http.createServer((request, response) => {
         // @ts-ignore
         if (ButtonType[button] === undefined) {
             response.writeHead(400, {"Content-Type": "text/html"});
-            response.end("Bad request. Unknown button " + query.button);
+            response.end("Bad request. Unknown button " + escapeHTML(query.button + ""));
             return;
         }
 
@@ -159,7 +160,7 @@ http.createServer((request, response) => {
         return;
     } else {
         response.writeHead(404, {"Content-Type": "text/html"});
-        response.end("Not Found. No path found for " + pathname);
+        response.end("Not Found. No path found for " + escapeHTML(pathname));
         return;
     }
 }).listen(8080);

@@ -11,7 +11,7 @@ import {
   uuid, VoidCallback
 } from '..';
 
-var MOTION_SENSOR = {
+const MOTION_SENSOR = {
   motionDetected: false,
 
   getStatus: () => {
@@ -21,15 +21,15 @@ var MOTION_SENSOR = {
   identify: () => {
     console.log("Identify the motion sensor!");
   }
-}
+};
 
 // Generate a consistent UUID for our Motion Sensor Accessory that will remain the same even when
 // restarting our server. We use the `uuid.generate` helper function to create a deterministic
 // UUID based on an arbitrary "namespace" and the word "motionsensor".
-var motionSensorUUID = uuid.generate('hap-nodejs:accessories:motionsensor');
+const motionSensorUUID = uuid.generate('hap-nodejs:accessories:motionsensor');
 
 // This is the Accessory that we'll return to HAP-NodeJS that represents our fake motionSensor.
-var motionSensor = exports.accessory = new Accessory('Motion Sensor', motionSensorUUID);
+const motionSensor = exports.accessory = new Accessory('Motion Sensor', motionSensorUUID);
 
 // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
 // @ts-ignore

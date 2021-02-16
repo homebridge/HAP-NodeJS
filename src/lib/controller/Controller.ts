@@ -22,7 +22,9 @@ export const enum DefaultControllerType {
     TV = "tv",
     ROUTER = "router",
     LOCK = "lock",
+    CHARACTERISTIC_TRANSITION = "characteristic-transition",
 }
+export type ControllerIdentifier = string | ControllerType;
 
 export type StateChangeDelegate = () => void;
 
@@ -50,12 +52,15 @@ export interface ControllerConstructor {
 export interface Controller<M extends ControllerServiceMap = ControllerServiceMap> {
 
     /**
-     * Every instance of a Controller must expose the respective type see {@see ControllerType}.
-     * The type of a Controller implementation MUST NEVER change.
+     * Every instance of a Controller must define appropriate identifying material.
+     * The returned identifier MUST NOT change over the lifetime of the Controller object.
      *
-     * This property must stay readonly. Controllers can be inherited from, but even then the type must not change.
+     * Note: The controller can choose to return the same identifier for all controllers of the same type.
+     * This will result in the user only being able to add ONE instance of an Controller to an accessory.
+     *
+     * Some predefined identifiers can be found in {@link ControllerIdentifier}.
      */
-    readonly controllerType: ControllerType;
+    controllerId(): ControllerIdentifier;
 
     /**
      * This method is called by the accessory the controller is added to. This method is only called if a new controller
@@ -68,6 +73,9 @@ export interface Controller<M extends ControllerServiceMap = ControllerServiceMa
      * The method must return all created services in a ServiceMap.
      * A {@link ControllerServiceMap} basically maps a name to every service on the controller.
      * It is used to potentially recreate a controller for a given ServiceMap using {@link initWithServices}.
+     *
+     * The set of services represented by the Controller MUST remain static and can only change over new version of
+     * the Controller implementation (see {@link initWithServices})
      *
      * @returns a {@link ControllerServiceMap} representing all services of a controller indexed by a controller chosen name.
      */
@@ -97,10 +105,23 @@ export interface Controller<M extends ControllerServiceMap = ControllerServiceMa
     configureServices(): void;
 
     /**
+     * This method is called once the Controller is removed from the accessory.
+     * The controller MUST reset everything to its initial state (just as it would have been constructed freshly)
+     * form the constructor.
+     * Adding the Controller back to an accessory after it was removed MUST be supported!
+     * If the controller is a {@link SerializableController} it MUST NOT call the {@link StateChangeDelegate}
+     * as a result of a call to this method.
+     *
+     * All service contained in the {@link ControllerServiceMap} returned by {@link constructServices}
+     * will be automatically removed from the Accessory. The Controller MUST remove any references to those services.
+     */
+    handleControllerRemoved(): void;
+
+    /**
      * This method is called to signal a factory reset of the controller and its services and characteristics.
      * A controller MUST reset any configuration or states to default values.
      *
-     * This method is currently only called when the Accessory gets unpaired.
+     * This method is called once the accessory gets unpaired or the Controller gets removed from the Accessory.
      */
     handleFactoryReset?(): void;
 
@@ -111,7 +132,6 @@ export interface Controller<M extends ControllerServiceMap = ControllerServiceMa
  * which needs to be persistently stored. For example current target configuration for an AppleTV remote.
  */
 export interface SerializableController<M extends ControllerServiceMap = ControllerServiceMap, S = any> extends Controller<M> {
-
     /**
      * This method can be used to persistently save controller related configuration across reboots.
      * It should return undefined, if the controller data was reset to default values and nothing needs to be stored anymore.
@@ -131,15 +151,20 @@ export interface SerializableController<M extends ControllerServiceMap = Control
     deserialize(serialized: S): void;
 
     /**
+     * This method is inherited from {@link Controller.handleFactoryReset} though is required with {@link SerializableController}.
+     */
+    handleFactoryReset(): void;
+
+    /**
      * This method is called once upon setup. It supplies a function used by the Controller to signal state changes.
      * The implementing controller SHOULD store the function and call it every time the internal controller state changes.
      * It should be expected that the {@link serialize} method will be called next and that the state will be stored
      * to disk.
+     * The delegate parameter can be undefined when the controller is removed and the state change delegate is reset.
      *
      * @param delegate {StateChangeDelegate} - the delegate to call when controller state has changed
      */
-    setupStateChangeDelegate(delegate: StateChangeDelegate): void;
-
+    setupStateChangeDelegate(delegate?: StateChangeDelegate): void;
 }
 
 export function isSerializableController(controller: Controller): controller is SerializableController {

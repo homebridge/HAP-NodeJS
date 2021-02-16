@@ -6,8 +6,8 @@ import { Accessory } from './Accessory';
  * will be hosted automatically, instead of needed to publish() every single Accessory as a separate server.
  */
 export class Bridge extends Accessory {
-    constructor(displayName: string, serialNumber: string) {
-        super(displayName, serialNumber);
+    constructor(displayName: string, UUID: string) {
+        super(displayName, UUID);
         this._isBridge = true;
     }
 }

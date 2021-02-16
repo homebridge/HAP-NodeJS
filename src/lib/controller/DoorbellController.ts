@@ -1,10 +1,10 @@
-import {CameraController, CameraControllerOptions, CameraControllerServiceMap} from "./CameraController";
-import {Doorbell, ProgrammableSwitchEvent} from "../gen/HomeKit";
-import {Service} from "../Service";
-import {Characteristic, CharacteristicEventTypes, CharacteristicGetCallback} from "../Characteristic";
-import {ControllerServiceMap} from "./Controller";
+import { Characteristic, CharacteristicEventTypes, CharacteristicGetCallback } from "../Characteristic";
+import type { Doorbell } from "../definitions";
+import { Service } from "../Service";
+import { CameraController, CameraControllerOptions, CameraControllerServiceMap } from "./CameraController";
+import { ControllerServiceMap } from "./Controller";
 
-export class DoorbellController extends CameraController {
+export class DoorbellController extends CameraController { // TODO optional name characteristic
 
     /*
      * NOTICE: We subclass from the CameraController here and deliberately do not introduce/set a
@@ -22,7 +22,7 @@ export class DoorbellController extends CameraController {
     }
 
     public ringDoorbell() {
-        this.doorbellService!.updateCharacteristic(Characteristic.ProgrammableSwitchEvent, ProgrammableSwitchEvent.SINGLE_PRESS);
+        this.doorbellService!.updateCharacteristic(Characteristic.ProgrammableSwitchEvent, Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS);
     }
 
     constructServices(): CameraControllerServiceMap {
@@ -53,13 +53,17 @@ export class DoorbellController extends CameraController {
         return false;
     }
 
+    handleControllerRemoved() {
+        super.handleControllerRemoved();
+
+        this.doorbellService = undefined;
+    }
+
     configureServices(): void {
         super.configureServices();
 
-        this.doorbellService!.getCharacteristic(Characteristic.ProgrammableSwitchEvent)!
-            .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-                callback(null, null); // a value of null represent nothing is pressed
-            });
+        this.doorbellService!.getCharacteristic(Characteristic.ProgrammableSwitchEvent)
+          .onGet(() => null); // a value of null represent nothing is pressed
     }
 
 }

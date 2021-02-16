@@ -1,3 +1,4 @@
+// @ts-ignore
 import storage, { LocalStorage } from "node-persist";
 
 export class HAPStorage {

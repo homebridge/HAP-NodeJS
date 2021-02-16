@@ -3,6 +3,8 @@ import crypto from 'crypto';
 type Binary = Buffer | NodeJS.TypedArray | DataView;
 export type BinaryLike = string | Binary;
 
+export const BASE_UUID = '-0000-1000-8000-0026BB765291';
+
 // http://stackoverflow.com/a/25951500/66673
 export function generate(data: BinaryLike) {
   const sha1sum = crypto.createHash('sha1');
@@ -27,8 +29,30 @@ export function isValid(UUID: string) {
   return VALID_UUID_REGEX.test(UUID);
 }
 
-// https://github.com/defunctzombie/node-uuid/blob/master/uuid.js
-export function unparse(buf: Buffer | string, offset: number = 0) {
+
+/**
+ * Returns the identity of the passed argument.
+ *
+ * @param buf - The string argument which is returned
+ * @deprecated Most certainly the API you are using this function with changed from returning a Buffer to returning
+ *  the actual uuid string. You can safely remove the call to unparse. Most certainly this call to unparse
+ *  is located in you CameraSource which you converted from the old style CameraSource API to the new CameraControllers.
+ */
+export function unparse(buf: string): string
+/**
+ * Parses the uuid as a string from the given Buffer.
+ * The parser will use the first 8 bytes.
+ *
+ * @param buf - The buffer to read from.
+ */
+export function unparse(buf: Buffer): string
+/**
+ * Parses the uuid as a string from the given Buffer at the specified offset.
+ * @param buf - The buffer to read from.
+ * @param offset - The offset in the buffer to start reading from.
+ */
+export function unparse(buf: Buffer, offset: number): string
+export function unparse(buf: Buffer | string, offset = 0): string {
   if (typeof buf === "string" && isValid(buf)) {
     /*
       This check was added to fix backwards compatibility with the old style CameraSource API.
@@ -45,30 +69,30 @@ export function unparse(buf: Buffer | string, offset: number = 0) {
   }
 
   let i = offset;
-  return buf[i++].toString(16) + buf[i++].toString(16) +
-         buf[i++].toString(16) + buf[i++].toString(16) + '-' +
-         buf[i++].toString(16) + buf[i++].toString(16) + '-' +
-         buf[i++].toString(16) + buf[i++].toString(16) + '-' +
-         buf[i++].toString(16) + buf[i++].toString(16) + '-' +
-         buf[i++].toString(16) + buf[i++].toString(16) +
-         buf[i++].toString(16) + buf[i++].toString(16) +
-         buf[i++].toString(16) + buf[i++].toString(16);
+
+  return buf.toString("hex", i, (i += 4)) + "-" +
+    buf.toString("hex", i, (i += 2)) + "-" +
+    buf.toString("hex", i, (i += 2)) + "-" +
+    buf.toString("hex", i, (i += 2)) + "-" +
+    buf.toString("hex", i, i + 6);
 }
 
-export function write(uuid: string, buf: Buffer = Buffer.alloc(16), offset: number = 0): Buffer {
-  uuid = uuid.replace(/-/g, "");
+export function write(uuid: string): Buffer
+export function write(uuid: string, buf: Buffer, offset: number): void
+export function write(uuid: string, buf?: Buffer, offset: number = 0): Buffer {
+  const buffer = Buffer.from(uuid.replace(/-/g, ""), "hex");
 
-  for (let i = 0; i < uuid.length; i += 2) {
-    const octet = uuid.substring(i, i + 2);
-    buf.write(octet, offset++, undefined, "hex");
+  if (buf) {
+    buffer.copy(buf, offset)
+    return buf
+  } else {
+    return buffer
   }
-
-  return buf;
 }
 
 const SHORT_FORM_REGEX = /^0*([0-9a-f]{1,8})-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
 
-export function toShortForm(uuid: string, base?: string) {
+export function toShortForm(uuid: string, base: string = BASE_UUID) {
   if (!isValid(uuid)) throw new TypeError('uuid was not a valid UUID or short form UUID');
   if (base && !isValid('00000000' + base)) throw new TypeError('base was not a valid base UUID');
   if (base && !uuid.endsWith(base)) return uuid.toUpperCase();
@@ -78,7 +102,7 @@ export function toShortForm(uuid: string, base?: string) {
 
 const VALID_SHORT_REGEX = /^[0-9a-f]{1,8}$/i;
 
-export function toLongForm(uuid: string, base: string) {
+export function toLongForm(uuid: string, base: string = BASE_UUID) {
   if (isValid(uuid)) return uuid.toUpperCase();
   if (!VALID_SHORT_REGEX.test(uuid)) throw new TypeError('uuid was not a valid UUID or short form UUID');
   if (!isValid('00000000' + base)) throw new TypeError('base was not a valid base UUID');

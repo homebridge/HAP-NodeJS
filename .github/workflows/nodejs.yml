@@ -22,13 +22,35 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ matrix.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
       - name: npm install, build and test
         run: |
           npm ci
           npm run build --if-present
-          npm test
+          npm run test-coverage
         env:
           CI: true
+      - name: Coveralls Parallel
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.github_token }}
+          flag-name: run-${{ matrix.node-version }}
+          parallel: true
+
+  finish:
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Coveralls Finished
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.github_token }}
+          parallel-finished: true
 
   publish-npm:
     # publish only if we are on our own repo, event was 'create' (a tag was created) and the tag starts with "v" (aka version tag)
@@ -44,6 +66,10 @@ jobs:
         with:
           node-version: 10 # use the minimum required version
           registry-url: https://registry.npmjs.org/
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ matrix.os }}-node-10-${{ hashFiles('**/package-lock.json') }}
       - run: npm ci
       - run: npm publish
         env:

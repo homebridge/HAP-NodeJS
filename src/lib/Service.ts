@@ -1,17 +1,106 @@
-import { Characteristic, CharacteristicEventTypes, SerializedCharacteristic } from './Characteristic';
-import { clone } from './util/clone';
-import { EventEmitter } from './EventEmitter';
+import assert from "assert";
+import createDebug from "debug";
+import { EventEmitter } from "events";
+import { ServiceJsonObject } from "../internal-types";
+import { CharacteristicValue, Nullable, WithUUID } from '../types';
+import { CharacteristicWarning, CharacteristicWarningType } from "./Accessory";
+import {
+  Characteristic,
+  CharacteristicChange,
+  CharacteristicEventTypes,
+  SerializedCharacteristic
+} from './Characteristic';
+import {
+  AccessControl,
+  AccessoryInformation,
+  AccessoryRuntimeInformation,
+  AirPurifier,
+  AirQualitySensor,
+  AudioStreamManagement,
+  Battery,
+  BridgeConfiguration,
+  BridgingState,
+  CameraControl,
+  CameraOperatingMode,
+  CameraRecordingManagement,
+  CameraRTPStreamManagement,
+  CarbonDioxideSensor,
+  CarbonMonoxideSensor,
+  CloudRelay,
+  ContactSensor,
+  DataStreamTransportManagement,
+  Diagnostics,
+  Door,
+  Doorbell,
+  Fan,
+  Fanv2,
+  Faucet,
+  FilterMaintenance,
+  GarageDoorOpener,
+  HeaterCooler,
+  HumidifierDehumidifier,
+  HumiditySensor,
+  InputSource,
+  IrrigationSystem,
+  LeakSensor,
+  Lightbulb,
+  LightSensor,
+  LockManagement,
+  LockMechanism,
+  Microphone,
+  MotionSensor,
+  OccupancySensor,
+  Outlet,
+  Pairing,
+  PowerManagement,
+  ProtocolInformation,
+  SecuritySystem,
+  ServiceLabel,
+  Siri,
+  Slats,
+  SmartSpeaker,
+  SmokeSensor,
+  Speaker,
+  StatefulProgrammableSwitch,
+  StatelessProgrammableSwitch,
+  Switch,
+  TargetControl,
+  TargetControlManagement,
+  Television,
+  TelevisionSpeaker,
+  TemperatureSensor,
+  Thermostat,
+  ThreadTransport,
+  TimeInformation,
+  TransferTransportManagement,
+  Tunnel,
+  Valve,
+  WiFiRouter,
+  WiFiSatellite,
+  WiFiTransport,
+  Window,
+  WindowCovering,
+} from "./definitions";
 import { IdentifierCache } from './model/IdentifierCache';
-import { CharacteristicChange, CharacteristicValue, HapService, Nullable, ToHAPOptions, WithUUID, } from '../types';
-import * as HomeKitTypes from './gen';
+import { HAPConnection } from "./util/eventedhttp";
 import { toShortForm } from './util/uuid';
+import Timeout = NodeJS.Timeout;
 
+const debug = createDebug("HAP-NodeJS:Service");
+
+/**
+ * HAP spec allows a maximum of 100 characteristics per service!
+ */
 const MAX_CHARACTERISTICS = 100;
 
+/**
+ * @private
+ */
 export interface SerializedService {
   displayName: string,
   UUID: string,
   subtype?: string,
+  constructorName?: string,
 
   hiddenService?: boolean,
   primaryService?: boolean,
@@ -22,24 +111,29 @@ export interface SerializedService {
 
 export type ServiceId = string; // string with the format: UUID + (subtype | "")
 
-export const enum ServiceEventTypes {
-  CHARACTERISTIC_CHANGE = "characteristic-change",
-  SERVICE_CONFIGURATION_CHANGE = "service-configurationChange",
-}
+export type ServiceCharacteristicChange = CharacteristicChange & { characteristic: Characteristic };
 
-export type ServiceConfigurationChange = {
-  service: Service;
-};
-
-type Events = {
-  [ServiceEventTypes.CHARACTERISTIC_CHANGE]: (change: CharacteristicChange) => void;
-  [ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE]: (change: ServiceConfigurationChange) => void;
-}
-
+// noinspection JSUnusedGlobalSymbols
 /**
  * @deprecated Use ServiceEventTypes instead
  */
 export type EventService = ServiceEventTypes.CHARACTERISTIC_CHANGE | ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE;
+
+export const enum ServiceEventTypes {
+  CHARACTERISTIC_CHANGE = "characteristic-change",
+  SERVICE_CONFIGURATION_CHANGE = "service-configurationChange",
+  CHARACTERISTIC_WARNING = "characteristic-warning",
+}
+
+export declare interface Service {
+  on(event: "characteristic-change", listener: (change: ServiceCharacteristicChange) => void): this;
+  on(event: "service-configurationChange", listener: () => void): this;
+  on(event: "characteristic-warning", listener: (warning: CharacteristicWarning) => void): this;
+
+  emit(event: "characteristic-change", change: ServiceCharacteristicChange): boolean;
+  emit(event: "service-configurationChange"): boolean;
+  emit(event: "characteristic-warning", warning: CharacteristicWarning): boolean;
+}
 
 /**
  * Service represents a set of grouped values necessary to provide a logical function. For instance, a
@@ -60,109 +154,153 @@ export type EventService = ServiceEventTypes.CHARACTERISTIC_CHANGE | ServiceEven
  * You can also define custom Services by providing your own UUID for the type that you generate yourself.
  * Custom Services can contain an arbitrary set of Characteristics, but Siri will likely not be able to
  * work with these.
- *
- * @event 'characteristic-change' => function({characteristic, oldValue, newValue, context}) { }
- *        Emitted after a change in the value of one of our Characteristics has occurred.
  */
-export class Service extends EventEmitter<Events> {
+export class Service extends EventEmitter {
+  // Service MUST NOT have any other static variables
 
-  static AccessControl: typeof HomeKitTypes.Generated.AccessControl;
-  static AccessoryInformation: typeof HomeKitTypes.Generated.AccessoryInformation;
-  static AirPurifier: typeof HomeKitTypes.Generated.AirPurifier;
-  static AirQualitySensor: typeof HomeKitTypes.Generated.AirQualitySensor;
-  static AudioStreamManagement: typeof HomeKitTypes.Remote.AudioStreamManagement;
-  static BatteryService: typeof HomeKitTypes.Generated.BatteryService;
-  static BridgeConfiguration: typeof HomeKitTypes.Bridged.BridgeConfiguration;
-  static BridgingState: typeof HomeKitTypes.Bridged.BridgingState;
-  static CameraControl: typeof HomeKitTypes.Bridged.CameraControl;
-  static CameraRTPStreamManagement: typeof HomeKitTypes.Generated.CameraRTPStreamManagement;
-  static CarbonDioxideSensor: typeof HomeKitTypes.Generated.CarbonDioxideSensor;
-  static CarbonMonoxideSensor: typeof HomeKitTypes.Generated.CarbonMonoxideSensor;
-  static ContactSensor: typeof HomeKitTypes.Generated.ContactSensor;
-  static DataStreamTransportManagement: typeof HomeKitTypes.DataStream.DataStreamTransportManagement;
-  static Door: typeof HomeKitTypes.Generated.Door;
-  static Doorbell: typeof HomeKitTypes.Generated.Doorbell;
-  static Fan: typeof HomeKitTypes.Generated.Fan;
-  static Fanv2: typeof HomeKitTypes.Generated.Fanv2;
-  static Faucet: typeof HomeKitTypes.Generated.Faucet;
-  static FilterMaintenance: typeof HomeKitTypes.Generated.FilterMaintenance;
-  static GarageDoorOpener: typeof HomeKitTypes.Generated.GarageDoorOpener;
-  static HeaterCooler: typeof HomeKitTypes.Generated.HeaterCooler;
-  static HumidifierDehumidifier: typeof HomeKitTypes.Generated.HumidifierDehumidifier;
-  static HumiditySensor: typeof HomeKitTypes.Generated.HumiditySensor;
-  static InputSource: typeof HomeKitTypes.TV.InputSource;
-  static IrrigationSystem: typeof HomeKitTypes.Generated.IrrigationSystem;
+  // Pattern below is for automatic detection of the section of defined services. Used by the generator
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  public static AccessControl: typeof AccessControl;
+  public static AccessoryInformation: typeof AccessoryInformation;
+  public static AccessoryRuntimeInformation: typeof AccessoryRuntimeInformation;
+  public static AirPurifier: typeof AirPurifier;
+  public static AirQualitySensor: typeof AirQualitySensor;
+  public static AudioStreamManagement: typeof AudioStreamManagement;
+  public static Battery: typeof Battery;
   /**
-   * @deprecated Removed in iOS 11. Use ServiceLabel instead.
+   * @deprecated Please use {@link Service.Battery}.
    */
-  static Label: typeof HomeKitTypes.Generated.ServiceLabel;
-  static LeakSensor: typeof HomeKitTypes.Generated.LeakSensor;
-  static LightSensor: typeof HomeKitTypes.Generated.LightSensor;
-  static Lightbulb: typeof HomeKitTypes.Generated.Lightbulb;
-  static LockManagement: typeof HomeKitTypes.Generated.LockManagement;
-  static LockMechanism: typeof HomeKitTypes.Generated.LockMechanism;
-  static Microphone: typeof HomeKitTypes.Generated.Microphone;
-  static MotionSensor: typeof HomeKitTypes.Generated.MotionSensor;
-  static OccupancySensor: typeof HomeKitTypes.Generated.OccupancySensor;
-  static Outlet: typeof HomeKitTypes.Generated.Outlet;
-  static Pairing: typeof HomeKitTypes.Bridged.Pairing;
-  static ProtocolInformation: typeof HomeKitTypes.Bridged.ProtocolInformation;
-  static Relay: typeof HomeKitTypes.Bridged.Relay;
-  static SecuritySystem: typeof HomeKitTypes.Generated.SecuritySystem;
-  static ServiceLabel: typeof HomeKitTypes.Generated.ServiceLabel;
-  static Siri: typeof HomeKitTypes.Remote.Siri;
-  static Slat: typeof HomeKitTypes.Generated.Slat;
-  static SmokeSensor: typeof HomeKitTypes.Generated.SmokeSensor;
-  static SmartSpeaker: typeof HomeKitTypes.Generated.SmartSpeaker;
-  static Speaker: typeof HomeKitTypes.Generated.Speaker;
-  static StatefulProgrammableSwitch: typeof HomeKitTypes.Bridged.StatefulProgrammableSwitch;
-  static StatelessProgrammableSwitch: typeof HomeKitTypes.Generated.StatelessProgrammableSwitch;
-  static Switch: typeof HomeKitTypes.Generated.Switch;
-  static TargetControl: typeof HomeKitTypes.Remote.TargetControl;
-  static TargetControlManagement: typeof HomeKitTypes.Remote.TargetControlManagement;
-  static Television: typeof HomeKitTypes.TV.Television;
-  static TelevisionSpeaker: typeof HomeKitTypes.TV.TelevisionSpeaker;
-  static TemperatureSensor: typeof HomeKitTypes.Generated.TemperatureSensor;
-  static Thermostat: typeof HomeKitTypes.Generated.Thermostat;
-  static TimeInformation: typeof HomeKitTypes.Bridged.TimeInformation;
-  static TunneledBTLEAccessoryService: typeof HomeKitTypes.Bridged.TunneledBTLEAccessoryService;
-  static Valve: typeof HomeKitTypes.Generated.Valve;
-  static Window: typeof HomeKitTypes.Generated.Window;
-  static WindowCovering: typeof HomeKitTypes.Generated.WindowCovering;
-  static CameraOperatingMode: typeof HomeKitTypes.Generated.CameraOperatingMode;
-  static CameraEventRecordingManagement: typeof HomeKitTypes.Generated.CameraEventRecordingManagement;
-  static WiFiRouter: typeof HomeKitTypes.Generated.WiFiRouter;
-  static WiFiSatellite: typeof HomeKitTypes.Generated.WiFiSatellite;
-  static PowerManagement: typeof HomeKitTypes.Generated.PowerManagement;
-  static TransferTransportManagement: typeof HomeKitTypes.Generated.TransferTransportManagement;
-
-  static AccessoryRuntimeInformation: typeof HomeKitTypes.Generated.AccessoryRuntimeInformation;
-  static Diagnostics: typeof HomeKitTypes.Generated.Diagnostics;
-  static WiFiTransport: typeof HomeKitTypes.Generated.WiFiTransport;
+  public static BatteryService: typeof Battery;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static BridgeConfiguration: typeof BridgeConfiguration;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static BridgingState: typeof BridgingState;
+  /**
+   * @deprecated This service has no usage anymore and will be ignored by iOS
+   */
+  public static CameraControl: typeof CameraControl;
+  /**
+   * @deprecated Please use {@link Service.CameraRecordingManagement}.
+   */
+  public static CameraEventRecordingManagement: typeof CameraRecordingManagement;
+  public static CameraOperatingMode: typeof CameraOperatingMode;
+  public static CameraRecordingManagement: typeof CameraRecordingManagement;
+  public static CameraRTPStreamManagement: typeof CameraRTPStreamManagement;
+  public static CarbonDioxideSensor: typeof CarbonDioxideSensor;
+  public static CarbonMonoxideSensor: typeof CarbonMonoxideSensor;
+  public static CloudRelay: typeof CloudRelay;
+  public static ContactSensor: typeof ContactSensor;
+  public static DataStreamTransportManagement: typeof DataStreamTransportManagement;
+  public static Diagnostics: typeof Diagnostics;
+  public static Door: typeof Door;
+  public static Doorbell: typeof Doorbell;
+  public static Fan: typeof Fan;
+  public static Fanv2: typeof Fanv2;
+  public static Faucet: typeof Faucet;
+  public static FilterMaintenance: typeof FilterMaintenance;
+  public static GarageDoorOpener: typeof GarageDoorOpener;
+  public static HeaterCooler: typeof HeaterCooler;
+  public static HumidifierDehumidifier: typeof HumidifierDehumidifier;
+  public static HumiditySensor: typeof HumiditySensor;
+  public static InputSource: typeof InputSource;
+  public static IrrigationSystem: typeof IrrigationSystem;
+  public static LeakSensor: typeof LeakSensor;
+  public static Lightbulb: typeof Lightbulb;
+  public static LightSensor: typeof LightSensor;
+  public static LockManagement: typeof LockManagement;
+  public static LockMechanism: typeof LockMechanism;
+  public static Microphone: typeof Microphone;
+  public static MotionSensor: typeof MotionSensor;
+  public static OccupancySensor: typeof OccupancySensor;
+  public static Outlet: typeof Outlet;
+  public static Pairing: typeof Pairing;
+  public static PowerManagement: typeof PowerManagement;
+  public static ProtocolInformation: typeof ProtocolInformation;
+  /**
+   * @deprecated Please use {@link Service.CloudRelay}.
+   */
+  public static Relay: typeof CloudRelay;
+  public static SecuritySystem: typeof SecuritySystem;
+  public static ServiceLabel: typeof ServiceLabel;
+  public static Siri: typeof Siri;
+  /**
+   * @deprecated Please use {@link Service.Slats}.
+   */
+  public static Slat: typeof Slats;
+  public static Slats: typeof Slats;
+  public static SmartSpeaker: typeof SmartSpeaker;
+  public static SmokeSensor: typeof SmokeSensor;
+  public static Speaker: typeof Speaker;
+  public static StatefulProgrammableSwitch: typeof StatefulProgrammableSwitch;
+  public static StatelessProgrammableSwitch: typeof StatelessProgrammableSwitch;
+  public static Switch: typeof Switch;
+  public static TargetControl: typeof TargetControl;
+  public static TargetControlManagement: typeof TargetControlManagement;
+  public static Television: typeof Television;
+  public static TelevisionSpeaker: typeof TelevisionSpeaker;
+  public static TemperatureSensor: typeof TemperatureSensor;
+  public static Thermostat: typeof Thermostat;
+  public static ThreadTransport: typeof ThreadTransport;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static TimeInformation: typeof TimeInformation;
+  public static TransferTransportManagement: typeof TransferTransportManagement;
+  public static Tunnel: typeof Tunnel;
+  /**
+   * @deprecated Please use {@link Service.Tunnel}.
+   */
+  public static TunneledBTLEAccessoryService: typeof Tunnel;
+  public static Valve: typeof Valve;
+  public static WiFiRouter: typeof WiFiRouter;
+  public static WiFiSatellite: typeof WiFiSatellite;
+  public static WiFiTransport: typeof WiFiTransport;
+  public static Window: typeof Window;
+  public static WindowCovering: typeof WindowCovering;
+  // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
   // NOTICE: when adding/changing properties, remember to possibly adjust the serialize/deserialize functions
+  public displayName: string;
+  public UUID: string;
+  subtype?: string;
   iid: Nullable<number> = null; // assigned later by our containing Accessory
   name: Nullable<string> = null;
   characteristics: Characteristic[] = [];
   optionalCharacteristics: Characteristic[] = [];
+  /**
+   * @private
+   */
   isHiddenService: boolean = false;
+  /**
+   * @private
+   */
   isPrimaryService: boolean = false; // do not write to this directly
+  /**
+   * @private
+   */
   linkedServices: Service[] = [];
 
-  constructor(public displayName: string = "", public UUID: string, public subtype?: string) {
+  public constructor(displayName: string = "", UUID: string, subtype?: string) {
     super();
-    if (!UUID) throw new Error("Services must be created with a valid UUID.");
+    assert(UUID, "Services must be created with a valid UUID.");
+    this.displayName = displayName;
+    this.UUID = UUID;
+    this.subtype = subtype;
 
     // every service has an optional Characteristic.Name property - we'll set it to our displayName
     // if one was given
     // if you don't provide a display name, some HomeKit apps may choose to hide the device.
     if (displayName) {
       // create the characteristic if necessary
-      var nameCharacteristic =
+      const nameCharacteristic =
         this.getCharacteristic(Characteristic.Name) ||
         this.addCharacteristic(Characteristic.Name);
 
-      nameCharacteristic.setValue(displayName);
+      nameCharacteristic.updateValue(displayName);
     }
   }
 
@@ -173,19 +311,19 @@ export class Service extends EventEmitter<Events> {
    *
    * @returns the serviceId
    */
-  getServiceId(): ServiceId {
+  public getServiceId(): ServiceId {
     return this.UUID + (this.subtype || "");
   }
 
-  addCharacteristic = (characteristic: Characteristic | {new (...args: any[]): Characteristic}, ...constructorArgs: any[]) => {
-    // characteristic might be a constructor like `Characteristic.Brightness` instead of an instance
-    // of Characteristic. Coerce if necessary.
-    if (typeof characteristic === 'function') {
-      characteristic = new characteristic(...constructorArgs) as Characteristic;
-    }
+  public addCharacteristic(input: Characteristic): Characteristic
+  public addCharacteristic(input: { new (...args: any[]): Characteristic }, ...constructorArgs: any[]): Characteristic
+  public addCharacteristic(input: Characteristic | {new (...args: any[]): Characteristic}, ...constructorArgs: any[]): Characteristic {
+    // characteristic might be a constructor like `Characteristic.Brightness` instead of an instance of Characteristic. Coerce if necessary.
+
+    let characteristic = typeof input === "function"? new input(...constructorArgs): input;
+
     // check for UUID conflict
-    for (var index in this.characteristics) {
-      var existing = this.characteristics[index];
+    for (const existing of this.characteristics) {
       if (existing.UUID === characteristic.UUID) {
         if (characteristic.UUID === '00000052-0000-1000-8000-0026BB765291') {
           //This is a special workaround for the Firmware Revision characteristic.
@@ -199,15 +337,11 @@ export class Service extends EventEmitter<Events> {
       throw new Error("Cannot add more than " + MAX_CHARACTERISTICS + " characteristics to a single service!");
     }
 
-    // listen for changes in characteristics and bubble them up
-    characteristic.on(CharacteristicEventTypes.CHANGE, (change: CharacteristicChange) => {
-      // make a new object with the relevant characteristic added, and bubble it up
-      this.emit(ServiceEventTypes.CHARACTERISTIC_CHANGE, clone(change, { characteristic: characteristic }));
-    });
+    this.setupCharacteristicEventHandlers(characteristic);
 
     this.characteristics.push(characteristic);
 
-    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
+    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
 
     return characteristic;
   }
@@ -220,69 +354,71 @@ export class Service extends EventEmitter<Events> {
    *
    * @param isPrimary {boolean} - optional boolean (default true) if the service should be the primary service
    */
-  setPrimaryService = (isPrimary: boolean = true) => {
+  public setPrimaryService(isPrimary: boolean = true): void {
     this.isPrimaryService = isPrimary;
-    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
-  };
+    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
+  }
 
   /**
    * Marks the service as hidden
    *
    * @param isHidden {boolean} - optional boolean (default true) if the service should be marked hidden
    */
-  setHiddenService = (isHidden: boolean = true) => {
+  public setHiddenService(isHidden: boolean = true): void {
     this.isHiddenService = isHidden;
-    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
+    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
   }
 
-//Allows setting other services that link to this one.
-  addLinkedService = (newLinkedService: Service) => {
+  /**
+   * Adds a new link to the specified service. The service MUST be already added to
+   * the SAME accessory.
+   *
+   * @param service - The service this service should link to
+   */
+  public addLinkedService(service: Service): void {
     //TODO: Add a check if the service is on the same accessory.
-    if (!this.linkedServices.includes(newLinkedService))
-      this.linkedServices.push(newLinkedService);
-    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
-  }
-
-  removeLinkedService = (oldLinkedService: Service) => {
-    //TODO: Add a check if the service is on the same accessory.
-    if (this.linkedServices.includes(oldLinkedService))
-      this.linkedServices.splice(this.linkedServices.indexOf(oldLinkedService), 1);
-    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
-  }
-
-  removeCharacteristic = (characteristic: Characteristic) => {
-    var targetCharacteristicIndex;
-
-    for (var index in this.characteristics) {
-      var existingCharacteristic = this.characteristics[index];
-
-      if (existingCharacteristic === characteristic) {
-        targetCharacteristicIndex = index;
-        break;
-      }
+    if (!this.linkedServices.includes(service)) {
+      this.linkedServices.push(service);
     }
+    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
+  }
 
-    if (targetCharacteristicIndex) {
-      this.characteristics.splice(Number.parseInt(targetCharacteristicIndex), 1);
+  /**
+   * Removes a link to the specified service which was previously added with {@link addLinkedService}
+   *
+   * @param service - Previously linked service
+   */
+  public removeLinkedService(service: Service): void {
+    //TODO: Add a check if the service is on the same accessory.
+    const index = this.linkedServices.indexOf(service);
+    if (index !== -1) {
+      this.linkedServices.splice(index, 1);
+    }
+    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
+  }
+
+  public removeCharacteristic(characteristic: Characteristic): void {
+    const index = this.characteristics.indexOf(characteristic);
+    if (index !== -1) {
+      this.characteristics.splice(index, 1);
       characteristic.removeAllListeners();
 
-      this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE, clone({ service: this }));
+      this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
     }
   }
 
   // If a Characteristic constructor is passed a Characteristic object will always be returned
-  getCharacteristic(constructor: WithUUID<{new (): Characteristic}>): Characteristic
+  public getCharacteristic(constructor: WithUUID<{new (): Characteristic}>): Characteristic
   // Still support using a Characteristic constructor or a name so "passing though" a value still works
   // https://www.typescriptlang.org/docs/handbook/declaration-files/do-s-and-don-ts.html#use-union-types
-  getCharacteristic(name: string | WithUUID<{new (): Characteristic}>): Characteristic | undefined
-  getCharacteristic(name: string | WithUUID<{new (): Characteristic}>) {
+  public getCharacteristic(name: string | WithUUID<{new (): Characteristic}>): Characteristic | undefined
+  public getCharacteristic(name: string | WithUUID<{new (): Characteristic}>) {
     // returns a characteristic object from the service
     // If  Service.prototype.getCharacteristic(Characteristic.Type)  does not find the characteristic,
     // but the type is in optionalCharacteristics, it adds the characteristic.type to the service and returns it.
 
-    var index, characteristic: Characteristic;
-    for (index in this.characteristics) {
-      characteristic = this.characteristics[index] as Characteristic;
+    let index, characteristic: Characteristic;
+    for (const characteristic of this.characteristics) {
       if (typeof name === 'string' && characteristic.displayName === name) {
         return characteristic;
       } else if (typeof name === 'function' && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
@@ -290,25 +426,26 @@ export class Service extends EventEmitter<Events> {
       }
     }
     if (typeof name === 'function') {
-      for (index in this.optionalCharacteristics) {
-        characteristic = this.optionalCharacteristics[index];
+      for (const characteristic of this.optionalCharacteristics) {
         if ((characteristic instanceof name) || (name.UUID === characteristic.UUID)) {
           return this.addCharacteristic(name);
         }
       }
+
+      const instance = this.addCharacteristic(name);
       // Not found in optional Characteristics. Adding anyway, but warning about it if it isn't the Name.
       if (name.UUID !== Characteristic.Name.UUID) {
-        console.warn("HAP Warning: Characteristic %s not in required or optional characteristics for service %s. Adding anyway.", name.UUID, this.UUID);
+        this.emitCharacteristicWarningEvent(instance, CharacteristicWarningType.WARN_MESSAGE,
+          "Characteristic not in required or optional characteristic section for service " + this.constructor.name + ". Adding anyway.");
       }
-      return this.addCharacteristic(name);
+
+      return instance;
     }
   }
 
-  testCharacteristic = <T extends WithUUID<typeof Characteristic>>(name: string | T) => {
+  public testCharacteristic<T extends WithUUID<typeof Characteristic>>(name: string | T): boolean {
     // checks for the existence of a characteristic object in the service
-    var index, characteristic;
-    for (index in this.characteristics) {
-      characteristic = this.characteristics[index];
+    for (const characteristic of this.characteristics) {
       if (typeof name === 'string' && characteristic.displayName === name) {
         return true;
       } else if (typeof name === 'function' && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
@@ -318,18 +455,18 @@ export class Service extends EventEmitter<Events> {
     return false;
   }
 
-  setCharacteristic = <T extends WithUUID<{new (): Characteristic}>>(name: string | T, value: CharacteristicValue) => {
+  public setCharacteristic<T extends WithUUID<{new (): Characteristic}>>(name: string | T, value: CharacteristicValue): Service {
     this.getCharacteristic(name)!.setValue(value);
     return this; // for chaining
   }
 
   // A function to only updating the remote value, but not firing the 'set' event.
-  updateCharacteristic = <T extends WithUUID<{new (): Characteristic}>>(name: string | T, value: CharacteristicValue) => {
+  public updateCharacteristic<T extends WithUUID<{new (): Characteristic}>>(name: string | T, value: CharacteristicValue): Service {
     this.getCharacteristic(name)!.updateValue(value);
     return this;
   }
 
-  addOptionalCharacteristic = (characteristic: Characteristic | {new (): Characteristic}) => {
+  public addOptionalCharacteristic(characteristic: Characteristic | {new (): Characteristic}): void {
     // characteristic might be a constructor like `Characteristic.Brightness` instead of an instance
     // of Characteristic. Coerce if necessary.
     if (typeof characteristic === 'function') {
@@ -340,16 +477,18 @@ export class Service extends EventEmitter<Events> {
     this.optionalCharacteristics.push(characteristic);
   }
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * This method was created to copy all characteristics from another service to this.
    * It's only adopting is currently in homebridge to merge the AccessoryInformation service. So some things
    * my be explicitly tailored towards this use case.
    *
    * It will not remove characteristics which are present currently but not added on the other characteristic.
-   * It will not replace the characteristic if the value is falsey (except of '0' or 'false')
+   * It will not replace the characteristic if the value is falsy (except of '0' or 'false')
    * @param service
+   * @private used by homebridge
    */
-  replaceCharacteristicsFromService(service: Service) {
+  replaceCharacteristicsFromService(service: Service): void {
     if (this.UUID !== service.UUID) {
       throw new Error(`Incompatible services. Tried replacing characteristics of ${this.UUID} with characteristics from ${service.UUID}`);
     }
@@ -363,25 +502,10 @@ export class Service extends EventEmitter<Events> {
         delete foreignCharacteristics[characteristic.UUID];
 
         if (!foreignCharacteristic.value && foreignCharacteristic.value !== 0 && foreignCharacteristic.value !== false) {
-          return; // ignore falsey values expect if its the number zero or literally false
+          return; // ignore falsy values except if its the number zero or literally false
         }
 
-        characteristic.props = foreignCharacteristic.props;
-        characteristic.updateValue(foreignCharacteristic.value);
-
-        const getListeners = foreignCharacteristic.listeners(CharacteristicEventTypes.GET);
-        if (getListeners.length) {
-          // the callback can only be called once so we remove all old listeners
-          characteristic.removeAllListeners(CharacteristicEventTypes.GET);
-          getListeners.forEach(listener => characteristic.addListener(CharacteristicEventTypes.GET, listener));
-        }
-
-        const setListeners = foreignCharacteristic.listeners(CharacteristicEventTypes.SET);
-        if (setListeners.length) {
-          // the callback can only be called once so we remove all old listeners
-          characteristic.removeAllListeners(CharacteristicEventTypes.SET);
-          setListeners.forEach(listener => characteristic.addListener(CharacteristicEventTypes.SET, listener));
-        }
+        characteristic.replaceBy(foreignCharacteristic);
       }
     });
 
@@ -389,15 +513,20 @@ export class Service extends EventEmitter<Events> {
     Object.values(foreignCharacteristics).forEach(characteristic => this.addCharacteristic(characteristic));
   }
 
-  getCharacteristicByIID = (iid: number) => {
-    for (var index in this.characteristics) {
-      var characteristic = this.characteristics[index];
+  /**
+   * @private
+   */
+  getCharacteristicByIID(iid: number): Characteristic | undefined {
+    for (const characteristic of this.characteristics) {
       if (characteristic.iid === iid)
         return characteristic;
     }
   }
 
-  _assignIDs = (identifierCache: IdentifierCache, accessoryName: string, baseIID: number = 0) => {
+  /**
+   * @private
+   */
+  _assignIDs(identifierCache: IdentifierCache, accessoryName: string, baseIID: number = 0): void {
     // the Accessory Information service must have a (reserved by IdentifierCache) ID of 1
     if (this.UUID === '0000003E-0000-1000-8000-0026BB765291') {
       this.iid = 1;
@@ -407,70 +536,174 @@ export class Service extends EventEmitter<Events> {
     }
 
     // assign IIDs to our Characteristics
-    for (var index in this.characteristics) {
-      var characteristic = this.characteristics[index];
+    for (const characteristic of this.characteristics) {
       characteristic._assignID(identifierCache, accessoryName, this.UUID, this.subtype);
     }
   }
 
   /**
-   * Returns a JSON representation of this Accessory suitable for delivering to HAP clients.
+   * Returns a JSON representation of this service suitable for delivering to HAP clients.
+   * @private used to generate response to /accessories query
    */
-  toHAP = (opt?: ToHAPOptions) => {
-    var characteristicsHAP = [];
+  toHAP(connection: HAPConnection, contactGetHandlers = true): Promise<ServiceJsonObject> {
+    return new Promise(resolve => {
+      assert(this.iid, "iid cannot be undefined for service '" + this.displayName + "'");
+      assert(this.characteristics.length, "service '" + this.displayName + "' does not have any characteristics!");
 
-    for (var index in this.characteristics) {
-      var characteristic = this.characteristics[index];
-      characteristicsHAP.push(characteristic.toHAP(opt));
-    }
-
-    const hap: Partial<HapService> = {
-      iid: this.iid!,
-      type: toShortForm(this.UUID, HomeKitTypes.BASE_UUID),
-      characteristics: characteristicsHAP
-    };
-
-    if (this.isPrimaryService) {
-      hap['primary'] = this.isPrimaryService;
-    }
-
-    if (this.isHiddenService) {
-      hap['hidden'] = this.isHiddenService;
-    }
-
-    if (this.linkedServices.length > 0) {
-      hap['linked'] = [];
-      for (var index in this.linkedServices) {
-        var otherService = this.linkedServices[index];
-        hap['linked'].push(otherService.iid!);
+      const service: ServiceJsonObject = {
+        type: toShortForm(this.UUID),
+        iid: this.iid!,
+        characteristics: [],
+        hidden: this.isHiddenService? true: undefined,
+        primary: this.isPrimaryService? true: undefined,
       }
-    }
 
-    return hap as HapService;
-  }
+      if (this.linkedServices.length) {
+        service.linked = [];
+        for (const linked of this.linkedServices) {
+          if (!linked.iid) {
+            // we got a linked service which is not added to the accessory
+            // as it doesn't "exists" we just ignore it.
+            // we have some (at least one) plugins on homebridge which link to the AccessoryInformation service.
+            // homebridge always creates it's own AccessoryInformation service and ignores the user supplied one
+            // thus the link is automatically broken.
+            debug(`iid of linked service '${linked.displayName}' ${linked.UUID} is undefined on service '${this.displayName}'`);
+            continue;
+          }
+          service.linked.push(linked.iid!);
+        }
+      }
 
-  _setupCharacteristic = (characteristic: Characteristic) => {
-    // listen for changes in characteristics and bubble them up
-    characteristic.on(CharacteristicEventTypes.CHANGE, (change: CharacteristicChange) => {
-      // make a new object with the relevant characteristic added, and bubble it up
-      this.emit(ServiceEventTypes.CHARACTERISTIC_CHANGE, clone(change, { characteristic: characteristic }));
+      const missingCharacteristics: Set<Characteristic> = new Set();
+      let timeout: Timeout | undefined = setTimeout(() => {
+        for (const characteristic of missingCharacteristics) {
+          this.emitCharacteristicWarningEvent(characteristic, CharacteristicWarningType.SLOW_READ,
+            `The read handler for the characteristic '${characteristic.displayName}' was slow to respond!`);
+        }
+
+        timeout = setTimeout(() => {
+          timeout = undefined;
+
+          for (const characteristic of missingCharacteristics) {
+            this.emitCharacteristicWarningEvent(characteristic, CharacteristicWarningType.TIMEOUT_READ,
+              "The read handler for the characteristic '" + characteristic?.displayName +
+              "' didn't respond at all!. Please check that you properly call the callback!");
+            service.characteristics.push(characteristic.internalHAPRepresentation()); // value is set to null
+          }
+
+          missingCharacteristics.clear();
+          resolve(service);
+        }, 7000);
+      }, 3000);
+
+      for (const characteristic of this.characteristics) {
+        missingCharacteristics.add(characteristic);
+        characteristic.toHAP(connection, contactGetHandlers).then(value => {
+          if (!timeout) {
+            return; // if timeout is undefined, response was already sent out
+          }
+
+          missingCharacteristics.delete(characteristic);
+          service.characteristics.push(value);
+
+          if (missingCharacteristics.size === 0) {
+            if (timeout) {
+              clearTimeout(timeout);
+              timeout = undefined;
+            }
+            resolve(service);
+          }
+        });
+      }
     });
   }
 
-  _sideloadCharacteristics = (targetCharacteristics: Characteristic[]) => {
-    for (var index in targetCharacteristics) {
-      var target = targetCharacteristics[index];
-      this._setupCharacteristic(target);
+  /**
+   * Returns a JSON representation of this service without characteristic values.
+   * @private used to generate the config hash
+   */
+  internalHAPRepresentation(): ServiceJsonObject {
+    assert(this.iid, "iid cannot be undefined for service '" + this.displayName + "'");
+    assert(this.characteristics.length, "service '" + this.displayName + "' does not have any characteristics!");
+
+    const service: ServiceJsonObject = {
+      type: toShortForm(this.UUID),
+      iid: this.iid!,
+      characteristics: this.characteristics.map(characteristic => characteristic.internalHAPRepresentation()),
+      hidden: this.isHiddenService? true: undefined,
+      primary: this.isPrimaryService? true: undefined,
+    }
+
+    if (this.linkedServices.length) {
+      service.linked = [];
+      for (const linked of this.linkedServices) {
+        if (!linked.iid) {
+          // we got a linked service which is not added to the accessory
+          // as it doesn't "exists" we just ignore it.
+          // we have some (at least one) plugins on homebridge which link to the AccessoryInformation service.
+          // homebridge always creates it's own AccessoryInformation service and ignores the user supplied one
+          // thus the link is automatically broken.
+          debug(`iid of linked service '${linked.displayName}' ${linked.UUID} is undefined on service '${this.displayName}'`);
+          continue;
+        }
+        service.linked.push(linked.iid!);
+      }
+    }
+
+    return service;
+  }
+
+  /**
+   * @private
+   */
+  private setupCharacteristicEventHandlers(characteristic: Characteristic): void {
+    // listen for changes in characteristics and bubble them up
+    characteristic.on(CharacteristicEventTypes.CHANGE, (change: CharacteristicChange) => {
+      this.emit(ServiceEventTypes.CHARACTERISTIC_CHANGE, { ...change, characteristic: characteristic });
+    });
+
+    characteristic.on(CharacteristicEventTypes.CHARACTERISTIC_WARNING, this.emitCharacteristicWarningEvent.bind(this, characteristic));
+  }
+
+  /**
+   * @private
+   */
+  private emitCharacteristicWarningEvent(characteristic: Characteristic, type: CharacteristicWarningType, message: string, stack?: string): void {
+    this.emit(ServiceEventTypes.CHARACTERISTIC_WARNING, {
+      characteristic: characteristic,
+      type: type,
+      message: message,
+      originatorChain: [this.displayName, characteristic.displayName],
+      stack: stack,
+    })
+  }
+
+  /**
+   * @private
+   */
+  private _sideloadCharacteristics(targetCharacteristics: Characteristic[]): void {
+    for (const target of targetCharacteristics) {
+      this.setupCharacteristicEventHandlers(target);
     }
 
     this.characteristics = targetCharacteristics.slice();
   }
 
-  static serialize = (service: Service): SerializedService => {
+  /**
+   * @private
+   */
+  static serialize(service: Service): SerializedService {
+    let constructorName: string | undefined;
+    if (service.constructor.name !== "Service") {
+      constructorName = service.constructor.name;
+    }
+
     return {
       displayName: service.displayName,
       UUID: service.UUID,
       subtype: service.subtype,
+
+      constructorName: constructorName,
 
       hiddenService: service.isHiddenService,
       primaryService: service.isPrimaryService,
@@ -478,10 +711,21 @@ export class Service extends EventEmitter<Events> {
       characteristics: service.characteristics.map(characteristic => Characteristic.serialize(characteristic)),
       optionalCharacteristics: service.optionalCharacteristics.map(characteristic => Characteristic.serialize(characteristic)),
     };
-  };
+  }
 
-  static deserialize = (json: SerializedService): Service => {
-    const service = new Service(json.displayName, json.UUID, json.subtype);
+  /**
+   * @private
+   */
+  static deserialize(json: SerializedService): Service {
+    let service: Service;
+
+    if (json.constructorName && json.constructorName.charAt(0).toUpperCase() === json.constructorName.charAt(0)
+      && Service[json.constructorName as keyof (typeof Service)]) { // MUST start with uppercase character and must exist on Service object
+      const constructor = Service[json.constructorName as keyof (typeof Service)] as { new(displayName?: string, subtype?: string): Service };
+      service = new constructor(json.displayName, json.subtype);
+    } else {
+      service = new Service(json.displayName, json.UUID, json.subtype);
+    }
 
     service.isHiddenService = !!json.hiddenService;
     service.isPrimaryService = !!json.primaryService;
@@ -494,6 +738,6 @@ export class Service extends EventEmitter<Events> {
     }
 
     return service;
-  };
+  }
 
 }

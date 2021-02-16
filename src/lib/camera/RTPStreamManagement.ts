@@ -1,19 +1,15 @@
 import crypto from 'crypto';
 import createDebug from 'debug';
 import net from "net";
+// noinspection JSDeprecatedSymbols
 import { LegacyCameraSource, LegacyCameraSourceAdapter, once, uuid } from "../../index";
 import { CharacteristicValue, Nullable, SessionIdentifier } from '../../types';
-import {
-  Characteristic,
-  CharacteristicEventTypes,
-  CharacteristicGetCallback,
-  CharacteristicSetCallback
-} from '../Characteristic';
+import { Characteristic, CharacteristicEventTypes, CharacteristicSetCallback } from '../Characteristic';
 import { CameraController, CameraStreamingDelegate } from "../controller";
-import { CameraRTPStreamManagement } from "../gen/HomeKit";
-import { Status } from "../HAPServer";
+import type { CameraRTPStreamManagement } from "../definitions";
+import { HAPStatus } from "../HAPServer";
 import { Service } from '../Service';
-import { EventedHTTPServer, Session } from "../util/eventedhttp";
+import { HAPConnection, HAPConnectionEvent } from "../util/eventedhttp";
 import * as tlv from '../util/tlv';
 import RTPProxy from './RTPProxy';
 
@@ -482,12 +478,17 @@ export class RTPStreamManagement {
   readonly supportedVideoStreamConfiguration: string;
   readonly supportedAudioStreamConfiguration: string;
 
+  /**
+   * @deprecated
+   */
   connectionID?: SessionIdentifier;
+  private activeConnection?: HAPConnection;
+  private activeConnectionClosedListener?: () => void;
   sessionIdentifier?: StreamSessionIdentifier = undefined;
   streamStatus: StreamingStatus = StreamingStatus.AVAILABLE; // use _updateStreamStatus to update this property
   private ipVersion?: "ipv4" | "ipv6"; // ip version for the current session
 
-  selectedConfiguration: Nullable<string> = null; // base64 representation of the currently selected configuration
+  selectedConfiguration: string; // base64 representation of the currently selected configuration
   setupEndpointsResponse: string; // response of the SetupEndpoints Characteristic
 
   audioProxy?: RTPProxy;
@@ -512,9 +513,10 @@ export class RTPStreamManagement {
       throw new Error('Video parameters cannot be undefined in options');
     }
 
-    this.supportedRTPConfiguration = this._supportedRTPConfiguration(this.supportedCryptoSuites);
-    this.supportedVideoStreamConfiguration = this._supportedVideoStreamConfiguration(options.video);
+    this.supportedRTPConfiguration = RTPStreamManagement._supportedRTPConfiguration(this.supportedCryptoSuites);
+    this.supportedVideoStreamConfiguration = RTPStreamManagement._supportedVideoStreamConfiguration(options.video);
     this.supportedAudioStreamConfiguration = this._supportedAudioStreamConfiguration(options.audio);
+    this.selectedConfiguration = RTPStreamManagement.initialSelectedStreamConfiguration();
     this.setupEndpointsResponse = RTPStreamManagement.initialSetupEndpointsResponse();
 
     this.service = service || this.constructService(id);
@@ -529,18 +531,26 @@ export class RTPStreamManagement {
     return this.service;
   }
 
-  // Private
-
-  handleCloseConnection(connectionID: SessionIdentifier) {
-    if (this.connectionID && this.connectionID === connectionID) {
-      this._handleStopStream();
-    }
+  // noinspection JSUnusedGlobalSymbols,JSUnusedLocalSymbols
+  /**
+   * @deprecated
+   */
+  handleCloseConnection(connectionID: SessionIdentifier): void {
+    // This method is only here for legacy compatibility. It used to be called by legacy style CameraSource
+    // implementations to signal that the associated HAP connection was closed.
+    // This is now handled automatically. Thus we don't need to do anything anymore.
   }
 
   handleFactoryReset() {
-    this.selectedConfiguration = null;
+    this.selectedConfiguration = RTPStreamManagement.initialSelectedStreamConfiguration();
     this.setupEndpointsResponse = RTPStreamManagement.initialSetupEndpointsResponse();
     // on a factory reset the assumption is that all connections were already terminated and thus "handleStopStream" was already called
+  }
+
+  public destroy() {
+    if (this.activeConnection) {
+      this._handleStopStream();
+    }
   }
 
   private constructService(id: number): CameraRTPStreamManagement {
@@ -559,32 +569,38 @@ export class RTPStreamManagement {
     this.service.setCharacteristic(Characteristic.SetupEndpoints, this.setupEndpointsResponse); // reset SetupEndpoints to default
 
     this.service.getCharacteristic(Characteristic.SelectedRTPStreamConfiguration)!
-        .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+        .on(CharacteristicEventTypes.GET, callback => {
           callback(null, this.selectedConfiguration);
         })
         .on(CharacteristicEventTypes.SET, this._handleSelectedStreamConfigurationWrite.bind(this));
 
     this.service.getCharacteristic(Characteristic.SetupEndpoints)!
-        .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+        .on(CharacteristicEventTypes.GET, callback => {
           callback(null, this.setupEndpointsResponse);
         })
-        .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context?: any, connectionID?: SessionIdentifier) => {
-          this.handleSetupEndpoints(value, callback, connectionID!);
+        .on(CharacteristicEventTypes.SET, (value, callback, context, connection) => {
+          if (!connection) {
+            debug("Set event handler for SetupEndpoints cannot be called from plugin. Connection undefined!");
+            callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
+            return;
+          }
+          this.handleSetupEndpoints(value, callback, connection);
         });
   }
 
   private handleSessionClosed(): void { // called when the streaming was ended or aborted and needs to be cleaned up
-    this.selectedConfiguration = tlv.encode(
-        SelectedRTPStreamConfigurationTypes.SESSION_CONTROL, tlv.encode(
-            SessionControlTypes.COMMAND, SessionControlCommand.SUSPEND_SESSION,
-        ),
-    ).toString("base64");
-    this.setupEndpointsResponse = tlv.encode(
-        SetupEndpointsResponseTypes.STATUS, SetupEndpointsStatus.ERROR,
-    ).toString("base64");
+    this.selectedConfiguration = RTPStreamManagement.initialSelectedStreamConfiguration();
+    this.setupEndpointsResponse = RTPStreamManagement.initialSetupEndpointsResponse();
+
+    if (this.activeConnectionClosedListener && this.activeConnection) {
+      this.activeConnection.removeListener(HAPConnectionEvent.CLOSED, this.activeConnectionClosedListener);
+      this.activeConnectionClosedListener = undefined;
+    }
 
     this._updateStreamStatus(StreamingStatus.AVAILABLE);
     this.sessionIdentifier = undefined;
+    this.activeConnection = undefined;
+    // noinspection JSDeprecatedSymbols
     this.connectionID = undefined;
     this.ipVersion = undefined;
 
@@ -608,7 +624,7 @@ export class RTPStreamManagement {
 
     if (sessionIdentifier !== this.sessionIdentifier) {
       debug(`Received unknown session Identifier with request to ${SessionControlCommand[requestType]}`);
-      callback(new Error(Status.INVALID_VALUE_IN_REQUEST + ""));
+      callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
       return;
     }
 
@@ -641,7 +657,7 @@ export class RTPStreamManagement {
       case SessionControlCommand.SUSPEND_SESSION:
       default:
         debug(`Unhandled request type ${SessionControlCommand[requestType]}`);
-        callback(new Error(Status.INVALID_VALUE_IN_REQUEST + ""));
+        callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
         return;
     }
   }
@@ -844,7 +860,7 @@ export class RTPStreamManagement {
     this.delegate.handleStreamRequest(request, error => callback? callback(error): undefined);
   }
 
-  private handleSetupEndpoints(value: CharacteristicValue, callback: CharacteristicSetCallback, connectionID: SessionIdentifier): void {
+  private handleSetupEndpoints(value: CharacteristicValue, callback: CharacteristicSetCallback, connection: HAPConnection): void {
     const data = Buffer.from(value as string, 'base64');
     const objects = tlv.decode(data);
 
@@ -859,11 +875,13 @@ export class RTPStreamManagement {
       return;
     }
 
-    this.connectionID = connectionID;
+    this.activeConnection = connection;
+    this.activeConnection.on(HAPConnectionEvent.CLOSED, (this.activeConnectionClosedListener = this._handleStopStream.bind(this)));
+
+    // noinspection JSDeprecatedSymbols
+    this.connectionID = connection.sessionID;
     this.sessionIdentifier = sessionIdentifier;
     this._updateStreamStatus(StreamingStatus.IN_USE);
-
-    const session: Session = Session.getSession(connectionID);
 
     // Address
     const targetAddressPayload = objects[SetupEndpointsTypes.CONTROLLER_ADDRESS];
@@ -925,7 +943,7 @@ export class RTPStreamManagement {
     const promises: Promise<void>[] = [];
 
     if (this.requireProxy) {
-      prepareRequest.targetAddress = session.getLocalAddress(addressVersion === IPAddressVersion.IPV6? "ipv6": "ipv4"); // ip versions must be the same
+      prepareRequest.targetAddress = connection.getLocalAddress(addressVersion === IPAddressVersion.IPV6? "ipv6": "ipv4"); // ip versions must be the same
 
       this.videoProxy = new RTPProxy({
         outgoingAddress: controllerAddress,
@@ -966,13 +984,13 @@ export class RTPStreamManagement {
           this.handleSessionClosed();
           callback(error);
         } else {
-          this.generateSetupEndpointResponse(session, sessionIdentifier, prepareRequest, response, callback);
+          this.generateSetupEndpointResponse(connection, sessionIdentifier, prepareRequest, response, callback);
         }
       }));
     });
   }
 
-  private generateSetupEndpointResponse(session: Session, identifier: StreamSessionIdentifier, request: PrepareStreamRequest, response: PrepareStreamResponse, callback: CharacteristicSetCallback): void {
+  private generateSetupEndpointResponse(connection: HAPConnection, identifier: StreamSessionIdentifier, request: PrepareStreamRequest, response: PrepareStreamResponse, callback: CharacteristicSetCallback): void {
     let address: string;
     let addressVersion = request.addressVersion;
 
@@ -1009,7 +1027,7 @@ export class RTPStreamManagement {
         addressVersion = net.isIPv4(response.addressOverride)? "ipv4": "ipv6";
         address = response.addressOverride;
       } else {
-        address = session.getLocalAddress(addressVersion);
+        address = connection.getLocalAddress(addressVersion);
       }
 
       if (request.addressVersion !== addressVersion) {
@@ -1043,7 +1061,7 @@ export class RTPStreamManagement {
     } else {
       const videoInfo = response.video as ProxiedSourceResponse;
 
-      address = session.getLocalAddress(request.addressVersion);
+      address = connection.getLocalAddress(request.addressVersion);
 
 
       videoCryptoSuite = SRTPCryptoSuites.NONE;
@@ -1120,28 +1138,15 @@ export class RTPStreamManagement {
       ).toString('base64'));
   }
 
-  private _supportedRTPConfiguration(supportedCryptoSuites: SRTPCryptoSuites[]): string {
+  private static _supportedRTPConfiguration(supportedCryptoSuites: SRTPCryptoSuites[]): string {
     if (supportedCryptoSuites.length === 1 && supportedCryptoSuites[0] === SRTPCryptoSuites.NONE) {
       debug("Client claims it doesn't support SRTP. The stream may stops working with future iOS releases.");
     }
 
-    const buffers: Buffer[] = [];
-    supportedCryptoSuites.forEach(suite => {
-      if (buffers.length > 0) {
-        buffers.push(tlv.encode(
-            tlv.EMPTY_TLV_TYPE, Buffer.alloc(0), // delimiter
-        ));
-      }
-
-      buffers.push(tlv.encode(
-          SupportedRTPConfigurationTypes.SRTP_CRYPTO_SUITE, suite
-      ));
-    });
-
-    return Buffer.concat(buffers).toString("base64");
+    return tlv.encode(SupportedRTPConfigurationTypes.SRTP_CRYPTO_SUITE, supportedCryptoSuites).toString("base64");
   }
 
-  private _supportedVideoStreamConfiguration(videoOptions: VideoStreamingOptions): string {
+  private static _supportedVideoStreamConfiguration(videoOptions: VideoStreamingOptions): string {
     if (!videoOptions.codec) {
       throw new Error('Video codec cannot be undefined');
     }
@@ -1149,80 +1154,48 @@ export class RTPStreamManagement {
       throw new Error('Video resolutions cannot be undefined');
     }
 
-    const videoParametersBuffers: Buffer[] = [];
-    videoOptions.codec.profiles.forEach(profile => {
-      if (videoParametersBuffers.length > 0) {
-        videoParametersBuffers.push(tlv.encode(
-            tlv.EMPTY_TLV_TYPE, Buffer.alloc(0), // delimiter
-        ));
-      }
+    let codecParameters = tlv.encode(
+      VideoCodecParametersTypes.PROFILE_ID, videoOptions.codec.profiles,
+      VideoCodecParametersTypes.LEVEL, videoOptions.codec.levels,
+      VideoCodecParametersTypes.PACKETIZATION_MODE, VideoCodecPacketizationMode.NON_INTERLEAVED,
+    );
 
-      videoParametersBuffers.push(tlv.encode(
-          VideoCodecParametersTypes.PROFILE_ID, profile
-      ));
-    });
-
-    const levelsOffset = videoParametersBuffers.length;
-    videoOptions.codec.levels.forEach(level => {
-      if (videoParametersBuffers.length > levelsOffset) {
-        videoParametersBuffers.push(tlv.encode(
-            tlv.EMPTY_TLV_TYPE, Buffer.alloc(0), // delimiter
-        ));
-      }
-
-      videoParametersBuffers.push(tlv.encode(
-          VideoCodecParametersTypes.LEVEL, level
-      ));
-    });
-
-    videoParametersBuffers.push(tlv.encode(
-        VideoCodecParametersTypes.PACKETIZATION_MODE, VideoCodecPacketizationMode.NON_INTERLEAVED
-    ));
-    if (videoOptions.cvoId) {
-      videoParametersBuffers.push(tlv.encode(
+    if (videoOptions.cvoId != undefined) {
+      codecParameters = Buffer.concat([
+        codecParameters,
+        tlv.encode(
           VideoCodecParametersTypes.CVO_ENABLED, VideoCodecCVO.SUPPORTED,
-          VideoCodecParametersTypes.CVO_ID, videoOptions.cvoId
-      ));
+          VideoCodecParametersTypes.CVO_ID, videoOptions.cvoId,
+        )
+      ]);
     }
 
-
-    const videoAttributesBuffers: Buffer[] = [];
-    videoOptions.resolutions.forEach(resolution => {
-      if (resolution.length != 3) {
-        throw new Error('Unexpected video resolution');
-      }
-
-      const width = Buffer.alloc(2);
-      const height = Buffer.alloc(2);
-      const frameRate = Buffer.alloc(1);
-
-      width.writeUInt16LE(resolution[0], 0);
-      height.writeUInt16LE(resolution[1], 0);
-      frameRate.writeUInt8(resolution[2], 0);
-
-      if (videoAttributesBuffers.length > 0) {
-        videoAttributesBuffers.push(tlv.encode(
-            tlv.EMPTY_TLV_TYPE, Buffer.alloc(0),
-        ));
-      }
-
-      videoAttributesBuffers.push(tlv.encode(
-          VideoCodecConfigurationTypes.ATTRIBUTES, tlv.encode(
-              VideoAttributesTypes.IMAGE_WIDTH, width,
-              VideoAttributesTypes.IMAGE_HEIGHT, height,
-              VideoAttributesTypes.FRAME_RATE, frameRate,
-          ),
-      ));
-    });
-
     const videoStreamConfiguration = tlv.encode(
-        VideoCodecConfigurationTypes.CODEC_TYPE, VideoCodecType.H264,
-        VideoCodecConfigurationTypes.CODEC_PARAMETERS, Buffer.concat(videoParametersBuffers)
+      VideoCodecConfigurationTypes.CODEC_TYPE, VideoCodecType.H264,
+      VideoCodecConfigurationTypes.CODEC_PARAMETERS, codecParameters,
+      VideoCodecConfigurationTypes.ATTRIBUTES, videoOptions.resolutions.map(resolution => {
+        if (resolution.length != 3) {
+          throw new Error('Unexpected video resolution');
+        }
+
+        const width = Buffer.alloc(2);
+        const height = Buffer.alloc(2);
+        const frameRate = Buffer.alloc(1);
+
+        width.writeUInt16LE(resolution[0], 0);
+        height.writeUInt16LE(resolution[1], 0);
+        frameRate.writeUInt8(resolution[2], 0);
+
+        return tlv.encode(
+          VideoAttributesTypes.IMAGE_WIDTH, width,
+          VideoAttributesTypes.IMAGE_HEIGHT, height,
+          VideoAttributesTypes.FRAME_RATE, frameRate,
+        );
+      }),
     );
-    const videoAttributes = Buffer.concat(videoAttributesBuffers);
 
     return tlv.encode(
-      SupportedVideoStreamConfigurationTypes.VIDEO_CODEC_CONFIGURATION, Buffer.concat([videoStreamConfiguration, videoAttributes])
+      SupportedVideoStreamConfigurationTypes.VIDEO_CODEC_CONFIGURATION, videoStreamConfiguration,
     ).toString('base64');
   }
 
@@ -1257,8 +1230,6 @@ export class RTPStreamManagement {
     const supportedCodecs: AudioStreamingCodec[] = (audioOptions && audioOptions.codecs) || [];
     this.checkForLegacyAudioCodecRepresentation(supportedCodecs);
 
-    const codecConfigurationsBuffers: Buffer[] = [];
-
     if (supportedCodecs.length === 0) { // Fake a Codec if we haven't got anything
       debug("Client doesn't support any audio codec that HomeKit supports.");
       this.videoOnly = true;
@@ -1269,7 +1240,7 @@ export class RTPStreamManagement {
       });
     }
 
-    supportedCodecs.forEach(codec => {
+    const codecConfigurations: Buffer[] = supportedCodecs.map(codec => {
       let type: AudioCodecTypes;
 
       switch (codec.type) {
@@ -1295,16 +1266,11 @@ export class RTPStreamManagement {
           type = AudioCodecTypes.AMR_WB;
           break;
         default:
-          debug("Unsupported codec: ", codec.type);
-          return;
+          throw new Error("Unsupported codec: " + codec.type);
       }
 
-      let providedSamplerates = typeof codec.samplerate === "number"? [codec.samplerate]: codec.samplerate;
-      const samplerateBuffers: Buffer[] = [];
-
-      providedSamplerates.forEach(rate => {
+      const providedSamplerates = (typeof codec.samplerate === "number"? [codec.samplerate]: codec.samplerate).map(rate => {
         let samplerate;
-
         switch (rate) {
           case AudioStreamingSamplerate.KHZ_8:
             samplerate = AudioSamplerate.KHZ_8;
@@ -1316,58 +1282,45 @@ export class RTPStreamManagement {
             samplerate = AudioSamplerate.KHZ_24;
             break;
           default:
-            debug("Unsupported sample rate: ", codec.samplerate);
-            return;
+            console.log("Unsupported sample rate: ", codec.samplerate);
+            samplerate = -1;
         }
+        return samplerate;
+      }).filter(rate => rate !== -1);
 
-        if (samplerateBuffers.length > 0) {
-          samplerateBuffers.push(tlv.encode(
-              tlv.EMPTY_TLV_TYPE, Buffer.alloc(0), // delimiter
-          ));
-        }
-        samplerateBuffers.push(tlv.encode(
-          AudioCodecParametersTypes.SAMPLE_RATE, samplerate,
-        ));
-      });
-
-      if (samplerateBuffers.length === 0) {
+      if (providedSamplerates.length === 0) {
         throw new Error("Audio samplerate cannot be empty!");
       }
 
-      const audioParameters = Buffer.concat([
-          tlv.encode(
-              AudioCodecParametersTypes.CHANNEL, Math.max(1, codec.audioChannels || 1),
-              AudioCodecParametersTypes.BIT_RATE, codec.bitrate || AudioBitrate.VARIABLE,
-          ),
-          Buffer.concat(samplerateBuffers),
-      ]);
+      const audioParameters = tlv.encode(
+        AudioCodecParametersTypes.CHANNEL, Math.max(1, codec.audioChannels || 1),
+        AudioCodecParametersTypes.BIT_RATE, codec.bitrate || AudioBitrate.VARIABLE,
+        AudioCodecParametersTypes.SAMPLE_RATE, providedSamplerates,
+      )
 
-      const audioConfiguration = tlv.encode(
+      return tlv.encode(
           AudioCodecConfigurationTypes.CODEC_TYPE, type,
           AudioCodecConfigurationTypes.CODEC_PARAMETERS, audioParameters
       );
-
-      if (codecConfigurationsBuffers.length > 0) {
-        codecConfigurationsBuffers.push(tlv.encode(
-            tlv.EMPTY_TLV_TYPE, Buffer.alloc(0), // delimiter
-        ))
-      }
-
-      codecConfigurationsBuffers.push(tlv.encode(
-          SupportedAudioStreamConfigurationTypes.AUDIO_CODEC_CONFIGURATION, audioConfiguration
-      ));
     });
 
-    codecConfigurationsBuffers.push(tlv.encode(
-        SupportedAudioStreamConfigurationTypes.COMFORT_NOISE_SUPPORT, comfortNoise? 1: 0
-    ));
-
-    return Buffer.concat(codecConfigurationsBuffers).toString("base64");
+    return tlv.encode(
+      SupportedAudioStreamConfigurationTypes.AUDIO_CODEC_CONFIGURATION, codecConfigurations,
+      SupportedAudioStreamConfigurationTypes.COMFORT_NOISE_SUPPORT, comfortNoise? 1: 1,
+    ).toString("base64");
   }
 
   private static initialSetupEndpointsResponse(): string {
     return tlv.encode(
         SetupEndpointsResponseTypes.STATUS, SetupEndpointsStatus.ERROR,
+    ).toString("base64");
+  }
+
+  private static initialSelectedStreamConfiguration(): string {
+    return tlv.encode(
+      SelectedRTPStreamConfigurationTypes.SESSION_CONTROL, tlv.encode(
+        SessionControlTypes.COMMAND, SessionControlCommand.SUSPEND_SESSION,
+      ),
     ).toString("base64");
   }
 

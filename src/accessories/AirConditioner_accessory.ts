@@ -1,4 +1,4 @@
-//In This example we create an Airconditioner Accessory that Has a Thermostat linked to a Fan Service.
+//In This example we create an air conditioner Accessory that Has a Thermostat linked to a Fan Service.
 //For example, I've also put a Light Service that should be hidden to represent a light in the closet that is part of the AC. It is to show how to hide services.
 //The linking and Hiding does NOT appear to be reflected in Home
 
@@ -8,14 +8,16 @@ import {
   AccessoryEventTypes,
   Categories,
   Characteristic,
-  CharacteristicEventTypes, CharacteristicGetCallback, CharacteristicSetCallback,
+  CharacteristicEventTypes,
+  CharacteristicGetCallback,
+  CharacteristicSetCallback,
   CharacteristicValue,
   Service,
   uuid,
 } from '..';
-import { NodeCallback, VoidCallback } from '../types';
+import { VoidCallback } from '../types';
 
-var ACTest_data: Record<string, CharacteristicValue> = {
+const ACTest_data: Record<string, CharacteristicValue> = {
   fanPowerOn: false,
   rSpeed: 100,
   CurrentHeatingCoolingState: 1,
@@ -24,10 +26,10 @@ var ACTest_data: Record<string, CharacteristicValue> = {
   TargetTemperature: 32,
   TemperatureDisplayUnits: 1,
   LightOn: false
-}
+};
 
 // This is the Accessory that we'll return to HAP-NodeJS that represents our fake fan.
-var ACTest = exports.accessory = new Accessory('Air Conditioner', uuid.generate('hap-nodejs:accessories:airconditioner'));
+const ACTest = exports.accessory = new Accessory('Air Conditioner', uuid.generate('hap-nodejs:accessories:airconditioner'));
 
 // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
 // @ts-ignore
@@ -49,9 +51,8 @@ ACTest.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback
 });
 
 // Add the actual Fan Service and listen for change events from iOS.
-// We can see the complete list of Services and Characteristics in `lib/gen/HomeKit.ts`
 
-var FanService = ACTest.addService(Service.Fan, "Blower") // services exposed to the user should have "names" like "Fake Light" for us
+const FanService = ACTest.addService(Service.Fan, "Blower"); // services exposed to the user should have "names" like "Fake Light" for us
 FanService.getCharacteristic(Characteristic.On)!
   .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
     console.log("Fan Power Changed To "+value);
@@ -68,7 +69,7 @@ FanService.getCharacteristic(Characteristic.On)!
     // the fan hardware itself to find this out, then call the callback. But if you take longer than a
     // few seconds to respond, Siri will give up.
 
-    var err = null; // in case there were any problems
+    const err = null; // in case there were any problems
 
     if (ACTest_data.fanPowerOn) {
       callback(err, true);
@@ -90,7 +91,7 @@ FanService.addCharacteristic(Characteristic.RotationSpeed)
     callback();
   })
 
-var ThermostatService = ACTest.addService(Service.Thermostat,"Thermostat");
+const ThermostatService = ACTest.addService(Service.Thermostat, "Thermostat");
 ThermostatService.addLinkedService(FanService);
 ThermostatService.setPrimaryService();
 
@@ -146,8 +147,7 @@ ThermostatService.getCharacteristic(Characteristic.CurrentHeatingCoolingState)!
     });
 
 
-
-var LightService = ACTest.addService(Service.Lightbulb, 'AC Light');
+const LightService = ACTest.addService(Service.Lightbulb, 'AC Light');
 LightService.getCharacteristic(Characteristic.On)!
     .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
       callback(null, ACTest_data.LightOn);

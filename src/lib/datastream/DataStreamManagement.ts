@@ -1,17 +1,17 @@
-import * as tlv from '../util/tlv';
 import createDebug from "debug";
-import {Service} from "../Service";
+import { Characteristic, CharacteristicEventTypes, CharacteristicSetCallback } from "../Characteristic";
+import type { DataStreamTransportManagement } from "../definitions";
+import { HAPStatus } from "../HAPServer";
+import { Service } from "../Service";
+import { HAPConnection } from "../util/eventedhttp";
+import * as tlv from '../util/tlv';
 import {
-    Characteristic,
-    CharacteristicEventTypes,
-    CharacteristicGetCallback,
-    CharacteristicSetCallback
-} from "../Characteristic";
-import {CharacteristicValue, SessionIdentifier} from "../../types";
-import {DataStreamTransportManagement} from "../gen/HomeKit-DataStream";
-import {DataStreamServer, DataStreamServerEventMap, GlobalEventHandler, GlobalRequestHandler} from "./DataStreamServer";
-import {Session} from "../util/eventedhttp";
-import {Event} from "../EventEmitter";
+    DataStreamConnection,
+    DataStreamServer,
+    DataStreamServerEvent,
+    GlobalEventHandler,
+    GlobalRequestHandler
+} from "./DataStreamServer";
 
 const debug = createDebug('HAP-NodeJS:DataStream:Management');
 
@@ -59,12 +59,12 @@ export const enum DataStreamStatus {
 export class DataStreamManagement {
 
     // one server per accessory is probably the best practice
-    private readonly dataStreamServer: DataStreamServer = new DataStreamServer();
+    private readonly dataStreamServer: DataStreamServer = new DataStreamServer(); // TODO how to handle Remote+future HKSV controller at the same time?
 
-    private dataStreamTransportManagementService: DataStreamTransportManagement;
+    private readonly dataStreamTransportManagementService: DataStreamTransportManagement;
 
-    readonly supportedDataStreamTransportConfiguration: string;
-    lastSetupDataStreamTransportResponse: string = ""; // stripped. excludes ACCESSORY_KEY_SALT
+    private readonly supportedDataStreamTransportConfiguration: string;
+    private lastSetupDataStreamTransportResponse: string = ""; // stripped. excludes ACCESSORY_KEY_SALT
 
     constructor(service?: DataStreamTransportManagement) {
         const supportedConfiguration: TransportType[] = [TransportType.HOMEKIT_DATA_STREAM];
@@ -72,6 +72,14 @@ export class DataStreamManagement {
 
         this.dataStreamTransportManagementService = service || this.constructService();
         this.setupServiceHandlers();
+    }
+
+    public destroy(): void {
+        this.dataStreamServer.destroy(); // removes ALL listeners
+        this.dataStreamTransportManagementService.getCharacteristic(Characteristic.SetupDataStreamTransport)
+          .removeOnGet()
+          .removeAllListeners(CharacteristicEventTypes.SET);
+        this.lastSetupDataStreamTransportResponse = "";
     }
 
     /**
@@ -139,12 +147,13 @@ export class DataStreamManagement {
      * @param event - the event to register for
      * @param listener - the event handler
      */
-    onServerEvent(event: Event<keyof DataStreamServerEventMap>, listener: DataStreamServerEventMap[Event<keyof DataStreamServerEventMap>]): this {
+    onServerEvent(event: DataStreamServerEvent, listener: (connection: DataStreamConnection) => void): this {
+        // @ts-expect-error
         this.dataStreamServer.on(event, listener);
         return this;
     }
 
-    private handleSetupDataStreamTransportWrite(value: any, callback: CharacteristicSetCallback, connectionID?: string) {
+    private handleSetupDataStreamTransportWrite(value: any, callback: CharacteristicSetCallback, connection: HAPConnection) {
         const data = Buffer.from(value, 'base64');
         const objects = tlv.decode(data);
 
@@ -155,23 +164,17 @@ export class DataStreamManagement {
         debug("Received setup write with command %s and transport type %s", SessionCommandType[sessionCommandType], TransportType[transportType]);
 
         if (sessionCommandType === SessionCommandType.START_SESSION) {
-            if (transportType !== TransportType.HOMEKIT_DATA_STREAM) {
-                callback(null, DataStreamManagement.buildSetupStatusResponse(DataStreamStatus.GENERIC_ERROR));
+            if (transportType !== TransportType.HOMEKIT_DATA_STREAM || controllerKeySalt.length !== 32) {
+                callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
                 return;
             }
 
-            if (!connectionID) { // we need the session for the shared secret to generate the encryption keys
-                callback(null, DataStreamManagement.buildSetupStatusResponse(DataStreamStatus.GENERIC_ERROR));
-                return;
-            }
+            this.dataStreamServer.prepareSession(connection, controllerKeySalt, (error, preparedSession) => {
+                if (error || !preparedSession) {
+                    callback(error ?? new Error("PreparedSession was undefined!"));
+                    return;
+                }
 
-            const session: Session = Session.getSession(connectionID);
-            if (!session) { // we need the session for the shared secret to generate the encryption keys
-                callback(null, DataStreamManagement.buildSetupStatusResponse(DataStreamStatus.GENERIC_ERROR));
-                return;
-            }
-
-            this.dataStreamServer.prepareSession(session, controllerKeySalt, preparedSession => {
                 const listeningPort = tlv.encode(TransportSessionConfiguration.TCP_LISTENING_PORT, tlv.writeUInt16(preparedSession.port!));
 
                 let response: Buffer = Buffer.concat([
@@ -187,13 +190,9 @@ export class DataStreamManagement {
                 callback(null, response.toString('base64'));
             });
         } else {
-            callback(null, DataStreamManagement.buildSetupStatusResponse(DataStreamStatus.GENERIC_ERROR));
+            callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
             return;
         }
-    }
-
-    private static buildSetupStatusResponse(status: DataStreamStatus) {
-        return tlv.encode(SetupDataStreamWriteResponseTypes.STATUS, status).toString('base64');
     }
 
     private buildSupportedDataStreamTransportConfigurationTLV(supportedConfiguration: TransportType[]): string {
@@ -218,13 +217,17 @@ export class DataStreamManagement {
     }
 
     private setupServiceHandlers() {
-        this.dataStreamTransportManagementService.getCharacteristic(Characteristic.SetupDataStreamTransport)!
-            .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-                callback(null, this.lastSetupDataStreamTransportResponse);
-            })
-            .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback, context?: any, connectionID?: SessionIdentifier) => {
-                this.handleSetupDataStreamTransportWrite(value, callback, connectionID);
-            }).getValue();
+        this.dataStreamTransportManagementService.getCharacteristic(Characteristic.SetupDataStreamTransport)
+          .onGet(() => this.lastSetupDataStreamTransportResponse)
+          .on(CharacteristicEventTypes.SET, (value, callback, context, connection) => {
+              if (!connection) {
+                  debug("Set event handler for SetupDataStreamTransport cannot be called from plugin! Connection undefined!");
+                  callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
+                  return;
+              }
+              this.handleSetupDataStreamTransportWrite(value, callback, connection);
+          })
+          .updateValue(this.lastSetupDataStreamTransportResponse);
     }
 
 }

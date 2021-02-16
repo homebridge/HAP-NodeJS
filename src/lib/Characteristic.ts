@@ -1,46 +1,322 @@
-import Decimal from 'decimal.js';
-
-import { once } from './util/once';
-import { clone } from "./util/clone";
-import { IdentifierCache } from './model/IdentifierCache';
+import assert from "assert";
+import createDebug from "debug";
+import { EventEmitter } from "events";
+import { CharacteristicJsonObject } from "../internal-types";
+import { CharacteristicValue, Nullable, VoidCallback, } from '../types';
+import { CharacteristicWarningType } from "./Accessory";
 import {
-  CharacteristicChange,
-  CharacteristicValue,
-  HapCharacteristic,
-  SessionIdentifier,
-  Nullable,
-  ToHAPOptions,
-  VoidCallback,
-} from '../types';
-import { EventEmitter } from './EventEmitter';
-import * as HomeKitTypes from './gen';
-import { toShortForm } from './util/uuid';
+  AccessControlLevel,
+  AccessoryFlags,
+  AccessoryIdentifier,
+  Active,
+  ActiveIdentifier,
+  ActivityInterval,
+  AdministratorOnlyAccess,
+  AirParticulateDensity,
+  AirParticulateSize,
+  AirQuality,
+  AppMatchingIdentifier,
+  AudioFeedback,
+  BatteryLevel,
+  Brightness,
+  ButtonEvent,
+  CameraOperatingModeIndicator,
+  CarbonDioxideDetected,
+  CarbonDioxideLevel,
+  CarbonDioxidePeakLevel,
+  CarbonMonoxideDetected,
+  CarbonMonoxideLevel,
+  CarbonMonoxidePeakLevel,
+  Category,
+  CCAEnergyDetectThreshold,
+  CCASignalDetectThreshold,
+  CharacteristicValueActiveTransitionCount,
+  CharacteristicValueTransitionControl,
+  ChargingState,
+  ClosedCaptions,
+  ColorTemperature,
+  ConfigureBridgedAccessory,
+  ConfigureBridgedAccessoryStatus,
+  ConfiguredName,
+  ContactSensorState,
+  CoolingThresholdTemperature,
+  CurrentAirPurifierState,
+  CurrentAmbientLightLevel,
+  CurrentDoorState,
+  CurrentFanState,
+  CurrentHeaterCoolerState,
+  CurrentHeatingCoolingState,
+  CurrentHorizontalTiltAngle,
+  CurrentHumidifierDehumidifierState,
+  CurrentMediaState,
+  CurrentPosition,
+  CurrentRelativeHumidity,
+  CurrentSlatState,
+  CurrentTemperature,
+  CurrentTiltAngle,
+  CurrentTime,
+  CurrentTransport,
+  CurrentVerticalTiltAngle,
+  CurrentVisibilityState,
+  DataStreamHAPTransport,
+  DataStreamHAPTransportInterrupt,
+  DayoftheWeek,
+  DiagonalFieldOfView,
+  DigitalZoom,
+  DiscoverBridgedAccessories,
+  DiscoveredBridgedAccessories,
+  DisplayOrder,
+  EventRetransmissionMaximum,
+  EventSnapshotsActive,
+  EventTransmissionCounters,
+  FilterChangeIndication,
+  FilterLifeLevel,
+  FirmwareRevision,
+  FirmwareUpdateReadiness,
+  FirmwareUpdateStatus,
+  HardwareRevision,
+  HeartBeat,
+  HeatingThresholdTemperature,
+  HoldPosition,
+  HomeKitCameraActive,
+  Hue,
+  Identifier,
+  Identify,
+  ImageMirroring,
+  ImageRotation,
+  InputDeviceType,
+  InputSourceType,
+  InUse,
+  IsConfigured,
+  LeakDetected,
+  LinkQuality,
+  ListPairings,
+  LockControlPoint,
+  LockCurrentState,
+  LockLastKnownAction,
+  LockManagementAutoSecurityTimeout,
+  LockPhysicalControls,
+  LockTargetState,
+  Logs,
+  MACRetransmissionMaximum,
+  MACTransmissionCounters,
+  ManagedNetworkEnable,
+  ManuallyDisabled,
+  Manufacturer,
+  MaximumTransmitPower,
+  Model,
+  MotionDetected,
+  Mute,
+  Name,
+  NetworkAccessViolationControl,
+  NetworkClientProfileControl,
+  NetworkClientStatusControl,
+  NightVision,
+  NitrogenDioxideDensity,
+  ObstructionDetected,
+  OccupancyDetected,
+  On,
+  OperatingStateResponse,
+  OpticalZoom,
+  OutletInUse,
+  OzoneDensity,
+  PairingFeatures,
+  PairSetup,
+  PairVerify,
+  PasswordSetting,
+  PeriodicSnapshotsActive,
+  PictureMode,
+  Ping,
+  PM10Density,
+  PM2_5Density,
+  PositionState,
+  PowerModeSelection,
+  ProductData,
+  ProgrammableSwitchEvent,
+  ProgrammableSwitchOutputState,
+  ProgramMode,
+  Reachable,
+  ReceivedSignalStrengthIndication,
+  ReceiverSensitivity,
+  RecordingAudioActive,
+  RelativeHumidityDehumidifierThreshold,
+  RelativeHumidityHumidifierThreshold,
+  RelayControlPoint,
+  RelayEnabled,
+  RelayState,
+  RemainingDuration,
+  RemoteKey,
+  ResetFilterIndication,
+  RotationDirection,
+  RotationSpeed,
+  RouterStatus,
+  Saturation,
+  SecuritySystemAlarmType,
+  SecuritySystemCurrentState,
+  SecuritySystemTargetState,
+  SelectedAudioStreamConfiguration,
+  SelectedCameraRecordingConfiguration,
+  SelectedRTPStreamConfiguration,
+  SerialNumber,
+  ServiceLabelIndex,
+  ServiceLabelNamespace,
+  SetDuration,
+  SetupDataStreamTransport,
+  SetupEndpoints,
+  SetupTransferTransport,
+  SignalToNoiseRatio,
+  SiriInputType,
+  SlatType,
+  SleepDiscoveryMode,
+  SleepInterval,
+  SmokeDetected,
+  SoftwareRevision,
+  StagedFirmwareVersion,
+  StatusActive,
+  StatusFault,
+  StatusJammed,
+  StatusLowBattery,
+  StatusTampered,
+  StreamingStatus,
+  SulphurDioxideDensity,
+  SupportedAudioRecordingConfiguration,
+  SupportedAudioStreamConfiguration,
+  SupportedCameraRecordingConfiguration,
+  SupportedCharacteristicValueTransitionConfiguration,
+  SupportedDataStreamTransportConfiguration,
+  SupportedDiagnosticsSnapshot,
+  SupportedFirmwareUpdateConfiguration,
+  SupportedRouterConfiguration,
+  SupportedRTPConfiguration,
+  SupportedTransferTransportConfiguration,
+  SupportedVideoRecordingConfiguration,
+  SupportedVideoStreamConfiguration,
+  SwingMode,
+  TargetAirPurifierState,
+  TargetAirQuality,
+  TargetControlList,
+  TargetControlSupportedConfiguration,
+  TargetDoorState,
+  TargetFanState,
+  TargetHeaterCoolerState,
+  TargetHeatingCoolingState,
+  TargetHorizontalTiltAngle,
+  TargetHumidifierDehumidifierState,
+  TargetMediaState,
+  TargetPosition,
+  TargetRelativeHumidity,
+  TargetSlatState,
+  TargetTemperature,
+  TargetTiltAngle,
+  TargetVerticalTiltAngle,
+  TargetVisibilityState,
+  TemperatureDisplayUnits,
+  ThirdPartyCameraActive,
+  ThreadControlPoint,
+  ThreadNodeCapabilities,
+  ThreadOpenThreadVersion,
+  ThreadStatus,
+  TimeUpdate,
+  TransmitPower,
+  TunnelConnectionTimeout,
+  TunneledAccessoryAdvertising,
+  TunneledAccessoryConnected,
+  TunneledAccessoryStateNumber,
+  ValveType,
+  Version,
+  VideoAnalysisActive,
+  VOCDensity,
+  Volume,
+  VolumeControlType,
+  VolumeSelector,
+  WakeConfiguration,
+  WANConfigurationList,
+  WANStatusList,
+  WaterLevel,
+  WiFiCapabilities,
+  WiFiConfigurationControl,
+  WiFiSatelliteStatus,
+} from "./definitions";
+import { HAPStatus, IsKnownHAPStatusError } from "./HAPServer";
+import { IdentifierCache } from './model/IdentifierCache';
+import { Service } from "./Service";
+import { clone } from "./util/clone";
+import { HAPConnection } from "./util/eventedhttp";
+import { HapStatusError } from './util/hapStatusError';
+import { once } from './util/once';
+import {
+  formatOutgoingCharacteristicValue, isIntegerNumericFormat, isNumericFormat,
+  isUnsignedNumericFormat,
+  numericLowerBound,
+  numericUpperBound
+} from "./util/request-util";
+import { BASE_UUID, toShortForm } from './util/uuid';
+
+const debug = createDebug("HAP-NodeJS:Characteristic");
 
 export const enum Formats {
   BOOL = 'bool',
-  INT = 'int',
+  /**
+   * Signed 32-bit integer
+   */
+  INT = 'int', // signed 32-bit int
+  /**
+   * Signed 64-bit floating point
+   */
   FLOAT = 'float',
+  /**
+   * String encoded in utf8
+   */
   STRING = 'string',
+  /**
+   * Unsigned 8-bit integer.
+   */
   UINT8 = 'uint8',
+  /**
+   * Unsigned 16-bit integer.
+   */
   UINT16 = 'uint16',
+  /**
+   * Unsigned 32-bit integer.
+   */
   UINT32 = 'uint32',
+  /**
+   * Unsigned 64-bit integer.
+   */
   UINT64 = 'uint64',
+  /**
+   * Data is base64 encoded string.
+   */
   DATA = 'data',
+  /**
+   * Base64 encoded tlv8 string.
+   */
   TLV8 = 'tlv8',
-  ARRAY = 'array', //Not in HAP Spec
-  DICTIONARY = 'dict', //Not in HAP Spec
+  /**
+   * @deprecated Not contained in the HAP spec
+   */
+  ARRAY = 'array',
+  /**
+   * @deprecated Not contained in the HAP spec
+   */
+  DICTIONARY = 'dict',
 }
 
 export const enum Units {
-  CELSIUS = 'celsius', // celsius is the only temperature unit, conversion to fahrenheit is done on the iOS device
+  /**
+   * Celsius is the only temperature unit in the HomeKit Accessory Protocol.
+   * Unit conversion is always done on the client side e.g. on the iPhone in the Home App depending on
+   * the configured unit on the device itself.
+   */
+  CELSIUS = 'celsius',
   PERCENTAGE = 'percentage',
   ARC_DEGREE = 'arcdegrees',
   LUX = 'lux',
   SECONDS = 'seconds',
 }
 
-// Known HomeKit permission types
 export const enum Perms {
+  // noinspection JSUnusedGlobalSymbols
   /**
    * @deprecated replaced by {@link PAIRED_READ}. Kept for backwards compatibility.
    */
@@ -51,7 +327,7 @@ export const enum Perms {
   WRITE = 'pw',
   PAIRED_READ = 'pr',
   PAIRED_WRITE = 'pw',
-  NOTIFY = 'ev', // both terms are used in hap spec
+  NOTIFY = 'ev',
   EVENTS = 'ev',
   ADDITIONAL_AUTHORIZATION = 'aa',
   TIMED_WRITE = 'tw',
@@ -60,18 +336,38 @@ export const enum Perms {
 }
 
 export interface CharacteristicProps {
-  format: Formats;
-  unit?: Units;
+  format: Formats | string;
   perms: Perms[];
-  ev?: boolean;
+  unit?: Units | string;
   description?: string;
+  /**
+   * Defines the minimum value for a numeric characteristic
+   */
   minValue?: number;
+  /**
+   * Defines the maximum value for a numeric characteristic
+   */
   maxValue?: number;
   minStep?: number;
+  /**
+   * Maximum number of characters when format is {@link Formats.STRING}.
+   * Default is 64 characters. Maximum allowed is 256 characters.
+   */
   maxLen?: number;
+  /**
+   * Maximum number of characters when format is {@link Formats.DATA}.
+   * Default is 2097152 characters.
+   */
   maxDataLen?: number;
+  /**
+   * Defines a array of valid values to be used for the characteristic.
+   */
   validValues?: number[];
-  validValueRanges?: [number, number];
+  /**
+   * Two element array where the first value specifies the lowest valid value and
+   * the second element specifies the highest valid value.
+   */
+  validValueRanges?: [min: number, max: number];
   adminOnlyAccess?: Access[];
 }
 
@@ -81,376 +377,726 @@ export const enum Access {
   NOTIFY = 0x02
 }
 
+export type CharacteristicChange = {
+  originator?: HAPConnection,
+  newValue: Nullable<CharacteristicValue>;
+  oldValue: Nullable<CharacteristicValue>;
+  reason: ChangeReason,
+  context?: any;
+};
+
+export const enum ChangeReason {
+  /**
+   * Reason used when HomeKit writes a value or the API user calls {@link Characteristic.setValue}.
+   */
+  WRITE = "write",
+  /**
+   * Reason used when the API user calls the method {@link Characteristic.updateValue}.
+   */
+  UPDATE = "update",
+  /**
+   * Used when when HomeKit reads a value or the API user calls the deprecated method {@link Characteristic.getValue}.
+   */
+  READ = "read",
+  /**
+   * Used when call to {@link Characteristic.sendEventNotification} was made.
+   */
+  EVENT = "event",
+}
+
+/**
+ * This format for a context object can be used to pass to any characteristic write operation.
+ * It can contain additional information used by the internal event handlers of hap-nodejs.
+ * The context object can be combined with any custom data for own use.
+ */
+export interface CharacteristicOperationContext {
+  /**
+   * If set to true for any characteristic write operation
+   * the Accessory won't send any event notifications to HomeKit controllers
+   * for that particular change.
+   */
+  omitEventUpdate?: boolean;
+}
+
+/**
+ * @private
+ */
 export interface SerializedCharacteristic {
   displayName: string,
   UUID: string,
-  props: CharacteristicProps,
-  value: Nullable<CharacteristicValue>,
   eventOnlyCharacteristic: boolean,
+  constructorName?: string,
+
+  value: Nullable<CharacteristicValue>,
+  props: CharacteristicProps,
 }
 
 export const enum CharacteristicEventTypes {
+  /**
+   * This event is thrown when a HomeKit controller wants to read the current value of the characteristic.
+   * The event handler should call the supplied callback as fast as possible.
+   *
+   * HAP-NodeJS will complain about slow running get handlers after 3 seconds and terminate the request after 10 seconds.
+   */
   GET = "get",
+  /**
+   * This event is thrown when a HomeKit controller wants to write a new value to the characteristic.
+   * The event handler should call the supplied callback as fast as possible.
+   *
+   * HAP-NodeJS will complain about slow running set handlers after 3 seconds and terminate the request after 10 seconds.
+   */
   SET = "set",
-  SUBSCRIBE = "subscribe",
-  UNSUBSCRIBE = "unsubscribe",
+  /**
+   * Emitted after a new value is set for the characteristic.
+   * The new value can be set via a request by a HomeKit controller or via an API call.
+   */
   CHANGE = "change",
+  /**
+   * @private
+   */
+  SUBSCRIBE = "subscribe",
+  /**
+   * @private
+   */
+  UNSUBSCRIBE = "unsubscribe",
+  /**
+   * @private
+   */
+  CHARACTERISTIC_WARNING = "characteristic-warning",
 }
 
-export type CharacteristicGetCallback<T = Nullable<CharacteristicValue>> = (error?: Error | null , value?: T) => void
-export type CharacteristicSetCallback = (error?: Error | null, value?: CharacteristicValue) => void
+export type CharacteristicGetCallback = (status?: HAPStatus | null | Error, value?: Nullable<CharacteristicValue>) => void;
+export type CharacteristicSetCallback = (error?: HAPStatus | null | Error, writeResponse?: Nullable<CharacteristicValue>) => void;
+export type CharacteristicGetHandler = (context: any, connection?: HAPConnection) => Promise<Nullable<CharacteristicValue>> | Nullable<CharacteristicValue>;
+export type CharacteristicSetHandler = (value: CharacteristicValue, context: any, connection?: HAPConnection) => Promise<Nullable<CharacteristicValue> | void> | Nullable<CharacteristicValue> | void;
 
-type Events = {
-  ["change"]: (change: CharacteristicChange) => void;
-  ["get"]: (cb: CharacteristicGetCallback, context?: any, connectionID?: SessionIdentifier) => void;
-  ["set"]: (value: CharacteristicValue, cb: CharacteristicSetCallback, context?: any, connectionID?: SessionIdentifier) => void;
-  ["subscribe"]: VoidCallback;
-  ["unsubscribe"]: VoidCallback;
+export type AdditionalAuthorizationHandler = (additionalAuthorizationData: string | undefined) => boolean;
+
+export declare interface Characteristic {
+
+  on(event: "get", listener: (callback: CharacteristicGetCallback, context: any, connection?: HAPConnection) => void): this;
+  on(event: "set", listener: (value: CharacteristicValue, callback: CharacteristicSetCallback, context: any, connection?: HAPConnection) => void): this
+  on(event: "change", listener: (change: CharacteristicChange) => void): this;
+  /**
+   * @private
+   */
+  on(event: "subscribe", listener: VoidCallback): this;
+  /**
+   * @private
+   */
+  on(event: "unsubscribe", listener: VoidCallback): this;
+  /**
+   * @private
+   */
+  on(event: "characteristic-warning", listener: (type: CharacteristicWarningType, message: string, stack?: string) => void): this;
+
+  /**
+   * @private
+   */
+  emit(event: "get", callback: CharacteristicGetCallback, context: any, connection?: HAPConnection): boolean;
+  /**
+   * @private
+   */
+  emit(event: "set", value: CharacteristicValue, callback: CharacteristicSetCallback, context: any, connection?: HAPConnection): boolean;
+  /**
+   * @private
+   */
+  emit(event: "change", change: CharacteristicChange): boolean;
+  /**
+   * @private
+   */
+  emit(event: "subscribe"): boolean;
+  /**
+   * @private
+   */
+  emit(event: "unsubscribe"): boolean;
+  /**
+   * @private
+   */
+  emit(event: "characteristic-warning", type: CharacteristicWarningType, message: string, stack?: string): boolean;
+
+}
+
+class ValidValuesIterable implements Iterable<number> {
+
+  private readonly props: CharacteristicProps;
+
+  constructor(props: CharacteristicProps) {
+    assert(isNumericFormat(props.format), "Cannot instantiate valid values iterable when format is not numeric. Found " + props.format);
+    this.props = props;
+  }
+
+  *[Symbol.iterator](): Iterator<number> {
+    if (this.props.validValues) {
+      for (const value of this.props.validValues) {
+        yield value;
+      }
+    } else {
+      let min: number = 0; // default is zero for all the uint types
+      let max: number;
+      let stepValue = 1;
+
+      if (this.props.validValueRanges) {
+        min = this.props.validValueRanges[0];
+        max = this.props.validValueRanges[1];
+      } else if (this.props.minValue != null && this.props.maxValue != null) {
+        min = this.props.minValue;
+        max = this.props.maxValue;
+        if (this.props.minStep != null) {
+          stepValue = this.props.minStep;
+        }
+      } else if (isUnsignedNumericFormat(this.props.format)) {
+        max = numericUpperBound(this.props.format)
+      } else {
+        throw new Error("Could not find valid iterator strategy for props: " + JSON.stringify(this.props));
+      }
+
+      for (let i = min; i <= max; i += stepValue) {
+        yield i;
+      }
+    }
+  }
+
 }
 
 /**
  * Characteristic represents a particular typed variable that can be assigned to a Service. For instance, a
  * "Hue" Characteristic might store a 'float' value of type 'arcdegrees'. You could add the Hue Characteristic
- * to a Service in order to store that value. A particular Characteristic is distinguished from others by its
+ * to a {@link Service} in order to store that value. A particular Characteristic is distinguished from others by its
  * UUID. HomeKit provides a set of known Characteristic UUIDs defined in HomeKit.ts along with a
  * corresponding concrete subclass.
  *
  * You can also define custom Characteristics by providing your own UUID. Custom Characteristics can be added
  * to any native or custom Services, but Siri will likely not be able to work with these.
- *
- * Note that you can get the "value" of a Characteristic by accessing the "value" property directly, but this
- * is really a "cached value". If you want to fetch the latest value, which may involve doing some work, then
- * call getValue().
- *
- * @event 'get' => function(callback(err, newValue), context) { }
- *        Emitted when someone calls getValue() on this Characteristic and desires the latest non-cached
- *        value. If there are any listeners to this event, one of them MUST call the callback in order
- *        for the value to ever be delivered. The `context` object is whatever was passed in by the initiator
- *        of this event (for instance whomever called `getValue`).
- *
- * @event 'set' => function(newValue, callback(err), context) { }
- *        Emitted when someone calls setValue() on this Characteristic with a desired new value. If there
- *        are any listeners to this event, one of them MUST call the callback in order for this.value to
- *        actually be set. The `context` object is whatever was passed in by the initiator of this change
- *        (for instance, whomever called `setValue`).
- *
- * @event 'change' => function({ oldValue, newValue, context }) { }
- *        Emitted after a change in our value has occurred. The new value will also be immediately accessible
- *        in this.value. The event object contains the new value as well as the context object originally
- *        passed in by the initiator of this change (if known).
  */
-export class Characteristic extends EventEmitter<Events> {
+export class Characteristic extends EventEmitter {
 
   /**
    * @deprecated Please use the Formats const enum above. Scheduled to be removed in 2021-06.
    */
-  // @ts-ignore
+  // @ts-expect-error
   static Formats = Formats;
   /**
    * @deprecated Please use the Units const enum above. Scheduled to be removed in 2021-06.
    */
-  // @ts-ignore
+  // @ts-expect-error
   static Units = Units;
   /**
    * @deprecated Please use the Perms const enum above. Scheduled to be removed in 2021-06.
    */
-  // @ts-ignore
+  // @ts-expect-error
   static Perms = Perms;
 
-  static AccessControlLevel: typeof HomeKitTypes.Generated.AccessControlLevel;
-  static AccessoryFlags: typeof HomeKitTypes.Generated.AccessoryFlags;
-  static AccessoryIdentifier: typeof HomeKitTypes.Bridged.AccessoryIdentifier;
-  static Active: typeof HomeKitTypes.Generated.Active;
-  static ActiveIdentifier: typeof HomeKitTypes.TV.ActiveIdentifier;
-  static AdministratorOnlyAccess: typeof HomeKitTypes.Generated.AdministratorOnlyAccess;
-  static AirParticulateDensity: typeof HomeKitTypes.Generated.AirParticulateDensity;
-  static AirParticulateSize: typeof HomeKitTypes.Generated.AirParticulateSize;
-  static AirQuality: typeof HomeKitTypes.Generated.AirQuality;
-  static AppMatchingIdentifier: typeof HomeKitTypes.Bridged.AppMatchingIdentifier;
-  static AudioFeedback: typeof HomeKitTypes.Generated.AudioFeedback;
-  static BatteryLevel: typeof HomeKitTypes.Generated.BatteryLevel;
-  static Brightness: typeof HomeKitTypes.Generated.Brightness;
-  static ButtonEvent: typeof HomeKitTypes.Remote.ButtonEvent;
-  static CarbonDioxideDetected: typeof HomeKitTypes.Generated.CarbonDioxideDetected;
-  static CarbonDioxideLevel: typeof HomeKitTypes.Generated.CarbonDioxideLevel;
-  static CarbonDioxidePeakLevel: typeof HomeKitTypes.Generated.CarbonDioxidePeakLevel;
-  static CarbonMonoxideDetected: typeof HomeKitTypes.Generated.CarbonMonoxideDetected;
-  static CarbonMonoxideLevel: typeof HomeKitTypes.Generated.CarbonMonoxideLevel;
-  static CarbonMonoxidePeakLevel: typeof HomeKitTypes.Generated.CarbonMonoxidePeakLevel;
-  static Category: typeof HomeKitTypes.Bridged.Category;
-  static ChargingState: typeof HomeKitTypes.Generated.ChargingState;
-  static ClosedCaptions: typeof HomeKitTypes.TV.ClosedCaptions;
-  static ColorTemperature: typeof HomeKitTypes.Generated.ColorTemperature;
-  static ConfigureBridgedAccessory: typeof HomeKitTypes.Bridged.ConfigureBridgedAccessory;
-  static ConfigureBridgedAccessoryStatus: typeof HomeKitTypes.Bridged.ConfigureBridgedAccessoryStatus;
-  static ConfiguredName: typeof HomeKitTypes.TV.ConfiguredName;
-  static ContactSensorState: typeof HomeKitTypes.Generated.ContactSensorState;
-  static CoolingThresholdTemperature: typeof HomeKitTypes.Generated.CoolingThresholdTemperature;
-  static CurrentAirPurifierState: typeof HomeKitTypes.Generated.CurrentAirPurifierState;
-  static CurrentAmbientLightLevel: typeof HomeKitTypes.Generated.CurrentAmbientLightLevel;
-  static CurrentDoorState: typeof HomeKitTypes.Generated.CurrentDoorState;
-  static CurrentFanState: typeof HomeKitTypes.Generated.CurrentFanState;
-  static CurrentHeaterCoolerState: typeof HomeKitTypes.Generated.CurrentHeaterCoolerState;
-  static CurrentHeatingCoolingState: typeof HomeKitTypes.Generated.CurrentHeatingCoolingState;
-  static CurrentHorizontalTiltAngle: typeof HomeKitTypes.Generated.CurrentHorizontalTiltAngle;
-  static CurrentHumidifierDehumidifierState: typeof HomeKitTypes.Generated.CurrentHumidifierDehumidifierState;
-  static CurrentMediaState: typeof HomeKitTypes.TV.CurrentMediaState;
-  static CurrentPosition: typeof HomeKitTypes.Generated.CurrentPosition;
-  static CurrentRelativeHumidity: typeof HomeKitTypes.Generated.CurrentRelativeHumidity;
-  static CurrentSlatState: typeof HomeKitTypes.Generated.CurrentSlatState;
-  static CurrentTemperature: typeof HomeKitTypes.Generated.CurrentTemperature;
-  static CurrentTiltAngle: typeof HomeKitTypes.Generated.CurrentTiltAngle;
-  static CurrentTime: typeof HomeKitTypes.Bridged.CurrentTime;
-  static CurrentVerticalTiltAngle: typeof HomeKitTypes.Generated.CurrentVerticalTiltAngle;
-  static CurrentVisibilityState: typeof HomeKitTypes.TV.CurrentVisibilityState;
-  static DayoftheWeek: typeof HomeKitTypes.Bridged.DayoftheWeek;
-  static DigitalZoom: typeof HomeKitTypes.Generated.DigitalZoom;
-  static DiscoverBridgedAccessories: typeof HomeKitTypes.Bridged.DiscoverBridgedAccessories;
-  static DiscoveredBridgedAccessories: typeof HomeKitTypes.Bridged.DiscoveredBridgedAccessories;
-  static DisplayOrder: typeof HomeKitTypes.TV.DisplayOrder;
-  static FilterChangeIndication: typeof HomeKitTypes.Generated.FilterChangeIndication;
-  static FilterLifeLevel: typeof HomeKitTypes.Generated.FilterLifeLevel;
-  static FirmwareRevision: typeof HomeKitTypes.Generated.FirmwareRevision;
-  static HardwareRevision: typeof HomeKitTypes.Generated.HardwareRevision;
-  static HeatingThresholdTemperature: typeof HomeKitTypes.Generated.HeatingThresholdTemperature;
-  static HoldPosition: typeof HomeKitTypes.Generated.HoldPosition;
-  static Hue: typeof HomeKitTypes.Generated.Hue;
-  static Identifier: typeof HomeKitTypes.TV.Identifier;
-  static Identify: typeof HomeKitTypes.Generated.Identify;
-  static ImageMirroring: typeof HomeKitTypes.Generated.ImageMirroring;
-  static ImageRotation: typeof HomeKitTypes.Generated.ImageRotation;
-  static InUse: typeof HomeKitTypes.Generated.InUse;
-  static InputDeviceType: typeof HomeKitTypes.TV.InputDeviceType;
-  static InputSourceType: typeof HomeKitTypes.TV.InputSourceType;
-  static IsConfigured: typeof HomeKitTypes.Generated.IsConfigured;
+  // Pattern below is for automatic detection of the section of defined characteristics. Used by the generator
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  public static AccessControlLevel: typeof AccessControlLevel;
+  public static AccessoryFlags: typeof AccessoryFlags;
+  public static AccessoryIdentifier: typeof AccessoryIdentifier;
+  public static Active: typeof Active;
+  public static ActiveIdentifier: typeof ActiveIdentifier;
+  public static ActivityInterval: typeof ActivityInterval;
+  public static AdministratorOnlyAccess: typeof AdministratorOnlyAccess;
+  public static AirParticulateDensity: typeof AirParticulateDensity;
+  public static AirParticulateSize: typeof AirParticulateSize;
+  public static AirQuality: typeof AirQuality;
+  public static AppMatchingIdentifier: typeof AppMatchingIdentifier;
+  public static AudioFeedback: typeof AudioFeedback;
+  public static BatteryLevel: typeof BatteryLevel;
+  public static Brightness: typeof Brightness;
+  public static ButtonEvent: typeof ButtonEvent;
+  public static CameraOperatingModeIndicator: typeof CameraOperatingModeIndicator;
+  public static CarbonDioxideDetected: typeof CarbonDioxideDetected;
+  public static CarbonDioxideLevel: typeof CarbonDioxideLevel;
+  public static CarbonDioxidePeakLevel: typeof CarbonDioxidePeakLevel;
+  public static CarbonMonoxideDetected: typeof CarbonMonoxideDetected;
+  public static CarbonMonoxideLevel: typeof CarbonMonoxideLevel;
+  public static CarbonMonoxidePeakLevel: typeof CarbonMonoxidePeakLevel;
   /**
-   * @deprecated Removed in iOS 11. Use ServiceLabelIndex instead.
+   * @deprecated Removed and not used anymore
    */
-  static LabelIndex: typeof HomeKitTypes.Generated.ServiceLabelIndex;
+  public static Category: typeof Category;
+  public static CCAEnergyDetectThreshold: typeof CCAEnergyDetectThreshold;
+  public static CCASignalDetectThreshold: typeof CCASignalDetectThreshold;
+  public static CharacteristicValueActiveTransitionCount: typeof CharacteristicValueActiveTransitionCount;
+  public static CharacteristicValueTransitionControl: typeof CharacteristicValueTransitionControl;
+  public static ChargingState: typeof ChargingState;
+  public static ClosedCaptions: typeof ClosedCaptions;
+  public static ColorTemperature: typeof ColorTemperature;
   /**
-   * @deprecated Removed in iOS 11. Use ServiceLabelNamespace instead.
+   * @deprecated Removed and not used anymore
    */
-  static LabelNamespace: typeof HomeKitTypes.Generated.ServiceLabelNamespace;
-  static LeakDetected: typeof HomeKitTypes.Generated.LeakDetected;
-  static LinkQuality: typeof HomeKitTypes.Bridged.LinkQuality;
-  static LockControlPoint: typeof HomeKitTypes.Generated.LockControlPoint;
-  static LockCurrentState: typeof HomeKitTypes.Generated.LockCurrentState;
-  static LockLastKnownAction: typeof HomeKitTypes.Generated.LockLastKnownAction;
-  static LockManagementAutoSecurityTimeout: typeof HomeKitTypes.Generated.LockManagementAutoSecurityTimeout;
-  static LockPhysicalControls: typeof HomeKitTypes.Generated.LockPhysicalControls;
-  static LockTargetState: typeof HomeKitTypes.Generated.LockTargetState;
-  static Logs: typeof HomeKitTypes.Generated.Logs;
-  static Manufacturer: typeof HomeKitTypes.Generated.Manufacturer;
-  static Model: typeof HomeKitTypes.Generated.Model;
-  static MotionDetected: typeof HomeKitTypes.Generated.MotionDetected;
-  static Mute: typeof HomeKitTypes.Generated.Mute;
-  static Name: typeof HomeKitTypes.Generated.Name;
-  static NightVision: typeof HomeKitTypes.Generated.NightVision;
-  static NitrogenDioxideDensity: typeof HomeKitTypes.Generated.NitrogenDioxideDensity;
-  static ObstructionDetected: typeof HomeKitTypes.Generated.ObstructionDetected;
-  static OccupancyDetected: typeof HomeKitTypes.Generated.OccupancyDetected;
-  static On: typeof HomeKitTypes.Generated.On;
-  static OpticalZoom: typeof HomeKitTypes.Generated.OpticalZoom;
-  static OutletInUse: typeof HomeKitTypes.Generated.OutletInUse;
-  static OzoneDensity: typeof HomeKitTypes.Generated.OzoneDensity;
-  static PM10Density: typeof HomeKitTypes.Generated.PM10Density;
-  static PM2_5Density: typeof HomeKitTypes.Generated.PM2_5Density;
-  static PairSetup: typeof HomeKitTypes.Generated.PairSetup;
-  static PairVerify: typeof HomeKitTypes.Generated.PairVerify;
-  static PairingFeatures: typeof HomeKitTypes.Generated.PairingFeatures;
-  static PairingPairings: typeof HomeKitTypes.Generated.PairingPairings;
-  static PasswordSetting: typeof HomeKitTypes.Generated.PasswordSetting;
-  static PictureMode: typeof HomeKitTypes.TV.PictureMode;
-  static PositionState: typeof HomeKitTypes.Generated.PositionState;
-  static PowerModeSelection: typeof HomeKitTypes.TV.PowerModeSelection;
-  static ProgramMode: typeof HomeKitTypes.Generated.ProgramMode;
-  static ProgrammableSwitchEvent: typeof HomeKitTypes.Generated.ProgrammableSwitchEvent;
-  static ProductData: typeof HomeKitTypes.Generated.ProductData;
-  static ProgrammableSwitchOutputState: typeof HomeKitTypes.Bridged.ProgrammableSwitchOutputState;
-  static Reachable: typeof HomeKitTypes.Bridged.Reachable;
-  static RelativeHumidityDehumidifierThreshold: typeof HomeKitTypes.Generated.RelativeHumidityDehumidifierThreshold;
-  static RelativeHumidityHumidifierThreshold: typeof HomeKitTypes.Generated.RelativeHumidityHumidifierThreshold;
-  static RelayControlPoint: typeof HomeKitTypes.Bridged.RelayControlPoint;
-  static RelayEnabled: typeof HomeKitTypes.Bridged.RelayEnabled;
-  static RelayState: typeof HomeKitTypes.Bridged.RelayState;
-  static RemainingDuration: typeof HomeKitTypes.Generated.RemainingDuration;
-  static RemoteKey: typeof HomeKitTypes.TV.RemoteKey;
-  static ResetFilterIndication: typeof HomeKitTypes.Generated.ResetFilterIndication;
-  static RotationDirection: typeof HomeKitTypes.Generated.RotationDirection;
-  static RotationSpeed: typeof HomeKitTypes.Generated.RotationSpeed;
-  static Saturation: typeof HomeKitTypes.Generated.Saturation;
-  static SecuritySystemAlarmType: typeof HomeKitTypes.Generated.SecuritySystemAlarmType;
-  static SecuritySystemCurrentState: typeof HomeKitTypes.Generated.SecuritySystemCurrentState;
-  static SecuritySystemTargetState: typeof HomeKitTypes.Generated.SecuritySystemTargetState;
-  static SelectedAudioStreamConfiguration: typeof HomeKitTypes.Remote.SelectedAudioStreamConfiguration;
+  public static ConfigureBridgedAccessory: typeof ConfigureBridgedAccessory;
   /**
-   * @deprecated Removed in iOS 11. Use SelectedRTPStreamConfiguration instead.
+   * @deprecated Removed and not used anymore
    */
-  static SelectedStreamConfiguration: typeof HomeKitTypes.Generated.SelectedRTPStreamConfiguration;
-  static SelectedRTPStreamConfiguration: typeof HomeKitTypes.Generated.SelectedRTPStreamConfiguration;
-  static SerialNumber: typeof HomeKitTypes.Generated.SerialNumber;
-  static ServiceLabelIndex: typeof HomeKitTypes.Generated.ServiceLabelIndex;
-  static ServiceLabelNamespace: typeof HomeKitTypes.Generated.ServiceLabelNamespace;
-  static SetDuration: typeof HomeKitTypes.Generated.SetDuration;
-  static SetupDataStreamTransport: typeof HomeKitTypes.DataStream.SetupDataStreamTransport;
-  static SetupEndpoints: typeof HomeKitTypes.Generated.SetupEndpoints;
-  static SiriInputType: typeof HomeKitTypes.Remote.SiriInputType;
-  static SlatType: typeof HomeKitTypes.Generated.SlatType;
-  static SleepDiscoveryMode: typeof HomeKitTypes.TV.SleepDiscoveryMode;
-  static SmokeDetected: typeof HomeKitTypes.Generated.SmokeDetected;
-  static SoftwareRevision: typeof HomeKitTypes.Bridged.SoftwareRevision;
-  static StatusActive: typeof HomeKitTypes.Generated.StatusActive;
-  static StatusFault: typeof HomeKitTypes.Generated.StatusFault;
-  static StatusJammed: typeof HomeKitTypes.Generated.StatusJammed;
-  static StatusLowBattery: typeof HomeKitTypes.Generated.StatusLowBattery;
-  static StatusTampered: typeof HomeKitTypes.Generated.StatusTampered;
-  static StreamingStatus: typeof HomeKitTypes.Generated.StreamingStatus;
-  static SulphurDioxideDensity: typeof HomeKitTypes.Generated.SulphurDioxideDensity;
-  static SupportedAudioStreamConfiguration: typeof HomeKitTypes.Generated.SupportedAudioStreamConfiguration;
-  static SupportedDataStreamTransportConfiguration: typeof HomeKitTypes.DataStream.SupportedDataStreamTransportConfiguration;
-  static SupportedRTPConfiguration: typeof HomeKitTypes.Generated.SupportedRTPConfiguration;
-  static SupportedVideoStreamConfiguration: typeof HomeKitTypes.Generated.SupportedVideoStreamConfiguration;
-  static SwingMode: typeof HomeKitTypes.Generated.SwingMode;
-  static TargetAirPurifierState: typeof HomeKitTypes.Generated.TargetAirPurifierState;
-  static TargetAirQuality: typeof HomeKitTypes.Generated.TargetAirQuality;
-  static TargetControlList: typeof HomeKitTypes.Remote.TargetControlList;
-  static TargetControlSupportedConfiguration: typeof HomeKitTypes.Remote.TargetControlSupportedConfiguration;
-  static TargetDoorState: typeof HomeKitTypes.Generated.TargetDoorState;
-  static TargetFanState: typeof HomeKitTypes.Generated.TargetFanState;
-  static TargetHeaterCoolerState: typeof HomeKitTypes.Generated.TargetHeaterCoolerState;
-  static TargetHeatingCoolingState: typeof HomeKitTypes.Generated.TargetHeatingCoolingState;
-  static TargetHorizontalTiltAngle: typeof HomeKitTypes.Generated.TargetHorizontalTiltAngle;
-  static TargetHumidifierDehumidifierState: typeof HomeKitTypes.Generated.TargetHumidifierDehumidifierState;
-  static TargetMediaState: typeof HomeKitTypes.TV.TargetMediaState;
-  static TargetPosition: typeof HomeKitTypes.Generated.TargetPosition;
-  static TargetRelativeHumidity: typeof HomeKitTypes.Generated.TargetRelativeHumidity;
-  static TargetSlatState: typeof HomeKitTypes.Generated.TargetSlatState;
-  static TargetTemperature: typeof HomeKitTypes.Generated.TargetTemperature;
-  static TargetTiltAngle: typeof HomeKitTypes.Generated.TargetTiltAngle;
-  static TargetVerticalTiltAngle: typeof HomeKitTypes.Generated.TargetVerticalTiltAngle;
-  static TargetVisibilityState: typeof HomeKitTypes.TV.TargetVisibilityState;
-  static TemperatureDisplayUnits: typeof HomeKitTypes.Generated.TemperatureDisplayUnits;
-  static TimeUpdate: typeof HomeKitTypes.Bridged.TimeUpdate;
-  static TunnelConnectionTimeout: typeof HomeKitTypes.Bridged.TunnelConnectionTimeout;
-  static TunneledAccessoryAdvertising: typeof HomeKitTypes.Bridged.TunneledAccessoryAdvertising;
-  static TunneledAccessoryConnected: typeof HomeKitTypes.Bridged.TunneledAccessoryConnected;
-  static TunneledAccessoryStateNumber: typeof HomeKitTypes.Bridged.TunneledAccessoryStateNumber;
-  static VOCDensity: typeof HomeKitTypes.Generated.VOCDensity;
-  static ValveType: typeof HomeKitTypes.Generated.ValveType;
-  static Version: typeof HomeKitTypes.Generated.Version;
-  static Volume: typeof HomeKitTypes.Generated.Volume;
-  static VolumeControlType: typeof HomeKitTypes.TV.VolumeControlType;
-  static VolumeSelector: typeof HomeKitTypes.TV.VolumeSelector;
-  static WaterLevel: typeof HomeKitTypes.Generated.WaterLevel;
-  static ManuallyDisabled: typeof HomeKitTypes.Generated.ManuallyDisabled;
-  static ThirdPartyCameraActive: typeof HomeKitTypes.Generated.ThirdPartyCameraActive;
-  static PeriodicSnapshotsActive: typeof HomeKitTypes.Generated.PeriodicSnapshotsActive;
-  static EventSnapshotsActive: typeof HomeKitTypes.Generated.EventSnapshotsActive;
-  static HomeKitCameraActive: typeof HomeKitTypes.Generated.HomeKitCameraActive;
-  static RecordingAudioActive: typeof HomeKitTypes.Generated.RecordingAudioActive;
-  static SupportedCameraRecordingConfiguration: typeof HomeKitTypes.Generated.SupportedCameraRecordingConfiguration;
-  static SupportedVideoRecordingConfiguration: typeof HomeKitTypes.Generated.SupportedVideoRecordingConfiguration;
-  static SupportedAudioRecordingConfiguration: typeof HomeKitTypes.Generated.SupportedAudioRecordingConfiguration;
-  static SelectedCameraRecordingConfiguration: typeof HomeKitTypes.Generated.SelectedCameraRecordingConfiguration;
-  static CameraOperatingModeIndicator: typeof HomeKitTypes.Generated.CameraOperatingModeIndicator;
+  public static ConfigureBridgedAccessoryStatus: typeof ConfigureBridgedAccessoryStatus;
+  public static ConfiguredName: typeof ConfiguredName;
+  public static ContactSensorState: typeof ContactSensorState;
+  public static CoolingThresholdTemperature: typeof CoolingThresholdTemperature;
+  public static CurrentAirPurifierState: typeof CurrentAirPurifierState;
+  public static CurrentAmbientLightLevel: typeof CurrentAmbientLightLevel;
+  public static CurrentDoorState: typeof CurrentDoorState;
+  public static CurrentFanState: typeof CurrentFanState;
+  public static CurrentHeaterCoolerState: typeof CurrentHeaterCoolerState;
+  public static CurrentHeatingCoolingState: typeof CurrentHeatingCoolingState;
+  public static CurrentHorizontalTiltAngle: typeof CurrentHorizontalTiltAngle;
+  public static CurrentHumidifierDehumidifierState: typeof CurrentHumidifierDehumidifierState;
+  public static CurrentMediaState: typeof CurrentMediaState;
+  public static CurrentPosition: typeof CurrentPosition;
+  public static CurrentRelativeHumidity: typeof CurrentRelativeHumidity;
+  public static CurrentSlatState: typeof CurrentSlatState;
+  public static CurrentTemperature: typeof CurrentTemperature;
+  public static CurrentTiltAngle: typeof CurrentTiltAngle;
   /**
-   * @deprecated Removed in iOS 13.4
+   * @deprecated Removed and not used anymore
    */
-  static DiagonalFieldOfView: typeof HomeKitTypes.Generated.DiagonalFieldOfView;
-  static NetworkClientProfileControl: typeof HomeKitTypes.Generated.NetworkClientProfileControl;
-  static NetworkClientStatusControl: typeof HomeKitTypes.Generated.NetworkClientStatusControl;
-  static RouterStatus: typeof HomeKitTypes.Generated.RouterStatus;
-  static SupportedRouterConfiguration: typeof HomeKitTypes.Generated.SupportedRouterConfiguration;
-  static WANConfigurationList: typeof HomeKitTypes.Generated.WANConfigurationList;
-  static WANStatusList: typeof HomeKitTypes.Generated.WANStatusList;
-  static ManagedNetworkEnable: typeof HomeKitTypes.Generated.ManagedNetworkEnable;
-  static NetworkAccessViolationControl: typeof HomeKitTypes.Generated.NetworkAccessViolationControl;
-  static WiFiSatelliteStatus: typeof HomeKitTypes.Generated.WiFiSatelliteStatus;
-  static WakeConfiguration: typeof HomeKitTypes.Generated.WakeConfiguration;
-  static SupportedTransferTransportConfiguration: typeof HomeKitTypes.Generated.SupportedTransferTransportConfiguration;
-  static SetupTransferTransport: typeof HomeKitTypes.Generated.SetupTransferTransport;
-
-
-  static ActivityInterval: typeof HomeKitTypes.Generated.ActivityInterval;
-  static CCAEnergyDetectThreshold: typeof HomeKitTypes.Generated.CCAEnergyDetectThreshold;
-  static CCASignalDetectThreshold: typeof HomeKitTypes.Generated.CCASignalDetectThreshold;
-  static CharacteristicValueTransitionControl: typeof HomeKitTypes.Generated.CharacteristicValueTransitionControl;
-  static SupportedCharacteristicValueTransitionConfiguration: typeof HomeKitTypes.Generated.SupportedCharacteristicValueTransitionConfiguration;
-  static CurrentTransport: typeof HomeKitTypes.Generated.CurrentTransport;
-  static DataStreamHAPTransport: typeof HomeKitTypes.Generated.DataStreamHAPTransport;
-  static DataStreamHAPTransportInterrupt: typeof HomeKitTypes.Generated.DataStreamHAPTransportInterrupt;
-  static EventRetransmissionMaximum: typeof HomeKitTypes.Generated.EventRetransmissionMaximum;
-  static EventTransmissionCounters: typeof HomeKitTypes.Generated.EventTransmissionCounters;
-  static HeartBeat: typeof HomeKitTypes.Generated.HeartBeat;
-  static MACRetransmissionMaximum: typeof HomeKitTypes.Generated.MACRetransmissionMaximum;
-  static MACTransmissionCounters: typeof HomeKitTypes.Generated.MACTransmissionCounters;
-  static OperatingStateResponse: typeof HomeKitTypes.Generated.OperatingStateResponse;
-  static Ping: typeof HomeKitTypes.Generated.Ping;
-  static ReceiverSensitivity: typeof HomeKitTypes.Generated.ReceiverSensitivity;
-  static ReceivedSignalStrengthIndication: typeof HomeKitTypes.Generated.ReceivedSignalStrengthIndication;
-  static SleepInterval: typeof HomeKitTypes.Generated.SleepInterval;
-  static SignalToNoiseRatio: typeof HomeKitTypes.Generated.SignalToNoiseRatio;
-  static SupportedDiagnosticsSnapshot: typeof HomeKitTypes.Generated.SupportedDiagnosticsSnapshot;
-  static TransmitPower: typeof HomeKitTypes.Generated.TransmitPower;
-  static TransmitPowerMaximum: typeof HomeKitTypes.Generated.TransmitPowerMaximum;
-  static VideoAnalysisActive: typeof HomeKitTypes.Generated.VideoAnalysisActive;
-  static WiFiCapabilities: typeof HomeKitTypes.Generated.WiFiCapabilities;
-  static WiFiConfigurationControl: typeof HomeKitTypes.Generated.WiFiConfigurationControl;
+  public static CurrentTime: typeof CurrentTime;
+  public static CurrentTransport: typeof CurrentTransport;
+  public static CurrentVerticalTiltAngle: typeof CurrentVerticalTiltAngle;
+  public static CurrentVisibilityState: typeof CurrentVisibilityState;
+  public static DataStreamHAPTransport: typeof DataStreamHAPTransport;
+  public static DataStreamHAPTransportInterrupt: typeof DataStreamHAPTransportInterrupt;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static DayoftheWeek: typeof DayoftheWeek;
+  public static DiagonalFieldOfView: typeof DiagonalFieldOfView;
+  public static DigitalZoom: typeof DigitalZoom;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static DiscoverBridgedAccessories: typeof DiscoverBridgedAccessories;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static DiscoveredBridgedAccessories: typeof DiscoveredBridgedAccessories;
+  public static DisplayOrder: typeof DisplayOrder;
+  public static EventRetransmissionMaximum: typeof EventRetransmissionMaximum;
+  public static EventSnapshotsActive: typeof EventSnapshotsActive;
+  public static EventTransmissionCounters: typeof EventTransmissionCounters;
+  public static FilterChangeIndication: typeof FilterChangeIndication;
+  public static FilterLifeLevel: typeof FilterLifeLevel;
+  public static FirmwareRevision: typeof FirmwareRevision;
+  public static FirmwareUpdateReadiness: typeof FirmwareUpdateReadiness;
+  public static FirmwareUpdateStatus: typeof FirmwareUpdateStatus;
+  public static HardwareRevision: typeof HardwareRevision;
+  public static HeartBeat: typeof HeartBeat;
+  public static HeatingThresholdTemperature: typeof HeatingThresholdTemperature;
+  public static HoldPosition: typeof HoldPosition;
+  public static HomeKitCameraActive: typeof HomeKitCameraActive;
+  public static Hue: typeof Hue;
+  public static Identifier: typeof Identifier;
+  public static Identify: typeof Identify;
+  public static ImageMirroring: typeof ImageMirroring;
+  public static ImageRotation: typeof ImageRotation;
+  public static InputDeviceType: typeof InputDeviceType;
+  public static InputSourceType: typeof InputSourceType;
+  public static InUse: typeof InUse;
+  public static IsConfigured: typeof IsConfigured;
+  public static LeakDetected: typeof LeakDetected;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static LinkQuality: typeof LinkQuality;
+  public static ListPairings: typeof ListPairings;
+  public static LockControlPoint: typeof LockControlPoint;
+  public static LockCurrentState: typeof LockCurrentState;
+  public static LockLastKnownAction: typeof LockLastKnownAction;
+  public static LockManagementAutoSecurityTimeout: typeof LockManagementAutoSecurityTimeout;
+  public static LockPhysicalControls: typeof LockPhysicalControls;
+  public static LockTargetState: typeof LockTargetState;
+  public static Logs: typeof Logs;
+  public static MACRetransmissionMaximum: typeof MACRetransmissionMaximum;
+  public static MACTransmissionCounters: typeof MACTransmissionCounters;
+  public static ManagedNetworkEnable: typeof ManagedNetworkEnable;
+  public static ManuallyDisabled: typeof ManuallyDisabled;
+  public static Manufacturer: typeof Manufacturer;
+  public static MaximumTransmitPower: typeof MaximumTransmitPower;
+  public static Model: typeof Model;
+  public static MotionDetected: typeof MotionDetected;
+  public static Mute: typeof Mute;
+  public static Name: typeof Name;
+  public static NetworkAccessViolationControl: typeof NetworkAccessViolationControl;
+  public static NetworkClientProfileControl: typeof NetworkClientProfileControl;
+  public static NetworkClientStatusControl: typeof NetworkClientStatusControl;
+  public static NightVision: typeof NightVision;
+  public static NitrogenDioxideDensity: typeof NitrogenDioxideDensity;
+  public static ObstructionDetected: typeof ObstructionDetected;
+  public static OccupancyDetected: typeof OccupancyDetected;
+  public static On: typeof On;
+  public static OperatingStateResponse: typeof OperatingStateResponse;
+  public static OpticalZoom: typeof OpticalZoom;
+  public static OutletInUse: typeof OutletInUse;
+  public static OzoneDensity: typeof OzoneDensity;
+  public static PairingFeatures: typeof PairingFeatures;
+  public static PairSetup: typeof PairSetup;
+  public static PairVerify: typeof PairVerify;
+  public static PasswordSetting: typeof PasswordSetting;
+  public static PeriodicSnapshotsActive: typeof PeriodicSnapshotsActive;
+  public static PictureMode: typeof PictureMode;
+  public static Ping: typeof Ping;
+  public static PM10Density: typeof PM10Density;
+  public static PM2_5Density: typeof PM2_5Density;
+  public static PositionState: typeof PositionState;
+  public static PowerModeSelection: typeof PowerModeSelection;
+  public static ProductData: typeof ProductData;
+  public static ProgrammableSwitchEvent: typeof ProgrammableSwitchEvent;
+  public static ProgrammableSwitchOutputState: typeof ProgrammableSwitchOutputState;
+  public static ProgramMode: typeof ProgramMode;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static Reachable: typeof Reachable;
+  public static ReceivedSignalStrengthIndication: typeof ReceivedSignalStrengthIndication;
+  public static ReceiverSensitivity: typeof ReceiverSensitivity;
+  public static RecordingAudioActive: typeof RecordingAudioActive;
+  public static RelativeHumidityDehumidifierThreshold: typeof RelativeHumidityDehumidifierThreshold;
+  public static RelativeHumidityHumidifierThreshold: typeof RelativeHumidityHumidifierThreshold;
+  public static RelayControlPoint: typeof RelayControlPoint;
+  public static RelayEnabled: typeof RelayEnabled;
+  public static RelayState: typeof RelayState;
+  public static RemainingDuration: typeof RemainingDuration;
+  public static RemoteKey: typeof RemoteKey;
+  public static ResetFilterIndication: typeof ResetFilterIndication;
+  public static RotationDirection: typeof RotationDirection;
+  public static RotationSpeed: typeof RotationSpeed;
+  public static RouterStatus: typeof RouterStatus;
+  public static Saturation: typeof Saturation;
+  public static SecuritySystemAlarmType: typeof SecuritySystemAlarmType;
+  public static SecuritySystemCurrentState: typeof SecuritySystemCurrentState;
+  public static SecuritySystemTargetState: typeof SecuritySystemTargetState;
+  public static SelectedAudioStreamConfiguration: typeof SelectedAudioStreamConfiguration;
+  public static SelectedCameraRecordingConfiguration: typeof SelectedCameraRecordingConfiguration;
+  public static SelectedRTPStreamConfiguration: typeof SelectedRTPStreamConfiguration;
+  public static SerialNumber: typeof SerialNumber;
+  public static ServiceLabelIndex: typeof ServiceLabelIndex;
+  public static ServiceLabelNamespace: typeof ServiceLabelNamespace;
+  public static SetDuration: typeof SetDuration;
+  public static SetupDataStreamTransport: typeof SetupDataStreamTransport;
+  public static SetupEndpoints: typeof SetupEndpoints;
+  public static SetupTransferTransport: typeof SetupTransferTransport;
+  public static SignalToNoiseRatio: typeof SignalToNoiseRatio;
+  public static SiriInputType: typeof SiriInputType;
+  public static SlatType: typeof SlatType;
+  public static SleepDiscoveryMode: typeof SleepDiscoveryMode;
+  public static SleepInterval: typeof SleepInterval;
+  public static SmokeDetected: typeof SmokeDetected;
+  public static SoftwareRevision: typeof SoftwareRevision;
+  public static StagedFirmwareVersion: typeof StagedFirmwareVersion;
+  public static StatusActive: typeof StatusActive;
+  public static StatusFault: typeof StatusFault;
+  public static StatusJammed: typeof StatusJammed;
+  public static StatusLowBattery: typeof StatusLowBattery;
+  public static StatusTampered: typeof StatusTampered;
+  public static StreamingStatus: typeof StreamingStatus;
+  public static SulphurDioxideDensity: typeof SulphurDioxideDensity;
+  public static SupportedAudioRecordingConfiguration: typeof SupportedAudioRecordingConfiguration;
+  public static SupportedAudioStreamConfiguration: typeof SupportedAudioStreamConfiguration;
+  public static SupportedCameraRecordingConfiguration: typeof SupportedCameraRecordingConfiguration;
+  public static SupportedCharacteristicValueTransitionConfiguration: typeof SupportedCharacteristicValueTransitionConfiguration;
+  public static SupportedDataStreamTransportConfiguration: typeof SupportedDataStreamTransportConfiguration;
+  public static SupportedDiagnosticsSnapshot: typeof SupportedDiagnosticsSnapshot;
+  public static SupportedFirmwareUpdateConfiguration: typeof SupportedFirmwareUpdateConfiguration;
+  public static SupportedRouterConfiguration: typeof SupportedRouterConfiguration;
+  public static SupportedRTPConfiguration: typeof SupportedRTPConfiguration;
+  public static SupportedTransferTransportConfiguration: typeof SupportedTransferTransportConfiguration;
+  public static SupportedVideoRecordingConfiguration: typeof SupportedVideoRecordingConfiguration;
+  public static SupportedVideoStreamConfiguration: typeof SupportedVideoStreamConfiguration;
+  public static SwingMode: typeof SwingMode;
+  public static TargetAirPurifierState: typeof TargetAirPurifierState;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static TargetAirQuality: typeof TargetAirQuality;
+  public static TargetControlList: typeof TargetControlList;
+  public static TargetControlSupportedConfiguration: typeof TargetControlSupportedConfiguration;
+  public static TargetDoorState: typeof TargetDoorState;
+  public static TargetFanState: typeof TargetFanState;
+  public static TargetHeaterCoolerState: typeof TargetHeaterCoolerState;
+  public static TargetHeatingCoolingState: typeof TargetHeatingCoolingState;
+  public static TargetHorizontalTiltAngle: typeof TargetHorizontalTiltAngle;
+  public static TargetHumidifierDehumidifierState: typeof TargetHumidifierDehumidifierState;
+  public static TargetMediaState: typeof TargetMediaState;
+  public static TargetPosition: typeof TargetPosition;
+  public static TargetRelativeHumidity: typeof TargetRelativeHumidity;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static TargetSlatState: typeof TargetSlatState;
+  public static TargetTemperature: typeof TargetTemperature;
+  public static TargetTiltAngle: typeof TargetTiltAngle;
+  public static TargetVerticalTiltAngle: typeof TargetVerticalTiltAngle;
+  public static TargetVisibilityState: typeof TargetVisibilityState;
+  public static TemperatureDisplayUnits: typeof TemperatureDisplayUnits;
+  public static ThirdPartyCameraActive: typeof ThirdPartyCameraActive;
+  public static ThreadControlPoint: typeof ThreadControlPoint;
+  public static ThreadNodeCapabilities: typeof ThreadNodeCapabilities;
+  public static ThreadOpenThreadVersion: typeof ThreadOpenThreadVersion;
+  public static ThreadStatus: typeof ThreadStatus;
+  /**
+   * @deprecated Removed and not used anymore
+   */
+  public static TimeUpdate: typeof TimeUpdate;
+  public static TransmitPower: typeof TransmitPower;
+  public static TunnelConnectionTimeout: typeof TunnelConnectionTimeout;
+  public static TunneledAccessoryAdvertising: typeof TunneledAccessoryAdvertising;
+  public static TunneledAccessoryConnected: typeof TunneledAccessoryConnected;
+  public static TunneledAccessoryStateNumber: typeof TunneledAccessoryStateNumber;
+  public static ValveType: typeof ValveType;
+  public static Version: typeof Version;
+  public static VideoAnalysisActive: typeof VideoAnalysisActive;
+  public static VOCDensity: typeof VOCDensity;
+  public static Volume: typeof Volume;
+  public static VolumeControlType: typeof VolumeControlType;
+  public static VolumeSelector: typeof VolumeSelector;
+  public static WakeConfiguration: typeof WakeConfiguration;
+  public static WANConfigurationList: typeof WANConfigurationList;
+  public static WANStatusList: typeof WANStatusList;
+  public static WaterLevel: typeof WaterLevel;
+  public static WiFiCapabilities: typeof WiFiCapabilities;
+  public static WiFiConfigurationControl: typeof WiFiConfigurationControl;
+  public static WiFiSatelliteStatus: typeof WiFiSatelliteStatus;
+  // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
   // NOTICE: when adding/changing properties, remember to possibly adjust the serialize/deserialize functions
+  public displayName: string;
+  public UUID: string;
   iid: Nullable<number> = null;
   value: Nullable<CharacteristicValue> = null;
+  /**
+   * @deprecated replaced by {@link statusCode}
+   * @private
+   */
   status: Nullable<Error> = null;
-  eventOnlyCharacteristic: boolean = false;
+  /**
+   * @private
+   */
+  statusCode: HAPStatus = HAPStatus.SUCCESS;
   props: CharacteristicProps;
-  subscriptions: number = 0;
 
-  'valid-values': number[];
-  'valid-values-range': [number, number];
+  /**
+   * The {@link onGet} handler
+   */
+  private getHandler?: CharacteristicGetHandler;
 
-  constructor(public displayName: string, public UUID: string, props?: CharacteristicProps) {
+  /**
+   * The {@link onSet} handler
+   */
+  private setHandler?: CharacteristicSetHandler;
+
+  private subscriptions: number = 0;
+  /**
+   * @private
+   */
+  additionalAuthorizationHandler?: AdditionalAuthorizationHandler;
+
+  public constructor(displayName: string, UUID: string, props: CharacteristicProps) {
     super();
-    // @ts-ignore
-    this.props = props || {
-      format: null,
-      unit: null,
-      minValue: null,
-      maxValue: null,
-      minStep: null,
-      perms: []
+    this.displayName = displayName;
+    this.UUID = UUID;
+    this.props = { // some weird defaults (with legacy constructor props was optional)
+      format: Formats.INT,
+      perms: [Perms.NOTIFY],
     };
 
-    this.setProps({}); // ensure sanity checks are called
+    this.setProps(props || {}); // ensure sanity checks are called
   }
 
   /**
-   * Copies the given properties to our props member variable,
-   * and returns 'this' for chaining.
+   * Accepts a function that will be called to retrieve the current value of a Characteristic.
+   * The function must return a valid Characteristic value for the Characteristic type.
+   * May optionally return a promise.
    *
-   * @param 'props' {
-   *   format: <one of Formats>,
-   *   unit: <one of Characteristic.Units>,
-   *   perms: array of [Characteristic.Perms] like [Characteristic.Perms.READ, Characteristic.Perms.WRITE]
-   *   ev: <Event Notifications Enabled Boolean>, (Optional)
-   *   description: <String of description>, (Optional)
-   *   minValue: <minimum value for numeric characteristics>, (Optional)
-   *   maxValue: <maximum value for numeric characteristics>, (Optional)
-   *   minStep: <smallest allowed increment for numeric characteristics>, (Optional)
-   *   maxLen: <max length of string up to 256>, (Optional default: 64)
-   *   maxDataLen: <max length of data>, (Optional default: 2097152)
-   *   valid-values: <array of numbers>, (Optional)
-   *   valid-values-range: <array of two numbers for start and end range> (Optional)
-   * }
+   * @example
+   * ```ts
+   * Characteristic.onGet(async () => {
+   *   return true;
+   * });
+   * ```
+   * @param handler
    */
-  setProps = (props: Partial<CharacteristicProps>) => {
-    for (var key in (props || {}))
-      if (Object.prototype.hasOwnProperty.call(props, key)) {
-        // @ts-ignore
-        this.props[key] = props[key];
+  public onGet(handler: CharacteristicGetHandler): Characteristic {
+    if (typeof handler !== 'function') {
+      this.characteristicWarning(`.onGet handler must be a function.`);
+      return this;
+    }
+    this.getHandler = handler;
+    return this;
+  }
+
+  /**
+   * Removes the {@link CharacteristicGetHandler} handler which was configured using {@link onGet}.
+   */
+  public removeOnGet(): Characteristic {
+    this.getHandler = undefined;
+    return this;
+  }
+
+  /**
+   * Accepts a function that will be called when setting the value of a Characteristic.
+   * If the characteristic supports {@link Perms.WRITE_RESPONSE} and the request requests a write response value,
+   * the returned value will be used.
+   * May optionally return a promise.
+   *
+   * @example
+   * ```ts
+   * Characteristic.onSet(async (value: CharacteristicValue) => {
+   *   console.log(value);
+   * });
+   * ```
+   * @param handler
+   */
+  public onSet(handler: CharacteristicSetHandler): Characteristic {
+    if (typeof handler !== 'function') {
+      this.characteristicWarning(`.onSet handler must be a function.`);
+      return this;
+    }
+    this.setHandler = handler;
+    return this;
+  }
+
+  /**
+   * Removes the {@link CharacteristicSetHandler} which was configured using {@link onSet}.
+   */
+  public removeOnSet(): Characteristic {
+    this.setHandler = undefined;
+    return this;
+  }
+
+  /**
+   * Updates the properties of this characteristic.
+   * Properties passed via the parameter will be set. Any parameter set to null will be deleted.
+   * See {@link CharacteristicProps}.
+   *
+   * @param props - Partial properties object with the desired updates.
+   */
+  public setProps(props: Partial<CharacteristicProps>): Characteristic {
+    assert(props, "props cannot be undefined when setting props");
+    // TODO calling setProps after publish doesn't lead to a increment in the current configuration number
+
+    // for every value "null" can be used to reset props, except for required props
+    if (props.format) {
+      this.props.format = props.format;
+    }
+    if (props.perms) {
+      assert(props.perms.length > 0, "characteristic prop perms cannot be empty array");
+      this.props.perms = props.perms;
+    }
+
+    if (props.unit !== undefined) {
+      this.props.unit = props.unit != null? props.unit: undefined;
+    }
+    if (props.description !== undefined) {
+      this.props.description = props.description != null? props.description: undefined;
+    }
+    if (props.minValue !== undefined) {
+      if (props.minValue === null) {
+        this.props.minValue = undefined;
+      } else if (!isNumericFormat(this.props.format)) {
+        this.characteristicWarning(
+          "Characteristic Property `minValue` can only be set for characteristics with numeric format, but not for " + this.props.format,
+          CharacteristicWarningType.ERROR_MESSAGE
+        )
+      } else if (isUnsignedNumericFormat(this.props.format) && props.minValue < numericLowerBound(this.props.format)) {
+        this.characteristicWarning(
+          "Characteristic Property `minValue` was set to " + props.minValue + ", but for numeric format " +
+          this.props.format + " minimum possible is " + numericLowerBound(this.props.format),
+          CharacteristicWarningType.ERROR_MESSAGE
+        )
+      } else {
+        this.props.minValue = props.minValue;
       }
+    }
+    if (props.maxValue !== undefined) {
+      if (props.maxValue === null) {
+        this.props.maxValue = undefined
+      } else if (!isNumericFormat(this.props.format)) {
+        this.characteristicWarning(
+          "Characteristic Property `maxValue` can only be set for characteristics with numeric format, but not for " + this.props.format,
+          CharacteristicWarningType.ERROR_MESSAGE
+        )
+      } else if (isUnsignedNumericFormat(this.props.format) && props.maxValue > numericUpperBound(this.props.format)) {
+        this.characteristicWarning(
+          "Characteristic Property `maxValue` was set to " + props.maxValue + ", but for numeric format " +
+          this.props.format + " maximum possible is " + numericUpperBound(this.props.format),
+          CharacteristicWarningType.ERROR_MESSAGE
+        )
+      } else {
+        this.props.maxValue = props.maxValue;
+      }
+    }
+    if (props.minStep !== undefined) {
+      if (props.minStep === null) {
+        this.props.minStep = undefined;
+      } else if (!isNumericFormat(this.props.format)) {
+        this.characteristicWarning(
+          "Characteristic Property `minStep` can only be set for characteristics with numeric format, but not for " + this.props.format,
+          CharacteristicWarningType.ERROR_MESSAGE
+        )
+      } else {
+        if (props.minStep < 1 && isIntegerNumericFormat(this.props.format)) {
+          this.characteristicWarning("Characteristic Property `minStep` was set to a value lower than 1, " +
+            "this will have no effect on format `" + this.props.format + "`!")
+        }
+
+        this.props.minStep = props.minStep;
+      }
+    }
+    if (props.maxLen !== undefined) {
+      if (props.maxLen === null) {
+        this.props.maxLen = undefined;
+      } else if (this.props.format !== Formats.STRING) {
+        this.characteristicWarning(
+          "Characteristic Property `maxLen` can only be set for characteristics with format `STRING`, but not for " + this.props.format,
+          CharacteristicWarningType.ERROR_MESSAGE
+        )
+      } else {
+        if (props.maxLen > 256) {
+          this.characteristicWarning("Characteristic Property string `maxLen` cannot be bigger than 256!");
+          props.maxLen = 256;
+        }
+        this.props.maxLen = props.maxLen;
+      }
+    }
+    if (props.maxDataLen !== undefined) {
+      if (props.maxDataLen === null) {
+        this.props.maxDataLen = undefined;
+      } else if (this.props.format !== Formats.DATA) {
+        this.characteristicWarning(
+          "Characteristic Property `maxDataLen` can only be set for characteristics with format `DATA`, but not for " + this.props.format,
+          CharacteristicWarningType.ERROR_MESSAGE
+        )
+      } else {
+        this.props.maxDataLen = props.maxDataLen;
+      }
+    }
+    if (props.validValues !== undefined) {
+      if (props.validValues === null) {
+        this.props.validValues = undefined;
+      } else if (!isNumericFormat(this.props.format)) {
+        this.characteristicWarning("Characteristic Property `validValues` was supplied for non numeric format " + this.props.format)
+      } else {
+        assert(props.validValues.length, "characteristic prop validValues cannot be empty array");
+        this.props.validValues = props.validValues;
+      }
+    }
+    if (props.validValueRanges !== undefined) {
+      if (props.validValueRanges === null) {
+        this.props.validValueRanges = undefined;
+      } else if (!isNumericFormat(this.props.format)) {
+        this.characteristicWarning("Characteristic Property `validValueRanges` was supplied for non numeric format " + this.props.format)
+      } else {
+        assert(props.validValueRanges.length === 2, "characteristic prop validValueRanges must have a length of 2");
+        this.props.validValueRanges = props.validValueRanges;
+      }
+    }
+    if (props.adminOnlyAccess !== undefined) {
+      this.props.adminOnlyAccess = props.adminOnlyAccess != null? props.adminOnlyAccess: undefined;
+    }
+
 
     if (this.props.minValue != null && this.props.maxValue != null) { // the eqeq instead of eqeqeq is important here
-      if (this.props.minValue > this.props.maxValue) { // preventing DOS attack, see https://github.com/homebridge/HAP-NodeJS/issues/690
+      if (this.props.minValue > this.props.maxValue) { // see https://github.com/homebridge/HAP-NodeJS/issues/690
         this.props.minValue = undefined;
         this.props.maxValue = undefined;
         throw new Error("Error setting CharacteristicsProps for '" + this.displayName + "': 'minValue' cannot be greater or equal the 'maxValue'!");
@@ -460,15 +1106,552 @@ export class Characteristic extends EventEmitter<Events> {
     return this;
   }
 
-  subscribe = () => {
+  /**
+   * This method can be used to gain a Iterator to loop over all valid values defined for this characteristic.
+   *
+   * The range of valid values can be defined using three different ways via the {@link CharacteristicProps} object
+   * (set via the {@link setProps} method):
+   *  * First method is to specifically list every valid value inside {@link CharacteristicProps.validValues}
+   *  * Second you can specify a range via {@link CharacteristicProps.minValue} and {@link CharacteristicProps.maxValue} (with optionally defining
+   *    {@link CharacteristicProps.minStep})
+   *  * And lastly you can specify a range via {@link CharacteristicProps.validValueRanges}
+   *  * Implicitly a valid value range is predefined for characteristics with Format {@link Formats.UINT8}, {@link Formats.UINT16},
+   *    {@link Formats.UINT32} and {@link Formats.UINT64}: starting by zero to their respective maximum number
+   *
+   * The method will automatically detect which type of valid values definition is used and provide
+   * the correct Iterator for that case.
+   *
+   * Note: This method is (obviously) only valid for numeric characteristics.
+   *
+   * @example
+   * ```ts
+   * // use the iterator to loop over every valid value...
+   * for (const value of characteristic.validValuesIterator()) {
+   *   // Insert logic to run for every
+   * }
+   *
+   * // ... or collect them in an array for storage or manipulation
+   * const validValues = Array.from(characteristic.validValuesIterator());
+   * ```
+   */
+  public validValuesIterator(): Iterable<number> {
+    return new ValidValuesIterable(this.props);
+  }
+
+  // noinspection JSUnusedGlobalSymbols
+  /**
+   * This method can be used to setup additional authorization for a characteristic.
+   * For one it adds the {@link Perms.ADDITIONAL_AUTHORIZATION} permission to the characteristic
+   * (if it wasn't already) to signal support for additional authorization to HomeKit.
+   * Additionally an {@link AdditionalAuthorizationHandler} is setup up which is called
+   * before a write request is performed.
+   *
+   * Additional Authorization Data can be added to SET request via a custom iOS App.
+   * Before hap-nodejs executes a write request it will call the {@link AdditionalAuthorizationHandler}
+   * with 'authData' supplied in the write request. The 'authData' is a base64 encoded string
+   * (or undefined if no authData was supplied).
+   * The {@link AdditionalAuthorizationHandler} must then return true or false to indicate if the write request
+   * is authorized and should be accepted.
+   *
+   * @param handler - Handler called to check additional authorization data.
+   */
+  public setupAdditionalAuthorization(handler: AdditionalAuthorizationHandler): void {
+    if (!this.props.perms.includes(Perms.ADDITIONAL_AUTHORIZATION)) {
+      this.props.perms.push(Perms.ADDITIONAL_AUTHORIZATION);
+    }
+    this.additionalAuthorizationHandler = handler;
+  }
+
+  /**
+   * Updates the current value of the characteristic.
+   *
+   * @param callback
+   * @param context
+   * @private use to return the current value on HAP requests
+   *
+   * @deprecated
+   */
+  getValue(callback?: CharacteristicGetCallback, context?: any): void {
+    this.handleGetRequest(undefined, context).then(value => {
+      if (callback) {
+        callback(null, value);
+      }
+    }, reason => {
+      if (callback) {
+        callback(reason);
+      }
+    });
+  }
+
+  /**
+   * This updates the value by calling the {@link CharacteristicEventTypes.SET} event handler associated with the characteristic.
+   * This acts the same way as when a HomeKit controller sends a /characteristics request to update the characteristic.
+   * A event notification will be sent to all connected HomeKit controllers which are registered
+   * to receive event notifications for this characteristic.
+   *
+   * This method behaves like a {@link updateValue} call with the addition that the own {@link CharacteristicEventTypes.SET}
+   * event handler is called.
+   *
+   * @param value - The new value.
+   */
+  setValue(value: CharacteristicValue): Characteristic
+  /**
+   * Sets the state of the characteristic to an errored state.
+   * If a onGet or GET handler is set up, the errored state will be ignored and the characteristic
+   * will always query the latest state by calling the provided handler.
+   *
+   * If a generic error object is supplied, the characteristic tries to extract a {@link HAPStatus} code
+   * from the error message string. If not possible a generic {@link HAPStatus.SERVICE_COMMUNICATION_FAILURE} will be used.
+   * If the supplied error object is an instance of {@link HapStatusError} the corresponding status will be used.
+   *
+   * @param error - The error object
+   */
+  setValue(error: HapStatusError | Error): Characteristic;
+  /**
+   * This updates the value by calling the {@link CharacteristicEventTypes.SET} event handler associated with the characteristic.
+   * This acts the same way as when a HomeKit controller sends a /characteristics request to update the characteristic.
+   * A event notification will be sent to all connected HomeKit controllers which are registered
+   * to receive event notifications for this characteristic.
+   *
+   * This method behaves like a {@link updateValue} call with the addition that the own {@link CharacteristicEventTypes.SET}
+   * event handler is called.
+   *
+   * @param value - The new value.
+   * @param callback - Deprecated parameter there to provide backwards compatibility. Called once the
+   *   {@link CharacteristicEventTypes.SET} event handler returns.
+   * @param context - Passed to the {@link CharacteristicEventTypes.SET} and {@link CharacteristicEventTypes.CHANGE} event handler.
+   * @deprecated Parameter callback is deprecated.
+   */
+  setValue(value: CharacteristicValue, callback?: CharacteristicSetCallback, context?: any): Characteristic
+  /**
+   * This updates the value by calling the {@link CharacteristicEventTypes.SET} event handler associated with the characteristic.
+   * This acts the same way as when a HomeKit controller sends a /characteristics request to update the characteristic.
+   * A event notification will be sent to all connected HomeKit controllers which are registered
+   * to receive event notifications for this characteristic.
+   *
+   * This method behaves like a {@link updateValue} call with the addition that the own {@link CharacteristicEventTypes.SET}
+   * event handler is called.
+   *
+   * @param value - The new value.
+   * @param context - Passed to the {@link CharacteristicEventTypes.SET} and {@link CharacteristicEventTypes.CHANGE} event handler.
+   */
+  setValue(value: CharacteristicValue, context?: any): Characteristic;
+  setValue(value: CharacteristicValue | Error, callback?: CharacteristicSetCallback, context?: any): Characteristic {
+    if (value instanceof Error) {
+      this.statusCode = value instanceof HapStatusError? value.hapStatus: extractHAPStatusFromError(value);
+      // noinspection JSDeprecatedSymbols
+      this.status = value;
+
+      if (callback) {
+        callback();
+      }
+      return this;
+    }
+
+    if (callback && !context && typeof callback !== "function") {
+      context = callback;
+      callback = undefined;
+    }
+
+    try {
+      value = this.validateUserInput(value)!;
+    } catch (error) {
+      this.characteristicWarning(error.stack + "", CharacteristicWarningType.ERROR_MESSAGE);
+      if (callback) {
+        callback(error);
+      }
+      return this;
+    }
+
+    this.handleSetRequest(value, undefined, context).then(value => {
+      if (callback) {
+        if (value) { // possible write response
+          callback(null, value);
+        } else {
+          callback(null);
+        }
+      }
+    }, reason => {
+      if (callback) {
+        callback(reason);
+      }
+    });
+
+    return this;
+  }
+
+  /**
+   * This updates the value of the characteristic. If the value changed, a event notification will be sent to all connected
+   * HomeKit controllers which are registered to receive event notifications for this characteristic.
+   *
+   * @param value - The new value or a `Error` or {@link HapStatusError}.
+   */
+  updateValue(value: Nullable<CharacteristicValue> | Error | HapStatusError): Characteristic;
+  /**
+   * Sets the state of the characteristic to an errored state.
+   * If a onGet or GET handler is set up, the errored state will be ignored and the characteristic
+   * will always query the latest state by calling the provided handler.
+   *
+   * If a generic error object is supplied, the characteristic tries to extract a {@link HAPStatus} code
+   * from the error message string. If not possible a generic {@link HAPStatus.SERVICE_COMMUNICATION_FAILURE} will be used.
+   * If the supplied error object is an instance of {@link HapStatusError} the corresponding status will be used.
+   *
+   * @param error - The error object
+   */
+  updateValue(error: Error | HapStatusError): Characteristic;
+  /**
+   * This updates the value of the characteristic. If the value changed, a event notification will be sent to all connected
+   * HomeKit controllers which are registered to receive event notifications for this characteristic.
+   *
+   * @param value - The new value.
+   * @param callback - Deprecated parameter there to provide backwards compatibility. Callback is called instantly.
+   * @param context - Passed to the {@link CharacteristicEventTypes.CHANGE} event handler.
+   * @deprecated Parameter callback is deprecated.
+   */
+  updateValue(value: Nullable<CharacteristicValue>, callback?: () => void, context?: any): Characteristic;
+  /**
+   * This updates the value of the characteristic. If the value changed, a event notification will be sent to all connected
+   * HomeKit controllers which are registered to receive event notifications for this characteristic.
+   *
+   * @param value - The new value.
+   * @param context - Passed to the {@link CharacteristicEventTypes.CHANGE} event handler.
+   */
+  updateValue(value: Nullable<CharacteristicValue>, context?: any): Characteristic;
+  updateValue(value: Nullable<CharacteristicValue> | Error | HapStatusError, callback?: () => void, context?: any): Characteristic {
+    if (value instanceof Error) {
+      this.statusCode = value instanceof HapStatusError? value.hapStatus: extractHAPStatusFromError(value);
+      // noinspection JSDeprecatedSymbols
+      this.status = value;
+
+      if (callback) {
+        callback();
+      }
+      return this;
+    }
+
+    if (callback && !context && typeof callback !== "function") {
+      context = callback;
+      callback = undefined;
+    }
+
+    try {
+      value = this.validateUserInput(value);
+    } catch (error) {
+      this.characteristicWarning(error.stack + "");
+      if (callback) {
+        callback();
+      }
+      return this;
+    }
+
+    this.statusCode = HAPStatus.SUCCESS;
+    // noinspection JSDeprecatedSymbols
+    this.status = null;
+
+    const oldValue = this.value;
+    this.value = value;
+
+    if (callback) {
+      callback();
+    }
+
+    this.emit(CharacteristicEventTypes.CHANGE, { originator: undefined, oldValue: oldValue, newValue: value, reason: ChangeReason.UPDATE, context: context });
+
+    return this; // for chaining
+  }
+
+  /**
+   * This method acts similarly to {@link updateValue} by setting the current value of the characteristic
+   * without calling any {@link CharacteristicEventTypes.SET} or {@link onSet} handlers.
+   * The difference is that this method forces a event notification sent (updateValue only sends one if the value changed).
+   * This is especially useful for characteristics like {@link Characteristic.ButtonEvent} or {@link Characteristic.ProgrammableSwitchEvent}.
+   *
+   * @param value - The new value.
+   * @param context - Passed to the {@link CharacteristicEventTypes.CHANGE} event handler.
+   */
+  public sendEventNotification(value: CharacteristicValue, context?: any): Characteristic {
+    this.statusCode = HAPStatus.SUCCESS;
+    // noinspection JSDeprecatedSymbols
+    this.status = null;
+
+    value = this.validateUserInput(value)!;
+    const oldValue = this.value;
+    this.value = value;
+
+    this.emit(CharacteristicEventTypes.CHANGE, { originator: undefined, oldValue: oldValue, newValue: value, reason: ChangeReason.EVENT, context: context });
+
+    return this; // for chaining
+  }
+
+  /**
+   * Called when a HAP requests wants to know the current value of the characteristic.
+   *
+   * @param connection - The HAP connection from which the request originated from.
+   * @param context - Deprecated parameter. There for backwards compatibility.
+   * @private Used by the Accessory to load the characteristic value
+   */
+  async handleGetRequest(connection?: HAPConnection, context?: any): Promise<Nullable<CharacteristicValue>> {
+    if (!this.props.perms.includes(Perms.PAIRED_READ)) { // check if we are allowed to read from this characteristic
+      throw HAPStatus.WRITE_ONLY_CHARACTERISTIC;
+    }
+
+    if (this.UUID === Characteristic.ProgrammableSwitchEvent.UUID) {
+      // special workaround for event only programmable switch event, which must always return null
+      return null;
+    }
+
+    if (this.getHandler) {
+      if (this.listeners(CharacteristicEventTypes.GET).length > 0) {
+        this.characteristicWarning(`Ignoring on('get') handler as onGet handler was defined instead.`);
+      }
+
+      try {
+        let value = await this.getHandler(context, connection);
+        this.statusCode = HAPStatus.SUCCESS;
+        // noinspection JSDeprecatedSymbols
+        this.status = null;
+
+        try {
+          value = this.validateUserInput(value);
+        } catch (error) {
+          this.characteristicWarning(`An illegal value was supplied by the read handler for characteristic: ${error.stack}`);
+          this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+          // noinspection JSDeprecatedSymbols
+          this.status = error;
+          return Promise.reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+        }
+
+        const oldValue = this.value;
+        this.value = value;
+
+        if (oldValue !== value) { // emit a change event if necessary
+          this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, reason: ChangeReason.READ, context: context });
+        }
+
+        return value;
+      } catch (error) {
+        if (typeof error === "number") {
+          this.statusCode = error;
+          // noinspection JSDeprecatedSymbols
+          this.status = new HapStatusError(error);
+        } else if (error instanceof HapStatusError) {
+          this.statusCode = error.hapStatus;
+          // noinspection JSDeprecatedSymbols
+          this.status = error;
+        } else {
+          this.characteristicWarning(`Unhandled error thrown inside read handler for characteristic: ${error.stack}`);
+          this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+          // noinspection JSDeprecatedSymbols
+          this.status = error;
+        }
+        throw this.statusCode;
+      }
+    }
+
+    if (this.listeners(CharacteristicEventTypes.GET).length === 0) {
+      if (this.statusCode) {
+        throw this.statusCode;
+      }
+
+      try {
+        return this.validateUserInput(this.value);
+      } catch (error) {
+        this.characteristicWarning(`An illegal value was supplied by setting \`value\` for characteristic: ${error.stack}`);
+        return Promise.reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      }
+    }
+
+    return new Promise((resolve, reject) => {
+      try {
+        this.emit(CharacteristicEventTypes.GET, once((status?: Error | HAPStatus | null, value?: Nullable<CharacteristicValue>) => {
+          if (status) {
+            if (typeof status === "number") {
+              this.statusCode = status;
+              // noinspection JSDeprecatedSymbols
+              this.status = new HapStatusError(status);
+            } else if (status instanceof HapStatusError) {
+              this.statusCode = status.hapStatus;
+              // noinspection JSDeprecatedSymbols
+              this.status = status;
+            } else {
+              debug("[%s] Received error from get handler %s", this.displayName, status.stack);
+              this.statusCode = extractHAPStatusFromError(status);
+              // noinspection JSDeprecatedSymbols
+              this.status = status;
+            }
+            reject(this.statusCode);
+            return;
+          }
+
+          this.statusCode = HAPStatus.SUCCESS;
+          // noinspection JSDeprecatedSymbols
+          this.status = null;
+
+          value = this.validateUserInput(value);
+          const oldValue = this.value;
+          this.value = value;
+
+          resolve(value);
+
+          if (oldValue !== value) { // emit a change event if necessary
+            this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, reason: ChangeReason.READ, context: context });
+          }
+        }), context, connection);
+      } catch (error) {
+        this.characteristicWarning(`Unhandled error thrown inside read handler for characteristic: ${error.stack}`);
+        this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+        // noinspection JSDeprecatedSymbols
+        this.status = error;
+        reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      }
+    });
+  }
+
+  /**
+   * Called when a HAP requests update the current value of the characteristic.
+   *
+   * @param value - The updated value
+   * @param connection - The connection from which the request originated from
+   * @param context - Deprecated parameter. There for backwards compatibility.
+   * @returns Promise resolve to void in normal operation. When characteristic supports write response, the
+   *  HAP request requests write response and the set handler returns a write response value, the respective
+   *  write response value is resolved.
+   * @private
+   */
+  async handleSetRequest(value: CharacteristicValue, connection?: HAPConnection, context?: any): Promise<CharacteristicValue | void> {
+    this.statusCode = HAPStatus.SUCCESS;
+    // noinspection JSDeprecatedSymbols
+    this.status = null;
+
+    if (connection !== undefined && !this.validClientSuppliedValue(value)) {
+      // if connection is undefined, the set "request" comes from the setValue method.
+      // for setValue a value of "null" is allowed and checked via validateUserInput.
+      return Promise.reject(HAPStatus.INVALID_VALUE_IN_REQUEST);
+    }
+
+    if (this.props.format === Formats.BOOL && typeof value === "number") {
+      // we already validate in validClientSuppliedValue that a number value can only be 0 or 1.
+      value = value === 1;
+    }
+
+    const oldValue = this.value;
+
+    if (this.setHandler) {
+      if (this.listeners(CharacteristicEventTypes.SET).length > 0) {
+        this.characteristicWarning(`Ignoring on('set') handler as onSet handler was defined instead.`);
+      }
+
+      try {
+        const writeResponse = await this.setHandler(value, context, connection);
+        this.statusCode = HAPStatus.SUCCESS;
+        // noinspection JSDeprecatedSymbols
+        this.status = null;
+
+        if (writeResponse != null && this.props.perms.includes(Perms.WRITE_RESPONSE)) {
+          this.value = this.validateUserInput(writeResponse);
+          return this.value!;
+        } else {
+          if (writeResponse != null) {
+            this.characteristicWarning(`SET handler returned write response value, though the characteristic doesn't support write response!`);
+          }
+          this.value = value;
+
+          this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, reason: ChangeReason.WRITE, context: context });
+          return;
+        }
+      } catch (error) {
+        if (typeof error === "number") {
+          this.statusCode = error;
+          // noinspection JSDeprecatedSymbols
+          this.status = new HapStatusError(error);
+        } else if (error instanceof HapStatusError) {
+          this.statusCode = error.hapStatus;
+          // noinspection JSDeprecatedSymbols
+          this.status = error;
+        } else {
+          this.characteristicWarning(`Unhandled error thrown inside write handler for characteristic: ${error.stack}`);
+          this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+          // noinspection JSDeprecatedSymbols
+          this.status = error;
+        }
+        throw this.statusCode;
+      }
+    }
+
+    if (this.listeners(CharacteristicEventTypes.SET).length === 0) {
+      this.value = value;
+      this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, reason: ChangeReason.WRITE, context: context });
+      return Promise.resolve();
+    } else {
+      return new Promise((resolve, reject) => {
+        try {
+          this.emit(CharacteristicEventTypes.SET, value, once((status?: Error | HAPStatus | null, writeResponse?: Nullable<CharacteristicValue>) => {
+            if (status) {
+              if (typeof status === "number") {
+                this.statusCode = status;
+                // noinspection JSDeprecatedSymbols
+                this.status = new HapStatusError(status);
+              } else if (status instanceof HapStatusError) {
+                this.statusCode = status.hapStatus;
+                // noinspection JSDeprecatedSymbols
+                this.status = status;
+              } else {
+                debug("[%s] Received error from set handler %s", this.displayName, status.stack);
+                this.statusCode = extractHAPStatusFromError(status);
+                // noinspection JSDeprecatedSymbols
+                this.status = status;
+              }
+              reject(this.statusCode);
+              return;
+            }
+
+            this.statusCode = HAPStatus.SUCCESS;
+            // noinspection JSDeprecatedSymbols
+            this.status = null;
+
+            if (writeResponse != null && this.props.perms.includes(Perms.WRITE_RESPONSE)) {
+              // support write response simply by letting the implementor pass the response as second argument to the callback
+              this.value = this.validateUserInput(writeResponse);
+              resolve(this.value!);
+            } else {
+              if (writeResponse != null) {
+                this.characteristicWarning(`SET handler returned write response value, though the characteristic doesn't support write response!`);
+              }
+              this.value = value;
+              resolve();
+
+              this.emit(CharacteristicEventTypes.CHANGE, { originator: connection, oldValue: oldValue, newValue: value, reason: ChangeReason.WRITE, context: context });
+            }
+          }), context, connection);
+        } catch (error) {
+          this.characteristicWarning(`Unhandled error thrown inside write handler for characteristic: ${error.stack}`);
+          this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+          // noinspection JSDeprecatedSymbols
+          this.status = error;
+          reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+        }
+      });
+    }
+  }
+
+  /**
+   * Called once a HomeKit controller subscribes to events of this characteristics.
+   * @private
+   */
+  subscribe(): void {
     if (this.subscriptions === 0) {
       this.emit(CharacteristicEventTypes.SUBSCRIBE);
     }
     this.subscriptions++;
   }
 
-  unsubscribe = () => {
-    var wasOne = this.subscriptions === 1;
+  /**
+   * Called once a HomeKit controller unsubscribe to events of this characteristics or a HomeKit controller
+   * which was subscribed to this characteristic disconnects.
+   * @private
+   */
+  unsubscribe(): void {
+    const wasOne = this.subscriptions === 1;
     this.subscriptions--;
     this.subscriptions = Math.max(this.subscriptions, 0);
     if (wasOne) {
@@ -476,237 +1659,24 @@ export class Characteristic extends EventEmitter<Events> {
     }
   }
 
-  getValue = (callback?: CharacteristicGetCallback, context?: any, connectionID?: SessionIdentifier) => {
-    // Handle special event only characteristics.
-    if (this.eventOnlyCharacteristic === true) {
-      if (callback) {
-        callback(null, null);
-      }
-      return;
-    }
-    if (this.listeners(CharacteristicEventTypes.GET).length > 0) {
-      // allow a listener to handle the fetching of this value, and wait for completion
-      this.emit(CharacteristicEventTypes.GET, once((err: Error, newValue: Nullable<CharacteristicValue>) => {
-        this.status = err;
-        if (err) {
-          // pass the error along to our callback
-          if (callback)
-            callback(err);
-        } else {
-          newValue = this.validateValue(newValue); //validateValue returns a value that has be cooerced into a valid value.
-          if (newValue === undefined || newValue === null)
-            newValue = this.getDefaultValue();
-          // getting the value was a success; we can pass it along and also update our cached value
-          var oldValue = this.value;
-          this.value = newValue;
-          if (callback)
-            callback(null, newValue);
-          // emit a change event if necessary
-          if (oldValue !== newValue)
-            this.emit(CharacteristicEventTypes.CHANGE, {oldValue: oldValue, newValue: newValue, context: context});
-        }
-      }), context, connectionID);
-    } else {
-      // no one is listening to the 'get' event, so just return the cached value
-      if (callback)
-        callback(this.status, this.value);
-    }
-  }
-
-  validateValue = (newValue: Nullable<CharacteristicValue>): Nullable<CharacteristicValue> => {
-    let isNumericType = false;
-    let minValue_resolved: number | undefined = 0;
-    let maxValue_resolved: number | undefined = 0;
-    let minStep_resolved = undefined;
-    let stepDecimals = 0;
-    switch (this.props.format) {
-      case Formats.INT:
-        minStep_resolved = 1;
-        minValue_resolved = -2147483648;
-        maxValue_resolved = 2147483647;
-        isNumericType = true;
-        break;
-      case Formats.FLOAT:
-        minStep_resolved = undefined;
-        minValue_resolved = undefined;
-        maxValue_resolved = undefined;
-        isNumericType = true;
-        break;
-      case Formats.UINT8:
-        minStep_resolved = 1;
-        minValue_resolved = 0;
-        maxValue_resolved = 255;
-        isNumericType = true;
-        break;
-      case Formats.UINT16:
-        minStep_resolved = 1;
-        minValue_resolved = 0;
-        maxValue_resolved = 65535;
-        isNumericType = true;
-        break;
-      case Formats.UINT32:
-        minStep_resolved = 1;
-        minValue_resolved = 0;
-        maxValue_resolved = 4294967295;
-        isNumericType = true;
-        break;
-      case Formats.UINT64:
-        minStep_resolved = 1;
-        minValue_resolved = 0;
-        maxValue_resolved = 18446744073709551615;
-        isNumericType = true;
-        break;
-      //All of the following datatypes return from this switch.
-      case Formats.BOOL:
-        // @ts-ignore
-        return (newValue == true); //We don't need to make sure this returns true or false
-        break;
-      case Formats.STRING:
-        let myString = newValue as string || ''; //If null or undefined or anything odd, make it a blank string
-        myString = String(myString);
-        var maxLength = this.props.maxLen;
-        if (maxLength === undefined)
-          maxLength = 64; //Default Max Length is 64.
-        if (myString.length > maxLength)
-          myString = myString.substring(0, maxLength); //Truncate strings that are too long
-        return myString; //We don't need to do any validation after having truncated the string
-        break;
-      case Formats.DATA:
-        var maxLength = this.props.maxDataLen;
-        if (maxLength === undefined)
-          maxLength = 2097152; //Default Max Length is 2097152.
-        //if (newValue.length>maxLength) //I don't know the best way to handle this since it's unknown binary data.
-        //I suspect that it will crash HomeKit for this bridge if the length is too long.
-        return newValue;
-        break;
-      case Formats.TLV8:
-        //Should we parse this to make sure the tlv8 is valid?
-        break;
-      default: //Datatype out of HAP Spec encountered. We'll assume the developer knows what they're doing.
-        return newValue;
-    };
-
-    if (isNumericType) {
-      if (newValue === false) {
-        return 0;
-      }
-      if (newValue === true) {
-        return 1;
-      }
-      if (isNaN(Number.parseInt(newValue as string, 10))) {
-        return this.value!;
-      } //This is not a number so we'll just pass out the last value.
-      if ((this.props.maxValue && !isNaN(this.props.maxValue)) && (this.props.maxValue !== null))
-        maxValue_resolved = this.props.maxValue;
-      if ((this.props.minValue && !isNaN(this.props.minValue)) && (this.props.minValue !== null))
-        minValue_resolved = this.props.minValue;
-      if ((this.props.minStep && !isNaN(this.props.minStep)) && (this.props.minStep !== null))
-        minStep_resolved = this.props.minStep;
-      if (newValue! < minValue_resolved!)
-        newValue = minValue_resolved!; //Fails Minimum Value Test
-      if (newValue! > maxValue_resolved!)
-        newValue = maxValue_resolved!; //Fails Maximum Value Test
-      if (minStep_resolved !== undefined) {
-        //Determine how many decimals we need to display
-        if (Math.floor(minStep_resolved) === minStep_resolved)
-          stepDecimals = 0;
-        else
-          stepDecimals = minStep_resolved.toString().split(".")[1].length || 0;
-        //Use Decimal to detemine the lowest value within the step.
-        try {
-          var decimalVal = new Decimal(parseFloat(newValue as string));
-          var decimalDiff = decimalVal.mod(minStep_resolved);
-          decimalVal = decimalVal.minus(decimalDiff);
-          if (stepDecimals === 0) {
-            newValue = parseInt(decimalVal.toFixed(0));
-          } else {
-            newValue = parseFloat(decimalVal.toFixed(stepDecimals)); //Convert it to a fixed decimal
-          }
-        } catch (e) {
-          return this.value!; //If we had an error, return the current value.
-        }
-      }
-      if (this['valid-values'] !== undefined)
-        if (!this['valid-values'].includes(newValue as number))
-          return this.value!; //Fails Valid Values Test
-      if (this['valid-values-range'] !== undefined) { //This is another way Apple has to handle min/max
-        if (newValue! < this['valid-values-range'][0])
-          newValue = this['valid-values-range'][0];
-        if (newValue! > this['valid-values-range'][1])
-          newValue = this['valid-values-range'][1];
-      }
-    }
-    return newValue;
-  }
-
-  setValue = (newValue: Nullable<CharacteristicValue | Error>, callback?: CharacteristicSetCallback, context?: any, connectionID?: SessionIdentifier): Characteristic => {
-    if (newValue instanceof Error) {
-      this.status = newValue;
-    } else {
-      this.status = null;
-    }
-    newValue = this.validateValue(newValue as Nullable<CharacteristicValue>); //validateValue returns a value that has be cooerced into a valid value.
-    var oldValue = this.value;
-    if (this.listeners(CharacteristicEventTypes.SET).length > 0) {
-      // allow a listener to handle the setting of this value, and wait for completion
-      this.emit(CharacteristicEventTypes.SET, newValue, once((err: Error, writeResponse?: CharacteristicValue) => {
-        this.status = err;
-        if (err) {
-          // pass the error along to our callback
-          if (callback)
-            callback(err);
-        } else {
-          if (writeResponse !== undefined && this.props.perms.includes(Perms.WRITE_RESPONSE))
-            newValue = writeResponse; // support write response simply by letting the implementor pass the response as second argument to the callback
-
-          if (newValue === undefined || newValue === null)
-            newValue = this.getDefaultValue() as CharacteristicValue;
-          // setting the value was a success; so we can cache it now
-          this.value = newValue as CharacteristicValue;
-          if (callback)
-            callback();
-          if (this.eventOnlyCharacteristic === true || oldValue !== newValue)
-            this.emit(CharacteristicEventTypes.CHANGE, {oldValue: oldValue, newValue: newValue, context: context});
-        }
-      }), context, connectionID);
-    } else {
-      if (newValue === undefined || newValue === null)
-        newValue = this.getDefaultValue() as CharacteristicValue;
-      // no one is listening to the 'set' event, so just assign the value blindly
-      this.value = newValue as string | number;
-      if (callback)
-        callback();
-      if (this.eventOnlyCharacteristic === true || oldValue !== newValue)
-        this.emit(CharacteristicEventTypes.CHANGE, {oldValue: oldValue, newValue: newValue, context: context});
-    }
-    return this; // for chaining
-  }
-
-  updateValue = (newValue: Nullable<CharacteristicValue | Error>, callback?: () => void, context?: any): Characteristic => {
-    if (newValue instanceof Error) {
-      this.status = newValue;
-    } else {
-      this.status = null;
-    }
-    newValue = this.validateValue(newValue as Nullable<CharacteristicValue>); //validateValue returns a value that has be cooerced into a valid value.
-    if (newValue === undefined || newValue === null)
-      newValue = this.getDefaultValue() as CharacteristicValue;
-    // no one is listening to the 'set' event, so just assign the value blindly
-    var oldValue = this.value;
-    this.value = newValue;
-    if (callback)
-      callback();
-    if (this.eventOnlyCharacteristic === true || oldValue !== newValue)
-      this.emit(CharacteristicEventTypes.CHANGE, {oldValue: oldValue, newValue: newValue, context: context});
-    return this; // for chaining
-  }
-
-  getDefaultValue = (): Nullable<CharacteristicValue> => {
+  protected getDefaultValue(): Nullable<CharacteristicValue> {
+    // noinspection JSDeprecatedSymbols
     switch (this.props.format) {
       case Formats.BOOL:
         return false;
       case Formats.STRING:
-        return "";
+        switch (this.UUID) {
+          case Characteristic.Manufacturer.UUID:
+            return "Default-Manufacturer";
+          case Characteristic.Model.UUID:
+            return "Default-Model";
+          case Characteristic.SerialNumber.UUID:
+            return "Default-SerialNumber";
+          case Characteristic.FirmwareRevision.UUID:
+            return "0.0.0";
+          default:
+              return "";
+        }
       case Formats.DATA:
         return null; // who knows!
       case Formats.TLV8:
@@ -716,126 +1686,560 @@ export class Characteristic extends EventEmitter<Events> {
       case Formats.ARRAY:
         return [];
       default:
-        return this.props.minValue || 0;
+        return this.props.minValue ?? 0;
     }
   }
 
-  _assignID = (identifierCache: IdentifierCache, accessoryName: string, serviceUUID: string, serviceSubtype?: string) => {
+  /**
+   * Checks if the value received from the HAP request is valid.
+   * If returned false the received value is not valid and {@link HAPStatus.INVALID_VALUE_IN_REQUEST}
+   * must be returned.
+   * @param value - Value supplied by the HomeKit controller
+   */
+  private validClientSuppliedValue(value?: Nullable<CharacteristicValue>): boolean {
+    if (value == undefined) {
+      return false;
+    }
+
+    let numericMin: number | undefined = undefined;
+    let numericMax: number | undefined = undefined;
+
+    switch (this.props.format) {
+      case Formats.BOOL:
+        if (!(typeof value === "boolean" || value == 0 || value == 1)) {
+          return false;
+        }
+        break;
+      case Formats.INT: // 32-bit signed int
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value !== "number") {
+          return false;
+        }
+
+        numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.INT));
+        numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(Formats.INT));
+        break;
+      case Formats.FLOAT:
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value !== "number") {
+          return false;
+        }
+
+        if (this.props.minValue != null) {
+          numericMin = this.props.minValue;
+        }
+        if (this.props.maxValue != null) {
+          numericMax = this.props.maxValue;
+        }
+        break;
+      case Formats.UINT8:
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value !== "number") {
+          return false;
+        }
+
+        numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.UINT8));
+        numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(Formats.UINT8));
+        break;
+      case Formats.UINT16:
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value !== "number") {
+          return false;
+        }
+
+        numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.UINT16));
+        numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(Formats.UINT16));
+        break;
+      case Formats.UINT32:
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value !== "number") {
+          return false;
+        }
+
+        numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.UINT32));
+        numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(Formats.UINT32));
+        break;
+      case Formats.UINT64:
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value !== "number") {
+          return false;
+        }
+
+        numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.UINT64));
+        numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(Formats.UINT64));
+        break;
+      case Formats.STRING: {
+        if (typeof value !== "string") {
+          return false;
+        }
+
+        const maxLength = this.props.maxLen != null? this.props.maxLen: 64; // default is 64; max is 256 which is set in setProps
+        if (value.length > maxLength) {
+          return false;
+        }
+        break;
+      }
+      case Formats.DATA: {
+        if (typeof value !== "string") {
+          return false;
+        }
+        // we don't validate base64 here
+
+        const maxLength = this.props.maxDataLen != null? this.props.maxDataLen: 0x200000; // default is 0x200000
+        if (value.length > maxLength) {
+          return false;
+        }
+        break;
+      }
+      case Formats.TLV8:
+        if (typeof value !== "string") {
+          return false;
+        }
+        break;
+    }
+
+    if (typeof value === "number") {
+      if (numericMin != null && value < numericMin) {
+        return false;
+      }
+      if (numericMax != null && value > numericMax) {
+        return false;
+      }
+
+      if (this.props.validValues && !this.props.validValues.includes(value)) {
+        return false;
+      }
+      if (this.props.validValueRanges && this.props.validValueRanges.length === 2) {
+        if (value < this.props.validValueRanges[0]) {
+          return false;
+        } else if (value > this.props.validValueRanges[1]) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Checks if the value received from the API call is valid.
+   * It adjust the value where it makes sense, prints a warning where values may be rejected with an error
+   * in the future and throws an error which can't be converted to a valid value.
+   *
+   * @param value - The value received from the API call
+   */
+  private validateUserInput(value?: Nullable<CharacteristicValue>): Nullable<CharacteristicValue> {
+    if (value === undefined) {
+      this.characteristicWarning(`characteristic was supplied illegal value: undefined! This might throw errors in the future!`);
+      return this.value; // don't change the value
+    } else if (value === null) {
+      if (this.UUID === Characteristic.Model.UUID || this.UUID === Characteristic.SerialNumber.UUID) { // mirrors the statement in case: Formats.STRING
+        this.characteristicWarning(new Error(`characteristic must have a non null value otherwise HomeKit will reject this accessory. Ignoring new value.`).stack + "", CharacteristicWarningType.ERROR_MESSAGE);
+        return this.value; // don't change the value
+      }
+
+      /**
+       * A short disclaimer here.
+       * null is actually a perfectly valid value for characteristics to have.
+       * The Home app will show "no response" for some characteristics for which it can't handle null
+       * but ultimately its valid and the developers decision what the return.
+       * BUT: out of history hap-nodejs did replaced null with the last known value and thus
+       * homebridge devs started to adopting this method as a way of not changing the value in a GET handler.
+       * As an intermediate step we kept the behavior but added a warning printed to the console.
+       * In a future update we will do the breaking change of return null below!
+       */
+
+      if (this.UUID.endsWith(BASE_UUID)) { // we have a apple defined characteristic (at least assuming nobody else uses the UUID namespace)
+        if (this.UUID === ProgrammableSwitchEvent.UUID) {
+          return value; // null is allowed as a value for ProgrammableSwitchEvent
+        }
+
+        this.characteristicWarning(`characteristic was supplied illegal value: null! Home App will reject null for Apple defined characteristics`);
+      }
+
+      // we currently allow null for any non custom defined characteristics
+      return this.value;
+    }
+
+
+    let numericMin: number | undefined = undefined;
+    let numericMax: number | undefined = undefined;
+    let stepValue: number | undefined = undefined;
+
+    switch (this.props.format) {
+      case Formats.BOOL: {
+        const type = typeof value;
+        if (type === "boolean") {
+          return value;
+        } else if (type === "number") {
+          return value === 1;
+        } else if (type === "string") {
+          return value === "1" || value === "true";
+        } else {
+          throw new Error("characteristic value expected boolean and received " + type);
+        }
+      }
+      case Formats.INT: {
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value === "string") {
+           // this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
+          value = parseInt(value, 10);
+        } else if (typeof value !== "number") {
+          throw new Error("characteristic value expected number and received " + typeof value);
+        }
+
+        numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.INT));
+        numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(Formats.INT));
+        stepValue = maxWithUndefined(this.props.minStep, 1);
+        break;
+      }
+      case Formats.FLOAT: {
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value === "string") {
+          // this.characteristicWarning(`characteristic was supplied illegal value: string instead of float. Supplying illegal values will throw errors in the future!`);
+          value = parseFloat(value);
+        } else if (typeof value !== "number") {
+          throw new Error("characteristic value expected float and received " + typeof value);
+        }
+
+        if (this.props.minValue != null) {
+          numericMin = this.props.minValue;
+        }
+        if (this.props.maxValue != null) {
+          numericMax = this.props.maxValue;
+        }
+        stepValue = this.props.minStep;
+        break;
+      }
+      case Formats.UINT8: {
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value === "string") {
+          // this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
+          value = parseInt(value, 10);
+        } else if (typeof value !== "number") {
+          throw new Error("characteristic value expected number and received " + typeof value);
+        }
+
+        numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.UINT8));
+        numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(Formats.UINT8));
+        stepValue = maxWithUndefined(this.props.minStep, 1);
+        break;
+      }
+      case Formats.UINT16: {
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value === "string") {
+          // this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
+          value = parseInt(value, 10);
+        } else if (typeof value !== "number") {
+          throw new Error("characteristic value expected number and received " + typeof value);
+        }
+
+        numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.UINT16));
+        numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(Formats.UINT16));
+        stepValue = maxWithUndefined(this.props.minStep, 1);
+        break;
+      }
+      case Formats.UINT32: {
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value === "string") {
+          // this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
+          value = parseInt(value, 10);
+        } else if (typeof value !== "number") {
+          throw new Error("characteristic value expected number and received " + typeof value);
+        }
+
+        numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.UINT32));
+        numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(Formats.UINT32));
+        stepValue = maxWithUndefined(this.props.minStep, 1);
+        break;
+      }
+      case Formats.UINT64: {
+        if (typeof value === "boolean") {
+          value = value? 1: 0;
+        } if (typeof value === "string") {
+          // this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
+          value = parseInt(value, 10);
+        } else if (typeof value !== "number") {
+          throw new Error("characteristic value expected number and received " + typeof value);
+        }
+
+        numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.UINT64));
+        numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(Formats.UINT64));
+        stepValue = maxWithUndefined(this.props.minStep, 1);
+        break;
+      }
+      case Formats.STRING: {
+        if (typeof value === "number") {
+          this.characteristicWarning(`characteristic was supplied illegal value: number instead of string. Supplying illegal values will throw errors in the future!`);
+          value = String(value);
+        } else if (typeof value !== "string") {
+          throw new Error("characteristic value expected string and received " + (typeof value));
+        }
+
+        if (value.length <= 1 && (this.UUID === Characteristic.Model.UUID || this.UUID === Characteristic.SerialNumber.UUID)) { // mirrors the case value = null at the beginning
+          this.characteristicWarning(new Error(`[${this.displayName}] characteristic must have a length of more than 1 character otherwise HomeKit will reject this accessory. Ignoring new value.`).stack + "", CharacteristicWarningType.ERROR_MESSAGE);
+          return this.value; // just return the current value
+        }
+
+        const maxLength = this.props.maxLen ?? 64; // default is 64 (max is 256 which is set in setProps)
+        if (value.length > maxLength) {
+          this.characteristicWarning(`characteristic was supplied illegal value: string '${value}' exceeded max length of ${maxLength}.`);
+          value = value.substring(0, maxLength);
+        }
+
+        return value;
+      }
+      case Formats.DATA:
+        if (typeof value !== "string") {
+          throw new Error("characteristic with DATA format must have string value");
+        }
+
+        if (this.props.maxDataLen != null && value.length > this.props.maxDataLen) {
+          // can't cut it as we would basically yet binary rubbish afterwards
+          throw new Error("characteristic with DATA format exceeds specified maxDataLen!");
+        }
+        return value;
+      case Formats.TLV8:
+        return value; // we trust that this is valid tlv8
+    }
+
+    if (typeof value === "number") {
+      if (numericMin != null && value < numericMin) {
+        this.characteristicWarning(`characteristic was supplied illegal value: number ${value} exceeded minimum of ${numericMin}.`);
+        value = numericMin;
+      }
+      if (numericMax != null && value > numericMax) {
+        this.characteristicWarning(`characteristic was supplied illegal value: number ${value} exceeded maximum of ${numericMax}.`);
+        value = numericMax;
+      }
+
+      if (this.props.validValues && !this.props.validValues.includes(value)) {
+        throw new Error(`characteristic value ${value} is not contained in valid values array!`);
+      }
+
+      if (this.props.validValueRanges && this.props.validValueRanges.length === 2) {
+        if (value < this.props.validValueRanges[0]) {
+          this.characteristicWarning(`characteristic was supplied illegal value: number ${value} not contained in valid value range of ${this.props.validValueRanges}. Supplying illegal values will throw errors in the future!`);
+          value = this.props.validValueRanges[0];
+        } else if (value > this.props.validValueRanges[1]) {
+          this.characteristicWarning(`characteristic was supplied illegal value: number ${value} not contained in valid value range of ${this.props.validValueRanges}. Supplying illegal values will throw errors in the future!`);
+          value = this.props.validValueRanges[1];
+        }
+      }
+
+      if (stepValue != undefined) {
+        if (stepValue === 1) {
+          value = Math.round(value);
+        } else if (stepValue > 1) {
+          value = Math.round(value);
+          value = value - (value % stepValue);
+        } // for stepValue < 1 rounding is done only when formatting the response. We can't store the "perfect" .step anyways
+      }
+    }
+
+    return value;
+  }
+
+  /**
+   * @private used to assign iid to characteristic
+   */
+  _assignID(identifierCache: IdentifierCache, accessoryName: string, serviceUUID: string, serviceSubtype?: string): void {
     // generate our IID based on our UUID
     this.iid = identifierCache.getIID(accessoryName, serviceUUID, serviceSubtype, this.UUID);
   }
 
-  /**
-   * Returns a JSON representation of this Accessory suitable for delivering to HAP clients.
-   */
-  toHAP = (opt?: ToHAPOptions) => {
-    // ensure our value fits within our constraints if present
-    var value = this.value;
-
-    if (this.props.minValue != null && value! < this.props.minValue)
-      value = this.props.minValue;
-    if (this.props.maxValue != null && value! > this.props.maxValue)
-      value = this.props.maxValue;
-    if (this.props.format != null) {
-      if (this.props.format === Formats.INT)
-        value = parseInt(value as string);
-      else if (this.props.format === Formats.UINT8)
-        value = parseInt(value as string);
-      else if (this.props.format === Formats.UINT16)
-        value = parseInt(value as string);
-      else if (this.props.format === Formats.UINT32)
-        value = parseInt(value as string);
-      else if (this.props.format === Formats.UINT64)
-        value = parseInt(value as string);
-      else if (this.props.format === Formats.FLOAT) {
-        value = parseFloat(value as string);
-        if (this.props.minStep != null) {
-          var pow = Math.pow(10, decimalPlaces(this.props.minStep));
-          value = Math.round(value * pow) / pow;
-        }
-      }
-    }
-    if (this.eventOnlyCharacteristic === true) {
-      // @ts-ignore
-      value = null;
-    }
-
-    const hap: Partial<HapCharacteristic> = {
-      iid: this.iid!,
-      type: toShortForm(this.UUID, HomeKitTypes.BASE_UUID),
-      perms: this.props.perms,
-      format: this.props.format,
-      value: value,
-      description: this.displayName,
-      // These properties used to be sent but do not seem to be used:
-      //
-      // events: false,
-      // bonjour: false
-    };
-    if (this.props.validValues != null && this.props.validValues.length > 0) {
-      hap['valid-values'] = this.props.validValues;
-    }
-    if (this.props.validValueRanges != null && this.props.validValueRanges.length > 0 && !(this.props.validValueRanges.length & 1)) {
-      hap['valid-values-range'] = this.props.validValueRanges;
-    }
-    // extra properties
-    if (this.props.unit != null)
-      hap.unit = this.props.unit;
-    if (this.props.maxValue != null)
-      hap.maxValue = this.props.maxValue;
-    if (this.props.minValue != null)
-      hap.minValue = this.props.minValue;
-    if (this.props.minStep != null)
-      hap.minStep = this.props.minStep;
-    // add maxLen if string length is > 64 bytes and trim to max 256 bytes
-    if (this.props.format === Formats.STRING) {
-      var str = Buffer.from(value as string, 'utf8'), len = str.byteLength;
-      if (len > 256) { // 256 bytes is the max allowed length
-        hap.value = str.toString('utf8', 0, 256);
-        hap.maxLen = 256;
-      } else if (len > 64) { // values below can be ommited
-        hap.maxLen = len;
-      }
-    }
-    // if we're not readable, omit the "value" property - otherwise iOS will complain about non-compliance
-    if (this.props.perms.indexOf(Perms.READ) == -1)
-      delete hap.value;
-    // delete the "value" property anyway if we were asked to
-    if (opt && opt.omitValues)
-      delete hap.value;
-    return hap as HapCharacteristic;
+  private characteristicWarning(message: string, type = CharacteristicWarningType.WARN_MESSAGE): void {
+    this.emit(CharacteristicEventTypes.CHARACTERISTIC_WARNING, type, message, new Error().stack);
   }
 
-  static serialize = (characteristic: Characteristic): SerializedCharacteristic => {
+  /**
+   * @param event
+   * @private
+   */
+  removeAllListeners(event?: string | symbol): this {
+    if (!event) {
+      this.removeOnGet();
+      this.removeOnSet();
+    }
+    return super.removeAllListeners(event);
+  }
+
+  /**
+   * @param characteristic
+   * @private
+   */
+  replaceBy(characteristic: Characteristic): void {
+    this.props = characteristic.props;
+    this.updateValue(characteristic.value);
+
+    const getListeners = characteristic.listeners(CharacteristicEventTypes.GET);
+    if (getListeners.length) {
+      // the callback can only be called once so we remove all old listeners
+      this.removeAllListeners(CharacteristicEventTypes.GET);
+      // @ts-expect-error
+      getListeners.forEach(listener => this.addListener(CharacteristicEventTypes.GET, listener));
+    }
+
+    this.removeOnGet();
+    if (characteristic.getHandler) {
+      this.onGet(characteristic.getHandler);
+    }
+
+    const setListeners = characteristic.listeners(CharacteristicEventTypes.SET);
+    if (setListeners.length) {
+      // the callback can only be called once so we remove all old listeners
+      this.removeAllListeners(CharacteristicEventTypes.SET);
+      // @ts-expect-error
+      setListeners.forEach(listener => this.addListener(CharacteristicEventTypes.SET, listener));
+    }
+
+    this.removeOnSet();
+    if (characteristic.setHandler) {
+      this.onSet(characteristic.setHandler);
+    }
+  }
+
+  /**
+   * Returns a JSON representation of this characteristic suitable for delivering to HAP clients.
+   * @private used to generate response to /accessories query
+   */
+  async toHAP(connection: HAPConnection, contactGetHandlers = true): Promise<CharacteristicJsonObject> {
+    const object = this.internalHAPRepresentation();
+
+    if (!this.props.perms.includes(Perms.PAIRED_READ)) {
+      object.value = undefined;
+    } else if (this.UUID === Characteristic.ProgrammableSwitchEvent.UUID) {
+      // special workaround for event only programmable switch event, which must always return null
+      object.value = null;
+    } else { // query the current value
+      const value = contactGetHandlers
+        ? await this.handleGetRequest(connection).catch(() => {
+          debug('[%s] Error getting value for characteristic on /accessories request. Returning cached value instead: %s', this.displayName, `${this.value}`);
+          return this.value; // use cached value
+        })
+        : this.value;
+
+      object.value = formatOutgoingCharacteristicValue(value, this.props);
+    }
+
+    return object;
+  }
+
+  /**
+   * Returns a JSON representation of this characteristic without the value.
+   * @private used to generate the config hash
+   */
+  internalHAPRepresentation(): CharacteristicJsonObject {
+    assert(this.iid,"iid cannot be undefined for characteristic '" + this.displayName + "'");
+    // TODO include the value for characteristics of the AccessoryInformation service
+    return {
+      type: toShortForm(this.UUID),
+      iid: this.iid!,
+      value: null,
+      perms: this.props.perms,
+      description: this.props.description || this.displayName,
+      format: this.props.format,
+      unit: this.props.unit,
+      minValue: this.props.minValue,
+      maxValue: this.props.maxValue,
+      minStep: this.props.minStep,
+      maxLen: this.props.maxLen,
+      maxDataLen: this.props.maxDataLen,
+      "valid-values": this.props.validValues,
+      "valid-values-range": this.props.validValueRanges,
+    }
+  }
+
+  /**
+   * Serialize characteristic into json string.
+   *
+   * @param characteristic - Characteristic object.
+   * @private used to store characteristic on disk
+   */
+  static serialize(characteristic: Characteristic): SerializedCharacteristic {
+    let constructorName: string | undefined;
+    if (characteristic.constructor.name !== "Characteristic") {
+      constructorName = characteristic.constructor.name;
+    }
+
     return {
       displayName: characteristic.displayName,
       UUID: characteristic.UUID,
-      props: clone({}, characteristic.props),
+      eventOnlyCharacteristic: characteristic.UUID === Characteristic.ProgrammableSwitchEvent.UUID, // support downgrades for now
+      constructorName: constructorName,
       value: characteristic.value,
-      eventOnlyCharacteristic: characteristic.eventOnlyCharacteristic,
+      props: clone({}, characteristic.props),
     }
-  };
+  }
 
-  static deserialize = (json: SerializedCharacteristic): Characteristic => {
-    const characteristic = new Characteristic(json.displayName, json.UUID, json.props);
+  /**
+   * Deserialize characteristic from json string.
+   *
+   * @param json - Json string representing a characteristic.
+   * @private used to recreate characteristic from disk
+   */
+  static deserialize(json: SerializedCharacteristic): Characteristic {
+    let characteristic: Characteristic;
+
+    if (json.constructorName && json.constructorName.charAt(0).toUpperCase() === json.constructorName.charAt(0)
+      && Characteristic[json.constructorName as keyof (typeof Characteristic)]) { // MUST start with uppercase character and must exist on Characteristic object
+      const constructor = Characteristic[json.constructorName as keyof (typeof Characteristic)] as { new(): Characteristic };
+      characteristic = new constructor();
+      characteristic.displayName = json.displayName;
+      characteristic.setProps(json.props);
+    } else {
+      characteristic = new Characteristic(json.displayName, json.UUID, json.props);
+    }
 
     characteristic.value = json.value;
-    characteristic.eventOnlyCharacteristic = json.eventOnlyCharacteristic;
 
     return characteristic;
-  };
+  }
 
 }
 
-// Mike Samuel
-// http://stackoverflow.com/questions/10454518/javascript-how-to-retrieve-the-number-of-decimals-of-a-string-number
-function decimalPlaces(num: number) {
-  var match = (''+num).match(/(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/);
-  if (!match) { return 0; }
-  return Math.max(
-       0,
-       // Number of digits right of decimal point.
-       (match[1] ? match[1].length : 0)
-       // Adjust for scientific notation.
-       - (match[2] ? +match[2] : 0));
+const numberPattern = /^-?\d+$/;
+function extractHAPStatusFromError(error: Error) {
+  let errorValue = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+
+  if (numberPattern.test(error.message)) {
+    const value = parseInt(error.message, 10);
+
+	if (IsKnownHAPStatusError(value)) {
+      errorValue = value;
+    }
+  }
+
+  return errorValue;
+}
+
+function maxWithUndefined(a?: number, b?: number): number | undefined {
+  if (a === undefined) {
+    return b;
+  } else if (b === undefined) {
+    return a;
+  } else {
+    return Math.max(a, b);
+  }
+}
+
+function minWithUndefined(a?: number, b?: number): number | undefined {
+  if (a === undefined) {
+    return b;
+  } else if (b === undefined) {
+    return a;
+  } else {
+    return Math.min(a, b);
+  }
 }
