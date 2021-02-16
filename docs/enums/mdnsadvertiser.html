@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>CameraControllerEvents | hap-nodejs</title>
+	<title>MDNSAdvertiser | hap-nodejs</title>
 	<meta name="description" content="Documentation for hap-nodejs">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -53,10 +53,10 @@
 					<a href="../modules.html">hap-nodejs</a>
 				</li>
 				<li>
-					<a href="cameracontrollerevents.html">CameraControllerEvents</a>
+					<a href="mdnsadvertiser.html">MDNSAdvertiser</a>
 				</li>
 			</ul>
-			<h1>Enumeration CameraControllerEvents</h1>
+			<h1>Enumeration MDNSAdvertiser</h1>
 		</div>
 	</div>
 </header>
@@ -70,8 +70,8 @@
 						<section class="tsd-index-section ">
 							<h3>Enumeration members</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="cameracontrollerevents.html#microphone_properties_changed" class="tsd-kind-icon">MICROPHONE_<wbr>PROPERTIES_<wbr>CHANGED</a></li>
-								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="cameracontrollerevents.html#speaker_properties_changed" class="tsd-kind-icon">SPEAKER_<wbr>PROPERTIES_<wbr>CHANGED</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="mdnsadvertiser.html#bonjour" class="tsd-kind-icon">BONJOUR</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="mdnsadvertiser.html#ciao" class="tsd-kind-icon">CIAO</a></li>
 							</ul>
 						</section>
 					</div>
@@ -80,35 +80,32 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Enumeration members</h2>
 				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
-					<a name="microphone_properties_changed" class="tsd-anchor"></a>
-					<h3>MICROPHONE_<wbr>PROPERTIES_<wbr>CHANGED</h3>
-					<div class="tsd-signature tsd-kind-icon">MICROPHONE_<wbr>PROPERTIES_<wbr>CHANGED<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = &quot;microphone-change&quot;</span></div>
+					<a name="bonjour" class="tsd-anchor"></a>
+					<h3>BONJOUR</h3>
+					<div class="tsd-signature tsd-kind-icon">BONJOUR<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = &quot;bonjour-hap&quot;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/eeaaa73/src/lib/controller/CameraController.ts#L98">lib/controller/CameraController.ts:98</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/eeaaa73/src/lib/Accessory.ts#L278">lib/Accessory.ts:278</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p> Emitted when the mute state or the volume changed. The Apple Home App typically does not set those values
-								except the mute state. When you adjust the volume in the Camera view it will reset the muted state if it was set previously.
-							The value of volume has nothing to do with the volume slider in the Camera view of the Home app.</p>
+							<p>Use the <code>bonjour-hap</code> module as advertiser.</p>
 						</div>
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
-					<a name="speaker_properties_changed" class="tsd-anchor"></a>
-					<h3>SPEAKER_<wbr>PROPERTIES_<wbr>CHANGED</h3>
-					<div class="tsd-signature tsd-kind-icon">SPEAKER_<wbr>PROPERTIES_<wbr>CHANGED<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = &quot;speaker-change&quot;</span></div>
+					<a name="ciao" class="tsd-anchor"></a>
+					<h3>CIAO</h3>
+					<div class="tsd-signature tsd-kind-icon">CIAO<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = &quot;ciao&quot;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/eeaaa73/src/lib/controller/CameraController.ts#L103">lib/controller/CameraController.ts:103</a></li>
+							<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/eeaaa73/src/lib/Accessory.ts#L274">lib/Accessory.ts:274</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>Emitted when the mute state or the volume changed. The Apple Home App typically does not set those values
-							except the mute state. When you unmute the device microphone it will reset the mute state if it was set previously.</p>
+							<p>Use the <code>@homebridge/ciao</code> module as advertiser.</p>
 						</div>
 					</div>
 				</section>
@@ -127,13 +124,13 @@
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-enum">
-						<a href="cameracontrollerevents.html" class="tsd-kind-icon">Camera<wbr>Controller<wbr>Events</a>
+						<a href="mdnsadvertiser.html" class="tsd-kind-icon">MDNSAdvertiser</a>
 						<ul>
 							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
-								<a href="cameracontrollerevents.html#microphone_properties_changed" class="tsd-kind-icon">MICROPHONE_<wbr>PROPERTIES_<wbr>CHANGED</a>
+								<a href="mdnsadvertiser.html#bonjour" class="tsd-kind-icon">BONJOUR</a>
 							</li>
 							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
-								<a href="cameracontrollerevents.html#speaker_properties_changed" class="tsd-kind-icon">SPEAKER_<wbr>PROPERTIES_<wbr>CHANGED</a>
+								<a href="mdnsadvertiser.html#ciao" class="tsd-kind-icon">CIAO</a>
 							</li>
 						</ul>
 					</li>
