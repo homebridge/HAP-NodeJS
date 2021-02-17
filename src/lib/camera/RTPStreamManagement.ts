@@ -1306,7 +1306,7 @@ export class RTPStreamManagement {
 
     return tlv.encode(
       SupportedAudioStreamConfigurationTypes.AUDIO_CODEC_CONFIGURATION, codecConfigurations,
-      SupportedAudioStreamConfigurationTypes.COMFORT_NOISE_SUPPORT, comfortNoise? 1: 1,
+      SupportedAudioStreamConfigurationTypes.COMFORT_NOISE_SUPPORT, comfortNoise? 1: 0,
     ).toString("base64");
   }
 
