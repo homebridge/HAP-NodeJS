@@ -52,6 +52,80 @@ describe('Characteristic', () => {
       setProps(0, 0);
       setProps(3, 3);
     });
+
+    it('should reject update to minValue and maxValue when they are out of range for format type', function () {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.UINT8,
+        perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+        minValue: 0,
+        maxValue: 255,
+      });
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      mock.mockReset();
+      characteristic.setProps({
+        minValue: 700,
+        maxValue: 1000
+      })
+
+      expect(characteristic.props.minValue).toEqual(0); // min for UINT8
+      expect(characteristic.props.maxValue).toEqual(255); // max for UINT8
+      expect(mock).toBeCalledTimes(2);
+
+      mock.mockReset();
+      characteristic.setProps({
+        minValue: -1000,
+        maxValue: -500
+      })
+
+      expect(characteristic.props.minValue).toEqual(0); // min for UINT8
+      expect(characteristic.props.maxValue).toEqual(255); // max for UINT8
+      expect(mock).toBeCalledTimes(2);
+
+      mock.mockReset();
+      characteristic.setProps({
+        minValue: 10,
+        maxValue: 1000
+      })
+
+      expect(characteristic.props.minValue).toEqual(10);
+      expect(characteristic.props.maxValue).toEqual(255); // max for UINT8
+      expect(mock).toBeCalledTimes(1);
+    });
+
+    it('should accept update to minValue and maxValue when they are in range for format type', function () {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.INT,
+        perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+        minValue: 0,
+        maxValue: 255,
+      });
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      mock.mockReset();
+      characteristic.setProps({
+        minValue: 10,
+        maxValue: 240
+      })
+
+      expect(characteristic.props.minValue).toEqual(10);
+      expect(characteristic.props.maxValue).toEqual(240);
+      expect(mock).toBeCalledTimes(0);
+
+      mock.mockReset();
+      characteristic.setProps({
+        minValue: -2147483648,
+        maxValue: 2147483647
+      })
+
+      expect(characteristic.props.minValue).toEqual(-2147483648);
+      expect(characteristic.props.maxValue).toEqual(2147483647);
+      expect(mock).toBeCalledTimes(0);
+    });
   });
 
   describe("validValuesIterator", () => {

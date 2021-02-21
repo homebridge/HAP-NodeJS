@@ -989,42 +989,69 @@ export class Characteristic extends EventEmitter {
     if (props.description !== undefined) {
       this.props.description = props.description != null? props.description: undefined;
     }
+
+    // check minValue is valid for the format type
     if (props.minValue !== undefined) {
       if (props.minValue === null) {
-        this.props.minValue = undefined;
+        props.minValue = undefined;
       } else if (!isNumericFormat(this.props.format)) {
         this.characteristicWarning(
           "Characteristic Property `minValue` can only be set for characteristics with numeric format, but not for " + this.props.format,
           CharacteristicWarningType.ERROR_MESSAGE
-        )
-      } else if (isUnsignedNumericFormat(this.props.format) && props.minValue < numericLowerBound(this.props.format)) {
-        this.characteristicWarning(
-          "Characteristic Property `minValue` was set to " + props.minValue + ", but for numeric format " +
-          this.props.format + " minimum possible is " + numericLowerBound(this.props.format),
-          CharacteristicWarningType.ERROR_MESSAGE
-        )
-      } else {
-        this.props.minValue = props.minValue;
+        );
+        props.minValue = undefined;
+      } else if (isUnsignedNumericFormat(this.props.format)) {
+        if (props.minValue < numericLowerBound(this.props.format)) {
+          this.characteristicWarning(
+            "Characteristic Property `minValue` was set to " + props.minValue + ", but for numeric format " +
+            this.props.format + " minimum possible is " + numericLowerBound(this.props.format),
+            CharacteristicWarningType.ERROR_MESSAGE
+          )
+          props.minValue = numericLowerBound(this.props.format);
+        } else if (props.minValue > numericUpperBound(this.props.format)) {
+          this.characteristicWarning(
+            "Characteristic Property `minValue` was set to " + props.minValue + ", but for numeric format " +
+            this.props.format + " maximum possible is " + numericUpperBound(this.props.format),
+            CharacteristicWarningType.ERROR_MESSAGE
+          );
+          props.minValue = numericLowerBound(this.props.format);
+        }
       }
+
+      this.props.minValue = props.minValue;
     }
+
+    // check maxValue is valid for the format type
     if (props.maxValue !== undefined) {
       if (props.maxValue === null) {
-        this.props.maxValue = undefined
+        props.maxValue = undefined
       } else if (!isNumericFormat(this.props.format)) {
         this.characteristicWarning(
           "Characteristic Property `maxValue` can only be set for characteristics with numeric format, but not for " + this.props.format,
           CharacteristicWarningType.ERROR_MESSAGE
-        )
-      } else if (isUnsignedNumericFormat(this.props.format) && props.maxValue > numericUpperBound(this.props.format)) {
-        this.characteristicWarning(
-          "Characteristic Property `maxValue` was set to " + props.maxValue + ", but for numeric format " +
-          this.props.format + " maximum possible is " + numericUpperBound(this.props.format),
-          CharacteristicWarningType.ERROR_MESSAGE
-        )
-      } else {
-        this.props.maxValue = props.maxValue;
+        );
+        props.maxValue = undefined;
+      } else if (isUnsignedNumericFormat(this.props.format)) {
+        if (props.maxValue > numericUpperBound(this.props.format)) {
+          this.characteristicWarning(
+            "Characteristic Property `maxValue` was set to " + props.maxValue + ", but for numeric format " +
+            this.props.format + " maximum possible is " + numericUpperBound(this.props.format),
+            CharacteristicWarningType.ERROR_MESSAGE
+          );
+          props.maxValue = numericUpperBound(this.props.format);
+        } else if (props.maxValue < numericLowerBound(this.props.format)) {
+          this.characteristicWarning(
+            "Characteristic Property `maxValue` was set to " + props.maxValue + ", but for numeric format " +
+            this.props.format + " minimum possible is " + numericUpperBound(this.props.format),
+            CharacteristicWarningType.ERROR_MESSAGE
+          );
+          props.maxValue = numericUpperBound(this.props.format);
+        }
       }
+
+      this.props.maxValue = props.maxValue;
     }
+
     if (props.minStep !== undefined) {
       if (props.minStep === null) {
         this.props.minStep = undefined;
