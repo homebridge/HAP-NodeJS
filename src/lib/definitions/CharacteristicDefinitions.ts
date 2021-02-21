@@ -1014,7 +1014,7 @@ export class CurrentTemperature extends Characteristic {
       format: Formats.FLOAT,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ],
       unit: Units.CELSIUS,
-      minValue: 0,
+      minValue: -273.15,
       maxValue: 100,
       minStep: 0.1,
     });
