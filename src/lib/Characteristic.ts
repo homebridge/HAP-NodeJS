@@ -1858,10 +1858,15 @@ export class Characteristic extends EventEmitter {
         }
 
         this.characteristicWarning(`characteristic was supplied illegal value: null! Home App will reject null for Apple defined characteristics`);
-      }
 
-      // we currently allow null for any non custom defined characteristics
-      return this.value;
+        // if the value has been set previously, return it now, otherwise continue with validation to have a default value set.
+        if (this.value !== null) {
+          return this.value;
+        }
+      } else {
+        // we currently allow null for any non custom defined characteristics
+        return value;
+      }
     }
 
     let numericMin: number | undefined = undefined;

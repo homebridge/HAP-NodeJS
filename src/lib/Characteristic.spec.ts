@@ -286,6 +286,313 @@ describe('Characteristic', () => {
       // @ts-expect-error
       expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
+
+    it("should validate boolean inputs", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.BOOL,
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+      });
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      characteristic.setValue(true);
+      expect(characteristic.value).toEqual(true);
+
+      characteristic.setValue(false);
+      expect(characteristic.value).toEqual(false);
+
+      characteristic.setValue(1);
+      expect(characteristic.value).toEqual(true);
+
+      characteristic.setValue(0);
+      expect(characteristic.value).toEqual(false);
+
+      characteristic.setValue("1");
+      expect(characteristic.value).toEqual(true);
+
+      characteristic.setValue("true");
+      expect(characteristic.value).toEqual(true);
+
+      characteristic.setValue("0");
+      expect(characteristic.value).toEqual(false);
+
+      characteristic.setValue("false");
+      expect(characteristic.value).toEqual(false);
+
+      characteristic.setValue({ some: 'object' });
+      expect(characteristic.value).toEqual(false);
+      expect(mock).toBeCalledTimes(1);
+    });
+
+    it("should validate boolean inputs when value is undefined", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.BOOL,
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+      });
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      characteristic.setValue(undefined as unknown as boolean);
+      expect(characteristic.value).toEqual(false);
+      expect(mock).toBeCalledTimes(1);
+    });
+
+    test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
+      "should validate %p inputs", (intType) => {
+        const characteristic = createCharacteristicWithProps({
+          format: intType,
+          perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+          minValue: 0,
+          maxValue: 100,
+        });
+
+        // @ts-ignore - spying on private property
+        const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+        characteristic.setValue(1);
+        expect(characteristic.value).toEqual(1);
+
+        // round to nearest valid value, trigger warning
+        mock.mockReset();
+        characteristic.setValue(-100);
+        expect(characteristic.value).toEqual(0);
+        expect(mock).toBeCalledTimes(1);
+
+        // round to nearest valid value, trigger warning
+        mock.mockReset();
+        characteristic.setValue(200);
+        expect(characteristic.value).toEqual(100);
+        expect(mock).toBeCalledTimes(1);
+
+        // parse string
+        mock.mockReset();
+        characteristic.setValue('50');
+        expect(characteristic.value).toEqual(50);
+        expect(mock).toBeCalledTimes(0);
+
+        // handle NaN string, restore last known value, trigger warning
+        mock.mockReset();
+        characteristic.setValue(50);
+        characteristic.setValue('SOME STRING');
+        expect(characteristic.value).toEqual(50);
+        expect(mock).toBeCalledTimes(1);
+
+        // handle object, restore last known value, trigger warning
+        mock.mockReset();
+        characteristic.setValue(50);
+        characteristic.setValue({ some: 'object' });
+        expect(characteristic.value).toEqual(50);
+        expect(mock).toBeCalledTimes(1);
+
+        // handle boolean - true -> 1
+        mock.mockReset();
+        characteristic.setValue(true);
+        expect(characteristic.value).toEqual(1);
+        expect(mock).toBeCalledTimes(0);
+
+        // handle boolean - false -> 0
+        mock.mockReset();
+        characteristic.setValue(false);
+        expect(characteristic.value).toEqual(0);
+        expect(mock).toBeCalledTimes(0);
+      }
+    );
+
+    test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
+      "should validate %p inputs when value is undefined", (intType) => {
+        const characteristic = createCharacteristicWithProps({
+          format: intType,
+          perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+          minValue: 0,
+          maxValue: 100,
+        });
+
+        // @ts-ignore - spying on private property
+        const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+        // undefined values should be set to the minValue if not yet set
+        mock.mockReset();
+        characteristic.setValue(undefined as unknown as boolean);
+        expect(characteristic.value).toEqual(0);
+        expect(mock).toBeCalledTimes(1);
+
+        // undefined values should be set to the existing value if set
+        mock.mockReset();
+        characteristic.setValue(50);
+        characteristic.setValue(undefined as unknown as boolean);
+        expect(characteristic.value).toEqual(50);
+        expect(mock).toBeCalledTimes(1);
+      }
+    );
+
+    test.each([Formats.INT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
+      "should round when a float is provided for %p inputs", (intType) => {
+        const characteristic = createCharacteristicWithProps({
+          format: intType,
+          perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+          minValue: 0,
+          maxValue: 100,
+        });
+
+        characteristic.setValue(99.5);
+        expect(characteristic.value).toEqual(100);
+
+        characteristic.setValue(0.1);
+        expect(characteristic.value).toEqual(0);
+      }
+    );
+
+    it("should not round floats for Formats.FLOAT", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.FLOAT,
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+        minValue: 0,
+        maxValue: 100,
+      });
+
+      characteristic.setValue(99.5);
+      expect(characteristic.value).toEqual(99.5);
+
+      characteristic.setValue(0.1);
+      expect(characteristic.value).toEqual(0.1);
+    });
+
+    it("should validate string inputs", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.STRING,
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+        maxLen: 15,
+      });
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      // valid string
+      mock.mockReset();
+      characteristic.setValue("ok string");
+      expect(characteristic.value).toEqual("ok string");
+      expect(mock).toBeCalledTimes(0);
+
+      // number - convert to string - trigger warning
+      mock.mockReset();
+      characteristic.setValue(12345);
+      expect(characteristic.value).toEqual("12345");
+      expect(mock).toBeCalledTimes(1);
+
+      // not a string or number, use last known good value and trigger warning
+      mock.mockReset();
+      characteristic.setValue("ok string");
+      characteristic.setValue({ ok: 'an object' });
+      expect(characteristic.value).toEqual("ok string");
+      expect(mock).toBeCalledTimes(1);
+
+      // max length exceeded
+      mock.mockReset();
+      characteristic.setValue("this string exceeds the max length allowed");
+      expect(characteristic.value).toEqual("this string exc");
+      expect(mock).toBeCalledTimes(1);
+    });
+
+    it("should validate string inputs when undefined", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.STRING,
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+        maxLen: 15,
+      });
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      // undefined values should be set to "undefined" of no valid value is set yet
+      mock.mockReset();
+      characteristic.setValue(undefined as unknown as boolean);
+      expect(characteristic.value).toEqual("undefined");
+      expect(mock).toBeCalledTimes(1);
+
+      // undefined values should revert back to last known good value if set
+      mock.mockReset();
+      characteristic.setValue("ok string");
+      characteristic.setValue(undefined as unknown as boolean);
+      expect(characteristic.value).toEqual("ok string");
+      expect(mock).toBeCalledTimes(1);
+    });
+
+    it("should validate data type intputs", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.DATA,
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+        maxDataLen: 15,
+      });
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      // valid data
+      mock.mockReset();
+      characteristic.setValue("some data");
+      expect(characteristic.value).toEqual("some data");
+      expect(mock).toBeCalledTimes(0);
+
+      // not valid data
+      mock.mockReset();
+      characteristic.setValue({ some: 'data' });
+      expect(mock).toBeCalledTimes(1);
+
+      // max length exceeded
+      mock.mockReset();
+      characteristic.setValue("this string exceeds the max length allowed");
+      expect(mock).toBeCalledTimes(1);
+    });
+
+    it("should handle null inputs correctly for Apple characteristics", () => {
+      const characteristic = new Characteristic('CurrentTemperature', Characteristic.CurrentTemperature.UUID, {
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+        format: Formats.FLOAT,
+        minValue: 0,
+        maxValue: 100,
+      });
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      // if the initial value is null, validation should set a valid default
+      mock.mockReset();
+      characteristic.setValue(null as unknown as boolean);
+      expect(characteristic.value).toEqual(0);
+      expect(mock).toBeCalledTimes(2);
+
+      // if the value has been previously set, and null is received, the previous value should be returned,
+      mock.mockReset();
+      characteristic.setValue(50);
+      characteristic.setValue(null as unknown as boolean);
+      expect(characteristic.value).toEqual(50);
+      expect(mock).toBeCalledTimes(1);
+    });
+
+    it("should handle null inputs correctly for non-Apple characteristics", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.INT,
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+      });
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      // if the initial value is null, still allow null for non-Apple characteristics
+      mock.mockReset();
+      characteristic.setValue(null as unknown as boolean);
+      expect(characteristic.value).toEqual(null);
+      expect(mock).toBeCalledTimes(0);
+
+      // if the value has been previously set, and null is received, still allow null for non-Apple characteristics
+      mock.mockReset();
+      characteristic.setValue(50);
+      characteristic.setValue(null as unknown as boolean);
+      expect(characteristic.value).toEqual(null);
+      expect(mock).toBeCalledTimes(0);
+    });
   });
 
   describe('#getDefaultValue()', () => {
@@ -615,267 +922,5 @@ describe('Characteristic', () => {
     });
 
   });
-
-  describe('#validateUserInput', () => {
-    it("should validate boolean inputs", () => {
-      const characteristic = createCharacteristicWithProps({
-        format: Formats.BOOL,
-        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE]
-      });
-
-      // @ts-ignore - spying on private property
-      const mock = jest.spyOn(characteristic, 'characteristicWarning');
-
-      characteristic.setValue(true);
-      expect(characteristic.value).toEqual(true);
-
-      characteristic.setValue(false);
-      expect(characteristic.value).toEqual(false);
-
-      characteristic.setValue(1);
-      expect(characteristic.value).toEqual(true);
-
-      characteristic.setValue(0);
-      expect(characteristic.value).toEqual(false);
-
-      characteristic.setValue("1");
-      expect(characteristic.value).toEqual(true);
-
-      characteristic.setValue("true");
-      expect(characteristic.value).toEqual(true);
-
-      characteristic.setValue("0");
-      expect(characteristic.value).toEqual(false);
-
-      characteristic.setValue("false");
-      expect(characteristic.value).toEqual(false);
-
-      characteristic.setValue({some: 'object'});
-      expect(characteristic.value).toEqual(false);
-      expect(mock).toBeCalledTimes(1);
-    });
-
-    it("should validate boolean inputs when value is undefined", () => {
-      const characteristic = createCharacteristicWithProps({
-        format: Formats.BOOL,
-        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE]
-      });
-
-      // @ts-ignore - spying on private property
-      const mock = jest.spyOn(characteristic, 'characteristicWarning');
-
-      characteristic.setValue(undefined as unknown as boolean);
-      expect(characteristic.value).toEqual(false);
-      expect(mock).toBeCalledTimes(1);
-    });
-
-    test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
-      "should validate %p inputs", (intType) => {
-        const characteristic = createCharacteristicWithProps({
-          format: intType,
-          perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-          minValue: 0,
-          maxValue: 100,
-        });
-
-        // @ts-ignore - spying on private property
-        const mock = jest.spyOn(characteristic, 'characteristicWarning');
-
-        characteristic.setValue(1);
-        expect(characteristic.value).toEqual(1);
-
-        // round to nearest valid value, trigger warning
-        mock.mockReset();
-        characteristic.setValue(-100);
-        expect(characteristic.value).toEqual(0);
-        expect(mock).toBeCalledTimes(1);
-
-        // round to nearest valid value, trigger warning
-        mock.mockReset();
-        characteristic.setValue(200);
-        expect(characteristic.value).toEqual(100);
-        expect(mock).toBeCalledTimes(1);
-
-        // parse string
-        mock.mockReset();
-        characteristic.setValue('50');
-        expect(characteristic.value).toEqual(50);
-        expect(mock).toBeCalledTimes(0);
-
-        // handle NaN string, restore last known value, trigger warning
-        mock.mockReset();
-        characteristic.setValue(50);
-        characteristic.setValue('SOME STRING');
-        expect(characteristic.value).toEqual(50);
-        expect(mock).toBeCalledTimes(1);
-
-        // handle object, restore last known value, trigger warning
-        mock.mockReset();
-        characteristic.setValue(50);
-        characteristic.setValue({ some: 'object' });
-        expect(characteristic.value).toEqual(50);
-        expect(mock).toBeCalledTimes(1);
-
-        // handle boolean - true -> 1
-        mock.mockReset();
-        characteristic.setValue(true);
-        expect(characteristic.value).toEqual(1);
-        expect(mock).toBeCalledTimes(0);
-
-        // handle boolean - false -> 0
-        mock.mockReset();
-        characteristic.setValue(false);
-        expect(characteristic.value).toEqual(0);
-        expect(mock).toBeCalledTimes(0);
-      }
-    );
-
-    test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
-      "should validate %p inputs when value is undefined", (intType) => {
-        const characteristic = createCharacteristicWithProps({
-          format: intType,
-          perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-          minValue: 0,
-          maxValue: 100,
-        });
-
-        // @ts-ignore - spying on private property
-        const mock = jest.spyOn(characteristic, 'characteristicWarning');
-
-        // undefined values should be set to the minValue if not yet set
-        mock.mockReset();
-        characteristic.setValue(undefined as unknown as boolean);
-        expect(characteristic.value).toEqual(0);
-        expect(mock).toBeCalledTimes(1);
-
-        // undefined values should be set to the existing value if set
-        mock.mockReset();
-        characteristic.setValue(50);
-        characteristic.setValue(undefined as unknown as boolean);
-        expect(characteristic.value).toEqual(50);
-        expect(mock).toBeCalledTimes(1);
-      }
-    );
-
-    test.each([Formats.INT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
-      "should round when a float is provided for %p inputs", (intType) => {
-        const characteristic = createCharacteristicWithProps({
-          format: intType,
-          perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-          minValue: 0,
-          maxValue: 100,
-        });
-
-        characteristic.setValue(99.5);
-        expect(characteristic.value).toEqual(100);
-
-        characteristic.setValue(0.1);
-        expect(characteristic.value).toEqual(0);
-      }
-    );
-
-    it("should not round floats for Formats.FLOAT", () => {
-      const characteristic = createCharacteristicWithProps({
-        format: Formats.FLOAT,
-        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-        minValue: 0,
-        maxValue: 100,
-      });
-
-      characteristic.setValue(99.5);
-      expect(characteristic.value).toEqual(99.5);
-
-      characteristic.setValue(0.1);
-      expect(characteristic.value).toEqual(0.1);
-    });
-
-    it("should validate string inputs", () => {
-      const characteristic = createCharacteristicWithProps({
-        format: Formats.STRING,
-        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-        maxLen: 15,
-      });
-
-      // @ts-ignore - spying on private property
-      const mock = jest.spyOn(characteristic, 'characteristicWarning');
-
-      // valid string
-      mock.mockReset();
-      characteristic.setValue("ok string");
-      expect(characteristic.value).toEqual("ok string");
-      expect(mock).toBeCalledTimes(0);
-
-      // number - convert to string - trigger warning
-      mock.mockReset();
-      characteristic.setValue(12345);
-      expect(characteristic.value).toEqual("12345");
-      expect(mock).toBeCalledTimes(1);
-
-      // not a string or number, use last known good value and trigger warning
-      mock.mockReset();
-      characteristic.setValue("ok string");
-      characteristic.setValue({ok: 'an object'});
-      expect(characteristic.value).toEqual("ok string");
-      expect(mock).toBeCalledTimes(1);
-
-      // max length exceeded
-      mock.mockReset();
-      characteristic.setValue("this string exceeds the max length allowed");
-      expect(characteristic.value).toEqual("this string exc");
-      expect(mock).toBeCalledTimes(1);
-    });
-
-    it("should validate string inputs when undefined", () => {
-      const characteristic = createCharacteristicWithProps({
-        format: Formats.STRING,
-        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-        maxLen: 15,
-      });
-
-      // @ts-ignore - spying on private property
-      const mock = jest.spyOn(characteristic, 'characteristicWarning');
-
-      // undefined values should be set to "undefined" of no valid value is set yet
-      mock.mockReset();
-      characteristic.setValue(undefined as unknown as boolean);
-      expect(characteristic.value).toEqual("undefined");
-      expect(mock).toBeCalledTimes(1);
-
-      // undefined values should revert back to last known good value if set
-      mock.mockReset();
-      characteristic.setValue("ok string");
-      characteristic.setValue(undefined as unknown as boolean);
-      expect(characteristic.value).toEqual("ok string");
-      expect(mock).toBeCalledTimes(1);
-    });
-
-    it("should validate data type intputs", () => {
-      const characteristic = createCharacteristicWithProps({
-        format: Formats.DATA,
-        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-        maxDataLen: 15,
-      });
-
-      // @ts-ignore - spying on private property
-      const mock = jest.spyOn(characteristic, 'characteristicWarning');
-
-      // valid data
-      mock.mockReset();
-      characteristic.setValue("some data");
-      expect(characteristic.value).toEqual("some data");
-      expect(mock).toBeCalledTimes(0);
-
-      // not valid data
-      mock.mockReset();
-      characteristic.setValue({some: 'data'});
-      expect(mock).toBeCalledTimes(1);
-
-      // max length exceeded
-      mock.mockReset();
-      characteristic.setValue("this string exceeds the max length allowed");
-      expect(mock).toBeCalledTimes(1);
-    });
-  });
-
 
 });
