@@ -1835,10 +1835,7 @@ export class Characteristic extends EventEmitter {
    * @param value - The value received from the API call
    */
   private validateUserInput(value?: Nullable<CharacteristicValue>): Nullable<CharacteristicValue> {
-    if (value === undefined) {
-      this.characteristicWarning(`characteristic was supplied illegal value: undefined! This might throw errors in the future!`);
-      return this.value; // don't change the value
-    } else if (value === null) {
+    if (value === null) {
       if (this.UUID === Characteristic.Model.UUID || this.UUID === Characteristic.SerialNumber.UUID) { // mirrors the statement in case: Formats.STRING
         this.characteristicWarning(`characteristic must have a non null value otherwise HomeKit will reject this accessory. Ignoring new value.`, CharacteristicWarningType.ERROR_MESSAGE);
         return this.value; // don't change the value
@@ -1867,23 +1864,21 @@ export class Characteristic extends EventEmitter {
       return this.value;
     }
 
-
     let numericMin: number | undefined = undefined;
     let numericMax: number | undefined = undefined;
     let stepValue: number | undefined = undefined;
 
     switch (this.props.format) {
       case Formats.BOOL: {
-        const type = typeof value;
-        if (type === "boolean") {
+        if (typeof value === "boolean") {
           return value;
-        } else if (type === "number") {
+        } else if (typeof value === "number") {
           return value === 1;
-        } else if (type === "string") {
+        } else if (typeof value === "string") {
           return value === "1" || value === "true";
         } else {
-          this.characteristicWarning("characteristic value expected boolean and received " + type, CharacteristicWarningType.ERROR_MESSAGE);
-          return Boolean(value);
+          this.characteristicWarning("characteristic value expected boolean and received " + typeof value, CharacteristicWarningType.ERROR_MESSAGE);
+          return false;
         }
       }
       case Formats.INT: {
@@ -1895,7 +1890,7 @@ export class Characteristic extends EventEmitter {
           value = parseInt(value, 10);
         }
         if (typeof value === 'number' && isNaN(value)) {
-          this.characteristicWarning("characteristic was supplied value: NaN");
+          this.characteristicWarning("characteristic was expected valid number and received NaN");
           value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
         if (typeof value !== "number") {
@@ -1917,7 +1912,7 @@ export class Characteristic extends EventEmitter {
           value = parseFloat(value);
         }
         if (typeof value === 'number' && isNaN(value)) {
-          this.characteristicWarning("characteristic was supplied value: NaN");
+          this.characteristicWarning("characteristic was expected valid number and received NaN");
           value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
         if (typeof value !== "number") {
@@ -1943,7 +1938,7 @@ export class Characteristic extends EventEmitter {
           value = parseInt(value, 10);
         }
         if (typeof value === 'number' && isNaN(value)) {
-          this.characteristicWarning("characteristic was supplied value: NaN");
+          this.characteristicWarning("characteristic was expected valid number and received NaN");
           value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
         if (typeof value !== "number") {
@@ -1965,7 +1960,7 @@ export class Characteristic extends EventEmitter {
           value = parseInt(value, 10);
         }
         if (typeof value === 'number' && isNaN(value)) {
-          this.characteristicWarning("characteristic was supplied value: NaN");
+          this.characteristicWarning("characteristic was expected valid number and received NaN");
           value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
         if (typeof value !== "number") {
@@ -1987,7 +1982,7 @@ export class Characteristic extends EventEmitter {
           value = parseInt(value, 10);
         }
         if (typeof value === 'number' && isNaN(value)) {
-          this.characteristicWarning("characteristic was supplied value: NaN");
+          this.characteristicWarning("characteristic was expected valid number and received NaN");
           value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
         if (typeof value !== "number") {
@@ -2009,7 +2004,7 @@ export class Characteristic extends EventEmitter {
           value = parseInt(value, 10);
         }
         if (typeof value === 'number' && isNaN(value)) {
-          this.characteristicWarning("characteristic was supplied value: NaN");
+          this.characteristicWarning("characteristic was expected valid number and received NaN");
           value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
         if (typeof value !== "number") {
@@ -2056,6 +2051,10 @@ export class Characteristic extends EventEmitter {
         }
         return value;
       case Formats.TLV8:
+        if (value === undefined) {
+          this.characteristicWarning(`characteristic was supplied illegal value: undefined`);
+          return this.value;
+        }
         return value; // we trust that this is valid tlv8
     }
 
@@ -2092,6 +2091,12 @@ export class Characteristic extends EventEmitter {
           value = value - (value % stepValue);
         } // for stepValue < 1 rounding is done only when formatting the response. We can't store the "perfect" .step anyways
       }
+    }
+
+    // hopefully it shouldn't get to this point
+    if (value === undefined) {
+      this.characteristicWarning(`characteristic was supplied illegal value: undefined`, CharacteristicWarningType.ERROR_MESSAGE);
+      return this.value;
     }
 
     return value;
