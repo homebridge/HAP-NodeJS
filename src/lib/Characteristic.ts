@@ -1256,7 +1256,7 @@ export class Characteristic extends EventEmitter {
     try {
       value = this.validateUserInput(value)!;
     } catch (error) {
-      this.characteristicWarning(error.stack + "", CharacteristicWarningType.ERROR_MESSAGE);
+      this.characteristicWarning(error.message + "", CharacteristicWarningType.ERROR_MESSAGE);
       if (callback) {
         callback(error);
       }
@@ -1337,7 +1337,7 @@ export class Characteristic extends EventEmitter {
     try {
       value = this.validateUserInput(value);
     } catch (error) {
-      this.characteristicWarning(error.stack + "");
+      this.characteristicWarning(error.message + "");
       if (callback) {
         callback();
       }
@@ -1840,7 +1840,7 @@ export class Characteristic extends EventEmitter {
       return this.value; // don't change the value
     } else if (value === null) {
       if (this.UUID === Characteristic.Model.UUID || this.UUID === Characteristic.SerialNumber.UUID) { // mirrors the statement in case: Formats.STRING
-        this.characteristicWarning(new Error(`characteristic must have a non null value otherwise HomeKit will reject this accessory. Ignoring new value.`).stack + "", CharacteristicWarningType.ERROR_MESSAGE);
+        this.characteristicWarning(`characteristic must have a non null value otherwise HomeKit will reject this accessory. Ignoring new value.`, CharacteristicWarningType.ERROR_MESSAGE);
         return this.value; // don't change the value
       }
 
@@ -1882,17 +1882,25 @@ export class Characteristic extends EventEmitter {
         } else if (type === "string") {
           return value === "1" || value === "true";
         } else {
-          throw new Error("characteristic value expected boolean and received " + type);
+          this.characteristicWarning("characteristic value expected boolean and received " + type, CharacteristicWarningType.ERROR_MESSAGE);
+          return Boolean(value);
         }
       }
       case Formats.INT: {
         if (typeof value === "boolean") {
-          value = value? 1: 0;
-        } if (typeof value === "string") {
+          value = value ? 1: 0;
+        }
+        if (typeof value === "string") {
            // this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
           value = parseInt(value, 10);
-        } else if (typeof value !== "number") {
-          throw new Error("characteristic value expected number and received " + typeof value);
+        }
+        if (typeof value === 'number' && isNaN(value)) {
+          this.characteristicWarning("characteristic was supplied value: NaN");
+          value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
+        }
+        if (typeof value !== "number") {
+          this.characteristicWarning("characteristic value expected number and received " + typeof value, CharacteristicWarningType.ERROR_MESSAGE);
+          value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
 
         numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.INT));
@@ -1903,11 +1911,18 @@ export class Characteristic extends EventEmitter {
       case Formats.FLOAT: {
         if (typeof value === "boolean") {
           value = value? 1: 0;
-        } if (typeof value === "string") {
+        }
+        if (typeof value === "string") {
           // this.characteristicWarning(`characteristic was supplied illegal value: string instead of float. Supplying illegal values will throw errors in the future!`);
           value = parseFloat(value);
-        } else if (typeof value !== "number") {
-          throw new Error("characteristic value expected float and received " + typeof value);
+        }
+        if (typeof value === 'number' && isNaN(value)) {
+          this.characteristicWarning("characteristic was supplied value: NaN");
+          value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
+        }
+        if (typeof value !== "number") {
+          this.characteristicWarning("characteristic value expected float and received " + typeof value, CharacteristicWarningType.ERROR_MESSAGE);
+          value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
 
         if (this.props.minValue != null) {
@@ -1922,11 +1937,18 @@ export class Characteristic extends EventEmitter {
       case Formats.UINT8: {
         if (typeof value === "boolean") {
           value = value? 1: 0;
-        } if (typeof value === "string") {
+        }
+        if (typeof value === "string") {
           // this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
           value = parseInt(value, 10);
-        } else if (typeof value !== "number") {
-          throw new Error("characteristic value expected number and received " + typeof value);
+        }
+        if (typeof value === 'number' && isNaN(value)) {
+          this.characteristicWarning("characteristic was supplied value: NaN");
+          value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
+        }
+        if (typeof value !== "number") {
+          this.characteristicWarning("characteristic value expected number and received " + typeof value, CharacteristicWarningType.ERROR_MESSAGE);
+          value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
 
         numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.UINT8));
@@ -1937,11 +1959,18 @@ export class Characteristic extends EventEmitter {
       case Formats.UINT16: {
         if (typeof value === "boolean") {
           value = value? 1: 0;
-        } if (typeof value === "string") {
+        }
+        if (typeof value === "string") {
           // this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
           value = parseInt(value, 10);
-        } else if (typeof value !== "number") {
-          throw new Error("characteristic value expected number and received " + typeof value);
+        }
+        if (typeof value === 'number' && isNaN(value)) {
+          this.characteristicWarning("characteristic was supplied value: NaN");
+          value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
+        }
+        if (typeof value !== "number") {
+          this.characteristicWarning("characteristic value expected number and received " + typeof value, CharacteristicWarningType.ERROR_MESSAGE);
+          value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
 
         numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.UINT16));
@@ -1952,11 +1981,18 @@ export class Characteristic extends EventEmitter {
       case Formats.UINT32: {
         if (typeof value === "boolean") {
           value = value? 1: 0;
-        } if (typeof value === "string") {
+        }
+        if (typeof value === "string") {
           // this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
           value = parseInt(value, 10);
-        } else if (typeof value !== "number") {
-          throw new Error("characteristic value expected number and received " + typeof value);
+        }
+        if (typeof value === 'number' && isNaN(value)) {
+          this.characteristicWarning("characteristic was supplied value: NaN");
+          value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
+        }
+        if (typeof value !== "number") {
+          this.characteristicWarning("characteristic value expected number and received " + typeof value, CharacteristicWarningType.ERROR_MESSAGE);
+          value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
 
         numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.UINT32));
@@ -1967,11 +2003,18 @@ export class Characteristic extends EventEmitter {
       case Formats.UINT64: {
         if (typeof value === "boolean") {
           value = value? 1: 0;
-        } if (typeof value === "string") {
+        }
+        if (typeof value === "string") {
           // this.characteristicWarning(`characteristic was supplied illegal value: string instead of number. Supplying illegal values will throw errors in the future!`);
           value = parseInt(value, 10);
-        } else if (typeof value !== "number") {
-          throw new Error("characteristic value expected number and received " + typeof value);
+        }
+        if (typeof value === 'number' && isNaN(value)) {
+          this.characteristicWarning("characteristic was supplied value: NaN");
+          value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
+        }
+        if (typeof value !== "number") {
+          this.characteristicWarning("characteristic value expected number and received " + typeof value, CharacteristicWarningType.ERROR_MESSAGE);
+          value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
 
         numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(Formats.UINT64));
@@ -1983,12 +2026,14 @@ export class Characteristic extends EventEmitter {
         if (typeof value === "number") {
           this.characteristicWarning(`characteristic was supplied illegal value: number instead of string. Supplying illegal values will throw errors in the future!`);
           value = String(value);
-        } else if (typeof value !== "string") {
-          throw new Error("characteristic value expected string and received " + (typeof value));
+        }
+        if (typeof value !== "string") {
+          this.characteristicWarning("characteristic value expected string and received " + (typeof value));
+          value = typeof this.value === 'string' ? this.value : value + '';
         }
 
         if (value.length <= 1 && (this.UUID === Characteristic.Model.UUID || this.UUID === Characteristic.SerialNumber.UUID)) { // mirrors the case value = null at the beginning
-          this.characteristicWarning(new Error(`[${this.displayName}] characteristic must have a length of more than 1 character otherwise HomeKit will reject this accessory. Ignoring new value.`).stack + "", CharacteristicWarningType.ERROR_MESSAGE);
+          this.characteristicWarning(`[${this.displayName}] characteristic must have a length of more than 1 character otherwise HomeKit will reject this accessory. Ignoring new value.`, CharacteristicWarningType.ERROR_MESSAGE);
           return this.value; // just return the current value
         }
 
@@ -2025,7 +2070,8 @@ export class Characteristic extends EventEmitter {
       }
 
       if (this.props.validValues && !this.props.validValues.includes(value)) {
-        throw new Error(`characteristic value ${value} is not contained in valid values array!`);
+        this.characteristicWarning(`characteristic value ${value} is not contained in valid values array!`, CharacteristicWarningType.ERROR_MESSAGE);
+        return this.props.validValues.includes(this.value as number) ? this.value : (this.props.validValues[0] || 0);
       }
 
       if (this.props.validValueRanges && this.props.validValueRanges.length === 2) {
