@@ -707,6 +707,55 @@ describe('Characteristic', () => {
       expect(characteristic.getDefaultValue()).toEqual([]);
     });
 
+    it('should get the correct default value a UINT8 property without minValue', () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.UINT8,
+        perms: [Perms.TIMED_WRITE, Perms.PAIRED_READ],
+      });
+      // @ts-expect-error
+      expect(characteristic.getDefaultValue()).toEqual(0);
+      expect(characteristic.value).toEqual(null); // null if never set
+    });
+
+    it('should get the correct default value a UINT8 property with minValue', () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.UINT8,
+        perms: [Perms.TIMED_WRITE, Perms.PAIRED_READ],
+        minValue: 50,
+      });
+      // @ts-expect-error
+      expect(characteristic.getDefaultValue()).toEqual(50);
+      expect(characteristic.value).toEqual(null); // null if never set
+    });
+
+    it('should get the correct default value a INT property without minValue', () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.INT,
+        perms: [Perms.TIMED_WRITE, Perms.PAIRED_READ],
+      });
+      // @ts-expect-error
+      expect(characteristic.getDefaultValue()).toEqual(0);
+      expect(characteristic.value).toEqual(null); // null if never set
+    });
+
+    it('should get the correct default value a INT property with minValue', () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.INT,
+        perms: [Perms.TIMED_WRITE, Perms.PAIRED_READ],
+        minValue: 50,
+      });
+      // @ts-expect-error
+      expect(characteristic.getDefaultValue()).toEqual(50);
+      expect(characteristic.value).toEqual(null); // null if never set
+    });
+
+    it('should get the correct default value for the current temperature characteristic', () => {
+      const characteristic = new Characteristic.CurrentTemperature();
+      // @ts-expect-error
+      expect(characteristic.getDefaultValue()).toEqual(0);
+      expect(characteristic.value).toEqual(0);
+    });
+
   });
 
   describe('#toHAP()', () => {

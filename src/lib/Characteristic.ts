@@ -1713,7 +1713,12 @@ export class Characteristic extends EventEmitter {
       case Formats.ARRAY:
         return [];
       default:
-        return this.props.minValue ?? 0;
+        switch(this.UUID) {
+          case Characteristic.CurrentTemperature.UUID:
+            return 0;
+          default:
+            return this.props.minValue ?? 0;
+        }
     }
   }
 
