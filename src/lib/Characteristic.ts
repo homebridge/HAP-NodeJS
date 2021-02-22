@@ -1283,7 +1283,7 @@ export class Characteristic extends EventEmitter {
     try {
       value = this.validateUserInput(value)!;
     } catch (error) {
-      this.characteristicWarning(error.message + "", CharacteristicWarningType.ERROR_MESSAGE, error?.stack);
+      this.characteristicWarning(error?.message + "", CharacteristicWarningType.ERROR_MESSAGE, error?.stack);
       if (callback) {
         callback(error);
       }
@@ -1364,7 +1364,7 @@ export class Characteristic extends EventEmitter {
     try {
       value = this.validateUserInput(value);
     } catch (error) {
-      this.characteristicWarning(error.message + "", CharacteristicWarningType.ERROR_MESSAGE, error?.stack);
+      this.characteristicWarning(error?.message + "", CharacteristicWarningType.ERROR_MESSAGE, error?.stack);
       if (callback) {
         callback();
       }
@@ -1483,7 +1483,7 @@ export class Characteristic extends EventEmitter {
       try {
         return this.validateUserInput(this.value);
       } catch (error) {
-        this.characteristicWarning(`An illegal value was supplied by setting \`value\` for characteristic: ${error.message}`, CharacteristicWarningType.WARN_MESSAGE, error?.stack);
+        this.characteristicWarning(`An illegal value was supplied by setting \`value\` for characteristic: ${error?.message}`, CharacteristicWarningType.WARN_MESSAGE, error?.stack);
         return Promise.reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       }
     }
