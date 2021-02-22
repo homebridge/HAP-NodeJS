@@ -427,7 +427,7 @@ export class CameraController extends EventEmitter implements Controller<CameraC
           console.warn(`[${accessoryName}] Image snapshot handler didn't respond at all!`);
 
           reject(HAPStatus.OPERATION_TIMED_OUT);
-        }, 10000);
+        }, 17000);
         timeout.unref();
       }, 5000);
       timeout.unref();
