@@ -768,7 +768,7 @@ describe('Characteristic', () => {
       expect(characteristic.value).toEqual(null); // null if never set
     });
 
-    it('should get the default value from the first item in minValue prop', () => {
+    it('should get the default value from minValue prop if set', () => {
       const characteristic = createCharacteristicWithProps({
         format: Formats.INT,
         perms: [Perms.TIMED_WRITE, Perms.PAIRED_READ],
@@ -778,7 +778,7 @@ describe('Characteristic', () => {
 
       // @ts-expect-error
       expect(characteristic.getDefaultValue()).toEqual(100);
-      expect(characteristic.value).toEqual(null);; // null if never set
+      expect(characteristic.value).toEqual(null); // null if never set
     });
 
   });
