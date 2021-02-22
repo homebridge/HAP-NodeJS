@@ -1598,7 +1598,7 @@ export class Accessory extends EventEmitter {
           characteristics.push({
             aid: aid,
             iid: iid,
-            status: HAPStatus.SERVICE_COMMUNICATION_FAILURE,
+            status: HAPStatus.OPERATION_TIMED_OUT,
           });
         }
         missingCharacteristics.clear();
