@@ -756,6 +756,31 @@ describe('Characteristic', () => {
       expect(characteristic.value).toEqual(0);
     });
 
+    it('should get the default value from the first item in the validValues prop', () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.INT,
+        perms: [Perms.TIMED_WRITE, Perms.PAIRED_READ],
+        validValues: [5, 4, 3, 2]
+      });
+
+      // @ts-expect-error
+      expect(characteristic.getDefaultValue()).toEqual(5);
+      expect(characteristic.value).toEqual(null); // null if never set
+    });
+
+    it('should get the default value from the first item in minValue prop', () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.INT,
+        perms: [Perms.TIMED_WRITE, Perms.PAIRED_READ],
+        minValue: 100,
+        maxValue: 255,
+      });
+
+      // @ts-expect-error
+      expect(characteristic.getDefaultValue()).toEqual(100);
+      expect(characteristic.value).toEqual(null);; // null if never set
+    });
+
   });
 
   describe('#toHAP()', () => {

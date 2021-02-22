@@ -1283,7 +1283,7 @@ export class Characteristic extends EventEmitter {
     try {
       value = this.validateUserInput(value)!;
     } catch (error) {
-      this.characteristicWarning(error.message + "", CharacteristicWarningType.ERROR_MESSAGE);
+      this.characteristicWarning(error.message + "", CharacteristicWarningType.ERROR_MESSAGE, error?.stack);
       if (callback) {
         callback(error);
       }
@@ -1364,7 +1364,7 @@ export class Characteristic extends EventEmitter {
     try {
       value = this.validateUserInput(value);
     } catch (error) {
-      this.characteristicWarning(error.message + "");
+      this.characteristicWarning(error.message + "", CharacteristicWarningType.ERROR_MESSAGE, error?.stack);
       if (callback) {
         callback();
       }
@@ -1429,7 +1429,7 @@ export class Characteristic extends EventEmitter {
 
     if (this.getHandler) {
       if (this.listeners(CharacteristicEventTypes.GET).length > 0) {
-        this.characteristicWarning(`Ignoring on('get') handler as onGet handler was defined instead.`);
+        this.characteristicWarning(`Ignoring on('get') handler as onGet handler was defined instead`);
       }
 
       try {
@@ -1441,7 +1441,7 @@ export class Characteristic extends EventEmitter {
         try {
           value = this.validateUserInput(value);
         } catch (error) {
-          this.characteristicWarning(`An illegal value was supplied by the read handler for characteristic: ${error.stack}`);
+          this.characteristicWarning(`An illegal value was supplied by the read handler for characteristic: ${error?.message}`, CharacteristicWarningType.WARN_MESSAGE, error?.stack);
           this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
           // noinspection JSDeprecatedSymbols
           this.status = error;
@@ -1466,7 +1466,7 @@ export class Characteristic extends EventEmitter {
           // noinspection JSDeprecatedSymbols
           this.status = error;
         } else {
-          this.characteristicWarning(`Unhandled error thrown inside read handler for characteristic: ${error.stack}`);
+          this.characteristicWarning(`Unhandled error thrown inside read handler for characteristic: ${error?.message}`, CharacteristicWarningType.ERROR_MESSAGE, error?.stack);
           this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
           // noinspection JSDeprecatedSymbols
           this.status = error;
@@ -1483,7 +1483,7 @@ export class Characteristic extends EventEmitter {
       try {
         return this.validateUserInput(this.value);
       } catch (error) {
-        this.characteristicWarning(`An illegal value was supplied by setting \`value\` for characteristic: ${error.stack}`);
+        this.characteristicWarning(`An illegal value was supplied by setting \`value\` for characteristic: ${error.message}`, CharacteristicWarningType.WARN_MESSAGE, error?.stack);
         return Promise.reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       }
     }
@@ -1525,7 +1525,7 @@ export class Characteristic extends EventEmitter {
           }
         }), context, connection);
       } catch (error) {
-        this.characteristicWarning(`Unhandled error thrown inside read handler for characteristic: ${error.stack}`);
+        this.characteristicWarning(`Unhandled error thrown inside read handler for characteristic: ${error?.message}`, CharacteristicWarningType.ERROR_MESSAGE, error?.stack);
         this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
         // noinspection JSDeprecatedSymbols
         this.status = error;
@@ -1596,7 +1596,7 @@ export class Characteristic extends EventEmitter {
           // noinspection JSDeprecatedSymbols
           this.status = error;
         } else {
-          this.characteristicWarning(`Unhandled error thrown inside write handler for characteristic: ${error.stack}`);
+          this.characteristicWarning(`Unhandled error thrown inside write handler for characteristic: ${error?.message}`, CharacteristicWarningType.ERROR_MESSAGE, error?.stack);
           this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
           // noinspection JSDeprecatedSymbols
           this.status = error;
@@ -1651,7 +1651,7 @@ export class Characteristic extends EventEmitter {
             }
           }), context, connection);
         } catch (error) {
-          this.characteristicWarning(`Unhandled error thrown inside write handler for characteristic: ${error.stack}`);
+          this.characteristicWarning(`Unhandled error thrown inside write handler for characteristic: ${error?.message}`, CharacteristicWarningType.ERROR_MESSAGE, error?.stack);
           this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
           // noinspection JSDeprecatedSymbols
           this.status = error;
@@ -1712,13 +1712,27 @@ export class Characteristic extends EventEmitter {
         return {};
       case Formats.ARRAY:
         return [];
-      default:
+      case Formats.INT:
+      case Formats.FLOAT:
+      case Formats.UINT8:
+      case Formats.UINT16:
+      case Formats.UINT32:
+      case Formats.UINT64:
         switch(this.UUID) {
           case Characteristic.CurrentTemperature.UUID:
+            return 0; // some existing integrations expect this to be 0 by default
+          default: {
+            if (this.props.validValues?.length && typeof this.props.validValues[0] === 'number') {
+              return this.props.validValues[0];
+            }
+            if (typeof this.props.minValue === 'number') {
+              return this.props.minValue;
+            }
             return 0;
-          default:
-            return this.props.minValue ?? 0;
+          }
         }
+      default:
+        return 0;
     }
   }
 
@@ -2147,8 +2161,8 @@ export class Characteristic extends EventEmitter {
     this.iid = identifierCache.getIID(accessoryName, serviceUUID, serviceSubtype, this.UUID);
   }
 
-  private characteristicWarning(message: string, type = CharacteristicWarningType.WARN_MESSAGE): void {
-    this.emit(CharacteristicEventTypes.CHARACTERISTIC_WARNING, type, message, new Error().stack);
+  private characteristicWarning(message: string, type = CharacteristicWarningType.WARN_MESSAGE, stack = new Error().stack): void {
+    this.emit(CharacteristicEventTypes.CHARACTERISTIC_WARNING, type, message, stack);
   }
 
   /**
