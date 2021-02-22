@@ -51,13 +51,13 @@ declare module 'bonjour-hap' {
 
 
   export type MulticastOptions = {
-    multicast: boolean;
-    interface: string;
-    port: number;
-    ip: string;
-    ttl: number;
-    loopback: boolean;
-    reuseAddr: boolean;
+    multicast?: boolean;
+    interface?: string;
+    port?: number;
+    ip?: string;
+    ttl?: number;
+    loopback?: boolean;
+    reuseAddr?: boolean;
   };
   function createWithOptions(options?: MulticastOptions): BonjourHAP;
 
