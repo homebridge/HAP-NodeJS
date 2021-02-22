@@ -419,15 +419,15 @@ export class CameraController extends EventEmitter implements Controller<CameraC
   handleSnapshotRequest(height: number, width: number, accessoryName?: string): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       let timeout: Timeout | undefined = setTimeout(() => {
-        console.warn(`[${accessoryName}] Image snapshot handler is slow to respond!`);
+        console.warn(`[${accessoryName}] The image snapshot handler for the given accessory is slow to respond! See https://git.io/JtMGR for more info.`);
 
         timeout = setTimeout(() => {
           timeout = undefined;
 
-          console.warn(`[${accessoryName}] Image snapshot handler didn't respond at all!`);
+          console.warn(`[${accessoryName}] The image snapshot handler for the given accessory didn't respond at all! See https://git.io/JtMGR for more info.`);
 
           reject(HAPStatus.OPERATION_TIMED_OUT);
-        }, 10000);
+        }, 17000);
         timeout.unref();
       }, 5000);
       timeout.unref();
