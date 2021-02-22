@@ -1439,7 +1439,7 @@ export class Accessory extends EventEmitter {
         missingCharacteristics.clear();
 
         callback(undefined, response);
-      }, 12000);
+      }, 6000);
       timeout.unref();
     }, 3000);
     timeout.unref();
@@ -1598,13 +1598,13 @@ export class Accessory extends EventEmitter {
           characteristics.push({
             aid: aid,
             iid: iid,
-            status: HAPStatus.OPERATION_TIMED_OUT,
+            status: HAPStatus.SERVICE_COMMUNICATION_FAILURE,
           });
         }
         missingCharacteristics.clear();
 
         callback(undefined, response);
-      }, 12000);
+      }, 6000);
       timeout.unref();
     }, 3000);
     timeout.unref();
