@@ -446,12 +446,21 @@ describe('Characteristic', () => {
         expect(characteristic.value).toEqual(50);
         expect(mock).toBeCalledTimes(0);
 
-        // handle NaN string, restore last known value, trigger warning
+        // handle NaN from non-numeric string, restore last known value, trigger warning
         mock.mockReset();
         characteristic.setValue(50);
         characteristic.setValue('SOME STRING');
         expect(characteristic.value).toEqual(50);
         expect(mock).toBeCalledTimes(1);
+        expect(mock).toBeCalledWith(expect.stringContaining('NaN'))
+
+        // handle NaN: number from number value
+        mock.mockReset();
+        characteristic.setValue(50);
+        characteristic.setValue(NaN);
+        expect(characteristic.value).toEqual(50);
+        expect(mock).toBeCalledTimes(1);
+        expect(mock).toBeCalledWith(expect.stringContaining('NaN'))
 
         // handle object, restore last known value, trigger warning
         mock.mockReset();
@@ -531,6 +540,33 @@ describe('Characteristic', () => {
 
       characteristic.setValue(0.1);
       expect(characteristic.value).toEqual(0.1);
+    });
+
+    it("should validate Formats.FLOAT with precision", () => {
+      const characteristic = new Characteristic.CurrentAmbientLightLevel();
+
+      // @ts-expect-error - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      mock.mockReset();
+      characteristic.setValue(0);
+      expect(characteristic.value).toEqual(0.0001);
+      expect(mock).toBeCalledTimes(1);
+
+      mock.mockReset();
+      characteristic.setValue(0.0001);
+      expect(characteristic.value).toEqual(0.0001);
+      expect(mock).toBeCalledTimes(0);
+
+      mock.mockReset();
+      characteristic.setValue(100000.00000001);
+      expect(characteristic.value).toEqual(100000);
+      expect(mock).toBeCalledTimes(1);
+
+      mock.mockReset();
+      characteristic.setValue(100000);
+      expect(characteristic.value).toEqual(100000);
+      expect(mock).toBeCalledTimes(0);
     });
 
     it("should validate string inputs", () => {
