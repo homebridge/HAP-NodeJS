@@ -1928,7 +1928,7 @@ export class Characteristic extends EventEmitter {
         } else if (typeof value === "string") {
           return value === "1" || value === "true";
         } else {
-          this.characteristicWarning("characteristic value expected boolean and received " + typeof value, CharacteristicWarningType.ERROR_MESSAGE);
+          this.characteristicWarning("characteristic value expected boolean and received " + typeof value);
           return false;
         }
       }
@@ -1945,7 +1945,7 @@ export class Characteristic extends EventEmitter {
           value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
         if (typeof value !== "number") {
-          this.characteristicWarning("characteristic value expected number and received " + typeof value, CharacteristicWarningType.ERROR_MESSAGE);
+          this.characteristicWarning("characteristic value expected number and received " + typeof value,);
           value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
 
@@ -1967,7 +1967,7 @@ export class Characteristic extends EventEmitter {
           value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
         if (typeof value !== "number") {
-          this.characteristicWarning("characteristic value expected float and received " + typeof value, CharacteristicWarningType.ERROR_MESSAGE);
+          this.characteristicWarning("characteristic value expected float and received " + typeof value);
           value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
 
@@ -1993,7 +1993,7 @@ export class Characteristic extends EventEmitter {
           value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
         if (typeof value !== "number") {
-          this.characteristicWarning("characteristic value expected number and received " + typeof value, CharacteristicWarningType.ERROR_MESSAGE);
+          this.characteristicWarning("characteristic value expected number and received " + typeof value);
           value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
 
@@ -2015,7 +2015,7 @@ export class Characteristic extends EventEmitter {
           value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
         if (typeof value !== "number") {
-          this.characteristicWarning("characteristic value expected number and received " + typeof value, CharacteristicWarningType.ERROR_MESSAGE);
+          this.characteristicWarning("characteristic value expected number and received " + typeof value);
           value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
 
@@ -2037,7 +2037,7 @@ export class Characteristic extends EventEmitter {
           value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
         if (typeof value !== "number") {
-          this.characteristicWarning("characteristic value expected number and received " + typeof value, CharacteristicWarningType.ERROR_MESSAGE);
+          this.characteristicWarning("characteristic value expected number and received " + typeof value);
           value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
 
@@ -2059,7 +2059,7 @@ export class Characteristic extends EventEmitter {
           value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
         if (typeof value !== "number") {
-          this.characteristicWarning("characteristic value expected number and received " + typeof value, CharacteristicWarningType.ERROR_MESSAGE);
+          this.characteristicWarning("characteristic value expected number and received " + typeof value);
           value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
 
@@ -2079,7 +2079,7 @@ export class Characteristic extends EventEmitter {
         }
 
         if (value.length <= 1 && (this.UUID === Characteristic.Model.UUID || this.UUID === Characteristic.SerialNumber.UUID)) { // mirrors the case value = null at the beginning
-          this.characteristicWarning(`[${this.displayName}] characteristic must have a length of more than 1 character otherwise HomeKit will reject this accessory, ignoring new value`, CharacteristicWarningType.ERROR_MESSAGE);
+          this.characteristicWarning(`[${this.displayName}] characteristic must have a length of more than 1 character otherwise HomeKit will reject this accessory, ignoring new value`);
           return this.value; // just return the current value
         }
 
@@ -2120,7 +2120,7 @@ export class Characteristic extends EventEmitter {
       }
 
       if (this.props.validValues && !this.props.validValues.includes(value)) {
-        this.characteristicWarning(`characteristic value ${value} is not contained in valid values array`, CharacteristicWarningType.ERROR_MESSAGE);
+        this.characteristicWarning(`characteristic value ${value} is not contained in valid values array`);
         return this.props.validValues.includes(this.value as number) ? this.value : (this.props.validValues[0] || 0);
       }
 
