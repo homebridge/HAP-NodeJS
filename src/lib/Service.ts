@@ -593,7 +593,7 @@ export class Service extends EventEmitter {
 
           missingCharacteristics.clear();
           resolve(service);
-        }, 7000);
+        }, 6000);
       }, 3000);
 
       for (const characteristic of this.characteristics) {

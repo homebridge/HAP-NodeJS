@@ -75,6 +75,9 @@ export const CharacteristicOverriding: Map<string, (generated: GeneratedCharacte
   ["rotation.speed", generated => {
     generated.units = "percentage";
   }],
+  ["temperature.current", generated => {
+    generated.minValue = -273.15;
+  }],
   ["characteristic-value-transition-control", generated => {
     generated.properties |= PropertyId.WRITE_RESPONSE;
   }],

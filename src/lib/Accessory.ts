@@ -1439,7 +1439,7 @@ export class Accessory extends EventEmitter {
         missingCharacteristics.clear();
 
         callback(undefined, response);
-      }, 7000);
+      }, 6000);
       timeout.unref();
     }, 3000);
     timeout.unref();
@@ -1604,7 +1604,7 @@ export class Accessory extends EventEmitter {
         missingCharacteristics.clear();
 
         callback(undefined, response);
-      }, 7000);
+      }, 6000);
       timeout.unref();
     }, 3000);
     timeout.unref();
