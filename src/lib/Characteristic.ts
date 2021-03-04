@@ -1746,7 +1746,7 @@ export class Characteristic extends EventEmitter {
    * must be returned.
    * @param value - Value supplied by the HomeKit controller
    */
-  private validClientSuppliedValue(value?: Nullable<CharacteristicValue>): Nullable<CharacteristicValue> {
+  private validClientSuppliedValue(value?: Nullable<CharacteristicValue>): boolean {
     if (value == undefined) {
       return false;
     }
