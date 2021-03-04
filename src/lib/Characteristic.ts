@@ -1561,6 +1561,10 @@ export class Characteristic extends EventEmitter {
       value = value === 1;
     }
 
+    if (isNumericFormat(this.props.format) && typeof value === "boolean") {
+      value = value ? 1 : 0;
+    }
+
     const oldValue = this.value;
 
     if (this.setHandler) {
@@ -1742,7 +1746,7 @@ export class Characteristic extends EventEmitter {
    * must be returned.
    * @param value - Value supplied by the HomeKit controller
    */
-  private validClientSuppliedValue(value?: Nullable<CharacteristicValue>): boolean {
+  private validClientSuppliedValue(value?: Nullable<CharacteristicValue>): Nullable<CharacteristicValue> {
     if (value == undefined) {
       return false;
     }
@@ -1758,8 +1762,9 @@ export class Characteristic extends EventEmitter {
         break;
       case Formats.INT: // 32-bit signed int
         if (typeof value === "boolean") {
-          value = value? 1: 0;
-        } if (typeof value !== "number") {
+          value = value ? 1 : 0;
+        }
+        if (typeof value !== "number") {
           return false;
         }
 
@@ -1768,8 +1773,9 @@ export class Characteristic extends EventEmitter {
         break;
       case Formats.FLOAT:
         if (typeof value === "boolean") {
-          value = value? 1: 0;
-        } if (typeof value !== "number") {
+          value = value ? 1 : 0;
+        }
+        if (typeof value !== "number") {
           return false;
         }
 
@@ -1782,7 +1788,7 @@ export class Characteristic extends EventEmitter {
         break;
       case Formats.UINT8:
         if (typeof value === "boolean") {
-          value = value? 1: 0;
+          value = value ? 1 : 0;
         } if (typeof value !== "number") {
           return false;
         }
@@ -1792,7 +1798,7 @@ export class Characteristic extends EventEmitter {
         break;
       case Formats.UINT16:
         if (typeof value === "boolean") {
-          value = value? 1: 0;
+          value = value ? 1 : 0;
         } if (typeof value !== "number") {
           return false;
         }
@@ -1802,7 +1808,7 @@ export class Characteristic extends EventEmitter {
         break;
       case Formats.UINT32:
         if (typeof value === "boolean") {
-          value = value? 1: 0;
+          value = value ? 1 : 0;
         } if (typeof value !== "number") {
           return false;
         }
@@ -1812,7 +1818,7 @@ export class Characteristic extends EventEmitter {
         break;
       case Formats.UINT64:
         if (typeof value === "boolean") {
-          value = value? 1: 0;
+          value = value ? 1 : 0;
         } if (typeof value !== "number") {
           return false;
         }

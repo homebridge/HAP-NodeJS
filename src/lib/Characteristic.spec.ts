@@ -11,6 +11,7 @@ import {
   Units,
   uuid
 } from '..';
+import { HAPConnection } from './util/eventedhttp';
 
 function createCharacteristic(type: Formats, customUUID?: string): Characteristic {
   return new Characteristic('Test', customUUID || uuid.generate('Foo'), { format: type, perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE] });
@@ -269,6 +270,103 @@ describe('Characteristic', () => {
         callback();
       });
     });
+  });
+
+  describe('#validClientSuppliedValue()', () => {
+    test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
+      "boolean types sent for %p types should be transformed from false to 0", async (intType) => {
+        const characteristic = createCharacteristicWithProps({
+          format: intType,
+          maxValue: 1,
+          minValue: 0,
+          minStep: 1,
+          perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+        });
+
+        // @ts-expect-error
+        const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+
+        await characteristic.handleSetRequest(false, null as unknown as undefined);
+        expect(characteristic.value).toEqual(0);
+
+        // ensure validator was actually called
+        expect(validClientSuppliedValueMock).toBeCalled();
+      });
+  
+
+    test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
+      "boolean types sent for %p types should be transformed from true to 1", async (intType) => {
+        const characteristic = createCharacteristicWithProps({
+          format: intType,
+          maxValue: 1,
+          minValue: 0,
+          minStep: 1,
+          perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+        });
+
+        // @ts-expect-error
+        const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+
+        await characteristic.handleSetRequest(true, null as unknown as undefined);
+        expect(characteristic.value).toEqual(1);
+
+        // ensure validator was actually called
+        expect(validClientSuppliedValueMock).toBeCalled();
+      });
+
+    test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
+      "rejects string values sent for %p types sent from client", async (intType) => {
+        const characteristic = createCharacteristicWithProps({
+          format: intType,
+          maxValue: 1,
+          minValue: 0,
+          minStep: 1,
+          perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+        });
+
+        // @ts-expect-error
+        const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+
+        // set initial known good value
+        characteristic.setValue(1);
+
+        // this should throw an error
+        await expect(characteristic.handleSetRequest("what is this!", null as unknown as undefined))
+          .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST)
+
+        // the existing valid value should remain
+        expect(characteristic.value).toEqual(1);
+
+        // ensure validator was actually called
+        expect(validClientSuppliedValueMock).toBeCalled();
+      });
+
+    it('rejects undefined values from client', async () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.UINT8,
+        maxValue: 1,
+        minValue: 0,
+        minStep: 1,
+        perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+      });
+
+      // @ts-expect-error
+      const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+
+      // set initial known good value
+      characteristic.setValue(1);
+
+      // this should throw an error
+      await expect(characteristic.handleSetRequest(undefined as unknown as boolean, null as unknown as undefined))
+      .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST)
+
+      // the existing valid value should remain
+      expect(characteristic.value).toEqual(1);
+
+      // ensure validator was actually called
+      expect(validClientSuppliedValueMock).toBeCalled();
+    });
+
   });
 
   describe('#validateUserInput()', () => {
