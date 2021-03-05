@@ -596,12 +596,34 @@ describe('Characteristic', () => {
       // the existing valid value should remain
       expect(characteristic.value).toEqual(0.0005);
 
-      // strings should pass
+      // should allow float
       await expect(characteristic.handleSetRequest(0.0001005, null as unknown as undefined))
         .resolves.toEqual(undefined);
 
       // value should now be updated
       expect(characteristic.value).toEqual(0.0001005);
+
+      // ensure validator was actually called
+      expect(validClientSuppliedValueMock).toBeCalledTimes(1);
+    });
+
+    it("should accept negative floats in range for Formats.FLOAT provided by the cleint", async () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.FLOAT,
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+        minValue: -1000,
+        maxValue: 1000,
+      });
+
+      // @ts-expect-error - spying on private property
+      const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+
+      // should allow negative float
+      await expect(characteristic.handleSetRequest(-0.013, null as unknown as undefined))
+        .resolves.toEqual(undefined);
+
+      // value should now be updated
+      expect(characteristic.value).toEqual(-0.013);
 
       // ensure validator was actually called
       expect(validClientSuppliedValueMock).toBeCalledTimes(1);
