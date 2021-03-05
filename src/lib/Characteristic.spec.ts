@@ -607,7 +607,7 @@ describe('Characteristic', () => {
       expect(validClientSuppliedValueMock).toBeCalledTimes(1);
     });
 
-    it("should accept negative floats in range for Formats.FLOAT provided by the cleint", async () => {
+    it("should accept negative floats in range for Formats.FLOAT provided by the client", async () => {
       const characteristic = createCharacteristicWithProps({
         format: Formats.FLOAT,
         perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],

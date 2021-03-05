@@ -1963,7 +1963,7 @@ export class Characteristic extends EventEmitter {
           } // for stepValue < 1 rounding is done only when formatting the response. We can't store the "perfect" .step anyways
         }
 
-        break;
+        return value;
       }
       case Formats.STRING: {
         if (typeof value === "number") {
