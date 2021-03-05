@@ -980,7 +980,7 @@ describe('Characteristic', () => {
         perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
         minValue: -1000,
         maxValue: 1000,
-      }, '00000023-0000-1000-8000-0026BB765292');
+      });
 
       // @ts-expect-error - spying on private property
       const mock = jest.spyOn(characteristic, 'characteristicWarning');
@@ -989,7 +989,6 @@ describe('Characteristic', () => {
       characteristic.setValue(-0.013);
       expect(characteristic.value).toEqual(-0.013);
       expect(mock).toBeCalledTimes(0);
-
     });
 
     it("should validate string inputs", () => {
