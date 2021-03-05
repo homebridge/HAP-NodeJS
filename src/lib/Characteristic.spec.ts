@@ -273,6 +273,72 @@ describe('Characteristic', () => {
   });
 
   describe('#validClientSuppliedValue()', () => {
+    it('rejects undefined values from client', async () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.UINT8,
+        maxValue: 1,
+        minValue: 0,
+        minStep: 1,
+        perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+      });
+
+      // @ts-expect-error
+      const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+
+      // set initial known good value
+      characteristic.setValue(1);
+
+      // this should throw an error
+      await expect(characteristic.handleSetRequest(undefined as unknown as boolean, null as unknown as undefined))
+        .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST);
+
+      // the existing valid value should remain
+      expect(characteristic.value).toEqual(1);
+
+      // ensure validator was actually called
+      expect(validClientSuppliedValueMock).toBeCalled();
+    });
+
+    it('rejects invalid values for the boolean format type', async () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.BOOL,
+        maxValue: 1,
+        minValue: 0,
+        minStep: 1,
+        perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+      });
+
+      // @ts-expect-error
+      const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+
+      // set initial known good value
+      characteristic.setValue(true);
+
+      // numbers other than 1 or 0 should throw an error
+      await expect(characteristic.handleSetRequest(20, null as unknown as undefined))
+        .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST);
+
+      // strings should throw an error
+      await expect(characteristic.handleSetRequest("true", null as unknown as undefined))
+        .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST);
+
+      // the existing valid value should remain
+      expect(characteristic.value).toEqual(true);
+
+      // 0 should set the value to false
+      await expect(characteristic.handleSetRequest(0, null as unknown as undefined))
+        .resolves.toEqual(undefined);
+      expect(characteristic.value).toEqual(false);
+
+      // 1 should set the value to true
+      await expect(characteristic.handleSetRequest(1, null as unknown as undefined))
+        .resolves.toEqual(undefined);
+      expect(characteristic.value).toEqual(true);
+
+      // ensure validator was actually called
+      expect(validClientSuppliedValueMock).toBeCalledTimes(4);
+    });
+
     test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
       "boolean types sent for %p types should be transformed from false to 0", async (intType) => {
         const characteristic = createCharacteristicWithProps({
@@ -341,12 +407,149 @@ describe('Characteristic', () => {
         expect(validClientSuppliedValueMock).toBeCalled();
       });
 
-    it('rejects undefined values from client', async () => {
+    test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
+      "ensure maxValue is not exceeded for %p types sent from client", async (intType) => {
+        const characteristic = createCharacteristicWithProps({
+          format: intType,
+          maxValue: 1,
+          minValue: 0,
+          minStep: 1,
+          perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+        });
+
+        // @ts-expect-error
+        const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+
+        // set initial known good value
+        characteristic.setValue(1);
+
+        // this should throw an error
+        await expect(characteristic.handleSetRequest(100, null as unknown as undefined))
+          .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST)
+
+        // this should throw an error
+        await expect(characteristic.handleSetRequest(-100, null as unknown as undefined))
+          .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST)
+
+        // value should revert to 
+        expect(characteristic.value).toEqual(1);
+
+        // this should pass
+        await expect(characteristic.handleSetRequest(0, null as unknown as undefined))
+          .resolves.toEqual(undefined);
+
+        // value should now be 3
+        expect(characteristic.value).toEqual(0);
+
+        // ensure validator was actually called
+        expect(validClientSuppliedValueMock).toBeCalledTimes(3);
+      });
+
+    test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
+      "ensure NaN is rejected for %p types sent from client", async (intType) => {
+        const characteristic = createCharacteristicWithProps({
+          format: intType,
+          maxValue: 1,
+          minValue: 0,
+          minStep: 1,
+          perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+        });
+
+        // @ts-expect-error
+        const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+
+        // set initial known good value
+        characteristic.setValue(1);
+
+        // this should throw an error
+        await expect(characteristic.handleSetRequest(NaN, null as unknown as undefined))
+          .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST)
+
+        // value should revert to 
+        expect(characteristic.value).toEqual(1);
+
+        // ensure validator was actually called
+        expect(validClientSuppliedValueMock).toBeCalledTimes(1);
+      });
+
+    test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
+      "ensure value is rejected if outside valid values for %p types sent from client", async (intType) => {
+        const characteristic = createCharacteristicWithProps({
+          format: intType,
+          maxValue: 10,
+          minValue: 0,
+          minStep: 1,
+          validValues: [1, 3, 5, 10],
+          perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+        });
+
+        // @ts-expect-error
+        const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+
+        // set initial known good value
+        characteristic.setValue(1);
+
+        // this should throw an error
+        await expect(characteristic.handleSetRequest(6, null as unknown as undefined))
+          .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST)
+
+        // value should revert to 
+        expect(characteristic.value).toEqual(1);
+
+        // this should pass
+        await expect(characteristic.handleSetRequest(3, null as unknown as undefined))
+          .resolves.toEqual(undefined);
+
+        // value should now be 3
+        expect(characteristic.value).toEqual(3);
+
+        // ensure validator was actually called
+        expect(validClientSuppliedValueMock).toBeCalledTimes(2);
+      });
+
+    test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
+      "ensure value is rejected if outside valid value ranges for %p types sent from client", async (intType) => {
+        const characteristic = createCharacteristicWithProps({
+          format: intType,
+          maxValue: 1000,
+          minValue: 0,
+          minStep: 1,
+          validValueRanges: [50, 55],
+          perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+        });
+
+        // @ts-expect-error
+        const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+
+        // set initial known good value
+        characteristic.setValue(50);
+
+        // this should throw an error
+        await expect(characteristic.handleSetRequest(100, null as unknown as undefined))
+          .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST);
+
+        // this should throw an error
+        await expect(characteristic.handleSetRequest(20, null as unknown as undefined))
+          .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST);
+
+        // value should still be 50
+        expect(characteristic.value).toEqual(50);
+
+        // this should pass
+        await expect(characteristic.handleSetRequest(52, null as unknown as undefined))
+          .resolves.toEqual(undefined);
+
+        // value should now be 52
+        expect(characteristic.value).toEqual(52);
+
+        // ensure validator was actually called
+        expect(validClientSuppliedValueMock).toBeCalledTimes(3);
+      });
+
+    test.each([Formats.STRING, Formats.TLV8, Formats.DATA])(
+      "rejects non-string values for the %p format type from the client", async (stringType) => {
       const characteristic = createCharacteristicWithProps({
-        format: Formats.UINT8,
-        maxValue: 1,
-        minValue: 0,
-        minStep: 1,
+        format: stringType,
         perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
       });
 
@@ -354,17 +557,116 @@ describe('Characteristic', () => {
       const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
 
       // set initial known good value
-      characteristic.setValue(1);
+      characteristic.setValue('some string');
 
-      // this should throw an error
-      await expect(characteristic.handleSetRequest(undefined as unknown as boolean, null as unknown as undefined))
-      .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST)
+      // numbers should throw an error
+      await expect(characteristic.handleSetRequest(1234, null as unknown as undefined))
+        .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST);
+
+      // booleans should throw an error
+      await expect(characteristic.handleSetRequest(false, null as unknown as undefined))
+        .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST);
 
       // the existing valid value should remain
-      expect(characteristic.value).toEqual(1);
+      expect(characteristic.value).toEqual('some string');
+
+      // strings should pass
+      await expect(characteristic.handleSetRequest('some other test string', null as unknown as undefined))
+        .resolves.toEqual(undefined);
+  
+      // value should now be updated
+      expect(characteristic.value).toEqual('some other test string');
 
       // ensure validator was actually called
-      expect(validClientSuppliedValueMock).toBeCalled();
+      expect(validClientSuppliedValueMock).toBeCalledTimes(3);
+    });
+
+    it('should accept Formats.FLOAT with precision provided by client', async () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.FLOAT,
+        perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+      });
+
+      // @ts-expect-error
+      const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+
+      // set initial known good value
+      characteristic.setValue(0.0005);
+
+      // the existing valid value should remain
+      expect(characteristic.value).toEqual(0.0005);
+
+      // strings should pass
+      await expect(characteristic.handleSetRequest(0.0001005, null as unknown as undefined))
+        .resolves.toEqual(undefined);
+
+      // value should now be updated
+      expect(characteristic.value).toEqual(0.0001005);
+
+      // ensure validator was actually called
+      expect(validClientSuppliedValueMock).toBeCalledTimes(1);
+    });
+
+    it('rejects string values exceeding the max length from the client', async () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.STRING,
+        maxLen: 5,
+        perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+      });
+
+      // @ts-expect-error
+      const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+
+      // set initial known good value
+      characteristic.setValue('abcde');
+
+      // should reject strings that are to long
+      await expect(characteristic.handleSetRequest('this is to long', null as unknown as undefined))
+        .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST);
+
+      // the existing valid value should remain
+      expect(characteristic.value).toEqual('abcde');
+
+      // strings should pass
+      await expect(characteristic.handleSetRequest('abc', null as unknown as undefined))
+        .resolves.toEqual(undefined);
+
+      // value should now be updated
+      expect(characteristic.value).toEqual('abc');
+
+      // ensure validator was actually called
+      expect(validClientSuppliedValueMock).toBeCalledTimes(2);
+    });
+
+    it('rejects data values exceeding the max length from the client', async () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.DATA,
+        maxDataLen: 5,
+        perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+      });
+
+      // @ts-expect-error
+      const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+
+      // set initial known good value
+      characteristic.setValue('abcde');
+
+      // should reject strings that are to long
+      await expect(characteristic.handleSetRequest('this is to long', null as unknown as undefined))
+        .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST);
+
+      // the existing valid value should remain
+      expect(characteristic.value).toEqual('abcde');
+
+      // strings should pass
+      await expect(characteristic.handleSetRequest('abc', null as unknown as undefined))
+        .resolves.toEqual(undefined);
+
+      // value should now be updated
+      expect(characteristic.value).toEqual('abc');
+
+      // ensure validator was actually called
+      expect(validClientSuppliedValueMock).toBeCalledTimes(2);
     });
 
   });
@@ -653,6 +955,11 @@ describe('Characteristic', () => {
 
       mock.mockReset();
       characteristic.setValue(0.0001);
+      expect(characteristic.value).toEqual(0.0001);
+      expect(mock).toBeCalledTimes(0);
+
+      mock.mockReset();
+      characteristic.setValue('0.0001');
       expect(characteristic.value).toEqual(0.0001);
       expect(mock).toBeCalledTimes(0);
 
