@@ -160,6 +160,7 @@ export const enum CharacteristicWarningType {
   TIMEOUT_READ = "timeout-read",
   WARN_MESSAGE = "warn-message",
   ERROR_MESSAGE = "error-message",
+  DEBUG_MESSAGE = "debug-message",
 }
 
 export interface CharacteristicWarning {

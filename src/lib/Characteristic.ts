@@ -1579,7 +1579,7 @@ export class Characteristic extends EventEmitter {
           return this.value!;
         } else {
           if (writeResponse != null) {
-            this.characteristicWarning(`SET handler returned write response value, though the characteristic doesn't support write response`);
+            this.characteristicWarning(`SET handler returned write response value, though the characteristic doesn't support write response`, CharacteristicWarningType.DEBUG_MESSAGE);
           }
           this.value = value;
 
@@ -1642,7 +1642,7 @@ export class Characteristic extends EventEmitter {
               resolve(this.value!);
             } else {
               if (writeResponse != null) {
-                this.characteristicWarning(`SET handler returned write response value, though the characteristic doesn't support write response`);
+                this.characteristicWarning(`SET handler returned write response value, though the characteristic doesn't support write response`, CharacteristicWarningType.DEBUG_MESSAGE);
               }
               this.value = value;
               resolve();
