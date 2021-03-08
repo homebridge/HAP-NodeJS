@@ -1002,7 +1002,7 @@ export class Characteristic extends EventEmitter {
         props.minValue = undefined;
       } else if (typeof props.minValue !== 'number' || !Number.isFinite(props.minValue)) {
         this.characteristicWarning(
-          `Characteristic Property 'minValue' must be a finite number, received ${props.minValue} (${typeof props.minValue})`,
+          `Characteristic Property 'minValue' must be a finite number, received "${props.minValue}" (${typeof props.minValue})`,
           CharacteristicWarningType.ERROR_MESSAGE
         );
         props.minValue = undefined;
@@ -1039,7 +1039,7 @@ export class Characteristic extends EventEmitter {
         props.maxValue = undefined;
       } else if (typeof props.maxValue !== 'number' || !Number.isFinite(props.maxValue)) {
         this.characteristicWarning(
-          `Characteristic Property 'maxValue' must be a finite number, received ${props.maxValue} (${typeof props.maxValue})`,
+          `Characteristic Property 'maxValue' must be a finite number, received "${props.maxValue}" (${typeof props.maxValue})`,
           CharacteristicWarningType.ERROR_MESSAGE
         );
         props.maxValue = undefined;
@@ -1781,11 +1781,7 @@ export class Characteristic extends EventEmitter {
           value = value ? 1 : 0;
         }
 
-        if (typeof value !== "number") {
-          throw new Error(`Client supplied invalid type for ${this.props.format}: "${value}" (${typeof value})`)
-        }
-
-        if (!Number.isFinite(value)) {
+        if (typeof value !== "number" || !Number.isFinite(value)) {
           throw new Error(`Client supplied invalid type for ${this.props.format}: "${value}" (${typeof value})`)
         }
 
@@ -1923,12 +1919,8 @@ export class Characteristic extends EventEmitter {
         if (typeof value === "string") {
           value = this.props.format === Formats.FLOAT ? parseFloat(value) : parseInt(value, 10);
         }
-        if (typeof value === 'number' && !Number.isFinite(value)) {
-          this.characteristicWarning(`characteristic value expected valid finite number and received '${value}'`);
-          value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
-        }
-        if (typeof value !== "number") {
-          this.characteristicWarning("characteristic value expected number and received " + typeof value);
+        if (typeof value !== 'number' || !Number.isFinite(value)) {
+          this.characteristicWarning(`characteristic value expected valid finite number and received "${value}" (${typeof value})`);
           value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
 
