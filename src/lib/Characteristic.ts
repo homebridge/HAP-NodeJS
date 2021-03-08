@@ -1998,7 +1998,7 @@ export class Characteristic extends EventEmitter {
         }
 
         if (this.props.maxDataLen != null && value.length > this.props.maxDataLen) {
-          // can't cut it as we would basically yet binary rubbish afterwards
+          // can't cut it as we would basically set binary rubbish afterwards
           throw new Error("characteristic with DATA format exceeds specified maxDataLen");
         }
         return value;

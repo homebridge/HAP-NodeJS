@@ -11,7 +11,6 @@ import {
   Units,
   uuid
 } from '..';
-import { HAPConnection } from './util/eventedhttp';
 
 function createCharacteristic(type: Formats, customUUID?: string): Characteristic {
   return new Characteristic('Test', customUUID || uuid.generate('Foo'), { format: type, perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE] });
