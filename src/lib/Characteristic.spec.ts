@@ -11,6 +11,7 @@ import {
   Units,
   uuid
 } from '..';
+import { HapStatusError } from './util/hapStatusError';
 
 function createCharacteristic(type: Formats, customUUID?: string): Characteristic {
   return new Characteristic('Test', customUUID || uuid.generate('Foo'), { format: type, perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE] });
@@ -1372,7 +1373,6 @@ describe('Characteristic', () => {
   });
 
   describe(`@${CharacteristicEventTypes.GET}`, () => {
-
     it('should call any listeners for the event', (callback) => {
       const characteristic = createCharacteristic(Formats.STRING);
 
@@ -1384,6 +1384,53 @@ describe('Characteristic', () => {
         expect(listenerCallback).toHaveBeenCalledTimes(1);
         callback();
       })
+    });
+
+    it("should handle GET event errors gracefully when using on('get')", async () => {
+      const characteristic = createCharacteristic(Formats.STRING);
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      // throw HapStatusError - should not trigger characteristic warning
+      mock.mockReset();
+      characteristic.removeAllListeners('get');
+      characteristic.on('get', (callback) => {
+        callback(new HapStatusError(HAPStatus.RESOURCE_BUSY));
+      });
+      await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.RESOURCE_BUSY)
+      expect(characteristic.statusCode).toEqual(HAPStatus.RESOURCE_BUSY);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw number - should not trigger characteristic warning
+      mock.mockReset();
+      characteristic.removeAllListeners('get');
+      characteristic.on('get', (callback) => {
+        callback(HAPStatus.RESOURCE_BUSY);
+      });
+      await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.RESOURCE_BUSY)
+      expect(characteristic.statusCode).toEqual(HAPStatus.RESOURCE_BUSY);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw out of range number - should convert status code to SERVICE_COMMUNICATION_FAILURE
+      mock.mockReset();
+      characteristic.removeAllListeners('get');
+      characteristic.on('get', (callback) => {
+        callback(234234234234);
+      });
+      await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw other error - callback style getters should still not trigger warning when error is passed in
+      mock.mockReset();
+      characteristic.removeAllListeners('get');
+      characteristic.on('get', (callback) => {
+        callback(new Error('Something else'));
+      });
+      await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(mock).toBeCalledTimes(0);
     });
   });
 
@@ -1407,10 +1454,52 @@ describe('Characteristic', () => {
       expect(handlerMock).toHaveBeenCalledTimes(1);
       expect(listenerCallback).toHaveBeenCalledTimes(0);
     });
+
+    it("should handle GET event errors gracefully when using the onGet handler", async () => {
+      const characteristic = createCharacteristic(Formats.STRING);
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      // throw HapStatusError - should not trigger characteristic warning
+      mock.mockReset();
+      characteristic.onGet(() => {
+        throw new HapStatusError(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      });
+      await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw number - should not trigger characteristic warning
+      mock.mockReset();
+      characteristic.onGet(() => {
+        throw HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+      });
+      await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw out of range number - should convert status code to SERVICE_COMMUNICATION_FAILURE
+      mock.mockReset();
+      characteristic.onGet(() => {
+        throw 234234234234;
+      });
+      await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw other error - should trigger characteristic warning
+      mock.mockReset();
+      characteristic.onGet(() => {
+        throw new Error('A Random Error');
+      });
+      await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(mock).toBeCalledTimes(1);
+    });
   });
 
   describe(`@${CharacteristicEventTypes.SET}`, () => {
-
     it('should call any listeners for the event', () => {
       const characteristic = createCharacteristic(Formats.STRING);
 
@@ -1422,6 +1511,53 @@ describe('Characteristic', () => {
       characteristic.handleSetRequest(VALUE);
 
       expect(listenerCallback).toHaveBeenCalledTimes(1);
+    });
+
+    it("should handle SET event errors gracefully when using on('set')", async () => {
+      const characteristic = createCharacteristic(Formats.STRING);
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      // throw HapStatusError - should not trigger characteristic warning
+      mock.mockReset();
+      characteristic.removeAllListeners('set');
+      characteristic.on('set', (value, callback) => {
+        callback(new HapStatusError(HAPStatus.RESOURCE_BUSY));
+      });
+      await expect(characteristic.handleSetRequest('hello')).rejects.toEqual(HAPStatus.RESOURCE_BUSY)
+      expect(characteristic.statusCode).toEqual(HAPStatus.RESOURCE_BUSY);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw number - should not trigger characteristic warning
+      mock.mockReset();
+      characteristic.removeAllListeners('set');
+      characteristic.on('set', (value, callback) => {
+        callback(HAPStatus.RESOURCE_BUSY);
+      });
+      await expect(characteristic.handleSetRequest('hello')).rejects.toEqual(HAPStatus.RESOURCE_BUSY)
+      expect(characteristic.statusCode).toEqual(HAPStatus.RESOURCE_BUSY);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw out of range number - should convert status code to SERVICE_COMMUNICATION_FAILURE
+      mock.mockReset();
+      characteristic.removeAllListeners('set');
+      characteristic.on('set', (value, callback) => {
+        callback(234234234234);
+      });
+      await expect(characteristic.handleSetRequest('hello')).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw other error - callback style setters should still not trigger warning when error is passed in
+      mock.mockReset();
+      characteristic.removeAllListeners('set');
+      characteristic.on('set', (value, callback) => {
+        callback(new Error('Something else'));
+      });
+      await expect(characteristic.handleSetRequest('hello')).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(mock).toBeCalledTimes(0);
     });
   });
 
@@ -1442,6 +1578,49 @@ describe('Characteristic', () => {
 
       expect(handlerMock).toHaveBeenCalledTimes(1);
       expect(listenerCallback).toHaveBeenCalledTimes(0);
+    });
+
+    it("should handle SET event errors gracefully when using onSet handler", async () => {
+      const characteristic = createCharacteristic(Formats.STRING);
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      // throw HapStatusError - should not trigger characteristic warning
+      mock.mockReset();
+      characteristic.onSet(() => {
+        throw new HapStatusError(HAPStatus.RESOURCE_BUSY);
+      });
+      await expect(characteristic.handleSetRequest('hello')).rejects.toEqual(HAPStatus.RESOURCE_BUSY)
+      expect(characteristic.statusCode).toEqual(HAPStatus.RESOURCE_BUSY);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw number - should not trigger characteristic warning
+      mock.mockReset();
+      characteristic.onSet(() => {
+        throw HAPStatus.RESOURCE_BUSY;
+      });
+      await expect(characteristic.handleSetRequest('hello')).rejects.toEqual(HAPStatus.RESOURCE_BUSY)
+      expect(characteristic.statusCode).toEqual(HAPStatus.RESOURCE_BUSY);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw out of range number - should convert status code to SERVICE_COMMUNICATION_FAILURE
+      mock.mockReset();
+      characteristic.onSet(() => {
+        throw 234234234234;
+      });
+      await expect(characteristic.handleSetRequest('hello')).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw other error - should trigger characteristic warning
+      mock.mockReset();
+      characteristic.onSet(() => {
+        throw new Error('A Random Error');
+      });
+      await expect(characteristic.handleSetRequest('hello')).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(mock).toBeCalledTimes(1);
     });
   });
 

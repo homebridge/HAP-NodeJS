@@ -1470,9 +1470,10 @@ export class Characteristic extends EventEmitter {
         return value;
       } catch (error) {
         if (typeof error === "number") {
-          this.statusCode = error;
+          const hapStatusError = new HapStatusError(error);
+          this.statusCode = hapStatusError.hapStatus;
           // noinspection JSDeprecatedSymbols
-          this.status = new HapStatusError(error);
+          this.status = hapStatusError;
         } else if (error instanceof HapStatusError) {
           this.statusCode = error.hapStatus;
           // noinspection JSDeprecatedSymbols
@@ -1505,9 +1506,10 @@ export class Characteristic extends EventEmitter {
         this.emit(CharacteristicEventTypes.GET, once((status?: Error | HAPStatus | null, value?: Nullable<CharacteristicValue>) => {
           if (status) {
             if (typeof status === "number") {
-              this.statusCode = status;
+              const hapStatusError = new HapStatusError(status);
+              this.statusCode = hapStatusError.hapStatus;
               // noinspection JSDeprecatedSymbols
-              this.status = new HapStatusError(status);
+              this.status = hapStatusError;
             } else if (status instanceof HapStatusError) {
               this.statusCode = status.hapStatus;
               // noinspection JSDeprecatedSymbols
@@ -1600,9 +1602,10 @@ export class Characteristic extends EventEmitter {
         }
       } catch (error) {
         if (typeof error === "number") {
-          this.statusCode = error;
+          const hapStatusError = new HapStatusError(error);
+          this.statusCode = hapStatusError.hapStatus;
           // noinspection JSDeprecatedSymbols
-          this.status = new HapStatusError(error);
+          this.status = hapStatusError;
         } else if (error instanceof HapStatusError) {
           this.statusCode = error.hapStatus;
           // noinspection JSDeprecatedSymbols
@@ -1627,9 +1630,10 @@ export class Characteristic extends EventEmitter {
           this.emit(CharacteristicEventTypes.SET, value, once((status?: Error | HAPStatus | null, writeResponse?: Nullable<CharacteristicValue>) => {
             if (status) {
               if (typeof status === "number") {
-                this.statusCode = status;
+                const hapStatusError = new HapStatusError(status);
+                this.statusCode = hapStatusError.hapStatus;
                 // noinspection JSDeprecatedSymbols
-                this.status = new HapStatusError(status);
+                this.status = hapStatusError;
               } else if (status instanceof HapStatusError) {
                 this.statusCode = status.hapStatus;
                 // noinspection JSDeprecatedSymbols
