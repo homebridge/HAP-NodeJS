@@ -127,6 +127,62 @@ describe('Characteristic', () => {
       expect(characteristic.props.maxValue).toEqual(2147483647);
       expect(mock).toBeCalledTimes(0);
     });
+
+    it('should reject non-finite numbers for minValue and maxValue for numeric characteristics', function () {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.FLOAT,
+        perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      });
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      mock.mockReset();
+      characteristic.setProps({
+        minValue: Number.NEGATIVE_INFINITY,
+      });
+
+      expect(characteristic.props.minValue).toEqual(undefined);
+      expect(mock).toBeCalledTimes(1);
+      expect(mock).toBeCalledWith(expect.stringContaining("Property 'minValue' must be a finite number"), expect.anything());
+
+      mock.mockReset();
+      characteristic.setProps({
+        maxValue: Number.POSITIVE_INFINITY,
+      });
+
+      expect(characteristic.props.maxValue).toEqual(undefined);
+      expect(mock).toBeCalledTimes(1);
+      expect(mock).toBeCalledWith(expect.stringContaining("Property 'maxValue' must be a finite number"), expect.anything());
+    });
+
+    it('should reject NaN numbers for minValue and maxValue for numeric characteristics', function () {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.FLOAT,
+        perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      });
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      mock.mockReset();
+      characteristic.setProps({
+        minValue: NaN,
+      });
+
+      expect(characteristic.props.minValue).toEqual(undefined);
+      expect(mock).toBeCalledTimes(1);
+      expect(mock).toBeCalledWith(expect.stringContaining("Property 'minValue' must be a finite number"), expect.anything());
+
+      mock.mockReset();
+      characteristic.setProps({
+        maxValue: NaN,
+      });
+
+      expect(characteristic.props.maxValue).toEqual(undefined);
+      expect(mock).toBeCalledTimes(1);
+      expect(mock).toBeCalledWith(expect.stringContaining("Property 'maxValue' must be a finite number"), expect.anything());
+    });
   });
 
   describe("validValuesIterator", () => {
@@ -463,6 +519,30 @@ describe('Characteristic', () => {
 
         // this should throw an error
         await expect(characteristic.handleSetRequest(NaN, null as unknown as undefined))
+          .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST)
+
+        // value should revert to 
+        expect(characteristic.value).toEqual(1);
+
+        // ensure validator was actually called
+        expect(validClientSuppliedValueMock).toBeCalledTimes(1);
+      });
+
+    test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
+      "ensure non-finite values are rejected for %p types sent from client", async (intType) => {
+        const characteristic = createCharacteristicWithProps({
+          format: intType,
+          perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+        });
+
+        // @ts-expect-error
+        const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+
+        // set initial known good value
+        characteristic.setValue(1);
+
+        // this should throw an error
+        await expect(characteristic.handleSetRequest(Infinity, null as unknown as undefined))
           .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST)
 
         // value should revert to 
@@ -1011,6 +1091,31 @@ describe('Characteristic', () => {
       characteristic.setValue(-0.013);
       expect(characteristic.value).toEqual(-0.013);
       expect(mock).toBeCalledTimes(0);
+    });
+
+    it("should not allow non-finite floats in range for Formats.FLOAT", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.FLOAT,
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+      });
+
+      // @ts-expect-error - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      mock.mockReset();
+      characteristic.setValue(Infinity);
+      expect(characteristic.value).toEqual(0);
+      expect(mock).toBeCalledTimes(1);
+
+      mock.mockReset();
+      characteristic.setValue(Number.POSITIVE_INFINITY);
+      expect(characteristic.value).toEqual(0);
+      expect(mock).toBeCalledTimes(1);
+
+      mock.mockReset();
+      characteristic.setValue(Number.NEGATIVE_INFINITY);
+      expect(characteristic.value).toEqual(0);
+      expect(mock).toBeCalledTimes(1);
     });
 
     it("should validate string inputs", () => {

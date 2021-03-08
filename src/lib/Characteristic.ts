@@ -996,21 +996,27 @@ export class Characteristic extends EventEmitter {
         props.minValue = undefined;
       } else if (!isNumericFormat(this.props.format)) {
         this.characteristicWarning(
-          "Characteristic Property `minValue` can only be set for characteristics with numeric format, but not for " + this.props.format,
+          "Characteristic Property 'minValue' can only be set for characteristics with numeric format, but not for " + this.props.format,
           CharacteristicWarningType.ERROR_MESSAGE
         );
         props.minValue = undefined;
-      } else if (isUnsignedNumericFormat(this.props.format)) {
+      } else if (typeof props.minValue !== 'number' || !Number.isFinite(props.minValue)) {
+        this.characteristicWarning(
+          `Characteristic Property 'minValue' must be a finite number, received ${props.minValue} (${typeof props.minValue})`,
+          CharacteristicWarningType.ERROR_MESSAGE
+        );
+        props.minValue = undefined;
+      } else {
         if (props.minValue < numericLowerBound(this.props.format)) {
           this.characteristicWarning(
-            "Characteristic Property `minValue` was set to " + props.minValue + ", but for numeric format " +
+            "Characteristic Property 'minValue' was set to " + props.minValue + ", but for numeric format " +
             this.props.format + " minimum possible is " + numericLowerBound(this.props.format),
             CharacteristicWarningType.ERROR_MESSAGE
           )
           props.minValue = numericLowerBound(this.props.format);
         } else if (props.minValue > numericUpperBound(this.props.format)) {
           this.characteristicWarning(
-            "Characteristic Property `minValue` was set to " + props.minValue + ", but for numeric format " +
+            "Characteristic Property 'minValue' was set to " + props.minValue + ", but for numeric format " +
             this.props.format + " maximum possible is " + numericUpperBound(this.props.format),
             CharacteristicWarningType.ERROR_MESSAGE
           );
@@ -1027,21 +1033,27 @@ export class Characteristic extends EventEmitter {
         props.maxValue = undefined
       } else if (!isNumericFormat(this.props.format)) {
         this.characteristicWarning(
-          "Characteristic Property `maxValue` can only be set for characteristics with numeric format, but not for " + this.props.format,
+          "Characteristic Property 'maxValue' can only be set for characteristics with numeric format, but not for " + this.props.format,
           CharacteristicWarningType.ERROR_MESSAGE
         );
         props.maxValue = undefined;
-      } else if (isUnsignedNumericFormat(this.props.format)) {
+      } else if (typeof props.maxValue !== 'number' || !Number.isFinite(props.maxValue)) {
+        this.characteristicWarning(
+          `Characteristic Property 'maxValue' must be a finite number, received ${props.maxValue} (${typeof props.maxValue})`,
+          CharacteristicWarningType.ERROR_MESSAGE
+        );
+        props.maxValue = undefined;
+      } else {
         if (props.maxValue > numericUpperBound(this.props.format)) {
           this.characteristicWarning(
-            "Characteristic Property `maxValue` was set to " + props.maxValue + ", but for numeric format " +
+            "Characteristic Property 'maxValue' was set to " + props.maxValue + ", but for numeric format " +
             this.props.format + " maximum possible is " + numericUpperBound(this.props.format),
             CharacteristicWarningType.ERROR_MESSAGE
           );
           props.maxValue = numericUpperBound(this.props.format);
         } else if (props.maxValue < numericLowerBound(this.props.format)) {
           this.characteristicWarning(
-            "Characteristic Property `maxValue` was set to " + props.maxValue + ", but for numeric format " +
+            "Characteristic Property 'maxValue' was set to " + props.maxValue + ", but for numeric format " +
             this.props.format + " minimum possible is " + numericUpperBound(this.props.format),
             CharacteristicWarningType.ERROR_MESSAGE
           );
@@ -1725,7 +1737,7 @@ export class Characteristic extends EventEmitter {
             if (this.props.validValues?.length && typeof this.props.validValues[0] === 'number') {
               return this.props.validValues[0];
             }
-            if (typeof this.props.minValue === 'number') {
+            if (typeof this.props.minValue === 'number' && Number.isFinite(this.props.minValue)) {
               return this.props.minValue;
             }
             return 0;
@@ -1773,7 +1785,7 @@ export class Characteristic extends EventEmitter {
           throw new Error(`Client supplied invalid type for ${this.props.format}: "${value}" (${typeof value})`)
         }
 
-        if (isNaN(value)) {
+        if (!Number.isFinite(value)) {
           throw new Error(`Client supplied invalid type for ${this.props.format}: "${value}" (${typeof value})`)
         }
 
@@ -1911,8 +1923,8 @@ export class Characteristic extends EventEmitter {
         if (typeof value === "string") {
           value = this.props.format === Formats.FLOAT ? parseFloat(value) : parseInt(value, 10);
         }
-        if (typeof value === 'number' && isNaN(value)) {
-          this.characteristicWarning("characteristic was expected valid number and received NaN");
+        if (typeof value === 'number' && !Number.isFinite(value)) {
+          this.characteristicWarning(`characteristic value expected valid finite number and received '${value}'`);
           value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
         if (typeof value !== "number") {

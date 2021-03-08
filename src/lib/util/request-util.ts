@@ -74,7 +74,7 @@ export function numericLowerBound(format: Formats | string): number {
     case Formats.INT:
       return -2147483648;
     case Formats.FLOAT:
-      return Number.MIN_SAFE_INTEGER;
+      return Number.NEGATIVE_INFINITY;
     case Formats.UINT8:
     case Formats.UINT16:
     case Formats.UINT32:
@@ -90,7 +90,7 @@ export function numericUpperBound(format: Formats | string): number {
     case Formats.INT:
       return 2147483647;
     case Formats.FLOAT:
-      return Number.MAX_SAFE_INTEGER;
+      return Number.POSITIVE_INFINITY;
     case Formats.UINT8:
       return 255;
     case Formats.UINT16:
