@@ -1566,7 +1566,7 @@ export class Characteristic extends EventEmitter {
       // if connection is undefined, the set "request" comes from the setValue method.
       // for setValue a value of "null" is allowed and checked via validateUserInput.
       try {
-         value = this.validClientSuppliedValue(value);
+         value = this.validateClientSuppliedValue(value);
       } catch (e) {
         debug(`[${this.displayName}]`, e.message);
         return Promise.reject(HAPStatus.INVALID_VALUE_IN_REQUEST);
@@ -1754,7 +1754,7 @@ export class Characteristic extends EventEmitter {
    * must be returned.
    * @param value - Value supplied by the HomeKit controller
    */
-  private validClientSuppliedValue(value?: Nullable<CharacteristicValue>): CharacteristicValue {
+  private validateClientSuppliedValue(value?: Nullable<CharacteristicValue>): CharacteristicValue {
     if (value == undefined) {
       throw new Error(`Client supplied invalid value for ${this.props.format}: undefined`)
     }

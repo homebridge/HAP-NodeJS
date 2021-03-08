@@ -328,7 +328,7 @@ describe('Characteristic', () => {
     });
   });
 
-  describe('#validClientSuppliedValue()', () => {
+  describe('#validateClientSuppliedValue()', () => {
     it('rejects undefined values from client', async () => {
       const characteristic = createCharacteristicWithProps({
         format: Formats.UINT8,
@@ -339,7 +339,7 @@ describe('Characteristic', () => {
       });
 
       // @ts-expect-error
-      const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+      const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
 
       // set initial known good value
       characteristic.setValue(1);
@@ -352,7 +352,7 @@ describe('Characteristic', () => {
       expect(characteristic.value).toEqual(1);
 
       // ensure validator was actually called
-      expect(validClientSuppliedValueMock).toBeCalled();
+      expect(validateClientSuppliedValueMock).toBeCalled();
     });
 
     it('rejects invalid values for the boolean format type', async () => {
@@ -365,7 +365,7 @@ describe('Characteristic', () => {
       });
 
       // @ts-expect-error
-      const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+      const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
 
       // set initial known good value
       characteristic.setValue(true);
@@ -392,7 +392,7 @@ describe('Characteristic', () => {
       expect(characteristic.value).toEqual(true);
 
       // ensure validator was actually called
-      expect(validClientSuppliedValueMock).toBeCalledTimes(4);
+      expect(validateClientSuppliedValueMock).toBeCalledTimes(4);
     });
 
     test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
@@ -406,13 +406,13 @@ describe('Characteristic', () => {
         });
 
         // @ts-expect-error
-        const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+        const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
 
         await characteristic.handleSetRequest(false, null as unknown as undefined);
         expect(characteristic.value).toEqual(0);
 
         // ensure validator was actually called
-        expect(validClientSuppliedValueMock).toBeCalled();
+        expect(validateClientSuppliedValueMock).toBeCalled();
       });
   
 
@@ -427,13 +427,13 @@ describe('Characteristic', () => {
         });
 
         // @ts-expect-error
-        const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+        const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
 
         await characteristic.handleSetRequest(true, null as unknown as undefined);
         expect(characteristic.value).toEqual(1);
 
         // ensure validator was actually called
-        expect(validClientSuppliedValueMock).toBeCalled();
+        expect(validateClientSuppliedValueMock).toBeCalled();
       });
 
     test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
@@ -447,7 +447,7 @@ describe('Characteristic', () => {
         });
 
         // @ts-expect-error
-        const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+        const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
 
         // set initial known good value
         characteristic.setValue(1);
@@ -460,7 +460,7 @@ describe('Characteristic', () => {
         expect(characteristic.value).toEqual(1);
 
         // ensure validator was actually called
-        expect(validClientSuppliedValueMock).toBeCalled();
+        expect(validateClientSuppliedValueMock).toBeCalled();
       });
 
     test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
@@ -474,7 +474,7 @@ describe('Characteristic', () => {
         });
 
         // @ts-expect-error
-        const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+        const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
 
         // set initial known good value
         characteristic.setValue(1);
@@ -498,7 +498,7 @@ describe('Characteristic', () => {
         expect(characteristic.value).toEqual(0);
 
         // ensure validator was actually called
-        expect(validClientSuppliedValueMock).toBeCalledTimes(3);
+        expect(validateClientSuppliedValueMock).toBeCalledTimes(3);
       });
 
     test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
@@ -512,7 +512,7 @@ describe('Characteristic', () => {
         });
 
         // @ts-expect-error
-        const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+        const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
 
         // set initial known good value
         characteristic.setValue(1);
@@ -525,7 +525,7 @@ describe('Characteristic', () => {
         expect(characteristic.value).toEqual(1);
 
         // ensure validator was actually called
-        expect(validClientSuppliedValueMock).toBeCalledTimes(1);
+        expect(validateClientSuppliedValueMock).toBeCalledTimes(1);
       });
 
     test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
@@ -536,7 +536,7 @@ describe('Characteristic', () => {
         });
 
         // @ts-expect-error
-        const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+        const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
 
         // set initial known good value
         characteristic.setValue(1);
@@ -549,7 +549,7 @@ describe('Characteristic', () => {
         expect(characteristic.value).toEqual(1);
 
         // ensure validator was actually called
-        expect(validClientSuppliedValueMock).toBeCalledTimes(1);
+        expect(validateClientSuppliedValueMock).toBeCalledTimes(1);
       });
 
     test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
@@ -564,7 +564,7 @@ describe('Characteristic', () => {
         });
 
         // @ts-expect-error
-        const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+        const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
 
         // set initial known good value
         characteristic.setValue(1);
@@ -584,7 +584,7 @@ describe('Characteristic', () => {
         expect(characteristic.value).toEqual(3);
 
         // ensure validator was actually called
-        expect(validClientSuppliedValueMock).toBeCalledTimes(2);
+        expect(validateClientSuppliedValueMock).toBeCalledTimes(2);
       });
 
     test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
@@ -599,7 +599,7 @@ describe('Characteristic', () => {
         });
 
         // @ts-expect-error
-        const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+        const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
 
         // set initial known good value
         characteristic.setValue(50);
@@ -623,7 +623,7 @@ describe('Characteristic', () => {
         expect(characteristic.value).toEqual(52);
 
         // ensure validator was actually called
-        expect(validClientSuppliedValueMock).toBeCalledTimes(3);
+        expect(validateClientSuppliedValueMock).toBeCalledTimes(3);
       });
 
     test.each([Formats.STRING, Formats.TLV8, Formats.DATA])(
@@ -634,7 +634,7 @@ describe('Characteristic', () => {
       });
 
       // @ts-expect-error
-      const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+      const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
 
       // set initial known good value
       characteristic.setValue('some string');
@@ -658,7 +658,7 @@ describe('Characteristic', () => {
       expect(characteristic.value).toEqual('some other test string');
 
       // ensure validator was actually called
-      expect(validClientSuppliedValueMock).toBeCalledTimes(3);
+      expect(validateClientSuppliedValueMock).toBeCalledTimes(3);
     });
 
     it('should accept Formats.FLOAT with precision provided by client', async () => {
@@ -668,7 +668,7 @@ describe('Characteristic', () => {
       });
 
       // @ts-expect-error
-      const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+      const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
 
       // set initial known good value
       characteristic.setValue(0.0005);
@@ -684,7 +684,7 @@ describe('Characteristic', () => {
       expect(characteristic.value).toEqual(0.0001005);
 
       // ensure validator was actually called
-      expect(validClientSuppliedValueMock).toBeCalledTimes(1);
+      expect(validateClientSuppliedValueMock).toBeCalledTimes(1);
     });
 
     it("should accept negative floats in range for Formats.FLOAT provided by the client", async () => {
@@ -696,7 +696,7 @@ describe('Characteristic', () => {
       });
 
       // @ts-expect-error - spying on private property
-      const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+      const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
 
       // should allow negative float
       await expect(characteristic.handleSetRequest(-0.013, null as unknown as undefined))
@@ -706,7 +706,7 @@ describe('Characteristic', () => {
       expect(characteristic.value).toEqual(-0.013);
 
       // ensure validator was actually called
-      expect(validClientSuppliedValueMock).toBeCalledTimes(1);
+      expect(validateClientSuppliedValueMock).toBeCalledTimes(1);
     });
 
     it('rejects string values exceeding the max length from the client', async () => {
@@ -717,7 +717,7 @@ describe('Characteristic', () => {
       });
 
       // @ts-expect-error
-      const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+      const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
 
       // set initial known good value
       characteristic.setValue('abcde');
@@ -737,7 +737,7 @@ describe('Characteristic', () => {
       expect(characteristic.value).toEqual('abc');
 
       // ensure validator was actually called
-      expect(validClientSuppliedValueMock).toBeCalledTimes(2);
+      expect(validateClientSuppliedValueMock).toBeCalledTimes(2);
     });
 
     it('rejects data values exceeding the max length from the client', async () => {
@@ -748,7 +748,7 @@ describe('Characteristic', () => {
       });
 
       // @ts-expect-error
-      const validClientSuppliedValueMock = jest.spyOn(characteristic, 'validClientSuppliedValue');
+      const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
 
       // set initial known good value
       characteristic.setValue('abcde');
@@ -768,7 +768,7 @@ describe('Characteristic', () => {
       expect(characteristic.value).toEqual('abc');
 
       // ensure validator was actually called
-      expect(validClientSuppliedValueMock).toBeCalledTimes(2);
+      expect(validateClientSuppliedValueMock).toBeCalledTimes(2);
     });
 
   });
