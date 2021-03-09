@@ -69,7 +69,7 @@ describe('Characteristic', () => {
       characteristic.setProps({
         minValue: 700,
         maxValue: 1000
-      })
+      });
 
       expect(characteristic.props.minValue).toEqual(0); // min for UINT8
       expect(characteristic.props.maxValue).toEqual(255); // max for UINT8
@@ -79,7 +79,7 @@ describe('Characteristic', () => {
       characteristic.setProps({
         minValue: -1000,
         maxValue: -500
-      })
+      });
 
       expect(characteristic.props.minValue).toEqual(0); // min for UINT8
       expect(characteristic.props.maxValue).toEqual(255); // max for UINT8
@@ -89,11 +89,28 @@ describe('Characteristic', () => {
       characteristic.setProps({
         minValue: 10,
         maxValue: 1000
-      })
+      });
 
       expect(characteristic.props.minValue).toEqual(10);
       expect(characteristic.props.maxValue).toEqual(255); // max for UINT8
       expect(mock).toBeCalledTimes(1);
+    });
+
+    it('should reject update to minValue and maxValue when minValue is greater than maxValue', function () {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.FLOAT,
+        perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      });
+
+      expect(function() {
+        characteristic.setProps({
+          minValue: 1000,
+          maxValue: 500,
+        })
+      }).toThrowError()
+
+      expect(characteristic.props.minValue).toBeUndefined();
+      expect(characteristic.props.maxValue).toBeUndefined();
     });
 
     it('should accept update to minValue and maxValue when they are in range for format type', function () {

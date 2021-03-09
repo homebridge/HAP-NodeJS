@@ -1813,8 +1813,6 @@ export class Characteristic extends EventEmitter {
           }
         }
 
-        // should we enforce min step from the client as well?
-
         return value;
       }
       case Formats.STRING: {
