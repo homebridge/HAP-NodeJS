@@ -11,6 +11,7 @@ import {
   Units,
   uuid
 } from '..';
+import { HapStatusError } from './util/hapStatusError';
 
 function createCharacteristic(type: Formats, customUUID?: string): Characteristic {
   return new Characteristic('Test', customUUID || uuid.generate('Foo'), { format: type, perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE] });
@@ -68,7 +69,7 @@ describe('Characteristic', () => {
       characteristic.setProps({
         minValue: 700,
         maxValue: 1000
-      })
+      });
 
       expect(characteristic.props.minValue).toEqual(0); // min for UINT8
       expect(characteristic.props.maxValue).toEqual(255); // max for UINT8
@@ -78,7 +79,7 @@ describe('Characteristic', () => {
       characteristic.setProps({
         minValue: -1000,
         maxValue: -500
-      })
+      });
 
       expect(characteristic.props.minValue).toEqual(0); // min for UINT8
       expect(characteristic.props.maxValue).toEqual(255); // max for UINT8
@@ -88,11 +89,28 @@ describe('Characteristic', () => {
       characteristic.setProps({
         minValue: 10,
         maxValue: 1000
-      })
+      });
 
       expect(characteristic.props.minValue).toEqual(10);
       expect(characteristic.props.maxValue).toEqual(255); // max for UINT8
       expect(mock).toBeCalledTimes(1);
+    });
+
+    it('should reject update to minValue and maxValue when minValue is greater than maxValue', function () {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.FLOAT,
+        perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      });
+
+      expect(function() {
+        characteristic.setProps({
+          minValue: 1000,
+          maxValue: 500,
+        })
+      }).toThrowError()
+
+      expect(characteristic.props.minValue).toBeUndefined();
+      expect(characteristic.props.maxValue).toBeUndefined();
     });
 
     it('should accept update to minValue and maxValue when they are in range for format type', function () {
@@ -125,6 +143,62 @@ describe('Characteristic', () => {
       expect(characteristic.props.minValue).toEqual(-2147483648);
       expect(characteristic.props.maxValue).toEqual(2147483647);
       expect(mock).toBeCalledTimes(0);
+    });
+
+    it('should reject non-finite numbers for minValue and maxValue for numeric characteristics', function () {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.FLOAT,
+        perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      });
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      mock.mockReset();
+      characteristic.setProps({
+        minValue: Number.NEGATIVE_INFINITY,
+      });
+
+      expect(characteristic.props.minValue).toEqual(undefined);
+      expect(mock).toBeCalledTimes(1);
+      expect(mock).toBeCalledWith(expect.stringContaining("Property 'minValue' must be a finite number"), expect.anything());
+
+      mock.mockReset();
+      characteristic.setProps({
+        maxValue: Number.POSITIVE_INFINITY,
+      });
+
+      expect(characteristic.props.maxValue).toEqual(undefined);
+      expect(mock).toBeCalledTimes(1);
+      expect(mock).toBeCalledWith(expect.stringContaining("Property 'maxValue' must be a finite number"), expect.anything());
+    });
+
+    it('should reject NaN numbers for minValue and maxValue for numeric characteristics', function () {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.FLOAT,
+        perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      });
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      mock.mockReset();
+      characteristic.setProps({
+        minValue: NaN,
+      });
+
+      expect(characteristic.props.minValue).toEqual(undefined);
+      expect(mock).toBeCalledTimes(1);
+      expect(mock).toBeCalledWith(expect.stringContaining("Property 'minValue' must be a finite number"), expect.anything());
+
+      mock.mockReset();
+      characteristic.setProps({
+        maxValue: NaN,
+      });
+
+      expect(characteristic.props.maxValue).toEqual(undefined);
+      expect(mock).toBeCalledTimes(1);
+      expect(mock).toBeCalledWith(expect.stringContaining("Property 'maxValue' must be a finite number"), expect.anything());
     });
   });
 
@@ -269,6 +343,451 @@ describe('Characteristic', () => {
         callback();
       });
     });
+  });
+
+  describe('#validateClientSuppliedValue()', () => {
+    it('rejects undefined values from client', async () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.UINT8,
+        maxValue: 1,
+        minValue: 0,
+        minStep: 1,
+        perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+      });
+
+      // @ts-expect-error
+      const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
+
+      // set initial known good value
+      characteristic.setValue(1);
+
+      // this should throw an error
+      await expect(characteristic.handleSetRequest(undefined as unknown as boolean, null as unknown as undefined))
+        .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST);
+
+      // the existing valid value should remain
+      expect(characteristic.value).toEqual(1);
+
+      // ensure validator was actually called
+      expect(validateClientSuppliedValueMock).toBeCalled();
+    });
+
+    it('rejects invalid values for the boolean format type', async () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.BOOL,
+        maxValue: 1,
+        minValue: 0,
+        minStep: 1,
+        perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+      });
+
+      // @ts-expect-error
+      const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
+
+      // set initial known good value
+      characteristic.setValue(true);
+
+      // numbers other than 1 or 0 should throw an error
+      await expect(characteristic.handleSetRequest(20, null as unknown as undefined))
+        .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST);
+
+      // strings should throw an error
+      await expect(characteristic.handleSetRequest("true", null as unknown as undefined))
+        .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST);
+
+      // the existing valid value should remain
+      expect(characteristic.value).toEqual(true);
+
+      // 0 should set the value to false
+      await expect(characteristic.handleSetRequest(0, null as unknown as undefined))
+        .resolves.toEqual(undefined);
+      expect(characteristic.value).toEqual(false);
+
+      // 1 should set the value to true
+      await expect(characteristic.handleSetRequest(1, null as unknown as undefined))
+        .resolves.toEqual(undefined);
+      expect(characteristic.value).toEqual(true);
+
+      // ensure validator was actually called
+      expect(validateClientSuppliedValueMock).toBeCalledTimes(4);
+    });
+
+    test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
+      "boolean types sent for %p types should be transformed from false to 0", async (intType) => {
+        const characteristic = createCharacteristicWithProps({
+          format: intType,
+          maxValue: 1,
+          minValue: 0,
+          minStep: 1,
+          perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+        });
+
+        // @ts-expect-error
+        const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
+
+        await characteristic.handleSetRequest(false, null as unknown as undefined);
+        expect(characteristic.value).toEqual(0);
+
+        // ensure validator was actually called
+        expect(validateClientSuppliedValueMock).toBeCalled();
+      });
+  
+
+    test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
+      "boolean types sent for %p types should be transformed from true to 1", async (intType) => {
+        const characteristic = createCharacteristicWithProps({
+          format: intType,
+          maxValue: 1,
+          minValue: 0,
+          minStep: 1,
+          perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+        });
+
+        // @ts-expect-error
+        const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
+
+        await characteristic.handleSetRequest(true, null as unknown as undefined);
+        expect(characteristic.value).toEqual(1);
+
+        // ensure validator was actually called
+        expect(validateClientSuppliedValueMock).toBeCalled();
+      });
+
+    test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
+      "rejects string values sent for %p types sent from client", async (intType) => {
+        const characteristic = createCharacteristicWithProps({
+          format: intType,
+          maxValue: 1,
+          minValue: 0,
+          minStep: 1,
+          perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+        });
+
+        // @ts-expect-error
+        const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
+
+        // set initial known good value
+        characteristic.setValue(1);
+
+        // this should throw an error
+        await expect(characteristic.handleSetRequest("what is this!", null as unknown as undefined))
+          .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST)
+
+        // the existing valid value should remain
+        expect(characteristic.value).toEqual(1);
+
+        // ensure validator was actually called
+        expect(validateClientSuppliedValueMock).toBeCalled();
+      });
+
+    test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
+      "ensure maxValue is not exceeded for %p types sent from client", async (intType) => {
+        const characteristic = createCharacteristicWithProps({
+          format: intType,
+          maxValue: 1,
+          minValue: 0,
+          minStep: 1,
+          perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+        });
+
+        // @ts-expect-error
+        const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
+
+        // set initial known good value
+        characteristic.setValue(1);
+
+        // this should throw an error
+        await expect(characteristic.handleSetRequest(100, null as unknown as undefined))
+          .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST)
+
+        // this should throw an error
+        await expect(characteristic.handleSetRequest(-100, null as unknown as undefined))
+          .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST)
+
+        // value should revert to 
+        expect(characteristic.value).toEqual(1);
+
+        // this should pass
+        await expect(characteristic.handleSetRequest(0, null as unknown as undefined))
+          .resolves.toEqual(undefined);
+
+        // value should now be 3
+        expect(characteristic.value).toEqual(0);
+
+        // ensure validator was actually called
+        expect(validateClientSuppliedValueMock).toBeCalledTimes(3);
+      });
+
+    test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
+      "ensure NaN is rejected for %p types sent from client", async (intType) => {
+        const characteristic = createCharacteristicWithProps({
+          format: intType,
+          maxValue: 1,
+          minValue: 0,
+          minStep: 1,
+          perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+        });
+
+        // @ts-expect-error
+        const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
+
+        // set initial known good value
+        characteristic.setValue(1);
+
+        // this should throw an error
+        await expect(characteristic.handleSetRequest(NaN, null as unknown as undefined))
+          .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST)
+
+        // value should revert to 
+        expect(characteristic.value).toEqual(1);
+
+        // ensure validator was actually called
+        expect(validateClientSuppliedValueMock).toBeCalledTimes(1);
+      });
+
+    test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
+      "ensure non-finite values are rejected for %p types sent from client", async (intType) => {
+        const characteristic = createCharacteristicWithProps({
+          format: intType,
+          perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+        });
+
+        // @ts-expect-error
+        const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
+
+        // set initial known good value
+        characteristic.setValue(1);
+
+        // this should throw an error
+        await expect(characteristic.handleSetRequest(Infinity, null as unknown as undefined))
+          .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST)
+
+        // value should revert to 
+        expect(characteristic.value).toEqual(1);
+
+        // ensure validator was actually called
+        expect(validateClientSuppliedValueMock).toBeCalledTimes(1);
+      });
+
+    test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
+      "ensure value is rejected if outside valid values for %p types sent from client", async (intType) => {
+        const characteristic = createCharacteristicWithProps({
+          format: intType,
+          maxValue: 10,
+          minValue: 0,
+          minStep: 1,
+          validValues: [1, 3, 5, 10],
+          perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+        });
+
+        // @ts-expect-error
+        const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
+
+        // set initial known good value
+        characteristic.setValue(1);
+
+        // this should throw an error
+        await expect(characteristic.handleSetRequest(6, null as unknown as undefined))
+          .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST)
+
+        // value should revert to 
+        expect(characteristic.value).toEqual(1);
+
+        // this should pass
+        await expect(characteristic.handleSetRequest(3, null as unknown as undefined))
+          .resolves.toEqual(undefined);
+
+        // value should now be 3
+        expect(characteristic.value).toEqual(3);
+
+        // ensure validator was actually called
+        expect(validateClientSuppliedValueMock).toBeCalledTimes(2);
+      });
+
+    test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
+      "ensure value is rejected if outside valid value ranges for %p types sent from client", async (intType) => {
+        const characteristic = createCharacteristicWithProps({
+          format: intType,
+          maxValue: 1000,
+          minValue: 0,
+          minStep: 1,
+          validValueRanges: [50, 55],
+          perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+        });
+
+        // @ts-expect-error
+        const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
+
+        // set initial known good value
+        characteristic.setValue(50);
+
+        // this should throw an error
+        await expect(characteristic.handleSetRequest(100, null as unknown as undefined))
+          .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST);
+
+        // this should throw an error
+        await expect(characteristic.handleSetRequest(20, null as unknown as undefined))
+          .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST);
+
+        // value should still be 50
+        expect(characteristic.value).toEqual(50);
+
+        // this should pass
+        await expect(characteristic.handleSetRequest(52, null as unknown as undefined))
+          .resolves.toEqual(undefined);
+
+        // value should now be 52
+        expect(characteristic.value).toEqual(52);
+
+        // ensure validator was actually called
+        expect(validateClientSuppliedValueMock).toBeCalledTimes(3);
+      });
+
+    test.each([Formats.STRING, Formats.TLV8, Formats.DATA])(
+      "rejects non-string values for the %p format type from the client", async (stringType) => {
+      const characteristic = createCharacteristicWithProps({
+        format: stringType,
+        perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+      });
+
+      // @ts-expect-error
+      const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
+
+      // set initial known good value
+      characteristic.setValue('some string');
+
+      // numbers should throw an error
+      await expect(characteristic.handleSetRequest(1234, null as unknown as undefined))
+        .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST);
+
+      // booleans should throw an error
+      await expect(characteristic.handleSetRequest(false, null as unknown as undefined))
+        .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST);
+
+      // the existing valid value should remain
+      expect(characteristic.value).toEqual('some string');
+
+      // strings should pass
+      await expect(characteristic.handleSetRequest('some other test string', null as unknown as undefined))
+        .resolves.toEqual(undefined);
+  
+      // value should now be updated
+      expect(characteristic.value).toEqual('some other test string');
+
+      // ensure validator was actually called
+      expect(validateClientSuppliedValueMock).toBeCalledTimes(3);
+    });
+
+    it('should accept Formats.FLOAT with precision provided by client', async () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.FLOAT,
+        perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+      });
+
+      // @ts-expect-error
+      const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
+
+      // set initial known good value
+      characteristic.setValue(0.0005);
+
+      // the existing valid value should remain
+      expect(characteristic.value).toEqual(0.0005);
+
+      // should allow float
+      await expect(characteristic.handleSetRequest(0.0001005, null as unknown as undefined))
+        .resolves.toEqual(undefined);
+
+      // value should now be updated
+      expect(characteristic.value).toEqual(0.0001005);
+
+      // ensure validator was actually called
+      expect(validateClientSuppliedValueMock).toBeCalledTimes(1);
+    });
+
+    it("should accept negative floats in range for Formats.FLOAT provided by the client", async () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.FLOAT,
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+        minValue: -1000,
+        maxValue: 1000,
+      });
+
+      // @ts-expect-error - spying on private property
+      const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
+
+      // should allow negative float
+      await expect(characteristic.handleSetRequest(-0.013, null as unknown as undefined))
+        .resolves.toEqual(undefined);
+
+      // value should now be updated
+      expect(characteristic.value).toEqual(-0.013);
+
+      // ensure validator was actually called
+      expect(validateClientSuppliedValueMock).toBeCalledTimes(1);
+    });
+
+    it('rejects string values exceeding the max length from the client', async () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.STRING,
+        maxLen: 5,
+        perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+      });
+
+      // @ts-expect-error
+      const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
+
+      // set initial known good value
+      characteristic.setValue('abcde');
+
+      // should reject strings that are to long
+      await expect(characteristic.handleSetRequest('this is to long', null as unknown as undefined))
+        .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST);
+
+      // the existing valid value should remain
+      expect(characteristic.value).toEqual('abcde');
+
+      // strings should pass
+      await expect(characteristic.handleSetRequest('abc', null as unknown as undefined))
+        .resolves.toEqual(undefined);
+
+      // value should now be updated
+      expect(characteristic.value).toEqual('abc');
+
+      // ensure validator was actually called
+      expect(validateClientSuppliedValueMock).toBeCalledTimes(2);
+    });
+
+    it('rejects data values exceeding the max length from the client', async () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.DATA,
+        maxDataLen: 5,
+        perms: [Perms.EVENTS, Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+      });
+
+      // @ts-expect-error
+      const validateClientSuppliedValueMock = jest.spyOn(characteristic, 'validateClientSuppliedValue');
+
+      // set initial known good value
+      characteristic.setValue('abcde');
+
+      // should reject strings that are to long
+      await expect(characteristic.handleSetRequest('this is to long', null as unknown as undefined))
+        .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST);
+
+      // the existing valid value should remain
+      expect(characteristic.value).toEqual('abcde');
+
+      // strings should pass
+      await expect(characteristic.handleSetRequest('abc', null as unknown as undefined))
+        .resolves.toEqual(undefined);
+
+      // value should now be updated
+      expect(characteristic.value).toEqual('abc');
+
+      // ensure validator was actually called
+      expect(validateClientSuppliedValueMock).toBeCalledTimes(2);
+    });
+
   });
 
   describe('#validateUserInput()', () => {
@@ -559,6 +1078,11 @@ describe('Characteristic', () => {
       expect(mock).toBeCalledTimes(0);
 
       mock.mockReset();
+      characteristic.setValue('0.0001');
+      expect(characteristic.value).toEqual(0.0001);
+      expect(mock).toBeCalledTimes(0);
+
+      mock.mockReset();
       characteristic.setValue(100000.00000001);
       expect(characteristic.value).toEqual(100000);
       expect(mock).toBeCalledTimes(1);
@@ -567,6 +1091,48 @@ describe('Characteristic', () => {
       characteristic.setValue(100000);
       expect(characteristic.value).toEqual(100000);
       expect(mock).toBeCalledTimes(0);
+    });
+
+    it("should allow negative floats in range for Formats.FLOAT", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.FLOAT,
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+        minValue: -1000,
+        maxValue: 1000,
+      });
+
+      // @ts-expect-error - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      mock.mockReset();
+      characteristic.setValue(-0.013);
+      expect(characteristic.value).toEqual(-0.013);
+      expect(mock).toBeCalledTimes(0);
+    });
+
+    it("should not allow non-finite floats in range for Formats.FLOAT", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.FLOAT,
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE]
+      });
+
+      // @ts-expect-error - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      mock.mockReset();
+      characteristic.setValue(Infinity);
+      expect(characteristic.value).toEqual(0);
+      expect(mock).toBeCalledTimes(1);
+
+      mock.mockReset();
+      characteristic.setValue(Number.POSITIVE_INFINITY);
+      expect(characteristic.value).toEqual(0);
+      expect(mock).toBeCalledTimes(1);
+
+      mock.mockReset();
+      characteristic.setValue(Number.NEGATIVE_INFINITY);
+      expect(characteristic.value).toEqual(0);
+      expect(mock).toBeCalledTimes(1);
     });
 
     it("should validate string inputs", () => {
@@ -824,7 +1390,6 @@ describe('Characteristic', () => {
   });
 
   describe(`@${CharacteristicEventTypes.GET}`, () => {
-
     it('should call any listeners for the event', (callback) => {
       const characteristic = createCharacteristic(Formats.STRING);
 
@@ -836,6 +1401,53 @@ describe('Characteristic', () => {
         expect(listenerCallback).toHaveBeenCalledTimes(1);
         callback();
       })
+    });
+
+    it("should handle GET event errors gracefully when using on('get')", async () => {
+      const characteristic = createCharacteristic(Formats.STRING);
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      // throw HapStatusError - should not trigger characteristic warning
+      mock.mockReset();
+      characteristic.removeAllListeners('get');
+      characteristic.on('get', (callback) => {
+        callback(new HapStatusError(HAPStatus.RESOURCE_BUSY));
+      });
+      await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.RESOURCE_BUSY)
+      expect(characteristic.statusCode).toEqual(HAPStatus.RESOURCE_BUSY);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw number - should not trigger characteristic warning
+      mock.mockReset();
+      characteristic.removeAllListeners('get');
+      characteristic.on('get', (callback) => {
+        callback(HAPStatus.RESOURCE_BUSY);
+      });
+      await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.RESOURCE_BUSY)
+      expect(characteristic.statusCode).toEqual(HAPStatus.RESOURCE_BUSY);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw out of range number - should convert status code to SERVICE_COMMUNICATION_FAILURE
+      mock.mockReset();
+      characteristic.removeAllListeners('get');
+      characteristic.on('get', (callback) => {
+        callback(234234234234);
+      });
+      await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw other error - callback style getters should still not trigger warning when error is passed in
+      mock.mockReset();
+      characteristic.removeAllListeners('get');
+      characteristic.on('get', (callback) => {
+        callback(new Error('Something else'));
+      });
+      await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(mock).toBeCalledTimes(0);
     });
   });
 
@@ -859,10 +1471,52 @@ describe('Characteristic', () => {
       expect(handlerMock).toHaveBeenCalledTimes(1);
       expect(listenerCallback).toHaveBeenCalledTimes(0);
     });
+
+    it("should handle GET event errors gracefully when using the onGet handler", async () => {
+      const characteristic = createCharacteristic(Formats.STRING);
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      // throw HapStatusError - should not trigger characteristic warning
+      mock.mockReset();
+      characteristic.onGet(() => {
+        throw new HapStatusError(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      });
+      await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw number - should not trigger characteristic warning
+      mock.mockReset();
+      characteristic.onGet(() => {
+        throw HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+      });
+      await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw out of range number - should convert status code to SERVICE_COMMUNICATION_FAILURE
+      mock.mockReset();
+      characteristic.onGet(() => {
+        throw 234234234234;
+      });
+      await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw other error - should trigger characteristic warning
+      mock.mockReset();
+      characteristic.onGet(() => {
+        throw new Error('A Random Error');
+      });
+      await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(mock).toBeCalledTimes(1);
+    });
   });
 
   describe(`@${CharacteristicEventTypes.SET}`, () => {
-
     it('should call any listeners for the event', () => {
       const characteristic = createCharacteristic(Formats.STRING);
 
@@ -874,6 +1528,53 @@ describe('Characteristic', () => {
       characteristic.handleSetRequest(VALUE);
 
       expect(listenerCallback).toHaveBeenCalledTimes(1);
+    });
+
+    it("should handle SET event errors gracefully when using on('set')", async () => {
+      const characteristic = createCharacteristic(Formats.STRING);
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      // throw HapStatusError - should not trigger characteristic warning
+      mock.mockReset();
+      characteristic.removeAllListeners('set');
+      characteristic.on('set', (value, callback) => {
+        callback(new HapStatusError(HAPStatus.RESOURCE_BUSY));
+      });
+      await expect(characteristic.handleSetRequest('hello')).rejects.toEqual(HAPStatus.RESOURCE_BUSY)
+      expect(characteristic.statusCode).toEqual(HAPStatus.RESOURCE_BUSY);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw number - should not trigger characteristic warning
+      mock.mockReset();
+      characteristic.removeAllListeners('set');
+      characteristic.on('set', (value, callback) => {
+        callback(HAPStatus.RESOURCE_BUSY);
+      });
+      await expect(characteristic.handleSetRequest('hello')).rejects.toEqual(HAPStatus.RESOURCE_BUSY)
+      expect(characteristic.statusCode).toEqual(HAPStatus.RESOURCE_BUSY);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw out of range number - should convert status code to SERVICE_COMMUNICATION_FAILURE
+      mock.mockReset();
+      characteristic.removeAllListeners('set');
+      characteristic.on('set', (value, callback) => {
+        callback(234234234234);
+      });
+      await expect(characteristic.handleSetRequest('hello')).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw other error - callback style setters should still not trigger warning when error is passed in
+      mock.mockReset();
+      characteristic.removeAllListeners('set');
+      characteristic.on('set', (value, callback) => {
+        callback(new Error('Something else'));
+      });
+      await expect(characteristic.handleSetRequest('hello')).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(mock).toBeCalledTimes(0);
     });
   });
 
@@ -894,6 +1595,49 @@ describe('Characteristic', () => {
 
       expect(handlerMock).toHaveBeenCalledTimes(1);
       expect(listenerCallback).toHaveBeenCalledTimes(0);
+    });
+
+    it("should handle SET event errors gracefully when using onSet handler", async () => {
+      const characteristic = createCharacteristic(Formats.STRING);
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristic, 'characteristicWarning');
+
+      // throw HapStatusError - should not trigger characteristic warning
+      mock.mockReset();
+      characteristic.onSet(() => {
+        throw new HapStatusError(HAPStatus.RESOURCE_BUSY);
+      });
+      await expect(characteristic.handleSetRequest('hello')).rejects.toEqual(HAPStatus.RESOURCE_BUSY)
+      expect(characteristic.statusCode).toEqual(HAPStatus.RESOURCE_BUSY);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw number - should not trigger characteristic warning
+      mock.mockReset();
+      characteristic.onSet(() => {
+        throw HAPStatus.RESOURCE_BUSY;
+      });
+      await expect(characteristic.handleSetRequest('hello')).rejects.toEqual(HAPStatus.RESOURCE_BUSY)
+      expect(characteristic.statusCode).toEqual(HAPStatus.RESOURCE_BUSY);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw out of range number - should convert status code to SERVICE_COMMUNICATION_FAILURE
+      mock.mockReset();
+      characteristic.onSet(() => {
+        throw 234234234234;
+      });
+      await expect(characteristic.handleSetRequest('hello')).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(mock).toBeCalledTimes(0);
+
+      // throw other error - should trigger characteristic warning
+      mock.mockReset();
+      characteristic.onSet(() => {
+        throw new Error('A Random Error');
+      });
+      await expect(characteristic.handleSetRequest('hello')).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(mock).toBeCalledTimes(1);
     });
   });
 

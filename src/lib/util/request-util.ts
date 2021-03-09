@@ -73,6 +73,8 @@ export function numericLowerBound(format: Formats | string): number {
   switch (format) {
     case Formats.INT:
       return -2147483648;
+    case Formats.FLOAT:
+      return -Number.MAX_VALUE;
     case Formats.UINT8:
     case Formats.UINT16:
     case Formats.UINT32:
@@ -87,6 +89,8 @@ export function numericUpperBound(format: Formats | string): number {
   switch (format) {
     case Formats.INT:
       return 2147483647;
+    case Formats.FLOAT:
+      return Number.MAX_VALUE;
     case Formats.UINT8:
       return 255;
     case Formats.UINT16:

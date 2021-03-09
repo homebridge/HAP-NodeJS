@@ -76,7 +76,7 @@ export const CharacteristicOverriding: Map<string, (generated: GeneratedCharacte
     generated.units = "percentage";
   }],
   ["temperature.current", generated => {
-    generated.minValue = -273.15;
+    generated.minValue = -270;
   }],
   ["characteristic-value-transition-control", generated => {
     generated.properties |= PropertyId.WRITE_RESPONSE;
