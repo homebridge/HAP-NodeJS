@@ -50,7 +50,7 @@ describe("request-util", () => {
     expect(formatOutgoingCharacteristicValue(36.135795, props)).toBe(36.1);
   });
 
-  it("should handle negative minumum values", () => {
+  it("should handle negative minimum values", () => {
     const props = createProps(Formats.INT, {
       minStep: 0.1,
       minValue: -100,
@@ -59,7 +59,7 @@ describe("request-util", () => {
     expect(formatOutgoingCharacteristicValue(25.1, props)).toBe(25.1);
   });
 
-  it("should handle small minumum values", () => {
+  it("should handle small minimum values", () => {
     const props = createProps(Formats.INT, {
       minStep: 0.1,
       minValue: 0.1,

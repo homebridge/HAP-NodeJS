@@ -245,7 +245,9 @@ import { HAPConnection } from "./util/eventedhttp";
 import { HapStatusError } from './util/hapStatusError';
 import { once } from './util/once';
 import {
-  formatOutgoingCharacteristicValue, isIntegerNumericFormat, isNumericFormat,
+  formatOutgoingCharacteristicValue,
+  isIntegerNumericFormat,
+  isNumericFormat,
   isUnsignedNumericFormat,
   numericLowerBound,
   numericUpperBound
@@ -1772,7 +1774,7 @@ export class Characteristic extends EventEmitter {
         if (typeof value === 'number' && (value === 1 || value === 0)) {
           return Boolean(value);
         }
-        
+
         throw new Error(`Client supplied invalid type for ${this.props.format}: "${value}" (${typeof value})`)
       }
       case Formats.INT:
@@ -1807,7 +1809,7 @@ export class Characteristic extends EventEmitter {
         if (this.props.validValueRanges && this.props.validValueRanges.length === 2) {
           if (value < this.props.validValueRanges[0]) {
             throw new Error(`Client supplied value of ${value} is less than the minimum allowed value of ${this.props.validValueRanges[0]}`);
-          } 
+          }
           if (value > this.props.validValueRanges[1]) {
             throw new Error(`Client supplied value of ${value} is greater than the maximum allowed value of ${this.props.validValueRanges[1]}`);
           }
@@ -1824,7 +1826,7 @@ export class Characteristic extends EventEmitter {
         if (value.length > maxLength) {
           throw new Error(`Client supplied value length of ${value.length} exceeds maximum length allowed of ${maxLength}`)
         }
-        
+
         return value;
       }
       case Formats.DATA: {
@@ -1838,14 +1840,14 @@ export class Characteristic extends EventEmitter {
         if (value.length > maxLength) {
           throw new Error(`Client supplied value length of ${value.length} exceeds maximum length allowed of ${maxLength}`)
         }
-        
+
         return value;
       }
       case Formats.TLV8:
         if (typeof value !== "string") {
           throw new Error(`Client supplied invalid type for ${this.props.format}: "${value}" (${typeof value})`)
         }
-        
+
         return value;
     }
 
@@ -1864,6 +1866,10 @@ export class Characteristic extends EventEmitter {
       if (this.UUID === Characteristic.Model.UUID || this.UUID === Characteristic.SerialNumber.UUID) { // mirrors the statement in case: Formats.STRING
         this.characteristicWarning(`characteristic must have a non null value otherwise HomeKit will reject this accessory, ignoring new value`, CharacteristicWarningType.ERROR_MESSAGE);
         return this.value; // don't change the value
+      }
+
+      if (this.getDefaultValue() === null) {
+        return value; // any format which has default value null, is allowed to have null as a value (e.g. TLV8 or DATA formats)
       }
 
       /**
