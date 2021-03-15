@@ -1002,7 +1002,7 @@ export class Characteristic extends EventEmitter {
           CharacteristicWarningType.ERROR_MESSAGE
         );
         props.minValue = undefined;
-      } else if (typeof props.minValue !== 'number' || !Number.isFinite(props.minValue)) {
+      } else if (typeof (props.minValue as any) !== 'number' || !Number.isFinite(props.minValue)) {
         this.characteristicWarning(
           `Characteristic Property 'minValue' must be a finite number, received "${props.minValue}" (${typeof props.minValue})`,
           CharacteristicWarningType.ERROR_MESSAGE
@@ -1039,7 +1039,7 @@ export class Characteristic extends EventEmitter {
           CharacteristicWarningType.ERROR_MESSAGE
         );
         props.maxValue = undefined;
-      } else if (typeof props.maxValue !== 'number' || !Number.isFinite(props.maxValue)) {
+      } else if (typeof (props.maxValue as any) !== 'number' || !Number.isFinite(props.maxValue)) {
         this.characteristicWarning(
           `Characteristic Property 'maxValue' must be a finite number, received "${props.maxValue}" (${typeof props.maxValue})`,
           CharacteristicWarningType.ERROR_MESSAGE
