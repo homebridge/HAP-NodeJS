@@ -488,8 +488,8 @@ export class RTPStreamManagement {
   streamStatus: StreamingStatus = StreamingStatus.AVAILABLE; // use _updateStreamStatus to update this property
   private ipVersion?: "ipv4" | "ipv6"; // ip version for the current session
 
-  selectedConfiguration: string; // base64 representation of the currently selected configuration
-  setupEndpointsResponse: string; // response of the SetupEndpoints Characteristic
+  selectedConfiguration: string = ""; // base64 representation of the currently selected configuration
+  setupEndpointsResponse: string = ""; // response of the SetupEndpoints Characteristic
 
   audioProxy?: RTPProxy;
   videoProxy?: RTPProxy;
@@ -516,11 +516,12 @@ export class RTPStreamManagement {
     this.supportedRTPConfiguration = RTPStreamManagement._supportedRTPConfiguration(this.supportedCryptoSuites);
     this.supportedVideoStreamConfiguration = RTPStreamManagement._supportedVideoStreamConfiguration(options.video);
     this.supportedAudioStreamConfiguration = this._supportedAudioStreamConfiguration(options.audio);
-    this.selectedConfiguration = RTPStreamManagement.initialSelectedStreamConfiguration();
-    this.setupEndpointsResponse = RTPStreamManagement.initialSetupEndpointsResponse();
 
     this.service = service || this.constructService(id);
     this.setupServiceHandlers();
+
+    this.resetSetupEndpointsResponse();
+    this.resetSelectedStreamConfiguration();
   }
 
   public forceStop() {
@@ -542,8 +543,8 @@ export class RTPStreamManagement {
   }
 
   handleFactoryReset() {
-    this.selectedConfiguration = RTPStreamManagement.initialSelectedStreamConfiguration();
-    this.setupEndpointsResponse = RTPStreamManagement.initialSetupEndpointsResponse();
+    this.resetSelectedStreamConfiguration();
+    this.resetSetupEndpointsResponse();
     // on a factory reset the assumption is that all connections were already terminated and thus "handleStopStream" was already called
   }
 
@@ -569,28 +570,28 @@ export class RTPStreamManagement {
     this.service.setCharacteristic(Characteristic.SetupEndpoints, this.setupEndpointsResponse); // reset SetupEndpoints to default
 
     this.service.getCharacteristic(Characteristic.SelectedRTPStreamConfiguration)!
-        .on(CharacteristicEventTypes.GET, callback => {
-          callback(null, this.selectedConfiguration);
-        })
-        .on(CharacteristicEventTypes.SET, this._handleSelectedStreamConfigurationWrite.bind(this));
+      .on(CharacteristicEventTypes.GET, callback => {
+        callback(null, this.selectedConfiguration);
+      })
+      .on(CharacteristicEventTypes.SET, this._handleSelectedStreamConfigurationWrite.bind(this));
 
     this.service.getCharacteristic(Characteristic.SetupEndpoints)!
-        .on(CharacteristicEventTypes.GET, callback => {
-          callback(null, this.setupEndpointsResponse);
-        })
-        .on(CharacteristicEventTypes.SET, (value, callback, context, connection) => {
-          if (!connection) {
-            debug("Set event handler for SetupEndpoints cannot be called from plugin. Connection undefined!");
-            callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
-            return;
-          }
-          this.handleSetupEndpoints(value, callback, connection);
-        });
+      .on(CharacteristicEventTypes.GET, callback => {
+        callback(null, this.setupEndpointsResponse);
+      })
+      .on(CharacteristicEventTypes.SET, (value, callback, context, connection) => {
+        if (!connection) {
+          debug("Set event handler for SetupEndpoints cannot be called from plugin. Connection undefined!");
+          callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
+          return;
+        }
+        this.handleSetupEndpoints(value, callback, connection);
+      });
   }
 
   private handleSessionClosed(): void { // called when the streaming was ended or aborted and needs to be cleaned up
-    this.selectedConfiguration = RTPStreamManagement.initialSelectedStreamConfiguration();
-    this.setupEndpointsResponse = RTPStreamManagement.initialSetupEndpointsResponse();
+    this.resetSelectedStreamConfiguration();
+    this.resetSetupEndpointsResponse();
 
     if (this.activeConnectionClosedListener && this.activeConnection) {
       this.activeConnection.removeListener(HAPConnectionEvent.CLOSED, this.activeConnectionClosedListener);
@@ -1310,18 +1311,20 @@ export class RTPStreamManagement {
     ).toString("base64");
   }
 
-  private static initialSetupEndpointsResponse(): string {
-    return tlv.encode(
+  private resetSetupEndpointsResponse(): void {
+    this.setupEndpointsResponse = tlv.encode(
         SetupEndpointsResponseTypes.STATUS, SetupEndpointsStatus.ERROR,
     ).toString("base64");
+    this.service.updateCharacteristic(Characteristic.SetupEndpoints, this.setupEndpointsResponse);
   }
 
-  private static initialSelectedStreamConfiguration(): string {
-    return tlv.encode(
+  private resetSelectedStreamConfiguration(): void {
+    this.selectedConfiguration = tlv.encode(
       SelectedRTPStreamConfigurationTypes.SESSION_CONTROL, tlv.encode(
         SessionControlTypes.COMMAND, SessionControlCommand.SUSPEND_SESSION,
       ),
     ).toString("base64");
+    this.service.updateCharacteristic(Characteristic.SelectedRTPStreamConfiguration, this.selectedConfiguration);
   }
 
 }
