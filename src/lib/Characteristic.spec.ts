@@ -11,6 +11,7 @@ import {
   Units,
   uuid
 } from '..';
+import { SelectedRTPStreamConfiguration } from "./definitions";
 import { HapStatusError } from './util/hapStatusError';
 
 function createCharacteristic(type: Formats, customUUID?: string): Characteristic {
@@ -431,7 +432,7 @@ describe('Characteristic', () => {
         // ensure validator was actually called
         expect(validateClientSuppliedValueMock).toBeCalled();
       });
-  
+
 
     test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
       "boolean types sent for %p types should be transformed from true to 1", async (intType) => {
@@ -504,7 +505,7 @@ describe('Characteristic', () => {
         await expect(characteristic.handleSetRequest(-100, null as unknown as undefined))
           .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST)
 
-        // value should revert to 
+        // value should revert to
         expect(characteristic.value).toEqual(1);
 
         // this should pass
@@ -538,7 +539,7 @@ describe('Characteristic', () => {
         await expect(characteristic.handleSetRequest(NaN, null as unknown as undefined))
           .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST)
 
-        // value should revert to 
+        // value should revert to
         expect(characteristic.value).toEqual(1);
 
         // ensure validator was actually called
@@ -562,7 +563,7 @@ describe('Characteristic', () => {
         await expect(characteristic.handleSetRequest(Infinity, null as unknown as undefined))
           .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST)
 
-        // value should revert to 
+        // value should revert to
         expect(characteristic.value).toEqual(1);
 
         // ensure validator was actually called
@@ -590,7 +591,7 @@ describe('Characteristic', () => {
         await expect(characteristic.handleSetRequest(6, null as unknown as undefined))
           .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST)
 
-        // value should revert to 
+        // value should revert to
         expect(characteristic.value).toEqual(1);
 
         // this should pass
@@ -670,7 +671,7 @@ describe('Characteristic', () => {
       // strings should pass
       await expect(characteristic.handleSetRequest('some other test string', null as unknown as undefined))
         .resolves.toEqual(undefined);
-  
+
       // value should now be updated
       expect(characteristic.value).toEqual('some other test string');
 
@@ -1222,7 +1223,7 @@ describe('Characteristic', () => {
       expect(mock).toBeCalledTimes(1);
     });
 
-    it("should handle null inputs correctly for Apple characteristics", () => {
+    it("should handle null inputs correctly for scalar Apple characteristics", () => {
       const characteristic = new Characteristic('CurrentTemperature', Characteristic.CurrentTemperature.UUID, {
         perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
         format: Formats.FLOAT,
@@ -1245,6 +1246,35 @@ describe('Characteristic', () => {
       characteristic.setValue(null as unknown as boolean);
       expect(characteristic.value).toEqual(50);
       expect(mock).toBeCalledTimes(1);
+    });
+
+    it("should handle null inputs correctly for scalar non-scalar Apple characteristics", () => {
+      const characteristicTLV = new SelectedRTPStreamConfiguration();
+      const characteristicData = new Characteristic("Data characteristic", Characteristic.SupportedRTPConfiguration.UUID, {
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+        format: Formats.DATA,
+      });
+
+      const exampleString = "Example String"; // data and tlv8 are both string based
+
+      // @ts-ignore - spying on private property
+      const mock = jest.spyOn(characteristicTLV, 'characteristicWarning');
+
+      // null is a valid value for tlv8 format
+      mock.mockReset();
+      characteristicTLV.setValue(exampleString);
+      expect(characteristicTLV.value).toEqual(exampleString);
+      characteristicTLV.setValue(null as unknown as string);
+      expect(characteristicTLV.value).toEqual(null);
+      expect(mock).toBeCalledTimes(0);
+
+      // null is a valid value for data format
+      mock.mockReset();
+      characteristicData.setValue(exampleString);
+      expect(characteristicData.value).toEqual(exampleString);
+      characteristicData.setValue(null as unknown as string);
+      expect(characteristicData.value).toEqual(null);
+      expect(mock).toBeCalledTimes(0);
     });
 
     it("should handle null inputs correctly for non-Apple characteristics", () => {
