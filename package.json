@@ -13,6 +13,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "clean": "rimraf dist && rimraf coverage",
+    "lint": "eslint 'src/**/*.{js,ts,json}'",
     "build": "rimraf dist && tsc && node .github/workflows/node-persist-ignore.js",
     "prepublishOnly": "npm run build",
     "postpublish": "npm run clean",
@@ -66,6 +67,9 @@
     "@types/escape-html": "^1.0.0",
     "@types/jest": "^26.0.22",
     "@types/node": "^10.17.58",
+    "@typescript-eslint/eslint-plugin": "^4.17.0",
+    "@typescript-eslint/parser": "^4.17.0",
+    "eslint": "^7.24.0",
     "commander": "^6.2.1",
     "escape-html": "^1.0.3",
     "jest": "^26.6.3",
