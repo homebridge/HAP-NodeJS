@@ -10,12 +10,11 @@
     "sourceType": "module"
   },
   "ignorePatterns": [
-    "bin/",
-    "lib/"
+    "dist/"
   ],
   "rules": {
     "quotes": ["error", "double"],
-    "indent": ["error", 2, { "SwitchCase": 1 }],
+    "indent": ["error", 2, { "SwitchCase": 0 }],
     "linebreak-style": ["error", "unix"],
     "semi": ["error", "always"],
 
@@ -26,8 +25,10 @@
     "brace-style": ["error"],
     "prefer-arrow-callback": "warn",
     "max-len": ["warn", 150],
+    "object-curly-spacing": ["error", "always"],
 
     "@typescript-eslint/no-non-null-assertion": "off",
-    "@typescript-eslint/no-use-before-define": ["error", {"classes": false}]
+    "@typescript-eslint/no-use-before-define": ["error", {"classes": false}],
+    "@typescript-eslint/explicit-module-boundary-types": "error"
   }
 }
