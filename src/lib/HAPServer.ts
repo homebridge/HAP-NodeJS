@@ -181,7 +181,7 @@ export const enum HAPPairingHTTPCode {
   INTERNAL_SERVER_ERROR = 500,
 }
 
-export type PairIdentity = Identity & {setupcode: string | null};
+export type PairIdentity = Identity & {setupcode: string | null}; // TODO PasswordIdentity vs VerifierIdentity;
 
 type HAPRequestHandler = (connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse) => void;
 
@@ -212,9 +212,9 @@ export const enum HAPServerEventTypes {
   ADD_PAIRING = "add-pairing",
   REMOVE_PAIRING = "remove-pairing",
   LIST_PAIRINGS = "list-pairings",
-  GENERATE_SETUP_CODE = 'generate-setup-code',
-  PAIR_SETUP_STARTED = 'pair-setup-started',
-  PAIR_SETUP_FINISHED = 'pair-setup-finished',
+  GENERATE_SETUP_CODE = "generate-setup-code",
+  PAIR_SETUP_STARTED = "pair-setup-started",
+  PAIR_SETUP_FINISHED = "pair-setup-finished",
   /**
    * This event is emitted when a client completes the "pairing" process and exchanges encryption keys.
    * Note that this does not mean the "Add Accessory" process in iOS has completed.
@@ -311,8 +311,8 @@ export class HAPServer extends EventEmitter {
   private unsuccessfulPairAttempts: number = 0; // after 100 unsuccessful attempts the server won't accept any further attempts. Will currently be reset on a reboot
 
   /** Session currently trying to pair with the server */
-  _pairing: HAPConnection | null = null;
-  _setupCodeIdentity: PairIdentity | null = null;
+  private _pairing: HAPConnection | null = null;
+  private _setupCodeIdentity: PairIdentity | null = null;
 
   allowInsecureRequest: boolean;
 
@@ -598,7 +598,7 @@ export class HAPServer extends EventEmitter {
       this._handlePairFinished([PairingStates.M4, TLVErrorCode.AUTHENTICATION], null, connection);
       return;
     }
-  
+
     // "M2 is the proof that the server actually knows your password."
     const M2 = srpServer.computeM2();
     response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});

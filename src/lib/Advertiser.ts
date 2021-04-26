@@ -11,7 +11,7 @@ import { InterfaceName, IPAddress } from "@homebridge/ciao/lib/NetworkManager";
 import assert from "assert";
 import bonjour, { BonjourHAP, BonjourHAPService, MulticastOptions } from "bonjour-hap";
 import { EventEmitter } from "events";
-import { AccessoryInfo } from './model/AccessoryInfo';
+import { AccessoryInfo } from "./model/AccessoryInfo";
 import { generateSetupHash } from "./util/setupid";
 
 /**
@@ -101,7 +101,7 @@ export class CiaoAdvertiser extends EventEmitter implements Advertiser {
   constructor(accessoryInfo: AccessoryInfo, responderOptions?: MDNSServerOptions, serviceOptions?: ServiceNetworkOptions) {
     super();
     this.accessoryInfo = accessoryInfo;
-    this.setupHash = generateSetupHash(this.accessoryInfo.username, this.accessoryInfo.setupID).toString('base64');
+    this.setupHash = generateSetupHash(this.accessoryInfo.username, this.accessoryInfo.setupID);
 
     this.responder = ciao.getResponder({
       ...responderOptions
@@ -189,7 +189,7 @@ export class BonjourHAPAdvertiser extends EventEmitter implements Advertiser {
   constructor(accessoryInfo: AccessoryInfo, responderOptions?: MulticastOptions, serviceOptions?: ServiceNetworkOptions) {
     super();
     this.accessoryInfo = accessoryInfo;
-    this.setupHash = generateSetupHash(this.accessoryInfo.username, this.accessoryInfo.setupID).toString('base64');
+    this.setupHash = generateSetupHash(this.accessoryInfo.username, this.accessoryInfo.setupID);
     this.serviceOptions = serviceOptions;
 
     this.bonjour = bonjour(responderOptions);
