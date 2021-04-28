@@ -26,6 +26,7 @@
     "prefer-arrow-callback": "warn",
     "max-len": ["warn", 150],
     "object-curly-spacing": ["error", "always"],
+    "operator-linebreak": ["error"],
 
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/no-use-before-define": ["error", {"classes": false}],

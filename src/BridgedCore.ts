@@ -2,7 +2,7 @@ import path from 'path';
 
 import storage from 'node-persist';
 
-import { Accessory, AccessoryEventTypes, AccessoryLoader, Bridge, Categories, uuid, VoidCallback } from './';
+import { Accessory, AccessoryEventTypes, AccessoryLoader, Bridge, Categories, uuid, generateSetupCode, VoidCallback } from './';
 
 console.log("HAP-NodeJS starting...");
 
@@ -34,7 +34,6 @@ accessories.forEach((accessory: Accessory) => {
 bridge.publish({
   username: "CC:22:3D:E3:CE:F6",
   port: 51826,
-  pincode: "031-45-154",
   category: Categories.BRIDGE
 });
 

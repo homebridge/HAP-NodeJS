@@ -2,7 +2,8 @@ import path from 'path';
 
 import storage from 'node-persist';
 
-import { AccessoryLoader } from './';
+import { AccessoryLoader, generateSetupCode } from './';
+import { NodeCallback } from './types';
 
 console.log("HAP-NodeJS starting...");
 
@@ -27,11 +28,6 @@ accessories.forEach((accessory) => {
   if (!accessory.username)
     throw new Error("Username not found on accessory '" + accessory.displayName +
                     "'. Core.js requires all accessories to define a unique 'username' property.");
-
-  // @ts-ignore
-  if (!accessory.pincode)
-    throw new Error("Pincode not found on accessory '" + accessory.displayName +
-                    "'. Core.js requires all accessories to define a 'pincode' property.");
 
   // publish this Accessory on the local network
   accessory.publish({

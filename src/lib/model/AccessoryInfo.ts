@@ -1,10 +1,10 @@
-import assert from 'assert';
+import assert from "assert";
 import crypto from "crypto";
-import tweetnacl from 'tweetnacl';
-import util from 'util';
+import tweetnacl from "tweetnacl";
+import util from "util";
 import { AccessoryJsonObject } from "../../internal-types";
 import { MacAddress } from "../../types";
-import { Categories } from '../Accessory';
+import { Categories } from "../Accessory";
 import { EventedHTTPServer, HAPConnection, HAPUsername } from "../util/eventedhttp";
 import { HAPStorage } from "./HAPStorage";
 
@@ -35,7 +35,7 @@ export class AccessoryInfo {
   displayName: string;
   model: string; // this property is currently not saved to disk
   category: Categories;
-  pincode: string;
+  pincode: string | {salt: Buffer; verifier: Buffer} | null; // TODO check how this affects backwards compatibility (NEEDS a configVersion increment)
   signSk: Buffer;
   signPk: Buffer;
   pairedClients: Record<HAPUsername, PairingInformation>;
@@ -49,8 +49,7 @@ export class AccessoryInfo {
     this.username = username;
     this.displayName = "";
     this.model = "";
-    // @ts-ignore
-    this.category = "";
+    this.category = Categories.OTHER;
     this.pincode = "";
     this.signSk = Buffer.alloc(0);
     this.signPk = Buffer.alloc(0);
@@ -209,7 +208,9 @@ export class AccessoryInfo {
     const saved = {
       displayName: this.displayName,
       category: this.category,
-      pincode: this.pincode,
+      pincode: typeof this.pincode === "object" && this.pincode
+        ? { salt: this.pincode.salt.toString("hex"), verifier: this.pincode.verifier.toString("hex") }
+        : this.pincode,
       signSk: this.signSk.toString('hex'),
       signPk: this.signPk.toString('hex'),
       pairedClients: {},
@@ -235,7 +236,7 @@ export class AccessoryInfo {
     HAPStorage.storage().setItemSync(key, saved);
   }
 
-// Gets a key for storing this AccessoryInfo in the filesystem, like "AccessoryInfo.CC223DE3CEF3.json"
+  // Gets a key for storing this AccessoryInfo in the filesystem, like "AccessoryInfo.CC223DE3CEF3.json"
   static persistKey = (username: MacAddress) => {
     return util.format("AccessoryInfo.%s.json", username.replace(/:/g, "").toUpperCase());
   }
@@ -265,7 +266,16 @@ export class AccessoryInfo {
       const info = new AccessoryInfo(username);
       info.displayName = saved.displayName || "";
       info.category = saved.category || "";
-      info.pincode = saved.pincode || "";
+
+      if (saved.pincode && typeof saved.pincode === "object" && "verifier" in saved.pincode && "salt" in saved.pincode) {
+        info.pincode = {
+          salt: Buffer.from(saved.pincode.salt, "hex"),
+          verifier: Buffer.from(saved.pincode.verifier, "hex")
+        };
+      } else {
+        info.pincode = saved.pincode;
+      }
+
       info.signSk = Buffer.from(saved.signSk || '', 'hex');
       info.signPk = Buffer.from(saved.signPk || '', 'hex');
 
@@ -307,7 +317,7 @@ export class AccessoryInfo {
 
   static assertValidUsername = (username: MacAddress) => {
     assert.ok(AccessoryInfo.deviceIdPattern.test(username),
-        "The supplied username (" + username + ") is not valid " +
+      "The supplied username (" + username + ") is not valid " +
         "(expected a format like 'XX:XX:XX:XX:XX:XX' with XX being a valid hexadecimal string). " +
         "Note that, if you had this accessory already paired with the invalid username, you will need to repair " +
         "the accessory and reconfigure your services in the Home app. " +
