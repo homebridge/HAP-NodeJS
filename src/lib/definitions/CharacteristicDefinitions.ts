@@ -14,7 +14,7 @@ export class AccessCodeControlPoint extends Characteristic {
   constructor() {
     super("Access Code Control Point", AccessCodeControlPoint.UUID, {
       format: Formats.TLV8,
-      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
     });
     this.value = this.getDefaultValue();
   }
@@ -2269,7 +2269,7 @@ export class NFCAccessControlPoint extends Characteristic {
   constructor() {
     super("NFC Access Control Point", NFCAccessControlPoint.UUID, {
       format: Formats.TLV8,
-      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
     });
     this.value = this.getDefaultValue();
   }

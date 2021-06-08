@@ -183,7 +183,14 @@ export const CharacteristicOverriding: Map<string, (generated: GeneratedCharacte
   }],
   ["identifier", generated => {
     generated.minValue = undefined;
-  }]
+  }],
+
+  ["access-code-control-point", generated => {
+    generated.properties |= PropertyId.WRITE_RESPONSE;
+  }],
+  ["nfc-access-control-point", generated => {
+    generated.properties |= PropertyId.WRITE_RESPONSE;
+  }],
 ])
 
 export const CharacteristicManualAdditions: Map<string, GeneratedCharacteristic> = new Map([
