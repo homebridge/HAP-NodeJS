@@ -50,7 +50,7 @@ import {
   LockMechanism,
   Microphone,
   MotionSensor,
-  NFCAccessService,
+  NFCAccess,
   OccupancySensor,
   Outlet,
   Pairing,
@@ -218,7 +218,7 @@ export class Service extends EventEmitter {
   public static LockMechanism: typeof LockMechanism;
   public static Microphone: typeof Microphone;
   public static MotionSensor: typeof MotionSensor;
-  public static NFCAccessService: typeof NFCAccessService;
+  public static NFCAccess: typeof NFCAccess;
   public static OccupancySensor: typeof OccupancySensor;
   public static Outlet: typeof Outlet;
   public static Pairing: typeof Pairing;

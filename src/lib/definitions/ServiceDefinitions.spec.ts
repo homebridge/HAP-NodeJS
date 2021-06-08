@@ -872,11 +872,11 @@ describe("ServiceDefinitions", () => {
     });
   });
 
-  describe("NFCAccessService", () => {
+  describe("NFCAccess", () => {
     it("should be able to construct", () => {
-      const service0 = new Service.NFCAccessService();
-      const service1 = new Service.NFCAccessService("test name");
-      const service2 = new Service.NFCAccessService("test name", "test sub type");
+      const service0 = new Service.NFCAccess();
+      const service1 = new Service.NFCAccess("test name");
+      const service2 = new Service.NFCAccess("test name", "test sub type");
 
       expect(service0.displayName).toBe("");
       expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);

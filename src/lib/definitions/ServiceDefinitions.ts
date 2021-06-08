@@ -913,15 +913,15 @@ export class MotionSensor extends Service {
 Service.MotionSensor = MotionSensor;
 
 /**
- * Service "NFC Access Service"
+ * Service "NFC Access"
  * @since iOS 15
  */
-export class NFCAccessService extends Service {
+export class NFCAccess extends Service {
 
   public static readonly UUID: string = "00000266-0000-1000-8000-0026BB765291";
 
   constructor(displayName?: string, subtype?: string) {
-    super(displayName, NFCAccessService.UUID, subtype);
+    super(displayName, NFCAccess.UUID, subtype);
 
     // Required Characteristics
     this.addCharacteristic(Characteristic.ConfigurationState);
@@ -929,7 +929,7 @@ export class NFCAccessService extends Service {
     this.addCharacteristic(Characteristic.NFCAccessSupportedConfiguration);
   }
 }
-Service.NFCAccessService = NFCAccessService;
+Service.NFCAccess = NFCAccess;
 
 /**
  * Service "Occupancy Sensor"

@@ -361,6 +361,7 @@ export const ServiceNameOverrides: Map<string, string> = new Map([
   ["service-label", "Service Label"],
   ["smart-speaker", "Smart Speaker"],
   ["speaker", "Television Speaker"], // has some additional accessories
+  ["nfc-access", "NFC Access"],
 ]);
 
 export const ServiceDeprecatedNames: Map<string, string> = new Map([
