@@ -5,6 +5,8 @@ import { CharacteristicJsonObject } from "../internal-types";
 import { CharacteristicValue, Nullable, VoidCallback, } from '../types';
 import { CharacteristicWarningType } from "./Accessory";
 import {
+  AccessCodeControlPoint,
+  AccessCodeSupportedConfiguration,
   AccessControlLevel,
   AccessoryFlags,
   AccessoryIdentifier,
@@ -35,6 +37,7 @@ import {
   ChargingState,
   ClosedCaptions,
   ColorTemperature,
+  ConfigurationState,
   ConfigureBridgedAccessory,
   ConfigureBridgedAccessoryStatus,
   ConfiguredName,
@@ -74,6 +77,7 @@ import {
   FirmwareRevision,
   FirmwareUpdateReadiness,
   FirmwareUpdateStatus,
+  HardwareFinish,
   HardwareRevision,
   HeartBeat,
   HeatingThresholdTemperature,
@@ -111,6 +115,8 @@ import {
   NetworkAccessViolationControl,
   NetworkClientProfileControl,
   NetworkClientStatusControl,
+  NFCAccessControlPoint,
+  NFCAccessSupportedConfiguration,
   NightVision,
   NitrogenDioxideDensity,
   ObstructionDetected,
@@ -591,6 +597,8 @@ export class Characteristic extends EventEmitter {
 
   // Pattern below is for automatic detection of the section of defined characteristics. Used by the generator
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  public static AccessCodeControlPoint: typeof AccessCodeControlPoint;
+  public static AccessCodeSupportedConfiguration: typeof AccessCodeSupportedConfiguration;
   public static AccessControlLevel: typeof AccessControlLevel;
   public static AccessoryFlags: typeof AccessoryFlags;
   public static AccessoryIdentifier: typeof AccessoryIdentifier;
@@ -624,6 +632,7 @@ export class Characteristic extends EventEmitter {
   public static ChargingState: typeof ChargingState;
   public static ClosedCaptions: typeof ClosedCaptions;
   public static ColorTemperature: typeof ColorTemperature;
+  public static ConfigurationState: typeof ConfigurationState;
   /**
    * @deprecated Removed and not used anymore
    */
@@ -681,6 +690,7 @@ export class Characteristic extends EventEmitter {
   public static FirmwareRevision: typeof FirmwareRevision;
   public static FirmwareUpdateReadiness: typeof FirmwareUpdateReadiness;
   public static FirmwareUpdateStatus: typeof FirmwareUpdateStatus;
+  public static HardwareFinish: typeof HardwareFinish;
   public static HardwareRevision: typeof HardwareRevision;
   public static HeartBeat: typeof HeartBeat;
   public static HeatingThresholdTemperature: typeof HeatingThresholdTemperature;
@@ -721,6 +731,8 @@ export class Characteristic extends EventEmitter {
   public static NetworkAccessViolationControl: typeof NetworkAccessViolationControl;
   public static NetworkClientProfileControl: typeof NetworkClientProfileControl;
   public static NetworkClientStatusControl: typeof NetworkClientStatusControl;
+  public static NFCAccessControlPoint: typeof NFCAccessControlPoint;
+  public static NFCAccessSupportedConfiguration: typeof NFCAccessSupportedConfiguration;
   public static NightVision: typeof NightVision;
   public static NitrogenDioxideDensity: typeof NitrogenDioxideDensity;
   public static ObstructionDetected: typeof ObstructionDetected;

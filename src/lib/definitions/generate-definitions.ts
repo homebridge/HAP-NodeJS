@@ -1,3 +1,5 @@
+import "./CharacteristicDefinitions"
+
 import assert from "assert";
 import { Command } from "commander";
 import fs from "fs";
@@ -625,6 +627,8 @@ function characteristicPerm(id: string): string | undefined {
       return "WRITE_RESPONSE";
     case "broadcast": // used for bluetooth
       return undefined;
+    case "adminOnly":
+      return undefined // TODO add support for it (currently unused though)
     default:
       throw new Error("Received unknown perms id: " + id);
   }

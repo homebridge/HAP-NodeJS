@@ -5,6 +5,28 @@ import { Characteristic } from "../Characteristic";
 import { Service } from "../Service";
 
 describe("ServiceDefinitions", () => {
+  describe("AccessCode", () => {
+    it("should be able to construct", () => {
+      const service0 = new Service.AccessCode();
+      const service1 = new Service.AccessCode("test name");
+      const service2 = new Service.AccessCode("test name", "test sub type");
+
+      expect(service0.displayName).toBe("");
+      expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);
+      expect(service0.subtype).toBeUndefined();
+
+      expect(service1.displayName).toBe("test name");
+      expect(service1.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service1.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service1.subtype).toBeUndefined();
+
+      expect(service2.displayName).toBe("test name");
+      expect(service2.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service2.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service2.subtype).toBe("test sub type");
+    });
+  });
+
   describe("AccessControl", () => {
     it("should be able to construct", () => {
       const service0 = new Service.AccessControl();
@@ -833,6 +855,28 @@ describe("ServiceDefinitions", () => {
       const service0 = new Service.MotionSensor();
       const service1 = new Service.MotionSensor("test name");
       const service2 = new Service.MotionSensor("test name", "test sub type");
+
+      expect(service0.displayName).toBe("");
+      expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);
+      expect(service0.subtype).toBeUndefined();
+
+      expect(service1.displayName).toBe("test name");
+      expect(service1.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service1.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service1.subtype).toBeUndefined();
+
+      expect(service2.displayName).toBe("test name");
+      expect(service2.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service2.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service2.subtype).toBe("test sub type");
+    });
+  });
+
+  describe("NFCAccessService", () => {
+    it("should be able to construct", () => {
+      const service0 = new Service.NFCAccessService();
+      const service1 = new Service.NFCAccessService("test name");
+      const service2 = new Service.NFCAccessService("test name", "test sub type");
 
       expect(service0.displayName).toBe("");
       expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);

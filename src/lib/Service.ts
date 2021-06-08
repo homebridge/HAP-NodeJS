@@ -11,6 +11,7 @@ import {
   SerializedCharacteristic
 } from './Characteristic';
 import {
+  AccessCode,
   AccessControl,
   AccessoryInformation,
   AccessoryRuntimeInformation,
@@ -49,6 +50,7 @@ import {
   LockMechanism,
   Microphone,
   MotionSensor,
+  NFCAccessService,
   OccupancySensor,
   Outlet,
   Pairing,
@@ -160,6 +162,7 @@ export class Service extends EventEmitter {
 
   // Pattern below is for automatic detection of the section of defined services. Used by the generator
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  public static AccessCode: typeof AccessCode;
   public static AccessControl: typeof AccessControl;
   public static AccessoryInformation: typeof AccessoryInformation;
   public static AccessoryRuntimeInformation: typeof AccessoryRuntimeInformation;
@@ -215,6 +218,7 @@ export class Service extends EventEmitter {
   public static LockMechanism: typeof LockMechanism;
   public static Microphone: typeof Microphone;
   public static MotionSensor: typeof MotionSensor;
+  public static NFCAccessService: typeof NFCAccessService;
   public static OccupancySensor: typeof OccupancySensor;
   public static Outlet: typeof Outlet;
   public static Pairing: typeof Pairing;

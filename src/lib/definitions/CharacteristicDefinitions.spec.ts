@@ -4,6 +4,18 @@ import "./";
 import { Characteristic } from "../Characteristic";
 
 describe("CharacteristicDefinitions", () => {
+  describe("AccessCodeControlPoint", () => {
+    it("should be able to construct", () => {
+      new Characteristic.AccessCodeControlPoint();
+    });
+  });
+
+  describe("AccessCodeSupportedConfiguration", () => {
+    it("should be able to construct", () => {
+      new Characteristic.AccessCodeSupportedConfiguration();
+    });
+  });
+
   describe("AccessControlLevel", () => {
     it("should be able to construct", () => {
       new Characteristic.AccessControlLevel();
@@ -181,6 +193,12 @@ describe("CharacteristicDefinitions", () => {
   describe("ColorTemperature", () => {
     it("should be able to construct", () => {
       new Characteristic.ColorTemperature();
+    });
+  });
+
+  describe("ConfigurationState", () => {
+    it("should be able to construct", () => {
+      new Characteristic.ConfigurationState();
     });
   });
 
@@ -418,6 +436,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("HardwareFinish", () => {
+    it("should be able to construct", () => {
+      new Characteristic.HardwareFinish();
+    });
+  });
+
   describe("HardwareRevision", () => {
     it("should be able to construct", () => {
       new Characteristic.HardwareRevision();
@@ -637,6 +661,18 @@ describe("CharacteristicDefinitions", () => {
   describe("NetworkClientStatusControl", () => {
     it("should be able to construct", () => {
       new Characteristic.NetworkClientStatusControl();
+    });
+  });
+
+  describe("NFCAccessControlPoint", () => {
+    it("should be able to construct", () => {
+      new Characteristic.NFCAccessControlPoint();
+    });
+  });
+
+  describe("NFCAccessSupportedConfiguration", () => {
+    it("should be able to construct", () => {
+      new Characteristic.NFCAccessSupportedConfiguration();
     });
   });
 

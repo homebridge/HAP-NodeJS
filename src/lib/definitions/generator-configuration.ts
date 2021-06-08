@@ -469,8 +469,18 @@ export const CharacteristicSinceInformation: Map<string, string> = new Map([
   ["wake-configuration", "13.4"],
   ["wifi-capabilities", "14"],
   ["wifi-configuration-control", "14"],
+
+  ["access-code-control-point", "15"],
+  ["access-code-supported-configuration", "15"],
+  ["configuration-state", "15"],
+  ["hardware-finish", "15"],
+  ["nfc-access-control-point", "15"],
+  ["nfc-access-supported-configuration", "15"],
 ]);
 
 export const ServiceSinceInformation: Map<string, string> = new Map([
   ["outlet", "13"],
+
+  ["access-code", "15"],
+  ["nfc-access", "15"],
 ]);

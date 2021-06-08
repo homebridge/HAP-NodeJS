@@ -1,8 +1,27 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=860
+// V=876
 
 import { Characteristic } from "../Characteristic";
 import { Service } from "../Service";
+
+/**
+ * Service "Access Code"
+ * @since iOS 15
+ */
+export class AccessCode extends Service {
+
+  public static readonly UUID: string = "00000260-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, AccessCode.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.AccessCodeControlPoint);
+    this.addCharacteristic(Characteristic.AccessCodeSupportedConfiguration);
+    this.addCharacteristic(Characteristic.ConfigurationState);
+  }
+}
+Service.AccessCode = AccessCode;
 
 /**
  * Service "Access Control"
@@ -47,9 +66,10 @@ export class AccessoryInformation extends Service {
     this.addOptionalCharacteristic(Characteristic.AccessoryFlags);
     this.addOptionalCharacteristic(Characteristic.AppMatchingIdentifier);
     this.addOptionalCharacteristic(Characteristic.ConfiguredName);
+    this.addOptionalCharacteristic(Characteristic.HardwareFinish);
     this.addOptionalCharacteristic(Characteristic.HardwareRevision);
-    this.addOptionalCharacteristic(Characteristic.SoftwareRevision);
     this.addOptionalCharacteristic(Characteristic.ProductData);
+    this.addOptionalCharacteristic(Characteristic.SoftwareRevision);
   }
 }
 Service.AccessoryInformation = AccessoryInformation;
@@ -891,6 +911,25 @@ export class MotionSensor extends Service {
   }
 }
 Service.MotionSensor = MotionSensor;
+
+/**
+ * Service "NFC Access Service"
+ * @since iOS 15
+ */
+export class NFCAccessService extends Service {
+
+  public static readonly UUID: string = "00000266-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, NFCAccessService.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.ConfigurationState);
+    this.addCharacteristic(Characteristic.NFCAccessControlPoint);
+    this.addCharacteristic(Characteristic.NFCAccessSupportedConfiguration);
+  }
+}
+Service.NFCAccessService = NFCAccessService;
 
 /**
  * Service "Occupancy Sensor"
