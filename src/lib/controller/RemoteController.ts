@@ -42,7 +42,6 @@ import {
     SerializableController,
     StateChangeDelegate
 } from "./Controller";
-import Timeout = NodeJS.Timeout;
 
 const debug = createDebug('HAP-NodeJS:Remote:Controller');
 
@@ -1355,7 +1354,7 @@ export class SiriAudioSession extends EventEmitter {
 
     private readonly producer: SiriAudioStreamProducer;
     private producerRunning = false; // indicates if the producer is running
-    private producerTimer?: Timeout; // producer has a 3s timeout to produce the first frame, otherwise transmission will be cancelled
+    private producerTimer?: NodeJS.Timeout; // producer has a 3s timeout to produce the first frame, otherwise transmission will be cancelled
 
     state: SiriAudioSessionState = SiriAudioSessionState.STARTING;
     streamId?: number; // present when state >= SENDING

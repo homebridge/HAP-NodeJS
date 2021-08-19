@@ -7,7 +7,7 @@ import { HAPConnection, HAPConnectionEvent } from "../util/eventedhttp";
 
 import * as hapCrypto from '../util/hapCrypto';
 import { DataStreamParser, DataStreamReader, DataStreamWriter, Int64 } from './DataStreamParser';
-import Timeout = NodeJS.Timeout;
+
 
 const debug = createDebug('HAP-NodeJS:DataStream:Server');
 
@@ -21,7 +21,7 @@ export type PreparedDataStreamSession = {
 
     port?: number,
 
-    connectTimeout?: Timeout, // 10s timer
+    connectTimeout?: NodeJS.Timeout, // 10s timer
 
 }
 
@@ -483,9 +483,9 @@ export class DataStreamConnection extends EventEmitter {
     private protocolHandlers: Record<string, DataStreamProtocolHandler> = {}; // used to store protocolHandlers identified by their protocol name
 
     private responseHandlers: Record<number, ResponseHandler> = {}; // used to store responseHandlers indexed by their respective requestId
-    private responseTimers: Record<number, Timeout> = {}; // used to store response timeouts indexed by their respective requestId
+    private responseTimers: Record<number, NodeJS.Timeout> = {}; // used to store response timeouts indexed by their respective requestId
 
-    private helloTimer?: Timeout;
+    private helloTimer?: NodeJS.Timeout;
 
     constructor(socket: Socket) {
         super();

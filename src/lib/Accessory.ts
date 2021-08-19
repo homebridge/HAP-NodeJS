@@ -75,7 +75,6 @@ import { EventName, HAPConnection, HAPUsername } from "./util/eventedhttp";
 import { formatOutgoingCharacteristicValue } from "./util/request-util";
 import * as uuid from "./util/uuid";
 import { toShortForm } from "./util/uuid";
-import Timeout = NodeJS.Timeout;
 
 const debug = createDebug('HAP-NodeJS:Accessory');
 const MAX_ACCESSORIES = 149; // Maximum number of bridged accessories per bridge.
@@ -388,7 +387,7 @@ export class Accessory extends EventEmitter {
   _server?: HAPServer;
   _setupURI?: string;
 
-  private configurationChangeDebounceTimeout?: Timeout;
+  private configurationChangeDebounceTimeout?: NodeJS.Timeout;
   /**
    * This property captures the time when we last server a /accessories request.
    * For multiple bursts of /accessories request we don't want to always contact GET handlers
@@ -1405,7 +1404,7 @@ export class Accessory extends EventEmitter {
       return;
     }
 
-    let timeout: Timeout | undefined = setTimeout(() => {
+    let timeout: NodeJS.Timeout | undefined = setTimeout(() => {
       for (const id of missingCharacteristics) {
         const split = id.split(".");
         const aid = parseInt(split[0], 10);
@@ -1570,7 +1569,7 @@ export class Accessory extends EventEmitter {
       return;
     }
 
-    let timeout: Timeout | undefined = setTimeout(() => {
+    let timeout: NodeJS.Timeout | undefined = setTimeout(() => {
       for (const id of missingCharacteristics) {
         const split = id.split(".");
         const aid = parseInt(split[0], 10);
@@ -1778,7 +1777,7 @@ export class Accessory extends EventEmitter {
         return;
       }
 
-      controller.handleSnapshotRequest(data["image-height"], data["image-width"], accessory?.displayName).then(buffer => {
+      controller.handleSnapshotRequest(data["image-height"], data["image-width"], accessory?.displayName, data["reason"]).then(buffer => {
         callback(undefined, buffer);
       }, (status: HAPStatus) => {
         callback({ httpCode: HAPHTTPCode.OK, status: status });

@@ -181,6 +181,7 @@ export interface ResourceRequest {
   aid?: number;
   "image-height": number;
   "image-width": number;
+  "reason": number;
   "resource-type": ResourceRequestType;
 }
 

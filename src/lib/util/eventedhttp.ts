@@ -11,7 +11,7 @@ import { CharacteristicValue, Nullable, SessionIdentifier } from '../../types';
 import * as hapCrypto from "./hapCrypto";
 import { getOSLoopbackAddressIfAvailable } from "./net-utils";
 import * as uuid from './uuid';
-import Timeout = NodeJS.Timeout;
+
 
 const debug = createDebug('HAP-NodeJS:EventedHTTPServer');
 const debugCon = createDebug("HAP-NodeJS:EventedHTTPServer:Connection")
@@ -104,7 +104,7 @@ export class EventedHTTPServer extends EventEmitter {
    * So there can be multiple sessions open for a single username (multiple devices connected to the same Apple ID).
    */
   private readonly connectionsByUsername: Map<HAPUsername, HAPConnection[]> = new Map();
-  private connectionIdleTimeout?: Timeout;
+  private connectionIdleTimeout?: NodeJS.Timeout;
 
   constructor() {
     super();
@@ -321,7 +321,7 @@ export class HAPConnection extends EventEmitter {
   _pairVerifyState?: number;
 
   private registeredEvents: Set<EventName> = new Set();
-  private eventsTimer?: Timeout;
+  private eventsTimer?: NodeJS.Timeout;
   private readonly queuedEvents: Map<EventName, CharacteristicEventNotification> = new Map();
   private readonly pendingEventData: Buffer[] = []; // queue of unencrypted event data waiting to be sent until after an in-progress HTTP response is being written
 

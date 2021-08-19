@@ -4,7 +4,7 @@ import createDebug from "debug";
 import {ControllerIdentifier, SerializableController} from "../controller";
 import {Accessory} from "../Accessory";
 import { HAPStorage } from "./HAPStorage";
-import Timeout = NodeJS.Timeout;
+
 
 const debug = createDebug("HAP-NodeJS:ControllerStorage");
 
@@ -45,7 +45,7 @@ export class ControllerStorage {
     private parent?: ControllerStorage;
     private linkedAccessories?: ControllerStorage[];
 
-    private queuedSaveTimeout?: Timeout;
+    private queuedSaveTimeout?: NodeJS.Timeout;
     private queuedSaveTime?: number;
 
     public constructor(accessory: Accessory) {

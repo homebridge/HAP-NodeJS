@@ -309,6 +309,7 @@ export type StreamSessionIdentifier = string; // uuid provided by HAP to identif
 export type SnapshotRequest = {
   height: number;
   width: number;
+  reason?: number;
 }
 
 export type PrepareStreamRequest = {
