@@ -1,5 +1,5 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=876
+// V=880
 
 import { Characteristic } from "../Characteristic";
 import { Service } from "../Service";
@@ -75,6 +75,22 @@ export class AccessoryInformation extends Service {
 Service.AccessoryInformation = AccessoryInformation;
 
 /**
+ * Service "Accessory Metrics"
+ */
+export class AccessoryMetrics extends Service {
+
+  public static readonly UUID: string = "00000270-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, AccessoryMetrics.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.Active);
+  }
+}
+Service.AccessoryMetrics = AccessoryMetrics;
+
+/**
  * Service "Accessory Runtime Information"
  */
 export class AccessoryRuntimeInformation extends Service {
@@ -147,6 +163,43 @@ export class AirQualitySensor extends Service {
   }
 }
 Service.AirQualitySensor = AirQualitySensor;
+
+/**
+ * Service "Asset Update"
+ */
+export class AssetUpdate extends Service {
+
+  public static readonly UUID: string = "00000267-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, AssetUpdate.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.AssetUpdateReadiness);
+    this.addCharacteristic(Characteristic.SupportedAssetTypes);
+  }
+}
+Service.AssetUpdate = AssetUpdate;
+
+/**
+ * Service "Assistant"
+ */
+export class Assistant extends Service {
+
+  public static readonly UUID: string = "0000026A-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, Assistant.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.Active);
+    this.addCharacteristic(Characteristic.Identifier);
+    if (!this.testCharacteristic(Characteristic.Name)) { // workaround for Name characteristic collision in constructor
+      this.addCharacteristic(Characteristic.Name).updateValue("Unnamed Service");
+    }
+  }
+}
+Service.Assistant = Assistant;
 
 /**
  * Service "Audio Stream Management"
@@ -463,6 +516,10 @@ export class Diagnostics extends Service {
 
     // Required Characteristics
     this.addCharacteristic(Characteristic.SupportedDiagnosticsSnapshot);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.SelectedDiagnosticsModes);
+    this.addOptionalCharacteristic(Characteristic.SupportedDiagnosticsModes);
   }
 }
 Service.Diagnostics = Diagnostics;
@@ -1077,9 +1134,38 @@ export class Siri extends Service {
 
     // Required Characteristics
     this.addCharacteristic(Characteristic.SiriInputType);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.MultifunctionButton);
+    this.addOptionalCharacteristic(Characteristic.SiriEnable);
+    this.addOptionalCharacteristic(Characteristic.SiriEngineVersion);
+    this.addOptionalCharacteristic(Characteristic.SiriLightOnUse);
+    this.addOptionalCharacteristic(Characteristic.SiriListening);
+    this.addOptionalCharacteristic(Characteristic.SiriTouchToUse);
   }
 }
 Service.Siri = Siri;
+
+/**
+ * Service "Siri Endpoint"
+ */
+export class SiriEndpoint extends Service {
+
+  public static readonly UUID: string = "00000253-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, SiriEndpoint.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.SiriEndpointSessionStatus);
+    this.addCharacteristic(Characteristic.Version);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.ActiveIdentifier);
+    this.addOptionalCharacteristic(Characteristic.ManuallyDisabled);
+  }
+}
+Service.SiriEndpoint = SiriEndpoint;
 
 /**
  * Service "Slats"
@@ -1121,6 +1207,7 @@ export class SmartSpeaker extends Service {
     this.addCharacteristic(Characteristic.TargetMediaState);
 
     // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.AirPlayEnable);
     this.addOptionalCharacteristic(Characteristic.ConfiguredName);
     this.addOptionalCharacteristic(Characteristic.Mute);
     this.addOptionalCharacteristic(Characteristic.Name);
