@@ -3,7 +3,7 @@ name: Node-CI Beta
 on:
   push:
     branches:
-      - beta
+      - beta*
 
 jobs:
   build:
