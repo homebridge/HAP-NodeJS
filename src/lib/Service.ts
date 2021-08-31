@@ -14,9 +14,12 @@ import {
   AccessCode,
   AccessControl,
   AccessoryInformation,
+  AccessoryMetrics,
   AccessoryRuntimeInformation,
   AirPurifier,
   AirQualitySensor,
+  AssetUpdate,
+  Assistant,
   AudioStreamManagement,
   Battery,
   BridgeConfiguration,
@@ -59,6 +62,7 @@ import {
   SecuritySystem,
   ServiceLabel,
   Siri,
+  SiriEndpoint,
   Slats,
   SmartSpeaker,
   SmokeSensor,
@@ -165,9 +169,12 @@ export class Service extends EventEmitter {
   public static AccessCode: typeof AccessCode;
   public static AccessControl: typeof AccessControl;
   public static AccessoryInformation: typeof AccessoryInformation;
+  public static AccessoryMetrics: typeof AccessoryMetrics;
   public static AccessoryRuntimeInformation: typeof AccessoryRuntimeInformation;
   public static AirPurifier: typeof AirPurifier;
   public static AirQualitySensor: typeof AirQualitySensor;
+  public static AssetUpdate: typeof AssetUpdate;
+  public static Assistant: typeof Assistant;
   public static AudioStreamManagement: typeof AudioStreamManagement;
   public static Battery: typeof Battery;
   /**
@@ -231,6 +238,7 @@ export class Service extends EventEmitter {
   public static SecuritySystem: typeof SecuritySystem;
   public static ServiceLabel: typeof ServiceLabel;
   public static Siri: typeof Siri;
+  public static SiriEndpoint: typeof SiriEndpoint;
   /**
    * @deprecated Please use {@link Service.Slats}.
    */

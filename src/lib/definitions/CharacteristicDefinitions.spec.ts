@@ -70,6 +70,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("AirPlayEnable", () => {
+    it("should be able to construct", () => {
+      new Characteristic.AirPlayEnable();
+    });
+  });
+
   describe("AirQuality", () => {
     it("should be able to construct", () => {
       new Characteristic.AirQuality();
@@ -79,6 +85,12 @@ describe("CharacteristicDefinitions", () => {
   describe("AppMatchingIdentifier", () => {
     it("should be able to construct", () => {
       new Characteristic.AppMatchingIdentifier();
+    });
+  });
+
+  describe("AssetUpdateReadiness", () => {
+    it("should be able to construct", () => {
+      new Characteristic.AssetUpdateReadiness();
     });
   });
 
@@ -634,6 +646,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("MultifunctionButton", () => {
+    it("should be able to construct", () => {
+      new Characteristic.MultifunctionButton();
+    });
+  });
+
   describe("Mute", () => {
     it("should be able to construct", () => {
       new Characteristic.Mute();
@@ -946,6 +964,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("SelectedDiagnosticsModes", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SelectedDiagnosticsModes();
+    });
+  });
+
   describe("SelectedRTPStreamConfiguration", () => {
     it("should be able to construct", () => {
       new Characteristic.SelectedRTPStreamConfiguration();
@@ -1000,9 +1024,45 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("SiriEnable", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SiriEnable();
+    });
+  });
+
+  describe("SiriEndpointSessionStatus", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SiriEndpointSessionStatus();
+    });
+  });
+
+  describe("SiriEngineVersion", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SiriEngineVersion();
+    });
+  });
+
   describe("SiriInputType", () => {
     it("should be able to construct", () => {
       new Characteristic.SiriInputType();
+    });
+  });
+
+  describe("SiriLightOnUse", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SiriLightOnUse();
+    });
+  });
+
+  describe("SiriListening", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SiriListening();
+    });
+  });
+
+  describe("SiriTouchToUse", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SiriTouchToUse();
     });
   });
 
@@ -1084,6 +1144,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("SupportedAssetTypes", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SupportedAssetTypes();
+    });
+  });
+
   describe("SupportedAudioRecordingConfiguration", () => {
     it("should be able to construct", () => {
       new Characteristic.SupportedAudioRecordingConfiguration();
@@ -1111,6 +1177,12 @@ describe("CharacteristicDefinitions", () => {
   describe("SupportedDataStreamTransportConfiguration", () => {
     it("should be able to construct", () => {
       new Characteristic.SupportedDataStreamTransportConfiguration();
+    });
+  });
+
+  describe("SupportedDiagnosticsModes", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SupportedDiagnosticsModes();
     });
   });
 

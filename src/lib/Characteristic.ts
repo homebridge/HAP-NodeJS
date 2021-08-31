@@ -16,8 +16,10 @@ import {
   AdministratorOnlyAccess,
   AirParticulateDensity,
   AirParticulateSize,
+  AirPlayEnable,
   AirQuality,
   AppMatchingIdentifier,
+  AssetUpdateReadiness,
   AudioFeedback,
   BatteryLevel,
   Brightness,
@@ -110,6 +112,7 @@ import {
   MaximumTransmitPower,
   Model,
   MotionDetected,
+  MultifunctionButton,
   Mute,
   Name,
   NetworkAccessViolationControl,
@@ -162,6 +165,7 @@ import {
   SecuritySystemTargetState,
   SelectedAudioStreamConfiguration,
   SelectedCameraRecordingConfiguration,
+  SelectedDiagnosticsModes,
   SelectedRTPStreamConfiguration,
   SerialNumber,
   ServiceLabelIndex,
@@ -171,7 +175,13 @@ import {
   SetupEndpoints,
   SetupTransferTransport,
   SignalToNoiseRatio,
+  SiriEnable,
+  SiriEndpointSessionStatus,
+  SiriEngineVersion,
   SiriInputType,
+  SiriLightOnUse,
+  SiriListening,
+  SiriTouchToUse,
   SlatType,
   SleepDiscoveryMode,
   SleepInterval,
@@ -185,11 +195,13 @@ import {
   StatusTampered,
   StreamingStatus,
   SulphurDioxideDensity,
+  SupportedAssetTypes,
   SupportedAudioRecordingConfiguration,
   SupportedAudioStreamConfiguration,
   SupportedCameraRecordingConfiguration,
   SupportedCharacteristicValueTransitionConfiguration,
   SupportedDataStreamTransportConfiguration,
+  SupportedDiagnosticsModes,
   SupportedDiagnosticsSnapshot,
   SupportedFirmwareUpdateConfiguration,
   SupportedRouterConfiguration,
@@ -608,8 +620,10 @@ export class Characteristic extends EventEmitter {
   public static AdministratorOnlyAccess: typeof AdministratorOnlyAccess;
   public static AirParticulateDensity: typeof AirParticulateDensity;
   public static AirParticulateSize: typeof AirParticulateSize;
+  public static AirPlayEnable: typeof AirPlayEnable;
   public static AirQuality: typeof AirQuality;
   public static AppMatchingIdentifier: typeof AppMatchingIdentifier;
+  public static AssetUpdateReadiness: typeof AssetUpdateReadiness;
   public static AudioFeedback: typeof AudioFeedback;
   public static BatteryLevel: typeof BatteryLevel;
   public static Brightness: typeof Brightness;
@@ -726,6 +740,7 @@ export class Characteristic extends EventEmitter {
   public static MaximumTransmitPower: typeof MaximumTransmitPower;
   public static Model: typeof Model;
   public static MotionDetected: typeof MotionDetected;
+  public static MultifunctionButton: typeof MultifunctionButton;
   public static Mute: typeof Mute;
   public static Name: typeof Name;
   public static NetworkAccessViolationControl: typeof NetworkAccessViolationControl;
@@ -781,6 +796,7 @@ export class Characteristic extends EventEmitter {
   public static SecuritySystemTargetState: typeof SecuritySystemTargetState;
   public static SelectedAudioStreamConfiguration: typeof SelectedAudioStreamConfiguration;
   public static SelectedCameraRecordingConfiguration: typeof SelectedCameraRecordingConfiguration;
+  public static SelectedDiagnosticsModes: typeof SelectedDiagnosticsModes;
   public static SelectedRTPStreamConfiguration: typeof SelectedRTPStreamConfiguration;
   public static SerialNumber: typeof SerialNumber;
   public static ServiceLabelIndex: typeof ServiceLabelIndex;
@@ -790,7 +806,13 @@ export class Characteristic extends EventEmitter {
   public static SetupEndpoints: typeof SetupEndpoints;
   public static SetupTransferTransport: typeof SetupTransferTransport;
   public static SignalToNoiseRatio: typeof SignalToNoiseRatio;
+  public static SiriEnable: typeof SiriEnable;
+  public static SiriEndpointSessionStatus: typeof SiriEndpointSessionStatus;
+  public static SiriEngineVersion: typeof SiriEngineVersion;
   public static SiriInputType: typeof SiriInputType;
+  public static SiriLightOnUse: typeof SiriLightOnUse;
+  public static SiriListening: typeof SiriListening;
+  public static SiriTouchToUse: typeof SiriTouchToUse;
   public static SlatType: typeof SlatType;
   public static SleepDiscoveryMode: typeof SleepDiscoveryMode;
   public static SleepInterval: typeof SleepInterval;
@@ -804,11 +826,13 @@ export class Characteristic extends EventEmitter {
   public static StatusTampered: typeof StatusTampered;
   public static StreamingStatus: typeof StreamingStatus;
   public static SulphurDioxideDensity: typeof SulphurDioxideDensity;
+  public static SupportedAssetTypes: typeof SupportedAssetTypes;
   public static SupportedAudioRecordingConfiguration: typeof SupportedAudioRecordingConfiguration;
   public static SupportedAudioStreamConfiguration: typeof SupportedAudioStreamConfiguration;
   public static SupportedCameraRecordingConfiguration: typeof SupportedCameraRecordingConfiguration;
   public static SupportedCharacteristicValueTransitionConfiguration: typeof SupportedCharacteristicValueTransitionConfiguration;
   public static SupportedDataStreamTransportConfiguration: typeof SupportedDataStreamTransportConfiguration;
+  public static SupportedDiagnosticsModes: typeof SupportedDiagnosticsModes;
   public static SupportedDiagnosticsSnapshot: typeof SupportedDiagnosticsSnapshot;
   public static SupportedFirmwareUpdateConfiguration: typeof SupportedFirmwareUpdateConfiguration;
   public static SupportedRouterConfiguration: typeof SupportedRouterConfiguration;
