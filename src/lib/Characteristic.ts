@@ -1180,6 +1180,9 @@ export class Characteristic extends EventEmitter {
       }
     }
 
+    // validateUserInput when called from setProps is intended to clamp value withing allowed range. It is why warnings should not be displayed.
+    this.updateValue(this.validateUserInput(this.value, CharacteristicWarningType.DEBUG_MESSAGE))
+
     return this;
   }
 
@@ -1896,9 +1899,10 @@ export class Characteristic extends EventEmitter {
    * in the future and throws an error which can't be converted to a valid value.
    *
    * @param value - The value received from the API call
+   * @param characteristicWarningType - Type of the warning message
    */
-  private validateUserInput(value?: Nullable<CharacteristicValue>): Nullable<CharacteristicValue> {
-    if (value === null) {
+  private validateUserInput(value?: Nullable<CharacteristicValue>, characteristicWarningType = CharacteristicWarningType.WARN_MESSAGE): Nullable<CharacteristicValue> {
+      if (value === null) {
       if (this.UUID === Characteristic.Model.UUID || this.UUID === Characteristic.SerialNumber.UUID) { // mirrors the statement in case: Formats.STRING
         this.characteristicWarning(`characteristic must have a non null value otherwise HomeKit will reject this accessory, ignoring new value`, CharacteristicWarningType.ERROR_MESSAGE);
         return this.value; // don't change the value
@@ -1925,6 +1929,7 @@ export class Characteristic extends EventEmitter {
         }
 
         this.characteristicWarning(`characteristic was supplied illegal value: null! Home App will reject null for Apple defined characteristics`);
+        this.characteristicWarning(`characteristic was supplied illegal value: null! Home App will reject null for Apple defined characteristics`, characteristicWarningType);
 
         // if the value has been set previously, return it now, otherwise continue with validation to have a default value set.
         if (this.value !== null) {
@@ -1949,6 +1954,7 @@ export class Characteristic extends EventEmitter {
         }
 
         this.characteristicWarning("characteristic value expected boolean and received " + typeof value);
+        this.characteristicWarning("characteristic value expected boolean and received " + typeof value, characteristicWarningType);
         return false;
       }
       case Formats.INT:
@@ -1965,6 +1971,7 @@ export class Characteristic extends EventEmitter {
         }
         if (typeof value !== 'number' || !Number.isFinite(value)) {
           this.characteristicWarning(`characteristic value expected valid finite number and received "${value}" (${typeof value})`);
+          this.characteristicWarning(`characteristic value expected valid finite number and received "${value}" (${typeof value})`, characteristicWarningType);
           value = typeof this.value === 'number' ? this.value : this.props.minValue || 0;
         }
 
@@ -1980,10 +1987,12 @@ export class Characteristic extends EventEmitter {
 
         if (numericMin != null && value < numericMin) {
           this.characteristicWarning(`characteristic was supplied illegal value: number ${value} exceeded minimum of ${numericMin}`);
+          this.characteristicWarning(`characteristic was supplied illegal value: number ${value} exceeded minimum of ${numericMin}`, characteristicWarningType);
           value = numericMin;
         }
         if (numericMax != null && value > numericMax) {
           this.characteristicWarning(`characteristic was supplied illegal value: number ${value} exceeded maximum of ${numericMax}`);
+          this.characteristicWarning(`characteristic was supplied illegal value: number ${value} exceeded maximum of ${numericMax}`, characteristicWarningType);
           value = numericMax;
         }
 
@@ -1995,9 +2004,11 @@ export class Characteristic extends EventEmitter {
         if (this.props.validValueRanges && this.props.validValueRanges.length === 2) {
           if (value < this.props.validValueRanges[0]) {
             this.characteristicWarning(`characteristic was supplied illegal value: number ${value} not contained in valid value range of ${this.props.validValueRanges}, supplying illegal values will throw errors in the future`);
+            this.characteristicWarning(`characteristic was supplied illegal value: number ${value} not contained in valid value range of ${this.props.validValueRanges}, supplying illegal values will throw errors in the future`, characteristicWarningType);
             value = this.props.validValueRanges[0];
           } else if (value > this.props.validValueRanges[1]) {
             this.characteristicWarning(`characteristic was supplied illegal value: number ${value} not contained in valid value range of ${this.props.validValueRanges}, supplying illegal values will throw errors in the future`);
+            this.characteristicWarning(`characteristic was supplied illegal value: number ${value} not contained in valid value range of ${this.props.validValueRanges}, supplying illegal values will throw errors in the future`, characteristicWarningType);
             value = this.props.validValueRanges[1];
           }
         }
@@ -2016,21 +2027,25 @@ export class Characteristic extends EventEmitter {
       case Formats.STRING: {
         if (typeof value === "number") {
           this.characteristicWarning(`characteristic was supplied illegal value: number instead of string, supplying illegal values will throw errors in the future`);
+          this.characteristicWarning(`characteristic was supplied illegal value: number instead of string, supplying illegal values will throw errors in the future`, characteristicWarningType);
           value = String(value);
         }
         if (typeof value !== "string") {
           this.characteristicWarning("characteristic value expected string and received " + (typeof value));
+          this.characteristicWarning("characteristic value expected string and received " + (typeof value), characteristicWarningType);
           value = typeof this.value === 'string' ? this.value : value + '';
         }
 
         if (value.length <= 1 && (this.UUID === Characteristic.Model.UUID || this.UUID === Characteristic.SerialNumber.UUID)) { // mirrors the case value = null at the beginning
           this.characteristicWarning(`[${this.displayName}] characteristic must have a length of more than 1 character otherwise HomeKit will reject this accessory, ignoring new value`);
+          this.characteristicWarning(`[${this.displayName}] characteristic must have a length of more than 1 character otherwise HomeKit will reject this accessory, ignoring new value`, characteristicWarningType);
           return this.value; // just return the current value
         }
 
         const maxLength = this.props.maxLen ?? 64; // default is 64 (max is 256 which is set in setProps)
         if (value.length > maxLength) {
           this.characteristicWarning(`characteristic was supplied illegal value: string '${value}' exceeded max length of ${maxLength}`);
+          this.characteristicWarning(`characteristic was supplied illegal value: string '${value}' exceeded max length of ${maxLength}`, characteristicWarningType);
           value = value.substring(0, maxLength);
         }
 
@@ -2049,6 +2064,7 @@ export class Characteristic extends EventEmitter {
       case Formats.TLV8:
         if (value === undefined) {
           this.characteristicWarning(`characteristic was supplied illegal value: undefined`);
+          this.characteristicWarning(`characteristic was supplied illegal value: undefined`, characteristicWarningType);
           return this.value;
         }
         return value; // we trust that this is valid tlv8
