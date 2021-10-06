@@ -71,6 +71,28 @@ describe("ServiceDefinitions", () => {
     });
   });
 
+  describe("AccessoryMetrics", () => {
+    it("should be able to construct", () => {
+      const service0 = new Service.AccessoryMetrics();
+      const service1 = new Service.AccessoryMetrics("test name");
+      const service2 = new Service.AccessoryMetrics("test name", "test sub type");
+
+      expect(service0.displayName).toBe("");
+      expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);
+      expect(service0.subtype).toBeUndefined();
+
+      expect(service1.displayName).toBe("test name");
+      expect(service1.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service1.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service1.subtype).toBeUndefined();
+
+      expect(service2.displayName).toBe("test name");
+      expect(service2.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service2.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service2.subtype).toBe("test sub type");
+    });
+  });
+
   describe("AccessoryRuntimeInformation", () => {
     it("should be able to construct", () => {
       const service0 = new Service.AccessoryRuntimeInformation();
@@ -123,6 +145,50 @@ describe("ServiceDefinitions", () => {
 
       expect(service0.displayName).toBe("");
       expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);
+      expect(service0.subtype).toBeUndefined();
+
+      expect(service1.displayName).toBe("test name");
+      expect(service1.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service1.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service1.subtype).toBeUndefined();
+
+      expect(service2.displayName).toBe("test name");
+      expect(service2.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service2.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service2.subtype).toBe("test sub type");
+    });
+  });
+
+  describe("AssetUpdate", () => {
+    it("should be able to construct", () => {
+      const service0 = new Service.AssetUpdate();
+      const service1 = new Service.AssetUpdate("test name");
+      const service2 = new Service.AssetUpdate("test name", "test sub type");
+
+      expect(service0.displayName).toBe("");
+      expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);
+      expect(service0.subtype).toBeUndefined();
+
+      expect(service1.displayName).toBe("test name");
+      expect(service1.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service1.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service1.subtype).toBeUndefined();
+
+      expect(service2.displayName).toBe("test name");
+      expect(service2.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service2.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service2.subtype).toBe("test sub type");
+    });
+  });
+
+  describe("Assistant", () => {
+    it("should be able to construct", () => {
+      const service0 = new Service.Assistant();
+      const service1 = new Service.Assistant("test name");
+      const service2 = new Service.Assistant("test name", "test sub type");
+
+      expect(service0.displayName).toBe("");
+      expect(service0.testCharacteristic(Characteristic.Name)).toBe(true);
       expect(service0.subtype).toBeUndefined();
 
       expect(service1.displayName).toBe("test name");
@@ -1053,6 +1119,28 @@ describe("ServiceDefinitions", () => {
       const service0 = new Service.Siri();
       const service1 = new Service.Siri("test name");
       const service2 = new Service.Siri("test name", "test sub type");
+
+      expect(service0.displayName).toBe("");
+      expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);
+      expect(service0.subtype).toBeUndefined();
+
+      expect(service1.displayName).toBe("test name");
+      expect(service1.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service1.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service1.subtype).toBeUndefined();
+
+      expect(service2.displayName).toBe("test name");
+      expect(service2.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service2.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service2.subtype).toBe("test sub type");
+    });
+  });
+
+  describe("SiriEndpoint", () => {
+    it("should be able to construct", () => {
+      const service0 = new Service.SiriEndpoint();
+      const service1 = new Service.SiriEndpoint("test name");
+      const service2 = new Service.SiriEndpoint("test name", "test sub type");
 
       expect(service0.displayName).toBe("");
       expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);

@@ -1,5 +1,5 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=876
+// V=880
 
 import { Access, Characteristic, Formats, Perms, Units } from "../Characteristic";
 
@@ -217,6 +217,25 @@ export class AirParticulateSize extends Characteristic {
 Characteristic.AirParticulateSize = AirParticulateSize;
 
 /**
+ * Characteristic "AirPlay Enable"
+ */
+export class AirPlayEnable extends Characteristic {
+
+  public static readonly UUID: string = "0000025B-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("AirPlay Enable", AirPlayEnable.UUID, {
+      format: Formats.UINT8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      minValue: 0,
+      maxValue: 1,
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.AirPlayEnable = AirPlayEnable;
+
+/**
  * Characteristic "Air Quality"
  */
 export class AirQuality extends Characteristic {
@@ -260,6 +279,23 @@ export class AppMatchingIdentifier extends Characteristic {
   }
 }
 Characteristic.AppMatchingIdentifier = AppMatchingIdentifier;
+
+/**
+ * Characteristic "Asset Update Readiness"
+ */
+export class AssetUpdateReadiness extends Characteristic {
+
+  public static readonly UUID: string = "00000269-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Asset Update Readiness", AssetUpdateReadiness.UUID, {
+      format: Formats.UINT32,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.AssetUpdateReadiness = AssetUpdateReadiness;
 
 /**
  * Characteristic "Audio Feedback"
@@ -2173,6 +2209,25 @@ export class MotionDetected extends Characteristic {
 Characteristic.MotionDetected = MotionDetected;
 
 /**
+ * Characteristic "Multifunction Button"
+ */
+export class MultifunctionButton extends Characteristic {
+
+  public static readonly UUID: string = "0000026B-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Multifunction Button", MultifunctionButton.UUID, {
+      format: Formats.UINT8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      minValue: 0,
+      maxValue: 1,
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.MultifunctionButton = MultifunctionButton;
+
+/**
  * Characteristic "Mute"
  */
 export class Mute extends Characteristic {
@@ -3220,6 +3275,23 @@ export class SelectedCameraRecordingConfiguration extends Characteristic {
 Characteristic.SelectedCameraRecordingConfiguration = SelectedCameraRecordingConfiguration;
 
 /**
+ * Characteristic "Selected Diagnostics Modes"
+ */
+export class SelectedDiagnosticsModes extends Characteristic {
+
+  public static readonly UUID: string = "0000024D-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Selected Diagnostics Modes", SelectedDiagnosticsModes.UUID, {
+      format: Formats.UINT32,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SelectedDiagnosticsModes = SelectedDiagnosticsModes;
+
+/**
  * Characteristic "Selected RTP Stream Configuration"
  */
 export class SelectedRTPStreamConfiguration extends Characteristic {
@@ -3390,6 +3462,59 @@ export class SignalToNoiseRatio extends Characteristic {
 Characteristic.SignalToNoiseRatio = SignalToNoiseRatio;
 
 /**
+ * Characteristic "Siri Enable"
+ */
+export class SiriEnable extends Characteristic {
+
+  public static readonly UUID: string = "00000255-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Siri Enable", SiriEnable.UUID, {
+      format: Formats.UINT8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      minValue: 0,
+      maxValue: 1,
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SiriEnable = SiriEnable;
+
+/**
+ * Characteristic "Siri Endpoint Session Status"
+ */
+export class SiriEndpointSessionStatus extends Characteristic {
+
+  public static readonly UUID: string = "00000254-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Siri Endpoint Session Status", SiriEndpointSessionStatus.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SiriEndpointSessionStatus = SiriEndpointSessionStatus;
+
+/**
+ * Characteristic "Siri Engine Version"
+ */
+export class SiriEngineVersion extends Characteristic {
+
+  public static readonly UUID: string = "0000025A-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Siri Engine Version", SiriEngineVersion.UUID, {
+      format: Formats.STRING,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SiriEngineVersion = SiriEngineVersion;
+
+/**
  * Characteristic "Siri Input Type"
  */
 export class SiriInputType extends Characteristic {
@@ -3410,6 +3535,63 @@ export class SiriInputType extends Characteristic {
   }
 }
 Characteristic.SiriInputType = SiriInputType;
+
+/**
+ * Characteristic "Siri Light On Use"
+ */
+export class SiriLightOnUse extends Characteristic {
+
+  public static readonly UUID: string = "00000258-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Siri Light On Use", SiriLightOnUse.UUID, {
+      format: Formats.UINT8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      minValue: 0,
+      maxValue: 1,
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SiriLightOnUse = SiriLightOnUse;
+
+/**
+ * Characteristic "Siri Listening"
+ */
+export class SiriListening extends Characteristic {
+
+  public static readonly UUID: string = "00000256-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Siri Listening", SiriListening.UUID, {
+      format: Formats.UINT8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      minValue: 0,
+      maxValue: 1,
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SiriListening = SiriListening;
+
+/**
+ * Characteristic "Siri Touch To Use"
+ */
+export class SiriTouchToUse extends Characteristic {
+
+  public static readonly UUID: string = "00000257-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Siri Touch To Use", SiriTouchToUse.UUID, {
+      format: Formats.UINT8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      minValue: 0,
+      maxValue: 1,
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SiriTouchToUse = SiriTouchToUse;
 
 /**
  * Characteristic "Slat Type"
@@ -3688,6 +3870,23 @@ export class SulphurDioxideDensity extends Characteristic {
 Characteristic.SulphurDioxideDensity = SulphurDioxideDensity;
 
 /**
+ * Characteristic "Supported Asset Types"
+ */
+export class SupportedAssetTypes extends Characteristic {
+
+  public static readonly UUID: string = "00000268-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Supported Asset Types", SupportedAssetTypes.UUID, {
+      format: Formats.UINT32,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SupportedAssetTypes = SupportedAssetTypes;
+
+/**
  * Characteristic "Supported Audio Recording Configuration"
  */
 export class SupportedAudioRecordingConfiguration extends Characteristic {
@@ -3772,6 +3971,23 @@ export class SupportedDataStreamTransportConfiguration extends Characteristic {
   }
 }
 Characteristic.SupportedDataStreamTransportConfiguration = SupportedDataStreamTransportConfiguration;
+
+/**
+ * Characteristic "Supported Diagnostics Modes"
+ */
+export class SupportedDiagnosticsModes extends Characteristic {
+
+  public static readonly UUID: string = "0000024C-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Supported Diagnostics Modes", SupportedDiagnosticsModes.UUID, {
+      format: Formats.UINT32,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SupportedDiagnosticsModes = SupportedDiagnosticsModes;
 
 /**
  * Characteristic "Supported Diagnostics Snapshot"
