@@ -171,7 +171,7 @@ export class RecordingManagement {
 
   private static _supportedCameraRecordingConfiguration(options: CameraRecordingOptions): string {
     const eventTriggerOptions = Buffer.alloc(8);
-    eventTriggerOptions.writeInt32LE(1, 0);
+    eventTriggerOptions.writeInt32LE(options.eventTriggerOptions, 0);
     const prebufferLength = Buffer.alloc(4);
     prebufferLength.writeInt32LE(options.prebufferLength, 0);
     return tlv.encode(SupportedCameraRecordingConfigurationTypes.PREBUFFER_LENGTH, prebufferLength,
