@@ -73,8 +73,8 @@ const enum VideoCodecPacketizationMode {
 }
 
 const enum VideoCodecCVO { // Coordination of Video Orientation
-  UNSUPPORTED = 0x01,
-  SUPPORTED = 0x02
+  UNSUPPORTED = 0x00,
+  SUPPORTED = 0x01
 }
 
 // ----------
