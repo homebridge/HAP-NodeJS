@@ -10,7 +10,8 @@
 
 * **Node 10 LTS:** `HAP-NodeJS` has a minimum Node version requirement of 10.17.0.
     Pull requests MUST NOT require a Node version greater than that unless the feature is
-    enabled/backported via [TypeScript][link-typescript].
+    enabled/backported via [TypeScript][link-typescript]. If a higher version requirement may be justified
+  you SHALL include your reasoning in the pull request discussion.
 
 * **Add tests:** All pull requests SHOULD include unit tests to ensure the change works as
     expected and to prevent regressions.

@@ -12,7 +12,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "clean": "rimraf dist && rimraf coverage",
-    "build": "rimraf dist && tsc && node .github/workflows/node-persist-ignore.js",
+    "build": "rimraf dist && tsc && node .github/node-persist-ignore.js",
     "prepublishOnly": "npm run build",
     "postpublish": "npm run clean",
     "test": "jest",
