@@ -50,7 +50,7 @@
     "@types"
   ],
   "dependencies": {
-    "@homebridge/ciao": "~1.1.2",
+    "@homebridge/ciao": "~1.1.3",
     "bonjour-hap": "~3.6.3",
     "debug": "^4.3.2",
     "fast-srp-hap": "2.0.4",
