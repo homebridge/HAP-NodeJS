@@ -1259,8 +1259,8 @@ export class Accessory extends EventEmitter {
    * Accessory object will no longer valid after invoking this method
    * Trying to invoke publish() on the object will result undefined behavior
    */
-  public destroy(): void {
-    this.unpublish();
+  public destroy(): Promise<void> {
+    let promise = this.unpublish();
 
     if (this._accessoryInfo) {
       Accessory.cleanupAccessoryData(this._accessoryInfo.username);
@@ -1270,6 +1270,8 @@ export class Accessory extends EventEmitter {
       this.controllerStorage = new ControllerStorage(this);
     }
     this.removeAllListeners();
+
+    return promise;
   }
 
   public async unpublish(): Promise<void> {
