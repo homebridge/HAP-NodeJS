@@ -132,7 +132,9 @@ export class CiaoAdvertiser extends EventEmitter implements Advertiser {
   }
 
   public updateAdvertisement(silent?: boolean): void {
-    this.advertisedService!.updateTxt(CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash), silent);
+    let txt = CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash);
+    debug("Updating txt record (txt: %o, silent: %d)", txt, silent);
+    this.advertisedService!.updateTxt(txt, silent);
   }
 
   public async destroy(): Promise<void> {
@@ -238,8 +240,11 @@ export class BonjourHAPAdvertiser extends EventEmitter implements Advertiser {
   }
 
   public updateAdvertisement(silent?: boolean): void {
+    let txt = CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash)
+    debug("Updating txt record (txt: %o, silent: %d)", txt, silent);
+
     if (this.advertisement) {
-      this.advertisement.updateTxt(CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash), silent);
+      this.advertisement.updateTxt(txt, silent);
     }
   }
 
