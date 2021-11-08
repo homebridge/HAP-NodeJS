@@ -1751,7 +1751,7 @@ export class Accessory extends EventEmitter {
         try {
           allowWrite = characteristic.additionalAuthorizationHandler(data.authData);
         } catch (error) {
-          console.log("[" + this.displayName + "] Additional authorization handler has thrown an error when checking authData: " + error.stack);
+          console.warn("[" + this.displayName + "] Additional authorization handler has thrown an error when checking authData: " + error.stack);
           allowWrite = false;
         }
 

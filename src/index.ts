@@ -4,6 +4,7 @@ import * as accessoryLoader from './lib/AccessoryLoader';
 import * as uuidFunctions from './lib/util/uuid';
 import * as legacyTypes from './accessories/types';
 import { HAPStorage } from "./lib/model/HAPStorage";
+import createDebug from "debug";
 
 export const AccessoryLoader = accessoryLoader;
 export const uuid = uuidFunctions;
@@ -30,9 +31,19 @@ export * from './lib/util/time';
 export * from './types';
 export const LegacyTypes = legacyTypes;
 
-function printInit() {
+const debug = createDebug('HAP-NodeJS:Advertiser');
+
+/**
+ * This method can be used to retrieve the current running library version of the HAP-NodeJS framework.
+ * @returns The SemVer version string.
+ */
+export function HAPLibraryVersion(): string {
   const packageJson = require("../package.json");
-  console.log("Initializing HAP-NodeJS v" + packageJson.version + "...");
+  return packageJson.version;
+}
+
+function printInit() {
+  debug("Initializing HAP-NodeJS v%s ...", HAPLibraryVersion());
 }
 printInit()
 
