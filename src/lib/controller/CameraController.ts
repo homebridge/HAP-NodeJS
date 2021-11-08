@@ -87,8 +87,12 @@ export interface CameraStreamingDelegate {
 
 export interface CameraRecordingDelegate {
   /**
-   * HomeKit Secure Video expects a series of fragments that are
-   * of duration specified by the fragmentLength.
+   * HomeKit requests to receive the video (and audio, if enabled) recordings of
+   * the current ongoing motion (or doorbell) event.
+   * The first fragment must always be the "mediaInitialization" fragment.
+   * All subsequent fragments are "mediaFragment"s.
+   * Each "mediaFragment" must start with a key frame and must not be longer than the
+   * specified duration set via the "fragmentLength" (which was SELECTED by the HomeKit Home Hub).
    *
    * @returns AsyncIterator of Readables representing each fragment.
    */

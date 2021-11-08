@@ -168,22 +168,28 @@ export class RecordingManagement {
   private readonly supportedAudioRecordingConfiguration: string;
 
   private static _supportedCameraRecordingConfiguration(options: CameraRecordingOptions): string {
-    const eventTriggerOptions = Buffer.alloc(8);
-    eventTriggerOptions.writeInt32LE(options.eventTriggerOptions, 0);
     const prebufferLength = Buffer.alloc(4);
+    const eventTriggerOptions = Buffer.alloc(8);
+    
     prebufferLength.writeInt32LE(options.prebufferLength, 0);
-    return tlv.encode(SupportedCameraRecordingConfigurationTypes.PREBUFFER_LENGTH, prebufferLength,
+    eventTriggerOptions.writeInt32LE(options.eventTriggerOptions, 0);
+
+    return tlv.encode(
+      SupportedCameraRecordingConfigurationTypes.PREBUFFER_LENGTH, prebufferLength,
       SupportedCameraRecordingConfigurationTypes.EVENT_TRIGGER_OPTIONS, eventTriggerOptions,
       SupportedCameraRecordingConfigurationTypes.MEDIA_CONTAINER_CONFIGURATIONS, options.mediaContainerConfigurations.map(config => {
         const fragmentLength = Buffer.alloc(4);
+        
         fragmentLength.writeInt32LE(config.fragmentLength, 0);
+        
         return tlv.encode(
           MediaContainerConfigurationTypes.MEDIA_CONTAINER_TYPE, config.type,
           MediaContainerConfigurationTypes.MEDIA_CONTAINER_PARAMETERS, tlv.encode(
             MediaContainerParameterTypes.FRAGMENT_LENGTH, fragmentLength,
           )
         );
-      })).toString('base64');
+      })
+    ).toString('base64');
   }
 
   private static _supportedVideoRecordingConfiguration(videoOptions: VideoRecordingOptions): string {
