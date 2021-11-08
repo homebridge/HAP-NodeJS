@@ -163,8 +163,6 @@ export class RecordingManagement {
   private delegate: CameraRecordingDelegate;
   private service: CameraRecordingManagement;
 
-  private selectedConfiguration: string = ""; // base64 representation of the currently selected configuration
-
   private readonly supportedCameraRecordingConfiguration: string;
   private readonly supportedVideoRecordingConfiguration: string;
   private readonly supportedAudioRecordingConfiguration: string;
@@ -282,28 +280,11 @@ export class RecordingManagement {
     this.supportedAudioRecordingConfiguration = this._supportedAudioStreamConfiguration(options.audio);
   }
 
-  private recordingAudioActive = true;
-  private active = false;
-
   private constructService(): CameraRecordingManagement {
     const managementService = new Service.CameraRecordingManagement('', '');
 
-    managementService.getCharacteristic(Characteristic.Active)
-      .on('get', callback => {
-        callback(null, this.active)
-      })
-      .on('set', (value, callback) => {
-        this.active = !!value;
-        callback();
-      });
-    managementService.getCharacteristic(Characteristic.RecordingAudioActive)
-      .on('get', callback => {
-        callback(null, this.recordingAudioActive)
-      })
-      .on('set', (value, callback) => {
-        this.recordingAudioActive = !!value;
-        callback();
-      });
+    managementService.setCharacteristic(Characteristic.Active, false)
+    managementService.setCharacteristic(Characteristic.RecordingAudioActive, false);
 
     managementService.getCharacteristic(Characteristic.SupportedCameraRecordingConfiguration)
       .on('get', callback => {
@@ -321,19 +302,11 @@ export class RecordingManagement {
   }
 
   private setupServiceHandlers() {
-    this.service.getCharacteristic(Characteristic.SelectedCameraRecordingConfiguration)!
-      .on(CharacteristicEventTypes.GET, callback => {
-        callback(null, this.selectedConfiguration);
-      })
-      .on(CharacteristicEventTypes.SET, (value, callback) => {
-        this.selectedConfiguration = value.toString();
-        callback();
-        this.delegate.prepareRecording?.(this.getSelectedConfiguration());
-      });
+    this.service.setCharacteristic(Characteristic.SelectedCameraRecordingConfiguration, '');
   }
 
-  getSelectedConfiguration(): CameraRecordingConfiguration {
-    const decoded = tlv.decode(Buffer.from(this.selectedConfiguration, 'base64'));
+  static parseSelectedConfiguration(selectedconfiguration: string): CameraRecordingConfiguration {
+    const decoded = tlv.decode(Buffer.from(selectedconfiguration, 'base64'));
     const recording = tlv.decode(decoded[SelectedCameraRecordingConfigurationTypes.SELECTED_GENERAL_CONFIGURATION]);
     const video = tlv.decode(decoded[SelectedCameraRecordingConfigurationTypes.SELECTED_VIDEO_CONFIGURATION]);
     const audio = tlv.decode(decoded[SelectedCameraRecordingConfigurationTypes.SELECTED_AUDIO_CONFIGURATION]);

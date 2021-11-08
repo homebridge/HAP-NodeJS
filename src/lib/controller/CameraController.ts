@@ -87,21 +87,12 @@ export interface CameraStreamingDelegate {
 
 export interface CameraRecordingDelegate {
   /**
-   * This method is called when the camera recording configuration is set or changed
-   * by HomeKit.
-   * The handler must respect the desired audio and video configuration during
-   * subsequenct calls to handleFragmentRequests.
-   * @param configuration
-   */
-  prepareRecording?(configuration: CameraRecordingConfiguration): void;
-
-  /**
    * HomeKit Secure Video expects a series of fragments that are
    * of duration specified by the fragmentLength.
    *
    * @returns AsyncIterator of Readables representing each fragment.
    */
-  handleFragmentsRequests(configuration: CameraRecordingConfiguration): AsyncGenerator<Buffer>;
+  handleFragmentsRequests(): AsyncGenerator<Buffer>;
 }
 
 /**
@@ -171,18 +162,14 @@ export class CameraController extends EventEmitter implements Controller<CameraC
   private speakerMuted: boolean = false;
   private speakerVolume: number = 100;
 
-  private cameraOperatingModeService?: CameraOperatingMode;
-  private recordingManagement?: RecordingManagement;
+  cameraOperatingModeService?: CameraOperatingMode;
+  recordingManagement?: RecordingManagement;
   private dataStreamManagement?: DataStreamManagement;
   motionService?: MotionSensor;
   private connectionMap = new Map<number, {
     generator: AsyncGenerator<Buffer>,
     connection: DataStreamConnection,
   }>();
-
-  private homekitCameraActive = false;
-  private eventSnapshotsActive = false;
-  private periodicSnapshotsActive = false;
 
   constructor(options: CameraControllerOptions, legacyMode: boolean = false) {
     super();
@@ -514,32 +501,9 @@ export class CameraController extends EventEmitter implements Controller<CameraC
     }
 
     if (this.cameraOperatingModeService) {
-      this.cameraOperatingModeService.getCharacteristic(Characteristic.EventSnapshotsActive)
-        .on('get', callback => {
-          callback(null, this.eventSnapshotsActive)
-        })
-        .on('set', (value, callback) => {
-          this.eventSnapshotsActive = !!value;
-          callback();
-        });
-
-      this.cameraOperatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive)
-        .on('get', callback => {
-          callback(null, this.homekitCameraActive)
-        })
-        .on('set', (value, callback) => {
-          this.homekitCameraActive = !!value;
-          callback();
-        });
-
-      this.cameraOperatingModeService.getCharacteristic(Characteristic.PeriodicSnapshotsActive)
-        .on('get', callback => {
-          callback(null, this.periodicSnapshotsActive)
-        })
-        .on('set', (value, callback) => {
-          this.periodicSnapshotsActive = !!value;
-          callback();
-        });
+      this.cameraOperatingModeService.setCharacteristic(Characteristic.EventSnapshotsActive, false);
+      this.cameraOperatingModeService.setCharacteristic(Characteristic.HomeKitCameraActive, false);
+      this.cameraOperatingModeService.setCharacteristic(Characteristic.PeriodicSnapshotsActive, false);
     }
 
     if (this.dataStreamManagement) {
@@ -552,7 +516,7 @@ export class CameraController extends EventEmitter implements Controller<CameraC
 
   private async handleDataSendOpen(connection: DataStreamConnection, id: number, message: Record<any, any>) {
     const streamId: number = message.streamId;
-    const generator = this.recordingDelegate!.handleFragmentsRequests(this.recordingManagement!.getSelectedConfiguration());
+    const generator = this.recordingDelegate!.handleFragmentsRequests();
 
     this.connectionMap.set(streamId, { generator, connection });
 
