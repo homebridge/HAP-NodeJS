@@ -19,7 +19,7 @@ jobs:
   publish:
     needs: lint
 
-    if: ${{ secrests.npm_token != null }}
+    if: ${{ github.repository == 'homebridge/HAP-NodeJS' }}
 
     uses: homebridge/.github/.github/workflows/npm-publish.yml@main
     with:
