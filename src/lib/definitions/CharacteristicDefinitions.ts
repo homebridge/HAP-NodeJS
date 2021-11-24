@@ -4846,7 +4846,7 @@ export class VOCDensity extends Characteristic {
       format: Formats.FLOAT,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ],
       minValue: 0,
-      maxValue: 1000,
+      maxValue: 5000,
       minStep: 1,
     });
     this.value = this.getDefaultValue();
