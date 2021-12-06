@@ -52,8 +52,12 @@ const enum VideoAttributesTypes {
   FRAME_RATE = 0x03
 }
 
-const enum VideoCodecType {
-  H264 = 0x00
+export const enum VideoCodecType {
+  H264 = 0x00,
+  /**
+   * HomeKit Secure Video Only.
+   */
+  H265 = 0x01,
 }
 
 export const enum H264Profile {
@@ -268,6 +272,7 @@ export type VideoStreamingOptions = {
 }
 
 export type H264CodecParameters = {
+  type: VideoCodecType,
   levels: H264Level[],
   profiles: H264Profile[],
 }
@@ -424,6 +429,7 @@ export type AudioInfo = {
 };
 
 export type VideoInfo = {  // minimum keyframe interval is about 5 seconds
+  codec: VideoCodecType;
   profile: H264Profile,
   level: H264Level,
   packetizationMode: VideoCodecPacketizationMode,
@@ -731,6 +737,7 @@ export class RTPStreamManagement {
 
 
     const videoInfo: VideoInfo = {
+      codec: videoCodec.readUInt8(0),
       profile: h264Profile,
       level: h264Level,
       packetizationMode: packetizationMode,
@@ -1173,7 +1180,7 @@ export class RTPStreamManagement {
     }
 
     const videoStreamConfiguration = tlv.encode(
-      VideoCodecConfigurationTypes.CODEC_TYPE, VideoCodecType.H264,
+      VideoCodecConfigurationTypes.CODEC_TYPE, videoOptions.codec.type || VideoCodecType.H264,
       VideoCodecConfigurationTypes.CODEC_PARAMETERS, codecParameters,
       VideoCodecConfigurationTypes.ATTRIBUTES, videoOptions.resolutions.map(resolution => {
         if (resolution.length != 3) {

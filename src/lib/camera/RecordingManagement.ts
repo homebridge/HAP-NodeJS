@@ -5,6 +5,7 @@ import { Service } from "../Service"
 import { H264CodecParameters, H264Level, H264Profile, Resolution } from "./RTPStreamManagement"
 import createDebug from 'debug';
 import * as tlv from '../util/tlv';
+import { VideoCodecType } from "."
 
 const debug = createDebug('HAP-NodeJS:Camera:RecordingManagement');
 
@@ -83,10 +84,6 @@ const enum VideoAttributesTypes {
   IMAGE_WIDTH = 0x01,
   IMAGE_HEIGHT = 0x02,
   FRAME_RATE = 0x03,
-}
-
-const enum VideoCodecType {
-  H264 = 0x00,
 }
 
 const enum SelectedCameraRecordingConfigurationTypes {
@@ -206,7 +203,7 @@ export class RecordingManagement {
     );
 
     const videoStreamConfiguration = tlv.encode(
-      VideoCodecConfigurationTypes.CODEC_TYPE, VideoCodecType.H264,
+      VideoCodecConfigurationTypes.CODEC_TYPE, videoOptions.codec.type,
       VideoCodecConfigurationTypes.CODEC_PARAMETERS, codecParameters,
       VideoCodecConfigurationTypes.ATTRIBUTES, videoOptions.resolutions.map(resolution => {
         if (resolution.length != 3) {
