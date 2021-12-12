@@ -96,7 +96,7 @@ export interface CameraRecordingDelegate {
    *
    * @returns AsyncIterator of Readables representing each fragment.
    */
-  handleFragmentsRequests(): AsyncGenerator<Buffer>;
+  handleFragmentsRequests(connection: DataStreamConnection): AsyncGenerator<Buffer>;
 }
 
 /**
@@ -504,12 +504,6 @@ export class CameraController extends EventEmitter implements Controller<CameraC
         });
     }
 
-    if (this.cameraOperatingModeService) {
-      this.cameraOperatingModeService.setCharacteristic(Characteristic.EventSnapshotsActive, false);
-      this.cameraOperatingModeService.setCharacteristic(Characteristic.HomeKitCameraActive, false);
-      this.cameraOperatingModeService.setCharacteristic(Characteristic.PeriodicSnapshotsActive, false);
-    }
-
     if (this.dataStreamManagement) {
       this.dataStreamManagement!
         .onRequestMessage(Protocols.DATA_SEND, Topics.OPEN, this.handleDataSendOpen.bind(this))
@@ -520,7 +514,7 @@ export class CameraController extends EventEmitter implements Controller<CameraC
 
   private async handleDataSendOpen(connection: DataStreamConnection, id: number, message: Record<any, any>) {
     const streamId: number = message.streamId;
-    const generator = this.recordingDelegate!.handleFragmentsRequests();
+    const generator = this.recordingDelegate!.handleFragmentsRequests(connection);
 
     this.connectionMap.set(streamId, { generator, connection });
 

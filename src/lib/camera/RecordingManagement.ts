@@ -286,9 +286,6 @@ export class RecordingManagement {
   private constructService(): CameraRecordingManagement {
     const managementService = new Service.CameraRecordingManagement('', '');
 
-    managementService.setCharacteristic(Characteristic.Active, false)
-    managementService.setCharacteristic(Characteristic.RecordingAudioActive, false);
-
     managementService.getCharacteristic(Characteristic.SupportedCameraRecordingConfiguration)
       .on('get', callback => {
         callback(null, this.supportedCameraRecordingConfiguration);
