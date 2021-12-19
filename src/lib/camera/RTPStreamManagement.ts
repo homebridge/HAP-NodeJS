@@ -318,6 +318,7 @@ export type SnapshotRequest = {
 }
 
 export type PrepareStreamRequest = {
+  connection: HAPConnection;
   sessionID: StreamSessionIdentifier,
   targetAddress: string,
   addressVersion: "ipv4" | "ipv6",
@@ -929,6 +930,7 @@ export class RTPStreamManagement {
 
 
     const prepareRequest: PrepareStreamRequest = {
+      connection,
       sessionID: sessionIdentifier,
       targetAddress: controllerAddress,
       addressVersion: addressVersion === IPAddressVersion.IPV6? "ipv6": "ipv4",
