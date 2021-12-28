@@ -1,0 +1,29 @@
+name: Stale workflow
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '45 11 * * *'
+
+jobs:
+  stale:
+
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/stale@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          stale-issue-label: 'stale'
+          exempt-issue-labels: pinned,security,long running,discussion,vision
+          stale-issue-message: 'This issue has been automatically marked as stale because it has not had recent activity. It will be closed if no further activity occurs. Thank you for your contributions.'
+          close-issue-message: 'This issue has been closed as no further activity has occurred.'
+          days-before-issue-stale: 30
+          days-before-issue-close: 5
+
+          # disabling stale bot for PRs
+          days-before-pr-close: -1
+          days-before-pr-stale: -1

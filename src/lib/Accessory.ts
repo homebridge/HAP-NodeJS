@@ -512,6 +512,7 @@ export class Accessory extends EventEmitter {
     for (const service of this.services) {
       if (typeof name === 'string' && (service.displayName === name || service.name === name || service.subtype === name)) {
         return service;
+      // @ts-expect-error
       } else if (typeof name === 'function' && ((service instanceof name) || (name.UUID === service.UUID))) {
         return service;
       }
@@ -524,6 +525,7 @@ export class Accessory extends EventEmitter {
     for (const service of this.services) {
       if (typeof uuid === "string" && (service.displayName === uuid || service.name === uuid) && service.subtype === subType) {
         return service;
+      // @ts-expect-error
       } else if (typeof uuid === "function" && ((service instanceof uuid) || (uuid.UUID === service.UUID)) && service.subtype === subType) {
         return service;
       }
