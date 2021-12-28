@@ -1899,7 +1899,7 @@ export class Characteristic extends EventEmitter {
    * in the future and throws an error which can't be converted to a valid value.
    *
    * @param value - The value received from the API call
-   * @param characteristicWarningType - Type of the warning message
+   * @param characteristicWarningType - Optionally defines the warning type to use when raising a {@link CharacteristicEventTypes.CHARACTERISTIC_WARNING}.
    */
   private validateUserInput(value?: Nullable<CharacteristicValue>, characteristicWarningType = CharacteristicWarningType.WARN_MESSAGE): Nullable<CharacteristicValue> {
       if (value === null) {
