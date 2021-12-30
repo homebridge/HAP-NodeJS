@@ -23,10 +23,6 @@ export function HKDF(hashAlg: string, salt: Buffer, ikm: Buffer, info: Buffer, s
 
 //Security Layer Enc/Dec
 
-type Count = {
-  value: any;
-}
-
 export function layerEncrypt(data: Buffer, encryption: HAPEncryption) {
   let result = Buffer.alloc(0);
   const total = data.length;
@@ -76,8 +72,15 @@ export function layerDecrypt(packet: Buffer, encryption: HAPEncryption) {
 }
 
 export function chacha20_poly1305_decryptAndVerify(key: Buffer, nonce: Buffer, aad: Buffer | null, ciphertext: Buffer, authTag: Buffer): Buffer {
+  if (nonce.length < 12) { // openssl 3.x.x requires 98 bits nonce length
+    nonce = Buffer.concat([
+      Buffer.alloc(12 - nonce.length, 0),
+      nonce
+    ])
+  }
+
   // @ts-ignore types for this a really broken
-  const decipher = crypto.createDecipheriv("chacha20-poly1305", key, nonce, { authTagLength:16 });
+  const decipher = crypto.createDecipheriv("chacha20-poly1305", key, nonce, { authTagLength: 16 });
   if (aad) {
     decipher.setAAD(aad);
   }
@@ -89,6 +92,13 @@ export function chacha20_poly1305_decryptAndVerify(key: Buffer, nonce: Buffer, a
 }
 
 export function chacha20_poly1305_encryptAndSeal(key: Buffer, nonce: Buffer, aad: Buffer | null, plaintext: Buffer): { ciphertext: Buffer, authTag: Buffer } {
+  if (nonce.length < 12) { // openssl 3.x.x requires 98 bits nonce length
+    nonce = Buffer.concat([
+      Buffer.alloc(12 - nonce.length, 0),
+      nonce
+    ])
+  }
+
   // @ts-ignore types for this a really broken
   const cipher = crypto.createCipheriv("chacha20-poly1305", key, nonce, { authTagLength: 16 });
 

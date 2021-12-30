@@ -11,8 +11,12 @@ import { InterfaceName, IPAddress } from "@homebridge/ciao/lib/NetworkManager";
 import assert from "assert";
 import bonjour, { BonjourHAP, BonjourHAPService, MulticastOptions } from "bonjour-hap";
 import crypto from 'crypto';
+import createDebug from "debug";
 import { EventEmitter } from "events";
 import { AccessoryInfo } from './model/AccessoryInfo';
+import { PromiseTimeout } from "./util/promise-utils";
+
+const debug = createDebug('HAP-NodeJS:Advertiser');
 
 /**
  * This enum lists all bitmasks for all known status flags.
@@ -71,7 +75,7 @@ export interface Advertiser {
 
   initPort(port: number): void;
 
-  startAdvertising(): void;
+  startAdvertising(): Promise<void>;
 
   updateAdvertisement(silent?: boolean): void;
 
@@ -115,7 +119,7 @@ export class CiaoAdvertiser extends EventEmitter implements Advertiser {
     });
     this.advertisedService.on(ServiceEvent.NAME_CHANGED, this.emit.bind(this, AdvertiserEvent.UPDATED_NAME));
 
-    console.log(`Preparing Advertiser for '${this.accessoryInfo.displayName}' using ciao backend!`);
+    debug(`Preparing Advertiser for '${this.accessoryInfo.displayName}' using ciao backend!`);
   }
 
   public initPort(port: number): void {
@@ -123,16 +127,18 @@ export class CiaoAdvertiser extends EventEmitter implements Advertiser {
   }
 
   public startAdvertising(): Promise<void> {
-    console.log(`Starting to advertise '${this.accessoryInfo.displayName}' using ciao backend!`);
+    debug(`Starting to advertise '${this.accessoryInfo.displayName}' using ciao backend!`);
     return this.advertisedService!.advertise();
   }
 
   public updateAdvertisement(silent?: boolean): void {
-    this.advertisedService!.updateTxt(CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash), silent);
+    let txt = CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash);
+    debug("Updating txt record (txt: %o, silent: %d)", txt, silent);
+    this.advertisedService!.updateTxt(txt, silent);
   }
 
   public async destroy(): Promise<void> {
-    await this.advertisedService!.destroy();
+    // advertisedService.destroy(); is called implicitly via the shutdown call
     await this.responder.shutdown();
     this.removeAllListeners();
   }
@@ -199,20 +205,20 @@ export class BonjourHAPAdvertiser extends EventEmitter implements Advertiser {
     this.serviceOptions = serviceOptions;
 
     this.bonjour = bonjour(responderOptions);
-    console.log(`Preparing Advertiser for '${this.accessoryInfo.displayName}' using bonjour-hap backend!`);
+    debug(`Preparing Advertiser for '${this.accessoryInfo.displayName}' using bonjour-hap backend!`);
   }
 
   public initPort(port: number): void {
     this.port = port;
   }
 
-  public startAdvertising(): void {
+  public startAdvertising(): Promise<void> {
     assert(!this.destroyed, "Can't advertise on a destroyed bonjour instance!");
     if (this.port == undefined) {
       throw new Error("Tried starting bonjour-hap advertisement without initializing port!");
     }
 
-    console.log(`Starting to advertise '${this.accessoryInfo.displayName}' using bonjour-hap backend!`);
+    debug(`Starting to advertise '${this.accessoryInfo.displayName}' using bonjour-hap backend!`);
 
     if (this.advertisement) {
       this.destroy();
@@ -229,11 +235,16 @@ export class BonjourHAPAdvertiser extends EventEmitter implements Advertiser {
       addUnsafeServiceEnumerationRecord: true,
       ...this.serviceOptions,
     });
+
+    return PromiseTimeout(1);
   }
 
   public updateAdvertisement(silent?: boolean): void {
+    let txt = CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash)
+    debug("Updating txt record (txt: %o, silent: %d)", txt, silent);
+
     if (this.advertisement) {
-      this.advertisement.updateTxt(CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash), silent);
+      this.advertisement.updateTxt(txt, silent);
     }
   }
 

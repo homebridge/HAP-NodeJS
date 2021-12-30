@@ -1,14 +1,20 @@
 import {
-  Accessory, AccessoryEventTypes, Bridge,
+  Accessory,
+  AccessoryEventTypes,
+  Bridge,
   Categories,
   Characteristic,
   CharacteristicEventTypes,
   Controller,
   ControllerIdentifier,
   ControllerServiceMap,
+  MDNSAdvertiser,
+  PublishInfo,
   Service,
-  uuid
-} from '..';
+  uuid,
+} from "..";
+import { PromiseTimeout } from "./util/promise-utils";
+import EventEmitter = NodeJS.EventEmitter;
 
 
 class TestController implements Controller {
@@ -41,6 +47,26 @@ class TestController implements Controller {
   handleControllerRemoved(): void {
   }
 
+}
+
+const TEST_USERNAME = "AB:CD:EF:00:11:22"
+
+function awaitEvent<Object extends EventEmitter, Event extends string>(element: Object, event: Event, timeout: number = 5000): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    let timeoutId: NodeJS.Timeout
+
+    let resolveListener = () => {
+      clearTimeout(timeoutId);
+      resolve();
+    };
+
+    timeoutId = setTimeout(() => {
+      element.removeListener(event, resolveListener);
+      reject(new Error(`awaitEvent for event ${event} timed out!`))
+    }, timeout)
+
+    element.once(event, resolveListener);
+  });
 }
 
 describe('Accessory', () => {
@@ -76,6 +102,62 @@ describe('Accessory', () => {
         new Accessory('Test', 'test');
       }).toThrow('not a valid UUID');
     });
+  });
+
+  describe('Accessory Publishing', () => {
+    const DEFAULT_DISPLAY_NAME = "Test Accessory";
+
+    beforeEach(() => {
+      // ensure we start with a clean Accessory for every test
+      Accessory.cleanupAccessoryData(TEST_USERNAME);
+    });
+
+    test.each`
+      advertiser                 | republish
+      ${MDNSAdvertiser.BONJOUR}  | ${false}
+      ${MDNSAdvertiser.CIAO}     | ${false}
+      ${MDNSAdvertiser.BONJOUR}  | ${true}
+      ${MDNSAdvertiser.CIAO}     | ${true}
+    `("Clean Accessory publish and unpublish (advertiser: $advertiser; republish: $republish)", async ({advertiser, republish}) => {
+      const accessory = new Accessory(DEFAULT_DISPLAY_NAME, uuid.generate("foo"));
+
+      const switchService = new Service.Switch("My Example Switch");
+      accessory.addService(switchService);
+
+      let publishInfo: PublishInfo = {
+        username: TEST_USERNAME,
+        pincode: "000-00-000",
+        category: Categories.SWITCH,
+        advertiser: advertiser
+      };
+
+      accessory.publish(publishInfo);
+
+      expect(accessory.displayName.startsWith(DEFAULT_DISPLAY_NAME));
+      expect(accessory.displayName.length).toEqual(DEFAULT_DISPLAY_NAME.length + 1 + 4); // added hash!
+
+      await awaitEvent(accessory, AccessoryEventTypes.ADVERTISED);
+
+      let displayNameWithIdentifyingMaterial = accessory.displayName;
+
+      await accessory.unpublish();
+
+      if (!republish) {
+        return;
+      }
+      // This second round tests, that the Accessory is reusable after unpublished was called
+
+      await PromiseTimeout(200);
+
+      accessory.publish(publishInfo)
+
+      // ensure unification isn't done twice!
+      expect(accessory.displayName).toEqual(displayNameWithIdentifyingMaterial);
+
+      await awaitEvent(accessory, AccessoryEventTypes.ADVERTISED);
+
+      await accessory.unpublish();
+    })
   });
 
   describe("characteristicWarning", () => {
