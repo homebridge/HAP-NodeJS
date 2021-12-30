@@ -1224,7 +1224,6 @@ export class Accessory extends EventEmitter {
         });
         break;
       case MDNSAdvertiser.AVAHI:
-        // noinspection JSDeprecatedSymbols
         this._advertiser = new AvahiAdvertiser(this._accessoryInfo);
         break;
       default:

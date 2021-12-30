@@ -264,7 +264,7 @@ export class BonjourHAPAdvertiser extends EventEmitter implements Advertiser {
 }
 
 /**
- * Advertiser based on the Avahi D-Bus library.
+ * Advertiser based on the Avahi D-Bus library. For (very crappy) docs on the interface, see the XML files at: https://github.com/lathiat/avahi/tree/master/avahi-daemon
  */
 export class AvahiAdvertiser extends EventEmitter implements Advertiser {
   private readonly accessoryInfo: AccessoryInfo;
@@ -274,7 +274,6 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
 
   private bus: any;
   private path: string = '';
-  private destroyed: boolean = false;
 
   constructor(accessoryInfo: AccessoryInfo) {
     super();
@@ -302,7 +301,6 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
   }
 
   public async startAdvertising(): Promise<void> {
-    assert(!this.destroyed, "Can't advertise on a destroyed Avahi instance!");
     if (this.port == undefined) {
       throw new Error("Tried starting Avahi advertisement without initializing port!");
     }
@@ -316,7 +314,6 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
 
   public async updateAdvertisement(silent?: boolean): Promise<void> {
     if (this.path) {
-      let txt = Object.entries(CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash)).map(el => Buffer.from(el[0] + '=' + el[1]));
       await this.avahiInvoke(this.path, 'EntryGroup', 'UpdateServiceTxt', { body: [-1, -1, 0, this.accessoryInfo.displayName, '_hap._tcp', '', this.createTxt()], signature: 'iiusssaay' });
     }
   }
