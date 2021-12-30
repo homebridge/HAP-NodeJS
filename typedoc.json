@@ -8,5 +8,8 @@
   "excludeExternals": true,
   "hideGenerator": true,
   "includeVersion": false,
-  "listInvalidSymbolLinks": true
+  "validation": {
+    "invalidLink": true,
+    "notExported": true
+  }
 }
