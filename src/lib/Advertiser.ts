@@ -12,6 +12,7 @@ import assert from "assert";
 import bonjour, { BonjourHAP, BonjourHAPService, MulticastOptions } from "bonjour-hap";
 import crypto from 'crypto';
 import createDebug from "debug";
+import dbus from 'dbus-native';
 import { EventEmitter } from "events";
 import { AccessoryInfo } from './model/AccessoryInfo';
 import { PromiseTimeout } from "./util/promise-utils";
@@ -262,3 +263,68 @@ export class BonjourHAPAdvertiser extends EventEmitter implements Advertiser {
 
 }
 
+/**
+ * Advertiser based on the Avahi D-Bus library.
+ */
+export class AvahiAdvertiser extends EventEmitter implements Advertiser {
+  private readonly accessoryInfo: AccessoryInfo;
+  private readonly setupHash: string;
+
+  private port?: number;
+
+  private bus: any;
+  private path: string = '';
+  private destroyed: boolean = false;
+
+  constructor(accessoryInfo: AccessoryInfo) {
+    super();
+    this.accessoryInfo = accessoryInfo;
+    this.setupHash = CiaoAdvertiser.computeSetupHash(accessoryInfo);
+
+    this.bus = dbus.systemBus();
+
+    console.log(`Preparing Advertiser for '${this.accessoryInfo.displayName}' using Avahi backend!`);
+  }
+
+  private avahiInvoke(path: string, dbusInterface: string, member: string, others?: any): Promise<any> {
+    return new Promise((resolve, reject) => {
+      let command = { destination: 'org.freedesktop.Avahi', path, interface: 'org.freedesktop.Avahi.' + dbusInterface, member, ...(others || {}) };
+      this.bus.invoke(command, (err: any, result: any) => err ? reject(err) : resolve(result));
+    });
+  }
+
+  private createTxt(): Array<Buffer> {
+    return Object.entries(CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash)).map((el: Array<string>) => Buffer.from(el[0] + '=' + el[1]));
+  }
+
+  public initPort(port: number): void {
+    this.port = port;
+  }
+
+  public async startAdvertising(): Promise<void> {
+    assert(!this.destroyed, "Can't advertise on a destroyed Avahi instance!");
+    if (this.port == undefined) {
+      throw new Error("Tried starting Avahi advertisement without initializing port!");
+    }
+
+    console.log(`Starting to advertise '${this.accessoryInfo.displayName}' using Avahi backend!`);
+
+    this.path = await this.avahiInvoke('/', 'Server', 'EntryGroupNew') as string;
+    await this.avahiInvoke(this.path, 'EntryGroup', 'AddService', { body: [-1, -1, 0, this.accessoryInfo.displayName, '_hap._tcp', '', '', this.port, this.createTxt()], signature: 'iiussssqaay' });
+    await this.avahiInvoke(this.path, 'EntryGroup', 'Commit');
+  }
+
+  public async updateAdvertisement(silent?: boolean): Promise<void> {
+    if (this.path) {
+      let txt = Object.entries(CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash)).map(el => Buffer.from(el[0] + '=' + el[1]));
+      await this.avahiInvoke(this.path, 'EntryGroup', 'UpdateServiceTxt', { body: [-1, -1, 0, this.accessoryInfo.displayName, '_hap._tcp', '', this.createTxt()], signature: 'iiusssaay' });
+    }
+  }
+
+  public async destroy(): Promise<void> {
+    if (this.path) {
+      await this.avahiInvoke(this.path, 'EntryGroup', 'Free');
+      this.path = '';
+    }
+  }
+}
