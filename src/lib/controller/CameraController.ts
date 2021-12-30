@@ -1,28 +1,30 @@
-import crypto from 'crypto';
+import crypto from "crypto";
 import createDebug from "debug";
 import { EventEmitter } from "events";
-import { Readable } from 'stream';
+import { ResourceRequestReason } from "../../internal-types";
 import { CharacteristicValue, SessionIdentifier } from "../../types";
 import {
+  CameraRecordingOptions,
   CameraStreamingOptions,
   LegacyCameraSourceAdapter,
   PrepareStreamRequest,
   PrepareStreamResponse,
+  RecordingManagement,
   RTPStreamManagement,
   SnapshotRequest,
   StreamingRequest,
-  CameraRecordingConfiguration,
-  CameraRecordingOptions,
-  RecordingManagement
 } from "../camera";
+import { Characteristic, CharacteristicEventTypes, CharacteristicGetCallback, CharacteristicSetCallback } from "../Characteristic";
+import { DataStreamConnection, DataStreamManagement, DataStreamServerEvent, HDSStatus, Protocols, Topics } from "../datastream";
 import {
-  Characteristic,
-  CharacteristicEventTypes,
-  CharacteristicGetCallback,
-  CharacteristicSetCallback
-} from "../Characteristic";
-import { DataStreamConnection, DataStreamManagement, DataStreamServerEvent, HDSStatus, Protocols, Topics } from '../datastream';
-import { CameraOperatingMode, CameraRecordingManagement, DataStreamTransportManagement, Doorbell, Microphone, MotionSensor, Speaker } from "../definitions";
+  CameraOperatingMode,
+  CameraRecordingManagement,
+  DataStreamTransportManagement,
+  Doorbell,
+  Microphone,
+  MotionSensor,
+  Speaker,
+} from "../definitions";
 import { HAPStatus } from "../HAPServer";
 import { Service } from "../Service";
 import { Controller, ControllerIdentifier, ControllerServiceMap, DefaultControllerType } from "./Controller";
@@ -197,7 +199,7 @@ export class CameraController extends EventEmitter implements Controller<CameraC
 
   /**
    * Call this method if you want to forcefully suspend an ongoing streaming session.
-   * This would be adequate if the the rtp server or media encoding encountered an unexpected error.
+   * This would be adequate if the rtp server or media encoding encountered an unexpected error.
    *
    * @param sessionId {SessionIdentifier} - id of the current ongoing streaming session
    */
@@ -287,10 +289,14 @@ export class CameraController extends EventEmitter implements Controller<CameraC
       }
     }
 
+    // TODO are all active characteristics true?
     if (this.recordingOptions) {
+      // TODO some options to what characteristics to init for the camera operating mode?
       this.cameraOperatingModeService = new Service.CameraOperatingMode('', '');
+      this.cameraOperatingModeService.setCharacteristic(Characteristic.EventSnapshotsActive, true);
+      this.cameraOperatingModeService.setCharacteristic(Characteristic.HomeKitCameraActive, true);
+
       this.recordingManagement = new RecordingManagement(this.recordingOptions, this.recordingDelegate!);
-      this.dataStreamManagement = new DataStreamManagement();
 
       if (this.recordingOptions.motionService) {
         this.motionService = new MotionSensor('', '');
@@ -298,6 +304,7 @@ export class CameraController extends EventEmitter implements Controller<CameraC
         this.recordingManagement.getService().addLinkedService(this.motionService);
       }
 
+      this.dataStreamManagement = new DataStreamManagement();
       this.recordingManagement.getService().addLinkedService(this.dataStreamManagement.getService());
     }
 
@@ -620,7 +627,42 @@ export class CameraController extends EventEmitter implements Controller<CameraC
   /**
    * @private
    */
-  handleSnapshotRequest(height: number, width: number, accessoryName?: string, reason?: number): Promise<Buffer> {
+  handleSnapshotRequest(height: number, width: number, accessoryName?: string, reason?: ResourceRequestReason): Promise<Buffer> {
+    // first step is to verify that the reason is applicable to our current policy
+    if (this.cameraOperatingModeService != null) { // TODO log rejections!
+      // When rejecting a snapshot request the accessory must return HTTP 207 Multi-Status and a HAP Status code of
+      // -70401 (INSUFFICIENT_PRIVILEGES; if it was rejected due to the missing reason property)
+      // or
+      // -70412 (NOT_ALLOWED_IN_CURRENT_STATE, if the reason doesn't match the current set rules).
+
+      let eventSnapshotsActive = this.cameraOperatingModeService
+        .getCharacteristic(Characteristic.EventSnapshotsActive)
+        .value
+
+      // If the accessory has EventSnapshotsActive turned off, any snapshot request without a reason property or the reason property set to 1 must be rejected.
+      if (!eventSnapshotsActive) {
+        if (reason == null) {
+          return Promise.reject(HAPStatus.INSUFFICIENT_PRIVILEGES);
+        } else if (reason == ResourceRequestReason.EVENT) {
+          return Promise.reject(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
+        }
+      }
+
+      if (this.cameraOperatingModeService.testCharacteristic(Characteristic.PeriodicSnapshotsActive)) {
+        let periodicSnapshotsActive = this.cameraOperatingModeService
+          .getCharacteristic(Characteristic.PeriodicSnapshotsActive)
+          .value
+
+        if (!periodicSnapshotsActive) {
+          if (reason == null) {
+            return Promise.reject(HAPStatus.INSUFFICIENT_PRIVILEGES);
+          } else if (reason == ResourceRequestReason.PERIODIC) {
+            return Promise.reject(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
+          }
+        }
+      }
+    }
+
     return new Promise((resolve, reject) => {
       let timeout: NodeJS.Timeout | undefined = setTimeout(() => {
         console.warn(`[${accessoryName}] The image snapshot handler for the given accessory is slow to respond! See https://git.io/JtMGR for more info.`);
@@ -640,7 +682,6 @@ export class CameraController extends EventEmitter implements Controller<CameraC
         this.delegate.handleSnapshotRequest({
           height: height,
           width: width,
-          reason: reason,
         }, (error, buffer) => {
           if (!timeout) {
             return;
@@ -667,6 +708,7 @@ export class CameraController extends EventEmitter implements Controller<CameraC
           }
         });
       } catch (error) {
+        // TODO handle HAPStatusErrors?
         if (!timeout) {
           return;
         } else {

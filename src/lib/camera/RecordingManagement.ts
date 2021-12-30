@@ -1,5 +1,5 @@
 import { Characteristic, CharacteristicEventTypes } from "../Characteristic"
-import { CameraRecordingDelegate } from "../controller"
+import { AudioBitrate, CameraRecordingDelegate } from "../controller";
 import { CameraRecordingManagement, SelectedCameraRecordingConfiguration } from "../definitions"
 import { Service } from "../Service"
 import { H264CodecParameters, H264Level, H264Profile, Resolution } from "./RTPStreamManagement"
@@ -30,19 +30,19 @@ export type CameraRecordingConfiguration = {
 }
 
 export type CameraRecordingOptions = {
-  prebufferLength: number;
-  eventTriggerOptions: number;
+  prebufferLength: number; // TODO document ms
+  eventTriggerOptions: number; // TODO typed version
   mediaContainerConfigurations: MediaContainerConfiguration[];
 
   video: VideoRecordingOptions,
   audio: AudioRecordingOptions,
 
-  motionService?: boolean;
+  motionService?: boolean; // TODO maybe control existing motion service via?
 }
 
 export type MediaContainerConfiguration = {
-  type: number;
-  fragmentLength: number;
+  type: number; // TODO typed
+  fragmentLength: number; // TODO document!
 }
 
 export type VideoRecordingOptions = {
@@ -60,11 +60,6 @@ export type AudioRecordingCodec = {
   audioChannels: number, // default 1
   bitrateMode: AudioBitrate, // default VARIABLE, AAC-ELD or OPUS MUST support VARIABLE bitrate
   samplerate: AudioRecordingSamplerate[] | AudioRecordingSamplerate,
-}
-
-const enum AudioBitrate {
-  VARIABLE = 0x00,
-  CONSTANT = 0x01,
 }
 
 const enum VideoCodecConfigurationTypes {
@@ -158,7 +153,7 @@ const enum SupportedAudioRecordingConfigurationTypes {
 
 export class RecordingManagement {
   private delegate: CameraRecordingDelegate;
-  private service: CameraRecordingManagement;
+  private readonly service: CameraRecordingManagement;
 
   private readonly supportedCameraRecordingConfiguration: string;
   private readonly supportedVideoRecordingConfiguration: string;
@@ -167,7 +162,7 @@ export class RecordingManagement {
   private static _supportedCameraRecordingConfiguration(options: CameraRecordingOptions): string {
     const prebufferLength = Buffer.alloc(4);
     const eventTriggerOptions = Buffer.alloc(8);
-    
+
     prebufferLength.writeInt32LE(options.prebufferLength, 0);
     eventTriggerOptions.writeInt32LE(options.eventTriggerOptions, 0);
 
@@ -176,9 +171,9 @@ export class RecordingManagement {
       SupportedCameraRecordingConfigurationTypes.EVENT_TRIGGER_OPTIONS, eventTriggerOptions,
       SupportedCameraRecordingConfigurationTypes.MEDIA_CONTAINER_CONFIGURATIONS, options.mediaContainerConfigurations.map(config => {
         const fragmentLength = Buffer.alloc(4);
-        
+
         fragmentLength.writeInt32LE(config.fragmentLength, 0);
-        
+
         return tlv.encode(
           MediaContainerConfigurationTypes.MEDIA_CONTAINER_TYPE, config.type,
           MediaContainerConfigurationTypes.MEDIA_CONTAINER_PARAMETERS, tlv.encode(
@@ -203,7 +198,7 @@ export class RecordingManagement {
     );
 
     const videoStreamConfiguration = tlv.encode(
-      VideoCodecConfigurationTypes.CODEC_TYPE, videoOptions.codec.type,
+      VideoCodecConfigurationTypes.CODEC_TYPE, VideoCodecType.H264, // TODO videoOptions.codec.type,
       VideoCodecConfigurationTypes.CODEC_PARAMETERS, codecParameters,
       VideoCodecConfigurationTypes.ATTRIBUTES, videoOptions.resolutions.map(resolution => {
         if (resolution.length != 3) {
@@ -285,6 +280,8 @@ export class RecordingManagement {
 
   private constructService(): CameraRecordingManagement {
     const managementService = new Service.CameraRecordingManagement('', '');
+
+    managementService.setCharacteristic(Characteristic.Active, true);
 
     managementService.getCharacteristic(Characteristic.SupportedCameraRecordingConfiguration)
       .on('get', callback => {

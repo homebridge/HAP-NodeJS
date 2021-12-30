@@ -272,7 +272,7 @@ export type VideoStreamingOptions = {
 }
 
 export type H264CodecParameters = {
-  type: VideoCodecType,
+  // type: VideoCodecType, // TODO breaking change! and to be removed?
   levels: H264Level[],
   profiles: H264Profile[],
 }
@@ -314,7 +314,6 @@ export type StreamSessionIdentifier = string; // uuid provided by HAP to identif
 export type SnapshotRequest = {
   height: number;
   width: number;
-  reason?: number;
 }
 
 export type PrepareStreamRequest = {
@@ -1184,7 +1183,7 @@ export class RTPStreamManagement {
     }
 
     const videoStreamConfiguration = tlv.encode(
-      VideoCodecConfigurationTypes.CODEC_TYPE, videoOptions.codec.type || VideoCodecType.H264,
+      VideoCodecConfigurationTypes.CODEC_TYPE, VideoCodecType.H264, // TODO videoOptions.codec.type || VideoCodecType.H264,
       VideoCodecConfigurationTypes.CODEC_PARAMETERS, codecParameters,
       VideoCodecConfigurationTypes.ATTRIBUTES, videoOptions.resolutions.map(resolution => {
         if (resolution.length != 3) {

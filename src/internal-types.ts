@@ -177,11 +177,24 @@ export const enum ResourceRequestType {
   IMAGE = "image",
 }
 
+export const enum ResourceRequestReason {
+  /**
+   * The reason describes periodic resource requests.
+   * In the example of camera image snapshots those are the typical preview images every 10 seconds.
+   */
+  PERIODIC = 0,
+  /**
+   * The resource request is the result of some event.
+   * In the example of camera image snapshots, requests are made due to e.g. a motion event or similar.
+   */
+  EVENT = 1
+}
+
 export interface ResourceRequest {
   aid?: number;
   "image-height": number;
   "image-width": number;
-  "reason": number;
+  "reason": ResourceRequestReason;
   "resource-type": ResourceRequestType;
 }
 

@@ -1804,11 +1804,13 @@ export class Accessory extends EventEmitter {
         return;
       }
 
-      controller.handleSnapshotRequest(data["image-height"], data["image-width"], accessory?.displayName, data["reason"]).then(buffer => {
-        callback(undefined, buffer);
-      }, (status: HAPStatus) => {
-        callback({ httpCode: HAPHTTPCode.OK, status: status });
-      });
+      controller.handleSnapshotRequest(data["image-height"], data["image-width"], accessory?.displayName, data.reason)
+        .then(buffer => {
+          callback(undefined, buffer);
+        }, (status: HAPStatus) => {
+          callback({ httpCode: HAPHTTPCode.MULTI_STATUS, status: status });
+        });
+
       return;
     }
 
