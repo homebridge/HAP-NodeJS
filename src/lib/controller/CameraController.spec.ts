@@ -1,7 +1,9 @@
 import {
   CameraController,
+  CameraControllerOptions,
   CameraRecordingDelegate,
   CameraStreamingDelegate,
+  DoorbellController,
   PrepareStreamCallback,
   SnapshotRequestCallback,
   StreamRequestCallback,
@@ -12,8 +14,10 @@ import {
   AudioRecordingSamplerate,
   CameraRecordingOptions,
   CameraStreamingOptions,
+  EventTriggerOption,
   H264Level,
   H264Profile,
+  MediaContainerType,
   PrepareStreamRequest,
   SnapshotRequest,
   SRTPCryptoSuites,
@@ -22,7 +26,6 @@ import {
 import { Characteristic } from "../Characteristic";
 import { DataStreamConnection } from "../datastream";
 import "../definitions";
-import { HomeKitCameraActive } from "../definitions";
 import { HAPStatus } from "../HAPServer";
 import { AudioBitrate } from "./RemoteController";
 
@@ -53,11 +56,12 @@ let mockStreamingOptions: CameraStreamingOptions = {
 
 let mockRecordingOptions: CameraRecordingOptions = {
   prebufferLength: 4000,
-  eventTriggerOptions: 0x01, // TODO right?
-  mediaContainerConfigurations: [{
-    type: 0, // TODO right?
+  mediaContainerConfiguration: [{
+    type: MediaContainerType.FRAGMENTED_MP4,
     fragmentLength: 8000,
   }],
+
+  motionService: true,
 
   video: mockStreamingOptions.video,
   audio: {
@@ -92,21 +96,28 @@ class MockDelegate implements CameraStreamingDelegate, CameraRecordingDelegate {
   }
 }
 
+function createOptions(
+  recordingOptions: CameraRecordingOptions = mockRecordingOptions,
+  streamingOptions: CameraStreamingOptions = mockStreamingOptions,
+  cameraStreamCount: number = 1,
+  delegate: CameraStreamingDelegate & CameraRecordingDelegate = new MockDelegate(),
+): CameraControllerOptions {
+  return {
+    cameraStreamCount: 1,
+    delegate: delegate,
+    streamingOptions: streamingOptions,
+    recording: {
+      options: recordingOptions,
+      delegate: delegate,
+    }
+  }
+}
+
 describe("CameraController", () => {
   let controller: CameraController
 
   beforeEach(() => {
-    let delegate = new MockDelegate();
-
-    controller = new CameraController({
-      cameraStreamCount: 1,
-      delegate: delegate,
-      streamingOptions: mockStreamingOptions,
-      recording: {
-        options: mockRecordingOptions,
-        delegate: delegate,
-      }
-    });
+    controller = new CameraController(createOptions());
 
     // basic controller init
     controller.constructServices();
@@ -124,7 +135,45 @@ describe("CameraController", () => {
       expect(streamManagement.getService().getCharacteristic(Characteristic.Active).value)
         .toBe(Characteristic.Active.ACTIVE);
     }
-  })
+  });
+
+  describe("retrieveEventTriggerOptions", () => {
+    test("with motion service", () => {
+      // @ts-expect-error (private access)
+      expect(controller.recordingManagement?.eventTriggerOptions).toBe(EventTriggerOption.MOTION);
+    });
+
+    test("with motion service and doorbell", () => {
+      let doorbell = new DoorbellController(createOptions());
+      doorbell.constructServices();
+      doorbell.configureServices();
+
+      // @ts-expect-error (private access)
+      expect(doorbell.recordingManagement?.eventTriggerOptions).toBe(EventTriggerOption.MOTION | EventTriggerOption.DOORBELL);
+    });
+
+    test("with motion service and doorbell and override", () => {
+      let options = mockRecordingOptions;
+      options.overrideEventTriggerOptions = [EventTriggerOption.MOTION];
+      let doorbell = new DoorbellController(createOptions(options));
+      doorbell.constructServices();
+      doorbell.configureServices();
+
+      // @ts-expect-error (private access)
+      expect(doorbell.recordingManagement?.eventTriggerOptions).toBe(EventTriggerOption.MOTION | EventTriggerOption.DOORBELL);
+    });
+
+    test("with motion service and doorbell specified as override", () => {
+      let options = mockRecordingOptions;
+      options.overrideEventTriggerOptions = [EventTriggerOption.DOORBELL];
+      let camera = new CameraController(createOptions(options))
+      camera.constructServices()
+      camera.configureServices()
+
+      // @ts-expect-error (private access)
+      expect(camera.recordingManagement?.eventTriggerOptions).toBe(EventTriggerOption.MOTION | EventTriggerOption.DOORBELL);
+    });
+  });
 
   describe("handleSnapshotRequest", () => {
     beforeEach(() => {

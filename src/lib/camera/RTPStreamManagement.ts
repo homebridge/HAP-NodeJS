@@ -570,7 +570,7 @@ export class RTPStreamManagement {
   }
 
   private setupServiceHandlers() {
-    // ensure that configurations are up to date and reflected in the characteristic values
+    // ensure that configurations are up-to-date and reflected in the characteristic values
     this.service.setCharacteristic(Characteristic.SupportedRTPConfiguration, this.supportedRTPConfiguration);
     this.service.setCharacteristic(Characteristic.SupportedVideoStreamConfiguration, this.supportedVideoStreamConfiguration);
     this.service.setCharacteristic(Characteristic.SupportedAudioStreamConfiguration, this.supportedAudioStreamConfiguration);

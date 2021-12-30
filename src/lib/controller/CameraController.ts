@@ -6,6 +6,7 @@ import { CharacteristicValue, SessionIdentifier } from "../../types";
 import {
   CameraRecordingOptions,
   CameraStreamingOptions,
+  EventTriggerOption,
   LegacyCameraSourceAdapter,
   PrepareStreamRequest,
   PrepareStreamResponse,
@@ -152,7 +153,7 @@ export class CameraController extends EventEmitter implements Controller<CameraC
   private readonly delegate: CameraStreamingDelegate;
   private readonly streamingOptions: CameraStreamingOptions;
   private readonly recordingOptions?: CameraRecordingOptions;
-  private readonly recordingDelegate?: CameraRecordingDelegate;
+  private readonly recordingDelegate?: CameraRecordingDelegate; // TODO double optional (event we have a stronger assumption of both!)
   private readonly legacyMode: boolean = false;
 
   /**
@@ -272,14 +273,11 @@ export class CameraController extends EventEmitter implements Controller<CameraC
     for (let i = 0; i < this.streamCount; i++) {
       const rtp = new RTPStreamManagement(i, this.streamingOptions, this.delegate);
       this.streamManagements.push(rtp);
-
-      if (this.recordingOptions) {
-        rtp.getService().setCharacteristic(Characteristic.Active, 1);
-      }
     }
 
     if (!this.legacyMode && this.streamingOptions.audio) {
-      // In theory the Microphone Service is a necessity. In practice its not. lol. So we just add it if the user wants to support audio
+      // In theory the Microphone Service is a necessity. In practice, it's not. lol.
+      // So we just add it if the user wants to support audio
       this.microphoneService = new Service.Microphone('', '');
       this.microphoneService.setCharacteristic(Characteristic.Volume, this.microphoneVolume);
 
@@ -289,14 +287,13 @@ export class CameraController extends EventEmitter implements Controller<CameraC
       }
     }
 
-    // TODO are all active characteristics true?
     if (this.recordingOptions) {
       // TODO some options to what characteristics to init for the camera operating mode?
       this.cameraOperatingModeService = new Service.CameraOperatingMode('', '');
       this.cameraOperatingModeService.setCharacteristic(Characteristic.EventSnapshotsActive, true);
       this.cameraOperatingModeService.setCharacteristic(Characteristic.HomeKitCameraActive, true);
 
-      this.recordingManagement = new RecordingManagement(this.recordingOptions, this.recordingDelegate!);
+      this.recordingManagement = new RecordingManagement(this.recordingOptions, this.recordingDelegate!, this.retrieveEventTriggerOptions());
 
       if (this.recordingOptions.motionService) {
         this.motionService = new MotionSensor('', '');
@@ -317,7 +314,9 @@ export class CameraController extends EventEmitter implements Controller<CameraC
       motionService: this.motionService,
     };
 
-    this.streamManagements.forEach((management, index) => serviceMap[CameraController.STREAM_MANAGEMENT + index] = management.getService());
+    this.streamManagements.forEach((management, index) => {
+      serviceMap[CameraController.STREAM_MANAGEMENT + index] = management.getService();
+    });
 
     return serviceMap;
   }
@@ -332,6 +331,7 @@ export class CameraController extends EventEmitter implements Controller<CameraC
       let streamManagementService = serviceMap[CameraController.STREAM_MANAGEMENT + i];
 
       if (i < this.streamCount) {
+        // TODO ensure that the active characteristic is present after initializing from an (old) configuration!
         if (streamManagementService) { // normal init
           this.streamManagements.push(new RTPStreamManagement(i, this.streamingOptions, this.delegate, streamManagementService));
         } else { // stream count got bigger, we need to create a new service
@@ -347,7 +347,7 @@ export class CameraController extends EventEmitter implements Controller<CameraC
           delete serviceMap[CameraController.STREAM_MANAGEMENT + i];
           modifiedServiceMap = true;
         } else {
-          break; // we finished counting and we got no saved service; we are finished
+          break; // we finished counting, and we got no saved service; we are finished
         }
       }
     }
@@ -398,10 +398,20 @@ export class CameraController extends EventEmitter implements Controller<CameraC
         modifiedServiceMap = true;
       }
       if (serviceMap.cameraEventRecordingManagement) {
-        this.recordingManagement = new RecordingManagement(this.recordingOptions, this.recordingDelegate!, serviceMap.cameraEventRecordingManagement);
+        this.recordingManagement = new RecordingManagement(
+          this.recordingOptions,
+          this.recordingDelegate!,
+          this.retrieveEventTriggerOptions(),
+          serviceMap.cameraEventRecordingManagement,
+        );
       }
       else {
-        this.recordingManagement = new RecordingManagement(this.recordingOptions, this.recordingDelegate!);
+        this.recordingManagement = new RecordingManagement(
+          this.recordingOptions,
+          this.recordingDelegate!,
+          this.retrieveEventTriggerOptions(),
+        );
+
         serviceMap.cameraEventRecordingManagement = this.recordingManagement.getService();
         modifiedServiceMap = true;
       }
@@ -455,7 +465,7 @@ export class CameraController extends EventEmitter implements Controller<CameraC
     }
   }
 
-  // overwritten in DoorbellController (to avoid cyclic dependencies, i hate typescript for that)
+  // overwritten in DoorbellController (to avoid cyclic dependencies, I hate typescript for that)
   protected migrateFromDoorbell(serviceMap: ControllerServiceMap): boolean {
     if (serviceMap.doorbell) { // See NOTICE in DoorbellController
       delete serviceMap.doorbell;
@@ -463,6 +473,28 @@ export class CameraController extends EventEmitter implements Controller<CameraC
     }
 
     return false;
+  }
+
+  protected retrieveEventTriggerOptions(): Set<EventTriggerOption> {
+    if (!this.recordingOptions) {
+      return new Set()
+    }
+
+    const triggerOptions = new Set<EventTriggerOption>();
+
+    if (this.recordingOptions.overrideEventTriggerOptions) {
+      for (const option of this.recordingOptions.overrideEventTriggerOptions) {
+        triggerOptions.add(option);
+      }
+    }
+
+    if (this.recordingOptions.motionService) { // TODO revise heuristic, once we have revised the situation around passing motion sensors
+      triggerOptions.add(EventTriggerOption.MOTION);
+    }
+
+    // this method is overwritten by the `DoorbellController` to automatically configure EventTriggerOption.DOORBELL
+
+    return triggerOptions
   }
 
   /**
