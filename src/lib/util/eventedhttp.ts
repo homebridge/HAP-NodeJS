@@ -77,7 +77,7 @@ export declare interface EventedHTTPServer {
  * Implementation
  * --------------
  * In order to implement the "custom HTTP" server required by the HAP protocol (see HAPServer.js) without completely
- * reinventing the wheel, we create both a generic TCP socket server as well as a standard Node HTTP server.
+ * reinventing the wheel, we create both a generic TCP socket server and a standard Node HTTP server.
  * The TCP socket server acts as a proxy, allowing users of this class to transform data (for encryption) as necessary
  * and passing through bytes directly to the HTTP server for processing. This way we get Node to do all
  * the "heavy lifting" of HTTP like parsing headers and formatting responses.

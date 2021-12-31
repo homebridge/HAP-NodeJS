@@ -1,33 +1,27 @@
-import { Characteristic, CharacteristicEventTypes } from "../Characteristic"
+import createDebug from "debug";
+import { VideoCodecType } from ".";
+import { Access, Characteristic } from "../Characteristic";
 import { AudioBitrate, CameraRecordingDelegate } from "../controller";
-import { CameraRecordingManagement, SelectedCameraRecordingConfiguration } from "../definitions"
-import { Service } from "../Service"
-import { H264CodecParameters, H264Level, H264Profile, Resolution } from "./RTPStreamManagement"
-import createDebug from 'debug';
-import * as tlv from '../util/tlv';
-import { VideoCodecType } from "."
+import {
+  DataSendCloseReason,
+  DataStreamConnection,
+  DataStreamConnectionEvent,
+  DataStreamManagement,
+  DataStreamProtocolHandler,
+  EventHandler,
+  HDSStatus,
+  Protocols,
+  RequestHandler,
+  Topics,
+} from "../datastream";
+import { CameraOperatingMode, CameraRecordingManagement, SelectedCameraRecordingConfiguration } from "../definitions";
+import { HAPStatus } from "../HAPServer";
+import { Service } from "../Service";
+import { HapStatusError } from "../util/hapStatusError";
+import * as tlv from "../util/tlv";
+import { H264CodecParameters, H264Level, H264Profile, Resolution } from "./RTPStreamManagement";
 
 const debug = createDebug('HAP-NodeJS:Camera:RecordingManagement');
-
-export type CameraRecordingConfiguration = { // TODO weirdly used type?
-  mediaContainerConfiguration: MediaContainerConfiguration & {
-    prebufferLength: number,
-  },
-
-  videoCodec: {
-    type: VideoCodecType;
-    iFrameInterval: number,
-    level: H264Level,
-    profile: H264Profile,
-    resolution: Resolution,
-    bitrate: number,
-  },
-
-  audioCodec: AudioRecordingCodec & {
-    bitrate: number,
-    samplerate: AudioRecordingSamplerate,
-  },
-}
 
 /**
  * Describes options passed to the {@link RecordingManagement}.
@@ -87,7 +81,7 @@ export const enum MediaContainerType {
   FRAGMENTED_MP4 = 0x00
 }
 
-export type MediaContainerConfiguration = {
+export interface MediaContainerConfiguration {
   /**
    * The type of media container.
    */
@@ -99,10 +93,19 @@ export type MediaContainerConfiguration = {
   fragmentLength: number;
 }
 
-export type VideoRecordingOptions = {
-  // TODO support configuring H265?
-  codec: H264CodecParameters,
-  resolutions: Resolution[],
+export interface VideoRecordingOptions {
+  type: VideoCodecType.H264; // TODO make type again and remove H265 option
+  parameters: H264CodecParameters;
+  /**
+   * Required resolutions to be supported are:
+   * * 1920x1080
+   * * 1280x720
+   *
+   * The following frame rates are required to be supported:
+   * * 15 fps
+   * * 24fps or 30fps
+   */
+  resolutions: Resolution[];
 }
 
 export type AudioRecordingOptions = {
@@ -122,8 +125,51 @@ export type AudioRecordingCodec = {
   /**
    * The supported bitrate mode. Defaults to {@link AudioBitrate.VARIABLE}.
    */
-  bitrateMode?: AudioBitrate, // TODO any supporting musts?
+  bitrateMode?: AudioBitrate,
   samplerate: AudioRecordingSamplerate[] | AudioRecordingSamplerate,
+}
+
+/**
+ * This type describes the SelectedCameraRecordingConfiguration (written by the device to {@link SelectedCameraRecordingConfiguration}).
+ */
+export interface CameraRecordingConfiguration {
+  /**
+   * The size of the prebuffer in milliseconds.
+   * This value is less or equal of the value advertised in the {@link SupportedCameraRecordingConfiguration}.
+   */
+  prebufferLength: number;
+  /**
+   * List of the enabled {@link EventTriggerOption}s.
+   */
+  eventTriggerTypes: EventTriggerOption[];
+  /**
+   * The selected {@link MediaContainerConfiguration}.
+   */
+  mediaContainerConfiguration: MediaContainerConfiguration;
+
+  /**
+   * The selected video codec configuration.
+   */
+  videoCodec: {
+    type: VideoCodecType.H264;
+    parameters: SelectedH264CodecParameters,
+    resolution: Resolution,
+  },
+
+  /**
+   * The selected audio codec configuration.
+   */
+  audioCodec: AudioRecordingCodec & {
+    bitrate: number,
+    samplerate: AudioRecordingSamplerate,
+  },
+}
+
+export interface SelectedH264CodecParameters {
+  profile: H264Profile,
+  level: H264Level,
+  bitRate: number,
+  iFrameInterval: number,
 }
 
 
@@ -147,7 +193,7 @@ const enum VideoAttributesTypes {
 }
 
 const enum SelectedCameraRecordingConfigurationTypes {
-  SELECTED_GENERAL_CONFIGURATION = 0x01,
+  SELECTED_RECORDING_CONFIGURATION = 0x01,
   SELECTED_VIDEO_CONFIGURATION = 0x02,
   SELECTED_AUDIO_CONFIGURATION = 0x03,
 }
@@ -201,10 +247,40 @@ const enum SupportedAudioRecordingConfigurationTypes {
   AUDIO_CODEC_CONFIGURATION = 0x01,
 }
 
-export class RecordingManagement {
-  private delegate: CameraRecordingDelegate;
-  private readonly service: CameraRecordingManagement;
+const enum PacketDataType {
+  // mp4 moov box
+  MEDIA_INITIALIZATION = "mediaInitialization",
+  // mp4 moof + mdat boxes
+  MEDIA_FRAGMENT = "mediaFragment",
+}
 
+interface DataSendDataEvent {
+  streamId: number;
+  packets: {
+    data: Buffer;
+    metadata: {
+      dataType: PacketDataType,
+      dataSequenceNumber: number,
+      isLastDataChunk: boolean,
+      dataChunkSequenceNumber: number,
+      dataTotalSize?: number,
+    }
+  }[];
+  endOfStream?: boolean;
+}
+
+
+export interface RecordingManagementServices {
+  recordingManagement: CameraRecordingManagement;
+  operatingMode: CameraOperatingMode;
+  dataStreamManagement: DataStreamManagement;
+}
+
+export class RecordingManagement {
+  readonly options: CameraRecordingOptions;
+  readonly delegate: CameraRecordingDelegate;
+
+  // TODO store hash of the supported configurations (=> discard the selected configuration from storage if they change!)
   private readonly supportedCameraRecordingConfiguration: string;
   private readonly supportedVideoRecordingConfiguration: string;
   private readonly supportedAudioRecordingConfiguration: string;
@@ -214,11 +290,34 @@ export class RecordingManagement {
    */
   private readonly eventTriggerOptions: number;
 
-  constructor(options: CameraRecordingOptions, delegate: CameraRecordingDelegate, eventTriggerOptions: Set<EventTriggerOption>, service?: CameraRecordingManagement) {
-    this.delegate = delegate;
-    this.service = service || this.constructService();
+  readonly recordingManagementService: CameraRecordingManagement;
+  readonly operatingModeService: CameraOperatingMode;
+  readonly dataStreamManagement: DataStreamManagement;
 
-    this.setupServiceHandlers();
+  /**
+   * The currently active recording stream.
+   * Any camera only supports one stream at a time.
+   */
+  private recordingStream?: CameraRecordingStream;
+  private selectedConfiguration?: {
+    /**
+     * The parsed configuration structure.
+     */
+    parsed: CameraRecordingConfiguration,
+    /**
+     * The rawValue representation. TLV8 data encoded as base64 string.
+     */
+    base64: string,
+  }
+
+  constructor(options: CameraRecordingOptions, delegate: CameraRecordingDelegate, eventTriggerOptions: Set<EventTriggerOption>, services?: RecordingManagementServices) {
+    this.options = options;
+    this.delegate = delegate;
+
+    const recordingServices = services || this.constructService();
+    this.recordingManagementService = recordingServices.recordingManagement;
+    this.operatingModeService = recordingServices.operatingMode;
+    this.dataStreamManagement = recordingServices.dataStreamManagement;
 
     this.eventTriggerOptions = 0;
     for (const option of eventTriggerOptions) {
@@ -226,95 +325,227 @@ export class RecordingManagement {
     }
 
     this.supportedCameraRecordingConfiguration = this._supportedCameraRecordingConfiguration(options);
-    this.supportedVideoRecordingConfiguration = RecordingManagement._supportedVideoRecordingConfiguration(options.video);
+    this.supportedVideoRecordingConfiguration = this._supportedVideoRecordingConfiguration(options.video);
     this.supportedAudioRecordingConfiguration = this._supportedAudioStreamConfiguration(options.audio);
+
+    this.setupServiceHandlers();
   }
 
-  getService(): CameraRecordingManagement {
-    return this.service;
+  getServices(): RecordingManagementServices {
+    return {
+      recordingManagement: this.recordingManagementService,
+      operatingMode: this.operatingModeService,
+      dataStreamManagement: this.dataStreamManagement,
+    };
   }
 
-  private constructService(): CameraRecordingManagement {
-    const managementService = new Service.CameraRecordingManagement('', '');
+  private constructService(): RecordingManagementServices {
+    const recordingManagement = new Service.CameraRecordingManagement('', '');
+    recordingManagement.setCharacteristic(Characteristic.Active, false); // TODO notify delegate about active (enables/disables prebuffer!)
+    // TODO ACTIVE: value: reboot persists
+    recordingManagement.setCharacteristic(Characteristic.RecordingAudioActive, false); // TODO persists
 
-    managementService.setCharacteristic(Characteristic.Active, true);
+    const operatingMode = new Service.CameraOperatingMode('', '');
+    operatingMode.setCharacteristic(Characteristic.EventSnapshotsActive, true);
+    operatingMode.setCharacteristic(Characteristic.HomeKitCameraActive, true);
+    operatingMode.setCharacteristic(Characteristic.PeriodicSnapshotsActive, true);
 
-    managementService.getCharacteristic(Characteristic.SupportedCameraRecordingConfiguration)
-      .on('get', callback => {
-        callback(null, this.supportedCameraRecordingConfiguration);
-      });
-    managementService.getCharacteristic(Characteristic.SupportedVideoRecordingConfiguration)
-      .on('get', callback => {
-        callback(null, this.supportedVideoRecordingConfiguration);
-      });
-    managementService.getCharacteristic(Characteristic.SupportedAudioRecordingConfiguration)
-      .on('get', callback => {
-        callback(null, this.supportedAudioRecordingConfiguration);
-      });
-    return managementService;
+    // TODO configure how other characteristics to init?
+
+    const dataStreamManagement = new DataStreamManagement();
+    recordingManagement.addLinkedService(dataStreamManagement.getService());
+
+    return {
+      recordingManagement: recordingManagement,
+      operatingMode: operatingMode,
+      dataStreamManagement: dataStreamManagement,
+    };
   }
 
   private setupServiceHandlers() {
-    this.service.setCharacteristic(Characteristic.SelectedCameraRecordingConfiguration, '');
+    this.recordingManagementService.setCharacteristic(Characteristic.SelectedCameraRecordingConfiguration, '');
+
+    // update the current configuration values to the current state.
+    this.recordingManagementService.setCharacteristic(Characteristic.SupportedCameraRecordingConfiguration, this.supportedCameraRecordingConfiguration);
+    this.recordingManagementService.setCharacteristic(Characteristic.SupportedVideoRecordingConfiguration, this.supportedVideoRecordingConfiguration);
+    this.recordingManagementService.setCharacteristic(Characteristic.SupportedAudioRecordingConfiguration, this.supportedAudioRecordingConfiguration);
+
+    this.recordingManagementService.getCharacteristic(Characteristic.SelectedCameraRecordingConfiguration)
+      .onGet(this.handleSelectedCameraRecordingConfigurationRead.bind(this))
+      .onSet(this.handleSelectedCameraRecordingConfigurationWrite.bind(this))
+      .setProps({ adminOnlyAccess: [Access.WRITE] });
+
+    this.recordingManagementService.getCharacteristic(Characteristic.Active)
+      .setProps({ adminOnlyAccess: [Access.WRITE] });
+
+    this.operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive) // TODO persists reboot
+      .setProps({ adminOnlyAccess: [Access.WRITE] });
+    // TODO if false: reject read/write to SetupEndpoints and SelectedRTPStreamConfiguration with -70412
+    // TODO if set to false: send DataSend close with reason=DataSendCloseReason.NOT_ALLOWED
+    //   => + tear down HDS Connections!
+    // TODO => set `Active` of MotionSensor and OccupancySensor to false as well!
+
+    this.operatingModeService.getCharacteristic(Characteristic.EventSnapshotsActive) // TODO persists reboot
+      .setProps({ adminOnlyAccess: [Access.WRITE] });
+
+    // TODO periodicSnapshotsActive persists reboot
+    this.operatingModeService.getCharacteristic(Characteristic.PeriodicSnapshotsActive)
+      .setProps({ adminOnlyAccess: [Access.WRITE] });
+
+    this.dataStreamManagement
+      .onRequestMessage(Protocols.DATA_SEND, Topics.OPEN, this.handleDataSendOpen.bind(this))
+
   }
 
-  // TODO unused?
-  static parseSelectedConfiguration(selectedconfiguration: string): CameraRecordingConfiguration {
-    const decoded = tlv.decode(Buffer.from(selectedconfiguration, 'base64'));
-    const recording = tlv.decode(decoded[SelectedCameraRecordingConfigurationTypes.SELECTED_GENERAL_CONFIGURATION]);
+  handleFactoryReset() {
+    this.selectedConfiguration = undefined; // TODO update delegate?
+    this.recordingManagementService.updateCharacteristic(Characteristic.Active, false); // TODO update delegate?
+    this.recordingManagementService.updateCharacteristic(Characteristic.RecordingAudioActive, false);
+
+    // TODO motion/occupancy sensors ACTIVE?
+    this.operatingModeService.updateCharacteristic(Characteristic.HomeKitCameraActive, true);
+    this.operatingModeService.updateCharacteristic(Characteristic.EventSnapshotsActive, true);
+    this.operatingModeService.updateCharacteristic(Characteristic.PeriodicSnapshotsActive, false);
+  }
+
+  private handleDataSendOpen(connection: DataStreamConnection, id: number, message: Record<any, any>) {
+    // for message fields see https://github.com/Supereg/secure-video-specification#41-start
+    const target: string = message.target;
+    const type: string = message.type;
+    const streamId: number = message.streamId;
+
+    if (target != "controller" || type != "ipcamera.recording") {
+      debug("[HDS %s] Received data send with unexpected target: %s or type: %d. Rejecting...",
+        connection.remoteAddress, target, type);
+      connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, id, HDSStatus.PROTOCOL_SPECIFIC_ERROR, {
+        status: DataSendCloseReason.UNEXPECTED_FAILURE,
+      });
+      return;
+    }
+
+    if (!this.recordingManagementService.getCharacteristic(Characteristic.Active).value) {
+      connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, id, HDSStatus.PROTOCOL_SPECIFIC_ERROR, {
+        status: DataSendCloseReason.NOT_ALLOWED,
+      });
+      return;
+    }
+
+    if (!this.operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive).value) {
+      connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, id, HDSStatus.PROTOCOL_SPECIFIC_ERROR, {
+        status: DataSendCloseReason.NOT_ALLOWED,
+      });
+      return;
+    }
+
+    if (this.recordingStream) {
+      debug("[HDS %s] Rejecting DATA_SEND OPEN as another stream (%s) is already recording with streamId %d!",
+        connection.remoteAddress, this.recordingStream.connection.remoteAddress, this.recordingStream.streamId);
+      // there is already a recording stream running.
+      connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, id, HDSStatus.PROTOCOL_SPECIFIC_ERROR, {
+        status: DataSendCloseReason.BUSY,
+      });
+      return;
+    }
+
+    if (!this.selectedConfiguration) {
+      connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, id, HDSStatus.PROTOCOL_SPECIFIC_ERROR, {
+        status: DataSendCloseReason.INVALID_CONFIGURATION,
+      });
+      return;
+    }
+
+    this.recordingStream = new CameraRecordingStream(connection, this.delegate, id, streamId);
+    // TODO listen to close event!
+
+    // noinspection JSIgnoredPromiseFromCall
+    this.recordingStream.startStreaming();
+  }
+
+  private handleSelectedCameraRecordingConfigurationRead(): string {
+    if (!this.selectedConfiguration) {
+      throw new HapStatusError(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+    }
+
+    return this.selectedConfiguration.base64;
+  }
+
+  private handleSelectedCameraRecordingConfigurationWrite(value: any): void {
+    const decoded = tlv.decode(Buffer.from(value, 'base64'));
+
+    const recording = tlv.decode(decoded[SelectedCameraRecordingConfigurationTypes.SELECTED_RECORDING_CONFIGURATION]);
     const video = tlv.decode(decoded[SelectedCameraRecordingConfigurationTypes.SELECTED_VIDEO_CONFIGURATION]);
     const audio = tlv.decode(decoded[SelectedCameraRecordingConfigurationTypes.SELECTED_AUDIO_CONFIGURATION]);
 
-    const vcodec = video[VideoCodecConfigurationTypes.CODEC_TYPE][0];
-    const vparameters = tlv.decode(video[VideoCodecConfigurationTypes.CODEC_PARAMETERS]);
-    const vattributes = tlv.decode(video[VideoCodecConfigurationTypes.ATTRIBUTES]);
-
-    const width = vattributes[VideoAttributesTypes.IMAGE_WIDTH].readInt16LE(0);
-    const height = vattributes[VideoAttributesTypes.IMAGE_HEIGHT].readInt16LE(0);
-    const framerate = vattributes[VideoAttributesTypes.FRAME_RATE][0];
-
-    const profile = vparameters[VideoCodecParametersTypes.PROFILE_ID][0];
-    const level = vparameters[VideoCodecParametersTypes.LEVEL][0];
-    const videoBitrate = vparameters[VideoCodecParametersTypes.BITRATE].readInt32LE(0);
-    const iFrameInterval = vparameters[VideoCodecParametersTypes.IFRAME_INTERVAL].readInt32LE(0);
-
     const prebufferLength = recording[SupportedCameraRecordingConfigurationTypes.PREBUFFER_LENGTH].readInt32LE(0);
+    let eventTriggerOptions = recording[SupportedCameraRecordingConfigurationTypes.EVENT_TRIGGER_OPTIONS].readInt32LE(0);
     const mediaContainerConfiguration = tlv.decode(recording[SupportedCameraRecordingConfigurationTypes.MEDIA_CONTAINER_CONFIGURATIONS]);
-
     const containerType = mediaContainerConfiguration[MediaContainerConfigurationTypes.MEDIA_CONTAINER_TYPE][0];
     const mediaContainerParameters = tlv.decode(mediaContainerConfiguration[MediaContainerConfigurationTypes.MEDIA_CONTAINER_PARAMETERS]);
-
     const fragmentLength = mediaContainerParameters[MediaContainerParameterTypes.FRAGMENT_LENGTH].readInt32LE(0);
 
-    const acodec = audio[AudioCodecConfigurationTypes.CODEC_TYPE][0];
+    const videoCodec = video[VideoCodecConfigurationTypes.CODEC_TYPE][0];
+    const videoParameters = tlv.decode(video[VideoCodecConfigurationTypes.CODEC_PARAMETERS]);
+    const videoAttributes = tlv.decode(video[VideoCodecConfigurationTypes.ATTRIBUTES]);
+
+    const profile = videoParameters[VideoCodecParametersTypes.PROFILE_ID][0];
+    const level = videoParameters[VideoCodecParametersTypes.LEVEL][0];
+    const videoBitrate = videoParameters[VideoCodecParametersTypes.BITRATE].readInt32LE(0);
+    const iFrameInterval = videoParameters[VideoCodecParametersTypes.IFRAME_INTERVAL].readInt32LE(0);
+
+    const width = videoAttributes[VideoAttributesTypes.IMAGE_WIDTH].readInt16LE(0);
+    const height = videoAttributes[VideoAttributesTypes.IMAGE_HEIGHT].readInt16LE(0);
+    const framerate = videoAttributes[VideoAttributesTypes.FRAME_RATE][0];
+
+    const audioCodec = audio[AudioCodecConfigurationTypes.CODEC_TYPE][0];
     const audioParameters = tlv.decode(audio[AudioCodecConfigurationTypes.CODEC_PARAMETERS]);
+
     const audioChannels = audioParameters[AudioCodecParametersTypes.CHANNEL][0];
     const samplerate = audioParameters[AudioCodecParametersTypes.SAMPLE_RATE][0];
     const audioBitrateMode = audioParameters[AudioCodecParametersTypes.BIT_RATE][0];
     const audioBitrate = audioParameters[AudioCodecParametersTypes.MAX_AUDIO_BITRATE].readUInt32LE(0);
 
-    return {
+    const typedEventTriggers: EventTriggerOption[] = [];
+    let bit_index = 0;
+    while (eventTriggerOptions > 0) {
+      if (eventTriggerOptions & 0x01) { // of the lowest bit is set add the next event trigger option
+        typedEventTriggers.push(1 << bit_index);
+      }
+      eventTriggerOptions = eventTriggerOptions >> 1; // shift to right till we reach zero.
+      bit_index += 1; // count our current bit index
+    }
+
+    let configuration: CameraRecordingConfiguration = {
+      prebufferLength: prebufferLength,
+      eventTriggerTypes: typedEventTriggers,
       mediaContainerConfiguration: {
-        prebufferLength,
         type: containerType,
         fragmentLength,
       },
       videoCodec: {
-        type: vcodec,
-        bitrate: videoBitrate,
-        level,
-        profile,
+        type: videoCodec,
+        parameters: {
+          profile: profile,
+          level: level,
+          bitRate: videoBitrate,
+          iFrameInterval: iFrameInterval,
+        },
         resolution: [width, height, framerate],
-        iFrameInterval,
       },
       audioCodec: {
         audioChannels,
-        type: acodec,
+        type: audioCodec,
         samplerate,
         bitrateMode: audioBitrateMode,
         bitrate: audioBitrate,
       },
     };
+
+    this.selectedConfiguration = {
+      parsed: configuration,
+      base64: value as string,
+    }
+
+    this.delegate.updateRecordingConfiguration?.(this.selectedConfiguration.parsed);
   }
 
   private _supportedCameraRecordingConfiguration(options: CameraRecordingOptions): string {
@@ -346,21 +577,21 @@ export class RecordingManagement {
     ).toString('base64');
   }
 
-  private static _supportedVideoRecordingConfiguration(videoOptions: VideoRecordingOptions): string {
-    if (!videoOptions.codec) {
-      throw new Error('Video codec cannot be undefined');
+  private _supportedVideoRecordingConfiguration(videoOptions: VideoRecordingOptions): string {
+    if (!videoOptions.parameters) {
+      throw new Error('Video parameters cannot be undefined');
     }
     if (!videoOptions.resolutions) {
       throw new Error('Video resolutions cannot be undefined');
     }
 
     let codecParameters = tlv.encode(
-      VideoCodecParametersTypes.PROFILE_ID, videoOptions.codec.profiles,
-      VideoCodecParametersTypes.LEVEL, videoOptions.codec.levels,
+      VideoCodecParametersTypes.PROFILE_ID, videoOptions.parameters.profiles,
+      VideoCodecParametersTypes.LEVEL, videoOptions.parameters.levels,
     );
 
     const videoStreamConfiguration = tlv.encode(
-      VideoCodecConfigurationTypes.CODEC_TYPE, VideoCodecType.H264, // TODO videoOptions.codec.type,
+      VideoCodecConfigurationTypes.CODEC_TYPE, videoOptions.type,
       VideoCodecConfigurationTypes.CODEC_PARAMETERS, codecParameters,
       VideoCodecConfigurationTypes.ATTRIBUTES, videoOptions.resolutions.map(resolution => {
         if (resolution.length != 3) {
@@ -421,5 +652,137 @@ export class RecordingManagement {
     return tlv.encode(
       SupportedAudioRecordingConfigurationTypes.AUDIO_CODEC_CONFIGURATION, codecConfigurations,
     ).toString("base64");
+  }
+}
+
+class CameraRecordingStream implements DataStreamProtocolHandler {
+  readonly connection: DataStreamConnection;
+  readonly delegate: CameraRecordingDelegate;
+  readonly hdsRequestId: number;
+  readonly streamId: number;
+
+  eventHandler?: Record<string, EventHandler> = {
+    [Topics.CLOSE]: this.handleDataSendClose.bind(this),
+  }
+  requestHandler?: Record<string, RequestHandler> = undefined;
+
+  private readonly closeListener: () => void;
+
+  private generator?: AsyncGenerator<Buffer>;
+
+  constructor(connection: DataStreamConnection, delegate: CameraRecordingDelegate, requestId: number, streamId: number) {
+    this.connection = connection;
+    this.delegate = delegate;
+    this.hdsRequestId = requestId;
+    this.streamId = streamId;
+
+    this.connection.on(DataStreamConnectionEvent.CLOSED, this.closeListener = this.handleDataStreamConnectionClosed.bind(this));
+    this.connection.addProtocolHandler(Protocols.DATA_SEND, this);
+  }
+
+  async startStreaming() {
+    this.generator = this.delegate.handleRecordingStreamRequest(this.streamId);
+
+    this.connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, this.hdsRequestId, HDSStatus.SUCCESS, {
+      status: HDSStatus.SUCCESS,
+    });
+
+    // 256 KiB (1KiB to 900 KiB)
+    const maxChunk = 0x40000;
+
+    // The first buffer which we receive from the generator is always the `mediaInitialization` packet (mp4 `moov` box).
+    let initialization = true;
+
+    try {
+      let dataSequenceNumber = 1;
+
+      for await (const fragment of this.generator) {
+        let offset = 0;
+        let dataChunkSequenceNumber = 1;
+        while (offset < fragment.length) {
+          const data = fragment.slice(offset, offset + maxChunk);
+          offset += data.length;
+
+          // see https://github.com/Supereg/secure-video-specification#42-binary-data
+          const event: DataSendDataEvent = {
+            streamId: this.streamId,
+            packets: [{
+              data: data,
+              metadata: {
+                dataType: initialization ? PacketDataType.MEDIA_INITIALIZATION : PacketDataType.MEDIA_FRAGMENT,
+                dataSequenceNumber: dataSequenceNumber,
+                dataChunkSequenceNumber: dataChunkSequenceNumber,
+                isLastDataChunk: offset >= fragment.length,
+                dataTotalSize: dataChunkSequenceNumber == 1 ? fragment.length : undefined,
+              }
+            }],
+          };
+
+          this.connection.sendEvent(Protocols.DATA_SEND, Topics.DATA, event);
+
+          dataChunkSequenceNumber++;
+          initialization = false;
+        }
+
+        dataSequenceNumber++;
+      }
+    } catch (error) {
+      if (error instanceof RecordingSessionError) {
+        debug("[HDS %s] Ending generator loop with reason: %d", this.connection.remoteAddress, error.type);
+        return;
+      }
+
+      // TODO log the error!
+
+      this.connection.sendEvent(Protocols.DATA_SEND, Topics.CLOSE, {
+        streamId: this.streamId,
+        reason: DataSendCloseReason.UNEXPECTED_FAILURE,
+      });
+      return;
+    }
+
+    // TODO do we need to send a end of stream (or rather can we? without having any packets)?
+  }
+
+  private handleDataSendClose(message: Record<any, any>) {
+    // see https://github.com/Supereg/secure-video-specification#43-close
+    const streamId: number = message.streamId;
+    const reason: DataSendCloseReason = message.reason;
+
+    if (streamId != this.streamId) {
+      return;
+    }
+
+    this.generator?.throw(new RecordingSessionError(RecordingSessionErrorType.DATA_SEND_CLOSE));
+    this.delegate.closeRecordingStream(streamId, reason);
+
+    // TODO fire CLOSE event!
+  }
+
+  private handleDataStreamConnectionClosed() {
+    this.generator?.throw(new RecordingSessionError(RecordingSessionErrorType.CONNECTION_CLOSE));
+    this.delegate.closeRecordingStream(this.streamId, DataSendCloseReason.CANCELLED); // TODO do we need to encode error in a unique way?
+
+    this.connection.removeListener(DataStreamConnectionEvent.CLOSED, this.closeListener);
+
+    // TODO fire CLOSE event (so that we can untrack the thing!)
+  }
+}
+
+
+enum RecordingSessionErrorType {
+  DATA_SEND_CLOSE,
+  CONNECTION_CLOSE,
+}
+
+/**
+ * An error object we use internally to signal certain events.
+ */
+class RecordingSessionError extends Error {
+  type: RecordingSessionErrorType;
+
+  constructor(type: RecordingSessionErrorType) {
+    super();
+    this.type = type;
   }
 }

@@ -22,9 +22,10 @@ import {
   SnapshotRequest,
   SRTPCryptoSuites,
   StreamingRequest,
+  VideoCodecType,
 } from "../camera";
 import { Characteristic } from "../Characteristic";
-import { DataStreamConnection } from "../datastream";
+import { DataSendCloseReason } from "../datastream";
 import "../definitions";
 import { HAPStatus } from "../HAPServer";
 import { AudioBitrate } from "./RemoteController";
@@ -63,7 +64,11 @@ let mockRecordingOptions: CameraRecordingOptions = {
 
   motionService: true,
 
-  video: mockStreamingOptions.video,
+  video: {
+    type: VideoCodecType.H264,
+    parameters: mockStreamingOptions.video.codec,
+    resolutions: mockStreamingOptions.video.resolutions,
+  },
   audio: {
     codecs: [{
       type: AudioRecordingCodecType.AAC_ELD,
@@ -87,12 +92,11 @@ class MockDelegate implements CameraStreamingDelegate, CameraRecordingDelegate {
     callback() // TODO response
   }
 
-  handleFragmentsRequests(connection: DataStreamConnection): AsyncGenerator<Buffer> {
-    return this.yieldRecordingFragment();
+  async *handleRecordingStreamRequest(streamId: number): AsyncGenerator<Buffer> {
+    yield Buffer.alloc(64, 0);
   }
 
-  async* yieldRecordingFragment() {
-    yield Buffer.alloc(64, 0);
+  closeRecordingStream(streamId: number, reason: DataSendCloseReason): void {
   }
 }
 
@@ -125,11 +129,13 @@ describe("CameraController", () => {
   });
 
   test("init", () => {
-    expect(controller.cameraOperatingModeService?.getCharacteristic(Characteristic.HomeKitCameraActive).value)
+    expect(controller.recordingManagement?.operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive).value)
       .toBe(Characteristic.HomeKitCameraActive.ON);
 
-    expect(controller.recordingManagement?.getService().getCharacteristic(Characteristic.Active).value)
-      .toBe(Characteristic.Active.ACTIVE);
+    expect(controller.recordingManagement?.recordingManagementService.getCharacteristic(Characteristic.Active).value)
+      .toBe(Characteristic.Active.INACTIVE);
+
+    // TODO test the other active characteristics!
 
     for (const streamManagement of controller.streamManagements) {
       expect(streamManagement.getService().getCharacteristic(Characteristic.Active).value)
@@ -177,8 +183,8 @@ describe("CameraController", () => {
 
   describe("handleSnapshotRequest", () => {
     beforeEach(() => {
-      controller.cameraOperatingModeService
-        ?.setCharacteristic(Characteristic.PeriodicSnapshotsActive, true);
+      controller.recordingManagement?.operatingModeService
+        .setCharacteristic(Characteristic.PeriodicSnapshotsActive, true);
     });
 
     test("simple handleSnapshotRequest", async () => {
@@ -187,7 +193,7 @@ describe("CameraController", () => {
     });
 
     test("handleSnapshot considering PeriodicSnapshotsActive state", async () => {
-      controller.cameraOperatingModeService?.setCharacteristic(Characteristic.PeriodicSnapshotsActive, false);
+      controller.recordingManagement?.operatingModeService.setCharacteristic(Characteristic.PeriodicSnapshotsActive, false);
 
       await expect(
         controller.handleSnapshotRequest(100, 100, "SomeAccessory", undefined)
@@ -203,7 +209,7 @@ describe("CameraController", () => {
     });
 
     test("handleSnapshot considering EventSnapshotsActive state", async () => {
-      controller.cameraOperatingModeService?.setCharacteristic(Characteristic.EventSnapshotsActive, false);
+      controller.recordingManagement?.operatingModeService.setCharacteristic(Characteristic.EventSnapshotsActive, false);
 
       await expect(
         controller.handleSnapshotRequest(100, 100, "SomeAccessory", undefined)

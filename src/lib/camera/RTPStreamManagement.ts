@@ -2,7 +2,7 @@ import crypto from "crypto";
 import createDebug from "debug";
 import net from "net";
 // noinspection JSDeprecatedSymbols
-import { LegacyCameraSource, LegacyCameraSourceAdapter, once, uuid } from "../../index";
+import { Access, LegacyCameraSource, LegacyCameraSourceAdapter, once, uuid } from "../../index";
 import { CharacteristicValue, SessionIdentifier } from "../../types";
 import { Characteristic, CharacteristicEventTypes, CharacteristicSetCallback } from "../Characteristic";
 import { CameraController, CameraStreamingDelegate } from "../controller";
@@ -55,7 +55,7 @@ const enum VideoAttributesTypes {
 export const enum VideoCodecType {
   H264 = 0x00,
   /**
-   * HomeKit Secure Video Only.
+   * HomeKit Secure Video Only. Currently unsupported.
    */
   H265 = 0x01,
 }
@@ -271,8 +271,7 @@ export type VideoStreamingOptions = {
   cvoId?: number,
 }
 
-export type H264CodecParameters = {
-  // type: VideoCodecType, // TODO breaking change! and to be removed?
+export interface H264CodecParameters {
   levels: H264Level[],
   profiles: H264Profile[],
 }
@@ -546,12 +545,14 @@ export class RTPStreamManagement {
   handleCloseConnection(connectionID: SessionIdentifier): void {
     // This method is only here for legacy compatibility. It used to be called by legacy style CameraSource
     // implementations to signal that the associated HAP connection was closed.
-    // This is now handled automatically. Thus we don't need to do anything anymore.
+    // This is now handled automatically. Thus, we don't need to do anything anymore.
   }
 
   handleFactoryReset() {
     this.resetSelectedStreamConfiguration();
     this.resetSetupEndpointsResponse();
+
+    this.service.updateCharacteristic(Characteristic.Active, true);
     // on a factory reset the assumption is that all connections were already terminated and thus "handleStopStream" was already called
   }
 
@@ -564,12 +565,22 @@ export class RTPStreamManagement {
   private constructService(id: number): CameraRTPStreamManagement {
     const managementService = new Service.CameraRTPStreamManagement('', id.toString());
 
+    // this service is required only when recording is enabled. We don't really have access to this info here,
+    // so we just add the characteristic. Doesn't really hurt.
     managementService.setCharacteristic(Characteristic.Active, true);
+    // TODO reject start stream (SetupEndpoints, SelectedRTPConfig) with -70412 if set to false
+    // TODO perstis accros rebots
 
     return managementService;
   }
 
   private setupServiceHandlers() {
+    if (!this.service.testCharacteristic(Characteristic.Active)) {
+      this.service.setCharacteristic(Characteristic.Active, true);
+    }
+    this.service.getCharacteristic(Characteristic.Active)
+      .setProps({ adminOnlyAccess: [Access.WRITE] });
+
     // ensure that configurations are up-to-date and reflected in the characteristic values
     this.service.setCharacteristic(Characteristic.SupportedRTPConfiguration, this.supportedRTPConfiguration);
     this.service.setCharacteristic(Characteristic.SupportedVideoStreamConfiguration, this.supportedVideoStreamConfiguration);
@@ -1183,7 +1194,7 @@ export class RTPStreamManagement {
     }
 
     const videoStreamConfiguration = tlv.encode(
-      VideoCodecConfigurationTypes.CODEC_TYPE, VideoCodecType.H264, // TODO videoOptions.codec.type || VideoCodecType.H264,
+      VideoCodecConfigurationTypes.CODEC_TYPE, VideoCodecType.H264,
       VideoCodecConfigurationTypes.CODEC_PARAMETERS, codecParameters,
       VideoCodecConfigurationTypes.ATTRIBUTES, videoOptions.resolutions.map(resolution => {
         if (resolution.length != 3) {

@@ -33,10 +33,8 @@ export type GlobalEventHandler = (connection: DataStreamConnection, message: Rec
 export type GlobalRequestHandler = (connection: DataStreamConnection, id: number, message: Record<any, any>) => void;
 
 export interface DataStreamProtocolHandler {
-
-    eventHandler?: Record<string, EventHandler>,
-    requestHandler?: Record<string, RequestHandler>,
-
+    eventHandler?: Record<string, EventHandler>;
+    requestHandler?: Record<string, RequestHandler>;
 }
 
 export const enum Protocols { // a collection of currently known protocols
@@ -79,6 +77,9 @@ export enum DataSendCloseReason { // close reason used in the dataSend protocol
     UNSUPPORTED = 4,
     UNEXPECTED_FAILURE = 5,
     TIMEOUT = 6,
+    BAD_DATA = 7,
+    PROTOCOL_ERROR = 8,
+    INVALID_CONFIGURATION = 9,
 }
 
 

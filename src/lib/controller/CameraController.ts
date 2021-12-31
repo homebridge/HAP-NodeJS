@@ -4,6 +4,7 @@ import { EventEmitter } from "events";
 import { ResourceRequestReason } from "../../internal-types";
 import { CharacteristicValue, SessionIdentifier } from "../../types";
 import {
+  CameraRecordingConfiguration,
   CameraRecordingOptions,
   CameraStreamingOptions,
   EventTriggerOption,
@@ -16,7 +17,7 @@ import {
   StreamingRequest,
 } from "../camera";
 import { Characteristic, CharacteristicEventTypes, CharacteristicGetCallback, CharacteristicSetCallback } from "../Characteristic";
-import { DataStreamConnection, DataStreamManagement, DataStreamServerEvent, HDSStatus, Protocols, Topics } from "../datastream";
+import { DataSendCloseReason, DataStreamManagement } from "../datastream";
 import {
   CameraOperatingMode,
   CameraRecordingManagement,
@@ -28,6 +29,7 @@ import {
 } from "../definitions";
 import { HAPStatus } from "../HAPServer";
 import { Service } from "../Service";
+import { HapStatusError } from "../util/hapStatusError";
 import { Controller, ControllerIdentifier, ControllerServiceMap, DefaultControllerType } from "./Controller";
 
 const debug = createDebug("HAP-NodeJS:Camera:Controller")
@@ -56,13 +58,15 @@ export interface CameraControllerOptions {
     /**
      * Options regarding Recordings (Secure Video)
      */
-    options: CameraRecordingOptions,
+    options: CameraRecordingOptions, // TODO motion service shouldn't be a recording option
 
     /**
       * Delegate which handles the audio/video recording data streaming on motion.
       */
     delegate: CameraRecordingDelegate,
   }
+
+  // TODO motion and occupancy sensor?
 }
 
 export type SnapshotRequestCallback = (error?: Error | HAPStatus, buffer?: Buffer) => void;
@@ -88,7 +92,20 @@ export interface CameraStreamingDelegate {
 
 }
 
+/**
+ * A `CameraRecordingDelegate` is responsible for handling recordings of a HomeKit Secure Video camera.
+ *
+ * It is responsible for maintaining the prebuffer (see {@see CameraRecordingOptions.prebufferLength}.
+ * Once
+ */
 export interface CameraRecordingDelegate {
+  // TODO signal active (MUST be called after updateRecordingConfiguration)!!
+
+  // TODO maybe reintroduce the configuration stuff! (todo, init recording info from storage!!!)
+  // TODO if configuration change occurs while recording is still in progress,
+  //  active recording stream must continue to use the previous configuration
+  updateRecordingConfiguration?(configuration: CameraRecordingConfiguration): void;
+
   /**
    * HomeKit requests to receive the video (and audio, if enabled) recordings of
    * the current ongoing motion (or doorbell) event.
@@ -99,7 +116,23 @@ export interface CameraRecordingDelegate {
    *
    * @returns AsyncIterator of Readables representing each fragment.
    */
-  handleFragmentsRequests(connection: DataStreamConnection): AsyncGenerator<Buffer>;
+  // handleFragmentsRequests(connection: DataStreamConnection): AsyncGenerator<Buffer>;
+
+  /*
+  /**
+    * This method is called when the camera recording configuration is set or changed
+    * by HomeKit.
+    * The handler must respect the desired audio and video configuration during
+    * subsequenct calls to handleFragmentRequests.
+    * @param configuration
+    *
+  prepareRecording?(configuration: CameraRecordingConfiguration): void;
+   */
+
+  handleRecordingStreamRequest(streamId: number): AsyncGenerator<Buffer>; // TODO is the connection necessary?
+
+  // TODO method to signal that thing was closed (also for normal close)!
+  closeRecordingStream(streamId: number, reason: DataSendCloseReason): void; // TODO rename the type before heavy usage!
 }
 
 /**
@@ -111,12 +144,14 @@ export interface CameraControllerServiceMap extends ControllerServiceMap {
   microphone?: Microphone,
   speaker?: Speaker,
 
-  cameraOperatingMode?: CameraOperatingMode,
   cameraEventRecordingManagement?: CameraRecordingManagement,
+  cameraOperatingMode?: CameraOperatingMode,
   dataStreamTransportManagement?: DataStreamTransportManagement,
+
   motionService?: MotionSensor,
 
-  // this ServiceMap is also used by the DoorbellController; there is no necessity to declare it, but i think its good practice to reserve the namespace
+  // this ServiceMap is also used by the DoorbellController; there is no necessity to declare it,
+  // but I think its good practice to reserve the namespace
   doorbell?: Doorbell;
 }
 
@@ -152,14 +187,26 @@ export class CameraController extends EventEmitter implements Controller<CameraC
   private readonly streamCount: number;
   private readonly delegate: CameraStreamingDelegate;
   private readonly streamingOptions: CameraStreamingOptions;
-  private readonly recordingOptions?: CameraRecordingOptions;
-  private readonly recordingDelegate?: CameraRecordingDelegate; // TODO double optional (event we have a stronger assumption of both!)
+  /**
+   * **Temporary** storage for {@link CameraRecordingOptions} and {@link CameraRecordingDelegate}.
+   * This property is reset to `undefined` after the CameraController was fully initialized.
+   * You can still access those values via the {@link CameraController.recordingManagement}.
+   */
+  private recording?: {
+    options: CameraRecordingOptions,
+    delegate: CameraRecordingDelegate,
+  }
   private readonly legacyMode: boolean = false;
 
   /**
    * @private
    */
   streamManagements: RTPStreamManagement[] = [];
+  /**
+   * The {@link RecordingManagement} which is responsible for handling HomeKit Secure Video.
+   * This property is only present if recording was configured.
+   */
+  recordingManagement?: RecordingManagement;
 
   private microphoneService?: Microphone;
   private speakerService?: Speaker;
@@ -169,22 +216,15 @@ export class CameraController extends EventEmitter implements Controller<CameraC
   private speakerMuted: boolean = false;
   private speakerVolume: number = 100;
 
-  cameraOperatingModeService?: CameraOperatingMode;
-  recordingManagement?: RecordingManagement;
-  private dataStreamManagement?: DataStreamManagement;
+  // TODO move the motion sensor?
   motionService?: MotionSensor;
-  private connectionMap = new Map<number, {
-    generator: AsyncGenerator<Buffer>,
-    connection: DataStreamConnection,
-  }>();
 
   constructor(options: CameraControllerOptions, legacyMode: boolean = false) {
     super();
     this.streamCount = Math.max(1, options.cameraStreamCount || 1);
     this.delegate = options.delegate;
     this.streamingOptions = options.streamingOptions;
-    this.recordingOptions = options.recording?.options;
-    this.recordingDelegate = options.recording?.delegate;
+    this.recording = options.recording;
 
     this.legacyMode = legacyMode; // legacy mode will prent from Microphone and Speaker services to get created to avoid collisions
   }
@@ -287,36 +327,36 @@ export class CameraController extends EventEmitter implements Controller<CameraC
       }
     }
 
-    if (this.recordingOptions) {
-      // TODO some options to what characteristics to init for the camera operating mode?
-      this.cameraOperatingModeService = new Service.CameraOperatingMode('', '');
-      this.cameraOperatingModeService.setCharacteristic(Characteristic.EventSnapshotsActive, true);
-      this.cameraOperatingModeService.setCharacteristic(Characteristic.HomeKitCameraActive, true);
+    if (this.recording) {
+      this.recordingManagement = new RecordingManagement(this.recording.options, this.recording.delegate, this.retrieveEventTriggerOptions());
 
-      this.recordingManagement = new RecordingManagement(this.recordingOptions, this.recordingDelegate!, this.retrieveEventTriggerOptions());
-
-      if (this.recordingOptions.motionService) {
+      if (this.recording.options.motionService) {
         this.motionService = new MotionSensor('', '');
         this.motionService.setCharacteristic(Characteristic.Active, 1);
-        this.recordingManagement.getService().addLinkedService(this.motionService);
-      }
 
-      this.dataStreamManagement = new DataStreamManagement();
-      this.recordingManagement.getService().addLinkedService(this.dataStreamManagement.getService());
+        this.recordingManagement.getServices().recordingManagement.addLinkedService(this.motionService);
+      }
     }
+
 
     const serviceMap: CameraControllerServiceMap = {
       microphone: this.microphoneService,
       speaker: this.speakerService,
-      cameraOperatingMode: this.cameraOperatingModeService,
-      cameraEventRecordingManagement: this.recordingManagement?.getService(),
-      dataStreamTransportManagement: this.dataStreamManagement?.getService(),
       motionService: this.motionService,
     };
+
+    if (this.recordingManagement) {
+      const services = this.recordingManagement.getServices();
+      serviceMap.cameraEventRecordingManagement = services.recordingManagement;
+      serviceMap.cameraOperatingMode = services.operatingMode;
+      serviceMap.dataStreamTransportManagement = services.dataStreamManagement.getService();
+    }
 
     this.streamManagements.forEach((management, index) => {
       serviceMap[CameraController.STREAM_MANAGEMENT + index] = management.getService();
     });
+
+    this.recording = undefined;
 
     return serviceMap;
   }
@@ -388,62 +428,52 @@ export class CameraController extends EventEmitter implements Controller<CameraC
       modifiedServiceMap = true;
     }
 
-    if (this.recordingOptions) {
-      if (serviceMap.cameraOperatingMode) {
-        this.cameraOperatingModeService = serviceMap.cameraOperatingMode;
-      }
-      else {
-        this.cameraOperatingModeService = new Service.CameraOperatingMode('', '');
-        serviceMap.cameraOperatingMode = this.cameraOperatingModeService;
-        modifiedServiceMap = true;
-      }
-      if (serviceMap.cameraEventRecordingManagement) {
+    // RECORDING
+    if (this.recording) {
+      let eventTriggers = this.retrieveEventTriggerOptions();
+
+      // RECORDING MANAGEMENT
+      if (serviceMap.cameraEventRecordingManagement && serviceMap.cameraOperatingMode && serviceMap.dataStreamTransportManagement) {
         this.recordingManagement = new RecordingManagement(
-          this.recordingOptions,
-          this.recordingDelegate!,
-          this.retrieveEventTriggerOptions(),
-          serviceMap.cameraEventRecordingManagement,
+          this.recording.options,
+          this.recording.delegate,
+          eventTriggers,
+          {
+            recordingManagement: serviceMap.cameraEventRecordingManagement,
+            operatingMode: serviceMap.cameraOperatingMode,
+            dataStreamManagement: new DataStreamManagement(serviceMap.dataStreamTransportManagement),
+          }
         );
-      }
-      else {
+      } else {
         this.recordingManagement = new RecordingManagement(
-          this.recordingOptions,
-          this.recordingDelegate!,
-          this.retrieveEventTriggerOptions(),
+          this.recording.options,
+          this.recording.delegate,
+          eventTriggers
         );
 
-        serviceMap.cameraEventRecordingManagement = this.recordingManagement.getService();
+        let services = this.recordingManagement.getServices();
+        serviceMap.cameraEventRecordingManagement = services.recordingManagement;
+        serviceMap.cameraOperatingMode = services.operatingMode;
+        serviceMap.dataStreamTransportManagement = services.dataStreamManagement.getService();
         modifiedServiceMap = true;
       }
-      if (serviceMap.dataStreamTransportManagement) {
-        this.dataStreamManagement = new DataStreamManagement(serviceMap.dataStreamTransportManagement);
-      }
-      else {
-        this.dataStreamManagement = new DataStreamManagement();
-        serviceMap.dataStreamTransportManagement = this.dataStreamManagement.getService();
+
+      // MOTION SERVICE
+      if (this.recording.options.motionService && !serviceMap.motionService) {
+        this.motionService = new Service.MotionSensor('', '');
+        serviceMap.motionService = this.motionService
+        modifiedServiceMap = true;
+      } else if (!this.recording.options.motionService && serviceMap.motionService) {
+        delete serviceMap.motionService;
         modifiedServiceMap = true;
       }
-      if (!this.recordingOptions.motionService) {
-        if (serviceMap.motionService) {
-          delete serviceMap.motionService;
-          modifiedServiceMap = true;
-        }
-      }
-      else {
-        if (!serviceMap.motionService) {
-          this.motionService = new MotionSensor('', '');
-          serviceMap.motionService = this.motionService;
-          modifiedServiceMap = true;
-        }
-      }
-    }
-    else {
-      if (serviceMap.cameraOperatingMode) {
-        delete serviceMap.cameraOperatingMode;
-        modifiedServiceMap = true;
-      }
+    } else {
       if (serviceMap.cameraEventRecordingManagement) {
         delete serviceMap.cameraEventRecordingManagement;
+        modifiedServiceMap = true;
+      }
+      if (serviceMap.cameraOperatingMode) {
+        delete serviceMap.cameraOperatingMode;
         modifiedServiceMap = true;
       }
       if (serviceMap.dataStreamTransportManagement) {
@@ -459,6 +489,8 @@ export class CameraController extends EventEmitter implements Controller<CameraC
     if (this.migrateFromDoorbell(serviceMap)) {
       modifiedServiceMap = true;
     }
+
+    this.recording = undefined;
 
     if (modifiedServiceMap) { // serviceMap must only be returned if anything actually changed
       return serviceMap;
@@ -476,19 +508,19 @@ export class CameraController extends EventEmitter implements Controller<CameraC
   }
 
   protected retrieveEventTriggerOptions(): Set<EventTriggerOption> {
-    if (!this.recordingOptions) {
+    if (!this.recording) {
       return new Set()
     }
 
     const triggerOptions = new Set<EventTriggerOption>();
 
-    if (this.recordingOptions.overrideEventTriggerOptions) {
-      for (const option of this.recordingOptions.overrideEventTriggerOptions) {
+    if (this.recording.options.overrideEventTriggerOptions) {
+      for (const option of this.recording.options.overrideEventTriggerOptions) {
         triggerOptions.add(option);
       }
     }
 
-    if (this.recordingOptions.motionService) { // TODO revise heuristic, once we have revised the situation around passing motion sensors
+    if (this.recording.options.motionService) { // TODO revise heuristic, once we have revised the situation around passing motion sensors
       triggerOptions.add(EventTriggerOption.MOTION);
     }
 
@@ -542,89 +574,6 @@ export class CameraController extends EventEmitter implements Controller<CameraC
           this.emitSpeakerChange();
         });
     }
-
-    if (this.dataStreamManagement) {
-      this.dataStreamManagement!
-        .onRequestMessage(Protocols.DATA_SEND, Topics.OPEN, this.handleDataSendOpen.bind(this))
-        .onEventMessage(Protocols.DATA_SEND, Topics.CLOSE, this.handleDataSendClose.bind(this))
-        .onServerEvent(DataStreamServerEvent.CONNECTION_CLOSED, this.handleDataStreamConnectionClosed.bind(this));
-    }
-  }
-
-  private async handleDataSendOpen(connection: DataStreamConnection, id: number, message: Record<any, any>) {
-    const streamId: number = message.streamId;
-    const generator = this.recordingDelegate!.handleFragmentsRequests(connection);
-
-    this.connectionMap.set(streamId, { generator, connection });
-
-    let first = true;
-    const maxChunk = 0x40000;
-    try {
-      let dataSequenceNumber = 1;
-      for await (const fragment of generator) {
-        const wasFirst = first;
-        if (first) {
-          first = false;
-          connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, id, HDSStatus.SUCCESS, {
-            status: HDSStatus.SUCCESS,
-          });
-        }
-
-        let offset = 0;
-        let dataChunkSequenceNumber = 1;
-        while (offset < fragment.length) {
-          const data = fragment.slice(offset, offset + maxChunk);
-          offset += data.length;
-          const isLastDataChunk = offset >= fragment.length;
-          const event = {
-            streamId,
-            packets: [
-              {
-                metadata: {
-                  dataType: wasFirst ? 'mediaInitialization' : 'mediaFragment',
-                  dataSequenceNumber,
-                  isLastDataChunk,
-                  dataChunkSequenceNumber,
-                },
-                data,
-              }
-            ]
-          };
-          connection.sendEvent(Protocols.DATA_SEND, Topics.DATA, event);
-          dataChunkSequenceNumber++;
-        }
-
-        dataSequenceNumber++;
-      }
-    }
-    catch (e) {
-    }
-    finally {
-      if (first) {
-        connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, id, HDSStatus.PROTOCOL_SPECIFIC_ERROR, {
-          status: HDSStatus.PROTOCOL_SPECIFIC_ERROR,
-        });
-      }
-    }
-  }
-
-  private async handleDataSendClose(connection: DataStreamConnection, message: Record<any, any>) {
-    const streamId: number = message.streamId;
-    const entry = this.connectionMap.get(streamId);
-    if (!entry)
-      return;
-    this.connectionMap.delete(streamId);
-    const { generator } = entry;
-    generator.throw('dataSend close');
-  }
-
-  private handleDataStreamConnectionClosed(closedConnection: DataStreamConnection) {
-    for (const [key, { generator, connection }] of this.connectionMap.entries()) {
-      if (connection === closedConnection) {
-        this.connectionMap.delete(key);
-        generator.throw('connection closed');
-      }
-    }
   }
 
   /**
@@ -641,6 +590,8 @@ export class CameraController extends EventEmitter implements Controller<CameraC
     this.microphoneService = undefined;
     this.speakerService = undefined;
 
+    // TODO recording management!
+
     this.removeAllListeners();
   }
 
@@ -649,6 +600,7 @@ export class CameraController extends EventEmitter implements Controller<CameraC
    */
   handleFactoryReset(): void {
     this.streamManagements.forEach(management => management.handleFactoryReset());
+    this.recordingManagement?.handleFactoryReset();
 
     this.microphoneMuted = false;
     this.microphoneVolume = 100;
@@ -661,17 +613,19 @@ export class CameraController extends EventEmitter implements Controller<CameraC
    */
   handleSnapshotRequest(height: number, width: number, accessoryName?: string, reason?: ResourceRequestReason): Promise<Buffer> {
     // first step is to verify that the reason is applicable to our current policy
-    if (this.cameraOperatingModeService != null) { // TODO log rejections!
-      // When rejecting a snapshot request the accessory must return HTTP 207 Multi-Status and a HAP Status code of
-      // -70401 (INSUFFICIENT_PRIVILEGES; if it was rejected due to the missing reason property)
-      // or
-      // -70412 (NOT_ALLOWED_IN_CURRENT_STATE, if the reason doesn't match the current set rules).
+    if (this.streamManagements[0] && !this.streamManagements[0].getService().getCharacteristic(Characteristic.Active).value) { // TODO test case!
+      return Promise.reject(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
+    }
 
-      let eventSnapshotsActive = this.cameraOperatingModeService
+    if (this.recordingManagement) { // TODO log rejections!
+      let operatingModeService = this.recordingManagement.operatingModeService
+      if (!operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive).value) { // TODO test case
+        return Promise.reject(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
+      }
+
+      let eventSnapshotsActive = operatingModeService
         .getCharacteristic(Characteristic.EventSnapshotsActive)
         .value
-
-      // If the accessory has EventSnapshotsActive turned off, any snapshot request without a reason property or the reason property set to 1 must be rejected.
       if (!eventSnapshotsActive) {
         if (reason == null) {
           return Promise.reject(HAPStatus.INSUFFICIENT_PRIVILEGES);
@@ -680,21 +634,19 @@ export class CameraController extends EventEmitter implements Controller<CameraC
         }
       }
 
-      if (this.cameraOperatingModeService.testCharacteristic(Characteristic.PeriodicSnapshotsActive)) {
-        let periodicSnapshotsActive = this.cameraOperatingModeService
-          .getCharacteristic(Characteristic.PeriodicSnapshotsActive)
-          .value
-
-        if (!periodicSnapshotsActive) {
-          if (reason == null) {
-            return Promise.reject(HAPStatus.INSUFFICIENT_PRIVILEGES);
-          } else if (reason == ResourceRequestReason.PERIODIC) {
-            return Promise.reject(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
-          }
+      let periodicSnapshotsActive = operatingModeService
+        .getCharacteristic(Characteristic.PeriodicSnapshotsActive)
+        .value
+      if (!periodicSnapshotsActive) {
+        if (reason == null) {
+          return Promise.reject(HAPStatus.INSUFFICIENT_PRIVILEGES);
+        } else if (reason == ResourceRequestReason.PERIODIC) {
+          return Promise.reject(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
         }
       }
     }
 
+    // now do the actual snapshot request.
     return new Promise((resolve, reject) => {
       let timeout: NodeJS.Timeout | undefined = setTimeout(() => {
         console.warn(`[${accessoryName}] The image snapshot handler for the given accessory is slow to respond! See https://git.io/JtMGR for more info.`);
@@ -740,7 +692,6 @@ export class CameraController extends EventEmitter implements Controller<CameraC
           }
         });
       } catch (error) {
-        // TODO handle HAPStatusErrors?
         if (!timeout) {
           return;
         } else {
@@ -749,7 +700,7 @@ export class CameraController extends EventEmitter implements Controller<CameraC
         }
 
         console.warn(`[${accessoryName}] Unhandled error thrown inside snapshot request handler: ${error.stack}`);
-        reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+        reject(error instanceof HapStatusError ? error.hapStatus : HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       }
     });
   }

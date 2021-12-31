@@ -1348,7 +1348,6 @@ export declare interface SiriAudioSession {
  * Represents an ongoing audio transmission
  */
 export class SiriAudioSession extends EventEmitter {
-
     readonly connection: DataStreamConnection;
     private readonly selectedAudioConfiguration: AudioCodecConfiguration;
 

@@ -766,9 +766,9 @@ export class Accessory extends EventEmitter {
     if (savedServiceMap) { // we found data to restore from
       const clonedServiceMap = clone(savedServiceMap);
       const updatedServiceMap = controller.initWithServices(savedServiceMap); // init controller with existing services
-      serviceMap = updatedServiceMap || savedServiceMap; // initWithServices could return a updated serviceMap, otherwise just use the existing one
+      serviceMap = updatedServiceMap || savedServiceMap; // initWithServices could return an updated serviceMap, otherwise just use the existing one
 
-      if (updatedServiceMap) { // controller returned a ServiceMap and thus signaled a updated set of services
+      if (updatedServiceMap) { // controller returned a ServiceMap and thus signaled an updated set of services
         // clonedServiceMap is altered by this method, should not be touched again after this call (for the future people)
         this.handleUpdatedControllerServiceMap(clonedServiceMap, updatedServiceMap);
       }

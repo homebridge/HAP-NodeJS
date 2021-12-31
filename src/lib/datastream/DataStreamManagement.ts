@@ -57,7 +57,6 @@ export const enum DataStreamStatus {
 
 
 export class DataStreamManagement {
-
     // one server per accessory is probably the best practice
     private readonly dataStreamServer: DataStreamServer = new DataStreamServer(); // TODO how to handle Remote+future HKSV controller at the same time?
 

@@ -2,7 +2,7 @@ import { HAPStatus, IsKnownHAPStatusError } from "../HAPServer";
 
 /**
  * Throws a HAP status error that is sent back to HomeKit.
- * 
+ *
  * @example
  * ```ts
  * throw new HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
@@ -23,4 +23,3 @@ export class HapStatusError extends Error {
     }
   }
 }
-
