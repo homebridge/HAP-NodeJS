@@ -29,7 +29,7 @@ import {
   VoidCallback,
   WithUUID,
 } from '../types';
-import { Advertiser, AdvertiserEvent, BonjourHAPAdvertiser, CiaoAdvertiser } from './Advertiser';
+import { Advertiser, AdvertiserEvent, BonjourHAPAdvertiser, CiaoAdvertiser, AvahiAdvertiser } from './Advertiser';
 // noinspection JSDeprecatedSymbols
 import { LegacyCameraSource, LegacyCameraSourceAdapter, StreamController } from './camera';
 import {
@@ -277,6 +277,10 @@ export const enum MDNSAdvertiser {
    * Use the `bonjour-hap` module as advertiser.
    */
   BONJOUR = "bonjour-hap",
+  /**
+   * Use Avahi/D-Bus as advertiser.
+   */
+  AVAHI = "avahi",
 }
 
 export type AccessoryCharacteristicChange = ServiceCharacteristicChange &  {
@@ -1218,6 +1222,9 @@ export class Accessory extends EventEmitter {
           restrictedAddresses: parsed.serviceRestrictedAddress,
           disabledIpv6: parsed.serviceDisableIpv6,
         });
+        break;
+      case MDNSAdvertiser.AVAHI:
+        this._advertiser = new AvahiAdvertiser(this._accessoryInfo);
         break;
       default:
         throw new Error("Unsupported advertiser setting: '" + info.advertiser + "'");
