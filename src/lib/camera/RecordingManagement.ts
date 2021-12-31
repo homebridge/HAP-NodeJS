@@ -203,7 +203,7 @@ export class RecordingManagement {
     );
 
     const videoStreamConfiguration = tlv.encode(
-      VideoCodecConfigurationTypes.CODEC_TYPE, videoOptions.codec.type,
+      VideoCodecConfigurationTypes.CODEC_TYPE, videoOptions.codec.type || VideoCodecType.H264,
       VideoCodecConfigurationTypes.CODEC_PARAMETERS, codecParameters,
       VideoCodecConfigurationTypes.ATTRIBUTES, videoOptions.resolutions.map(resolution => {
         if (resolution.length != 3) {
