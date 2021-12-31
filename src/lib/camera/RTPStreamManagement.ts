@@ -272,7 +272,7 @@ export type VideoStreamingOptions = {
 }
 
 export type H264CodecParameters = {
-  type: VideoCodecType,
+  type?: VideoCodecType,
   levels: H264Level[],
   profiles: H264Profile[],
 }
