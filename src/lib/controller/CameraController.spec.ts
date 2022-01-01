@@ -11,7 +11,7 @@ import {
 import { ResourceRequestReason } from "../../internal-types";
 import {
   AudioRecordingCodecType,
-  AudioRecordingSamplerate,
+  AudioRecordingSamplerate, CameraRecordingConfiguration,
   CameraRecordingOptions,
   CameraStreamingOptions,
   EventTriggerOption,
@@ -96,8 +96,11 @@ class MockDelegate implements CameraStreamingDelegate, CameraRecordingDelegate {
     yield Buffer.alloc(64, 0);
   }
 
-  closeRecordingStream(streamId: number, reason: DataSendCloseReason): void {
-  }
+  closeRecordingStream(streamId: number, reason: DataSendCloseReason): void {}
+
+  updateRecordingActive(active: boolean): void {}
+
+  updateRecordingConfiguration(configuration: CameraRecordingConfiguration | undefined, audioActive: boolean): void {}
 }
 
 function createOptions(

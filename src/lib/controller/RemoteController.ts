@@ -352,7 +352,6 @@ interface SerializedControllerState {
  * Handles everything needed to implement a fully working HomeKit remote controller.
  */
 export class RemoteController extends EventEmitter implements SerializableController<RemoteControllerServiceMap, SerializedControllerState>, DataStreamProtocolHandler {
-
     private stateChangeDelegate?: StateChangeDelegate;
 
     private readonly audioSupported: boolean;

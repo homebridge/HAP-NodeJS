@@ -111,7 +111,7 @@ export class ControllerStorage {
             this.trackedControllers.splice(index, 1);
         }
 
-        controller.setupStateChangeDelegate(undefined); // remove associating with this storage object
+        controller.setupStateChangeDelegate(undefined); // remove association with this storage object
 
         this.purgeControllerData(controller);
     }

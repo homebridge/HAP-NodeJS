@@ -12,7 +12,9 @@ import {
   PrepareStreamRequest,
   PrepareStreamResponse,
   RecordingManagement,
+  RecordingManagementState,
   RTPStreamManagement,
+  RTPStreamManagementState,
   SnapshotRequest,
   StreamingRequest,
 } from "../camera";
@@ -30,7 +32,7 @@ import {
 import { HAPStatus } from "../HAPServer";
 import { Service } from "../Service";
 import { HapStatusError } from "../util/hapStatusError";
-import { Controller, ControllerIdentifier, ControllerServiceMap, DefaultControllerType } from "./Controller";
+import { ControllerIdentifier, ControllerServiceMap, DefaultControllerType, SerializableController, StateChangeDelegate } from "./Controller";
 
 const debug = createDebug("HAP-NodeJS:Camera:Controller")
 
@@ -99,12 +101,18 @@ export interface CameraStreamingDelegate {
  * Once
  */
 export interface CameraRecordingDelegate {
-  // TODO signal active (MUST be called after updateRecordingConfiguration)!!
+  // TODO signal active (MUST be called after updateRecordingConfiguration and before when disabling)!!
+
+  /**
+   * TODO consider non active by default!
+   * always called AFTEr update recording configuration(?) TODO would be a great guarantee to make
+   */
+  updateRecordingActive(active: boolean): void;
 
   // TODO maybe reintroduce the configuration stuff! (todo, init recording info from storage!!!)
   // TODO if configuration change occurs while recording is still in progress,
   //  active recording stream must continue to use the previous configuration
-  updateRecordingConfiguration?(configuration: CameraRecordingConfiguration): void;
+  updateRecordingConfiguration(configuration: CameraRecordingConfiguration | undefined, audioActive: boolean): void;
 
   /**
    * HomeKit requests to receive the video (and audio, if enabled) recordings of
@@ -155,6 +163,12 @@ export interface CameraControllerServiceMap extends ControllerServiceMap {
   doorbell?: Doorbell;
 }
 
+interface CameraControllerState {
+  // TODO document indexes
+  streamManagements: RTPStreamManagementState[];
+  recordingManagement?: RecordingManagementState;
+}
+
 export const enum CameraControllerEvents {
   /**
    *  Emitted when the mute state or the volume changed. The Apple Home App typically does not set those values
@@ -180,9 +194,10 @@ export declare interface CameraController {
 /**
  * Everything needed to expose a HomeKit Camera.
  */
-export class CameraController extends EventEmitter implements Controller<CameraControllerServiceMap> {
-
+export class CameraController extends EventEmitter implements SerializableController<CameraControllerServiceMap, CameraControllerState> {
   private static readonly STREAM_MANAGEMENT = "streamManagement"; // key to index all RTPStreamManagement services
+
+  private stateChangeDelegate?: StateChangeDelegate;
 
   private readonly streamCount: number;
   private readonly delegate: CameraStreamingDelegate;
@@ -371,7 +386,6 @@ export class CameraController extends EventEmitter implements Controller<CameraC
       let streamManagementService = serviceMap[CameraController.STREAM_MANAGEMENT + i];
 
       if (i < this.streamCount) {
-        // TODO ensure that the active characteristic is present after initializing from an (old) configuration!
         if (streamManagementService) { // normal init
           this.streamManagements.push(new RTPStreamManagement(i, this.streamingOptions, this.delegate, streamManagementService));
         } else { // stream count got bigger, we need to create a new service
@@ -520,7 +534,8 @@ export class CameraController extends EventEmitter implements Controller<CameraC
       }
     }
 
-    if (this.recording.options.motionService) { // TODO revise heuristic, once we have revised the situation around passing motion sensors
+    // TODO revise heuristic, once we have revised the situation around passing motion sensors
+    if (this.recording.options.motionService) {
       triggerOptions.add(EventTriggerOption.MOTION);
     }
 
@@ -590,7 +605,8 @@ export class CameraController extends EventEmitter implements Controller<CameraC
     this.microphoneService = undefined;
     this.speakerService = undefined;
 
-    // TODO recording management!
+    this.recordingManagement?.destroy();
+    this.recordingManagement = undefined;
 
     this.removeAllListeners();
   }
@@ -611,9 +627,60 @@ export class CameraController extends EventEmitter implements Controller<CameraC
   /**
    * @private
    */
+  serialize(): CameraControllerState | undefined {
+    const streamManagementStates: RTPStreamManagementState[] = [];
+
+    for (const management of this.streamManagements) {
+      const serializedState = management.serialize();
+      if (serializedState) {
+        streamManagementStates.push(serializedState);
+      }
+    }
+
+    return {
+      streamManagements: streamManagementStates,
+      recordingManagement: this.recordingManagement?.serialize(),
+    };
+  }
+
+  /**
+   * @private
+   */
+  deserialize(serialized: CameraControllerState): void {
+    for (const streamManagementState of serialized.streamManagements) {
+      const streamManagement = this.streamManagements[streamManagementState.id];
+      if (streamManagement) {
+        streamManagement.deserialize(streamManagementState);
+      }
+    }
+
+    if (serialized.recordingManagement) {
+      this.recordingManagement?.deserialize(serialized.recordingManagement);
+    }
+  }
+
+  /**
+   * @private
+   */
+  setupStateChangeDelegate(delegate?: StateChangeDelegate): void {
+    this.stateChangeDelegate = delegate;
+
+    for (const streamManagement of this.streamManagements) {
+      streamManagement.setupStateChangeDelegate(delegate);
+    }
+
+    this.recordingManagement?.setupStateChangeDelegate(delegate);
+  }
+
+  /**
+   * @private
+   */
   handleSnapshotRequest(height: number, width: number, accessoryName?: string, reason?: ResourceRequestReason): Promise<Buffer> {
     // first step is to verify that the reason is applicable to our current policy
-    if (this.streamManagements[0] && !this.streamManagements[0].getService().getCharacteristic(Characteristic.Active).value) { // TODO test case!
+    const streamingDisabled = this.streamManagements
+      .map(management => !management.getService().getCharacteristic(Characteristic.Active).value)
+      .reduce((previousValue, currentValue) => previousValue && currentValue);
+    if (streamingDisabled) { // TODO test case!
       return Promise.reject(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
     }
 
@@ -666,6 +733,7 @@ export class CameraController extends EventEmitter implements Controller<CameraC
         this.delegate.handleSnapshotRequest({
           height: height,
           width: width,
+          reason: reason,
         }, (error, buffer) => {
           if (!timeout) {
             return;

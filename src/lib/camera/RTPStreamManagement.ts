@@ -1,13 +1,14 @@
+import assert from "assert";
 import crypto from "crypto";
 import createDebug from "debug";
 import net from "net";
 // noinspection JSDeprecatedSymbols
-import { Access, LegacyCameraSource, LegacyCameraSourceAdapter, once, uuid } from "../../index";
+import { Access, HAPStatus, HapStatusError, LegacyCameraSource, LegacyCameraSourceAdapter, once, StateChangeDelegate, uuid } from "../../index";
+import { ResourceRequestReason } from "../../internal-types";
 import { CharacteristicValue, SessionIdentifier } from "../../types";
 import { Characteristic, CharacteristicEventTypes, CharacteristicSetCallback } from "../Characteristic";
 import { CameraController, CameraStreamingDelegate } from "../controller";
 import type { CameraRTPStreamManagement } from "../definitions";
-import { HAPStatus } from "../HAPServer";
 import { Service } from "../Service";
 import { HAPConnection, HAPConnectionEvent } from "../util/eventedhttp";
 import * as tlv from "../util/tlv";
@@ -313,6 +314,13 @@ export type StreamSessionIdentifier = string; // uuid provided by HAP to identif
 export type SnapshotRequest = {
   height: number;
   width: number;
+  /**
+   * An optional {@link ResourceRequestReason}. The client decides if it wants to send this value. It is typically
+   * only sent in the context of HomeKit Secure Video Cameras.
+   * This value might be used by a `CameraStreamingDelegate` for informational purposes.
+   * When `handleSnapshotRequest` is called, it is already checked if the respective reason is allowed in the current camera configuration.
+   */
+  reason?: ResourceRequestReason
 }
 
 export type PrepareStreamRequest = {
@@ -454,8 +462,12 @@ export type ReconfiguredVideoInfo = {
   rtcp_interval: number, // minimum rtcp interval in seconds (floating point number)
 }
 
-export class RTPStreamManagement {
+export interface RTPStreamManagementState {
+  id: number;
+  active: boolean;
+}
 
+export class RTPStreamManagement {
   /**
    * @deprecated Please use the SRTPCryptoSuites const enum above. Scheduled to be removed in 2021-06.
    */
@@ -472,8 +484,11 @@ export class RTPStreamManagement {
   // @ts-ignore
   static VideoCodecParamLevelTypes = Object.freeze({ TYPE3_1: 0, TYPE3_2: 1, TYPE4_0: 2 });
 
+  private readonly id: number;
   private readonly delegate: CameraStreamingDelegate;
-  readonly service: CameraRTPStreamManagement; // must be public for backwards compatibility
+  readonly service: CameraRTPStreamManagement;
+
+  private stateChangeDelegate?: StateChangeDelegate;
 
   requireProxy: boolean;
   disableAudioProxy: boolean;
@@ -501,6 +516,7 @@ export class RTPStreamManagement {
   videoProxy?: RTPProxy;
 
   constructor(id: number, options: CameraStreamingOptions, delegate: CameraStreamingDelegate, service?: CameraRTPStreamManagement) {
+    this.id = id;
     this.delegate = delegate;
 
     this.requireProxy = options.proxy || false;
@@ -569,16 +585,17 @@ export class RTPStreamManagement {
     // so we just add the characteristic. Doesn't really hurt.
     managementService.setCharacteristic(Characteristic.Active, true);
     // TODO reject start stream (SetupEndpoints, SelectedRTPConfig) with -70412 if set to false
-    // TODO perstis accros rebots
 
     return managementService;
   }
 
   private setupServiceHandlers() {
     if (!this.service.testCharacteristic(Characteristic.Active)) {
+      // the active characteristic might not be present on some older configurations.
       this.service.setCharacteristic(Characteristic.Active, true);
     }
     this.service.getCharacteristic(Characteristic.Active)
+      .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate && this.stateChangeDelegate())
       .setProps({ adminOnlyAccess: [Access.WRITE] });
 
     // ensure that configurations are up-to-date and reflected in the characteristic values
@@ -591,12 +608,14 @@ export class RTPStreamManagement {
 
     this.service.getCharacteristic(Characteristic.SelectedRTPStreamConfiguration)!
       .on(CharacteristicEventTypes.GET, callback => {
+        this.verifyCameraActive();
         callback(null, this.selectedConfiguration);
       })
       .on(CharacteristicEventTypes.SET, this._handleSelectedStreamConfigurationWrite.bind(this));
 
     this.service.getCharacteristic(Characteristic.SetupEndpoints)!
       .on(CharacteristicEventTypes.GET, callback => {
+        this.verifyCameraActive();
         callback(null, this.setupEndpointsResponse);
       })
       .on(CharacteristicEventTypes.SET, (value, callback, context, connection) => {
@@ -635,7 +654,17 @@ export class RTPStreamManagement {
     }
   }
 
+  private verifyCameraActive(): void {
+    if (!this.service.getCharacteristic(Characteristic.Active).value) {
+      throw new HapStatusError(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
+    }
+
+    // TODO check for HomeKitCameraActive as well!
+  }
+
   private _handleSelectedStreamConfigurationWrite(value: CharacteristicValue, callback: CharacteristicSetCallback): void {
+    this.verifyCameraActive();
+
     const data = Buffer.from(value as string, 'base64');
     const objects = tlv.decode(data);
 
@@ -883,6 +912,8 @@ export class RTPStreamManagement {
   }
 
   private handleSetupEndpoints(value: CharacteristicValue, callback: CharacteristicSetCallback, connection: HAPConnection): void {
+    this.verifyCameraActive();
+
     const data = Buffer.from(value as string, 'base64');
     const objects = tlv.decode(data);
 
@@ -1349,6 +1380,36 @@ export class RTPStreamManagement {
     this.service.updateCharacteristic(Characteristic.SelectedRTPStreamConfiguration, this.selectedConfiguration);
   }
 
+  /**
+   * @private
+   */
+  serialize(): RTPStreamManagementState | undefined {
+    const characteristicValue = this.service.getCharacteristic(Characteristic.Active).value;
+    if (characteristicValue == true) {
+      return undefined;
+    }
+
+    return {
+      id: this.id,
+      active: !!characteristicValue,
+    };
+  }
+
+  /**
+   * @private
+   */
+  deserialize(serialized: RTPStreamManagementState): void {
+    assert(serialized.id == this.id, `Tried to initialize RTPStreamManagement ${this.id} with data from management with id ${serialized.id}!`);
+
+    this.service.updateCharacteristic(Characteristic.Active, serialized.active);
+  }
+
+  /**
+   * @private
+   */
+  setupStateChangeDelegate(delegate?: StateChangeDelegate): void {
+    this.stateChangeDelegate = delegate;
+  }
 }
 
 /**

@@ -1,7 +1,8 @@
+import crypto from "crypto";
 import createDebug from "debug";
 import { VideoCodecType } from ".";
-import { Access, Characteristic } from "../Characteristic";
-import { AudioBitrate, CameraRecordingDelegate } from "../controller";
+import { Access, Characteristic, CharacteristicEventTypes } from "../Characteristic";
+import { AudioBitrate, CameraRecordingDelegate, StateChangeDelegate } from "../controller";
 import {
   DataSendCloseReason,
   DataStreamConnection,
@@ -276,11 +277,53 @@ export interface RecordingManagementServices {
   dataStreamManagement: DataStreamManagement;
 }
 
+export interface RecordingManagementState {
+  /**
+   * This property stores a hash of the supported configurations (recording, video and audio) of
+   * the recording management. We use this to determine if the configuration was changed by the user.
+   * If it was changed, we need to discard the `selectedConfiguration` to signify to HomeKit Controllers
+   * that they might reconsider their decision based on the updated configuration.
+   */
+  configurationHash: {
+    algorithm: "sha256";
+    hash: string;
+  };
+
+  /**
+   * The base64 encoded tlv of the {@link CameraRecordingConfiguration}.
+   * This value MIGHT be `undefined` if no HomeKit controller has yet selected a configuration.
+   */
+  selectedConfiguration?: string;
+
+  /**
+   * Service `CameraRecordingManagement`; Characteristic `Active`
+   */
+  recordingActive: boolean;
+  /**
+   * Service `CameraRecordingManagement`; Characteristic `RecordingAudioActive`
+   */
+  recordingAudioActive: boolean;
+
+  /**
+   * Service `CameraOperatingMode`; Characteristic `EventSnapshotsActive`
+   */
+  eventSnapshotsActive: boolean;
+  /**
+   * Service `CameraOperatingMode`; Characteristic `HomeKitCameraActive`
+   */
+  homeKitCameraActive: boolean;
+  /**
+   * Service `CameraOperatingMode`; Characteristic `PeriodicSnapshotsActive`
+   */
+  periodicSnapshotsActive: boolean;
+}
+
 export class RecordingManagement {
   readonly options: CameraRecordingOptions;
   readonly delegate: CameraRecordingDelegate;
 
-  // TODO store hash of the supported configurations (=> discard the selected configuration from storage if they change!)
+  private stateChangeDelegate?: StateChangeDelegate;
+
   private readonly supportedCameraRecordingConfiguration: string;
   private readonly supportedVideoRecordingConfiguration: string;
   private readonly supportedAudioRecordingConfiguration: string;
@@ -342,8 +385,7 @@ export class RecordingManagement {
   private constructService(): RecordingManagementServices {
     const recordingManagement = new Service.CameraRecordingManagement('', '');
     recordingManagement.setCharacteristic(Characteristic.Active, false); // TODO notify delegate about active (enables/disables prebuffer!)
-    // TODO ACTIVE: value: reboot persists
-    recordingManagement.setCharacteristic(Characteristic.RecordingAudioActive, false); // TODO persists
+    recordingManagement.setCharacteristic(Characteristic.RecordingAudioActive, false);
 
     const operatingMode = new Service.CameraOperatingMode('', '');
     operatingMode.setCharacteristic(Characteristic.EventSnapshotsActive, true);
@@ -363,8 +405,6 @@ export class RecordingManagement {
   }
 
   private setupServiceHandlers() {
-    this.recordingManagementService.setCharacteristic(Characteristic.SelectedCameraRecordingConfiguration, '');
-
     // update the current configuration values to the current state.
     this.recordingManagementService.setCharacteristic(Characteristic.SupportedCameraRecordingConfiguration, this.supportedCameraRecordingConfiguration);
     this.recordingManagementService.setCharacteristic(Characteristic.SupportedVideoRecordingConfiguration, this.supportedVideoRecordingConfiguration);
@@ -376,36 +416,29 @@ export class RecordingManagement {
       .setProps({ adminOnlyAccess: [Access.WRITE] });
 
     this.recordingManagementService.getCharacteristic(Characteristic.Active)
+      .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate && this.stateChangeDelegate())
       .setProps({ adminOnlyAccess: [Access.WRITE] });
 
-    this.operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive) // TODO persists reboot
+    this.recordingManagementService.getCharacteristic(Characteristic.RecordingAudioActive)
+      .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate && this.stateChangeDelegate())
+
+    this.operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive)
+      .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate && this.stateChangeDelegate())
       .setProps({ adminOnlyAccess: [Access.WRITE] });
-    // TODO if false: reject read/write to SetupEndpoints and SelectedRTPStreamConfiguration with -70412
     // TODO if set to false: send DataSend close with reason=DataSendCloseReason.NOT_ALLOWED
     //   => + tear down HDS Connections!
     // TODO => set `Active` of MotionSensor and OccupancySensor to false as well!
 
-    this.operatingModeService.getCharacteristic(Characteristic.EventSnapshotsActive) // TODO persists reboot
+    this.operatingModeService.getCharacteristic(Characteristic.EventSnapshotsActive)
+      .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate && this.stateChangeDelegate())
       .setProps({ adminOnlyAccess: [Access.WRITE] });
 
-    // TODO periodicSnapshotsActive persists reboot
     this.operatingModeService.getCharacteristic(Characteristic.PeriodicSnapshotsActive)
+      .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate && this.stateChangeDelegate())
       .setProps({ adminOnlyAccess: [Access.WRITE] });
 
     this.dataStreamManagement
       .onRequestMessage(Protocols.DATA_SEND, Topics.OPEN, this.handleDataSendOpen.bind(this))
-
-  }
-
-  handleFactoryReset() {
-    this.selectedConfiguration = undefined; // TODO update delegate?
-    this.recordingManagementService.updateCharacteristic(Characteristic.Active, false); // TODO update delegate?
-    this.recordingManagementService.updateCharacteristic(Characteristic.RecordingAudioActive, false);
-
-    // TODO motion/occupancy sensors ACTIVE?
-    this.operatingModeService.updateCharacteristic(Characteristic.HomeKitCameraActive, true);
-    this.operatingModeService.updateCharacteristic(Characteristic.EventSnapshotsActive, true);
-    this.operatingModeService.updateCharacteristic(Characteristic.PeriodicSnapshotsActive, false);
   }
 
   private handleDataSendOpen(connection: DataStreamConnection, id: number, message: Record<any, any>) {
@@ -470,6 +503,23 @@ export class RecordingManagement {
   }
 
   private handleSelectedCameraRecordingConfigurationWrite(value: any): void {
+    const configuration = this.parseSelectedConfiguration(value);
+
+    this.selectedConfiguration = {
+      parsed: configuration,
+      base64: value,
+    };
+
+    this.delegate.updateRecordingConfiguration(
+      this.selectedConfiguration.parsed,
+      !!this.recordingManagementService.getCharacteristic(Characteristic.RecordingAudioActive).value,
+    );
+
+    // notify controller storage about updated values!
+    this.stateChangeDelegate && this.stateChangeDelegate();
+  }
+
+  private parseSelectedConfiguration(value: string): CameraRecordingConfiguration {
     const decoded = tlv.decode(Buffer.from(value, 'base64'));
 
     const recording = tlv.decode(decoded[SelectedCameraRecordingConfigurationTypes.SELECTED_RECORDING_CONFIGURATION]);
@@ -514,7 +564,7 @@ export class RecordingManagement {
       bit_index += 1; // count our current bit index
     }
 
-    let configuration: CameraRecordingConfiguration = {
+    return {
       prebufferLength: prebufferLength,
       eventTriggerTypes: typedEventTriggers,
       mediaContainerConfiguration: {
@@ -539,13 +589,6 @@ export class RecordingManagement {
         bitrate: audioBitrate,
       },
     };
-
-    this.selectedConfiguration = {
-      parsed: configuration,
-      base64: value as string,
-    }
-
-    this.delegate.updateRecordingConfiguration?.(this.selectedConfiguration.parsed);
   }
 
   private _supportedCameraRecordingConfiguration(options: CameraRecordingOptions): string {
@@ -652,6 +695,85 @@ export class RecordingManagement {
     return tlv.encode(
       SupportedAudioRecordingConfigurationTypes.AUDIO_CODEC_CONFIGURATION, codecConfigurations,
     ).toString("base64");
+  }
+
+  private computeConfigurationHash(algorithm: string = "sha256"): string {
+    const configurationHash = crypto.createHash(algorithm);
+    configurationHash.update(this.supportedCameraRecordingConfiguration);
+    configurationHash.update(this.supportedVideoRecordingConfiguration);
+    configurationHash.update(this.supportedAudioRecordingConfiguration);
+    return configurationHash.digest().toString("hex");
+  }
+
+  /**
+   * @private
+   */
+  serialize(): RecordingManagementState | undefined {
+    return {
+      configurationHash: {
+        algorithm: "sha256",
+        hash: this.computeConfigurationHash("sha256"),
+      },
+      selectedConfiguration: this.selectedConfiguration?.base64,
+
+      recordingActive: !!this.recordingManagementService.getCharacteristic(Characteristic.Active).value,
+      recordingAudioActive: !!this.recordingManagementService.getCharacteristic(Characteristic.RecordingAudioActive).value,
+
+      eventSnapshotsActive: !!this.operatingModeService.getCharacteristic(Characteristic.EventSnapshotsActive).value,
+      homeKitCameraActive: !!this.operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive).value,
+      periodicSnapshotsActive: !!this.operatingModeService.getCharacteristic(Characteristic.PeriodicSnapshotsActive).value,
+    };
+  }
+
+  /**
+   * @private
+   */
+  deserialize(serialized: RecordingManagementState): void {
+    // we only restore the `selectedConfiguration` if our supported configuration hasn't changed.
+    let currentConfigurationHash = this.computeConfigurationHash(serialized.configurationHash.algorithm);
+    if (serialized.selectedConfiguration) {
+      if (currentConfigurationHash == serialized.configurationHash.hash) {
+        this.selectedConfiguration = {
+          base64: serialized.selectedConfiguration,
+          parsed: this.parseSelectedConfiguration(serialized.selectedConfiguration),
+        }
+      } else {
+        // TODO otherwise we need to call the stateChangeDelegate!
+      }
+    }
+
+    // TODO notify delegate about active change? (+ supportedConfiguration)
+    this.recordingManagementService.updateCharacteristic(Characteristic.Active, serialized.recordingActive);
+    this.recordingManagementService.updateCharacteristic(Characteristic.RecordingAudioActive, serialized.recordingAudioActive);
+
+    this.operatingModeService.updateCharacteristic(Characteristic.EventSnapshotsActive, serialized.eventSnapshotsActive);
+    this.operatingModeService.updateCharacteristic(Characteristic.HomeKitCameraActive, serialized.homeKitCameraActive);
+    this.operatingModeService.updateCharacteristic(Characteristic.PeriodicSnapshotsActive, serialized.periodicSnapshotsActive);
+  }
+
+  /**
+   * @private
+   */
+  setupStateChangeDelegate(delegate?: StateChangeDelegate): void {
+    this.stateChangeDelegate = delegate;
+  }
+
+  destroy(): void {
+    this.dataStreamManagement.destroy();
+  }
+
+  handleFactoryReset() {
+    // TODO dataStreamManagement. (maybe close the server?)
+
+    // TODO call active first!
+    this.selectedConfiguration = undefined; // TODO notify delegate?
+    this.recordingManagementService.updateCharacteristic(Characteristic.Active, false); // TODO notify delegate?
+    this.recordingManagementService.updateCharacteristic(Characteristic.RecordingAudioActive, false);
+
+    // TODO motion/occupancy sensors ACTIVE?
+    this.operatingModeService.updateCharacteristic(Characteristic.HomeKitCameraActive, true);
+    this.operatingModeService.updateCharacteristic(Characteristic.EventSnapshotsActive, true);
+    this.operatingModeService.updateCharacteristic(Characteristic.PeriodicSnapshotsActive, false);
   }
 }
 
