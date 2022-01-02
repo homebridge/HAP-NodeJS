@@ -5,7 +5,7 @@ import {
     AudioBitrate,
     AudioSamplerate,
     AudioCodecTypes,
-    DataSendCloseReason,
+    HDSProtocolSpecificErrorReason,
     ErrorHandler,
     FrameHandler,
     SiriAudioStreamProducer, AudioCodecConfiguration
@@ -122,7 +122,7 @@ export class GStreamerAudioProducer implements SiriAudioStreamProducer {
         this.process.on("error", error => {
             if (this.running) {
                 debug("Failed to spawn gstreamer process: " + error.message);
-                this.errorHandler(DataSendCloseReason.CANCELLED);
+                this.errorHandler(HDSProtocolSpecificErrorReason.CANCELLED);
             } else {
                 debug("Failed to kill gstreamer process: " + error.message);
             }
@@ -154,7 +154,7 @@ export class GStreamerAudioProducer implements SiriAudioStreamProducer {
         this.process.on("exit", (code, signal) => {
             if (signal !== "SIGTERM") { // if we receive SIGTERM, process exited gracefully (we stopped it)
                 debug("GStreamer process unexpectedly exited with code %d (signal: %s)", code, signal);
-                this.errorHandler(DataSendCloseReason.UNEXPECTED_FAILURE);
+                this.errorHandler(HDSProtocolSpecificErrorReason.UNEXPECTED_FAILURE);
             }
         });
     }

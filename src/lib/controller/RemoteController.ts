@@ -10,7 +10,7 @@ import {
     CharacteristicSetCallback
 } from "../Characteristic";
 import {
-    DataSendCloseReason,
+    HDSProtocolSpecificErrorReason,
     DataStreamConnection,
     DataStreamConnectionEvent,
     DataStreamManagement,
@@ -250,7 +250,7 @@ type AudioFramePacket = {
 
 
 export type FrameHandler = (frame: AudioFrame) => void;
-export type ErrorHandler = (error: DataSendCloseReason) => void;
+export type ErrorHandler = (error: HDSProtocolSpecificErrorReason) => void;
 
 export interface SiriAudioStreamProducer {
 
@@ -1049,7 +1049,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
 
     private handleDataSendCloseEvent(message: Record<any, any>): void { // controller indicates he can't handle audio request currently
         const streamId = message["streamId"];
-        const reason = message["reason"] as DataSendCloseReason;
+        const reason = message["reason"] as HDSProtocolSpecificErrorReason;
 
         if (this.activeAudioSession && this.activeAudioSession.streamId === streamId) {
             this.activeAudioSession.handleDataSendCloseEvent(reason);
@@ -1404,7 +1404,7 @@ export class SiriAudioSession extends EventEmitter {
                 this.streamId = message["streamId"];
 
                 if (!this.producerRunning) { // audio producer errored in the meantime
-                    this.sendDataSendCloseEvent(DataSendCloseReason.CANCELLED);
+                    this.sendDataSendCloseEvent(HDSProtocolSpecificErrorReason.CANCELLED);
                 } else {
                     debug("Successfully setup siri audio stream with streamId %d", this.streamId);
                 }
@@ -1448,7 +1448,7 @@ export class SiriAudioSession extends EventEmitter {
         this.producerTimer = setTimeout(() => { // producer has 3s to start producing audio frames
             debug("Didn't receive any frames from audio producer for stream with streamId %s. Canceling the stream now.", this.streamId);
             this.producerTimer = undefined;
-            this.handleProducerError(DataSendCloseReason.CANCELLED);
+            this.handleProducerError(HDSProtocolSpecificErrorReason.CANCELLED);
         }, 3000);
         this.producerTimer.unref();
     }
@@ -1516,7 +1516,7 @@ export class SiriAudioSession extends EventEmitter {
         }
     }
 
-    private handleProducerError(error: DataSendCloseReason): void { // called from audio producer
+    private handleProducerError(error: HDSProtocolSpecificErrorReason): void { // called from audio producer
         if (this.state >= SiriAudioSessionState.CLOSING) {
             return;
         }
@@ -1532,11 +1532,11 @@ export class SiriAudioSession extends EventEmitter {
 
         debug("Received acknowledgment for siri audio stream with streamId %s, closing it now", this.streamId);
 
-        this.sendDataSendCloseEvent(DataSendCloseReason.NORMAL);
+        this.sendDataSendCloseEvent(HDSProtocolSpecificErrorReason.NORMAL);
     }
 
-    handleDataSendCloseEvent(reason: DataSendCloseReason): void { // controller indicates he can't handle audio request currently
-        debug("Received close event from controller with reason %s for stream with streamId %s", DataSendCloseReason[reason], this.streamId);
+    handleDataSendCloseEvent(reason: HDSProtocolSpecificErrorReason): void { // controller indicates he can't handle audio request currently
+        debug("Received close event from controller with reason %s for stream with streamId %s", HDSProtocolSpecificErrorReason[reason], this.streamId);
         if (this.state <= SiriAudioSessionState.SENDING) {
             this.stopAudioProducer();
         }
@@ -1544,7 +1544,7 @@ export class SiriAudioSession extends EventEmitter {
         this.closed();
     }
 
-    private sendDataSendCloseEvent(reason: DataSendCloseReason): void {
+    private sendDataSendCloseEvent(reason: HDSProtocolSpecificErrorReason): void {
         assert(this.state >= SiriAudioSessionState.SENDING, "state was less than SENDING");
         assert(this.state <= SiriAudioSessionState.CLOSING, "state was higher than CLOSING");
 

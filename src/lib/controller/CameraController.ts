@@ -19,7 +19,7 @@ import {
   StreamingRequest,
 } from "../camera";
 import { Characteristic, CharacteristicEventTypes, CharacteristicGetCallback, CharacteristicSetCallback } from "../Characteristic";
-import { DataSendCloseReason, DataStreamManagement } from "../datastream";
+import { HDSProtocolSpecificErrorReason, DataStreamManagement } from "../datastream";
 import {
   CameraOperatingMode,
   CameraRecordingManagement,
@@ -97,50 +97,110 @@ export interface CameraStreamingDelegate {
 /**
  * A `CameraRecordingDelegate` is responsible for handling recordings of a HomeKit Secure Video camera.
  *
- * It is responsible for maintaining the prebuffer (see {@see CameraRecordingOptions.prebufferLength}.
- * Once
+ * It is responsible for maintaining the prebuffer (see {@see CameraRecordingOptions.prebufferLength},
+ * once recording was activated (see {@see updateRecordingActive}).
+ *
+ * Before recording is considered enabled two things must happen:
+ * - Recording must be enabled by the user. Signaled through {@link updateRecordingActive}.
+ * - Recording configurations must be selected by a HomeKit controller through {@link updateRecordingConfiguration}.
+ *
+ * A typical recording event scenario happens as follows:
+ * - The camera is in idle mode, maintaining the prebuffer (the duration of the prebuffer depends on the selected {@link CameraRecordingConfiguration}).
+ * - A recording event is triggered (e.g. motion or doorbell button press) and the camera signals it through
+ *   the respective characteristics (e.g. {@link Characteristic.MotionDetected} or {@link Characteristic.ProgrammableSwitchEvent}).
+ *   Further, the camera saves the content of the prebuffer and starts recording the video.
+ *   The camera should continue to store the recording until it runs out of space.
+ *   In any case the camera should preserve recordings which are nearest to the triggered event.
+ *   A stored recording might be completely deleted if a stream request wasn't initiated for eight seconds.
+ * - A HomeKit Controller will open a new recording session to download the next recording.
+ *   This results in a call to {@link handleRecordingStreamRequest}.
+ * - Once the recording event is finished the camera will reset the state accordingly
+ *   (e.g. in the {@link Service.MotionSensor} or {@link Service.Doorbell} service).
+ *   It will continue to send the remaining fragments of the currently ongoing recording stream request.
+ * - The camera goes back into idle mode.
  */
-export interface CameraRecordingDelegate {
-  // TODO signal active (MUST be called after updateRecordingConfiguration and before when disabling)!!
-
+export interface CameraRecordingDelegate { // TODO catch errors of all those calls!
   /**
-   * TODO consider non active by default!
-   * always called AFTEr update recording configuration(?) TODO would be a great guarantee to make
+   * A call to this method notifies the `CameraRecordingDelegate` about a change to the
+   * `CameraRecordingManagement.Active` characteristic. This characteristic controls
+   * if the camera should react to recording events.
+   *
+   * If recording is disabled the camera can stop maintaining its prebuffer.
+   * If recording is enabled the camera should start recording into its prebuffer.
+   *
+   * A `CameraRecordingDelegate` should assume active to be `false` on first initialization.
+   * HAP-NodeJS will persist the state of the `Active` characteristic across reboots
+   * and will call {@link updateRecordingActive} accordingly, if recording was previously enabled.
+   *
+   * NOTE: HAP-NodeJS cannot guarantee that a {@link CameraRecordingConfiguration} is present
+   * when recording is activated (e.g. the selected configuration might be erased due to changes
+   * in the supplied {@link CameraRecordingOptions}, but the camera is still `active`; or we can't otherwise
+   * influence the order which a HomeKit Controller might call those characteristics).
+   * However, HAP-NodeJS guarantees that if there is a valid {@link CameraRecordingConfiguration},
+   * {@link updateRecordingConfiguration} is called before {@link updateRecordingActive} (when enabling)
+   * to avoid any unnecessary and potentially expensive reconfigurations.
+   *
+   * @param active - Specifies if recording is active or not.
    */
   updateRecordingActive(active: boolean): void;
 
-  // TODO maybe reintroduce the configuration stuff! (todo, init recording info from storage!!!)
-  // TODO if configuration change occurs while recording is still in progress,
-  //  active recording stream must continue to use the previous configuration
+  /**
+   * A call to this method signals that the selected (by the HomeKit Controller)
+   * recording configuration of the camera has changed.
+   * The method is called if one of both or both values were changed.
+   *
+   * On startup the delegate should assume `configuration = undefined` and `audioActive = false`.
+   * HAP-NodeJS will persist the state of both across reboots and will call
+   * {@link updateRecordingConfiguration} if there is a **selected configuration** present.
+   *
+   * NOTE: An update to the recording configuration might happen while there is still a running
+   * recording stream. The camera MUST continue to use the previous configuration for the
+   * currently running stream and only apply the updated configuration to the next stream.
+   *
+   * @param configuration - The {@link CameraRecordingConfiguration}. Reconfigure your recording pipeline accordingly.
+   *  The parameter might be `undefined` when the selected configuration became invalid. This typically ony happens
+   *  e.g. due to a factory reset (when all pairings are removed). Disable the recording pipeline in such a case
+   *  even if recording is still activated.
+   * @param audioActive - Defines if the mp4 fragments include audio or not.
+   *  TODO a bit weird that audioActive is marshalled into here!
+   */
   updateRecordingConfiguration(configuration: CameraRecordingConfiguration | undefined, audioActive: boolean): void;
 
   /**
-   * HomeKit requests to receive the video (and audio, if enabled) recordings of
-   * the current ongoing motion (or doorbell) event.
-   * The first fragment must always be the "mediaInitialization" fragment.
-   * All subsequent fragments are "mediaFragment"s.
-   * Each "mediaFragment" must start with a key frame and must not be longer than the
-   * specified duration set via the "fragmentLength" (which was SELECTED by the HomeKit Home Hub).
+   * This method is called to stream the next recording event.
+   * It is guaranteed that there is only ever one ongoing recording stream request at a time.
    *
-   * @returns AsyncIterator of Readables representing each fragment.
+   * When this method is called return the currently ongoing (or next in case of a potentially queued)
+   * recording via a `AsyncGenerator`. Every `yield` of the generator represents a complete recording `packet`.
+   * The first packet MUST always be the {@link PacketDataType.MEDIA_INITIALIZATION} packet.
+   * Any following packet will transport the actual mp4 fragments in {@link PacketDataType.MEDIA_FRAGMENT} packets,
+   * starting with the content of the prebuffer. Every {@link PacketDataType.MEDIA_FRAGMENT} starts with a key frame
+   * and must not be longer than the specified duration set via the {@link CameraRecordingConfiguration.mediaContainerConfiguration.fragmentLength}
+   * **selected** by the HomeKit Controller in {@link updateRecordingConfiguration}.
+   *
+   * You might throw an error in this method if encountering a non-recoverable state.
+   *
+   * For more information about `AsyncGenerator`s you might have a look at:
+   * * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of
+   *
+   * @param streamId - The streamId of the currently ongoing stream.
    */
-  // handleFragmentsRequests(connection: DataStreamConnection): AsyncGenerator<Buffer>;
+  handleRecordingStreamRequest(streamId: number): AsyncGenerator<Buffer>;
 
-  /*
   /**
-    * This method is called when the camera recording configuration is set or changed
-    * by HomeKit.
-    * The handler must respect the desired audio and video configuration during
-    * subsequenct calls to handleFragmentRequests.
-    * @param configuration
-    *
-  prepareRecording?(configuration: CameraRecordingConfiguration): void;
+   * This method is called to notify the Delegate that a recording stream started via {@link handleRecordingStreamRequest}
+   * was closed.
+   *
+   * The method is also called if an ongoing recording stream is closed gracefully (using {@link HDSProtocolSpecificErrorReason.NORMAL}).
+   * In either case, the delegate should stop supplying further fragments to the recording stream.
+   * HAP-NodeJS won't send out any fragments from this point onwards.
+   *
+   * @param streamId - The streamId for which the close event was sent.
+   * @param reason - The reason with which the stream was closed.
+   *  NOTE: This method is also called in case of a closed connection. We encode this with {@link HDSProtocolSpecificErrorReason.CANCELLED}.
+   *  {@link HDSProtocolSpecificErrorReason.CANCELLED} might also be sent by a HomeKit Controller to encode any sort of processing error.
    */
-
-  handleRecordingStreamRequest(streamId: number): AsyncGenerator<Buffer>; // TODO is the connection necessary?
-
-  // TODO method to signal that thing was closed (also for normal close)!
-  closeRecordingStream(streamId: number, reason: DataSendCloseReason): void; // TODO rename the type before heavy usage!
+  closeRecordingStream(streamId: number, reason: HDSProtocolSpecificErrorReason): void;
 }
 
 /**

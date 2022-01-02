@@ -55,10 +55,8 @@ const enum VideoAttributesTypes {
 
 export const enum VideoCodecType {
   H264 = 0x00,
-  /**
-   * HomeKit Secure Video Only. Currently unsupported.
-   */
-  H265 = 0x01,
+  // while the namespace is already reserved for H265 it isn't currently supported.
+  // H265 = 0x01,
 }
 
 export const enum H264Profile {
@@ -324,7 +322,6 @@ export type SnapshotRequest = {
 }
 
 export type PrepareStreamRequest = {
-  connection: HAPConnection;
   sessionID: StreamSessionIdentifier,
   targetAddress: string,
   addressVersion: "ipv4" | "ipv6",
@@ -973,7 +970,6 @@ export class RTPStreamManagement {
 
 
     const prepareRequest: PrepareStreamRequest = {
-      connection,
       sessionID: sessionIdentifier,
       targetAddress: controllerAddress,
       addressVersion: addressVersion === IPAddressVersion.IPV6? "ipv6": "ipv4",

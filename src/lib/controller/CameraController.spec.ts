@@ -25,7 +25,7 @@ import {
   VideoCodecType,
 } from "../camera";
 import { Characteristic } from "../Characteristic";
-import { DataSendCloseReason } from "../datastream";
+import { HDSProtocolSpecificErrorReason } from "../datastream";
 import "../definitions";
 import { HAPStatus } from "../HAPServer";
 import { AudioBitrate } from "./RemoteController";
@@ -96,7 +96,7 @@ class MockDelegate implements CameraStreamingDelegate, CameraRecordingDelegate {
     yield Buffer.alloc(64, 0);
   }
 
-  closeRecordingStream(streamId: number, reason: DataSendCloseReason): void {}
+  closeRecordingStream(streamId: number, reason: HDSProtocolSpecificErrorReason): void {}
 
   updateRecordingActive(active: boolean): void {}
 

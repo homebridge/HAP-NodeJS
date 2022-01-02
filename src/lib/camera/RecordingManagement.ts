@@ -5,7 +5,7 @@ import { VideoCodecType } from ".";
 import { Access, Characteristic, CharacteristicEventTypes } from "../Characteristic";
 import { AudioBitrate, CameraRecordingDelegate, StateChangeDelegate } from "../controller";
 import {
-  DataSendCloseReason,
+  HDSProtocolSpecificErrorReason,
   DataStreamConnection,
   DataStreamConnectionEvent,
   DataStreamManagement,
@@ -96,7 +96,7 @@ export interface MediaContainerConfiguration {
 }
 
 export interface VideoRecordingOptions {
-  type: VideoCodecType.H264; // TODO make type again and remove H265 option
+  type: VideoCodecType;
   parameters: H264CodecParameters;
   /**
    * Required resolutions to be supported are:
@@ -249,7 +249,7 @@ const enum SupportedAudioRecordingConfigurationTypes {
   AUDIO_CODEC_CONFIGURATION = 0x01,
 }
 
-const enum PacketDataType {
+export const enum PacketDataType {
   // mp4 moov box
   MEDIA_INITIALIZATION = "mediaInitialization",
   // mp4 moof + mdat boxes
@@ -385,7 +385,7 @@ export class RecordingManagement {
 
   private constructService(): RecordingManagementServices {
     const recordingManagement = new Service.CameraRecordingManagement('', '');
-    recordingManagement.setCharacteristic(Characteristic.Active, false); // TODO notify delegate about active (enables/disables prebuffer!)
+    recordingManagement.setCharacteristic(Characteristic.Active, false);
     recordingManagement.setCharacteristic(Characteristic.RecordingAudioActive, false);
 
     const operatingMode = new Service.CameraOperatingMode('', '');
@@ -417,6 +417,7 @@ export class RecordingManagement {
       .setProps({ adminOnlyAccess: [Access.WRITE] });
 
     this.recordingManagementService.getCharacteristic(Characteristic.Active)
+      .onSet(value => this.delegate.updateRecordingActive(!!value))
       .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate && this.stateChangeDelegate())
       .setProps({ adminOnlyAccess: [Access.WRITE] });
 
@@ -426,7 +427,7 @@ export class RecordingManagement {
     this.operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive)
       .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate && this.stateChangeDelegate())
       .setProps({ adminOnlyAccess: [Access.WRITE] });
-    // TODO if set to false: send DataSend close with reason=DataSendCloseReason.NOT_ALLOWED
+    // TODO if set to false: send DataSend close with reason=HDSProtocolSpecificErrorReason.NOT_ALLOWED
     //   => + tear down HDS Connections!
     // TODO => set `Active` of MotionSensor and OccupancySensor to false as well!
 
@@ -444,29 +445,30 @@ export class RecordingManagement {
 
   private handleDataSendOpen(connection: DataStreamConnection, id: number, message: Record<any, any>) {
     // for message fields see https://github.com/Supereg/secure-video-specification#41-start
-    const target: string = message.target;
-    const type: string = message.type;
     const streamId: number = message.streamId;
+    const type: string = message.type;
+    const target: string = message.target;
+    const reason: string = message.reason;
 
     if (target != "controller" || type != "ipcamera.recording") {
       debug("[HDS %s] Received data send with unexpected target: %s or type: %d. Rejecting...",
         connection.remoteAddress, target, type);
       connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, id, HDSStatus.PROTOCOL_SPECIFIC_ERROR, {
-        status: DataSendCloseReason.UNEXPECTED_FAILURE,
+        status: HDSProtocolSpecificErrorReason.UNEXPECTED_FAILURE,
       });
       return;
     }
 
     if (!this.recordingManagementService.getCharacteristic(Characteristic.Active).value) {
       connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, id, HDSStatus.PROTOCOL_SPECIFIC_ERROR, {
-        status: DataSendCloseReason.NOT_ALLOWED,
+        status: HDSProtocolSpecificErrorReason.NOT_ALLOWED,
       });
       return;
     }
 
     if (!this.operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive).value) {
       connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, id, HDSStatus.PROTOCOL_SPECIFIC_ERROR, {
-        status: DataSendCloseReason.NOT_ALLOWED,
+        status: HDSProtocolSpecificErrorReason.NOT_ALLOWED,
       });
       return;
     }
@@ -476,17 +478,19 @@ export class RecordingManagement {
         connection.remoteAddress, this.recordingStream.connection.remoteAddress, this.recordingStream.streamId);
       // there is already a recording stream running.
       connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, id, HDSStatus.PROTOCOL_SPECIFIC_ERROR, {
-        status: DataSendCloseReason.BUSY,
+        status: HDSProtocolSpecificErrorReason.BUSY,
       });
       return;
     }
 
     if (!this.selectedConfiguration) {
       connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, id, HDSStatus.PROTOCOL_SPECIFIC_ERROR, {
-        status: DataSendCloseReason.INVALID_CONFIGURATION,
+        status: HDSProtocolSpecificErrorReason.INVALID_CONFIGURATION,
       });
       return;
     }
+
+    debug("[HDS %s] HDS DATA_SEND Open with reason %s.", connection.remoteAddress, reason);
 
     this.recordingStream = new CameraRecordingStream(connection, this.delegate, id, streamId);
     this.recordingStream.on(CameraRecordingStreamEvents.CLOSED, () => {
@@ -731,6 +735,8 @@ export class RecordingManagement {
    * @private
    */
   deserialize(serialized: RecordingManagementState): void {
+    let changedState = false;
+
     // we only restore the `selectedConfiguration` if our supported configuration hasn't changed.
     let currentConfigurationHash = this.computeConfigurationHash(serialized.configurationHash.algorithm);
     if (serialized.selectedConfiguration) {
@@ -740,17 +746,25 @@ export class RecordingManagement {
           parsed: this.parseSelectedConfiguration(serialized.selectedConfiguration),
         }
       } else {
-        // TODO otherwise we need to call the stateChangeDelegate!
+        changedState = true;
       }
     }
 
-    // TODO notify delegate about active change? (+ supportedConfiguration)
     this.recordingManagementService.updateCharacteristic(Characteristic.Active, serialized.recordingActive);
     this.recordingManagementService.updateCharacteristic(Characteristic.RecordingAudioActive, serialized.recordingAudioActive);
 
     this.operatingModeService.updateCharacteristic(Characteristic.EventSnapshotsActive, serialized.eventSnapshotsActive);
     this.operatingModeService.updateCharacteristic(Characteristic.HomeKitCameraActive, serialized.homeKitCameraActive);
     this.operatingModeService.updateCharacteristic(Characteristic.PeriodicSnapshotsActive, serialized.periodicSnapshotsActive);
+
+    if (this.selectedConfiguration) {
+      this.delegate.updateRecordingConfiguration(this.selectedConfiguration.parsed, serialized.recordingAudioActive);
+    }
+    this.delegate.updateRecordingActive(serialized.recordingActive);
+
+    if (changedState) {
+      this.stateChangeDelegate && this.stateChangeDelegate();
+    }
   }
 
   /**
@@ -765,17 +779,18 @@ export class RecordingManagement {
   }
 
   handleFactoryReset() {
-    // TODO dataStreamManagement. (maybe close the server?)
-
-    // TODO call active first!
-    this.selectedConfiguration = undefined; // TODO notify delegate?
-    this.recordingManagementService.updateCharacteristic(Characteristic.Active, false); // TODO notify delegate?
+    this.selectedConfiguration = undefined;
+    this.recordingManagementService.updateCharacteristic(Characteristic.Active, false);
     this.recordingManagementService.updateCharacteristic(Characteristic.RecordingAudioActive, false);
 
     // TODO motion/occupancy sensors ACTIVE?
     this.operatingModeService.updateCharacteristic(Characteristic.HomeKitCameraActive, true);
     this.operatingModeService.updateCharacteristic(Characteristic.EventSnapshotsActive, true);
     this.operatingModeService.updateCharacteristic(Characteristic.PeriodicSnapshotsActive, false);
+
+    // notifying the delegate about the updated state
+    this.delegate.updateRecordingActive(false);
+    this.delegate.updateRecordingConfiguration(undefined, false);
   }
 }
 
@@ -825,6 +840,7 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
 
   eventHandler?: Record<string, EventHandler> = {
     [Topics.CLOSE]: this.handleDataSendClose.bind(this),
+    [Topics.ACK]: this.handleDataSendAck.bind(this),
   }
   requestHandler?: Record<string, RequestHandler> = undefined;
 
@@ -849,8 +865,6 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
   }
 
   private async _startStreaming() {
-    this.generator = this.delegate.handleRecordingStreamRequest(this.streamId);
-
     this.connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, this.hdsRequestId, HDSStatus.SUCCESS, {
       status: HDSStatus.SUCCESS,
     });
@@ -860,9 +874,10 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
 
     // The first buffer which we receive from the generator is always the `mediaInitialization` packet (mp4 `moov` box).
     let initialization = true;
+    let dataSequenceNumber = 1;
 
     try {
-      let dataSequenceNumber = 1;
+      this.generator = this.delegate.handleRecordingStreamRequest(this.streamId);
 
       for await (const fragment of this.generator) {
         let offset = 0;
@@ -900,11 +915,12 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
         return;
       }
 
-      // TODO log the error!
+      // TODO add support for "expected" errors!
+      //   log the error!
 
       this.connection.sendEvent(Protocols.DATA_SEND, Topics.CLOSE, {
         streamId: this.streamId,
-        reason: DataSendCloseReason.UNEXPECTED_FAILURE,
+        reason: HDSProtocolSpecificErrorReason.UNEXPECTED_FAILURE,
       });
       return;
     }
@@ -912,10 +928,17 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
     // TODO do we need to send a end of stream (or rather can we? without having any packets)?
   }
 
+  private handleDataSendAck(message: Record<any, any>) {
+    const streamId: any = message.streamId;
+    const endOfStream: any = message.endOfStream;
+
+    debug("[HDS %s] Received DATA_SEND ACK packet for streamId %s. Acknowledged %s.", streamId, endOfStream);
+  }
+
   private handleDataSendClose(message: Record<any, any>) {
     // see https://github.com/Supereg/secure-video-specification#43-close
     const streamId: number = message.streamId;
-    const reason: DataSendCloseReason = message.reason;
+    const reason: HDSProtocolSpecificErrorReason = message.reason;
 
     if (streamId != this.streamId) {
       return;
@@ -924,13 +947,15 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
     this.generator?.throw(new RecordingSessionError(RecordingSessionErrorType.DATA_SEND_CLOSE));
     this.delegate.closeRecordingStream(streamId, reason);
 
+    this.connection.removeProtocolHandler(Protocols.DATA_SEND, this);
+
     this.handleClosed();
   }
 
   private handleDataStreamConnectionClosed() {
     this.generator?.throw(new RecordingSessionError(RecordingSessionErrorType.CONNECTION_CLOSE));
     // TODO do we need to encode error in a unique way?
-    this.delegate.closeRecordingStream(this.streamId, DataSendCloseReason.CANCELLED);
+    this.delegate.closeRecordingStream(this.streamId, HDSProtocolSpecificErrorReason.CANCELLED);
 
     this.connection.removeListener(DataStreamConnectionEvent.CLOSED, this.closeListener);
 
