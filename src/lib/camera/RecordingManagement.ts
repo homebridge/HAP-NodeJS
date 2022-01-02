@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import createDebug from "debug";
+import { EventEmitter } from "events";
 import { VideoCodecType } from ".";
 import { Access, Characteristic, CharacteristicEventTypes } from "../Characteristic";
 import { AudioBitrate, CameraRecordingDelegate, StateChangeDelegate } from "../controller";
@@ -488,9 +489,10 @@ export class RecordingManagement {
     }
 
     this.recordingStream = new CameraRecordingStream(connection, this.delegate, id, streamId);
-    // TODO listen to close event!
+    this.recordingStream.on(CameraRecordingStreamEvents.CLOSED, () => {
+      this.recordingStream = undefined;
+    });
 
-    // noinspection JSIgnoredPromiseFromCall
     this.recordingStream.startStreaming();
   }
 
@@ -777,7 +779,45 @@ export class RecordingManagement {
   }
 }
 
-class CameraRecordingStream implements DataStreamProtocolHandler {
+
+enum RecordingSessionErrorType {
+  DATA_SEND_CLOSE,
+  CONNECTION_CLOSE,
+}
+
+/**
+ * An error object we use internally to signal certain events.
+ */
+class RecordingSessionError extends Error {
+  type: RecordingSessionErrorType;
+
+  constructor(type: RecordingSessionErrorType) {
+    super();
+    this.type = type;
+  }
+}
+
+
+const enum CameraRecordingStreamEvents {
+  /**
+   * This event is fired when the recording stream is closed.
+   * Either due to a normal exit (e.g. the HomeKit Controller acknowledging the stream)
+   * or due to an erroneous exit (e.g. HDS connection getting closed).
+   */
+  CLOSED = "closed",
+}
+
+declare interface CameraRecordingStream {
+  on(event: "closed", listener: () => void): this;
+
+  emit(event: "closed"): boolean;
+}
+
+/**
+ * A `CameraRecordingStream` represents an ongoing stream request for a HomeKit Secure Video recording.
+ * A single camera can only support one ongoing recording at a time.
+ */
+class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHandler {
   readonly connection: DataStreamConnection;
   readonly delegate: CameraRecordingDelegate;
   readonly hdsRequestId: number;
@@ -793,6 +833,7 @@ class CameraRecordingStream implements DataStreamProtocolHandler {
   private generator?: AsyncGenerator<Buffer>;
 
   constructor(connection: DataStreamConnection, delegate: CameraRecordingDelegate, requestId: number, streamId: number) {
+    super();
     this.connection = connection;
     this.delegate = delegate;
     this.hdsRequestId = requestId;
@@ -802,7 +843,12 @@ class CameraRecordingStream implements DataStreamProtocolHandler {
     this.connection.addProtocolHandler(Protocols.DATA_SEND, this);
   }
 
-  async startStreaming() {
+  startStreaming() {
+    // noinspection JSIgnoredPromiseFromCall
+    this._startStreaming();
+  }
+
+  private async _startStreaming() {
     this.generator = this.delegate.handleRecordingStreamRequest(this.streamId);
 
     this.connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, this.hdsRequestId, HDSStatus.SUCCESS, {
@@ -878,33 +924,20 @@ class CameraRecordingStream implements DataStreamProtocolHandler {
     this.generator?.throw(new RecordingSessionError(RecordingSessionErrorType.DATA_SEND_CLOSE));
     this.delegate.closeRecordingStream(streamId, reason);
 
-    // TODO fire CLOSE event!
+    this.handleClosed();
   }
 
   private handleDataStreamConnectionClosed() {
     this.generator?.throw(new RecordingSessionError(RecordingSessionErrorType.CONNECTION_CLOSE));
-    this.delegate.closeRecordingStream(this.streamId, DataSendCloseReason.CANCELLED); // TODO do we need to encode error in a unique way?
+    // TODO do we need to encode error in a unique way?
+    this.delegate.closeRecordingStream(this.streamId, DataSendCloseReason.CANCELLED);
 
     this.connection.removeListener(DataStreamConnectionEvent.CLOSED, this.closeListener);
 
-    // TODO fire CLOSE event (so that we can untrack the thing!)
+    this.handleClosed();
   }
-}
 
-
-enum RecordingSessionErrorType {
-  DATA_SEND_CLOSE,
-  CONNECTION_CLOSE,
-}
-
-/**
- * An error object we use internally to signal certain events.
- */
-class RecordingSessionError extends Error {
-  type: RecordingSessionErrorType;
-
-  constructor(type: RecordingSessionErrorType) {
-    super();
-    this.type = type;
+  private handleClosed() {
+    this.emit(CameraRecordingStreamEvents.CLOSED);
   }
 }
