@@ -5,13 +5,16 @@ import {
   CameraStreamingDelegate,
   DoorbellController,
   PrepareStreamCallback,
+  ResourceRequestReason,
   SnapshotRequestCallback,
   StreamRequestCallback,
 } from ".";
-import { ResourceRequestReason } from "../../internal-types";
 import {
   AudioRecordingCodecType,
-  AudioRecordingSamplerate, CameraRecordingConfiguration,
+  AudioRecordingSamplerate,
+  AudioStreamingCodecType,
+  AudioStreamingSamplerate,
+  CameraRecordingConfiguration,
   CameraRecordingOptions,
   CameraStreamingOptions,
   EventTriggerOption,
@@ -19,6 +22,7 @@ import {
   H264Profile,
   MediaContainerType,
   PrepareStreamRequest,
+  RecordingPacket,
   SnapshotRequest,
   SRTPCryptoSuites,
   StreamingRequest,
@@ -52,7 +56,14 @@ let mockStreamingOptions: CameraStreamingOptions = {
       [320, 240, 15],
       [320, 180, 30],
     ],
-  }
+  },
+  audio: {
+    twoWayAudio: true,
+    codecs: [{
+      type: AudioStreamingCodecType.AAC_ELD,
+      samplerate: AudioStreamingSamplerate.KHZ_24
+    }],
+  },
 }
 
 let mockRecordingOptions: CameraRecordingOptions = {
@@ -61,8 +72,6 @@ let mockRecordingOptions: CameraRecordingOptions = {
     type: MediaContainerType.FRAGMENTED_MP4,
     fragmentLength: 8000,
   }],
-
-  motionService: true,
 
   video: {
     type: VideoCodecType.H264,
@@ -85,22 +94,22 @@ class MockDelegate implements CameraStreamingDelegate, CameraRecordingDelegate {
   }
 
   handleStreamRequest(request: StreamingRequest, callback: StreamRequestCallback): void {
-    callback()
+    throw Error("Unsupported!");
   }
 
   prepareStream(request: PrepareStreamRequest, callback: PrepareStreamCallback): void {
-    callback() // TODO response
+    throw Error("Unsupported!");
   }
 
-  async *handleRecordingStreamRequest(streamId: number): AsyncGenerator<Buffer> {
-    yield Buffer.alloc(64, 0);
+  async *handleRecordingStreamRequest(streamId: number): AsyncGenerator<RecordingPacket> {
+    yield { data: Buffer.alloc(64, 0), isLast: true };
   }
 
   closeRecordingStream(streamId: number, reason: HDSProtocolSpecificErrorReason): void {}
 
   updateRecordingActive(active: boolean): void {}
 
-  updateRecordingConfiguration(configuration: CameraRecordingConfiguration | undefined, audioActive: boolean): void {}
+  updateRecordingConfiguration(configuration: CameraRecordingConfiguration | undefined): void {}
 }
 
 function createOptions(
@@ -110,12 +119,16 @@ function createOptions(
   delegate: CameraStreamingDelegate & CameraRecordingDelegate = new MockDelegate(),
 ): CameraControllerOptions {
   return {
-    cameraStreamCount: 1,
+    cameraStreamCount: 2,
     delegate: delegate,
     streamingOptions: streamingOptions,
     recording: {
       options: recordingOptions,
       delegate: delegate,
+    },
+    sensors: {
+      motion: true,
+      occupancy: true,
     }
   }
 }
@@ -134,16 +147,29 @@ describe("CameraController", () => {
   test("init", () => {
     expect(controller.recordingManagement?.operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive).value)
       .toBe(Characteristic.HomeKitCameraActive.ON);
+    expect(controller.recordingManagement?.operatingModeService.getCharacteristic(Characteristic.PeriodicSnapshotsActive).value)
+      .toBe(1);
+    expect(controller.recordingManagement?.operatingModeService.getCharacteristic(Characteristic.EventSnapshotsActive).value)
+      .toBe(1);
+
+    expect(controller.recordingManagement?.recordingManagementService.getCharacteristic(Characteristic.RecordingAudioActive).value)
+      .toBe(0);
 
     expect(controller.recordingManagement?.recordingManagementService.getCharacteristic(Characteristic.Active).value)
       .toBe(Characteristic.Active.INACTIVE);
-
-    // TODO test the other active characteristics!
 
     for (const streamManagement of controller.streamManagements) {
       expect(streamManagement.getService().getCharacteristic(Characteristic.Active).value)
         .toBe(Characteristic.Active.ACTIVE);
     }
+
+    expect(controller.motionService?.testCharacteristic(Characteristic.StatusActive)).toBeTruthy();
+    expect(controller.motionService!.getCharacteristic(Characteristic.StatusActive).value)
+      .toEqual(true);
+
+    expect(controller.occupancyService?.testCharacteristic(Characteristic.StatusActive)).toBeTruthy();
+    expect(controller.occupancyService!.getCharacteristic(Characteristic.StatusActive).value)
+      .toEqual(true);
   });
 
   describe("retrieveEventTriggerOptions", () => {
@@ -225,6 +251,99 @@ describe("CameraController", () => {
       await expect(
         controller.handleSnapshotRequest(100, 100, "SomeAccessory", ResourceRequestReason.EVENT)
       ).rejects.toEqual(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
+    });
+
+    test("handleSnapshot considering HomeKitCameraActive state", async () => {
+      controller.recordingManagement?.operatingModeService.setCharacteristic(Characteristic.HomeKitCameraActive, false);
+
+      for (const reason of [undefined, ResourceRequestReason.PERIODIC, ResourceRequestReason.EVENT]) {
+        await expect(
+          controller.handleSnapshotRequest(100, 100, "SomeAccessory", reason)
+        ).rejects.toEqual(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
+      }
+    });
+
+    test("handleSnapshot considering RTPStreamManagement.Active state", async () => {
+      for (const management of controller.streamManagements) {
+        management.service.setCharacteristic(Characteristic.Active, false);
+      }
+
+      for (const reason of [undefined, ResourceRequestReason.PERIODIC, ResourceRequestReason.EVENT]) {
+        await expect(
+          controller.handleSnapshotRequest(100, 100, "SomeAccessory", reason)
+        ).rejects.toEqual(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
+      }
+    });
+  });
+
+  describe("serialization", () => {
+    test("identity", () => {
+      const serialized0 = controller.serialize()!;
+      controller.deserialize(serialized0);
+      const serialized1 = controller.serialize();
+
+      expect(serialized0).toEqual(serialized1);
+    });
+
+
+    test("should restore existing configuration", () => {
+      const selectedConfiguration = "AR0BBKAPAAACCAEAAAAAAAAAAwsBAQACBgEEoA8AAAIkAQEAAhIBAQICAQIDBNAHAAAEBKAPAAADCwECgAcCAjgEAwEeAxQBAQECDwEBAQIBAAMBBQQEQAAAAA==";
+      const data = JSON.parse(`{
+        "type": "camera",
+        "controllerData": {
+          "data": {
+            "streamManagements": [{
+              "id": 1,
+              "active": false
+            }],
+            "recordingManagement": {
+              "configurationHash": {
+                "algorithm": "sha256",
+                "hash": "e1e3ae4966b9421850246b1842969d783b63796b97bfdccdc2937ea0472c6838"
+              },
+              "selectedConfiguration": "${selectedConfiguration}",
+              "recordingActive": true,
+              "recordingAudioActive": true,
+              "eventSnapshotsActive": false,
+              "homeKitCameraActive": false,
+              "periodicSnapshotsActive": false
+            }
+          }
+        }
+      }`);
+
+      controller.deserialize(data.controllerData.data);
+
+      expect(controller.streamManagements[0].service.getCharacteristic(Characteristic.Active).value)
+        .toBe(Characteristic.Active.ACTIVE);
+      expect(controller.streamManagements[1].service.getCharacteristic(Characteristic.Active).value)
+        .toBe(Characteristic.Active.INACTIVE);
+
+      // @ts-expect-error (private access)
+      expect(controller.recordingManagement!.selectedConfiguration)
+        .toBeUndefined() // the hash is from a different configuration, we expect to drop selected config when the supported configuration changes!
+
+      expect(controller.recordingManagement?.recordingManagementService.getCharacteristic(Characteristic.Active).value)
+        .toBe(Characteristic.Active.ACTIVE);
+      expect(controller.recordingManagement?.recordingManagementService.getCharacteristic(Characteristic.RecordingAudioActive).value)
+        .toBe(1);
+
+      expect(controller.recordingManagement?.operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive).value)
+        .toBe(Characteristic.HomeKitCameraActive.OFF);
+      expect(controller.recordingManagement?.operatingModeService.getCharacteristic(Characteristic.PeriodicSnapshotsActive).value)
+        .toBe(0);
+      expect(controller.recordingManagement?.operatingModeService.getCharacteristic(Characteristic.EventSnapshotsActive).value)
+        .toBe(0);
+    });
+  });
+
+  describe("handleFactoryReset", () => {
+    test("default configuration", () => {
+      const serialized0 = controller.serialize();
+      controller.handleFactoryReset();
+      const serialized1 = controller.serialize();
+
+      expect(serialized0).toEqual(serialized1);
     });
   });
 });

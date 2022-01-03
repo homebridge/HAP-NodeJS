@@ -725,7 +725,7 @@ export class Accessory extends EventEmitter {
       }
 
       // all other services get added. We can't really control possibly linking to any of those ignored services
-      // so this is really only half baked stuff.
+      // so this is really only half-baked stuff.
       this.addService(service);
     });
 

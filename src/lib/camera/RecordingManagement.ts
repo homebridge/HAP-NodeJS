@@ -9,7 +9,8 @@ import {
   DataStreamConnectionEvent,
   DataStreamManagement,
   DataStreamProtocolHandler,
-  EventHandler, HDSProtocolError,
+  EventHandler,
+  HDSProtocolError,
   HDSProtocolSpecificErrorReason,
   HDSStatus,
   Protocols,
@@ -45,7 +46,7 @@ export type CameraRecordingOptions = {
    * which derives the {@link EventTriggerOption}s from application state.
    *
    * {@link EventTriggerOption}s are derived automatically as follows:
-   * * {@link EventTriggerOption.MOTION} is enabled when a {@link MotionSensor} is configured.
+   * * {@link EventTriggerOption.MOTION} is enabled when a {@link MotionSensor} is configured (via {@link CameraControllerOptions.sensors}).
    * * {@link EventTriggerOption.DOORBELL} is enabled when the {@link DoorbellController} is used.
    *
    * Note: This property is **ADDITIVE**. Meaning if the {@link CameraController} decides to add
@@ -61,8 +62,6 @@ export type CameraRecordingOptions = {
 
   video: VideoRecordingOptions,
   audio: AudioRecordingOptions,
-
-  motionService?: boolean; // TODO maybe control existing motion service via?
 }
 
 /**
@@ -280,7 +279,8 @@ export interface RecordingPacket {
    */
   data: Buffer;
   /**
-   * TODO document!
+   * Defines if this `RecordingPacket` is the last one in the recording stream.
+   * If `true` this will signal an end of stream and closes the recording stream.
    */
   isLast: boolean;
 }
@@ -368,6 +368,14 @@ export class RecordingManagement {
     base64: string,
   }
 
+  /**
+   * Array of sensor services (e.g. {@link Service.MotionSensor} or {@link Service.OccupancySensor}).
+   * Any service in this array owns a {@link Characteristic.StatusActive} characteristic.
+   * The value of the {@link Characteristic.HomeKitCameraActive} is mirrored towards the {@link Characteristic.StatusActive} characteristic.
+   * The array is initialized my the caller shortly after calling the constructor.
+   */
+  sensorServices: Service[] = [];
+
   constructor(options: CameraRecordingOptions, delegate: CameraRecordingDelegate, eventTriggerOptions: Set<EventTriggerOption>, services?: RecordingManagementServices) {
     this.options = options;
     this.delegate = delegate;
@@ -399,8 +407,6 @@ export class RecordingManagement {
     operatingMode.setCharacteristic(Characteristic.HomeKitCameraActive, true);
     operatingMode.setCharacteristic(Characteristic.PeriodicSnapshotsActive, true);
 
-    // TODO configure how other characteristics to init?
-
     const dataStreamManagement = new DataStreamManagement();
     recordingManagement.addLinkedService(dataStreamManagement.getService());
 
@@ -431,11 +437,18 @@ export class RecordingManagement {
       .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate?.())
 
     this.operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive)
-      .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate?.())
+      .on(CharacteristicEventTypes.CHANGE, change => {
+        for (const service of this.sensorServices) {
+          service.setCharacteristic(Characteristic.StatusActive, !!change.newValue);
+        }
+
+        if (!change.newValue && this.recordingStream) {
+          this.recordingStream.close(HDSProtocolSpecificErrorReason.NOT_ALLOWED);
+        }
+
+        this.stateChangeDelegate?.();
+      })
       .setProps({ adminOnlyAccess: [Access.WRITE] });
-    // TODO if set to false: send DataSend close with reason=HDSProtocolSpecificErrorReason.NOT_ALLOWED
-    //   => + tear down HDS Connections!
-    // TODO => set `Active` of MotionSensor and OccupancySensor to false as well!
 
     this.operatingModeService.getCharacteristic(Characteristic.EventSnapshotsActive)
       .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate?.())
@@ -454,7 +467,7 @@ export class RecordingManagement {
     const streamId: number = message.streamId;
     const type: string = message.type;
     const target: string = message.target;
-    const reason: string = message.reason;
+    const reason: HDSProtocolSpecificErrorReason = message.reason;
 
     if (target != "controller" || type != "ipcamera.recording") {
       debug("[HDS %s] Received data send with unexpected target: %s or type: %d. Rejecting...",
@@ -496,7 +509,7 @@ export class RecordingManagement {
       return;
     }
 
-    debug("[HDS %s] HDS DATA_SEND Open with reason '%s'.", connection.remoteAddress, reason);
+    debug("[HDS %s] HDS DATA_SEND Open with reason '%s'.", connection.remoteAddress, HDSProtocolSpecificErrorReason[reason]);
 
     this.recordingStream = new CameraRecordingStream(connection, this.delegate, id, streamId);
     this.recordingStream.on(CameraRecordingStreamEvents.CLOSED, () => {
@@ -757,8 +770,12 @@ export class RecordingManagement {
     this.recordingManagementService.updateCharacteristic(Characteristic.RecordingAudioActive, serialized.recordingAudioActive);
 
     this.operatingModeService.updateCharacteristic(Characteristic.EventSnapshotsActive, serialized.eventSnapshotsActive);
-    this.operatingModeService.updateCharacteristic(Characteristic.HomeKitCameraActive, serialized.homeKitCameraActive);
     this.operatingModeService.updateCharacteristic(Characteristic.PeriodicSnapshotsActive, serialized.periodicSnapshotsActive);
+
+    this.operatingModeService.updateCharacteristic(Characteristic.HomeKitCameraActive, serialized.homeKitCameraActive);
+    for (const service of this.sensorServices) {
+      service.setCharacteristic(Characteristic.StatusActive, serialized.homeKitCameraActive);
+    }
 
     try {
       if (this.selectedConfiguration) {
@@ -792,10 +809,13 @@ export class RecordingManagement {
     this.recordingManagementService.updateCharacteristic(Characteristic.Active, false);
     this.recordingManagementService.updateCharacteristic(Characteristic.RecordingAudioActive, false);
 
-    // TODO motion/occupancy sensors ACTIVE?
-    this.operatingModeService.updateCharacteristic(Characteristic.HomeKitCameraActive, true);
     this.operatingModeService.updateCharacteristic(Characteristic.EventSnapshotsActive, true);
-    this.operatingModeService.updateCharacteristic(Characteristic.PeriodicSnapshotsActive, false);
+    this.operatingModeService.updateCharacteristic(Characteristic.PeriodicSnapshotsActive, true);
+
+    this.operatingModeService.updateCharacteristic(Characteristic.HomeKitCameraActive, true);
+    for (const service of this.sensorServices) {
+      service.setCharacteristic(Characteristic.StatusActive, true);
+    }
 
     try {
       // notifying the delegate about the updated state
@@ -883,6 +903,11 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
       for await (const packet of this.generator) {
         if (this.closed) {
           console.error(`[HDS ${this.connection.remoteAddress}] Delegate yielded fragment after stream ${this.streamId} was already closed!`);
+          break;
+        }
+
+        if (lastFragmentWasMarkedLast) {
+          console.error(`[HDS ${this.connection.remoteAddress}] Delegate yielded fragment for stream ${this.streamId} after already signaling end of stream!`);
           break;
         }
 
@@ -988,7 +1013,7 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
     }
 
     debug("[HDS %s] Received DATA_SEND CLOSE for streamId %d with reason %s",
-      this.connection.remoteAddress, streamId, reason);
+      this.connection.remoteAddress, streamId, HDSProtocolSpecificErrorReason[reason]);
 
     this.handleClosed(() => this.delegate.closeRecordingStream(streamId, reason));
   }
@@ -996,8 +1021,7 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
   private handleDataStreamConnectionClosed() {
     debug("[HDS %s] The HDS connection of the stream %d closed.", this.connection.remoteAddress, this.streamId);
 
-
-    this.handleClosed(() => this.delegate.closeRecordingStream(this.streamId));
+    this.handleClosed(() => this.delegate.closeRecordingStream(this.streamId, undefined));
   }
 
   private handleClosed(closure: () => void): void {
@@ -1022,5 +1046,24 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
     }
 
     this.emit(CameraRecordingStreamEvents.CLOSED);
+  }
+
+  /**
+   * This method can be used to close a recording session from the outside.
+   * @param reason - The reason to close the stream with.
+   */
+  close(reason: HDSProtocolSpecificErrorReason): void {
+    if (this.closed) {
+      return;
+    }
+
+    debug("[HDS %s] Recording stream %d was closed manually with reason %s.", this.connection.remoteAddress, this.streamId, HDSProtocolSpecificErrorReason[reason]);
+
+    this.connection.sendEvent(Protocols.DATA_SEND, Topics.CLOSE, {
+      streamId: this.streamId,
+      reason: reason,
+    });
+
+    this.handleClosed(() => this.delegate.closeRecordingStream(this.streamId, reason));
   }
 }

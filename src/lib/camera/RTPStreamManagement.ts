@@ -521,7 +521,14 @@ export class RTPStreamManagement {
   audioProxy?: RTPProxy;
   videoProxy?: RTPProxy;
 
-  constructor(id: number, options: CameraStreamingOptions, delegate: CameraStreamingDelegate, service?: CameraRTPStreamManagement) {
+  /**
+   * A RTPStreamManagement is considered disabled if `HomeKitCameraActive` is set to false.
+   * We use a closure based approach to retrieve the value of this characteristic.
+   * The characteristic is managed by the RecordingManagement.
+   */
+  private readonly disabledThroughOperatingMode?: () => boolean;
+
+  constructor(id: number, options: CameraStreamingOptions, delegate: CameraStreamingDelegate, service?: CameraRTPStreamManagement, disabledThroughOperatingMode?: () => boolean) {
     this.id = id;
     this.delegate = delegate;
 
@@ -550,6 +557,8 @@ export class RTPStreamManagement {
 
     this.resetSetupEndpointsResponse();
     this.resetSelectedStreamConfiguration();
+
+    this.disabledThroughOperatingMode = disabledThroughOperatingMode;
   }
 
   public forceStop() {
@@ -664,7 +673,9 @@ export class RTPStreamManagement {
       throw new HapStatusError(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
     }
 
-    // TODO check for HomeKitCameraActive as well!
+    if (this.disabledThroughOperatingMode?.()) {
+      throw new HapStatusError(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
+    }
   }
 
   private _handleSelectedStreamConfigurationWrite(value: CharacteristicValue, callback: CharacteristicSetCallback): void {

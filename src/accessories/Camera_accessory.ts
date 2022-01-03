@@ -19,7 +19,8 @@ import {
     MediaContainerType,
     PrepareStreamCallback,
     PrepareStreamRequest,
-    PrepareStreamResponse, RecordingPacket,
+    PrepareStreamResponse,
+    RecordingPacket,
     Service,
     SnapshotRequest,
     SnapshotRequestCallback,
@@ -58,7 +59,7 @@ type SessionInfo = {
     videoSRTP: Buffer, // key and salt concatenated
     videoSSRC: number, // rtp synchronisation source
 
-    /* Won't be save as audio is not supported by this example
+    /* Won't be saved as audio is not supported by this example
     audioPort: number,
     audioCryptoSuite: SRTPCryptoSuites,
     audioSRTP: Buffer,
@@ -101,6 +102,11 @@ class ExampleCamera implements CameraStreamingDelegate, CameraRecordingDelegate 
     // keep track of sessions
     pendingSessions: Record<string, SessionInfo> = {};
     ongoingSessions: Record<string, OngoingSession> = {};
+
+    // minimal secure video properties.
+    configuration?: CameraRecordingConfiguration;
+    handlingStreamingRequest: boolean = false;
+    server?: MP4StreamingServer;
 
     handleSnapshotRequest(request: SnapshotRequest, callback: SnapshotRequestCallback): void {
         const ffmpegCommand = `-f lavfi -i testsrc=s=${request.width}x${request.height} -vframes 1 -f mjpeg -`;
@@ -293,11 +299,6 @@ class ExampleCamera implements CameraStreamingDelegate, CameraRecordingDelegate 
         }
     }
 
-    // TODO move
-    configuration?: CameraRecordingConfiguration;
-    handlingStreamingRequest: boolean = false;
-    server?: MP4StreamingServer;
-
     updateRecordingActive(active: boolean): void {
         // we haven't implemented a prebuffer
         console.log("Recording active set to " + active);
@@ -308,10 +309,30 @@ class ExampleCamera implements CameraStreamingDelegate, CameraRecordingDelegate 
         console.log(configuration);
     }
 
+    /**
+     * This is a very minimal, very experimental example on how to implement fmp4 streaming with a
+     * CameraController supporting HomeKit Secure Video.
+     *
+     * An ideal implementation would diverge from this in the following ways:
+     * * It would implement a prebuffer and respect the recording `active` characteristic for that.
+     * * It would start to immediately record after a trigger event occurred and not just
+     *   when the HomeKit Controller requests it (see the documentation of `CameraRecordingDelegate`).
+     */
     async *handleRecordingStreamRequest(streamId: number): AsyncGenerator<RecordingPacket> {
         assert(!!this.configuration);
 
+        /**
+         * With this flag you can control how the generator reacts to a reset to the motion trigger.
+         * If set to true, the generator will send a proper endOfStream if the motion stops.
+         * If set to false, the generator will run till the HomeKit Controller closes the stream.
+         *
+         * Note: In a real implementation you would most likely introduce a bit of a delay.
+         */
+        const STOP_AFTER_MOTION_STOP = false;
+
         this.handlingStreamingRequest = true;
+
+        assert(this.configuration.videoCodec.type === VideoCodecType.H264);
 
         const profile = this.configuration.videoCodec.parameters.profile === H264Profile.HIGH ? 'high'
           : this.configuration.videoCodec.parameters.profile === H264Profile.MAIN ? 'main' : 'baseline';
@@ -333,13 +354,49 @@ class ExampleCamera implements CameraStreamingDelegate, CameraRecordingDelegate 
             '-b:v', `${this.configuration.videoCodec.parameters.bitRate}k`,
             '-force_key_frames', `expr:eq(t,n_forced*${this.configuration.videoCodec.parameters.iFrameInterval / 1000})`,
             '-r', this.configuration.videoCodec.resolution[2].toString()
-        ]
+        ];
+
+        let samplerate: string;
+        switch (this.configuration.audioCodec.samplerate) {
+            case AudioRecordingSamplerate.KHZ_8:
+                samplerate = "8";
+                break;
+            case AudioRecordingSamplerate.KHZ_16:
+                samplerate = "16";
+                break;
+            case AudioRecordingSamplerate.KHZ_24:
+                samplerate = "24";
+                break;
+            case AudioRecordingSamplerate.KHZ_32:
+                samplerate = "32";
+                break;
+            case AudioRecordingSamplerate.KHZ_44_1:
+                samplerate = "44.1";
+                break;
+            case AudioRecordingSamplerate.KHZ_48:
+                samplerate = "48";
+                break;
+            default:
+                throw new Error("Unsupported audio samplerate: " + this.configuration.audioCodec.samplerate);
+        }
+
+        const audioArgs: Array<string> = this.controller?.recordingManagement?.recordingManagementService.getCharacteristic(Characteristic.RecordingAudioActive)
+          ? [
+              '-acodec', 'libfdk_aac',
+              ...(this.configuration.audioCodec.type === AudioRecordingCodecType.AAC_LC ?
+                ['-profile:a', 'aac_low'] :
+                ['-profile:a', 'aac_eld']),
+              '-ar', `${samplerate}k`,
+              '-b:a', `${this.configuration.audioCodec.bitrate}k`,
+              '-ac', `${this.configuration.audioCodec.audioChannels}`
+          ]
+          : [];
 
         this.server = new MP4StreamingServer(
           "ffmpeg",
           `-f lavfi -i testsrc=s=${this.configuration.videoCodec.resolution[0]}x${this.configuration.videoCodec.resolution[1]}:r=${this.configuration.videoCodec.resolution[2]}`
             .split(/ /g),
-          [], // TODO audio parameters!
+          audioArgs,
           videoArgs,
         );
 
@@ -354,22 +411,21 @@ class ExampleCamera implements CameraStreamingDelegate, CameraRecordingDelegate 
             for await (const box of this.server.generator()) {
                 pending.push(box.header, box.data);
 
-                const stop = camera.getService(Service.MotionSensor)?.getCharacteristic(Characteristic.MotionDetected).value === false;
+                const motionDetected = camera.getService(Service.MotionSensor)?.getCharacteristic(Characteristic.MotionDetected).value === false;
 
                 console.log("mp4 box type " + box.type + " and length " + box.length);
                 if (box.type === "moov" || box.type == "mdat") {
                     const fragment = Buffer.concat(pending);
                     pending.splice(0, pending.length);
-                    if (stop) {
-                        console.log("Yielding with stop="+ stop);
-                    }
+
+                    const isLast = STOP_AFTER_MOTION_STOP && !motionDetected;
 
                     yield {
                         data: fragment,
-                        isLast: false,
+                        isLast: isLast,
                     };
 
-                    if (false) {
+                    if (isLast) {
                         console.log("Ending session due to motion stopped!");
                         break;
                     }
@@ -398,7 +454,10 @@ class ExampleCamera implements CameraStreamingDelegate, CameraRecordingDelegate 
 class MP4StreamingServer {
     readonly server: Server;
 
-    readonly debugMode: boolean = false; // TODO configurable
+    /**
+     * This can be configured to output ffmpeg debug output!
+     */
+    readonly debugMode: boolean = false;
 
     readonly ffmpegPath: string;
     readonly args: string[];
@@ -589,7 +648,6 @@ const cameraController = new CameraController({
                 type: MediaContainerType.FRAGMENTED_MP4,
                 fragmentLength: 4000,
             },
-            motionService: true,
             video: {
                 type: VideoCodecType.H264,
                 parameters: {
@@ -621,13 +679,19 @@ const cameraController = new CameraController({
         },
 
         delegate: streamDelegate,
+    },
+
+    sensors: {
+        motion: true,
+        occupancy: true,
     }
 });
 streamDelegate.controller = cameraController;
 
 camera.configureController(cameraController);
 
-camera.addService(Service.Switch)
+// a service to trigger the motion sensor!
+camera.addService(Service.Switch, "MOTION TRIGGER")
   .getCharacteristic(Characteristic.On)
   .onSet(value => {
      camera.getService(Service.MotionSensor)

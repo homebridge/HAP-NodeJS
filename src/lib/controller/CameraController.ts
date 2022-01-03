@@ -11,14 +11,15 @@ import {
   PrepareStreamRequest,
   PrepareStreamResponse,
   RecordingManagement,
-  RecordingManagementState, RecordingPacket,
+  RecordingManagementState,
+  RecordingPacket,
   RTPStreamManagement,
   RTPStreamManagementState,
   SnapshotRequest,
   StreamingRequest,
 } from "../camera";
 import { Characteristic, CharacteristicEventTypes, CharacteristicGetCallback, CharacteristicSetCallback } from "../Characteristic";
-import { HDSProtocolSpecificErrorReason, DataStreamManagement } from "../datastream";
+import { DataStreamManagement, HDSProtocolSpecificErrorReason } from "../datastream";
 import {
   CameraOperatingMode,
   CameraRecordingManagement,
@@ -26,6 +27,7 @@ import {
   Doorbell,
   Microphone,
   MotionSensor,
+  OccupancySensor,
   Speaker,
 } from "../definitions";
 import { HAPStatus } from "../HAPServer";
@@ -55,11 +57,19 @@ export interface CameraControllerOptions {
    */
   streamingOptions: CameraStreamingOptions,
 
+  /**
+   * When supplying this option, it will enable support for HomeKit Secure Video.
+   * This will create the {@link Service.CameraRecordingManagement}, {@link Service.CameraOperatingMode}
+   * and {@link Service.DataStreamTransportManagement} services.
+   *
+   * NOTE: The controller only initializes the required characteristics for the {@link Service.CameraOperatingMode}.
+   *   You may add optional characteristics, if required, by accessing the service directly {@link CameraController.recordingManagement.operatingModeService}.
+   */
   recording?: {
     /**
      * Options regarding Recordings (Secure Video)
      */
-    options: CameraRecordingOptions, // TODO motion service shouldn't be a recording option
+    options: CameraRecordingOptions,
 
     /**
       * Delegate which handles the audio/video recording data streaming on motion.
@@ -67,7 +77,39 @@ export interface CameraControllerOptions {
     delegate: CameraRecordingDelegate,
   }
 
-  // TODO motion and occupancy sensor?
+  /**
+   * This config section configures optional sensors for the camera.
+   * It e.g. may be used to set up a {@link EventTriggerOption.MOTION} trigger when configuring Secure Video.
+   *
+   * You may specify to enable the desired services either as a `boolean` flag. In this case the controller will create
+   * and maintain the service for you. Otherwise, you can supply an already created instance of the respective {@link Service}.
+   * In this case you are responsible to manage the service yourself (e.g. creating, restoring, ...).
+   *
+   * The services can be accessed through the documented property after the call to {@link Accessory.configureController} has returned.
+   */
+  sensors?: {
+    /**
+     * Define if a {@link Service.MotionSensor} should be created/associated with the controller.
+     *
+     * You may access the created service via the {@link CameraController.motionService} property to configure listeners.
+     *
+     * ## HomeKit Secure Video:
+     *
+     * If supplied, this sensor will be used as a {@link EventTriggerOption.MOTION} trigger.
+     * The characteristic {@link Characteristic.StatusActive} will be added, which is used to enable or disable the sensor.
+     */
+    motion?: Service | boolean;
+    /**
+     * Define if a {@link Service.OccupancySensor} should be created/associated with the controller.
+     *
+     * You may access the created service via the {@link CameraController.occupancyService} property to configure listeners.
+     *
+     * ## HomeKit Secure Video:
+     *
+     * The characteristic {@link Characteristic.StatusActive} will be added, which is used to enable or disable the sensor.
+     */
+    occupancy?: Service | boolean;
+  }
 }
 
 export type SnapshotRequestCallback = (error?: Error | HAPStatus, buffer?: Buffer) => void;
@@ -194,7 +236,7 @@ export interface CameraRecordingDelegate {
    *   the {@link CameraController.recordingManagement.operatingModeService} property.
    *
    * You might throw an error in this method if encountering a non-recoverable state.
-   * TODO custom error!
+   * You may throw a {@link HDSProtocolError} to manually define the {@link HDSProtocolSpecificErrorReason} for the `DATA_SEND` `CLOSE` event.
    *
    * There are three ways an ongoing recording stream can be closed:
    * - Closed by the Accessory: There are no further fragments to transmit. The delegate MUST signal this by setting {@link RecordingPacket.isLast}
@@ -240,7 +282,7 @@ export interface CameraRecordingDelegate {
    * @param reason - The reason with which the stream was closed.
    *  NOTE: This method is also called in case of a closed connection. This is encoded by setting the `reason` to undefined.
    */
-  closeRecordingStream(streamId: number, reason?: HDSProtocolSpecificErrorReason): void;
+  closeRecordingStream(streamId: number, reason: HDSProtocolSpecificErrorReason | undefined): void;
 }
 
 /**
@@ -257,6 +299,7 @@ export interface CameraControllerServiceMap extends ControllerServiceMap {
   dataStreamTransportManagement?: DataStreamTransportManagement,
 
   motionService?: MotionSensor,
+  occupancyService?: OccupancySensor,
 
   // this ServiceMap is also used by the DoorbellController; there is no necessity to declare it,
   // but I think its good practice to reserve the namespace
@@ -264,7 +307,6 @@ export interface CameraControllerServiceMap extends ControllerServiceMap {
 }
 
 interface CameraControllerState {
-  // TODO document indexes
   streamManagements: RTPStreamManagementState[];
   recordingManagement?: RecordingManagementState;
 }
@@ -311,6 +353,13 @@ export class CameraController extends EventEmitter implements SerializableContro
     options: CameraRecordingOptions,
     delegate: CameraRecordingDelegate,
   }
+  /**
+   * Temporary storage for the sensor option.
+   */
+  private sensorOptions?: {
+    motion?: Service | boolean;
+    occupancy?: Service | boolean;
+  }
   private readonly legacyMode: boolean = false;
 
   /**
@@ -331,8 +380,10 @@ export class CameraController extends EventEmitter implements SerializableContro
   private speakerMuted: boolean = false;
   private speakerVolume: number = 100;
 
-  // TODO move the motion sensor?
   motionService?: MotionSensor;
+  private motionServiceExternallySupplied: boolean = false;
+  occupancyService?: OccupancySensor;
+  private occupancyServiceExternallySupplied: boolean = false;
 
   constructor(options: CameraControllerOptions, legacyMode: boolean = false) {
     super();
@@ -340,8 +391,9 @@ export class CameraController extends EventEmitter implements SerializableContro
     this.delegate = options.delegate;
     this.streamingOptions = options.streamingOptions;
     this.recording = options.recording;
+    this.sensorOptions = options.sensors;
 
-    this.legacyMode = legacyMode; // legacy mode will prent from Microphone and Speaker services to get created to avoid collisions
+    this.legacyMode = legacyMode; // legacy mode will prevent from Microphone and Speaker services to get created to avoid collisions
   }
 
   /**
@@ -420,13 +472,12 @@ export class CameraController extends EventEmitter implements SerializableContro
   }
 
   // -----------------------------------------------------------------------------------
-
   /**
    * @private
    */
   constructServices(): CameraControllerServiceMap {
     for (let i = 0; i < this.streamCount; i++) {
-      const rtp = new RTPStreamManagement(i, this.streamingOptions, this.delegate);
+      const rtp = new RTPStreamManagement(i, this.streamingOptions, this.delegate, undefined, this.rtpStreamManagementDisabledThroughOperatingMode.bind(this));
       this.streamManagements.push(rtp);
     }
 
@@ -444,20 +495,39 @@ export class CameraController extends EventEmitter implements SerializableContro
 
     if (this.recording) {
       this.recordingManagement = new RecordingManagement(this.recording.options, this.recording.delegate, this.retrieveEventTriggerOptions());
+    }
 
-      if (this.recording.options.motionService) {
-        this.motionService = new MotionSensor('', '');
-        this.motionService.setCharacteristic(Characteristic.Active, 1);
 
-        this.recordingManagement.recordingManagementService.addLinkedService(this.motionService);
+    if (this.sensorOptions?.motion) {
+      if (typeof this.sensorOptions.motion === "boolean") {
+        this.motionService = new Service.MotionSensor('', '');
+      } else {
+        this.motionService = this.sensorOptions.motion;
+        this.motionServiceExternallySupplied = true;
       }
+
+      this.motionService.setCharacteristic(Characteristic.StatusActive, true);
+      this.recordingManagement?.recordingManagementService.addLinkedService(this.motionService);
+    }
+
+    if (this.sensorOptions?.occupancy) {
+      if (typeof this.sensorOptions.occupancy === "boolean") {
+        this.occupancyService = new Service.OccupancySensor('', '');
+      } else {
+        this.occupancyService = this.sensorOptions.occupancy;
+        this.occupancyServiceExternallySupplied = true;
+      }
+
+      this.occupancyService.setCharacteristic(Characteristic.StatusActive, true);
+      this.recordingManagement?.recordingManagementService.addLinkedService(this.occupancyService);
     }
 
 
     const serviceMap: CameraControllerServiceMap = {
       microphone: this.microphoneService,
       speaker: this.speakerService,
-      motionService: this.motionService,
+      motionService: !this.motionServiceExternallySupplied ? this.motionService : undefined,
+      occupancyService: !this.occupancyServiceExternallySupplied ? this.occupancyService : undefined,
     };
 
     if (this.recordingManagement) {
@@ -471,6 +541,7 @@ export class CameraController extends EventEmitter implements SerializableContro
     });
 
     this.recording = undefined;
+    this.sensorOptions = undefined;
 
     return serviceMap;
   }
@@ -486,9 +557,9 @@ export class CameraController extends EventEmitter implements SerializableContro
 
       if (i < this.streamCount) {
         if (streamManagementService) { // normal init
-          this.streamManagements.push(new RTPStreamManagement(i, this.streamingOptions, this.delegate, streamManagementService));
+          this.streamManagements.push(new RTPStreamManagement(i, this.streamingOptions, this.delegate, streamManagementService, this.rtpStreamManagementDisabledThroughOperatingMode.bind(this)));
         } else { // stream count got bigger, we need to create a new service
-          const management = new RTPStreamManagement(i, this.streamingOptions, this.delegate);
+          const management = new RTPStreamManagement(i, this.streamingOptions, this.delegate, undefined, this.rtpStreamManagementDisabledThroughOperatingMode.bind(this));
 
           this.streamManagements.push(management);
           serviceMap[CameraController.STREAM_MANAGEMENT + i] = management.getService();
@@ -569,16 +640,6 @@ export class CameraController extends EventEmitter implements SerializableContro
         serviceMap.dataStreamTransportManagement = this.recordingManagement.dataStreamManagement.getService();
         modifiedServiceMap = true;
       }
-
-      // MOTION SERVICE
-      if (this.recording.options.motionService && !serviceMap.motionService) {
-        this.motionService = new Service.MotionSensor('', '');
-        serviceMap.motionService = this.motionService
-        modifiedServiceMap = true;
-      } else if (!this.recording.options.motionService && serviceMap.motionService) {
-        delete serviceMap.motionService;
-        modifiedServiceMap = true;
-      }
     } else {
       if (serviceMap.cameraEventRecordingManagement) {
         delete serviceMap.cameraEventRecordingManagement;
@@ -592,8 +653,66 @@ export class CameraController extends EventEmitter implements SerializableContro
         delete serviceMap.dataStreamTransportManagement;
         modifiedServiceMap = true;
       }
+    }
+
+    // MOTION SENSOR
+    if (this.sensorOptions?.motion) {
+      if (typeof this.sensorOptions.motion === "boolean") {
+        if (serviceMap.motionService) {
+          this.motionService = serviceMap.motionService;
+        } else {
+          // it could be the case that we previously had a manually supplied motion service
+          // at this point we can't remove the iid from the list of linked services from the recording management!
+          this.motionService = new Service.MotionSensor('', '');
+        }
+      } else {
+        this.motionService = this.sensorOptions.motion;
+        this.motionServiceExternallySupplied = true;
+
+        if (serviceMap.motionService) { // motion service previously supplied as bool option
+          this.recordingManagement?.recordingManagementService.removeLinkedService(serviceMap.motionService);
+          delete serviceMap.motionService;
+          modifiedServiceMap = true;
+        }
+      }
+
+      this.motionService.setCharacteristic(Characteristic.StatusActive, true);
+      this.recordingManagement?.recordingManagementService.addLinkedService(this.motionService);
+    } else {
       if (serviceMap.motionService) {
+        this.recordingManagement?.recordingManagementService.removeLinkedService(serviceMap.motionService);
         delete serviceMap.motionService;
+        modifiedServiceMap = true;
+      }
+    }
+
+    // OCCUPANCY SENSOR
+    if (this.sensorOptions?.occupancy) {
+      if (typeof this.sensorOptions.occupancy === "boolean") {
+        if (serviceMap.occupancyService) {
+          this.occupancyService = serviceMap.occupancyService;
+        } else {
+          // it could be the case that we previously had a manually supplied occupancy service
+          // at this point we can't remove the iid from the list of linked services from the recording management!
+          this.occupancyService = new Service.OccupancySensor('', '');
+        }
+      } else {
+        this.occupancyService = this.sensorOptions.occupancy;
+        this.occupancyServiceExternallySupplied = true;
+
+        if (serviceMap.occupancyService) { // occupancy service previously supplied as bool option
+          this.recordingManagement?.recordingManagementService.removeLinkedService(serviceMap.occupancyService);
+          delete serviceMap.occupancyService;
+          modifiedServiceMap = true;
+        }
+      }
+
+      this.occupancyService.setCharacteristic(Characteristic.StatusActive, true);
+      this.recordingManagement?.recordingManagementService.addLinkedService(this.occupancyService);
+    } else {
+      if (serviceMap.occupancyService) {
+        this.recordingManagement?.recordingManagementService.removeLinkedService(serviceMap.occupancyService);
+        delete serviceMap.occupancyService;
         modifiedServiceMap = true;
       }
     }
@@ -603,6 +722,7 @@ export class CameraController extends EventEmitter implements SerializableContro
     }
 
     this.recording = undefined;
+    this.sensorOptions = undefined;
 
     if (modifiedServiceMap) { // serviceMap must only be returned if anything actually changed
       return serviceMap;
@@ -632,8 +752,7 @@ export class CameraController extends EventEmitter implements SerializableContro
       }
     }
 
-    // TODO revise heuristic, once we have revised the situation around passing motion sensors
-    if (this.recording.options.motionService) {
+    if (this.sensorOptions?.motion) {
       triggerOptions.add(EventTriggerOption.MOTION);
     }
 
@@ -687,7 +806,22 @@ export class CameraController extends EventEmitter implements SerializableContro
           this.emitSpeakerChange();
         });
     }
+
+    // make the sensor services available to the RecordingManagement.
+    if (this.motionService) {
+      this.recordingManagement?.sensorServices.push(this.motionService);
+    }
+    if (this.occupancyService) {
+      this.recordingManagement?.sensorServices.push(this.occupancyService);
+    }
   }
+
+  private rtpStreamManagementDisabledThroughOperatingMode(): boolean {
+    return this.recordingManagement
+      ? !!this.recordingManagement.operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive).value
+      : false;
+  }
+
 
   /**
    * @private
@@ -778,7 +912,7 @@ export class CameraController extends EventEmitter implements SerializableContro
     const streamingDisabled = this.streamManagements
       .map(management => !management.getService().getCharacteristic(Characteristic.Active).value)
       .reduce((previousValue, currentValue) => previousValue && currentValue);
-    if (streamingDisabled) { // TODO test case!
+    if (streamingDisabled) {
       return Promise.reject(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
     }
 
