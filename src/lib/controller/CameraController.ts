@@ -83,7 +83,7 @@ export interface CameraControllerOptions {
    *
    * You may specify to enable the desired services either as a `boolean` flag. In this case the controller will create
    * and maintain the service for you. Otherwise, you can supply an already created instance of the respective {@link Service}.
-   * In this case you are responsible to manage the service yourself (e.g. creating, restoring, ...).
+   * In this case you are responsible to manage the service yourself (e.g. creating, restoring, adding to accessory, ...).
    *
    * The services can be accessed through the documented property after the call to {@link Accessory.configureController} has returned.
    */
@@ -550,6 +550,14 @@ export class CameraController extends EventEmitter implements SerializableContro
    * @private
    */
   initWithServices(serviceMap: CameraControllerServiceMap): void | CameraControllerServiceMap {
+    const result = this._initWithServices(serviceMap);
+
+    if (result.updated) { // serviceMap must only be returned if anything actually changed
+      return result.serviceMap;
+    }
+  }
+
+  protected _initWithServices(serviceMap: CameraControllerServiceMap): { serviceMap: CameraControllerServiceMap, updated: boolean } {
     let modifiedServiceMap = false;
 
     for (let i = 0; true; i++) {
@@ -724,8 +732,9 @@ export class CameraController extends EventEmitter implements SerializableContro
     this.recording = undefined;
     this.sensorOptions = undefined;
 
-    if (modifiedServiceMap) { // serviceMap must only be returned if anything actually changed
-      return serviceMap;
+    return {
+      serviceMap: serviceMap,
+      updated: modifiedServiceMap,
     }
   }
 
