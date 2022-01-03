@@ -86,6 +86,25 @@ export enum HDSProtocolSpecificErrorReason { // close reason used in the dataSen
     INVALID_CONFIGURATION = 9,
 }
 
+/**
+ * An error indicating a protocol level HDS error.
+ * E.g. it may be used to encode a {@link HDSStatus.PROTOCOL_SPECIFIC_ERROR} in the {@link Protocols.DATA_SEND} protocol.
+ */
+export class HDSProtocolError extends Error {
+    reason: HDSProtocolSpecificErrorReason
+
+    /**
+     * Initializes a new `HDSProtocolError`
+     * @param reason - The {@link HDSProtocolSpecificErrorReason}.
+     *  Values MUST NOT be {@link HDSProtocolSpecificErrorReason.NORMAL}.
+     */
+    constructor(reason: HDSProtocolSpecificErrorReason) {
+        super("HDSProtocolError: " + reason);
+        assert(reason != HDSProtocolSpecificErrorReason.NORMAL, "Cannot initialize a HDSProtocolError with NORMAL!");
+        this.reason = reason;
+    }
+}
+
 
 const enum ServerState {
     UNINITIALIZED, // server socket hasn't been created

@@ -129,9 +129,11 @@ export interface CameraStreamingDelegate {
  * - Once the recording event is finished the camera will reset the state accordingly
  *   (e.g. in the {@link Service.MotionSensor} or {@link Service.Doorbell} service).
  *   It will continue to send the remaining fragments of the currently ongoing recording stream request.
+ * - The camera will either reach the end of the recording (and signal this via {@link RecordingPacket.isLast}. Also see {@link acknowledgeStream})
+ *   or it will continue to stream til the HomeKit Controller closes the stream {@link closeRecordingStream with reason {@link HDSProtocolSpecificErrorReason.NORMAL}}.
  * - The camera goes back into idle mode.
  */
-export interface CameraRecordingDelegate { // TODO catch errors of all those calls!
+export interface CameraRecordingDelegate {
   /**
    * A call to this method notifies the `CameraRecordingDelegate` about a change to the
    * `CameraRecordingManagement.Active` characteristic. This characteristic controls
@@ -140,9 +142,9 @@ export interface CameraRecordingDelegate { // TODO catch errors of all those cal
    * If recording is disabled the camera can stop maintaining its prebuffer.
    * If recording is enabled the camera should start recording into its prebuffer.
    *
-   * A `CameraRecordingDelegate` should assume active to be `false` on first initialization.
+   * A `CameraRecordingDelegate` should assume active to be `false` on startup.
    * HAP-NodeJS will persist the state of the `Active` characteristic across reboots
-   * and will call {@link updateRecordingActive} accordingly, if recording was previously enabled.
+   * and will call {@link updateRecordingActive} accordingly on startup, if recording was previously enabled.
    *
    * NOTE: HAP-NodeJS cannot guarantee that a {@link CameraRecordingConfiguration} is present
    * when recording is activated (e.g. the selected configuration might be erased due to changes
@@ -159,11 +161,10 @@ export interface CameraRecordingDelegate { // TODO catch errors of all those cal
   /**
    * A call to this method signals that the selected (by the HomeKit Controller)
    * recording configuration of the camera has changed.
-   * The method is called if one of both or both values were changed.
    *
-   * On startup the delegate should assume `configuration = undefined` and `audioActive = false`.
+   * On startup the delegate should assume `configuration = undefined`.
    * HAP-NodeJS will persist the state of both across reboots and will call
-   * {@link updateRecordingConfiguration} if there is a **selected configuration** present.
+   * {@link updateRecordingConfiguration} on startup if there is a **selected configuration** present.
    *
    * NOTE: An update to the recording configuration might happen while there is still a running
    * recording stream. The camera MUST continue to use the previous configuration for the
@@ -172,20 +173,13 @@ export interface CameraRecordingDelegate { // TODO catch errors of all those cal
    * @param configuration - The {@link CameraRecordingConfiguration}. Reconfigure your recording pipeline accordingly.
    *  The parameter might be `undefined` when the selected configuration became invalid. This typically ony happens
    *  e.g. due to a factory reset (when all pairings are removed). Disable the recording pipeline in such a case
-   *  even if recording is still activated.
-   * @param audioActive - Defines if the mp4 fragments include audio or not.
-   *  TODO a bit weird that audioActive is marshalled into here!
+   *  even if recording is still enabled for the camera.
    */
-  updateRecordingConfiguration(configuration: CameraRecordingConfiguration | undefined, audioActive: boolean): void;
-
-  // TODO update documentation to the latest changes!
+  updateRecordingConfiguration(configuration: CameraRecordingConfiguration | undefined): void;
 
   /**
    * This method is called to stream the next recording event.
    * It is guaranteed that there is only ever one ongoing recording stream request at a time.
-   * TODO depending on how slow yield is, it may overlap a bit with the last frame!
-   *
-   * TODO must try-catch yield in the current configuration!
    *
    * When this method is called return the currently ongoing (or next in case of a potentially queued)
    * recording via a `AsyncGenerator`. Every `yield` of the generator represents a complete recording `packet`.
@@ -195,38 +189,58 @@ export interface CameraRecordingDelegate { // TODO catch errors of all those cal
    * and must not be longer than the specified duration set via the {@link CameraRecordingConfiguration.mediaContainerConfiguration.fragmentLength}
    * **selected** by the HomeKit Controller in {@link updateRecordingConfiguration}.
    *
+   * NOTE: You MUST respect the value of {@link Characteristic.RecordingAudioActive} characteristic of the {@link Service.CameraOperatingMode}
+   *   service. When the characteristic is set to false you MUST NOT include audio in the mp4 fragments. You can access the characteristic via
+   *   the {@link CameraController.recordingManagement.operatingModeService} property.
+   *
    * You might throw an error in this method if encountering a non-recoverable state.
+   * TODO custom error!
+   *
+   * There are three ways an ongoing recording stream can be closed:
+   * - Closed by the Accessory: There are no further fragments to transmit. The delegate MUST signal this by setting {@link RecordingPacket.isLast}
+   *   to `true`. Once the HomeKit Controller receives this last fragment it will call {@link acknowledgeStream} to notify the accessory about
+   *   the successful transmission.
+   * - Closed by the HomeKit Controller (expectedly): After the event trigger has been reset, the accessory continues to stream fragments.
+   *   At some point the HomeKit Controller will decide to shut down the stream by calling {@link closeRecordingStream} with a reason
+   *   of {@link HDSProtocolSpecificErrorReason.NORMAL}.
+   * - Closed by the HomeKit Controller (unexpectedly): A HomeKit Controller might at any point decide to close a recording stream
+   *   if it encounters erroneous state. This is signaled by a call to {@link closeRecordingStream} with the respective reason.
+   *
+   * Once a close of stream is signaled, the `AsyncGenerator` function must return gracefully.
    *
    * For more information about `AsyncGenerator`s you might have a look at:
    * * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of
    *
-   * TODO document yield throwing or closeRecrodingStream (immediate + if already completed)
-   *   => you may rethrow the error!
-   *
    * NOTE: HAP-NodeJS guarantees that this method is only called with a valid selected {@link CameraRecordingConfiguration}.
+   *
+   * NOTE: Don't rely on the streamId for unique identification. Two {@link DataStreamConnection}s might share the same identifier space.
    *
    * @param streamId - The streamId of the currently ongoing stream.
    */
-  handleRecordingStreamRequest(streamId: number): AsyncGenerator<RecordingPacket>; // TODO remove streamId as it may overlap if used with multiple controllers
+  handleRecordingStreamRequest(streamId: number): AsyncGenerator<RecordingPacket>;
 
-  // TODO document
+  /**
+   * This method is called once the HomeKit Controller acknowledges the `endOfStream`.
+   * A `endOfStream` is sent by the accessory by setting {@link RecordingPacket.isLast} to `true` in the last packet yielded
+   * by the {@link handleRecordingStreamRequest} `AsyncGenerator`.
+   *
+   * @param streamId - The streamId of the acknowledged stream.
+   */
   acknowledgeStream?(streamId: number): void;
 
   /**
-   * This method is called to notify the Delegate that a recording stream started via {@link handleRecordingStreamRequest}
-   * was closed.
+   * This method is called to notify the delegate that a recording stream started via {@link handleRecordingStreamRequest} was closed.
    *
    * The method is also called if an ongoing recording stream is closed gracefully (using {@link HDSProtocolSpecificErrorReason.NORMAL}).
    * In either case, the delegate should stop supplying further fragments to the recording stream.
+   * The `AsyncGenerator` function must return without yielding any further {@link RecordingPacket}s.
    * HAP-NodeJS won't send out any fragments from this point onwards.
-   *
-   * TODO document yield throwing!
    *
    * @param streamId - The streamId for which the close event was sent.
    * @param reason - The reason with which the stream was closed.
-   *  NOTE: This method is also called in case of a closed connection. This encoded by supplying `undefined` as the `reason`.
+   *  NOTE: This method is also called in case of a closed connection. This is encoded by setting the `reason` to undefined.
    */
-  closeRecordingStream(streamId: number, reason?: HDSProtocolSpecificErrorReason): void; // TODO optional?
+  closeRecordingStream(streamId: number, reason?: HDSProtocolSpecificErrorReason): void;
 }
 
 /**
@@ -435,7 +449,7 @@ export class CameraController extends EventEmitter implements SerializableContro
         this.motionService = new MotionSensor('', '');
         this.motionService.setCharacteristic(Characteristic.Active, 1);
 
-        this.recordingManagement.getServices().recordingManagement.addLinkedService(this.motionService);
+        this.recordingManagement.recordingManagementService.addLinkedService(this.motionService);
       }
     }
 
@@ -447,10 +461,9 @@ export class CameraController extends EventEmitter implements SerializableContro
     };
 
     if (this.recordingManagement) {
-      const services = this.recordingManagement.getServices();
-      serviceMap.cameraEventRecordingManagement = services.recordingManagement;
-      serviceMap.cameraOperatingMode = services.operatingMode;
-      serviceMap.dataStreamTransportManagement = services.dataStreamManagement.getService();
+      serviceMap.cameraEventRecordingManagement = this.recordingManagement.recordingManagementService;
+      serviceMap.cameraOperatingMode = this.recordingManagement.operatingModeService;
+      serviceMap.dataStreamTransportManagement = this.recordingManagement.dataStreamManagement.getService();
     }
 
     this.streamManagements.forEach((management, index) => {
@@ -551,10 +564,9 @@ export class CameraController extends EventEmitter implements SerializableContro
           eventTriggers
         );
 
-        let services = this.recordingManagement.getServices();
-        serviceMap.cameraEventRecordingManagement = services.recordingManagement;
-        serviceMap.cameraOperatingMode = services.operatingMode;
-        serviceMap.dataStreamTransportManagement = services.dataStreamManagement.getService();
+        serviceMap.cameraEventRecordingManagement = this.recordingManagement.recordingManagementService;
+        serviceMap.cameraOperatingMode = this.recordingManagement.operatingModeService;
+        serviceMap.dataStreamTransportManagement = this.recordingManagement.dataStreamManagement.getService();
         modifiedServiceMap = true;
       }
 

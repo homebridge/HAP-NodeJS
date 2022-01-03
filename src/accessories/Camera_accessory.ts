@@ -295,7 +295,6 @@ class ExampleCamera implements CameraStreamingDelegate, CameraRecordingDelegate 
 
     // TODO move
     configuration?: CameraRecordingConfiguration;
-    audioActive?: boolean;
     handlingStreamingRequest: boolean = false;
     server?: MP4StreamingServer;
 
@@ -304,9 +303,8 @@ class ExampleCamera implements CameraStreamingDelegate, CameraRecordingDelegate 
         console.log("Recording active set to " + active);
     }
 
-    updateRecordingConfiguration(configuration: CameraRecordingConfiguration | undefined, audioActive: boolean): void {
+    updateRecordingConfiguration(configuration: CameraRecordingConfiguration | undefined): void {
         this.configuration = configuration;
-        this.audioActive = audioActive;
         console.log(configuration);
     }
 
@@ -341,7 +339,7 @@ class ExampleCamera implements CameraStreamingDelegate, CameraRecordingDelegate 
           "ffmpeg",
           `-f lavfi -i testsrc=s=${this.configuration.videoCodec.resolution[0]}x${this.configuration.videoCodec.resolution[1]}:r=${this.configuration.videoCodec.resolution[2]}`
             .split(/ /g),
-          [],
+          [], // TODO audio parameters!
           videoArgs,
         );
 

@@ -9,7 +9,7 @@ import {
   DataStreamConnectionEvent,
   DataStreamManagement,
   DataStreamProtocolHandler,
-  EventHandler,
+  EventHandler, HDSProtocolError,
   HDSProtocolSpecificErrorReason,
   HDSStatus,
   Protocols,
@@ -286,7 +286,7 @@ export interface RecordingPacket {
 }
 
 
-export interface RecordingManagementServices {
+interface RecordingManagementServices {
   recordingManagement: CameraRecordingManagement;
   operatingMode: CameraOperatingMode;
   dataStreamManagement: DataStreamManagement;
@@ -387,14 +387,6 @@ export class RecordingManagement {
     this.supportedAudioRecordingConfiguration = this._supportedAudioStreamConfiguration(options.audio);
 
     this.setupServiceHandlers();
-  }
-
-  getServices(): RecordingManagementServices {
-    return {
-      recordingManagement: this.recordingManagementService,
-      operatingMode: this.operatingModeService,
-      dataStreamManagement: this.dataStreamManagement,
-    };
   }
 
   private constructService(): RecordingManagementServices {
@@ -530,10 +522,7 @@ export class RecordingManagement {
       base64: value,
     };
 
-    this.delegate.updateRecordingConfiguration(
-      this.selectedConfiguration.parsed,
-      !!this.recordingManagementService.getCharacteristic(Characteristic.RecordingAudioActive).value,
-    );
+    this.delegate.updateRecordingConfiguration(this.selectedConfiguration.parsed);
 
     // notify controller storage about updated values!
     this.stateChangeDelegate?.();
@@ -771,10 +760,16 @@ export class RecordingManagement {
     this.operatingModeService.updateCharacteristic(Characteristic.HomeKitCameraActive, serialized.homeKitCameraActive);
     this.operatingModeService.updateCharacteristic(Characteristic.PeriodicSnapshotsActive, serialized.periodicSnapshotsActive);
 
-    if (this.selectedConfiguration) {
-      this.delegate.updateRecordingConfiguration(this.selectedConfiguration.parsed, serialized.recordingAudioActive);
+    try {
+      if (this.selectedConfiguration) {
+        this.delegate.updateRecordingConfiguration(this.selectedConfiguration.parsed);
+      }
+      if (serialized.recordingActive) {
+        this.delegate.updateRecordingActive(serialized.recordingActive);
+      }
+    } catch (error) {
+      console.error("Failed to properly initialize CameraRecordingDelegate from persistent storage: " + error.stack);
     }
-    this.delegate.updateRecordingActive(serialized.recordingActive);
 
     if (changedState) {
       this.stateChangeDelegate?.();
@@ -802,9 +797,13 @@ export class RecordingManagement {
     this.operatingModeService.updateCharacteristic(Characteristic.EventSnapshotsActive, true);
     this.operatingModeService.updateCharacteristic(Characteristic.PeriodicSnapshotsActive, false);
 
-    // notifying the delegate about the updated state
-    this.delegate.updateRecordingActive(false);
-    this.delegate.updateRecordingConfiguration(undefined, false);
+    try {
+      // notifying the delegate about the updated state
+      this.delegate.updateRecordingActive(false);
+      this.delegate.updateRecordingConfiguration(undefined);
+    } catch (error) {
+      console.error("CameraRecordingDelegate failed to update state after handleFactoryReset: " + error.stack);
+    }
   }
 }
 
@@ -875,13 +874,15 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
     let initialization = true;
     let dataSequenceNumber = 1;
 
+    // tracks if the last received RecordingPacket was yielded with `isLast=true`.
+    let lastFragmentWasMarkedLast = false;
+
     try {
       this.generator = this.delegate.handleRecordingStreamRequest(this.streamId);
 
       for await (const packet of this.generator) {
         if (this.closed) {
-          // TODO this can be considered an error!
-          debug("[HDS %s] Received fragment after closed stream %d.", this.connection.remoteAddress, this.streamId);
+          console.error(`[HDS ${this.connection.remoteAddress}] Delegate yielded fragment after stream ${this.streamId} was already closed!`);
           break;
         }
 
@@ -917,20 +918,37 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
           initialization = false;
         }
 
+        lastFragmentWasMarkedLast = packet.isLast;
+
         if (packet.isLast) {
           break;
         }
 
         dataSequenceNumber++;
       }
-    } catch (error) {
-      // TODO add support for "expected" errors!
-      console.warn("[HDS %s] Encountered unexpected error handling recording stream request: %s", this.connection.remoteAddress, error.stack);
 
-      this.connection.sendEvent(Protocols.DATA_SEND, Topics.CLOSE, {
-        streamId: this.streamId,
-        reason: HDSProtocolSpecificErrorReason.UNEXPECTED_FAILURE,
-      });
+      if (!lastFragmentWasMarkedLast && !this.closed) {
+        // Delegate violates the contract. Exited normally on a non-closed stream without properly setting `isLast`.
+        console.warn(`[HDS ${this.connection.remoteAddress}] Delegate finished streaming for ${this.streamId} without setting RecordingPacket.isLast. Can't notify Controller about endOfStream!`);
+      }
+    } catch (error) {
+      if (this.closed) {
+        console.warn(`[HDS ${this.connection.remoteAddress}] Encountered unexpected error on already closed recording stream ${this.streamId}: ${error.stack}`);
+      } else {
+        let closeReason = HDSProtocolSpecificErrorReason.UNEXPECTED_FAILURE;
+
+        if (error instanceof HDSProtocolError) {
+          closeReason = error.reason;
+          debug("[HDS %s] Delegate signaled to close the recording stream %d", this.connection.remoteAddress, this.streamId);
+        } else {
+          console.error(`[HDS ${this.connection.remoteAddress}] Encountered unexpected error for recording stream ${this.streamId}: ${error.stack}`);
+        }
+
+        this.connection.sendEvent(Protocols.DATA_SEND, Topics.CLOSE, {
+          streamId: this.streamId,
+          reason: closeReason,
+        });
+      }
       return;
     } finally {
       this.generator = undefined;
@@ -940,7 +958,9 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
       }
     }
 
-    // TODO notify about error if no single packet was returned!
+    if (initialization) { // we never actually sent anything out there!
+      console.warn(`[HDS ${this.connection.remoteAddress}] Delegate finished recording stream ${this.streamId} without sending anything out. Controller will CANCEL.`);
+    }
 
     debug("[HDS %s] Finished DATA_SEND transmission for stream %d!", this.connection.remoteAddress, this.streamId);
   }
@@ -995,7 +1015,11 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
       }, 10000);
     }
 
-    closure();
+    try {
+      closure();
+    } catch (error) {
+      console.error(`[HDS ${this.connection.remoteAddress}] CameraRecordingDelegated failed to handle closing the stream ${this.streamId}: ${error.stack}`);
+    }
 
     this.emit(CameraRecordingStreamEvents.CLOSED);
   }
