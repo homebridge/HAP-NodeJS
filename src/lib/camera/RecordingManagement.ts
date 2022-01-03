@@ -5,12 +5,12 @@ import { VideoCodecType } from ".";
 import { Access, Characteristic, CharacteristicEventTypes } from "../Characteristic";
 import { AudioBitrate, CameraRecordingDelegate, StateChangeDelegate } from "../controller";
 import {
-  HDSProtocolSpecificErrorReason,
   DataStreamConnection,
   DataStreamConnectionEvent,
   DataStreamManagement,
   DataStreamProtocolHandler,
   EventHandler,
+  HDSProtocolSpecificErrorReason,
   HDSStatus,
   Protocols,
   RequestHandler,
@@ -171,6 +171,9 @@ export interface SelectedH264CodecParameters {
   profile: H264Profile,
   level: H264Level,
   bitRate: number,
+  /**
+   * The selected i-frame interval in milliseconds.
+   */
   iFrameInterval: number,
 }
 
@@ -418,25 +421,25 @@ export class RecordingManagement {
 
     this.recordingManagementService.getCharacteristic(Characteristic.Active)
       .onSet(value => this.delegate.updateRecordingActive(!!value))
-      .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate && this.stateChangeDelegate())
+      .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate?.())
       .setProps({ adminOnlyAccess: [Access.WRITE] });
 
     this.recordingManagementService.getCharacteristic(Characteristic.RecordingAudioActive)
-      .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate && this.stateChangeDelegate())
+      .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate?.())
 
     this.operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive)
-      .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate && this.stateChangeDelegate())
+      .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate?.())
       .setProps({ adminOnlyAccess: [Access.WRITE] });
     // TODO if set to false: send DataSend close with reason=HDSProtocolSpecificErrorReason.NOT_ALLOWED
     //   => + tear down HDS Connections!
     // TODO => set `Active` of MotionSensor and OccupancySensor to false as well!
 
     this.operatingModeService.getCharacteristic(Characteristic.EventSnapshotsActive)
-      .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate && this.stateChangeDelegate())
+      .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate?.())
       .setProps({ adminOnlyAccess: [Access.WRITE] });
 
     this.operatingModeService.getCharacteristic(Characteristic.PeriodicSnapshotsActive)
-      .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate && this.stateChangeDelegate())
+      .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate?.())
       .setProps({ adminOnlyAccess: [Access.WRITE] });
 
     this.dataStreamManagement
@@ -490,7 +493,7 @@ export class RecordingManagement {
       return;
     }
 
-    debug("[HDS %s] HDS DATA_SEND Open with reason %s.", connection.remoteAddress, reason);
+    debug("[HDS %s] HDS DATA_SEND Open with reason '%s'.", connection.remoteAddress, reason);
 
     this.recordingStream = new CameraRecordingStream(connection, this.delegate, id, streamId);
     this.recordingStream.on(CameraRecordingStreamEvents.CLOSED, () => {
@@ -522,7 +525,7 @@ export class RecordingManagement {
     );
 
     // notify controller storage about updated values!
-    this.stateChangeDelegate && this.stateChangeDelegate();
+    this.stateChangeDelegate?.();
   }
 
   private parseSelectedConfiguration(value: string): CameraRecordingConfiguration {
@@ -763,7 +766,7 @@ export class RecordingManagement {
     this.delegate.updateRecordingActive(serialized.recordingActive);
 
     if (changedState) {
-      this.stateChangeDelegate && this.stateChangeDelegate();
+      this.stateChangeDelegate?.();
     }
   }
 
@@ -807,7 +810,7 @@ class RecordingSessionError extends Error {
   type: RecordingSessionErrorType;
 
   constructor(type: RecordingSessionErrorType) {
-    super();
+    super("RecordingSessionError: " + type);
     this.type = type;
   }
 }
@@ -837,6 +840,7 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
   readonly delegate: CameraRecordingDelegate;
   readonly hdsRequestId: number;
   readonly streamId: number;
+  private closed: boolean = false;
 
   eventHandler?: Record<string, EventHandler> = {
     [Topics.CLOSE]: this.handleDataSendClose.bind(this),
@@ -846,7 +850,7 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
 
   private readonly closeListener: () => void;
 
-  private generator?: AsyncGenerator<Buffer>;
+  private generator?: AsyncGenerator<{ data: Buffer, last: boolean }>;
 
   constructor(connection: DataStreamConnection, delegate: CameraRecordingDelegate, requestId: number, streamId: number) {
     super();
@@ -865,6 +869,7 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
   }
 
   private async _startStreaming() {
+    debug("[HDS %s] Sending DATA_SEND OPEN response for streamId %d", this.connection.remoteAddress, this.streamId);
     this.connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, this.hdsRequestId, HDSStatus.SUCCESS, {
       status: HDSStatus.SUCCESS,
     });
@@ -879,7 +884,14 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
     try {
       this.generator = this.delegate.handleRecordingStreamRequest(this.streamId);
 
-      for await (const fragment of this.generator) {
+      for await (const next of this.generator) {
+        if (this.closed) {
+          debug("[HDS %s] Received fragment after closed stream %d.", this.connection.remoteAddress, this.streamId);
+          break;
+        }
+
+        const fragment = next.data;
+
         let offset = 0;
         let dataChunkSequenceNumber = 1;
         while (offset < fragment.length) {
@@ -897,10 +909,13 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
                 dataChunkSequenceNumber: dataChunkSequenceNumber,
                 isLastDataChunk: offset >= fragment.length,
                 dataTotalSize: dataChunkSequenceNumber == 1 ? fragment.length : undefined,
-              }
+              },
             }],
+            endOfStream: offset >= fragment.length ? !!next.last : undefined,
           };
 
+          debug("[HDS %s] Sending DATA_SEND DATA for stream %d with metadata: %o and length %d; EoS: %s",
+            this.connection.remoteAddress, this.streamId, event.packets[0].metadata, data.length, event.endOfStream);
           this.connection.sendEvent(Protocols.DATA_SEND, Topics.DATA, event);
 
           dataChunkSequenceNumber++;
@@ -916,23 +931,34 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
       }
 
       // TODO add support for "expected" errors!
-      //   log the error!
+      console.warn("[HDS %s] Encountered unexpected error handling recording stream request: %s", error.stack);
 
       this.connection.sendEvent(Protocols.DATA_SEND, Topics.CLOSE, {
         streamId: this.streamId,
         reason: HDSProtocolSpecificErrorReason.UNEXPECTED_FAILURE,
       });
       return;
+    } finally {
+      // this is essential to not crash. See `handleDataSendClose`.
+      this.generator = undefined;
     }
 
-    // TODO do we need to send a end of stream (or rather can we? without having any packets)?
+    debug("[HDS %s] Finished DATA_SEND transmission for stream %d!", this.connection.remoteAddress, this.streamId);
   }
 
   private handleDataSendAck(message: Record<any, any>) {
     const streamId: any = message.streamId;
     const endOfStream: any = message.endOfStream;
 
-    debug("[HDS %s] Received DATA_SEND ACK packet for streamId %s. Acknowledged %s.", streamId, endOfStream);
+    // The HomeKit Controller will send a DATA_SEND ACK if we set the `endOfStream` flag in the last packet
+    // of our DATA_SEND DATA packet.
+    // To my testing the session is then considered complete and the HomeKit controller will close the HDS Connection after 5 seconds.
+
+    debug("[HDS %s] Received DATA_SEND ACK packet for streamId %s. Acknowledged %s.", this.connection.remoteAddress, streamId, endOfStream);
+
+    this.handlePreClosed();
+    this.delegate.acknowledgeStream?.(this.streamId);
+    this.handlePostClosed();
   }
 
   private handleDataSendClose(message: Record<any, any>) {
@@ -944,25 +970,48 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
       return;
     }
 
+    debug("[HDS %s] Received DATA_SEND CLOSE for streamId %d with reason %s",
+      this.connection.remoteAddress, streamId, reason);
+
+    this.handlePreClosed();
+
+    this.delegate.closeRecordingStream?.(streamId, reason);
+    /**
+     * `throw` is not necessarily intuitive. And there aren't really any good resources documenting the feature.
+     * We are basically "injecting" an error into the generator. Meaning, if the generator HAS NOT RETURNED yet,
+     * the next `yield` call with throw the error which we pass to this method.
+     * Meaning, in an async generator it might not throw instantly. It throws when it reaches yield.
+     * That's the reason why we have `closeRecordingStream`, to immediately notify the delegate about a closing stream.
+     * Another speciality, if the generator already completed (aka the generator function returned),
+     * the error is "uncatchable" (could be handled by subscribing to the `uncaughtException` event) and will just crash the node instance.
+     * Therefore, the optional chaining syntax here. We reset the generator property to `undefined` once the iterator completed.
+     * That's also the second reason to have `closeRecordingStream`. Once the generator completed there is no way
+     * to be notified about the result of the recording.
+     */
     this.generator?.throw(new RecordingSessionError(RecordingSessionErrorType.DATA_SEND_CLOSE));
-    this.delegate.closeRecordingStream(streamId, reason);
 
-    this.connection.removeProtocolHandler(Protocols.DATA_SEND, this);
-
-    this.handleClosed();
+    this.handlePostClosed();
   }
 
   private handleDataStreamConnectionClosed() {
+    debug("[HDS %s] The HDS connection of the stream %d closed.", this.connection.remoteAddress, this.streamId);
+
+    this.handlePreClosed();
+
+    this.delegate.closeRecordingStream?.(this.streamId, HDSProtocolSpecificErrorReason.CANCELLED);
+    // see above for explanation on how `throw` works
     this.generator?.throw(new RecordingSessionError(RecordingSessionErrorType.CONNECTION_CLOSE));
-    // TODO do we need to encode error in a unique way?
-    this.delegate.closeRecordingStream(this.streamId, HDSProtocolSpecificErrorReason.CANCELLED);
 
-    this.connection.removeListener(DataStreamConnectionEvent.CLOSED, this.closeListener);
-
-    this.handleClosed();
+    this.handlePostClosed();
   }
 
-  private handleClosed() {
+  private handlePreClosed() {
+    this.closed = true;
+    this.connection.removeProtocolHandler(Protocols.DATA_SEND, this);
+    this.connection.removeListener(DataStreamConnectionEvent.CLOSED, this.closeListener);
+  }
+
+  private handlePostClosed() {
     this.emit(CameraRecordingStreamEvents.CLOSED);
   }
 }

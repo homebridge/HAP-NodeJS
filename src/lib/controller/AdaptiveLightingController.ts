@@ -503,7 +503,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
 
       this.activeTransition = undefined;
 
-      this.stateChangeDelegate && this.stateChangeDelegate();
+      this.stateChangeDelegate?.();
     }
 
     this.colorTemperatureCharacteristic = undefined;
@@ -611,7 +611,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     }
 
     if (!calledFromDeserializer) {
-      this.stateChangeDelegate && this.stateChangeDelegate();
+      this.stateChangeDelegate?.();
     }
   }
 

@@ -943,7 +943,7 @@ export class RemoteController extends EventEmitter implements SerializableContro
         }
 
         this.targetConfigurationsString = Buffer.concat(bufferList).toString('base64');
-        this.stateChangeDelegate && this.stateChangeDelegate();
+        this.stateChangeDelegate?.();
     }
 
     private buildTargetControlSupportedConfigurationTLV(configuration: SupportedConfiguration): string {

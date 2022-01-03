@@ -1,7 +1,6 @@
 import crypto from "crypto";
 import createDebug from "debug";
 import { EventEmitter } from "events";
-import { ResourceRequestReason } from "../../internal-types";
 import { CharacteristicValue, SessionIdentifier } from "../../types";
 import {
   CameraRecordingConfiguration,
@@ -39,7 +38,7 @@ const debug = createDebug("HAP-NodeJS:Camera:Controller")
 export interface CameraControllerOptions {
   /**
    * Amount of parallel camera streams the accessory is capable of running.
-   * As of the official HAP specification non Secure Video cameras have a minimum required amount of 2 (but 1 is also fine).
+   * As of the official HAP specification non SecureVideo cameras have a minimum required amount of 2 (but 1 is also fine).
    * Secure Video cameras just expose 1 stream.
    *
    * Default value: 1
@@ -74,6 +73,19 @@ export interface CameraControllerOptions {
 export type SnapshotRequestCallback = (error?: Error | HAPStatus, buffer?: Buffer) => void;
 export type PrepareStreamCallback = (error?: Error, response?: PrepareStreamResponse) => void;
 export type StreamRequestCallback = (error?: Error) => void;
+
+export const enum ResourceRequestReason {
+  /**
+   * The reason describes periodic resource requests.
+   * In the example of camera image snapshots those are the typical preview images every 10 seconds.
+   */
+  PERIODIC = 0,
+  /**
+   * The resource request is the result of some event.
+   * In the example of camera image snapshots, requests are made due to e.g. a motion event or similar.
+   */
+  EVENT = 1
+}
 
 export interface CameraStreamingDelegate {
 
@@ -169,6 +181,9 @@ export interface CameraRecordingDelegate { // TODO catch errors of all those cal
   /**
    * This method is called to stream the next recording event.
    * It is guaranteed that there is only ever one ongoing recording stream request at a time.
+   * TODO depending on how slow yield is, it may overlap a bit with the last frame!
+   *
+   * TODO must try-catch yield in the current configuration!
    *
    * When this method is called return the currently ongoing (or next in case of a potentially queued)
    * recording via a `AsyncGenerator`. Every `yield` of the generator represents a complete recording `packet`.
@@ -183,9 +198,17 @@ export interface CameraRecordingDelegate { // TODO catch errors of all those cal
    * For more information about `AsyncGenerator`s you might have a look at:
    * * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of
    *
+   * TODO document yield throwing or closeRecrodingStream (immediate + if already completed)
+   *   => you may rethrow the error!
+   *
+   * NOTE: HAP-NodeJS guarantees that this method is only called with a valid selected {@link CameraRecordingConfiguration}.
+   *
    * @param streamId - The streamId of the currently ongoing stream.
    */
-  handleRecordingStreamRequest(streamId: number): AsyncGenerator<Buffer>;
+  handleRecordingStreamRequest(streamId: number): AsyncGenerator<{ data: Buffer; last: boolean }>; // TODO remove streamId as it may overlap if used with multiple controllers
+
+  // TODO document
+  acknowledgeStream?(streamId: number): void;
 
   /**
    * This method is called to notify the Delegate that a recording stream started via {@link handleRecordingStreamRequest}
@@ -195,12 +218,13 @@ export interface CameraRecordingDelegate { // TODO catch errors of all those cal
    * In either case, the delegate should stop supplying further fragments to the recording stream.
    * HAP-NodeJS won't send out any fragments from this point onwards.
    *
+   * TODO document yield throwing!
+   *
    * @param streamId - The streamId for which the close event was sent.
    * @param reason - The reason with which the stream was closed.
-   *  NOTE: This method is also called in case of a closed connection. We encode this with {@link HDSProtocolSpecificErrorReason.CANCELLED}.
-   *  {@link HDSProtocolSpecificErrorReason.CANCELLED} might also be sent by a HomeKit Controller to encode any sort of processing error.
+   *  NOTE: This method is also called in case of a closed connection. This encoded by supplying `undefined` as the `reason`.
    */
-  closeRecordingStream(streamId: number, reason: HDSProtocolSpecificErrorReason): void;
+  closeRecordingStream?(streamId: number, reason?: HDSProtocolSpecificErrorReason): void; // TODO optional?
 }
 
 /**

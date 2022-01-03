@@ -3,8 +3,17 @@ import crypto from "crypto";
 import createDebug from "debug";
 import net from "net";
 // noinspection JSDeprecatedSymbols
-import { Access, HAPStatus, HapStatusError, LegacyCameraSource, LegacyCameraSourceAdapter, once, StateChangeDelegate, uuid } from "../../index";
-import { ResourceRequestReason } from "../../internal-types";
+import {
+  Access,
+  HAPStatus,
+  HapStatusError,
+  LegacyCameraSource,
+  LegacyCameraSourceAdapter,
+  once,
+  ResourceRequestReason,
+  StateChangeDelegate,
+  uuid,
+} from "../../index";
 import { CharacteristicValue, SessionIdentifier } from "../../types";
 import { Characteristic, CharacteristicEventTypes, CharacteristicSetCallback } from "../Characteristic";
 import { CameraController, CameraStreamingDelegate } from "../controller";
@@ -581,7 +590,6 @@ export class RTPStreamManagement {
     // this service is required only when recording is enabled. We don't really have access to this info here,
     // so we just add the characteristic. Doesn't really hurt.
     managementService.setCharacteristic(Characteristic.Active, true);
-    // TODO reject start stream (SetupEndpoints, SelectedRTPConfig) with -70412 if set to false
 
     return managementService;
   }
@@ -592,7 +600,7 @@ export class RTPStreamManagement {
       this.service.setCharacteristic(Characteristic.Active, true);
     }
     this.service.getCharacteristic(Characteristic.Active)
-      .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate && this.stateChangeDelegate())
+      .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate?.())
       .setProps({ adminOnlyAccess: [Access.WRITE] });
 
     // ensure that configurations are up-to-date and reflected in the characteristic values

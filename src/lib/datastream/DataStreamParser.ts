@@ -265,7 +265,8 @@ export class DataStreamParser {
                 } else if (data instanceof Buffer) {
                     buffer.writeData(data);
                 } else { // object is treated as dictionary
-                    const entries = Object.entries(data);
+                    const entries = Object.entries(data)
+                      .filter(entry => entry[1] !== undefined); // explicitly setting undefined will result in an entry here
 
                     if (entries.length <= 14) {
                         buffer.writeTag(DataFormatTags.DICTIONARY_LENGTH_START + entries.length);
