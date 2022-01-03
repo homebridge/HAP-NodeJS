@@ -818,7 +818,7 @@ export class CameraController extends EventEmitter implements SerializableContro
 
   private rtpStreamManagementDisabledThroughOperatingMode(): boolean {
     return this.recordingManagement
-      ? !!this.recordingManagement.operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive).value
+      ? !this.recordingManagement.operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive).value
       : false;
   }
 
@@ -913,12 +913,14 @@ export class CameraController extends EventEmitter implements SerializableContro
       .map(management => !management.getService().getCharacteristic(Characteristic.Active).value)
       .reduce((previousValue, currentValue) => previousValue && currentValue);
     if (streamingDisabled) {
+      debug("[%s] Rejecting snapshot as streaming is disabled.", accessoryName);
       return Promise.reject(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
     }
 
-    if (this.recordingManagement) { // TODO log rejections!
+    if (this.recordingManagement) {
       let operatingModeService = this.recordingManagement.operatingModeService
-      if (!operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive).value) { // TODO test case
+      if (!operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive).value) {
+        debug("[%s] Rejecting snapshot as HomeKit camera is disabled.", accessoryName);
         return Promise.reject(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
       }
 
@@ -927,8 +929,10 @@ export class CameraController extends EventEmitter implements SerializableContro
         .value
       if (!eventSnapshotsActive) {
         if (reason == null) {
+          debug("[%s] Rejecting snapshot as reason is required due to disabled event snapshots.", accessoryName);
           return Promise.reject(HAPStatus.INSUFFICIENT_PRIVILEGES);
         } else if (reason == ResourceRequestReason.EVENT) {
+          debug("[%s] Rejecting snapshot as even snapshots are disabled.", accessoryName);
           return Promise.reject(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
         }
       }
@@ -938,8 +942,10 @@ export class CameraController extends EventEmitter implements SerializableContro
         .value
       if (!periodicSnapshotsActive) {
         if (reason == null) {
+          debug("[%s] Rejecting snapshot as reason is required due to disabled periodic snapshots.", accessoryName);
           return Promise.reject(HAPStatus.INSUFFICIENT_PRIVILEGES);
         } else if (reason == ResourceRequestReason.PERIODIC) {
+          debug("[%s] Rejecting snapshot as periodic snapshots are disabled.", accessoryName);
           return Promise.reject(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
         }
       }

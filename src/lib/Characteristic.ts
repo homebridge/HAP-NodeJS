@@ -1759,9 +1759,9 @@ export class Characteristic extends EventEmitter {
               return "";
         }
       case Formats.DATA:
-        return null; // who knows!
+        return ""; // who knows!
       case Formats.TLV8:
-        return null; // who knows!
+        return ""; // who knows!
       case Formats.DICTIONARY:
         return {};
       case Formats.ARRAY:
@@ -2137,8 +2137,9 @@ export class Characteristic extends EventEmitter {
     } else { // query the current value
       const value = contactGetHandlers
         ? await this.handleGetRequest(connection).catch(() => {
-          debug('[%s] Error getting value for characteristic on /accessories request. Returning cached value instead: %s', this.displayName, `${this.value}`);
-          return this.value; // use cached value
+          const value = this.getDefaultValue();
+          debug('[%s] Error getting value for characteristic on /accessories request. Returning default value instead: %s', this.displayName, `${value}`);
+          return value; // use default value
         })
         : this.value;
 

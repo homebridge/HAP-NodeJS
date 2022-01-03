@@ -622,14 +622,28 @@ export class RTPStreamManagement {
 
     this.service.getCharacteristic(Characteristic.SelectedRTPStreamConfiguration)!
       .on(CharacteristicEventTypes.GET, callback => {
-        this.verifyCameraActive();
+        if (this.streamingIsDisabled()) {
+          callback(null, tlv.encode(
+            SelectedRTPStreamConfigurationTypes.SESSION_CONTROL, tlv.encode(
+              SessionControlTypes.COMMAND, SessionControlCommand.SUSPEND_SESSION,
+            ),
+          ).toString("base64"));
+          return;
+        }
+
         callback(null, this.selectedConfiguration);
       })
       .on(CharacteristicEventTypes.SET, this._handleSelectedStreamConfigurationWrite.bind(this));
 
     this.service.getCharacteristic(Characteristic.SetupEndpoints)!
       .on(CharacteristicEventTypes.GET, callback => {
-        this.verifyCameraActive();
+        if (this.streamingIsDisabled()) {
+          callback(null, tlv.encode(
+            SetupEndpointsResponseTypes.STATUS, SetupEndpointsStatus.ERROR,
+          ).toString("base64"));
+          return;
+        }
+
         callback(null, this.setupEndpointsResponse);
       })
       .on(CharacteristicEventTypes.SET, (value, callback, context, connection) => {
@@ -668,18 +682,26 @@ export class RTPStreamManagement {
     }
   }
 
-  private verifyCameraActive(): void {
+  private streamingIsDisabled(callback?: CharacteristicSetCallback): boolean {
     if (!this.service.getCharacteristic(Characteristic.Active).value) {
-      throw new HapStatusError(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
+      console.log("STREAMING DISABLED ACTIVE");
+      callback && callback(new HapStatusError(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE));
+      return true;
     }
 
     if (this.disabledThroughOperatingMode?.()) {
-      throw new HapStatusError(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
+      console.log("STREAMING DISABLED OPERATION MODE!");
+      callback && callback(new HapStatusError(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE));
+      return true;
     }
+
+    return false;
   }
 
   private _handleSelectedStreamConfigurationWrite(value: CharacteristicValue, callback: CharacteristicSetCallback): void {
-    this.verifyCameraActive();
+    if (this.streamingIsDisabled(callback)) {
+      return;
+    }
 
     const data = Buffer.from(value as string, 'base64');
     const objects = tlv.decode(data);
@@ -928,7 +950,9 @@ export class RTPStreamManagement {
   }
 
   private handleSetupEndpoints(value: CharacteristicValue, callback: CharacteristicSetCallback, connection: HAPConnection): void {
-    this.verifyCameraActive();
+    if (this.streamingIsDisabled(callback)) {
+      return;
+    }
 
     const data = Buffer.from(value as string, 'base64');
     const objects = tlv.decode(data);

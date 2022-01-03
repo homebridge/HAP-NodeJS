@@ -281,6 +281,10 @@ class ExampleCamera implements CameraStreamingDelegate, CameraRecordingDelegate 
                 break;
             case StreamRequestTypes.STOP:
                 const ongoingSession = this.ongoingSessions[sessionId];
+                if (!ongoingSession) {
+                    callback();
+                    break;
+                }
 
                 ports.delete(ongoingSession.localVideoPort);
 
