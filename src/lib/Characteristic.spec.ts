@@ -1318,13 +1318,13 @@ describe('Characteristic', () => {
     it('should get the correct default value for a data property', () => {
       const characteristic = createCharacteristic(Formats.DATA);
       // @ts-expect-error
-      expect(characteristic.getDefaultValue()).toEqual(null);
+      expect(characteristic.getDefaultValue()).toEqual("");
     });
 
     it('should get the correct default value for a TLV8 property', () => {
       const characteristic = createCharacteristic(Formats.TLV8);
       // @ts-expect-error
-      expect(characteristic.getDefaultValue()).toEqual(null);
+      expect(characteristic.getDefaultValue()).toEqual("");
     });
 
     it('should get the correct default value for a dictionary property', () => {

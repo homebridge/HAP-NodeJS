@@ -1904,8 +1904,8 @@ export class Characteristic extends EventEmitter {
         return this.value; // don't change the value
       }
 
-      if (this.getDefaultValue() === null) {
-        return value; // any format which has default value null, is allowed to have null as a value (e.g. TLV8 or DATA formats)
+      if (this.props.format === Formats.DATA || this.props.format === Formats.TLV8) {
+        return value; // TLV8 and DATA formats are allowed to have null as a value
       }
 
       /**
