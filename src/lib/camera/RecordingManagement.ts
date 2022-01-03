@@ -274,6 +274,17 @@ interface DataSendDataEvent {
   endOfStream?: boolean;
 }
 
+export interface RecordingPacket {
+  /**
+   * The `Buffer` containing the data of the packet.
+   */
+  data: Buffer;
+  /**
+   * TODO document!
+   */
+  isLast: boolean;
+}
+
 
 export interface RecordingManagementServices {
   recordingManagement: CameraRecordingManagement;
@@ -798,24 +809,6 @@ export class RecordingManagement {
 }
 
 
-enum RecordingSessionErrorType {
-  DATA_SEND_CLOSE,
-  CONNECTION_CLOSE,
-}
-
-/**
- * An error object we use internally to signal certain events.
- */
-class RecordingSessionError extends Error {
-  type: RecordingSessionErrorType;
-
-  constructor(type: RecordingSessionErrorType) {
-    super("RecordingSessionError: " + type);
-    this.type = type;
-  }
-}
-
-
 const enum CameraRecordingStreamEvents {
   /**
    * This event is fired when the recording stream is closed.
@@ -850,7 +843,8 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
 
   private readonly closeListener: () => void;
 
-  private generator?: AsyncGenerator<{ data: Buffer, last: boolean }>;
+  private generator?: AsyncGenerator<RecordingPacket>;
+  private generatorTimeout?: NodeJS.Timeout;
 
   constructor(connection: DataStreamConnection, delegate: CameraRecordingDelegate, requestId: number, streamId: number) {
     super();
@@ -884,13 +878,14 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
     try {
       this.generator = this.delegate.handleRecordingStreamRequest(this.streamId);
 
-      for await (const next of this.generator) {
+      for await (const packet of this.generator) {
         if (this.closed) {
+          // TODO this can be considered an error!
           debug("[HDS %s] Received fragment after closed stream %d.", this.connection.remoteAddress, this.streamId);
           break;
         }
 
-        const fragment = next.data;
+        const fragment = packet.data;
 
         let offset = 0;
         let dataChunkSequenceNumber = 1;
@@ -911,7 +906,7 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
                 dataTotalSize: dataChunkSequenceNumber == 1 ? fragment.length : undefined,
               },
             }],
-            endOfStream: offset >= fragment.length ? !!next.last : undefined,
+            endOfStream: offset >= fragment.length ? Boolean(packet.isLast).valueOf() : undefined,
           };
 
           debug("[HDS %s] Sending DATA_SEND DATA for stream %d with metadata: %o and length %d; EoS: %s",
@@ -922,16 +917,15 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
           initialization = false;
         }
 
+        if (packet.isLast) {
+          break;
+        }
+
         dataSequenceNumber++;
       }
     } catch (error) {
-      if (error instanceof RecordingSessionError) {
-        debug("[HDS %s] Ending generator loop with reason: %d", this.connection.remoteAddress, error.type);
-        return;
-      }
-
       // TODO add support for "expected" errors!
-      console.warn("[HDS %s] Encountered unexpected error handling recording stream request: %s", error.stack);
+      console.warn("[HDS %s] Encountered unexpected error handling recording stream request: %s", this.connection.remoteAddress, error.stack);
 
       this.connection.sendEvent(Protocols.DATA_SEND, Topics.CLOSE, {
         streamId: this.streamId,
@@ -939,9 +933,14 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
       });
       return;
     } finally {
-      // this is essential to not crash. See `handleDataSendClose`.
       this.generator = undefined;
+
+      if (this.generatorTimeout) {
+        clearTimeout(this.generatorTimeout);
+      }
     }
+
+    // TODO notify about error if no single packet was returned!
 
     debug("[HDS %s] Finished DATA_SEND transmission for stream %d!", this.connection.remoteAddress, this.streamId);
   }
@@ -956,9 +955,7 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
 
     debug("[HDS %s] Received DATA_SEND ACK packet for streamId %s. Acknowledged %s.", this.connection.remoteAddress, streamId, endOfStream);
 
-    this.handlePreClosed();
-    this.delegate.acknowledgeStream?.(this.streamId);
-    this.handlePostClosed();
+    this.handleClosed(() => this.delegate.acknowledgeStream?.(this.streamId));
   }
 
   private handleDataSendClose(message: Record<any, any>) {
@@ -973,45 +970,33 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
     debug("[HDS %s] Received DATA_SEND CLOSE for streamId %d with reason %s",
       this.connection.remoteAddress, streamId, reason);
 
-    this.handlePreClosed();
-
-    this.delegate.closeRecordingStream?.(streamId, reason);
-    /**
-     * `throw` is not necessarily intuitive. And there aren't really any good resources documenting the feature.
-     * We are basically "injecting" an error into the generator. Meaning, if the generator HAS NOT RETURNED yet,
-     * the next `yield` call with throw the error which we pass to this method.
-     * Meaning, in an async generator it might not throw instantly. It throws when it reaches yield.
-     * That's the reason why we have `closeRecordingStream`, to immediately notify the delegate about a closing stream.
-     * Another speciality, if the generator already completed (aka the generator function returned),
-     * the error is "uncatchable" (could be handled by subscribing to the `uncaughtException` event) and will just crash the node instance.
-     * Therefore, the optional chaining syntax here. We reset the generator property to `undefined` once the iterator completed.
-     * That's also the second reason to have `closeRecordingStream`. Once the generator completed there is no way
-     * to be notified about the result of the recording.
-     */
-    this.generator?.throw(new RecordingSessionError(RecordingSessionErrorType.DATA_SEND_CLOSE));
-
-    this.handlePostClosed();
+    this.handleClosed(() => this.delegate.closeRecordingStream(streamId, reason));
   }
 
   private handleDataStreamConnectionClosed() {
     debug("[HDS %s] The HDS connection of the stream %d closed.", this.connection.remoteAddress, this.streamId);
 
-    this.handlePreClosed();
 
-    this.delegate.closeRecordingStream?.(this.streamId, HDSProtocolSpecificErrorReason.CANCELLED);
-    // see above for explanation on how `throw` works
-    this.generator?.throw(new RecordingSessionError(RecordingSessionErrorType.CONNECTION_CLOSE));
-
-    this.handlePostClosed();
+    this.handleClosed(() => this.delegate.closeRecordingStream(this.streamId));
   }
 
-  private handlePreClosed() {
+  private handleClosed(closure: () => void): void {
     this.closed = true;
+
     this.connection.removeProtocolHandler(Protocols.DATA_SEND, this);
     this.connection.removeListener(DataStreamConnectionEvent.CLOSED, this.closeListener);
-  }
 
-  private handlePostClosed() {
+    if (this.generator) {
+      // when this variable is defined, the generator hasn't returned yet.
+      // we start a timeout to uncover potential programming mistakes where we await forever and can't free resources.
+      this.generatorTimeout = setTimeout(() => {
+        console.error("[HDS %s] Recording download stream %d is still awaiting generator although stream was closed 10s ago!",
+          this.connection.remoteAddress, this.streamId);
+      }, 10000);
+    }
+
+    closure();
+
     this.emit(CameraRecordingStreamEvents.CLOSED);
   }
 }

@@ -11,7 +11,7 @@ import {
   PrepareStreamRequest,
   PrepareStreamResponse,
   RecordingManagement,
-  RecordingManagementState,
+  RecordingManagementState, RecordingPacket,
   RTPStreamManagement,
   RTPStreamManagementState,
   SnapshotRequest,
@@ -178,6 +178,8 @@ export interface CameraRecordingDelegate { // TODO catch errors of all those cal
    */
   updateRecordingConfiguration(configuration: CameraRecordingConfiguration | undefined, audioActive: boolean): void;
 
+  // TODO update documentation to the latest changes!
+
   /**
    * This method is called to stream the next recording event.
    * It is guaranteed that there is only ever one ongoing recording stream request at a time.
@@ -205,7 +207,7 @@ export interface CameraRecordingDelegate { // TODO catch errors of all those cal
    *
    * @param streamId - The streamId of the currently ongoing stream.
    */
-  handleRecordingStreamRequest(streamId: number): AsyncGenerator<{ data: Buffer; last: boolean }>; // TODO remove streamId as it may overlap if used with multiple controllers
+  handleRecordingStreamRequest(streamId: number): AsyncGenerator<RecordingPacket>; // TODO remove streamId as it may overlap if used with multiple controllers
 
   // TODO document
   acknowledgeStream?(streamId: number): void;
@@ -224,7 +226,7 @@ export interface CameraRecordingDelegate { // TODO catch errors of all those cal
    * @param reason - The reason with which the stream was closed.
    *  NOTE: This method is also called in case of a closed connection. This encoded by supplying `undefined` as the `reason`.
    */
-  closeRecordingStream?(streamId: number, reason?: HDSProtocolSpecificErrorReason): void; // TODO optional?
+  closeRecordingStream(streamId: number, reason?: HDSProtocolSpecificErrorReason): void; // TODO optional?
 }
 
 /**
