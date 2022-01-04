@@ -896,7 +896,16 @@ export class CameraController extends EventEmitter implements SerializableContro
     }
 
     if (serialized.recordingManagement) {
-      this.recordingManagement?.deserialize(serialized.recordingManagement);
+      if (this.recordingManagement) {
+        this.recordingManagement.deserialize(serialized.recordingManagement)
+      } else {
+        // Active characteristic cannot be controlled if removing HSV, ensure they are all active!
+        for (const streamManagement of this.streamManagements) {
+          streamManagement.service.updateCharacteristic(Characteristic.Active, true);
+        }
+
+        this.stateChangeDelegate?.();
+      }
     }
   }
 
