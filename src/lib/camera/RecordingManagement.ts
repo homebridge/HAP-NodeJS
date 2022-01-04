@@ -467,7 +467,7 @@ export class RecordingManagement {
     const streamId: number = message.streamId;
     const type: string = message.type;
     const target: string = message.target;
-    const reason: HDSProtocolSpecificErrorReason = message.reason;
+    const reason: string = message.reason;
 
     if (target != "controller" || type != "ipcamera.recording") {
       debug("[HDS %s] Received data send with unexpected target: %s or type: %d. Rejecting...",
@@ -509,7 +509,7 @@ export class RecordingManagement {
       return;
     }
 
-    debug("[HDS %s] HDS DATA_SEND Open with reason '%s'.", connection.remoteAddress, HDSProtocolSpecificErrorReason[reason]);
+    debug("[HDS %s] HDS DATA_SEND Open with reason '%s'.", connection.remoteAddress, reason);
 
     this.recordingStream = new CameraRecordingStream(connection, this.delegate, id, streamId);
     this.recordingStream.on(CameraRecordingStreamEvents.CLOSED, () => {
