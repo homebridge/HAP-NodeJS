@@ -1,1 +1,1 @@
-declare module 'dbus-native';
+declare module "@homebridge/dbus-native";
