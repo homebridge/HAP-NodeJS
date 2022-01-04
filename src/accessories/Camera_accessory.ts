@@ -415,7 +415,7 @@ class ExampleCamera implements CameraStreamingDelegate, CameraRecordingDelegate 
             for await (const box of this.server.generator()) {
                 pending.push(box.header, box.data);
 
-                const motionDetected = camera.getService(Service.MotionSensor)?.getCharacteristic(Characteristic.MotionDetected).value === false;
+                const motionDetected = camera.getService(Service.MotionSensor)?.getCharacteristic(Characteristic.MotionDetected).value;
 
                 console.log("mp4 box type " + box.type + " and length " + box.length);
                 if (box.type === "moov" || box.type == "mdat") {
