@@ -12,7 +12,7 @@ import assert from "assert";
 import bonjour, { BonjourHAP, BonjourHAPService, MulticastOptions } from "bonjour-hap";
 import crypto from 'crypto';
 import createDebug from "debug";
-import dbus from 'dbus-native';
+import dbus from "@homebridge/dbus-native";
 import { EventEmitter } from "events";
 import { AccessoryInfo } from './model/AccessoryInfo';
 import { PromiseTimeout } from "./util/promise-utils";
