@@ -1536,6 +1536,7 @@ export class SiriAudioSession extends EventEmitter {
     }
 
     handleDataSendCloseEvent(reason: HDSProtocolSpecificErrorReason): void { // controller indicates he can't handle audio request currently
+        // @ts-expect-error
         debug("Received close event from controller with reason %s for stream with streamId %s", HDSProtocolSpecificErrorReason[reason], this.streamId);
         if (this.state <= SiriAudioSessionState.SENDING) {
             this.stopAudioProducer();

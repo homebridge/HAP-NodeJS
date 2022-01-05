@@ -72,7 +72,7 @@ export enum HDSStatus {
  * @deprecated Renamed to {@link HDSProtocolSpecificErrorReason}.
  */
 export type DataSendCloseReason = HDSProtocolSpecificErrorReason;
-export enum HDSProtocolSpecificErrorReason { // close reason used in the dataSend protocol
+export const enum HDSProtocolSpecificErrorReason { // close reason used in the dataSend protocol
     // noinspection JSUnusedGlobalSymbols
     NORMAL = 0,
     NOT_ALLOWED = 1,

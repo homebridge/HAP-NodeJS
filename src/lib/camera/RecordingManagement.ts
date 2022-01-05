@@ -1013,6 +1013,7 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
     }
 
     debug("[HDS %s] Received DATA_SEND CLOSE for streamId %d with reason %s",
+    // @ts-expect-error
       this.connection.remoteAddress, streamId, HDSProtocolSpecificErrorReason[reason]);
 
     this.handleClosed(() => this.delegate.closeRecordingStream(streamId, reason));
@@ -1057,7 +1058,9 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
       return;
     }
 
-    debug("[HDS %s] Recording stream %d was closed manually with reason %s.", this.connection.remoteAddress, this.streamId, HDSProtocolSpecificErrorReason[reason]);
+    debug("[HDS %s] Recording stream %d was closed manually with reason %s.",
+      // @ts-expect-error
+      this.connection.remoteAddress, this.streamId, HDSProtocolSpecificErrorReason[reason]);
 
     this.connection.sendEvent(Protocols.DATA_SEND, Topics.CLOSE, {
       streamId: this.streamId,
