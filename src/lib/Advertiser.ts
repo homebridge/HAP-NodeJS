@@ -12,7 +12,7 @@ import assert from "assert";
 import bonjour, { BonjourHAP, BonjourHAPService, MulticastOptions } from "bonjour-hap";
 import crypto from 'crypto';
 import createDebug from "debug";
-import dbus from "@homebridge/dbus-native";
+import dbus, { SystemBus } from "@homebridge/dbus-native";
 import { EventEmitter } from "events";
 import { AccessoryInfo } from './model/AccessoryInfo';
 import { PromiseTimeout } from "./util/promise-utils";
@@ -264,15 +264,18 @@ export class BonjourHAPAdvertiser extends EventEmitter implements Advertiser {
 }
 
 /**
- * Advertiser based on the Avahi D-Bus library. For (very crappy) docs on the interface, see the XML files at: https://github.com/lathiat/avahi/tree/master/avahi-daemon
+ * Advertiser based on the Avahi D-Bus library.
+ * For (very crappy) docs on the interface, see the XML files at: https://github.com/lathiat/avahi/tree/master/avahi-daemon.
  */
 export class AvahiAdvertiser extends EventEmitter implements Advertiser {
+  private static globalBus?: SystemBus;
+
   private readonly accessoryInfo: AccessoryInfo;
   private readonly setupHash: string;
 
   private port?: number;
 
-  private bus: any;
+  private readonly bus: SystemBus;
   private path: string = '';
 
   constructor(accessoryInfo: AccessoryInfo) {
@@ -280,16 +283,9 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
     this.accessoryInfo = accessoryInfo;
     this.setupHash = CiaoAdvertiser.computeSetupHash(accessoryInfo);
 
-    this.bus = dbus.systemBus();
+    this.bus = AvahiAdvertiser.globalBus ?? dbus.systemBus();
 
     console.log(`Preparing Advertiser for '${this.accessoryInfo.displayName}' using Avahi backend!`);
-  }
-
-  private avahiInvoke(path: string, dbusInterface: string, member: string, others?: any): Promise<any> {
-    return new Promise((resolve, reject) => {
-      let command = { destination: 'org.freedesktop.Avahi', path, interface: 'org.freedesktop.Avahi.' + dbusInterface, member, ...(others || {}) };
-      this.bus.invoke(command, (err: any, result: any) => err ? reject(err) : resolve(result));
-    });
   }
 
   private createTxt(): Array<Buffer> {
@@ -307,21 +303,83 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
 
     console.log(`Starting to advertise '${this.accessoryInfo.displayName}' using Avahi backend!`);
 
-    this.path = await this.avahiInvoke('/', 'Server', 'EntryGroupNew') as string;
-    await this.avahiInvoke(this.path, 'EntryGroup', 'AddService', { body: [-1, -1, 0, this.accessoryInfo.displayName, '_hap._tcp', '', '', this.port, this.createTxt()], signature: 'iiussssqaay' });
-    await this.avahiInvoke(this.path, 'EntryGroup', 'Commit');
+    this.path = await AvahiAdvertiser.avahiInvoke(this.bus, '/', 'Server', 'EntryGroupNew') as string;
+    await AvahiAdvertiser.avahiInvoke(this.bus, this.path, 'EntryGroup', 'AddService', {
+      body: [
+        -1, // interface
+        -1, // protocol
+        0, // flags
+        this.accessoryInfo.displayName, // name
+        '_hap._tcp', // type
+        '', // domain
+        '', // host
+        this.port, // port
+        this.createTxt() // txt
+      ],
+      signature: 'iiussssqaay'
+    });
+    await AvahiAdvertiser.avahiInvoke(this.bus, this.path, 'EntryGroup', 'Commit');
   }
 
   public async updateAdvertisement(silent?: boolean): Promise<void> {
     if (this.path) {
-      await this.avahiInvoke(this.path, 'EntryGroup', 'UpdateServiceTxt', { body: [-1, -1, 0, this.accessoryInfo.displayName, '_hap._tcp', '', this.createTxt()], signature: 'iiusssaay' });
+      await AvahiAdvertiser.avahiInvoke(this.bus, this.path, 'EntryGroup', 'UpdateServiceTxt', {
+        body: [-1, -1, 0, this.accessoryInfo.displayName, '_hap._tcp', '', this.createTxt()],
+        signature: 'iiusssaay'
+      });
     }
   }
 
   public async destroy(): Promise<void> {
     if (this.path) {
-      await this.avahiInvoke(this.path, 'EntryGroup', 'Free');
+      await AvahiAdvertiser.avahiInvoke(this.bus, this.path, 'EntryGroup', 'Free');
       this.path = '';
     }
+  }
+
+  public static async isAvailable(): Promise<boolean> {
+    // TODO dynmaically import dbus?
+    this.globalBus = this.globalBus ?? dbus.systemBus();
+
+    try {
+      await this.messageBusConnectionResult(this.globalBus);
+    } catch (error) {
+      debug("Avahi/DBus classified unavailable due to missing dbus interface!");
+      return false;
+    }
+
+    try {
+      const result = await this.avahiInvoke(this.globalBus, "/", "Server", "GetVersionString")
+      console.log("BUS_RESULT: " + result); // TODO remove!
+    } catch (error) {
+      debug("Avahi/DBus classified unavailable due to missing avahi interface!");
+      return false;
+    }
+
+    return true
+  }
+
+  private static messageBusConnectionResult(bus: SystemBus): Promise<void> {
+    return new Promise((resolve, reject) => {
+      let errorHandler = (error: Error) => {
+        bus.connection.removeListener("connect", connectHandler);
+        reject(error);
+      };
+      let connectHandler = () => {
+        bus.connection.removeListener("error", errorHandler);
+        resolve();
+      };
+
+      bus.connection.once("connect", connectHandler);
+      bus.connection.once("error", errorHandler);
+    });
+  }
+
+  private static avahiInvoke(bus: SystemBus, path: string, dbusInterface: string, member: string, others?: any): Promise<any> {
+    // TODO do we need to handle avahi shutdown?
+    return new Promise((resolve, reject) => {
+      let command = { destination: 'org.freedesktop.Avahi', path, interface: 'org.freedesktop.Avahi.' + dbusInterface, member, ...(others || {}) };
+      bus.invoke(command, (err: any, result: any) => err ? reject(err) : resolve(result));
+    });
   }
 }

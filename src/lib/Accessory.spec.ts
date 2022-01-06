@@ -131,7 +131,7 @@ describe('Accessory', () => {
         advertiser: advertiser
       };
 
-      accessory.publish(publishInfo);
+      await accessory.publish(publishInfo);
 
       expect(accessory.displayName.startsWith(DEFAULT_DISPLAY_NAME));
       expect(accessory.displayName.length).toEqual(DEFAULT_DISPLAY_NAME.length + 1 + 4); // added hash!
@@ -149,7 +149,7 @@ describe('Accessory', () => {
 
       await PromiseTimeout(200);
 
-      accessory.publish(publishInfo)
+      await accessory.publish(publishInfo)
 
       // ensure unification isn't done twice!
       expect(accessory.displayName).toEqual(displayNameWithIdentifyingMaterial);
@@ -157,7 +157,30 @@ describe('Accessory', () => {
       await awaitEvent(accessory, AccessoryEventTypes.ADVERTISED);
 
       await accessory.unpublish();
-    })
+    });
+
+    test("Clean Accessory publish and unpublish with default advertiser selection", async () => {
+      const accessory = new Accessory(DEFAULT_DISPLAY_NAME, uuid.generate("foo"));
+
+      const switchService = new Service.Switch("My Example Switch");
+      accessory.addService(switchService);
+
+      let publishInfo: PublishInfo = {
+        username: TEST_USERNAME,
+        pincode: "000-00-000",
+        category: Categories.SWITCH,
+        advertiser: undefined,
+      };
+
+      await accessory.publish(publishInfo);
+
+      expect(accessory.displayName.startsWith(DEFAULT_DISPLAY_NAME));
+      expect(accessory.displayName.length).toEqual(DEFAULT_DISPLAY_NAME.length + 1 + 4); // added hash!
+
+      await awaitEvent(accessory, AccessoryEventTypes.ADVERTISED);
+
+      await accessory.unpublish();
+    });
   });
 
   describe("characteristicWarning", () => {
