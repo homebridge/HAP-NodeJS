@@ -287,10 +287,10 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
 
     // TODO debug remove!
     this.bus.connection.on("message", message => {
-      console.log("Received MESSAGE: " + message);
+      debug("Received MESSAGE: " + JSON.stringify(message));
     });
 
-    console.log(`Preparing Advertiser for '${this.accessoryInfo.displayName}' using Avahi backend!`);
+    debug(`Preparing Advertiser for '${this.accessoryInfo.displayName}' using Avahi backend!`);
   }
 
   private createTxt(): Array<Buffer> {
@@ -306,7 +306,7 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
       throw new Error("Tried starting Avahi advertisement without initializing port!");
     }
 
-    console.log(`Starting to advertise '${this.accessoryInfo.displayName}' using Avahi backend!`);
+    debug(`Starting to advertise '${this.accessoryInfo.displayName}' using Avahi backend!`);
 
     this.path = await AvahiAdvertiser.avahiInvoke(this.bus, '/', 'Server', 'EntryGroupNew') as string;
     await AvahiAdvertiser.avahiInvoke(this.bus, this.path, 'EntryGroup', 'AddService', {
@@ -343,7 +343,6 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
   }
 
   public static async isAvailable(): Promise<boolean> {
-    // TODO dynmaically import dbus?
     this.globalBus = this.globalBus ?? dbus.systemBus();
 
     try {
