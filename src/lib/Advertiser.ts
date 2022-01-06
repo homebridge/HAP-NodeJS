@@ -285,6 +285,11 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
 
     this.bus = AvahiAdvertiser.globalBus ?? dbus.systemBus();
 
+    // TODO debug remove!
+    this.bus.connection.on("message", message => {
+      console.log("Received MESSAGE: " + message);
+    });
+
     console.log(`Preparing Advertiser for '${this.accessoryInfo.displayName}' using Avahi backend!`);
   }
 
@@ -349,8 +354,9 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
     }
 
     try {
-      const result = await this.avahiInvoke(this.globalBus, "/", "Server", "GetVersionString")
-      console.log("BUS_RESULT: " + result); // TODO remove!
+      // TODO avahi might be installed but not running!
+      const version = await this.avahiInvoke(this.globalBus, "/", "Server", "GetVersionString")
+      debug("Detected Avahi over DBus interface running version '%s'.", version);
     } catch (error) {
       debug("Avahi/DBus classified unavailable due to missing avahi interface!");
       return false;
