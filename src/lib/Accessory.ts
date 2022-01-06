@@ -75,7 +75,6 @@ import { EventName, HAPConnection, HAPUsername } from "./util/eventedhttp";
 import { formatOutgoingCharacteristicValue } from "./util/request-util";
 import * as uuid from "./util/uuid";
 import { toShortForm } from "./util/uuid";
-import Timeout = NodeJS.Timeout;
 
 const debug = createDebug('HAP-NodeJS:Accessory');
 const MAX_ACCESSORIES = 149; // Maximum number of bridged accessories per bridge.
@@ -409,7 +408,7 @@ export class Accessory extends EventEmitter {
   _server?: HAPServer;
   _setupURI?: string;
 
-  private configurationChangeDebounceTimeout?: Timeout;
+  private configurationChangeDebounceTimeout?: NodeJS.Timeout;
   /**
    * This property captures the time when we last served a /accessories request.
    * For multiple bursts of /accessories request we don't want to always contact GET handlers
@@ -730,7 +729,7 @@ export class Accessory extends EventEmitter {
       }
 
       // all other services get added. We can't really control possibly linking to any of those ignored services
-      // so this is really only half baked stuff.
+      // so this is really only half-baked stuff.
       this.addService(service);
     });
 
@@ -771,9 +770,9 @@ export class Accessory extends EventEmitter {
     if (savedServiceMap) { // we found data to restore from
       const clonedServiceMap = clone(savedServiceMap);
       const updatedServiceMap = controller.initWithServices(savedServiceMap); // init controller with existing services
-      serviceMap = updatedServiceMap || savedServiceMap; // initWithServices could return a updated serviceMap, otherwise just use the existing one
+      serviceMap = updatedServiceMap || savedServiceMap; // initWithServices could return an updated serviceMap, otherwise just use the existing one
 
-      if (updatedServiceMap) { // controller returned a ServiceMap and thus signaled a updated set of services
+      if (updatedServiceMap) { // controller returned a ServiceMap and thus signaled an updated set of services
         // clonedServiceMap is altered by this method, should not be touched again after this call (for the future people)
         this.handleUpdatedControllerServiceMap(clonedServiceMap, updatedServiceMap);
       }
@@ -1439,7 +1438,7 @@ export class Accessory extends EventEmitter {
       return;
     }
 
-    let timeout: Timeout | undefined = setTimeout(() => {
+    let timeout: NodeJS.Timeout | undefined = setTimeout(() => {
       for (const id of missingCharacteristics) {
         const split = id.split(".");
         const aid = parseInt(split[0], 10);
@@ -1604,7 +1603,7 @@ export class Accessory extends EventEmitter {
       return;
     }
 
-    let timeout: Timeout | undefined = setTimeout(() => {
+    let timeout: NodeJS.Timeout | undefined = setTimeout(() => {
       for (const id of missingCharacteristics) {
         const split = id.split(".");
         const aid = parseInt(split[0], 10);
@@ -1812,11 +1811,13 @@ export class Accessory extends EventEmitter {
         return;
       }
 
-      controller.handleSnapshotRequest(data["image-height"], data["image-width"], accessory?.displayName).then(buffer => {
-        callback(undefined, buffer);
-      }, (status: HAPStatus) => {
-        callback({ httpCode: HAPHTTPCode.OK, status: status });
-      });
+      controller.handleSnapshotRequest(data["image-height"], data["image-width"], accessory?.displayName, data.reason)
+        .then(buffer => {
+          callback(undefined, buffer);
+        }, (status: HAPStatus) => {
+          callback({ httpCode: HAPHTTPCode.MULTI_STATUS, status: status });
+        });
+
       return;
     }
 

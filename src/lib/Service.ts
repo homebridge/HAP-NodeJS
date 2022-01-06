@@ -90,7 +90,6 @@ import {
 import { IdentifierCache } from './model/IdentifierCache';
 import { HAPConnection } from "./util/eventedhttp";
 import { toShortForm } from './util/uuid';
-import Timeout = NodeJS.Timeout;
 
 const debug = createDebug("HAP-NodeJS:Service");
 
@@ -591,7 +590,7 @@ export class Service extends EventEmitter {
       }
 
       const missingCharacteristics: Set<Characteristic> = new Set();
-      let timeout: Timeout | undefined = setTimeout(() => {
+      let timeout: NodeJS.Timeout | undefined = setTimeout(() => {
         for (const characteristic of missingCharacteristics) {
           this.emitCharacteristicWarningEvent(characteristic, CharacteristicWarningType.SLOW_READ,
             `The read handler for the characteristic '${characteristic.displayName}' was slow to respond!`);

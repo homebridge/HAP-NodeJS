@@ -1,4 +1,5 @@
 import { Formats, Perms, Units } from "./lib/Characteristic";
+import { ResourceRequestReason } from "./lib/controller";
 import { HAPStatus } from "./lib/HAPServer";
 import { CharacteristicValue, Nullable } from "./types";
 
@@ -181,6 +182,7 @@ export interface ResourceRequest {
   aid?: number;
   "image-height": number;
   "image-width": number;
+  "reason": ResourceRequestReason;
   "resource-type": ResourceRequestType;
 }
 

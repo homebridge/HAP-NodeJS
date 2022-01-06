@@ -29,7 +29,6 @@ import {
   SerializableController,
   StateChangeDelegate
 } from "./Controller";
-import Timeout = NodeJS.Timeout;
 
 const debug = createDebug("HAP-NodeJS:Controller:TransitionControl");
 
@@ -434,7 +433,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
 
   private activeTransition?: ActiveAdaptiveLightingTransition;
   private didRunFirstInitializationStep = false;
-  private updateTimeout?: Timeout;
+  private updateTimeout?: NodeJS.Timeout;
 
   private lastTransitionPointInfo?: SavedLastTransitionPointInfo;
   private lastEventNotificationSent: number = 0;
@@ -504,7 +503,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
 
       this.activeTransition = undefined;
 
-      this.stateChangeDelegate && this.stateChangeDelegate();
+      this.stateChangeDelegate?.();
     }
 
     this.colorTemperatureCharacteristic = undefined;
@@ -612,7 +611,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     }
 
     if (!calledFromDeserializer) {
-      this.stateChangeDelegate && this.stateChangeDelegate();
+      this.stateChangeDelegate?.();
     }
   }
 

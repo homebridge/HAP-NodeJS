@@ -7,7 +7,7 @@ import { HAPConnection, HAPConnectionEvent } from "../util/eventedhttp";
 
 import * as hapCrypto from '../util/hapCrypto';
 import { DataStreamParser, DataStreamReader, DataStreamWriter, Int64 } from './DataStreamParser';
-import Timeout = NodeJS.Timeout;
+
 
 const debug = createDebug('HAP-NodeJS:DataStream:Server');
 
@@ -21,7 +21,7 @@ export type PreparedDataStreamSession = {
 
     port?: number,
 
-    connectTimeout?: Timeout, // 10s timer
+    connectTimeout?: NodeJS.Timeout, // 10s timer
 
 }
 
@@ -33,10 +33,8 @@ export type GlobalEventHandler = (connection: DataStreamConnection, message: Rec
 export type GlobalRequestHandler = (connection: DataStreamConnection, id: number, message: Record<any, any>) => void;
 
 export interface DataStreamProtocolHandler {
-
-    eventHandler?: Record<string, EventHandler>,
-    requestHandler?: Record<string, RequestHandler>,
-
+    eventHandler?: Record<string, EventHandler>;
+    requestHandler?: Record<string, RequestHandler>;
 }
 
 export const enum Protocols { // a collection of currently known protocols
@@ -70,7 +68,11 @@ export enum HDSStatus {
     PROTOCOL_SPECIFIC_ERROR = 6,
 }
 
-export enum DataSendCloseReason { // close reason used in the dataSend protocol
+/**
+ * @deprecated Renamed to {@link HDSProtocolSpecificErrorReason}.
+ */
+export type DataSendCloseReason = HDSProtocolSpecificErrorReason;
+export const enum HDSProtocolSpecificErrorReason { // close reason used in the dataSend protocol
     // noinspection JSUnusedGlobalSymbols
     NORMAL = 0,
     NOT_ALLOWED = 1,
@@ -79,6 +81,28 @@ export enum DataSendCloseReason { // close reason used in the dataSend protocol
     UNSUPPORTED = 4,
     UNEXPECTED_FAILURE = 5,
     TIMEOUT = 6,
+    BAD_DATA = 7,
+    PROTOCOL_ERROR = 8,
+    INVALID_CONFIGURATION = 9,
+}
+
+/**
+ * An error indicating a protocol level HDS error.
+ * E.g. it may be used to encode a {@link HDSStatus.PROTOCOL_SPECIFIC_ERROR} in the {@link Protocols.DATA_SEND} protocol.
+ */
+export class HDSProtocolError extends Error {
+    reason: HDSProtocolSpecificErrorReason
+
+    /**
+     * Initializes a new `HDSProtocolError`
+     * @param reason - The {@link HDSProtocolSpecificErrorReason}.
+     *  Values MUST NOT be {@link HDSProtocolSpecificErrorReason.NORMAL}.
+     */
+    constructor(reason: HDSProtocolSpecificErrorReason) {
+        super("HDSProtocolError: " + reason);
+        assert(reason != HDSProtocolSpecificErrorReason.NORMAL, "Cannot initialize a HDSProtocolError with NORMAL!");
+        this.reason = reason;
+    }
 }
 
 
@@ -483,9 +507,9 @@ export class DataStreamConnection extends EventEmitter {
     private protocolHandlers: Record<string, DataStreamProtocolHandler> = {}; // used to store protocolHandlers identified by their protocol name
 
     private responseHandlers: Record<number, ResponseHandler> = {}; // used to store responseHandlers indexed by their respective requestId
-    private responseTimers: Record<number, Timeout> = {}; // used to store response timeouts indexed by their respective requestId
+    private responseTimers: Record<number, NodeJS.Timeout> = {}; // used to store response timeouts indexed by their respective requestId
 
-    private helloTimer?: Timeout;
+    private helloTimer?: NodeJS.Timeout;
 
     constructor(socket: Socket) {
         super();
