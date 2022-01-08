@@ -273,8 +273,8 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
 
   private port?: number;
 
-  private readonly bus?: MessageBus;
-  private path: string = '';
+  private bus?: MessageBus;
+  private path?: string;
 
   constructor(accessoryInfo: AccessoryInfo) {
     super();
@@ -355,10 +355,11 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
         // Typically, this fails if e.g. avahi service was stopped in the meantime.
         debug("Destroying Avahi advertisement failed: " + error)
       }
-      this.path = '';
+      this.path = undefined;
     }
 
     this.bus.connection.stream.destroy()
+    this.bus = undefined
   }
 
   public static async isAvailable(): Promise<boolean> {
