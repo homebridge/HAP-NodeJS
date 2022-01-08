@@ -1325,7 +1325,8 @@ export class Accessory extends EventEmitter {
     this._advertiser!.initPort(port);
 
     this._advertiser!.startAdvertising()
-      .then(() => this.emit(AccessoryEventTypes.ADVERTISED));
+      .then(() => this.emit(AccessoryEventTypes.ADVERTISED))
+      .catch(reason => console.error("Could not create mDNS advertisement. The HAP-Server won't be discoverable: " + reason))
 
     this.emit(AccessoryEventTypes.LISTENING, port, hostname);
   }
