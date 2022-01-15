@@ -1,4 +1,5 @@
-// @ts-expect-error: missing type
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import { LocalStorage } from "node-persist";
 import { IdentifierCache } from "./IdentifierCache";
 import { HAPStorage } from "./HAPStorage";

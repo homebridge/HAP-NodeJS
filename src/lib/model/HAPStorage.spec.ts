@@ -1,4 +1,5 @@
-// @ts-expect-error: missing types
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import nodePersist from "node-persist";
 import { HAPStorage } from "./HAPStorage";
 
