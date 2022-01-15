@@ -540,6 +540,13 @@ export class DataStreamConnection extends EventEmitter {
         this.socket.on('data', this.onSocketData.bind(this));
         this.socket.on('error', this.onSocketError.bind(this));
         this.socket.on('close', this.onSocketClose.bind(this));
+
+        // this is to mitigate the event emitter "memory leak warning".
+        // e.g. with HSV there might be multiple cameras subscribing to the CLOSE event. one subscription for
+        // every active recording stream on a camera. The default limit of 10 might be easily reached.
+        // Setting a high limit isn't the prefect solution, but will avoid false positives but ensures that
+        // a warning is still be printed if running long enough.
+        this.setMaxListeners(100);
     }
 
     private handleHello(id: number, _message: Record<any, any>) {
