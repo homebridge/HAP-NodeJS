@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 declare module "simple-plist" {
 
   import { WriteFileOptions } from "fs";

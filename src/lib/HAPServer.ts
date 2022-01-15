@@ -1,10 +1,10 @@
-import crypto from 'crypto';
-import createDebug from 'debug';
+import crypto from "crypto";
+import createDebug from "debug";
 import { EventEmitter } from "events";
 import { SRP, SrpServer } from "fast-srp-hap";
 import { IncomingMessage, ServerResponse } from "http";
-import tweetnacl from 'tweetnacl';
-import { URL } from 'url';
+import tweetnacl from "tweetnacl";
+import { URL } from "url";
 import {
   AccessoriesResponse,
   CharacteristicId,
@@ -14,22 +14,22 @@ import {
   CharacteristicsWriteResponse,
   consideredTrue,
   PrepareWriteRequest,
-  ResourceRequest
+  ResourceRequest,
 } from "../internal-types";
-import { CharacteristicValue, Nullable, VoidCallback } from '../types';
+import { CharacteristicValue, Nullable, VoidCallback } from "../types";
 import { AccessoryInfo, PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
 import {
   EventedHTTPServer,
   EventedHTTPServerEvent,
   HAPConnection,
   HAPEncryption,
-  HAPUsername
-} from './util/eventedhttp';
-import * as hapCrypto from './util/hapCrypto';
-import { once } from './util/once';
-import * as tlv from './util/tlv';
+  HAPUsername,
+} from "./util/eventedhttp";
+import * as hapCrypto from "./util/hapCrypto";
+import { once } from "./util/once";
+import * as tlv from "./util/tlv";
 
-const debug = createDebug('HAP-NodeJS:HAPServer');
+const debug = createDebug("HAP-NodeJS:HAPServer");
 
 const enum TLVValues {
   // noinspection JSUnusedGlobalSymbols
@@ -239,14 +239,23 @@ export declare interface HAPServer {
   on(event: "listening", listener: (port: number, address: string) => void): this;
   on(event: "identify", listener: (callback: IdentifyCallback) => void): this;
 
-  on(event: "add-pairing", listener: (connection: HAPConnection, username: HAPUsername, publicKey: Buffer, permission: PermissionTypes, callback: AddPairingCallback) => void): this;
+  on(
+    event: "add-pairing",
+    listener: (connection: HAPConnection, username: HAPUsername, publicKey: Buffer, permission: PermissionTypes, callback: AddPairingCallback) => void
+  ): this;
   on(event: "remove-pairing", listener: (connection: HAPConnection, username: HAPUsername, callback: RemovePairingCallback) => void): this;
   on(event: "list-pairings", listener: (connection: HAPConnection, callback: ListPairingsCallback) => void): this;
   on(event: "pair", listener: (username: HAPUsername, clientLTPK: Buffer, callback: PairCallback) => void): this;
 
   on(event: "accessories", listener: (connection: HAPConnection, callback: AccessoriesCallback) => void): this;
-  on(event: "get-characteristics", listener: (connection: HAPConnection, request: CharacteristicsReadRequest, callback: ReadCharacteristicsCallback) => void): this;
-  on(event: "set-characteristics", listener: (connection: HAPConnection, request: CharacteristicsWriteRequest, callback: WriteCharacteristicsCallback) => void): this;
+  on(
+    event: "get-characteristics",
+    listener: (connection: HAPConnection, request: CharacteristicsReadRequest, callback: ReadCharacteristicsCallback) => void
+  ): this;
+  on(
+    event: "set-characteristics",
+    listener: (connection: HAPConnection, request: CharacteristicsWriteRequest, callback: WriteCharacteristicsCallback) => void
+  ): this;
   on(event: "request-resource", listener: (resource: ResourceRequest, callback: ResourceRequestCallback) => void): this;
 
   on(event: "connection-closed", listener: (connection: HAPConnection) => void): this;
@@ -255,7 +264,14 @@ export declare interface HAPServer {
   emit(event: "listening", port: number, address: string): boolean;
   emit(event: "identify", callback : IdentifyCallback): boolean;
 
-  emit(event: "add-pairing", connection: HAPConnection, username: HAPUsername, publicKey: Buffer, permission: PermissionTypes, callback: AddPairingCallback): boolean;
+  emit(
+    event: "add-pairing",
+    connection: HAPConnection,
+    username: HAPUsername,
+    publicKey: Buffer,
+    permission: PermissionTypes,
+    callback: AddPairingCallback
+  ): boolean;
   emit(event: "remove-pairing", connection: HAPConnection, username: HAPUsername, callback: RemovePairingCallback): boolean;
   emit(event: "list-pairings", connection: HAPConnection, callback: ListPairingsCallback): boolean;
   emit(event: "pair", username: HAPUsername, clientLTPK: Buffer, callback: PairCallback): boolean;
@@ -291,7 +307,7 @@ export class HAPServer extends EventEmitter {
 
   private accessoryInfo: AccessoryInfo;
   private httpServer: EventedHTTPServer;
-  private unsuccessfulPairAttempts: number = 0; // after 100 unsuccessful attempts the server won't accept any further attempts. Will currently be reset on a reboot
+  private unsuccessfulPairAttempts = 0; // after 100 unsuccessful attempts the server won't accept any further attempts. Will currently be reset on a reboot
 
   allowInsecureRequest: boolean;
 
@@ -306,11 +322,11 @@ export class HAPServer extends EventEmitter {
     this.httpServer.on(EventedHTTPServerEvent.CONNECTION_CLOSED, this.handleConnectionClosed.bind(this));
   }
 
-  public listen(port: number = 0, host?: string): void {
+  public listen(port = 0, host?: string): void {
     if (host === "::") {
       // this will workaround "EAFNOSUPPORT: address family not supported" errors
       // on systems where IPv6 is not supported/enabled, we just use the node default then by supplying undefined
-      host = undefined
+      host = undefined;
     }
 
     this.httpServer.listen(port, host);
@@ -352,16 +368,16 @@ export class HAPServer extends EventEmitter {
   private handleRequestOnHAPConnection(connection: HAPConnection, request: IncomingMessage, response: ServerResponse): void {
     debug("[%s] HAP Request: %s %s", this.accessoryInfo.username, request.method, request.url);
     const buffers: Buffer[] = [];
-    request.on('data', data => buffers.push(data));
+    request.on("data", data => buffers.push(data));
 
-    request.on('end', () => {
+    request.on("end", () => {
       const url = new URL(request.url!, "http://hap-nodejs.local"); // parse the url (query strings etc)
 
       const handler = this.getHandler(url); // TODO check that content-type is supported by the handler?
 
       if (!handler) {
         debug("[%s] WARNING: Handler for %s not implemented", this.accessoryInfo.username, request.url);
-        response.writeHead(HAPHTTPCode.NOT_FOUND, {'Content-Type': 'application/hap+json'});
+        response.writeHead(HAPHTTPCode.NOT_FOUND, { "Content-Type": "application/hap+json" });
         response.end(JSON.stringify({ status: HAPStatus.RESOURCE_DOES_NOT_EXIST }));
       } else {
         const data = Buffer.concat(buffers);
@@ -369,7 +385,7 @@ export class HAPServer extends EventEmitter {
           handler(connection, url, request, data, response);
         } catch (error) {
           debug("[%s] Error executing route handler: %s", this.accessoryInfo.username, error.stack);
-          response.writeHead(HAPHTTPCode.INTERNAL_SERVER_ERROR, {'Content-Type': 'application/hap+json'});
+          response.writeHead(HAPHTTPCode.INTERNAL_SERVER_ERROR, { "Content-Type": "application/hap+json" });
           response.end(JSON.stringify({ status: HAPStatus.RESOURCE_BUSY })); // resource busy try again, does somehow fit?
         }
       }
@@ -382,24 +398,24 @@ export class HAPServer extends EventEmitter {
 
   private getHandler(url: URL): HAPRequestHandler | undefined {
     switch (url.pathname.toLowerCase()) {
-      case "/identify":
-        return this.handleIdentifyRequest.bind(this);
-      case "/pair-setup":
-        return this.handlePairSetup.bind(this);
-      case "/pair-verify":
-        return this.handlePairVerify.bind(this);
-      case "/pairings":
-        return this.handlePairings.bind(this);
-      case "/accessories":
-        return this.handleAccessories.bind(this);
-      case "/characteristics":
-        return this.handleCharacteristics.bind(this);
-      case "/prepare":
-        return this.handlePrepareWrite.bind(this);
-      case "/resource":
-        return this.handleResource.bind(this);
-      default:
-        return undefined;
+    case "/identify":
+      return this.handleIdentifyRequest.bind(this);
+    case "/pair-setup":
+      return this.handlePairSetup.bind(this);
+    case "/pair-verify":
+      return this.handlePairVerify.bind(this);
+    case "/pairings":
+      return this.handlePairings.bind(this);
+    case "/accessories":
+      return this.handleAccessories.bind(this);
+    case "/characteristics":
+      return this.handleCharacteristics.bind(this);
+    case "/prepare":
+      return this.handlePrepareWrite.bind(this);
+    case "/resource":
+      return this.handleResource.bind(this);
+    default:
+      return undefined;
     }
   }
 
@@ -409,7 +425,7 @@ export class HAPServer extends EventEmitter {
   private handleIdentifyRequest(connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse): void {
     // POST body is empty
     if (!this.allowInsecureRequest && this.accessoryInfo.paired()) {
-      response.writeHead(HAPHTTPCode.BAD_REQUEST, {"Content-Type": "application/hap+json"});
+      response.writeHead(HAPHTTPCode.BAD_REQUEST, { "Content-Type": "application/hap+json" });
       response.end(JSON.stringify({ status: HAPStatus.INSUFFICIENT_PRIVILEGES }));
       return;
     }
@@ -421,7 +437,7 @@ export class HAPServer extends EventEmitter {
         response.end();
       } else {
         debug("[%s] Identification error: %s", this.accessoryInfo.username, err.message);
-        response.writeHead(HAPHTTPCode.INTERNAL_SERVER_ERROR, {"Content-Type": "application/hap+json"});
+        response.writeHead(HAPHTTPCode.INTERNAL_SERVER_ERROR, { "Content-Type": "application/hap+json" });
         response.end(JSON.stringify({ status: HAPStatus.RESOURCE_BUSY }));
       }
     }));
@@ -430,28 +446,28 @@ export class HAPServer extends EventEmitter {
   private handlePairSetup(connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse): void {
     // Can only be directly paired with one iOS device
     if (!this.allowInsecureRequest && this.accessoryInfo.paired()) {
-      response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
+      response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
       response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.UNAVAILABLE));
       return;
     }
     if (this.unsuccessfulPairAttempts > 100) {
       debug("[%s] Reached maximum amount of unsuccessful pair attempts!", this.accessoryInfo.username);
-      response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
+      response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
       response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.MAX_TRIES));
       return;
     }
 
     const tlvData = tlv.decode(data);
     const sequence = tlvData[TLVValues.SEQUENCE_NUM][0]; // value is single byte with sequence number
-    if (sequence == PairingStates.M1) {
+    if (sequence === PairingStates.M1) {
       this.handlePairSetupM1(connection, request, response);
-    } else if (sequence == PairingStates.M3 && connection._pairSetupState === PairingStates.M2) {
+    } else if (sequence === PairingStates.M3 && connection._pairSetupState === PairingStates.M2) {
       this.handlePairSetupM3(connection, request, response, tlvData);
-    } else if (sequence == PairingStates.M5 && connection._pairSetupState === PairingStates.M4) {
+    } else if (sequence === PairingStates.M5 && connection._pairSetupState === PairingStates.M4) {
       this.handlePairSetupM5(connection, request, response, tlvData);
     } else {
       // Invalid state/sequence number
-      response.writeHead(HAPPairingHTTPCode.BAD_REQUEST, {"Content-Type": "application/pairing+tlv8"});
+      response.writeHead(HAPPairingHTTPCode.BAD_REQUEST, { "Content-Type": "application/pairing+tlv8" });
       response.end(tlv.encode(TLVValues.STATE, sequence + 1, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
       return;
     }
@@ -459,21 +475,21 @@ export class HAPServer extends EventEmitter {
 
   private handlePairSetupM1(connection: HAPConnection, request: IncomingMessage, response: ServerResponse): void {
     debug("[%s] Pair step 1/5", this.accessoryInfo.username);
-    const salt = crypto.randomBytes(16, );
+    const salt = crypto.randomBytes(16 );
 
     const srpParams = SRP.params.hap;
     SRP.genKey(32).then(key => {
       // create a new SRP server
-      const srpServer = new SrpServer(srpParams, salt, Buffer.from("Pair-Setup"), Buffer.from(this.accessoryInfo.pincode), key)
+      const srpServer = new SrpServer(srpParams, salt, Buffer.from("Pair-Setup"), Buffer.from(this.accessoryInfo.pincode), key);
       const srpB = srpServer.computeB();
       // attach it to the current TCP session
       connection.srpServer = srpServer;
-      response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
+      response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
       response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M2, TLVValues.SALT, salt, TLVValues.PUBLIC_KEY, srpB));
       connection._pairSetupState = PairingStates.M2;
     }).catch(error => {
       debug("[%s] Error occurred when generating srp key: %s", this.accessoryInfo.username, error.message);
-      response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
+      response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
       response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
       return;
     });
@@ -492,14 +508,14 @@ export class HAPServer extends EventEmitter {
       // most likely the client supplied an incorrect pincode.
       this.unsuccessfulPairAttempts++;
       debug("[%s] Error while checking pincode: %s", this.accessoryInfo.username, err.message);
-      response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
+      response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
       response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M4, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
       connection._pairSetupState = undefined;
       return;
     }
     // "M2 is the proof that the server actually knows your password."
     const M2 = srpServer.computeM2();
-    response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
+    response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
     response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M4, TLVValues.PASSWORD_PROOF, M2));
     connection._pairSetupState = PairingStates.M4;
   }
@@ -523,7 +539,7 @@ export class HAPServer extends EventEmitter {
       plaintext = hapCrypto.chacha20_poly1305_decryptAndVerify(outputKey, Buffer.from("PS-Msg05"), null, messageData, authTagData);
     } catch (error) {
       debug("[%s] Error while decrypting and verifying M5 subTlv: %s", this.accessoryInfo.username);
-      response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
+      response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
       response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M4, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
       connection._pairSetupState = undefined;
       return;
@@ -537,7 +553,15 @@ export class HAPServer extends EventEmitter {
   }
 
   // M5-2
-  private handlePairSetupM5_2(connection: HAPConnection, request: IncomingMessage, response: ServerResponse, clientUsername: Buffer, clientLTPK: Buffer, clientProof: Buffer, hkdfEncKey: Buffer): void {
+  private handlePairSetupM5_2(
+    connection: HAPConnection,
+    request: IncomingMessage,
+    response: ServerResponse,
+    clientUsername: Buffer,
+    clientLTPK: Buffer,
+    clientProof: Buffer,
+    hkdfEncKey: Buffer,
+  ): void {
     debug("[%s] Pair step 4/5", this.accessoryInfo.username);
     const S_private = connection.srpServer!.computeK();
     const controllerSalt = Buffer.from("Pair-Setup-Controller-Sign-Salt");
@@ -546,7 +570,7 @@ export class HAPServer extends EventEmitter {
     const completeData = Buffer.concat([outputKey, clientUsername, clientLTPK]);
     if (!tweetnacl.sign.detached.verify(completeData, clientProof, clientLTPK)) {
       debug("[%s] Invalid signature", this.accessoryInfo.username);
-      response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
+      response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
       response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M6, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
       connection._pairSetupState = undefined;
       return;
@@ -555,7 +579,14 @@ export class HAPServer extends EventEmitter {
   }
 
   // M5 - F + M6
-  private handlePairSetupM5_3(connection: HAPConnection, request: IncomingMessage, response: ServerResponse, clientUsername: Buffer, clientLTPK: Buffer, hkdfEncKey: Buffer): void {
+  private handlePairSetupM5_3(
+    connection: HAPConnection,
+    request: IncomingMessage,
+    response: ServerResponse,
+    clientUsername: Buffer,
+    clientLTPK: Buffer,
+    hkdfEncKey: Buffer,
+  ): void {
     debug("[%s] Pair step 5/5", this.accessoryInfo.username);
     const S_private = connection.srpServer!.computeK();
     const accessorySalt = Buffer.from("Pair-Setup-Accessory-Sign-Salt");
@@ -574,13 +605,13 @@ export class HAPServer extends EventEmitter {
     this.emit(HAPServerEventTypes.PAIR, clientUsername.toString(), clientLTPK, once((err?: Error) => {
       if (err) {
         debug("[%s] Error adding pairing info: %s", this.accessoryInfo.username, err.message);
-        response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
+        response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
         response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M6, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
         connection._pairSetupState = undefined;
         return;
       }
       // send final pairing response to client
-      response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
+      response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
       response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M6, TLVValues.ENCRYPTED_DATA, Buffer.concat([encrypted.ciphertext, encrypted.authTag])));
       connection._pairSetupState = undefined;
     }));
@@ -590,13 +621,13 @@ export class HAPServer extends EventEmitter {
     const tlvData = tlv.decode(data);
     const sequence = tlvData[TLVValues.SEQUENCE_NUM][0]; // value is single byte with sequence number
 
-    if (sequence == PairingStates.M1)
+    if (sequence === PairingStates.M1) {
       this.handlePairVerifyM1(connection, request, response, tlvData);
-    else if (sequence == PairingStates.M3 && connection._pairVerifyState === PairingStates.M2)
+    } else if (sequence === PairingStates.M3 && connection._pairVerifyState === PairingStates.M2) {
       this.handlePairVerifyM2(connection, request, response, tlvData);
-    else {
+    } else {
       // Invalid state/sequence number
-      response.writeHead(HAPPairingHTTPCode.BAD_REQUEST, {"Content-Type": "application/pairing+tlv8"});
+      response.writeHead(HAPPairingHTTPCode.BAD_REQUEST, { "Content-Type": "application/pairing+tlv8" });
       response.end(tlv.encode(TLVValues.STATE, sequence + 1, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
       return;
     }
@@ -625,8 +656,12 @@ export class HAPServer extends EventEmitter {
 
     const encrypted = hapCrypto.chacha20_poly1305_encryptAndSeal(outputKey, Buffer.from("PV-Msg02"), null, message);
 
-    response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
-    response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M2, TLVValues.ENCRYPTED_DATA, Buffer.concat([encrypted.ciphertext, encrypted.authTag]), TLVValues.PUBLIC_KEY, publicKey));
+    response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
+    response.end(tlv.encode(
+      TLVValues.SEQUENCE_NUM, PairingStates.M2,
+      TLVValues.ENCRYPTED_DATA, Buffer.concat([encrypted.ciphertext, encrypted.authTag]),
+      TLVValues.PUBLIC_KEY, publicKey,
+    ));
     connection._pairVerifyState = PairingStates.M2;
   }
 
@@ -646,7 +681,7 @@ export class HAPServer extends EventEmitter {
       plaintext = hapCrypto.chacha20_poly1305_decryptAndVerify(enc.hkdfPairEncryptionKey, Buffer.from("PV-Msg03"), null, messageData, authTagData);
     } catch (error) {
       debug("[%s] M3: Failed to decrypt and/or verify", this.accessoryInfo.username);
-      response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
+      response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
       response.end(tlv.encode(TLVValues.STATE, PairingStates.M4, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
       connection._pairVerifyState = undefined;
       return;
@@ -662,20 +697,20 @@ export class HAPServer extends EventEmitter {
     // disagree. Respond with invalid request (seems to match HomeKit Accessory Simulator behavior)
     if (!clientPublicKey) {
       debug("[%s] Client %s attempting to verify, but we are not paired; rejecting client", this.accessoryInfo.username, clientUsername);
-      response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
+      response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
       response.end(tlv.encode(TLVValues.STATE, PairingStates.M4, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
       connection._pairVerifyState = undefined;
       return;
     }
     if (!tweetnacl.sign.detached.verify(material, proof, clientPublicKey)) {
       debug("[%s] Client %s provided an invalid signature", this.accessoryInfo.username, clientUsername);
-      response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
+      response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
       response.end(tlv.encode(TLVValues.STATE, PairingStates.M4, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
       connection._pairVerifyState = undefined;
       return;
     }
     debug("[%s] Client %s verification complete", this.accessoryInfo.username, clientUsername);
-    response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
+    response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
     response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M4));
     // now that the client has been verified, we must "upgrade" our pseudo-HTTP connection to include
     // TCP-level encryption. We'll do this by adding some more encryption vars to the session, and using them
@@ -694,7 +729,7 @@ export class HAPServer extends EventEmitter {
   private handlePairings(connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse): void {
     // Only accept /pairing request if there is a secure session
     if (!this.allowInsecureRequest && !connection.isAuthenticated()) {
-      response.writeHead(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED, {"Content-Type": "application/hap+json"});
+      response.writeHead(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED, { "Content-Type": "application/hap+json" });
       response.end(JSON.stringify({ status: HAPStatus.INSUFFICIENT_PRIVILEGES }));
       return;
     }
@@ -715,12 +750,12 @@ export class HAPServer extends EventEmitter {
       this.emit(HAPServerEventTypes.ADD_PAIRING, connection, identifier, publicKey, permissions, once((error: TLVErrorCode | 0) => {
         if (error > 0) {
           debug("[%s] Pairings: failed ADD_PAIRING with code %d", this.accessoryInfo.username, error);
-          response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
+          response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
           response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, error));
           return;
         }
 
-        response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
+        response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
         response.end(tlv.encode(TLVValues.STATE, PairingStates.M2));
         debug("[%s] Pairings: successfully executed ADD_PAIRING", this.accessoryInfo.username);
       }));
@@ -730,12 +765,12 @@ export class HAPServer extends EventEmitter {
       this.emit(HAPServerEventTypes.REMOVE_PAIRING, connection, identifier, once((error: TLVErrorCode | 0) => {
         if (error > 0) {
           debug("[%s] Pairings: failed REMOVE_PAIRING with code %d", this.accessoryInfo.username, error);
-          response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
+          response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
           response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, error));
           return;
         }
 
-        response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
+        response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
         response.end(tlv.encode(TLVValues.STATE, PairingStates.M2));
         debug("[%s] Pairings: successfully executed REMOVE_PAIRING", this.accessoryInfo.username);
       }));
@@ -743,11 +778,12 @@ export class HAPServer extends EventEmitter {
       this.emit(HAPServerEventTypes.LIST_PAIRINGS, connection, once((error: TLVErrorCode | 0, data?: PairingInformation[]) => {
         if (error > 0) {
           debug("[%s] Pairings: failed LIST_PAIRINGS with code %d", this.accessoryInfo.username, error);
-          response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
+          response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
           response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, error));
           return;
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const tlvList = [] as any[];
         data!.forEach((value: PairingInformation, index: number) => {
           if (index > 0) {
@@ -755,14 +791,14 @@ export class HAPServer extends EventEmitter {
           }
 
           tlvList.push(
-              TLVValues.IDENTIFIER, value.username,
-              TLVValues.PUBLIC_KEY, value.publicKey,
-              TLVValues.PERMISSIONS, value.permission
+            TLVValues.IDENTIFIER, value.username,
+            TLVValues.PUBLIC_KEY, value.publicKey,
+            TLVValues.PERMISSIONS, value.permission,
           );
         });
 
         const list = tlv.encode(TLVValues.STATE, PairingStates.M2, ...tlvList);
-        response.writeHead(HAPPairingHTTPCode.OK, {"Content-Type": "application/pairing+tlv8"});
+        response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
         response.end(list);
         debug("[%s] Pairings: successfully executed LIST_PAIRINGS", this.accessoryInfo.username);
       }));
@@ -771,17 +807,17 @@ export class HAPServer extends EventEmitter {
 
   private handleAccessories(connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse): void {
     if (!this.allowInsecureRequest && !connection.isAuthenticated()) {
-      response.writeHead(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED, {"Content-Type": "application/hap+json"});
-      response.end(JSON.stringify({status: HAPStatus.INSUFFICIENT_PRIVILEGES}));
+      response.writeHead(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED, { "Content-Type": "application/hap+json" });
+      response.end(JSON.stringify({ status: HAPStatus.INSUFFICIENT_PRIVILEGES }));
       return;
     }
     // call out to listeners to retrieve the latest accessories JSON
     this.emit(HAPServerEventTypes.ACCESSORIES, connection, once((error: HAPHttpError | undefined, result: AccessoriesResponse) => {
       if (error) {
-        response.writeHead(error.httpCode, {"Content-Type": "application/hap+json"});
+        response.writeHead(error.httpCode, { "Content-Type": "application/hap+json" });
         response.end(JSON.stringify({ status: error.status }));
       } else {
-        response.writeHead(HAPHTTPCode.OK, {"Content-Type": "application/hap+json"});
+        response.writeHead(HAPHTTPCode.OK, { "Content-Type": "application/hap+json" });
         response.end(JSON.stringify(result));
       }
     }));
@@ -789,8 +825,8 @@ export class HAPServer extends EventEmitter {
 
   private handleCharacteristics(connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse): void {
     if (!this.allowInsecureRequest && !connection.isAuthenticated()) {
-      response.writeHead(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED, {"Content-Type": "application/hap+json"});
-      response.end(JSON.stringify({status: HAPStatus.INSUFFICIENT_PRIVILEGES}));
+      response.writeHead(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED, { "Content-Type": "application/hap+json" });
+      response.end(JSON.stringify({ status: HAPStatus.INSUFFICIENT_PRIVILEGES }));
       return;
     }
 
@@ -799,14 +835,14 @@ export class HAPServer extends EventEmitter {
 
       const idParam = searchParams.get("id");
       if (!idParam) {
-        response.writeHead(HAPHTTPCode.BAD_REQUEST, {"Content-Type": "application/hap+json"});
+        response.writeHead(HAPHTTPCode.BAD_REQUEST, { "Content-Type": "application/hap+json" });
         response.end(JSON.stringify({ status: HAPStatus.INVALID_VALUE_IN_REQUEST }));
         return;
       }
 
       const ids: CharacteristicId[] = [];
       for (const entry of idParam.split(",")) { // ["1.9","2.14"]
-        const split = entry.split(".") // ["1","9"]
+        const split = entry.split("."); // ["1","9"]
         ids.push({
           aid: parseInt(split[0], 10), // accessory Id
           iid: parseInt(split[1], 10), // (characteristic) instance Id
@@ -821,102 +857,112 @@ export class HAPServer extends EventEmitter {
         includeEvent: consideredTrue(searchParams.get("ev")),
       };
 
-      this.emit(HAPServerEventTypes.GET_CHARACTERISTICS, connection, readRequest, once((error: HAPHttpError | undefined, readResponse: CharacteristicsReadResponse) => {
-        if (error) {
-          response.writeHead(error.httpCode, {"Content-Type": "application/hap+json"});
-          response.end(JSON.stringify({ status: error.status }));
-          return;
-        }
-
-        const characteristics = readResponse.characteristics;
-
-        let errorOccurred = false; // determine if we send a 207 Multi-Status
-        for (const data of characteristics) {
-          if (data.status) {
-            errorOccurred = true;
-            break;
+      this.emit(
+        HAPServerEventTypes.GET_CHARACTERISTICS,
+        connection,
+        readRequest,
+        once((error: HAPHttpError | undefined, readResponse: CharacteristicsReadResponse) => {
+          if (error) {
+            response.writeHead(error.httpCode, { "Content-Type": "application/hap+json" });
+            response.end(JSON.stringify({ status: error.status }));
+            return;
           }
-        }
 
-        if (errorOccurred) { // on a 207 Multi-Status EVERY characteristic MUST include a status property
+          const characteristics = readResponse.characteristics;
+
+          let errorOccurred = false; // determine if we send a 207 Multi-Status
           for (const data of characteristics) {
-            if (!data.status) { // a status is undefined if the request was successful
-              data.status = HAPStatus.SUCCESS; // a value of zero indicates success
+            if (data.status) {
+              errorOccurred = true;
+              break;
             }
           }
-        }
 
-        // 207 "multi-status" is returned when an error occurs reading a characteristic. otherwise 200 is returned
-        response.writeHead(errorOccurred? HAPHTTPCode.MULTI_STATUS: HAPHTTPCode.OK, {"Content-Type": "application/hap+json"});
-        response.end(JSON.stringify({ characteristics: characteristics }));
-      }));
+          if (errorOccurred) { // on a 207 Multi-Status EVERY characteristic MUST include a status property
+            for (const data of characteristics) {
+              if (!data.status) { // a status is undefined if the request was successful
+                data.status = HAPStatus.SUCCESS; // a value of zero indicates success
+              }
+            }
+          }
+
+          // 207 "multi-status" is returned when an error occurs reading a characteristic. otherwise 200 is returned
+          response.writeHead(errorOccurred? HAPHTTPCode.MULTI_STATUS: HAPHTTPCode.OK, { "Content-Type": "application/hap+json" });
+          response.end(JSON.stringify({ characteristics: characteristics }));
+        }),
+      );
     } else if (request.method === "PUT") {
       if (!connection.isAuthenticated()) {
-        if (!request.headers || (request.headers && request.headers["authorization"] !== this.accessoryInfo.pincode)) {
-          response.writeHead(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED, {"Content-Type": "application/hap+json"});
-          response.end(JSON.stringify({status: HAPStatus.INSUFFICIENT_PRIVILEGES}));
+        if (!request.headers || (request.headers && request.headers.authorization !== this.accessoryInfo.pincode)) {
+          response.writeHead(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED, { "Content-Type": "application/hap+json" });
+          response.end(JSON.stringify({ status: HAPStatus.INSUFFICIENT_PRIVILEGES }));
           return;
         }
       }
       if (data.length === 0) {
-        response.writeHead(400, {"Content-Type": "application/hap+json"});
-        response.end(JSON.stringify({status: HAPStatus.INVALID_VALUE_IN_REQUEST}));
+        response.writeHead(400, { "Content-Type": "application/hap+json" });
+        response.end(JSON.stringify({ status: HAPStatus.INVALID_VALUE_IN_REQUEST }));
         return;
       }
 
       const writeRequest = JSON.parse(data.toString("utf8")) as CharacteristicsWriteRequest;
 
-      this.emit(HAPServerEventTypes.SET_CHARACTERISTICS, connection, writeRequest, once((error: HAPHttpError | undefined, writeResponse: CharacteristicsWriteResponse) => {
-        if (error) {
-          response.writeHead(error.httpCode, {"Content-Type": "application/hap+json"});
-          response.end(JSON.stringify({ status: error.status }));
-          return;
-        }
-
-        const characteristics = writeResponse.characteristics;
-
-        let multiStatus = false;
-        for (const data of characteristics) {
-          if (data.status || data.value !== undefined) {
-            // also send multiStatus on write response requests
-            multiStatus = true;
-            break;
+      this.emit(
+        HAPServerEventTypes.SET_CHARACTERISTICS,
+        connection,
+        writeRequest,
+        once((error: HAPHttpError | undefined, writeResponse: CharacteristicsWriteResponse) => {
+          if (error) {
+            response.writeHead(error.httpCode, { "Content-Type": "application/hap+json" });
+            response.end(JSON.stringify({ status: error.status }));
+            return;
           }
-        }
 
-        if (multiStatus) {
-          for (const data of characteristics) { // on a 207 Multi-Status EVERY characteristic MUST include a status property
-            if (data.status === undefined) {
-              data.status = HAPStatus.SUCCESS;
+          const characteristics = writeResponse.characteristics;
+
+          let multiStatus = false;
+          for (const data of characteristics) {
+            if (data.status || data.value !== undefined) {
+            // also send multiStatus on write response requests
+              multiStatus = true;
+              break;
             }
           }
 
-          // 207 is "multi-status" since HomeKit may be setting multiple things and any one can fail independently
-          response.writeHead(HAPHTTPCode.MULTI_STATUS, {"Content-Type": "application/hap+json"});
-          response.end(JSON.stringify({ characteristics: characteristics }));
-        } else {
+          if (multiStatus) {
+            for (const data of characteristics) { // on a 207 Multi-Status EVERY characteristic MUST include a status property
+              if (data.status === undefined) {
+                data.status = HAPStatus.SUCCESS;
+              }
+            }
+
+            // 207 is "multi-status" since HomeKit may be setting multiple things and any one can fail independently
+            response.writeHead(HAPHTTPCode.MULTI_STATUS, { "Content-Type": "application/hap+json" });
+            response.end(JSON.stringify({ characteristics: characteristics }));
+          } else {
           // if everything went fine send 204 no content response
-          response.writeHead(HAPHTTPCode.NO_CONTENT);
-          response.end();
-        }
-      }));
+            response.writeHead(HAPHTTPCode.NO_CONTENT);
+            response.end();
+          }
+        }),
+      );
     } else {
-      response.writeHead(HAPHTTPCode.BAD_REQUEST, {"Content-Type": "application/hap+json"}); // method not allowed
+      response.writeHead(HAPHTTPCode.BAD_REQUEST, { "Content-Type": "application/hap+json" }); // method not allowed
       response.end(JSON.stringify({ status: HAPStatus.INVALID_VALUE_IN_REQUEST }));
     }
   }
 
   private handlePrepareWrite(connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse): void {
     if (!this.allowInsecureRequest && !connection.isAuthenticated()) {
-      response.writeHead(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED, {"Content-Type": "application/hap+json"});
-      response.end(JSON.stringify({status: HAPStatus.INSUFFICIENT_PRIVILEGES}));
+      response.writeHead(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED, { "Content-Type": "application/hap+json" });
+      response.end(JSON.stringify({ status: HAPStatus.INSUFFICIENT_PRIVILEGES }));
       return;
     }
 
-    if (request.method == "PUT") {
-      if (data.length == 0) {
-        response.writeHead(HAPHTTPCode.BAD_REQUEST, {"Content-Type": "application/hap+json"});
-        response.end(JSON.stringify({status: HAPStatus.INVALID_VALUE_IN_REQUEST}));
+    if (request.method === "PUT") {
+      if (data.length === 0) {
+        response.writeHead(HAPHTTPCode.BAD_REQUEST, { "Content-Type": "application/hap+json" });
+        response.end(JSON.stringify({ status: HAPStatus.INVALID_VALUE_IN_REQUEST }));
         return;
       }
 
@@ -925,8 +971,9 @@ export class HAPServer extends EventEmitter {
       if (prepareRequest.pid && prepareRequest.ttl) {
         debug("[%s] Received prepare write request with pid %d and ttl %d", this.accessoryInfo.username, prepareRequest.pid, prepareRequest.ttl);
 
-        if (connection.timedWriteTimeout) // clear any currently existing timeouts
+        if (connection.timedWriteTimeout) { // clear any currently existing timeouts
           clearTimeout(connection.timedWriteTimeout);
+        }
 
         connection.timedWritePid = prepareRequest.pid;
         connection.timedWriteTimeout = setTimeout(() => {
@@ -935,15 +982,15 @@ export class HAPServer extends EventEmitter {
           connection.timedWriteTimeout = undefined;
         }, prepareRequest.ttl);
 
-        response.writeHead(HAPHTTPCode.OK, {"Content-Type": "application/hap+json"});
-        response.end(JSON.stringify({status: HAPStatus.SUCCESS}));
+        response.writeHead(HAPHTTPCode.OK, { "Content-Type": "application/hap+json" });
+        response.end(JSON.stringify({ status: HAPStatus.SUCCESS }));
         return;
       } else {
-        response.writeHead(HAPHTTPCode.BAD_REQUEST, {"Content-Type": "application/hap+json"});
+        response.writeHead(HAPHTTPCode.BAD_REQUEST, { "Content-Type": "application/hap+json" });
         response.end(JSON.stringify({ status: HAPStatus.INVALID_VALUE_IN_REQUEST }));
       }
     } else {
-      response.writeHead(HAPHTTPCode.BAD_REQUEST, {"Content-Type": "application/hap+json"});
+      response.writeHead(HAPHTTPCode.BAD_REQUEST, { "Content-Type": "application/hap+json" });
       response.end(JSON.stringify({ status: HAPStatus.INVALID_VALUE_IN_REQUEST }));
     }
   }
@@ -951,14 +998,14 @@ export class HAPServer extends EventEmitter {
   private handleResource(connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse): void {
     if (!connection.isAuthenticated()) {
       if (!(this.allowInsecureRequest && request.headers && request.headers.authorization === this.accessoryInfo.pincode)) {
-        response.writeHead(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED, {"Content-Type": "application/hap+json"});
+        response.writeHead(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED, { "Content-Type": "application/hap+json" });
         response.end(JSON.stringify({ status: HAPStatus.INSUFFICIENT_PRIVILEGES }));
         return;
       }
     }
     if (request.method === "POST") {
       if (data.length === 0) {
-        response.writeHead(HAPHTTPCode.BAD_REQUEST, {"Content-Type": "application/hap+json"});
+        response.writeHead(HAPHTTPCode.BAD_REQUEST, { "Content-Type": "application/hap+json" });
         response.end(JSON.stringify({ status: HAPStatus.INVALID_VALUE_IN_REQUEST }));
         return;
       }
@@ -967,15 +1014,15 @@ export class HAPServer extends EventEmitter {
       // call out to listeners to retrieve the resource, snapshot only right now
       this.emit(HAPServerEventTypes.REQUEST_RESOURCE, resourceRequest, once((error: HAPHttpError | undefined, resource: Buffer) => {
         if (error) {
-          response.writeHead(error.httpCode, {"Content-Type": "application/hap+json"});
+          response.writeHead(error.httpCode, { "Content-Type": "application/hap+json" });
           response.end(JSON.stringify({ status: error.status }));
         } else {
-          response.writeHead(HAPHTTPCode.OK, {"Content-Type": "image/jpeg"});
+          response.writeHead(HAPHTTPCode.OK, { "Content-Type": "image/jpeg" });
           response.end(resource);
         }
       }));
     } else {
-      response.writeHead(HAPHTTPCode.BAD_REQUEST, {"Content-Type": "application/hap+json"}); // method not allowed
+      response.writeHead(HAPHTTPCode.BAD_REQUEST, { "Content-Type": "application/hap+json" }); // method not allowed
       response.end(JSON.stringify({ status: HAPStatus.INVALID_VALUE_IN_REQUEST }));
     }
   }

@@ -1,6 +1,6 @@
-import path from 'path';
+import path from "path";
 
-import storage from 'node-persist';
+import storage from "node-persist";
 
 import { Accessory, AccessoryEventTypes, AccessoryLoader, Bridge, Categories, HAPLibraryVersion, uuid, VoidCallback } from "./";
 
@@ -13,7 +13,7 @@ console.warn("DEPRECATION NOTICE: The use of Core and BridgeCore are deprecated 
 storage.initSync();
 
 // Start by creating our Bridge which will host all loaded Accessories
-const bridge = new Bridge('Node Bridge', uuid.generate("Node Bridge"));
+const bridge = new Bridge("Node Bridge", uuid.generate("Node Bridge"));
 
 // Listen for bridge identification event
 bridge.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
@@ -35,15 +35,16 @@ bridge.publish({
   username: "CC:22:3D:E3:CE:F6",
   port: 51826,
   pincode: "031-45-154",
-  category: Categories.BRIDGE
+  category: Categories.BRIDGE,
 });
 
-const signals = {'SIGINT': 2, 'SIGTERM': 15} as Record<string, number>;
+const signals = { "SIGINT": 2, "SIGTERM": 15 } as Record<string, number>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 Object.keys(signals).forEach((signal: any) => {
-  process.on(signal, function () {
+  process.on(signal, () => {
     bridge.unpublish();
-    setTimeout(function (){
-        process.exit(128 + signals[signal]);
-    }, 1000)
+    setTimeout(()=> {
+      process.exit(128 + signals[signal]);
+    }, 1000);
   });
 });

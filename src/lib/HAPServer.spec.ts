@@ -3,13 +3,13 @@ import { HAPStatus, IsKnownHAPStatusError } from "./HAPServer";
 describe("HAPServer", () => {
   describe(IsKnownHAPStatusError, () => {
     it("should approve all defined error codes", () => {
-      // @ts-ignore
+      // @ts-expect-error: forceConsistentCasingInFileNames compiler option
       const errorValues = Object.values(HAPStatus)
         .filter(error => typeof error === "number") // .values will actually include both the enum values and enum names
         .filter(error => error !== 0); // filter out HAPStatus.SUCCESS
 
       for (const error of errorValues) {
-        // @ts-ignore
+        // @ts-expect-error: type mismatch
         const result = IsKnownHAPStatusError(error);
         if (!result) {
           fail("IsKnownHAPStatusError does not return true for error code " + error);
@@ -25,11 +25,11 @@ describe("HAPServer", () => {
     });
 
     it("should reject invalid user input", () => {
-      // @ts-ignore
+      // @ts-expect-error: deliberate illegal input
       expect(IsKnownHAPStatusError("asdjw")).toBe(false);
-      // @ts-ignore
-      expect(IsKnownHAPStatusError({"key": "value"})).toBe(false);
-      // @ts-ignore
+      // @ts-expect-error: deliberate illegal input
+      expect(IsKnownHAPStatusError({ "key": "value" })).toBe(false);
+      // @ts-expect-error: deliberate illegal input
       expect(IsKnownHAPStatusError([])).toBe(false);
     });
   });

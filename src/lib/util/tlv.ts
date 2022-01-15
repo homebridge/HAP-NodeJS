@@ -1,5 +1,5 @@
 import assert from "assert";
-import * as hapCrypto from "../util/hapCrypto"
+import * as hapCrypto from "../util/hapCrypto";
 /**
  * Type Length Value encoding/decoding, used by HAP as a wire format.
  * https://en.wikipedia.org/wiki/Type-length-value
@@ -9,13 +9,14 @@ const EMPTY_TLV_TYPE = 0x00; // and empty tlv with id 0 is usually used as delim
 
 export type TLVEncodable = Buffer | number | string;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function encode(type: number, data: TLVEncodable | TLVEncodable[], ...args: any[]): Buffer {
   const encodedTLVBuffers: Buffer[] = [];
 
   // coerce data to Buffer if needed
-  if (typeof data === 'number') {
+  if (typeof data === "number") {
     data = Buffer.from([data]);
-  } else if (typeof data === 'string') {
+  } else if (typeof data === "string") {
     data = Buffer.from(data);
   }
 
@@ -136,7 +137,8 @@ export function decodeWithLists(buffer: Buffer): Record<number, Buffer | Buffer[
           result[type] = Buffer.concat([existing, data]);
         }
       } else {
-        throw new Error(`Found duplicated tlv entry with type ${type} and length ${length} (lastItemWasDelimiter: ${lastItemWasDelimiter}, lastType: ${lastType}, lastLength: ${lastLength})`);
+        throw new Error(`Found duplicated tlv entry with type ${type} and length ${length} \
+        (lastItemWasDelimiter: ${lastItemWasDelimiter}, lastType: ${lastType}, lastLength: ${lastLength})`);
       }
     } else {
       result[type] = data;
@@ -150,7 +152,7 @@ export function decodeWithLists(buffer: Buffer): Record<number, Buffer | Buffer[
   return result;
 }
 
-export function decodeList(data: Buffer, entryStartId: number) {
+export function decodeList(data: Buffer, entryStartId: number): Record<number, Buffer>[] {
   const objectsList: Record<number, Buffer>[] = [];
 
   let leftLength = data.length;
@@ -171,8 +173,9 @@ export function decodeList(data: Buffer, entryStartId: number) {
       objects = {};
     }
 
-    if (objects === undefined)
+    if (objects === undefined) {
       throw new Error("Error parsing tlv list: Encountered uninitialized storage object");
+    }
 
     if (objects[type]) { // append to buffer if we have an already data for this type
       objects[type] = Buffer.concat([value, objects[type]]);
@@ -184,13 +187,14 @@ export function decodeList(data: Buffer, entryStartId: number) {
     leftLength -= 2 + length;
   }
 
-  if (objects !== undefined)
-    objectsList.push(objects); // push last entry
+  if (objects !== undefined) {
+    objectsList.push(objects);
+  } // push last entry
 
   return objectsList;
 }
 
-export function writeUInt64(value: number) {
+export function writeUInt64(value: number): Buffer {
   const float64 = new Float64Array(1);
   float64[0] = value;
 
@@ -208,17 +212,17 @@ export function writeUInt64(value: number) {
  * @param buffer
  * @deprecated This is pretty much broken
  */
-export function readUInt64(buffer: Buffer) {
+export function readUInt64(buffer: Buffer): number {
   const float64 = new Float64Array(buffer);
   return float64[0];
 }
 
-export function readUInt64BE(buffer: Buffer, offset: number = 0) {
+export function readUInt64BE(buffer: Buffer, offset = 0): number {
   const low = buffer.readUInt32LE(offset);
   return buffer.readUInt32LE(offset + 4) * 0x100000000 + low;
 }
 
-export function writeUInt32(value: number) {
+export function writeUInt32(value: number): Buffer {
   const buffer = Buffer.alloc(4);
 
   buffer.writeUInt32LE(value, 0);
@@ -226,17 +230,17 @@ export function writeUInt32(value: number) {
   return buffer;
 }
 
-export function readUInt32(buffer: Buffer) {
+export function readUInt32(buffer: Buffer): number {
   return buffer.readUInt32LE(0);
 }
 
-export function writeFloat32LE(value: number) {
+export function writeFloat32LE(value: number): Buffer {
   const buffer = Buffer.alloc(4);
   buffer.writeFloatLE(value, 0);
   return buffer;
 }
 
-export function writeUInt16(value: number) {
+export function writeUInt16(value: number): Buffer {
   const buffer = Buffer.alloc(2);
 
   buffer.writeUInt16LE(value, 0);
@@ -244,21 +248,21 @@ export function writeUInt16(value: number) {
   return buffer;
 }
 
-export function readUInt16(buffer: Buffer) {
+export function readUInt16(buffer: Buffer): number {
   return buffer.readUInt16LE(0);
 }
 export function readVariableUIntLE(buffer: Buffer, offset = 0): number {
   switch (buffer.length) {
-    case 1:
-      return buffer.readUInt8(offset);
-    case 2:
-      return buffer.readUInt16LE(offset);
-    case 4:
-      return buffer.readUInt32LE(offset);
-    case 8:
-      return readUInt64BE(buffer, offset);
-    default:
-      throw new Error("Can't read uint LE with length " + buffer.length);
+  case 1:
+    return buffer.readUInt8(offset);
+  case 2:
+    return buffer.readUInt16LE(offset);
+  case 4:
+    return buffer.readUInt32LE(offset);
+  case 8:
+    return readUInt64BE(buffer, offset);
+  default:
+    throw new Error("Can't read uint LE with length " + buffer.length);
   }
 }
 

@@ -17,14 +17,14 @@ import {
   RequestHandler,
   Topics,
 } from "../datastream";
-import { CameraOperatingMode, CameraRecordingManagement, SelectedCameraRecordingConfiguration } from "../definitions";
+import { CameraOperatingMode, CameraRecordingManagement } from "../definitions";
 import { HAPStatus } from "../HAPServer";
 import { Service } from "../Service";
 import { HapStatusError } from "../util/hapStatusError";
 import * as tlv from "../util/tlv";
 import { H264CodecParameters, H264Level, H264Profile, Resolution } from "./RTPStreamManagement";
 
-const debug = createDebug('HAP-NodeJS:Camera:RecordingManagement');
+const debug = createDebug("HAP-NodeJS:Camera:RecordingManagement");
 
 /**
  * Describes options passed to the {@link RecordingManagement}.
@@ -366,7 +366,7 @@ export class RecordingManagement {
      * The rawValue representation. TLV8 data encoded as base64 string.
      */
     base64: string,
-  }
+  };
 
   /**
    * Array of sensor services (e.g. {@link Service.MotionSensor} or {@link Service.OccupancySensor}).
@@ -376,7 +376,12 @@ export class RecordingManagement {
    */
   sensorServices: Service[] = [];
 
-  constructor(options: CameraRecordingOptions, delegate: CameraRecordingDelegate, eventTriggerOptions: Set<EventTriggerOption>, services?: RecordingManagementServices) {
+  constructor(
+    options: CameraRecordingOptions,
+    delegate: CameraRecordingDelegate,
+    eventTriggerOptions: Set<EventTriggerOption>,
+    services?: RecordingManagementServices,
+  ) {
     this.options = options;
     this.delegate = delegate;
 
@@ -398,11 +403,11 @@ export class RecordingManagement {
   }
 
   private constructService(): RecordingManagementServices {
-    const recordingManagement = new Service.CameraRecordingManagement('', '');
+    const recordingManagement = new Service.CameraRecordingManagement("", "");
     recordingManagement.setCharacteristic(Characteristic.Active, false);
     recordingManagement.setCharacteristic(Characteristic.RecordingAudioActive, false);
 
-    const operatingMode = new Service.CameraOperatingMode('', '');
+    const operatingMode = new Service.CameraOperatingMode("", "");
     operatingMode.setCharacteristic(Characteristic.EventSnapshotsActive, true);
     operatingMode.setCharacteristic(Characteristic.HomeKitCameraActive, true);
     operatingMode.setCharacteristic(Characteristic.PeriodicSnapshotsActive, true);
@@ -434,7 +439,7 @@ export class RecordingManagement {
       .setProps({ adminOnlyAccess: [Access.WRITE] });
 
     this.recordingManagementService.getCharacteristic(Characteristic.RecordingAudioActive)
-      .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate?.())
+      .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate?.());
 
     this.operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive)
       .on(CharacteristicEventTypes.CHANGE, change => {
@@ -459,9 +464,10 @@ export class RecordingManagement {
       .setProps({ adminOnlyAccess: [Access.WRITE] });
 
     this.dataStreamManagement
-      .onRequestMessage(Protocols.DATA_SEND, Topics.OPEN, this.handleDataSendOpen.bind(this))
+      .onRequestMessage(Protocols.DATA_SEND, Topics.OPEN, this.handleDataSendOpen.bind(this));
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private handleDataSendOpen(connection: DataStreamConnection, id: number, message: Record<any, any>) {
     // for message fields see https://github.com/Supereg/secure-video-specification#41-start
     const streamId: number = message.streamId;
@@ -469,7 +475,7 @@ export class RecordingManagement {
     const target: string = message.target;
     const reason: string = message.reason;
 
-    if (target != "controller" || type != "ipcamera.recording") {
+    if (target !== "controller" || type !== "ipcamera.recording") {
       debug("[HDS %s] Received data send with unexpected target: %s or type: %d. Rejecting...",
         connection.remoteAddress, target, type);
       connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, id, HDSStatus.PROTOCOL_SPECIFIC_ERROR, {
@@ -511,6 +517,7 @@ export class RecordingManagement {
 
     debug("[HDS %s] HDS DATA_SEND Open with reason '%s'.", connection.remoteAddress, reason);
 
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
     this.recordingStream = new CameraRecordingStream(connection, this.delegate, id, streamId);
     this.recordingStream.on(CameraRecordingStreamEvents.CLOSED, () => {
       this.recordingStream = undefined;
@@ -527,6 +534,7 @@ export class RecordingManagement {
     return this.selectedConfiguration.base64;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private handleSelectedCameraRecordingConfigurationWrite(value: any): void {
     const configuration = this.parseSelectedConfiguration(value);
 
@@ -542,7 +550,7 @@ export class RecordingManagement {
   }
 
   private parseSelectedConfiguration(value: string): CameraRecordingConfiguration {
-    const decoded = tlv.decode(Buffer.from(value, 'base64'));
+    const decoded = tlv.decode(Buffer.from(value, "base64"));
 
     const recording = tlv.decode(decoded[SelectedCameraRecordingConfigurationTypes.SELECTED_RECORDING_CONFIGURATION]);
     const video = tlv.decode(decoded[SelectedCameraRecordingConfigurationTypes.SELECTED_VIDEO_CONFIGURATION]);
@@ -616,7 +624,7 @@ export class RecordingManagement {
   private _supportedCameraRecordingConfiguration(options: CameraRecordingOptions): string {
     const mediaContainers = Array.isArray(options.mediaContainerConfiguration)
       ? options.mediaContainerConfiguration
-      : [options.mediaContainerConfiguration]
+      : [options.mediaContainerConfiguration];
 
     const prebufferLength = Buffer.alloc(4);
     const eventTriggerOptions = Buffer.alloc(8);
@@ -636,21 +644,21 @@ export class RecordingManagement {
           MediaContainerConfigurationTypes.MEDIA_CONTAINER_TYPE, config.type,
           MediaContainerConfigurationTypes.MEDIA_CONTAINER_PARAMETERS, tlv.encode(
             MediaContainerParameterTypes.FRAGMENT_LENGTH, fragmentLength,
-          )
+          ),
         );
-      })
-    ).toString('base64');
+      }),
+    ).toString("base64");
   }
 
   private _supportedVideoRecordingConfiguration(videoOptions: VideoRecordingOptions): string {
     if (!videoOptions.parameters) {
-      throw new Error('Video parameters cannot be undefined');
+      throw new Error("Video parameters cannot be undefined");
     }
     if (!videoOptions.resolutions) {
-      throw new Error('Video resolutions cannot be undefined');
+      throw new Error("Video resolutions cannot be undefined");
     }
 
-    let codecParameters = tlv.encode(
+    const codecParameters = tlv.encode(
       VideoCodecParametersTypes.PROFILE_ID, videoOptions.parameters.profiles,
       VideoCodecParametersTypes.LEVEL, videoOptions.parameters.levels,
     );
@@ -659,8 +667,8 @@ export class RecordingManagement {
       VideoCodecConfigurationTypes.CODEC_TYPE, videoOptions.type,
       VideoCodecConfigurationTypes.CODEC_PARAMETERS, codecParameters,
       VideoCodecConfigurationTypes.ATTRIBUTES, videoOptions.resolutions.map(resolution => {
-        if (resolution.length != 3) {
-          throw new Error('Unexpected video resolution');
+        if (resolution.length !== 3) {
+          throw new Error("Unexpected video resolution");
         }
 
         const width = Buffer.alloc(2);
@@ -681,13 +689,13 @@ export class RecordingManagement {
 
     return tlv.encode(
       SupportedVideoRecordingConfigurationTypes.VIDEO_CODEC_CONFIGURATION, videoStreamConfiguration,
-    ).toString('base64');
+    ).toString("base64");
   }
 
   private _supportedAudioStreamConfiguration(audioOptions: AudioRecordingOptions): string {
     const audioCodecs = Array.isArray(audioOptions.codecs)
       ? audioOptions.codecs
-      : [audioOptions.codecs]
+      : [audioOptions.codecs];
 
     if (audioCodecs.length === 0) {
       throw Error("CameraRecordingOptions.audio: At least one audio codec configuration must be specified!");
@@ -706,11 +714,11 @@ export class RecordingManagement {
         AudioCodecParametersTypes.CHANNEL, Math.max(1, codec.audioChannels || 1),
         AudioCodecParametersTypes.BIT_RATE, codec.bitrateMode || AudioBitrate.VARIABLE,
         AudioCodecParametersTypes.SAMPLE_RATE, providedSamplerates,
-      )
+      );
 
       return tlv.encode(
         AudioCodecConfigurationTypes.CODEC_TYPE, codec.type,
-        AudioCodecConfigurationTypes.CODEC_PARAMETERS, audioParameters
+        AudioCodecConfigurationTypes.CODEC_PARAMETERS, audioParameters,
       );
     });
 
@@ -719,7 +727,7 @@ export class RecordingManagement {
     ).toString("base64");
   }
 
-  private computeConfigurationHash(algorithm: string = "sha256"): string {
+  private computeConfigurationHash(algorithm = "sha256"): string {
     const configurationHash = crypto.createHash(algorithm);
     configurationHash.update(this.supportedCameraRecordingConfiguration);
     configurationHash.update(this.supportedVideoRecordingConfiguration);
@@ -754,13 +762,13 @@ export class RecordingManagement {
     let changedState = false;
 
     // we only restore the `selectedConfiguration` if our supported configuration hasn't changed.
-    let currentConfigurationHash = this.computeConfigurationHash(serialized.configurationHash.algorithm);
+    const currentConfigurationHash = this.computeConfigurationHash(serialized.configurationHash.algorithm);
     if (serialized.selectedConfiguration) {
-      if (currentConfigurationHash == serialized.configurationHash.hash) {
+      if (currentConfigurationHash === serialized.configurationHash.hash) {
         this.selectedConfiguration = {
           base64: serialized.selectedConfiguration,
           parsed: this.parseSelectedConfiguration(serialized.selectedConfiguration),
-        }
+        };
       } else {
         changedState = true;
       }
@@ -804,7 +812,7 @@ export class RecordingManagement {
     this.dataStreamManagement.destroy();
   }
 
-  handleFactoryReset() {
+  handleFactoryReset(): void {
     this.selectedConfiguration = undefined;
     this.recordingManagementService.updateCharacteristic(Characteristic.Active, false);
     this.recordingManagementService.updateCharacteristic(Characteristic.RecordingAudioActive, false);
@@ -852,12 +860,12 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
   readonly delegate: CameraRecordingDelegate;
   readonly hdsRequestId: number;
   readonly streamId: number;
-  private closed: boolean = false;
+  private closed = false;
 
   eventHandler?: Record<string, EventHandler> = {
     [Topics.CLOSE]: this.handleDataSendClose.bind(this),
     [Topics.ACK]: this.handleDataSendAck.bind(this),
-  }
+  };
   requestHandler?: Record<string, RequestHandler> = undefined;
 
   private readonly closeListener: () => void;
@@ -929,7 +937,7 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
                 dataSequenceNumber: dataSequenceNumber,
                 dataChunkSequenceNumber: dataChunkSequenceNumber,
                 isLastDataChunk: offset >= fragment.length,
-                dataTotalSize: dataChunkSequenceNumber == 1 ? fragment.length : undefined,
+                dataTotalSize: dataChunkSequenceNumber === 1 ? fragment.length : undefined,
               },
             }],
             endOfStream: offset >= fragment.length ? Boolean(packet.isLast).valueOf() : undefined,
@@ -954,7 +962,8 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
 
       if (!lastFragmentWasMarkedLast && !this.closed) {
         // Delegate violates the contract. Exited normally on a non-closed stream without properly setting `isLast`.
-        console.warn(`[HDS ${this.connection.remoteAddress}] Delegate finished streaming for ${this.streamId} without setting RecordingPacket.isLast. Can't notify Controller about endOfStream!`);
+        console.warn(`[HDS ${this.connection.remoteAddress}] Delegate finished streaming for ${this.streamId} without setting RecordingPacket.isLast. \
+        Can't notify Controller about endOfStream!`);
       }
     } catch (error) {
       if (this.closed) {
@@ -984,15 +993,17 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
     }
 
     if (initialization) { // we never actually sent anything out there!
-      console.warn(`[HDS ${this.connection.remoteAddress}] Delegate finished recording stream ${this.streamId} without sending anything out. Controller will CANCEL.`);
+      console.warn(`[HDS ${this.connection.remoteAddress}] Delegate finished recording stream ${this.streamId} without sending anything out. \
+      Controller will CANCEL.`);
     }
 
     debug("[HDS %s] Finished DATA_SEND transmission for stream %d!", this.connection.remoteAddress, this.streamId);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private handleDataSendAck(message: Record<any, any>) {
-    const streamId: any = message.streamId;
-    const endOfStream: any = message.endOfStream;
+    const streamId: string = message.streamId;
+    const endOfStream: boolean = message.endOfStream;
 
     // The HomeKit Controller will send a DATA_SEND ACK if we set the `endOfStream` flag in the last packet
     // of our DATA_SEND DATA packet.
@@ -1003,17 +1014,18 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
     this.handleClosed(() => this.delegate.acknowledgeStream?.(this.streamId));
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private handleDataSendClose(message: Record<any, any>) {
     // see https://github.com/Supereg/secure-video-specification#43-close
     const streamId: number = message.streamId;
     const reason: HDSProtocolSpecificErrorReason = message.reason;
 
-    if (streamId != this.streamId) {
+    if (streamId !== this.streamId) {
       return;
     }
 
     debug("[HDS %s] Received DATA_SEND CLOSE for streamId %d with reason %s",
-    // @ts-expect-error
+      // @ts-expect-error: forceConsistentCasingInFileNames compiler option
       this.connection.remoteAddress, streamId, HDSProtocolSpecificErrorReason[reason]);
 
     this.handleClosed(() => this.delegate.closeRecordingStream(streamId, reason));
@@ -1059,7 +1071,7 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
     }
 
     debug("[HDS %s] Recording stream %d was closed manually with reason %s.",
-      // @ts-expect-error
+      // @ts-expect-error: forceConsistentCasingInFileNames compiler option
       this.connection.remoteAddress, this.streamId, HDSProtocolSpecificErrorReason[reason]);
 
     this.connection.sendEvent(Protocols.DATA_SEND, Topics.CLOSE, {

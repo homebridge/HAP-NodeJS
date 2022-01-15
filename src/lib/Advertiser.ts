@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference path="../../@types/bonjour-hap.d.ts" />
 import ciao, {
   CiaoService,
@@ -5,19 +6,19 @@ import ciao, {
   Responder,
   ServiceEvent,
   ServiceTxt,
-  ServiceType
+  ServiceType,
 } from "@homebridge/ciao";
 import { InterfaceName, IPAddress } from "@homebridge/ciao/lib/NetworkManager";
 import assert from "assert";
 import bonjour, { BonjourHAP, BonjourHAPService, MulticastOptions } from "bonjour-hap";
-import crypto from 'crypto';
+import crypto from "crypto";
 import createDebug from "debug";
 import dbus, { MessageBus } from "@homebridge/dbus-native";
 import { EventEmitter } from "events";
-import { AccessoryInfo } from './model/AccessoryInfo';
+import { AccessoryInfo } from "./model/AccessoryInfo";
 import { PromiseTimeout } from "./util/promise-utils";
 
-const debug = createDebug('HAP-NodeJS:Advertiser');
+const debug = createDebug("HAP-NodeJS:Advertiser");
 
 /**
  * This enum lists all bitmasks for all known status flags.
@@ -94,8 +95,8 @@ export interface Advertiser {
  */
 export class CiaoAdvertiser extends EventEmitter implements Advertiser {
 
-  static protocolVersion: string = "1.1";
-  static protocolVersionService: string = "1.1.0";
+  static protocolVersion = "1.1";
+  static protocolVersionService = "1.1.0";
 
   private readonly accessoryInfo: AccessoryInfo;
   private readonly setupHash: string;
@@ -109,7 +110,7 @@ export class CiaoAdvertiser extends EventEmitter implements Advertiser {
     this.setupHash = CiaoAdvertiser.computeSetupHash(accessoryInfo);
 
     this.responder = ciao.getResponder({
-      ...responderOptions
+      ...responderOptions,
     });
     this.advertisedService = this.responder.createService({
       name: this.accessoryInfo.displayName,
@@ -133,7 +134,7 @@ export class CiaoAdvertiser extends EventEmitter implements Advertiser {
   }
 
   public updateAdvertisement(silent?: boolean): void {
-    let txt = CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash);
+    const txt = CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash);
     debug("Updating txt record (txt: %o, silent: %d)", txt, silent);
     this.advertisedService!.updateTxt(txt, silent);
   }
@@ -165,9 +166,9 @@ export class CiaoAdvertiser extends EventEmitter implements Advertiser {
   }
 
   static computeSetupHash(accessoryInfo: AccessoryInfo): string {
-    const hash = crypto.createHash('sha512');
+    const hash = crypto.createHash("sha512");
     hash.update(accessoryInfo.setupID + accessoryInfo.username.toUpperCase());
-    return hash.digest().slice(0, 4).toString('base64');
+    return hash.digest().slice(0, 4).toString("base64");
   }
 
   public static ff(...flags: PairingFeatureFlag[]): number {
@@ -197,7 +198,7 @@ export class BonjourHAPAdvertiser extends EventEmitter implements Advertiser {
   private advertisement?: BonjourHAPService;
 
   private port?: number;
-  private destroyed: boolean = false;
+  private destroyed = false;
 
   constructor(accessoryInfo: AccessoryInfo, responderOptions?: MulticastOptions, serviceOptions?: ServiceNetworkOptions) {
     super();
@@ -215,7 +216,7 @@ export class BonjourHAPAdvertiser extends EventEmitter implements Advertiser {
 
   public startAdvertising(): Promise<void> {
     assert(!this.destroyed, "Can't advertise on a destroyed bonjour instance!");
-    if (this.port == undefined) {
+    if (this.port == null) {
       throw new Error("Tried starting bonjour-hap advertisement without initializing port!");
     }
 
@@ -225,7 +226,7 @@ export class BonjourHAPAdvertiser extends EventEmitter implements Advertiser {
       this.destroy();
     }
 
-    const hostname = this.accessoryInfo.username.replace(/:/ig, "_") + '.local';
+    const hostname = this.accessoryInfo.username.replace(/:/ig, "_") + ".local";
 
     this.advertisement = this.bonjour.publish({
       name: this.accessoryInfo.displayName,
@@ -241,7 +242,7 @@ export class BonjourHAPAdvertiser extends EventEmitter implements Advertiser {
   }
 
   public updateAdvertisement(silent?: boolean): void {
-    let txt = CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash)
+    const txt = CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash);
     debug("Updating txt record (txt: %o, silent: %d)", txt, silent);
 
     if (this.advertisement) {
@@ -289,7 +290,7 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
   private createTxt(): Array<Buffer> {
     return Object
       .entries(CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash))
-      .map((el: Array<string>) => Buffer.from(el[0] + '=' + el[1]));
+      .map((el: Array<string>) => Buffer.from(el[0] + "=" + el[1]));
   }
 
   public initPort(port: number): void {
@@ -297,7 +298,7 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
   }
 
   public async startAdvertising(): Promise<void> {
-    if (this.port == undefined) {
+    if (this.port == null) {
       throw new Error("Tried starting Avahi advertisement without initializing port!");
     }
     if (!this.bus) {
@@ -306,22 +307,22 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
 
     debug(`Starting to advertise '${this.accessoryInfo.displayName}' using Avahi backend!`);
 
-    this.path = await AvahiAdvertiser.avahiInvoke(this.bus, '/', 'Server', 'EntryGroupNew') as string;
-    await AvahiAdvertiser.avahiInvoke(this.bus, this.path, 'EntryGroup', 'AddService', {
+    this.path = await AvahiAdvertiser.avahiInvoke(this.bus, "/", "Server", "EntryGroupNew") as string;
+    await AvahiAdvertiser.avahiInvoke(this.bus, this.path, "EntryGroup", "AddService", {
       body: [
         -1, // interface
         -1, // protocol
         0, // flags
         this.accessoryInfo.displayName, // name
-        '_hap._tcp', // type
-        '', // domain
-        '', // host
+        "_hap._tcp", // type
+        "", // domain
+        "", // host
         this.port, // port
-        this.createTxt() // txt
+        this.createTxt(), // txt
       ],
-      signature: 'iiussssqaay'
+      signature: "iiussssqaay",
     });
-    await AvahiAdvertiser.avahiInvoke(this.bus, this.path, 'EntryGroup', 'Commit');
+    await AvahiAdvertiser.avahiInvoke(this.bus, this.path, "EntryGroup", "Commit");
   }
 
   public async updateAdvertisement(silent?: boolean): Promise<void> {
@@ -329,15 +330,17 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
       throw new Error("Tried to update Avahi advertisement on a destroyed advertiser!");
     }
     if (!this.path) {
-      debug("Tried to update advertisement without a valid `path`!")
-      return
+      debug("Tried to update advertisement without a valid `path`!");
+      return;
     }
 
+    debug("Updating txt record (txt: %o, silent: %d)", CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash), silent);
+
     try {
-      await AvahiAdvertiser.avahiInvoke(this.bus, this.path, 'EntryGroup', 'UpdateServiceTxt', {
-        body: [-1, -1, 0, this.accessoryInfo.displayName, '_hap._tcp', '', this.createTxt()],
-        signature: 'iiusssaay'
-      })
+      await AvahiAdvertiser.avahiInvoke(this.bus, this.path, "EntryGroup", "UpdateServiceTxt", {
+        body: [-1, -1, 0, this.accessoryInfo.displayName, "_hap._tcp", "", this.createTxt()],
+        signature: "iiusssaay",
+      });
     } catch (error) {
       console.error("Failed to update avahi advertisement: " + error);
     }
@@ -350,16 +353,16 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
 
     if (this.path) {
       try {
-        await AvahiAdvertiser.avahiInvoke(this.bus, this.path, 'EntryGroup', 'Free');
+        await AvahiAdvertiser.avahiInvoke(this.bus, this.path, "EntryGroup", "Free");
       } catch (error) {
         // Typically, this fails if e.g. avahi service was stopped in the meantime.
-        debug("Destroying Avahi advertisement failed: " + error)
+        debug("Destroying Avahi advertisement failed: " + error);
       }
       this.path = undefined;
     }
 
-    this.bus.connection.stream.destroy()
-    this.bus = undefined
+    this.bus.connection.stream.destroy();
+    this.bus = undefined;
   }
 
   public static async isAvailable(): Promise<boolean> {
@@ -374,26 +377,27 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
       }
 
       try {
-        const version = await this.avahiInvoke(bus, "/", "Server", "GetVersionString")
+        const version = await this.avahiInvoke(bus, "/", "Server", "GetVersionString");
         debug("Detected Avahi over DBus interface running version '%s'.", version);
       } catch (error) {
         debug("Avahi/DBus classified unavailable due to missing avahi interface!");
         return false;
       }
 
-      return true
+      return true;
     } finally {
-      bus.connection.stream.destroy()
+      bus.connection.stream.destroy();
     }
   }
 
   private static messageBusConnectionResult(bus: MessageBus): Promise<void> {
     return new Promise((resolve, reject) => {
-      let errorHandler = (error: Error) => {
+      const errorHandler = (error: Error) => {
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
         bus.connection.removeListener("connect", connectHandler);
         reject(error);
       };
-      let connectHandler = () => {
+      const connectHandler = () => {
         bus.connection.removeListener("error", errorHandler);
         resolve();
       };
@@ -403,12 +407,14 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static avahiInvoke(bus: MessageBus, path: string, dbusInterface: string, member: string, others?: any): Promise<any> {
     return new Promise((resolve, reject) => {
-      let command = { destination: 'org.freedesktop.Avahi', path, interface: 'org.freedesktop.Avahi.' + dbusInterface, member, ...(others || {}) };
+      const command = { destination: "org.freedesktop.Avahi", path, interface: "org.freedesktop.Avahi." + dbusInterface, member, ...(others || {}) };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       bus.invoke(command, (err: any, result: any) => {
         if (err) {
-          reject(new Error(`avahiInvoke error: ${JSON.stringify(err)}`))
+          reject(new Error(`avahiInvoke error: ${JSON.stringify(err)}`));
         } else {
           resolve(result);
         }

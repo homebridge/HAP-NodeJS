@@ -1,20 +1,20 @@
 import { getNetAddress } from "@homebridge/ciao/lib/util/domain-formatter";
 import assert from "assert";
-import createDebug from 'debug';
+import createDebug from "debug";
 import { EventEmitter } from "events";
 import { SrpServer } from "fast-srp-hap";
-import http, { IncomingMessage, ServerResponse } from 'http';
-import net, { AddressInfo, Socket } from 'net';
+import http, { IncomingMessage, ServerResponse } from "http";
+import net, { AddressInfo, Socket } from "net";
 import os from "os";
 import { CharacteristicEventNotification, EventNotification } from "../../internal-types";
-import { CharacteristicValue, Nullable, SessionIdentifier } from '../../types';
+import { CharacteristicValue, Nullable, SessionIdentifier } from "../../types";
 import * as hapCrypto from "./hapCrypto";
 import { getOSLoopbackAddressIfAvailable } from "./net-utils";
-import * as uuid from './uuid';
+import * as uuid from "./uuid";
 
 
-const debug = createDebug('HAP-NodeJS:EventedHTTPServer');
-const debugCon = createDebug("HAP-NodeJS:EventedHTTPServer:Connection")
+const debug = createDebug("HAP-NodeJS:EventedHTTPServer");
+const debugCon = createDebug("HAP-NodeJS:EventedHTTPServer:Connection");
 
 export type HAPUsername = string;
 export type EventName = string; // "<aid>.<iid>"
@@ -31,8 +31,8 @@ export class HAPEncryption {
   readonly sharedSecret: Buffer;
   readonly hkdfPairEncryptionKey: Buffer;
 
-  accessoryToControllerCount: number = 0;
-  controllerToAccessoryCount: number = 0;
+  accessoryToControllerCount = 0;
+  controllerToAccessoryCount = 0;
   accessoryToControllerKey: Buffer;
   controllerToAccessoryKey: Buffer;
 
@@ -51,7 +51,7 @@ export class HAPEncryption {
 }
 
 export const enum EventedHTTPServerEvent {
-  LISTENING = 'listening',
+  LISTENING = "listening",
   CONNECTION_OPENED = "connection-opened",
   REQUEST = "request",
   CONNECTION_CLOSED = "connection-closed",
@@ -133,7 +133,7 @@ export class EventedHTTPServer extends EventEmitter {
     debug("Running idle timeout timer...");
 
     const currentTime = new Date().getTime();
-    let nextTimeout: number = -1;
+    let nextTimeout = -1;
 
     for (const connection of this.connections) {
       const timeDelta = currentTime - connection.lastSocketOperation;
@@ -197,6 +197,7 @@ export class EventedHTTPServer extends EventEmitter {
   }
 
   private onConnection(socket: Socket): void {
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
     const connection = new HAPConnection(this, socket);
 
     connection.on(HAPConnectionEvent.REQUEST, (request, response) => {
@@ -312,9 +313,9 @@ export class HAPConnection extends EventEmitter {
   lastSocketOperation: number = new Date().getTime();
 
   private pendingClientSocketData?: Buffer = Buffer.alloc(0); // data received from client before HTTP proxy is fully setup
-  private handlingRequest: boolean = false; // true while we are composing an HTTP response (so events can wait)
+  private handlingRequest = false; // true while we are composing an HTTP response (so events can wait)
 
-  username?: HAPUsername; // username is unique to every user in the home, basically identifies an Apple Id
+  username?: HAPUsername; // username is unique to every user in the home, basically identifies an Apple ID
   encryption?: HAPEncryption; // created in handlePairVerifyStepOne
   srpServer?: SrpServer;
   _pairSetupState?: number; // TODO ensure those two states are always correctly reset?
@@ -323,7 +324,8 @@ export class HAPConnection extends EventEmitter {
   private registeredEvents: Set<EventName> = new Set();
   private eventsTimer?: NodeJS.Timeout;
   private readonly queuedEvents: Map<EventName, CharacteristicEventNotification> = new Map();
-  private readonly pendingEventData: Buffer[] = []; // queue of unencrypted event data waiting to be sent until after an in-progress HTTP response is being written
+  // queue of unencrypted event data waiting to be sent until after an in-progress HTTP response is being written
+  private readonly pendingEventData: Buffer[] = [];
 
   timedWritePid?: number;
   timedWriteTimeout?: NodeJS.Timeout;
@@ -332,7 +334,7 @@ export class HAPConnection extends EventEmitter {
     super();
 
     this.server = server;
-    this.sessionID = uuid.generate(clientSocket.remoteAddress + ':' + clientSocket.remotePort);
+    this.sessionID = uuid.generate(clientSocket.remoteAddress + ":" + clientSocket.remotePort);
     this.localAddress = clientSocket.localAddress;
     this.remoteAddress = clientSocket.remoteAddress!; // cache because it becomes undefined in 'onClientSocketClose'
     this.remotePort = clientSocket.remotePort!;
@@ -340,9 +342,10 @@ export class HAPConnection extends EventEmitter {
 
     // clientSocket is the socket connected to the actual iOS device
     this.tcpSocket = clientSocket;
-    this.tcpSocket.on('data', this.onTCPSocketData.bind(this));
-    this.tcpSocket.on('close', this.onTCPSocketClose.bind(this));
-    this.tcpSocket.on('error', this.onTCPSocketError.bind(this)); // we MUST register for this event, otherwise the error will bubble up to the top and crash the node process entirely.
+    this.tcpSocket.on("data", this.onTCPSocketData.bind(this));
+    this.tcpSocket.on("close", this.onTCPSocketClose.bind(this));
+    // we MUST register for this event, otherwise the error will bubble up to the top and crash the node process entirely.
+    this.tcpSocket.on("error", this.onTCPSocketError.bind(this));
     this.tcpSocket.setNoDelay(true); // disable Nagle algorithm
     // "HAP accessory servers must not use keepalive messages, which periodically wake up iOS devices".
     // Thus we don't configure any tcp keepalive
@@ -352,8 +355,8 @@ export class HAPConnection extends EventEmitter {
     this.internalHttpServer.timeout = 0; // clients expect to hold connections open as long as they want
     this.internalHttpServer.keepAliveTimeout = 0; // workaround for https://github.com/nodejs/node/issues/13391
     this.internalHttpServer.on("listening", this.onHttpServerListening.bind(this));
-    this.internalHttpServer.on('request', this.handleHttpServerRequest.bind(this));
-    this.internalHttpServer.on('error', this.onHttpServerError.bind(this));
+    this.internalHttpServer.on("request", this.handleHttpServerRequest.bind(this));
+    this.internalHttpServer.on("error", this.onHttpServerError.bind(this));
     // close event is added later on the "connect" event as possible listen retries would throw unnecessary close events
     this.internalHttpServer.listen(0, this.internalHttpServerAddress = getOSLoopbackAddressIfAvailable());
   }
@@ -397,8 +400,8 @@ export class HAPConnection extends EventEmitter {
   }
 
   public sendEvent(aid: number, iid: number, value: Nullable<CharacteristicValue>, immediateDelivery?: boolean): void {
-    assert(aid != undefined, "HAPConnection.sendEvent: aid must be defined!");
-    assert(iid != undefined, "HAPConnection.sendEvent: iid must be defined!");
+    assert(aid != null, "HAPConnection.sendEvent: aid must be defined!");
+    assert(iid != null, "HAPConnection.sendEvent: iid must be defined!");
 
     const eventName = aid + "." + iid;
 
@@ -481,7 +484,7 @@ export class HAPConnection extends EventEmitter {
       "Content-Type: application/hap+json\r\n" +
       "Content-Length: " + dataBuffer.length + "\r\n" +
       "\r\n",
-      "utf8" // buffer encoding
+      "utf8", // buffer encoding
     );
 
     const buffer = Buffer.concat([header, dataBuffer]);
@@ -539,22 +542,23 @@ export class HAPConnection extends EventEmitter {
 
     debugCon("[%s] Internal HTTP server listening on %s:%s", this.remoteAddress, addressString, addressInfo.port);
 
-    this.internalHttpServer.on('close', this.onHttpServerClose.bind(this));
+    this.internalHttpServer.on("close", this.onHttpServerClose.bind(this));
 
     // now we can establish a connection to this running HTTP server for proxying data
     this.httpSocket = net.createConnection(this.internalHttpServerPort, this.internalHttpServerAddress); // previously we used addressInfo.address
     this.httpSocket.setNoDelay(true); // disable Nagle algorithm
 
-    this.httpSocket.on('data', this.handleHttpServerResponse.bind(this));
-    this.httpSocket.on('error', this.onHttpSocketError.bind(this)); // we MUST register for this event, otherwise the error will bubble up to the top and crash the node process entirely.
-    this.httpSocket.on('close', this.onHttpSocketClose.bind(this));
-    this.httpSocket.on('connect', () => {
+    this.httpSocket.on("data", this.handleHttpServerResponse.bind(this));
+    // we MUST register for this event, otherwise the error will bubble up to the top and crash the node process entirely.
+    this.httpSocket.on("error", this.onHttpSocketError.bind(this));
+    this.httpSocket.on("close", this.onHttpSocketClose.bind(this));
+    this.httpSocket.on("connect", () => {
       // we are now fully set up:
       //  - clientSocket is connected to the iOS device
       //  - serverSocket is connected to the httpServer
       //  - ready to proxy data!
       this.state = HAPConnectionState.FULLY_SET_UP;
-      debugCon("[%s] Internal HTTP socket connected. HAPConnection now fully set up!", this.remoteAddress)
+      debugCon("[%s] Internal HTTP socket connected. HAPConnection now fully set up!", this.remoteAddress);
 
       // start by flushing any pending buffered data received from the client while we were setting up
       if (this.pendingClientSocketData && this.pendingClientSocketData.length > 0) {
@@ -655,7 +659,7 @@ export class HAPConnection extends EventEmitter {
 
   private onHttpServerError(err: Error & { code?: string }): void {
     debugCon("[%s] HTTP server error: %s", this.remoteAddress, err.message);
-    if (err.code === 'EADDRINUSE') {
+    if (err.code === "EADDRINUSE") {
       this.internalHttpServerPort = undefined;
 
       this.internalHttpServer.close();
@@ -748,7 +752,8 @@ export class HAPConnection extends EventEmitter {
       }
     }
 
-    console.log(`WARNING couldn't map socket coming from remote address ${socket.remoteAddress}:${socket.remotePort} at local address ${socket.localAddress} to a interface!`);
+    console.log(`WARNING couldn't map socket coming from remote address ${socket.remoteAddress}:${socket.remotePort} \
+    at local address ${socket.localAddress} to a interface!`);
 
     return Object.keys(interfaces)[1]; // just use the first interface after the loopback interface as fallback
   }

@@ -1,8 +1,8 @@
-declare module 'bonjour-hap' {
+declare module "bonjour-hap" {
 
   export const enum Protocols {
-    TCP = 'tcp',
-    UDP = 'udp',
+    TCP = "tcp",
+    UDP = "udp",
   }
 
   export type Nullable<T> = T | null;
@@ -26,6 +26,7 @@ declare module 'bonjour-hap' {
   }
 
   export type PublishOptions = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     category?: any,
     host?: string;
     name?: string;

@@ -1,13 +1,12 @@
-import { Accessory, AccessoryEventTypes, Categories, Service, uuid, VoidCallback, } from '..';
+import { Accessory, AccessoryEventTypes, Categories, Service, uuid, VoidCallback } from "..";
 
-const UUID = uuid.generate('hap-nodejs:accessories:wifi-router');
-export const accessory = new Accessory('Wi-Fi Router', UUID);
+const UUID = uuid.generate("hap-nodejs:accessories:wifi-router");
+export const accessory = new Accessory("Wi-Fi Router", UUID);
 
-// @ts-ignore
-accessory.username = 'FA:3C:ED:D2:1A:A2';
-// @ts-ignore
-accessory.pincode = '031-45-154';
-// @ts-ignore
+// @ts-expect-error: Core/BridgeCore API
+accessory.username = "FA:3C:ED:D2:1A:A2";
+// @ts-expect-error: Core/BridgeCore API
+accessory.pincode = "031-45-154";
 accessory.category = Categories.ROUTER;
 
 accessory.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
@@ -15,4 +14,4 @@ accessory.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallb
   callback();
 });
 
-const router = accessory.addService(Service.WiFiRouter);
+accessory.addService(Service.WiFiRouter);

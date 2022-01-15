@@ -23,7 +23,7 @@ import { HAPConnection, HAPConnectionEvent } from "../util/eventedhttp";
 import * as tlv from "../util/tlv";
 import RTPProxy from "./RTPProxy";
 
-const debug = createDebug('HAP-NodeJS:Camera:RTPStreamManagement');
+const debug = createDebug("HAP-NodeJS:Camera:RTPStreamManagement");
 // ---------------------------------- TLV DEFINITIONS START ----------------------------------
 
 const enum StreamingStatusTypes {
@@ -269,6 +269,7 @@ interface CameraStreamingOptionsSupportedCryptoSuites {
   supportedCryptoSuites: SRTPCryptoSuites[], // Suite NONE should only be used for testing and will probably be never selected by iOS!
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isLegacySRTPOptions(options: any): options is CameraStreamingOptionsLegacySRTP {
   return "srtp" in options;
 }
@@ -371,7 +372,7 @@ export type PrepareStreamResponse = {
  */
 export type Address = {
   address: string;
-  type?: 'v4' | 'v6';
+  type?: "v4" | "v6";
 }
 
 export interface SourceResponse {
@@ -390,9 +391,9 @@ export interface ProxiedSourceResponse {
 }
 
 export const enum StreamRequestTypes {
-  RECONFIGURE = 'reconfigure',
-  START = 'start',
-  STOP = 'stop',
+  RECONFIGURE = "reconfigure",
+  START = "start",
+  STOP = "stop",
 }
 
 export type StreamingRequest = StartStreamRequest | ReconfigureStreamRequest | StopStreamRequest;
@@ -475,19 +476,18 @@ export interface RTPStreamManagementState {
 
 export class RTPStreamManagement {
   /**
-   * @deprecated Please use the SRTPCryptoSuites const enum above. Scheduled to be removed in 2021-06.
+   * @deprecated Please use the SRTPCryptoSuites const enum above.
    */
-  // @ts-ignore
+  // @ts-expect-error: forceConsistentCasingInFileNames compiler option
   static SRTPCryptoSuites = SRTPCryptoSuites;
   /**
-   * @deprecated Please use the H264Profile const enum above. Scheduled to be removed in 2021-06.
+   * @deprecated Please use the H264Profile const enum above.
    */
-  // @ts-ignore
+  // @ts-expect-error: forceConsistentCasingInFileNames compiler option
   static VideoCodecParamProfileIDTypes = H264Profile;
   /**
-   * @deprecated won't be updated anymore. Please use the H264Level const enum above. Scheduled to be removed in 2021-06.
+   * @deprecated won't be updated anymore. Please use the H264Level const enum above.
    */
-  // @ts-ignore
   static VideoCodecParamLevelTypes = Object.freeze({ TYPE3_1: 0, TYPE3_2: 1, TYPE4_0: 2 });
 
   private readonly id: number;
@@ -499,7 +499,7 @@ export class RTPStreamManagement {
   requireProxy: boolean;
   disableAudioProxy: boolean;
   supportedCryptoSuites: SRTPCryptoSuites[];
-  videoOnly: boolean = false;
+  videoOnly = false;
 
   readonly supportedRTPConfiguration: string;
   readonly supportedVideoStreamConfiguration: string;
@@ -515,8 +515,8 @@ export class RTPStreamManagement {
   streamStatus: StreamingStatus = StreamingStatus.AVAILABLE; // use _updateStreamStatus to update this property
   private ipVersion?: "ipv4" | "ipv6"; // ip version for the current session
 
-  selectedConfiguration: string = ""; // base64 representation of the currently selected configuration
-  setupEndpointsResponse: string = ""; // response of the SetupEndpoints Characteristic
+  selectedConfiguration = ""; // base64 representation of the currently selected configuration
+  setupEndpointsResponse = ""; // response of the SetupEndpoints Characteristic
 
   audioProxy?: RTPProxy;
   videoProxy?: RTPProxy;
@@ -528,7 +528,13 @@ export class RTPStreamManagement {
    */
   private readonly disabledThroughOperatingMode?: () => boolean;
 
-  constructor(id: number, options: CameraStreamingOptions, delegate: CameraStreamingDelegate, service?: CameraRTPStreamManagement, disabledThroughOperatingMode?: () => boolean) {
+  constructor(
+    id: number,
+    options: CameraStreamingOptions,
+    delegate: CameraStreamingDelegate,
+    service?: CameraRTPStreamManagement,
+    disabledThroughOperatingMode?: () => boolean,
+  ) {
     this.id = id;
     this.delegate = delegate;
 
@@ -545,7 +551,7 @@ export class RTPStreamManagement {
     }
 
     if (!options.video) {
-      throw new Error('Video parameters cannot be undefined in options');
+      throw new Error("Video parameters cannot be undefined in options");
     }
 
     this.supportedRTPConfiguration = RTPStreamManagement._supportedRTPConfiguration(this.supportedCryptoSuites);
@@ -561,7 +567,7 @@ export class RTPStreamManagement {
     this.disabledThroughOperatingMode = disabledThroughOperatingMode;
   }
 
-  public forceStop() {
+  public forceStop(): void {
     this.handleSessionClosed();
   }
 
@@ -573,13 +579,14 @@ export class RTPStreamManagement {
   /**
    * @deprecated
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   handleCloseConnection(connectionID: SessionIdentifier): void {
     // This method is only here for legacy compatibility. It used to be called by legacy style CameraSource
     // implementations to signal that the associated HAP connection was closed.
     // This is now handled automatically. Thus, we don't need to do anything anymore.
   }
 
-  handleFactoryReset() {
+  handleFactoryReset(): void {
     this.resetSelectedStreamConfiguration();
     this.resetSetupEndpointsResponse();
 
@@ -587,14 +594,14 @@ export class RTPStreamManagement {
     // on a factory reset the assumption is that all connections were already terminated and thus "handleStopStream" was already called
   }
 
-  public destroy() {
+  public destroy(): void {
     if (this.activeConnection) {
       this._handleStopStream();
     }
   }
 
   private constructService(id: number): CameraRTPStreamManagement {
-    const managementService = new Service.CameraRTPStreamManagement('', id.toString());
+    const managementService = new Service.CameraRTPStreamManagement("", id.toString());
 
     // this service is required only when recording is enabled. We don't really have access to this info here,
     // so we just add the characteristic. Doesn't really hurt.
@@ -703,7 +710,7 @@ export class RTPStreamManagement {
       return;
     }
 
-    const data = Buffer.from(value as string, 'base64');
+    const data = Buffer.from(value as string, "base64");
     const objects = tlv.decode(data);
 
     const sessionControl = tlv.decode(objects[SelectedRTPStreamConfigurationTypes.SESSION_CONTROL]);
@@ -727,30 +734,36 @@ export class RTPStreamManagement {
     };
 
     switch (requestType) {
-      case SessionControlCommand.START_SESSION:
-        const selectedVideoParameters = tlv.decode(objects[SelectedRTPStreamConfigurationTypes.SELECTED_VIDEO_PARAMETERS]);
-        const selectedAudioParameters = tlv.decode(objects[SelectedRTPStreamConfigurationTypes.SELECTED_AUDIO_PARAMETERS]);
+    case SessionControlCommand.START_SESSION: {
+      const selectedVideoParameters = tlv.decode(objects[SelectedRTPStreamConfigurationTypes.SELECTED_VIDEO_PARAMETERS]);
+      const selectedAudioParameters = tlv.decode(objects[SelectedRTPStreamConfigurationTypes.SELECTED_AUDIO_PARAMETERS]);
 
-        this._handleStartStream(selectedVideoParameters, selectedAudioParameters, streamCallback);
-        break;
-      case SessionControlCommand.RECONFIGURE_SESSION:
-        const reconfiguredVideoParameters = tlv.decode(objects[SelectedRTPStreamConfigurationTypes.SELECTED_VIDEO_PARAMETERS]);
+      this._handleStartStream(selectedVideoParameters, selectedAudioParameters, streamCallback);
+      break;
+    }
+    case SessionControlCommand.RECONFIGURE_SESSION: {
+      const reconfiguredVideoParameters = tlv.decode(objects[SelectedRTPStreamConfigurationTypes.SELECTED_VIDEO_PARAMETERS]);
 
-        this.handleReconfigureStream(reconfiguredVideoParameters, streamCallback);
-        break;
-      case SessionControlCommand.END_SESSION:
-        this._handleStopStream(streamCallback);
-        break;
-      case SessionControlCommand.RESUME_SESSION:
-      case SessionControlCommand.SUSPEND_SESSION:
-      default:
-        debug(`Unhandled request type ${SessionControlCommand[requestType]}`);
-        callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
-        return;
+      this.handleReconfigureStream(reconfiguredVideoParameters, streamCallback);
+      break;
+    }
+    case SessionControlCommand.END_SESSION:
+      this._handleStopStream(streamCallback);
+      break;
+    case SessionControlCommand.RESUME_SESSION:
+    case SessionControlCommand.SUSPEND_SESSION:
+    default:
+      debug(`Unhandled request type ${SessionControlCommand[requestType]}`);
+      callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
+      return;
     }
   }
 
-  private _handleStartStream(videoConfiguration: Record<number, Buffer>, audioConfiguration: Record<number, Buffer>, callback: CharacteristicSetCallback): void {
+  private _handleStartStream(
+    videoConfiguration: Record<number, Buffer>,
+    audioConfiguration: Record<number, Buffer>,
+    callback: CharacteristicSetCallback,
+  ): void {
     // selected video configuration
     // noinspection JSUnusedLocalSymbols
     const videoCodec = videoConfiguration[SelectedVideoParametersTypes.CODEC_TYPE]; // always 0x00 for h264
@@ -838,43 +851,43 @@ export class RTPStreamManagement {
     let samplerateNum: AudioStreamingSamplerate;
 
     switch (audioCodec) {
-      case AudioCodecTypes.PCMU:
-        audioCodecName = AudioStreamingCodecType.PCMU;
-        break;
-      case AudioCodecTypes.PCMA:
-        audioCodecName = AudioStreamingCodecType.PCMA;
-        break;
-      case AudioCodecTypes.AAC_ELD:
-        audioCodecName = AudioStreamingCodecType.AAC_ELD;
-        break;
-      case AudioCodecTypes.OPUS:
-        audioCodecName = AudioStreamingCodecType.OPUS;
-        break;
-      case AudioCodecTypes.MSBC:
-        audioCodecName = AudioStreamingCodecType.MSBC;
-        break;
-      case AudioCodecTypes.AMR:
-        audioCodecName = AudioStreamingCodecType.AMR;
-        break;
-      case AudioCodecTypes.AMR_WB:
-        audioCodecName = AudioStreamingCodecType.AMR_WB;
-        break;
-      default:
-        throw new Error(`Encountered unknown selected audio codec ${audioCodec}`);
+    case AudioCodecTypes.PCMU:
+      audioCodecName = AudioStreamingCodecType.PCMU;
+      break;
+    case AudioCodecTypes.PCMA:
+      audioCodecName = AudioStreamingCodecType.PCMA;
+      break;
+    case AudioCodecTypes.AAC_ELD:
+      audioCodecName = AudioStreamingCodecType.AAC_ELD;
+      break;
+    case AudioCodecTypes.OPUS:
+      audioCodecName = AudioStreamingCodecType.OPUS;
+      break;
+    case AudioCodecTypes.MSBC:
+      audioCodecName = AudioStreamingCodecType.MSBC;
+      break;
+    case AudioCodecTypes.AMR:
+      audioCodecName = AudioStreamingCodecType.AMR;
+      break;
+    case AudioCodecTypes.AMR_WB:
+      audioCodecName = AudioStreamingCodecType.AMR_WB;
+      break;
+    default:
+      throw new Error(`Encountered unknown selected audio codec ${audioCodec}`);
     }
 
     switch (samplerate) {
-      case AudioSamplerate.KHZ_8:
-        samplerateNum = 8;
-        break;
-      case AudioSamplerate.KHZ_16:
-        samplerateNum = 16;
-        break;
-      case AudioSamplerate.KHZ_24:
-        samplerateNum = 24;
-        break;
-      default:
-        throw new Error(`Encountered unknown selected audio samplerate ${samplerate}`);
+    case AudioSamplerate.KHZ_8:
+      samplerateNum = 8;
+      break;
+    case AudioSamplerate.KHZ_16:
+      samplerateNum = 16;
+      break;
+    case AudioSamplerate.KHZ_24:
+      samplerateNum = 24;
+      break;
+    default:
+      throw new Error(`Encountered unknown selected audio samplerate ${samplerate}`);
     }
 
     const audioInfo: AudioInfo = {
@@ -918,7 +931,8 @@ export class RTPStreamManagement {
     // video rtp parameters
     const videoRTPParameters = tlv.decode(videoRTPParametersTLV);
     const videoMaximumBitrate = videoRTPParameters[VideoRTPParametersTypes.MAX_BIT_RATE].readUInt16LE(0);
-    const videoRTCPInterval = videoRTPParameters[VideoRTPParametersTypes.MIN_RTCP_INTERVAL].readFloatLE(0) || 0.5; // seems to be always zero, use default of 0.5
+    // seems to be always zero, use default of 0.5
+    const videoRTCPInterval = videoRTPParameters[VideoRTPParametersTypes.MIN_RTCP_INTERVAL].readFloatLE(0) || 0.5;
 
     const reconfiguredVideoInfo: ReconfiguredVideoInfo = {
       width: width,
@@ -954,15 +968,15 @@ export class RTPStreamManagement {
       return;
     }
 
-    const data = Buffer.from(value as string, 'base64');
+    const data = Buffer.from(value as string, "base64");
     const objects = tlv.decode(data);
 
     const sessionIdentifier = uuid.unparse(objects[SetupEndpointsTypes.SESSION_ID]);
 
     if (this.streamStatus !== StreamingStatus.AVAILABLE) {
       this.setupEndpointsResponse = tlv.encode(
-          SetupEndpointsResponseTypes.SESSION_ID, uuid.write(sessionIdentifier),
-          SetupEndpointsResponseTypes.STATUS, SetupEndpointsStatus.BUSY,
+        SetupEndpointsResponseTypes.SESSION_ID, uuid.write(sessionIdentifier),
+        SetupEndpointsResponseTypes.STATUS, SetupEndpointsStatus.BUSY,
       ).toString("base64");
       callback();
       return;
@@ -980,7 +994,7 @@ export class RTPStreamManagement {
     const targetAddressPayload = objects[SetupEndpointsTypes.CONTROLLER_ADDRESS];
     const processedAddressInfo = tlv.decode(targetAddressPayload);
     const addressVersion = processedAddressInfo[AddressTypes.ADDRESS_VERSION][0];
-    const controllerAddress = processedAddressInfo[AddressTypes.ADDRESS].toString('utf8');
+    const controllerAddress = processedAddressInfo[AddressTypes.ADDRESS].toString("utf8");
     const targetVideoPort = processedAddressInfo[AddressTypes.VIDEO_RTP_PORT].readUInt16LE(0);
     const targetAudioPort = processedAddressInfo[AddressTypes.AUDIO_RTP_PORT].readUInt16LE(0);
 
@@ -999,16 +1013,16 @@ export class RTPStreamManagement {
     const audioMasterSalt = processedAudioInfo[SRTPParametersTypes.MASTER_SALT];
 
     debug(
-      'Session: ', sessionIdentifier,
-      '\nControllerAddress: ', controllerAddress,
-      '\nVideoPort: ', targetVideoPort,
-      '\nAudioPort: ', targetAudioPort,
-      '\nVideo Crypto: ', videoCryptoSuite,
-      '\nVideo Master Key: ', videoMasterKey,
-      '\nVideo Master Salt: ', videoMasterSalt,
-      '\nAudio Crypto: ', audioCryptoSuite,
-      '\nAudio Master Key: ', audioMasterKey,
-      '\nAudio Master Salt: ', audioMasterSalt
+      "Session: ", sessionIdentifier,
+      "\nControllerAddress: ", controllerAddress,
+      "\nVideoPort: ", targetVideoPort,
+      "\nAudioPort: ", targetAudioPort,
+      "\nVideo Crypto: ", videoCryptoSuite,
+      "\nVideo Master Key: ", videoMasterKey,
+      "\nVideo Master Salt: ", videoMasterSalt,
+      "\nAudio Crypto: ", audioCryptoSuite,
+      "\nAudio Master Key: ", audioMasterKey,
+      "\nAudio Master Salt: ", audioMasterSalt,
     );
 
 
@@ -1042,7 +1056,7 @@ export class RTPStreamManagement {
         outgoingAddress: controllerAddress,
         outgoingPort: targetVideoPort,
         outgoingSSRC: crypto.randomBytes(4).readUInt32LE(0), // videoSSRC
-        disabled: false
+        disabled: false,
       });
 
       promises.push(this.videoProxy.setup().then(() => {
@@ -1055,7 +1069,7 @@ export class RTPStreamManagement {
           outgoingAddress: controllerAddress,
           outgoingPort: targetAudioPort,
           outgoingSSRC: crypto.randomBytes(4).readUInt32LE(0), // audioSSRC
-          disabled: this.videoOnly
+          disabled: this.videoOnly,
         });
 
         promises.push(this.audioProxy.setup().then(() => {
@@ -1070,8 +1084,8 @@ export class RTPStreamManagement {
         if (error || !response) {
           debug(`PrepareStream request encountered an error: ${error? error.message: undefined}`);
           this.setupEndpointsResponse = tlv.encode(
-              SetupEndpointsResponseTypes.SESSION_ID, uuid.write(sessionIdentifier),
-              SetupEndpointsResponseTypes.STATUS, SetupEndpointsStatus.ERROR,
+            SetupEndpointsResponseTypes.SESSION_ID, uuid.write(sessionIdentifier),
+            SetupEndpointsResponseTypes.STATUS, SetupEndpointsStatus.ERROR,
           ).toString("base64");
 
           this.handleSessionClosed();
@@ -1083,7 +1097,13 @@ export class RTPStreamManagement {
     });
   }
 
-  private generateSetupEndpointResponse(connection: HAPConnection, identifier: StreamSessionIdentifier, request: PrepareStreamRequest, response: PrepareStreamResponse, callback: CharacteristicSetCallback): void {
+  private generateSetupEndpointResponse(
+    connection: HAPConnection,
+    identifier: StreamSessionIdentifier,
+    request: PrepareStreamRequest,
+    response: PrepareStreamResponse,
+    callback: CharacteristicSetCallback,
+  ): void {
     let address: string;
     let addressVersion = request.addressVersion;
 
@@ -1193,32 +1213,32 @@ export class RTPStreamManagement {
     this.ipVersion = addressVersion; // we need to save this in order to calculate some default mtu values later
 
     const accessoryAddress = tlv.encode(
-        AddressTypes.ADDRESS_VERSION, addressVersion === "ipv4"? IPAddressVersion.IPV4: IPAddressVersion.IPV6,
-        AddressTypes.ADDRESS, address,
-        AddressTypes.VIDEO_RTP_PORT, tlv.writeUInt16(videoPort),
-        AddressTypes.AUDIO_RTP_PORT, tlv.writeUInt16(audioPort)
+      AddressTypes.ADDRESS_VERSION, addressVersion === "ipv4"? IPAddressVersion.IPV4: IPAddressVersion.IPV6,
+      AddressTypes.ADDRESS, address,
+      AddressTypes.VIDEO_RTP_PORT, tlv.writeUInt16(videoPort),
+      AddressTypes.AUDIO_RTP_PORT, tlv.writeUInt16(audioPort),
     );
 
     const videoSRTPParameters = tlv.encode(
-        SRTPParametersTypes.SRTP_CRYPTO_SUITE, videoCryptoSuite,
-        SRTPParametersTypes.MASTER_KEY, videoSRTPKey,
-        SRTPParametersTypes.MASTER_SALT, videoSRTPSalt
+      SRTPParametersTypes.SRTP_CRYPTO_SUITE, videoCryptoSuite,
+      SRTPParametersTypes.MASTER_KEY, videoSRTPKey,
+      SRTPParametersTypes.MASTER_SALT, videoSRTPSalt,
     );
 
     const audioSRTPParameters = tlv.encode(
-        SRTPParametersTypes.SRTP_CRYPTO_SUITE, audioCryptoSuite,
-        SRTPParametersTypes.MASTER_KEY, audioSRTPKey,
-        SRTPParametersTypes.MASTER_SALT, audioSRTPSalt
+      SRTPParametersTypes.SRTP_CRYPTO_SUITE, audioCryptoSuite,
+      SRTPParametersTypes.MASTER_KEY, audioSRTPKey,
+      SRTPParametersTypes.MASTER_SALT, audioSRTPSalt,
     );
 
     this.setupEndpointsResponse = tlv.encode(
-        SetupEndpointsResponseTypes.SESSION_ID, uuid.write(identifier),
-        SetupEndpointsResponseTypes.STATUS, SetupEndpointsStatus.SUCCESS,
-        SetupEndpointsResponseTypes.ACCESSORY_ADDRESS, accessoryAddress,
-        SetupEndpointsResponseTypes.VIDEO_SRTP_PARAMETERS, videoSRTPParameters,
-        SetupEndpointsResponseTypes.AUDIO_SRTP_PARAMETERS, audioSRTPParameters,
-        SetupEndpointsResponseTypes.VIDEO_SSRC, tlv.writeUInt32(videoSSRC),
-        SetupEndpointsResponseTypes.AUDIO_SSRC, tlv.writeUInt32(audioSSRC),
+      SetupEndpointsResponseTypes.SESSION_ID, uuid.write(identifier),
+      SetupEndpointsResponseTypes.STATUS, SetupEndpointsStatus.SUCCESS,
+      SetupEndpointsResponseTypes.ACCESSORY_ADDRESS, accessoryAddress,
+      SetupEndpointsResponseTypes.VIDEO_SRTP_PARAMETERS, videoSRTPParameters,
+      SetupEndpointsResponseTypes.AUDIO_SRTP_PARAMETERS, audioSRTPParameters,
+      SetupEndpointsResponseTypes.VIDEO_SSRC, tlv.writeUInt32(videoSSRC),
+      SetupEndpointsResponseTypes.AUDIO_SSRC, tlv.writeUInt32(audioSSRC),
     ).toString("base64");
     callback();
   }
@@ -1227,8 +1247,8 @@ export class RTPStreamManagement {
     this.streamStatus = status;
 
     this.service.updateCharacteristic(Characteristic.StreamingStatus, tlv.encode(
-          StreamingStatusTypes.STATUS, this.streamStatus
-      ).toString('base64'));
+      StreamingStatusTypes.STATUS, this.streamStatus,
+    ).toString("base64"));
   }
 
   private static _supportedRTPConfiguration(supportedCryptoSuites: SRTPCryptoSuites[]): string {
@@ -1241,10 +1261,10 @@ export class RTPStreamManagement {
 
   private static _supportedVideoStreamConfiguration(videoOptions: VideoStreamingOptions): string {
     if (!videoOptions.codec) {
-      throw new Error('Video codec cannot be undefined');
+      throw new Error("Video codec cannot be undefined");
     }
     if (!videoOptions.resolutions) {
-      throw new Error('Video resolutions cannot be undefined');
+      throw new Error("Video resolutions cannot be undefined");
     }
 
     let codecParameters = tlv.encode(
@@ -1253,13 +1273,13 @@ export class RTPStreamManagement {
       VideoCodecParametersTypes.PACKETIZATION_MODE, VideoCodecPacketizationMode.NON_INTERLEAVED,
     );
 
-    if (videoOptions.cvoId != undefined) {
+    if (videoOptions.cvoId != null) {
       codecParameters = Buffer.concat([
         codecParameters,
         tlv.encode(
           VideoCodecParametersTypes.CVO_ENABLED, VideoCodecCVO.SUPPORTED,
           VideoCodecParametersTypes.CVO_ID, videoOptions.cvoId,
-        )
+        ),
       ]);
     }
 
@@ -1267,8 +1287,8 @@ export class RTPStreamManagement {
       VideoCodecConfigurationTypes.CODEC_TYPE, VideoCodecType.H264,
       VideoCodecConfigurationTypes.CODEC_PARAMETERS, codecParameters,
       VideoCodecConfigurationTypes.ATTRIBUTES, videoOptions.resolutions.map(resolution => {
-        if (resolution.length != 3) {
-          throw new Error('Unexpected video resolution');
+        if (resolution.length !== 3) {
+          throw new Error("Unexpected video resolution");
         }
 
         const width = Buffer.alloc(2);
@@ -1289,7 +1309,7 @@ export class RTPStreamManagement {
 
     return tlv.encode(
       SupportedVideoStreamConfigurationTypes.VIDEO_CODEC_CONFIGURATION, videoStreamConfiguration,
-    ).toString('base64');
+    ).toString("base64");
   }
 
   private checkForLegacyAudioCodecRepresentation(codecs: AudioStreamingCodec[]) { // we basically merge the samplerates here
@@ -1337,46 +1357,46 @@ export class RTPStreamManagement {
       let type: AudioCodecTypes;
 
       switch (codec.type) {
-        case AudioStreamingCodecType.OPUS:
-          type = AudioCodecTypes.OPUS;
-          break;
-        case AudioStreamingCodecType.AAC_ELD:
-          type = AudioCodecTypes.AAC_ELD;
-          break;
-        case AudioStreamingCodecType.PCMA:
-          type = AudioCodecTypes.PCMA;
-          break;
-        case AudioStreamingCodecType.PCMU:
-          type = AudioCodecTypes.PCMU;
-          break;
-        case AudioStreamingCodecType.MSBC:
-          type = AudioCodecTypes.MSBC;
-          break;
-        case AudioStreamingCodecType.AMR:
-          type = AudioCodecTypes.AMR;
-          break;
-        case AudioStreamingCodecType.AMR_WB:
-          type = AudioCodecTypes.AMR_WB;
-          break;
-        default:
-          throw new Error("Unsupported codec: " + codec.type);
+      case AudioStreamingCodecType.OPUS:
+        type = AudioCodecTypes.OPUS;
+        break;
+      case AudioStreamingCodecType.AAC_ELD:
+        type = AudioCodecTypes.AAC_ELD;
+        break;
+      case AudioStreamingCodecType.PCMA:
+        type = AudioCodecTypes.PCMA;
+        break;
+      case AudioStreamingCodecType.PCMU:
+        type = AudioCodecTypes.PCMU;
+        break;
+      case AudioStreamingCodecType.MSBC:
+        type = AudioCodecTypes.MSBC;
+        break;
+      case AudioStreamingCodecType.AMR:
+        type = AudioCodecTypes.AMR;
+        break;
+      case AudioStreamingCodecType.AMR_WB:
+        type = AudioCodecTypes.AMR_WB;
+        break;
+      default:
+        throw new Error("Unsupported codec: " + codec.type);
       }
 
       const providedSamplerates = (typeof codec.samplerate === "number"? [codec.samplerate]: codec.samplerate).map(rate => {
         let samplerate;
         switch (rate) {
-          case AudioStreamingSamplerate.KHZ_8:
-            samplerate = AudioSamplerate.KHZ_8;
-            break;
-          case AudioStreamingSamplerate.KHZ_16:
-            samplerate = AudioSamplerate.KHZ_16;
-            break;
-          case AudioStreamingSamplerate.KHZ_24:
-            samplerate = AudioSamplerate.KHZ_24;
-            break;
-          default:
-            console.log("Unsupported sample rate: ", codec.samplerate);
-            samplerate = -1;
+        case AudioStreamingSamplerate.KHZ_8:
+          samplerate = AudioSamplerate.KHZ_8;
+          break;
+        case AudioStreamingSamplerate.KHZ_16:
+          samplerate = AudioSamplerate.KHZ_16;
+          break;
+        case AudioStreamingSamplerate.KHZ_24:
+          samplerate = AudioSamplerate.KHZ_24;
+          break;
+        default:
+          console.log("Unsupported sample rate: ", codec.samplerate);
+          samplerate = -1;
         }
         return samplerate;
       }).filter(rate => rate !== -1);
@@ -1389,11 +1409,11 @@ export class RTPStreamManagement {
         AudioCodecParametersTypes.CHANNEL, Math.max(1, codec.audioChannels || 1),
         AudioCodecParametersTypes.BIT_RATE, codec.bitrate || AudioBitrate.VARIABLE,
         AudioCodecParametersTypes.SAMPLE_RATE, providedSamplerates,
-      )
+      );
 
       return tlv.encode(
-          AudioCodecConfigurationTypes.CODEC_TYPE, type,
-          AudioCodecConfigurationTypes.CODEC_PARAMETERS, audioParameters
+        AudioCodecConfigurationTypes.CODEC_TYPE, type,
+        AudioCodecConfigurationTypes.CODEC_PARAMETERS, audioParameters,
       );
     });
 
@@ -1405,7 +1425,7 @@ export class RTPStreamManagement {
 
   private resetSetupEndpointsResponse(): void {
     this.setupEndpointsResponse = tlv.encode(
-        SetupEndpointsResponseTypes.STATUS, SetupEndpointsStatus.ERROR,
+      SetupEndpointsResponseTypes.STATUS, SetupEndpointsStatus.ERROR,
     ).toString("base64");
     this.service.updateCharacteristic(Characteristic.SetupEndpoints, this.setupEndpointsResponse);
   }
@@ -1424,7 +1444,7 @@ export class RTPStreamManagement {
    */
   serialize(): RTPStreamManagementState | undefined {
     const characteristicValue = this.service.getCharacteristic(Characteristic.Active).value;
-    if (characteristicValue == true) {
+    if (characteristicValue === true) {
       return undefined;
     }
 
@@ -1438,7 +1458,7 @@ export class RTPStreamManagement {
    * @private
    */
   deserialize(serialized: RTPStreamManagementState): void {
-    assert(serialized.id == this.id, `Tried to initialize RTPStreamManagement ${this.id} with data from management with id ${serialized.id}!`);
+    assert(serialized.id === this.id, `Tried to initialize RTPStreamManagement ${this.id} with data from management with id ${serialized.id}!`);
 
     this.service.updateCharacteristic(Characteristic.Active, serialized.active);
   }

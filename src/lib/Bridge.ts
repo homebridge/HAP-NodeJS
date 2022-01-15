@@ -1,4 +1,4 @@
-import { Accessory } from './Accessory';
+import { Accessory } from "./Accessory";
 
 /**
  * Bridge is a special type of HomeKit Accessory that hosts other Accessories "behind" it. This way you
@@ -6,8 +6,8 @@ import { Accessory } from './Accessory';
  * will be hosted automatically, instead of needed to publish() every single Accessory as a separate server.
  */
 export class Bridge extends Accessory {
-    constructor(displayName: string, UUID: string) {
-        super(displayName, UUID);
-        this._isBridge = true;
-    }
+  constructor(displayName: string, UUID: string) {
+    super(displayName, UUID);
+    this._isBridge = true;
+  }
 }
