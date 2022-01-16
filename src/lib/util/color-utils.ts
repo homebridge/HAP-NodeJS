@@ -414,7 +414,7 @@ export class ColorUtils {
    *  Thus the method will round the results by default to an integer value. This can be turned of using this option.
    * @returns An number array of length 2 with the first element being the saturation and the second argument being the hue.
    */
-  public static colorTemperatureToHueAndSaturation(colorTemperature: number, roundResults: boolean = true): { saturation: number, hue: number } {
+  public static colorTemperatureToHueAndSaturation(colorTemperature: number, roundResults = true): { saturation: number, hue: number } {
     if (colorTemperature > 500) {
       colorTemperature = 500;
     } else if (colorTemperature < 100) {
@@ -423,7 +423,7 @@ export class ColorUtils {
 
     colorTemperature = Math.round(colorTemperature); // ensure integer
     const hueAndTemperature = lookupTable.get(colorTemperature);
-    assert(colorTemperature != undefined, "lookup for temperature " + colorTemperature + " did not yield any results");
+    assert(colorTemperature != null, "lookup for temperature " + colorTemperature + " did not yield any results");
     if (roundResults) {
       hueAndTemperature![0] = Math.round(hueAndTemperature![0]);
       hueAndTemperature![1] = Math.round(hueAndTemperature![1]);

@@ -1,14 +1,14 @@
-import assert from 'assert';
-import createDebug from 'debug';
-import {ChildProcess, spawn} from 'child_process';
+import assert from "assert";
+import createDebug from "debug";
+import { ChildProcess, spawn } from "child_process";
 import {
-    AudioBitrate,
-    AudioSamplerate,
-    AudioCodecTypes,
-    HDSProtocolSpecificErrorReason,
-    ErrorHandler,
-    FrameHandler,
-    SiriAudioStreamProducer, AudioCodecConfiguration
+  AudioBitrate,
+  AudioSamplerate,
+  AudioCodecTypes,
+  HDSProtocolSpecificErrorReason,
+  ErrorHandler,
+  FrameHandler,
+  SiriAudioStreamProducer, AudioCodecConfiguration,
 } from "..";
 
 const debug = createDebug("HAP-NodeJS:Remote:GStreamer");
@@ -48,65 +48,65 @@ export type GStreamerOptions = {
  */
 export class GStreamerAudioProducer implements SiriAudioStreamProducer {
 
-    private readonly options: GStreamerOptions = {
-        alsaSrc: "plughw:1"
-    };
+  private readonly options: GStreamerOptions = {
+    alsaSrc: "plughw:1",
+  };
 
-    private readonly frameHandler: FrameHandler;
-    private readonly errorHandler: ErrorHandler;
+  private readonly frameHandler: FrameHandler;
+  private readonly errorHandler: ErrorHandler;
 
-    private process?: ChildProcess;
-    private running: boolean = false;
+  private process?: ChildProcess;
+  private running = false;
 
-    constructor(frameHandler: FrameHandler, errorHandler: ErrorHandler, options?: Partial<GStreamerOptions>) {
-        this.frameHandler = frameHandler;
-        this.errorHandler = errorHandler;
+  constructor(frameHandler: FrameHandler, errorHandler: ErrorHandler, options?: Partial<GStreamerOptions>) {
+    this.frameHandler = frameHandler;
+    this.errorHandler = errorHandler;
 
-        if (options) {
-            for (const [ key, value ] of Object.entries(options)) {
-                // @ts-ignore
-                GStreamerAudioProducer.options[key] = value;
-            }
-        }
+    if (options) {
+      for (const [ key, value ] of Object.entries(options)) {
+        // @ts-expect-error: type mismatch
+        GStreamerAudioProducer.options[key] = value;
+      }
+    }
+  }
+
+  startAudioProduction(selectedAudioConfiguration: AudioCodecConfiguration): void {
+    if (this.running) {
+      throw new Error("Gstreamer already running");
     }
 
-    startAudioProduction(selectedAudioConfiguration: AudioCodecConfiguration): void {
-        if (this.running) {
-            throw new Error("Gstreamer already running");
-        }
+    const codecParameters = selectedAudioConfiguration.parameters;
+    assert(selectedAudioConfiguration.codecType === AudioCodecTypes.OPUS);
 
-        const codecParameters = selectedAudioConfiguration.parameters;
-        assert(selectedAudioConfiguration.codecType === AudioCodecTypes.OPUS);
+    let bitrateType = BitrateType.VARIABLE;
+    switch (codecParameters.bitrate) {
+    case AudioBitrate.CONSTANT:
+      bitrateType = BitrateType.CONSTANT;
+      break;
+    case AudioBitrate.VARIABLE:
+      bitrateType = BitrateType.VARIABLE;
+      break;
+    }
 
-        let bitrateType = BitrateType.VARIABLE;
-        switch (codecParameters.bitrate) {
-            case AudioBitrate.CONSTANT:
-                bitrateType = BitrateType.CONSTANT;
-                break;
-            case AudioBitrate.VARIABLE:
-                bitrateType = BitrateType.VARIABLE;
-                break;
-        }
+    let bandwidth = Bandwidth.SUPER_WIDE_BAND;
+    switch (codecParameters.samplerate) {
+    case AudioSamplerate.KHZ_8:
+      bandwidth = Bandwidth.NARROW_BAND;
+      break;
+    case AudioSamplerate.KHZ_16:
+      bandwidth = Bandwidth.WIDE_BAND;
+      break;
+    case AudioSamplerate.KHZ_24:
+      bandwidth = Bandwidth.SUPER_WIDE_BAND;
+      break;
+    }
 
-        let bandwidth = Bandwidth.SUPER_WIDE_BAND;
-        switch (codecParameters.samplerate) {
-            case AudioSamplerate.KHZ_8:
-                bandwidth = Bandwidth.NARROW_BAND;
-                break;
-            case AudioSamplerate.KHZ_16:
-                bandwidth = Bandwidth.WIDE_BAND;
-                break;
-            case AudioSamplerate.KHZ_24:
-                bandwidth = Bandwidth.SUPER_WIDE_BAND;
-                break;
-        }
+    const packetTime = codecParameters.rtpTime;
 
-        let packetTime = codecParameters.rtpTime;
+    debug("Launching gstreamer...");
+    this.running = true;
 
-        debug("Launching gstreamer...");
-        this.running = true;
-
-        const args = "-q " +
+    const args = "-q " +
             "alsasrc device=" + this.options.alsaSrc + " ! " +
             "capsfilter caps=audio/x-raw,format=S16LE,rate=24000 ! " +
             // "level post-messages=true interval=" + packetTime + "000000 ! " + // used to capture rms
@@ -118,21 +118,21 @@ export class GStreamerAudioProducer implements SiriAudioStreamProducer {
                 "frame-size=" + packetTime + " ! " +
             "fdsink fd=1";
 
-        this.process = spawn("gst-launch-1.0", args.split(" "), {env: process.env});
-        this.process.on("error", error => {
-            if (this.running) {
-                debug("Failed to spawn gstreamer process: " + error.message);
-                this.errorHandler(HDSProtocolSpecificErrorReason.CANCELLED);
-            } else {
-                debug("Failed to kill gstreamer process: " + error.message);
-            }
-        });
-        this.process.stdout.on("data", (data: Buffer) => {
-            if (!this.running) { // received data after it was closed
-                return;
-            }
+    this.process = spawn("gst-launch-1.0", args.split(" "), { env: process.env });
+    this.process.on("error", error => {
+      if (this.running) {
+        debug("Failed to spawn gstreamer process: " + error.message);
+        this.errorHandler(HDSProtocolSpecificErrorReason.CANCELLED);
+      } else {
+        debug("Failed to kill gstreamer process: " + error.message);
+      }
+    });
+    this.process.stdout.on("data", (data: Buffer) => {
+      if (!this.running) { // received data after it was closed
+        return;
+      }
 
-            /*
+      /*
                 This listener seems to get called with only one opus frame most of the time.
                 Though it happens regularly that another or many more frames get appended.
                 This causes some problems as opus frames don't contain their data length in the "header".
@@ -143,29 +143,29 @@ export class GStreamerAudioProducer implements SiriAudioStreamProducer {
                 to interface directly with gstreamer api.
              */
 
-            this.frameHandler({
-                data: data,
-                rms: 0.25 // only way currently to extract rms from gstreamer is by interfacing with the api directly (nodejs c++ submodule could be a solution)
-            });
-        });
-        this.process.stderr.on("data", data => {
-            debug("GStreamer process reports the following error: " + String(data));
-        });
-        this.process.on("exit", (code, signal) => {
-            if (signal !== "SIGTERM") { // if we receive SIGTERM, process exited gracefully (we stopped it)
-                debug("GStreamer process unexpectedly exited with code %d (signal: %s)", code, signal);
-                this.errorHandler(HDSProtocolSpecificErrorReason.UNEXPECTED_FAILURE);
-            }
-        });
-    }
+      this.frameHandler({
+        data: data,
+        rms: 0.25, // only way currently to extract rms from gstreamer is by interfacing with the api directly (nodejs c++ submodule could be a solution)
+      });
+    });
+    this.process.stderr.on("data", data => {
+      debug("GStreamer process reports the following error: " + String(data));
+    });
+    this.process.on("exit", (code, signal) => {
+      if (signal !== "SIGTERM") { // if we receive SIGTERM, process exited gracefully (we stopped it)
+        debug("GStreamer process unexpectedly exited with code %d (signal: %s)", code, signal);
+        this.errorHandler(HDSProtocolSpecificErrorReason.UNEXPECTED_FAILURE);
+      }
+    });
+  }
 
-    stopAudioProduction(): void {
-        if (this.running) {
+  stopAudioProduction(): void {
+    if (this.running) {
             this.process!.kill("SIGTERM");
             this.running = false;
-        }
-
-        this.process = undefined;
     }
+
+    this.process = undefined;
+  }
 
 }

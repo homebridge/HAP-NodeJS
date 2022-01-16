@@ -2,14 +2,14 @@ import assert from "assert";
 import createDebug from "debug";
 import { EventEmitter } from "events";
 import { ServiceJsonObject } from "../internal-types";
-import { CharacteristicValue, Nullable, WithUUID } from '../types';
+import { CharacteristicValue, Nullable, WithUUID } from "../types";
 import { CharacteristicWarning, CharacteristicWarningType } from "./Accessory";
 import {
   Characteristic,
   CharacteristicChange,
   CharacteristicEventTypes,
-  SerializedCharacteristic
-} from './Characteristic';
+  SerializedCharacteristic,
+} from "./Characteristic";
 import {
   AccessCode,
   AccessControl,
@@ -87,9 +87,9 @@ import {
   Window,
   WindowCovering,
 } from "./definitions";
-import { IdentifierCache } from './model/IdentifierCache';
+import { IdentifierCache } from "./model/IdentifierCache";
 import { HAPConnection } from "./util/eventedhttp";
-import { toShortForm } from './util/uuid';
+import { toShortForm } from "./util/uuid";
 
 const debug = createDebug("HAP-NodeJS:Service");
 
@@ -285,17 +285,17 @@ export class Service extends EventEmitter {
   /**
    * @private
    */
-  isHiddenService: boolean = false;
+  isHiddenService = false;
   /**
    * @private
    */
-  isPrimaryService: boolean = false; // do not write to this directly
+  isPrimaryService = false; // do not write to this directly
   /**
    * @private
    */
   linkedServices: Service[] = [];
 
-  public constructor(displayName: string = "", UUID: string, subtype?: string) {
+  public constructor(displayName = "", UUID: string, subtype?: string) {
     super();
     assert(UUID, "Services must be created with a valid UUID.");
     this.displayName = displayName;
@@ -327,16 +327,18 @@ export class Service extends EventEmitter {
   }
 
   public addCharacteristic(input: Characteristic): Characteristic
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public addCharacteristic(input: { new (...args: any[]): Characteristic }, ...constructorArgs: any[]): Characteristic
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public addCharacteristic(input: Characteristic | {new (...args: any[]): Characteristic}, ...constructorArgs: any[]): Characteristic {
     // characteristic might be a constructor like `Characteristic.Brightness` instead of an instance of Characteristic. Coerce if necessary.
 
-    let characteristic = typeof input === "function"? new input(...constructorArgs): input;
+    const characteristic = typeof input === "function"? new input(...constructorArgs): input;
 
     // check for UUID conflict
     for (const existing of this.characteristics) {
       if (existing.UUID === characteristic.UUID) {
-        if (characteristic.UUID === '00000052-0000-1000-8000-0026BB765291') {
+        if (characteristic.UUID === "00000052-0000-1000-8000-0026BB765291") {
           //This is a special workaround for the Firmware Revision characteristic.
           return existing;
         }
@@ -365,7 +367,7 @@ export class Service extends EventEmitter {
    *
    * @param isPrimary {boolean} - optional boolean (default true) if the service should be the primary service
    */
-  public setPrimaryService(isPrimary: boolean = true): void {
+  public setPrimaryService(isPrimary = true): void {
     this.isPrimaryService = isPrimary;
     this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
   }
@@ -375,7 +377,7 @@ export class Service extends EventEmitter {
    *
    * @param isHidden {boolean} - optional boolean (default true) if the service should be marked hidden
    */
-  public setHiddenService(isHidden: boolean = true): void {
+  public setHiddenService(isHidden = true): void {
     this.isHiddenService = isHidden;
     this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
   }
@@ -423,23 +425,22 @@ export class Service extends EventEmitter {
   // Still support using a Characteristic constructor or a name so "passing though" a value still works
   // https://www.typescriptlang.org/docs/handbook/declaration-files/do-s-and-don-ts.html#use-union-types
   public getCharacteristic(name: string | WithUUID<{new (): Characteristic}>): Characteristic | undefined
-  public getCharacteristic(name: string | WithUUID<{new (): Characteristic}>) {
+  public getCharacteristic(name: string | WithUUID<{new (): Characteristic}>): Characteristic | undefined {
     // returns a characteristic object from the service
     // If  Service.prototype.getCharacteristic(Characteristic.Type)  does not find the characteristic,
     // but the type is in optionalCharacteristics, it adds the characteristic.type to the service and returns it.
 
-    let index, characteristic: Characteristic;
     for (const characteristic of this.characteristics) {
-      if (typeof name === 'string' && characteristic.displayName === name) {
+      if (typeof name === "string" && characteristic.displayName === name) {
         return characteristic;
-      // @ts-expect-error
-      } else if (typeof name === 'function' && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
+        // @ts-expect-error: UUID field
+      } else if (typeof name === "function" && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
         return characteristic;
       }
     }
-    if (typeof name === 'function') {
+    if (typeof name === "function") {
       for (const characteristic of this.optionalCharacteristics) {
-        // @ts-expect-error
+        // @ts-expect-error: UUID field
         if ((characteristic instanceof name) || (name.UUID === characteristic.UUID)) {
           return this.addCharacteristic(name);
         }
@@ -447,7 +448,7 @@ export class Service extends EventEmitter {
 
       const instance = this.addCharacteristic(name);
       // Not found in optional Characteristics. Adding anyway, but warning about it if it isn't the Name.
-      // @ts-expect-error
+      // @ts-expect-error: UUID field
       if (name.UUID !== Characteristic.Name.UUID) {
         this.emitCharacteristicWarningEvent(instance, CharacteristicWarningType.WARN_MESSAGE,
           "Characteristic not in required or optional characteristic section for service " + this.constructor.name + ". Adding anyway.");
@@ -460,10 +461,10 @@ export class Service extends EventEmitter {
   public testCharacteristic<T extends WithUUID<typeof Characteristic>>(name: string | T): boolean {
     // checks for the existence of a characteristic object in the service
     for (const characteristic of this.characteristics) {
-      if (typeof name === 'string' && characteristic.displayName === name) {
+      if (typeof name === "string" && characteristic.displayName === name) {
         return true;
-      // @ts-expect-error
-      } else if (typeof name === 'function' && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
+        // @ts-expect-error: UUID field
+      } else if (typeof name === "function" && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
         return true;
       }
     }
@@ -484,8 +485,7 @@ export class Service extends EventEmitter {
   public addOptionalCharacteristic(characteristic: Characteristic | {new (): Characteristic}): void {
     // characteristic might be a constructor like `Characteristic.Brightness` instead of an instance
     // of Characteristic. Coerce if necessary.
-    if (typeof characteristic === 'function') {
-      // @ts-ignore we are dealing with predefined characteristics here
+    if (typeof characteristic === "function") {
       characteristic = new characteristic() as Characteristic;
     }
 
@@ -533,17 +533,18 @@ export class Service extends EventEmitter {
    */
   getCharacteristicByIID(iid: number): Characteristic | undefined {
     for (const characteristic of this.characteristics) {
-      if (characteristic.iid === iid)
+      if (characteristic.iid === iid) {
         return characteristic;
+      }
     }
   }
 
   /**
    * @private
    */
-  _assignIDs(identifierCache: IdentifierCache, accessoryName: string, baseIID: number = 0): void {
+  _assignIDs(identifierCache: IdentifierCache, accessoryName: string, baseIID = 0): void {
     // the Accessory Information service must have a (reserved by IdentifierCache) ID of 1
-    if (this.UUID === '0000003E-0000-1000-8000-0026BB765291') {
+    if (this.UUID === "0000003E-0000-1000-8000-0026BB765291") {
       this.iid = 1;
     } else {
       // assign our own ID based on our UUID
@@ -571,7 +572,7 @@ export class Service extends EventEmitter {
         characteristics: [],
         hidden: this.isHiddenService? true: undefined,
         primary: this.isPrimaryService? true: undefined,
-      }
+      };
 
       if (this.linkedServices.length) {
         service.linked = [];
@@ -580,7 +581,7 @@ export class Service extends EventEmitter {
             // we got a linked service which is not added to the accessory
             // as it doesn't "exists" we just ignore it.
             // we have some (at least one) plugins on homebridge which link to the AccessoryInformation service.
-            // homebridge always creates it's own AccessoryInformation service and ignores the user supplied one
+            // homebridge always creates its own AccessoryInformation service and ignores the user supplied one
             // thus the link is automatically broken.
             debug(`iid of linked service '${linked.displayName}' ${linked.UUID} is undefined on service '${this.displayName}'`);
             continue;
@@ -647,7 +648,7 @@ export class Service extends EventEmitter {
       characteristics: this.characteristics.map(characteristic => characteristic.internalHAPRepresentation()),
       hidden: this.isHiddenService? true: undefined,
       primary: this.isPrimaryService? true: undefined,
-    }
+    };
 
     if (this.linkedServices.length) {
       service.linked = [];
@@ -656,7 +657,7 @@ export class Service extends EventEmitter {
           // we got a linked service which is not added to the accessory
           // as it doesn't "exists" we just ignore it.
           // we have some (at least one) plugins on homebridge which link to the AccessoryInformation service.
-          // homebridge always creates it's own AccessoryInformation service and ignores the user supplied one
+          // homebridge always creates its own AccessoryInformation service and ignores the user supplied one
           // thus the link is automatically broken.
           debug(`iid of linked service '${linked.displayName}' ${linked.UUID} is undefined on service '${this.displayName}'`);
           continue;
@@ -690,7 +691,7 @@ export class Service extends EventEmitter {
       message: message,
       originatorChain: [this.displayName, characteristic.displayName],
       stack: stack,
-    })
+    });
   }
 
   /**

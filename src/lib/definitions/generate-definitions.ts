@@ -1,4 +1,5 @@
-import "./CharacteristicDefinitions"
+/* eslint-disable @typescript-eslint/no-use-before-define */
+import "./CharacteristicDefinitions";
 
 import assert from "assert";
 import { Command } from "commander";
@@ -20,10 +21,11 @@ import {
   ServiceDeprecatedNames,
   ServiceManualAdditions,
   ServiceNameOverrides,
-  ServiceSinceInformation
+  ServiceSinceInformation,
 } from "./generator-configuration";
 
 // noinspection JSUnusedLocalSymbols
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const temp = Characteristic; // this to have "../Characteristic" not being only type import, otherwise this would not result in a require statement
 
 const command = new Command("generate-definitions")
@@ -179,11 +181,13 @@ const properties: Map<number, string> = new Map();
 try {
   characteristics = checkDefined(plistData.PlistDictionary.HAP.Characteristics);
   services = checkDefined(plistData.PlistDictionary.HAP.Services);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   units = checkDefined(plistData.PlistDictionary.HAP.Units);
   categories = checkDefined(plistData.PlistDictionary.HomeKit.Categories);
 
   const props: Record<string, PropertyDefinition> = checkDefined(plistData.PlistDictionary.HAP.Properties);
   // noinspection JSUnusedLocalSymbols
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   for (const [id, definition] of Object.entries(props).sort(([a, aDef], [b, bDef]) => aDef.Position - bDef.Position)) {
     const perm = characteristicPerm(id);
     if (perm) {
@@ -234,7 +238,8 @@ for (const [id, definition] of Object.entries(characteristics)) {
     }
 
     // "Carbon dioxide Detected" -> "Carbon Dioxide Detected"
-    const name = (CharacteristicNameOverrides.get(id) ?? definition.DefaultDescription).split(" ").map(entry => entry[0].toUpperCase() + entry.slice(1)).join(" ");
+    const name = (CharacteristicNameOverrides.get(id)
+      ?? definition.DefaultDescription).split(" ").map(entry => entry[0].toUpperCase() + entry.slice(1)).join(" ");
     const deprecatedName = CharacteristicDeprecatedNames.get(id);
 
     // "Target Door State" -> "TargetDoorState", "PM2.5" -> "PM2_5"
@@ -294,7 +299,7 @@ for (const [id, definition] of Object.entries(characteristics)) {
     };
 
     // call any handler which wants to manually override properties of the generated characteristic
-    CharacteristicOverriding.get(id)?.(generatedCharacteristic)
+    CharacteristicOverriding.get(id)?.(generatedCharacteristic);
 
     generatedCharacteristics[id] = generatedCharacteristic;
     writtenCharacteristicEntries[className] = generatedCharacteristic;
@@ -337,18 +342,18 @@ for (const generated of Object.values(generatedCharacteristics)
       characteristicOutput.write(classAdditions.map(line => "  " + line + "\n").join("") + "\n");
     }
 
-    let validValuesEntries = Object.entries(generated.validValues ?? {})
+    const validValuesEntries = Object.entries(generated.validValues ?? {});
     if (validValuesEntries.length) {
-      for (let [value, name] of validValuesEntries) {
+      for (const [value, name] of validValuesEntries) {
         if (!name) {
-          continue
+          continue;
         }
         characteristicOutput.write(`  public static readonly ${name} = ${value};\n`);
       }
       characteristicOutput.write("\n");
     }
     if (generated.validBitMasks) {
-      for (let [value, name] of Object.entries(generated.validBitMasks)) {
+      for (const [value, name] of Object.entries(generated.validBitMasks)) {
         characteristicOutput.write(`  public static readonly ${name} = ${value};\n`);
       }
       characteristicOutput.write("\n");
@@ -357,7 +362,7 @@ for (const generated of Object.values(generatedCharacteristics)
     characteristicOutput.write("  constructor() {\n");
     characteristicOutput.write("    super(\"" + generated.name + "\", " + generated.className + ".UUID, {\n");
     characteristicOutput.write("      format: Formats." + characteristicFormat(generated.format) + ",\n");
-    characteristicOutput.write("      perms: [" + generatePermsString(generated.id, generated.properties) + "],\n")
+    characteristicOutput.write("      perms: [" + generatePermsString(generated.id, generated.properties) + "],\n");
     if (generated.units && !undefinedUnits.includes(generated.units)) {
       characteristicOutput.write("      unit: Units." + characteristicUnit(generated.units) + ",\n");
     }
@@ -374,11 +379,11 @@ for (const generated of Object.values(generatedCharacteristics)
       characteristicOutput.write("      maxLen: " + generated.maxLength + ",\n");
     }
     if (validValuesEntries.length) {
-      characteristicOutput.write("      validValues: [" + Object.keys(generated.validValues!).join(", ") + "],\n")
+      characteristicOutput.write("      validValues: [" + Object.keys(generated.validValues!).join(", ") + "],\n");
     }
     if (generated.adminOnlyAccess) {
       characteristicOutput.write("      adminOnlyAccess: ["
-        + generated.adminOnlyAccess.map(value => "Access." + characteristicAccess(value)).join(", ") + "],\n")
+        + generated.adminOnlyAccess.map(value => "Access." + characteristicAccess(value)).join(", ") + "],\n");
     }
     characteristicOutput.write("    });\n");
     characteristicOutput.write("    this.value = this.getDefaultValue();\n");
@@ -577,7 +582,7 @@ function checkDefined<T>(input: T): T {
 }
 
 function characteristicFormat(format: string): string {
-  // @ts-expect-error
+  // @ts-expect-error: forceConsistentCasingInFileNames compiler option
   for (const [key, value] of Object.entries(Formats)) {
     if (value === format) {
       return key;
@@ -588,7 +593,7 @@ function characteristicFormat(format: string): string {
 }
 
 function characteristicUnit(unit: string): string {
-  // @ts-expect-error
+  // @ts-expect-error: forceConsistentCasingInFileNames compiler option
   for (const [key, value] of Object.entries(Units)) {
     if (value === unit) {
       return key;
@@ -599,7 +604,7 @@ function characteristicUnit(unit: string): string {
 }
 
 function characteristicAccess(access: number): string {
-  // @ts-expect-error
+  // @ts-expect-error: forceConsistentCasingInFileNames compiler option
   for (const [key, value] of Object.entries(Access)) {
     if (value === access) {
       return key;
@@ -611,26 +616,26 @@ function characteristicAccess(access: number): string {
 
 function characteristicPerm(id: string): string | undefined {
   switch (id) {
-    case "aa":
-      return "ADDITIONAL_AUTHORIZATION";
-    case "hidden":
-      return "HIDDEN";
-    case "notify":
-      return "NOTIFY";
-    case "read":
-      return "PAIRED_READ";
-    case "timedWrite":
-      return "TIMED_WRITE";
-    case "write":
-      return "PAIRED_WRITE";
-    case "writeResponse":
-      return "WRITE_RESPONSE";
-    case "broadcast": // used for bluetooth
-      return undefined;
-    case "adminOnly":
-      return undefined // TODO add support for it (currently unused though)
-    default:
-      throw new Error("Received unknown perms id: " + id);
+  case "aa":
+    return "ADDITIONAL_AUTHORIZATION";
+  case "hidden":
+    return "HIDDEN";
+  case "notify":
+    return "NOTIFY";
+  case "read":
+    return "PAIRED_READ";
+  case "timedWrite":
+    return "TIMED_WRITE";
+  case "write":
+    return "PAIRED_WRITE";
+  case "writeResponse":
+    return "WRITE_RESPONSE";
+  case "broadcast": // used for bluetooth
+    return undefined;
+  case "adminOnly":
+    return undefined; // TODO add support for it (currently unused though)
+  default:
+    throw new Error("Received unknown perms id: " + id);
   }
 }
 
@@ -648,7 +653,7 @@ function generatePermsString(id: string, propertiesBitMap: number): string {
   }
 
   const result =  perms.join(", ");
-  assert(result != "", "perms string cannot be empty (" + propertiesBitMap + ")");
+  assert(!result, "perms string cannot be empty (" + propertiesBitMap + ")");
   return result;
 }
 
@@ -671,7 +676,7 @@ function rewriteProperties(className: string, properties: [key: string, value: G
     throw new Error("File '" + filePath + "' does not exist!");
   }
 
-  const file = fs.readFileSync(filePath, { encoding: "utf8"});
+  const file = fs.readFileSync(filePath, { encoding: "utf8" });
   const lines = file.split("\n");
 
   let i = 0;

@@ -6,7 +6,7 @@ import {
   Characteristic,
   ColorUtils,
   Service,
-  uuid
+  uuid,
 } from "..";
 
 /**
@@ -21,7 +21,7 @@ import {
  * AdaptiveLighting setup is pretty much at the end of the file, don't miss it.
  */
 
-const lightUUID = uuid.generate('hap-nodejs:accessories:light-adaptive-lighting');
+const lightUUID = uuid.generate("hap-nodejs:accessories:light-adaptive-lighting");
 const accessory = exports.accessory = new Accessory("Light Example", lightUUID);
 
 // this section stores the basic state of the lightbulb
@@ -32,11 +32,10 @@ let hue = 0; // we start with white color
 let saturation = 0;
 
 // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
-// @ts-ignore
+// @ts-expect-error: Core/BridgeCore API
 accessory.username = "AA:BB:CC:DD:EE:FF";
-// @ts-ignore
+// @ts-expect-error: Core/BridgeCore API
 accessory.pincode = "031-45-154";
-// @ts-ignore
 accessory.category = Categories.LIGHTBULB;
 
 accessory.getService(Service.AccessoryInformation)!

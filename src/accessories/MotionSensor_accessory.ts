@@ -8,8 +8,8 @@ import {
   CharacteristicValue,
   NodeCallback,
   Service,
-  uuid, VoidCallback
-} from '..';
+  uuid, VoidCallback,
+} from "..";
 
 const MOTION_SENSOR = {
   motionDetected: false,
@@ -20,23 +20,22 @@ const MOTION_SENSOR = {
   },
   identify: () => {
     console.log("Identify the motion sensor!");
-  }
+  },
 };
 
 // Generate a consistent UUID for our Motion Sensor Accessory that will remain the same even when
 // restarting our server. We use the `uuid.generate` helper function to create a deterministic
 // UUID based on an arbitrary "namespace" and the word "motionsensor".
-const motionSensorUUID = uuid.generate('hap-nodejs:accessories:motionsensor');
+const motionSensorUUID = uuid.generate("hap-nodejs:accessories:motionsensor");
 
 // This is the Accessory that we'll return to HAP-NodeJS that represents our fake motionSensor.
-const motionSensor = exports.accessory = new Accessory('Motion Sensor', motionSensorUUID);
+const motionSensor = exports.accessory = new Accessory("Motion Sensor", motionSensorUUID);
 
 // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
-// @ts-ignore
+// @ts-expect-error: Core/BridgeCore API
 motionSensor.username = "1A:2B:3D:4D:2E:AF";
-// @ts-ignore
+// @ts-expect-error: Core/BridgeCore API
 motionSensor.pincode = "031-45-154";
-// @ts-ignore
 motionSensor.category = Categories.SENSOR;
 
 // set some basic properties (these values are arbitrary and setting them is optional)
@@ -56,6 +55,6 @@ motionSensor
   .addService(Service.MotionSensor, "Fake Motion Sensor") // services exposed to the user should have "names" like "Fake Motion Sensor" for us
   .getCharacteristic(Characteristic.MotionDetected)!
   .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
-     MOTION_SENSOR.getStatus();
-     callback(null, Boolean(MOTION_SENSOR.motionDetected));
-});
+    MOTION_SENSOR.getStatus();
+    callback(null, Boolean(MOTION_SENSOR.motionDetected));
+  });

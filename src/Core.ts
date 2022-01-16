@@ -1,6 +1,6 @@
-import path from 'path';
+import path from "path";
 
-import storage from 'node-persist';
+import storage from "node-persist";
 
 import { AccessoryLoader, HAPLibraryVersion } from "./";
 
@@ -23,29 +23,31 @@ const accessories = AccessoryLoader.loadDirectory(dir);
 accessories.forEach((accessory) => {
 
   // To push Accessories separately, we'll need a few extra properties
-  // @ts-ignore
-  if (!accessory.username)
+  // @ts-expect-error: Core/BridgeCore API
+  if (!accessory.username) {
     throw new Error("Username not found on accessory '" + accessory.displayName +
                     "'. Core.js requires all accessories to define a unique 'username' property.");
+  }
 
-  // @ts-ignore
-  if (!accessory.pincode)
+  // @ts-expect-error: Core/BridgeCore API
+  if (!accessory.pincode) {
     throw new Error("Pincode not found on accessory '" + accessory.displayName +
                     "'. Core.js requires all accessories to define a 'pincode' property.");
+  }
 
   // publish this Accessory on the local network
   accessory.publish({
     port: targetPort++,
-    // @ts-ignore
+    // @ts-expect-error: Core/BridgeCore API
     username: accessory.username,
-    // @ts-ignore
+    // @ts-expect-error: Core/BridgeCore API
     pincode: accessory.pincode,
-    // @ts-ignore
-    category: accessory.category
+    category: accessory.category,
   });
 });
 
-const signals = {'SIGINT': 2, 'SIGTERM': 15} as Record<string, number>;
+const signals = { "SIGINT": 2, "SIGTERM": 15 } as Record<string, number>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 Object.keys(signals).forEach((signal: any) => {
   process.on(signal, () => {
     for (let i = 0; i < accessories.length; i++) {
@@ -53,7 +55,7 @@ Object.keys(signals).forEach((signal: any) => {
     }
 
     setTimeout(() => {
-        process.exit(128 + signals[signal]);
-    }, 1000)
+      process.exit(128 + signals[signal]);
+    }, 1000);
   });
 });

@@ -34,9 +34,9 @@ import "../definitions";
 import { HAPStatus } from "../HAPServer";
 import { AudioBitrate } from "./RemoteController";
 
-let IMAGE = Buffer.alloc(64, 0);
+const IMAGE = Buffer.alloc(64, 0);
 
-let mockStreamingOptions: CameraStreamingOptions = {
+const mockStreamingOptions: CameraStreamingOptions = {
   supportedCryptoSuites: [SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80],
   video: {
     codec: {
@@ -61,12 +61,12 @@ let mockStreamingOptions: CameraStreamingOptions = {
     twoWayAudio: true,
     codecs: [{
       type: AudioStreamingCodecType.AAC_ELD,
-      samplerate: AudioStreamingSamplerate.KHZ_24
+      samplerate: AudioStreamingSamplerate.KHZ_24,
     }],
   },
-}
+};
 
-let mockRecordingOptions: CameraRecordingOptions = {
+const mockRecordingOptions: CameraRecordingOptions = {
   prebufferLength: 4000,
   mediaContainerConfiguration: [{
     type: MediaContainerType.FRAGMENTED_MP4,
@@ -84,42 +84,54 @@ let mockRecordingOptions: CameraRecordingOptions = {
       audioChannels: 1,
       bitrateMode: AudioBitrate.VARIABLE,
       samplerate: AudioRecordingSamplerate.KHZ_48,
-    }]
-  }
-}
+    }],
+  },
+};
 
 class MockDelegate implements CameraStreamingDelegate, CameraRecordingDelegate {
   handleSnapshotRequest(request: SnapshotRequest, callback: SnapshotRequestCallback): void {
-    callback(undefined, IMAGE)
+    callback(undefined, IMAGE);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   handleStreamRequest(request: StreamingRequest, callback: StreamRequestCallback): void {
     throw Error("Unsupported!");
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   prepareStream(request: PrepareStreamRequest, callback: PrepareStreamCallback): void {
     throw Error("Unsupported!");
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async *handleRecordingStreamRequest(streamId: number): AsyncGenerator<RecordingPacket> {
     yield { data: Buffer.alloc(64, 0), isLast: true };
   }
 
-  closeRecordingStream(streamId: number, reason: HDSProtocolSpecificErrorReason): void {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  closeRecordingStream(streamId: number, reason: HDSProtocolSpecificErrorReason): void {
+    // do nothing
+  }
 
-  updateRecordingActive(active: boolean): void {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  updateRecordingActive(active: boolean): void {
+    // do nothing
+  }
 
-  updateRecordingConfiguration(configuration: CameraRecordingConfiguration | undefined): void {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  updateRecordingConfiguration(configuration: CameraRecordingConfiguration | undefined): void {
+    // do nothing
+  }
 }
 
 function createOptions(
   recordingOptions: CameraRecordingOptions = mockRecordingOptions,
   streamingOptions: CameraStreamingOptions = mockStreamingOptions,
-  cameraStreamCount: number = 1,
+  cameraStreamCount = 2,
   delegate: CameraStreamingDelegate & CameraRecordingDelegate = new MockDelegate(),
 ): CameraControllerOptions {
   return {
-    cameraStreamCount: 2,
+    cameraStreamCount: cameraStreamCount,
     delegate: delegate,
     streamingOptions: streamingOptions,
     recording: {
@@ -129,12 +141,12 @@ function createOptions(
     sensors: {
       motion: true,
       occupancy: true,
-    }
-  }
+    },
+  };
 }
 
 describe("CameraController", () => {
-  let controller: CameraController
+  let controller: CameraController;
 
   beforeEach(() => {
     controller = new CameraController(createOptions());
@@ -179,7 +191,7 @@ describe("CameraController", () => {
     });
 
     test("with motion service and doorbell", () => {
-      let doorbell = new DoorbellController(createOptions());
+      const doorbell = new DoorbellController(createOptions());
       doorbell.constructServices();
       doorbell.configureServices();
 
@@ -188,9 +200,9 @@ describe("CameraController", () => {
     });
 
     test("with motion service and doorbell and override", () => {
-      let options = mockRecordingOptions;
+      const options = mockRecordingOptions;
       options.overrideEventTriggerOptions = [EventTriggerOption.MOTION];
-      let doorbell = new DoorbellController(createOptions(options));
+      const doorbell = new DoorbellController(createOptions(options));
       doorbell.constructServices();
       doorbell.configureServices();
 
@@ -199,11 +211,11 @@ describe("CameraController", () => {
     });
 
     test("with motion service and doorbell specified as override", () => {
-      let options = mockRecordingOptions;
+      const options = mockRecordingOptions;
       options.overrideEventTriggerOptions = [EventTriggerOption.DOORBELL];
-      let camera = new CameraController(createOptions(options))
-      camera.constructServices()
-      camera.configureServices()
+      const camera = new CameraController(createOptions(options));
+      camera.constructServices();
+      camera.configureServices();
 
       // @ts-expect-error (private access)
       expect(camera.recordingManagement?.eventTriggerOptions).toBe(EventTriggerOption.MOTION | EventTriggerOption.DOORBELL);
@@ -217,7 +229,7 @@ describe("CameraController", () => {
     });
 
     test("simple handleSnapshotRequest", async () => {
-      let result = controller.handleSnapshotRequest(100, 100, "SomeAccessory", undefined);
+      const result = controller.handleSnapshotRequest(100, 100, "SomeAccessory", undefined);
       await expect(result).resolves.toEqual(IMAGE);
     });
 
@@ -225,31 +237,31 @@ describe("CameraController", () => {
       controller.recordingManagement?.operatingModeService.setCharacteristic(Characteristic.PeriodicSnapshotsActive, false);
 
       await expect(
-        controller.handleSnapshotRequest(100, 100, "SomeAccessory", undefined)
+        controller.handleSnapshotRequest(100, 100, "SomeAccessory", undefined),
       ).rejects.toEqual(HAPStatus.INSUFFICIENT_PRIVILEGES);
 
       await expect(
-        controller.handleSnapshotRequest(100, 100, "SomeAccessory", ResourceRequestReason.PERIODIC)
+        controller.handleSnapshotRequest(100, 100, "SomeAccessory", ResourceRequestReason.PERIODIC),
       ).rejects.toEqual(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
 
       await expect(
-        controller.handleSnapshotRequest(100, 100, "SomeAccessory", ResourceRequestReason.EVENT)
-      ).resolves.toEqual(IMAGE)
+        controller.handleSnapshotRequest(100, 100, "SomeAccessory", ResourceRequestReason.EVENT),
+      ).resolves.toEqual(IMAGE);
     });
 
     test("handleSnapshot considering EventSnapshotsActive state", async () => {
       controller.recordingManagement?.operatingModeService.setCharacteristic(Characteristic.EventSnapshotsActive, false);
 
       await expect(
-        controller.handleSnapshotRequest(100, 100, "SomeAccessory", undefined)
+        controller.handleSnapshotRequest(100, 100, "SomeAccessory", undefined),
       ).rejects.toEqual(HAPStatus.INSUFFICIENT_PRIVILEGES);
 
       await expect(
-        controller.handleSnapshotRequest(100, 100, "SomeAccessory", ResourceRequestReason.PERIODIC)
-      ).resolves.toEqual(IMAGE)
+        controller.handleSnapshotRequest(100, 100, "SomeAccessory", ResourceRequestReason.PERIODIC),
+      ).resolves.toEqual(IMAGE);
 
       await expect(
-        controller.handleSnapshotRequest(100, 100, "SomeAccessory", ResourceRequestReason.EVENT)
+        controller.handleSnapshotRequest(100, 100, "SomeAccessory", ResourceRequestReason.EVENT),
       ).rejects.toEqual(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
     });
 
@@ -258,7 +270,7 @@ describe("CameraController", () => {
 
       for (const reason of [undefined, ResourceRequestReason.PERIODIC, ResourceRequestReason.EVENT]) {
         await expect(
-          controller.handleSnapshotRequest(100, 100, "SomeAccessory", reason)
+          controller.handleSnapshotRequest(100, 100, "SomeAccessory", reason),
         ).rejects.toEqual(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
       }
     });
@@ -270,7 +282,7 @@ describe("CameraController", () => {
 
       for (const reason of [undefined, ResourceRequestReason.PERIODIC, ResourceRequestReason.EVENT]) {
         await expect(
-          controller.handleSnapshotRequest(100, 100, "SomeAccessory", reason)
+          controller.handleSnapshotRequest(100, 100, "SomeAccessory", reason),
         ).rejects.toEqual(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
       }
     });
@@ -287,7 +299,8 @@ describe("CameraController", () => {
 
 
     test("should restore existing configuration", () => {
-      const selectedConfiguration = "AR0BBKAPAAACCAEAAAAAAAAAAwsBAQACBgEEoA8AAAIkAQEAAhIBAQICAQIDBNAHAAAEBKAPAAADCwECgAcCAjgEAwEeAxQBAQECDwEBAQIBAAMBBQQEQAAAAA==";
+      const selectedConfiguration = "AR0BBKAPAAACCAEAAAAAAAAAAwsBAQACBgEEoA8AAAIkAQEAAhIBAQICAQIDBNAHAAAEBKAPAAADC" +
+        "wECgAcCAjgEAwEeAxQBAQECDwEBAQIBAAMBBQQEQAAAAA==";
       const data = JSON.parse(`{
         "type": "camera",
         "controllerData": {
@@ -321,7 +334,7 @@ describe("CameraController", () => {
 
       // @ts-expect-error (private access)
       expect(controller.recordingManagement!.selectedConfiguration)
-        .toBeUndefined() // the hash is from a different configuration, we expect to drop selected config when the supported configuration changes!
+        .toBeUndefined(); // the hash is from a different configuration, we expect to drop selected config when the supported configuration changes!
 
       expect(controller.recordingManagement?.recordingManagementService.getCharacteristic(Characteristic.Active).value)
         .toBe(Characteristic.Active.ACTIVE);

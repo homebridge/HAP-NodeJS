@@ -7,8 +7,8 @@ import {
   NodeCallback,
   Service,
   uuid,
-  VoidCallback
-} from '..';
+  VoidCallback,
+} from "..";
 
 const FAKE_GARAGE = {
   opened: false,
@@ -30,18 +30,17 @@ const FAKE_GARAGE = {
     //use this section to get sensor values. set the boolean FAKE_GARAGE.opened with a sensor value.
     console.log("Sensor queried!");
     //FAKE_GARAGE.opened = true/false;
-  }
+  },
 };
 
-const garageUUID = uuid.generate('hap-nodejs:accessories:' + 'GarageDoor');
-const garage = exports.accessory = new Accessory('Garage Door', garageUUID);
+const garageUUID = uuid.generate("hap-nodejs:accessories:" + "GarageDoor");
+const garage = exports.accessory = new Accessory("Garage Door", garageUUID);
 
 // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
-// @ts-ignore
+// @ts-expect-error: Core/BridgeCore API
 garage.username = "C1:5D:3F:EE:5E:FA"; //edit this if you use Core.js
-// @ts-ignore
+// @ts-expect-error: Core/BridgeCore API
 garage.pincode = "031-45-154";
-// @ts-ignore
 garage.category = Categories.GARAGE_DOOR_OPENER;
 
 garage
@@ -61,14 +60,13 @@ garage
   .getCharacteristic(Characteristic.TargetDoorState)!
   .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
 
-    if (value == Characteristic.TargetDoorState.CLOSED) {
+    if (value === Characteristic.TargetDoorState.CLOSED) {
       FAKE_GARAGE.close();
       callback();
       garage
         .getService(Service.GarageDoorOpener)!
         .setCharacteristic(Characteristic.CurrentDoorState, Characteristic.CurrentDoorState.CLOSED);
-    }
-    else if (value == Characteristic.TargetDoorState.OPEN) {
+    } else if (value === Characteristic.TargetDoorState.OPEN) {
       FAKE_GARAGE.open();
       callback();
       garage
@@ -89,8 +87,7 @@ garage
     if (FAKE_GARAGE.opened) {
       console.log("Query: Is Garage Open? Yes.");
       callback(err, Characteristic.CurrentDoorState.OPEN);
-    }
-    else {
+    } else {
       console.log("Query: Is Garage Open? No.");
       callback(err, Characteristic.CurrentDoorState.CLOSED);
     }

@@ -1,5 +1,5 @@
 import assert from "assert";
-import * as uuid from "../util/uuid"
+import * as uuid from "../util/uuid";
 import createDebug from "debug";
 import { EventEmitter } from "events";
 import { ColorUtils, epochMillisFromMillisSince2001_01_01Buffer, HAPStatus, HapStatusError } from "../..";
@@ -9,7 +9,7 @@ import {
   Characteristic,
   CharacteristicChange,
   CharacteristicEventTypes,
-  CharacteristicOperationContext
+  CharacteristicOperationContext,
 } from "../Characteristic";
 import {
   Brightness,
@@ -19,7 +19,7 @@ import {
   Hue,
   Lightbulb,
   Saturation,
-  SupportedCharacteristicValueTransitionConfiguration
+  SupportedCharacteristicValueTransitionConfiguration,
 } from "../definitions";
 import * as tlv from "../util/tlv";
 import {
@@ -27,7 +27,7 @@ import {
   ControllerServiceMap,
   DefaultControllerType,
   SerializableController,
-  StateChangeDelegate
+  StateChangeDelegate,
 } from "./Controller";
 
 const debug = createDebug("HAP-NodeJS:Controller:TransitionControl");
@@ -110,6 +110,7 @@ interface AdaptiveLightingCharacteristicContext extends CharacteristicOperationC
   controller: AdaptiveLightingController;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isAdaptiveLightingContext(context: any): context is AdaptiveLightingCharacteristicContext {
   return context && "controller" in context;
 }
@@ -349,7 +350,7 @@ interface SerializedAdaptiveLightingControllerState {
  *  The AdaptiveLightingController will go through setup procedure with HomeKit and automatically update
  *  the color temperature characteristic base on the current transition schedule.
  *  It is also adjusting the color temperature when a write to the brightness characteristic happens.
- *  Additionally it will also handle turning off AdaptiveLighting, when it detects a write happening to the
+ *  Additionally, it will also handle turning off AdaptiveLighting, when it detects a write happening to the
  *  ColorTemperature, Hue or Saturation characteristic (though it can only detect writes coming from HomeKit and
  *  can't detect changes done to the physical devices directly! See below).
  *
@@ -369,13 +370,13 @@ interface SerializedAdaptiveLightingControllerState {
  *    of the ColorTemperature characteristic.
  *   - When using Hue/Saturation:
  *    When using Hue/Saturation in combination with the ColorTemperature characteristic you need to update the
- *    respective other in a particular way depending if being in "color mode" or "color temperature mode".
+ *    respective other in a particular way depending on if being in "color mode" or "color temperature mode".
  *    When a write happens to Hue/Saturation characteristic in is advised to set the internal value of the
- *    ColorTemperature to the minimal (NOT RAISING a event).
+ *    ColorTemperature to the minimal (NOT RAISING an event).
  *    When a write happens to the ColorTemperature characteristic just MUST convert to a proper representation
- *    in hue and saturation values, with RAISING a event.
+ *    in hue and saturation values, with RAISING an event.
  *    As noted above you MUST NOT call the {@link Characteristic.setValue} method for this, as this will be considered
- *    a write to the characteristic and will turn off AdaptiveLighting. Instead you should use
+ *    a write to the characteristic and will turn off AdaptiveLighting. Instead, you should use
  *    {@link Characteristic.updateValue} for this.
  *    You can and SHOULD use the supplied utility method {@link ColorUtils.colorTemperatureToHueAndSaturation}
  *    for converting mired to hue and saturation values.
@@ -387,13 +388,13 @@ interface SerializedAdaptiveLightingControllerState {
  *  Like for example ZigBee lights which support sending transitions directly to the lightbulb which
  *  then get executed ON the lightbulb itself reducing unnecessary network traffic.
  *  Here is a quick overview what you have to consider to successfully implement AdaptiveLighting support.
- *  The AdaptiveLightingController will also in manual mode do all of the setup procedure.
+ *  The AdaptiveLightingController will also in manual mode do all the setup procedure.
  *  It will also save the transition schedule to disk to keep AdaptiveLighting enabled across reboots.
  *  The "only" thing you have to do yourself is handling the actual transitions, check that event notifications
  *  are only sent in the defined interval threshold, adjust the color temperature when brightness is changed
  *  and signal that Adaptive Lighting should be disabled if ColorTemperature, Hue or Saturation is changed manually.
  *
- *  First step is to setup up a event handler for the {@link AdaptiveLightingControllerEvents.UPDATE}, which is called
+ *  First step is to setup up an event handler for the {@link AdaptiveLightingControllerEvents.UPDATE}, which is called
  *  when AdaptiveLighting is enabled, the HomeHub updates the schedule for the next 24 hours or AdaptiveLighting
  *  is restored from disk on startup.
  *  In the event handler you can get the current schedule via {@link AdaptiveLightingController.getAdaptiveLightingTransitionCurve},
@@ -403,15 +404,17 @@ interface SerializedAdaptiveLightingControllerState {
  *  Additionally {@link AdaptiveLightingController.getAdaptiveLightingBrightnessMultiplierRange} can be used
  *  to get the valid range for the brightness value to calculate the brightness adjustment factor.
  *  The method {@link AdaptiveLightingController.isAdaptiveLightingActive} can be used to check if AdaptiveLighting is enabled.
- *  Besides actually running the transition (see {@link AdaptiveLightingTransitionCurveEntry}) you must
- *  correctly update the color temperature when the brightness of the lightbulb changes (see {@link AdaptiveLightingTransitionCurveEntry.brightnessAdjustmentFactor}),
+ *  Besides, actually running the transition (see {@link AdaptiveLightingTransitionCurveEntry}) you must correctly update
+ *  the color temperature when the brightness of the lightbulb changes (see {@link AdaptiveLightingTransitionCurveEntry.brightnessAdjustmentFactor}),
  *  and signal when AdaptiveLighting got disabled by calling {@link AdaptiveLightingController.disableAdaptiveLighting}
  *  when ColorTemperature, Hue or Saturation where changed manually.
  *  Lastly you should set up a event handler for the {@link AdaptiveLightingControllerEvents.DISABLED} event.
  *  In yet unknown circumstances HomeKit may also send a dedicated disable command via the control point characteristic.
  *  Be prepared to handle that.
  */
-export class AdaptiveLightingController extends EventEmitter implements SerializableController<ControllerServiceMap, SerializedAdaptiveLightingControllerState> {
+export class AdaptiveLightingController
+  extends EventEmitter
+  implements SerializableController<ControllerServiceMap, SerializedAdaptiveLightingControllerState> {
 
   private stateChangeDelegate?: StateChangeDelegate;
 
@@ -436,10 +439,10 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
   private updateTimeout?: NodeJS.Timeout;
 
   private lastTransitionPointInfo?: SavedLastTransitionPointInfo;
-  private lastEventNotificationSent: number = 0;
-  private lastNotifiedTemperatureValue: number = 0;
-  private lastNotifiedSaturationValue: number = 0;
-  private lastNotifiedHueValue: number = 0;
+  private lastEventNotificationSent = 0;
+  private lastNotifiedTemperatureValue = 0;
+  private lastNotifiedSaturationValue = 0;
+  private lastNotifiedHueValue = 0;
 
   /**
    * Creates a new instance of the AdaptiveLightingController.
@@ -484,7 +487,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
    * This is the case when the user manually changes the value of Hue, Saturation or ColorTemperature characteristics
    * (or if any of those values is changed by physical interaction with the lightbulb).
    */
-  public disableAdaptiveLighting() {
+  public disableAdaptiveLighting(): void {
     if (this.updateTimeout) {
       clearTimeout(this.updateTimeout);
       this.updateTimeout = undefined;
@@ -595,7 +598,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
 
   // ----------- PUBLIC API END -----------
 
-  private handleActiveTransitionUpdated(calledFromDeserializer: boolean = false): void {
+  private handleActiveTransitionUpdated(calledFromDeserializer = false): void {
     if (!calledFromDeserializer) {
       this.activeTransitionCount!.sendEventNotification(1);
     } else {
@@ -755,7 +758,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     };
   }
 
-  private scheduleNextUpdate(dryRun: boolean = false): void {
+  private scheduleNextUpdate(dryRun = false): void {
     if (!this.activeTransition) {
       throw new Error("tried scheduling transition when no transition was active!");
     }
@@ -790,21 +793,22 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     } else {
       const timePercentage = (transitionPoint.transitionOffset - (lowerBound.duration ?? 0)) / upperBound.transitionTime;
       interpolatedTemperature = lowerBound.temperature + (upperBound.temperature - lowerBound.temperature) * timePercentage;
-      interpolatedAdjustmentFactor = lowerBound.brightnessAdjustmentFactor + (upperBound.brightnessAdjustmentFactor - lowerBound.brightnessAdjustmentFactor) * timePercentage;
+      interpolatedAdjustmentFactor = lowerBound.brightnessAdjustmentFactor
+        + (upperBound.brightnessAdjustmentFactor - lowerBound.brightnessAdjustmentFactor) * timePercentage;
     }
 
     const adjustmentMultiplier = Math.max(
       this.activeTransition.brightnessAdjustmentRange.minBrightnessValue,
       Math.min(
         this.activeTransition.brightnessAdjustmentRange.maxBrightnessValue,
-        this.brightnessCharacteristic!.value as number // get handler is not called for optimal performance
-      )
+        this.brightnessCharacteristic!.value as number, // get handler is not called for optimal performance
+      ),
     );
 
     let temperature = Math.round(interpolatedTemperature + interpolatedAdjustmentFactor * adjustmentMultiplier);
 
     // apply any manually applied temperature adjustments
-    temperature += this.customTemperatureAdjustment
+    temperature += this.customTemperatureAdjustment;
 
     const min = this.colorTemperatureCharacteristic?.props.minValue ?? 140;
     const max = this.colorTemperatureCharacteristic?.props.maxValue ?? 500;
@@ -846,7 +850,8 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     });
 
     if (!this.activeTransition) {
-      console.warn("[" + this.lightbulb.displayName + "] Adaptive Lighting was probably disable my mistake by some call in the SET handler of the ColorTemperature characteristic! " +
+      console.warn("[" + this.lightbulb.displayName + "] Adaptive Lighting was probably disable my mistake by some call in " +
+        "the SET handler of the ColorTemperature characteristic! " +
         "Please check that you don't call setValue/setCharacteristic on the Hue, Saturation or ColorTemperature characteristic!");
       return;
     }
@@ -889,6 +894,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
   /**
    * @private
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   initWithServices(serviceMap: ControllerServiceMap): void | ControllerServiceMap {
     // do nothing
   }
@@ -964,10 +970,10 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
 
     // Data migrations from beta builds
     if (!this.activeTransition.transitionId) {
-      // @ts-ignore
-      this.activeTransition.transitionId = this.activeTransition.id1
-      // @ts-ignore
-      delete this.activeTransition.id1
+      // @ts-expect-error: data migration from beta builds
+      this.activeTransition.transitionId = this.activeTransition.id1;
+      // @ts-expect-error: data migration from beta builds
+      delete this.activeTransition.id1;
     }
 
     if (!this.activeTransition.timeMillisOffset) { // compatibility to data produced by early betas
@@ -1067,7 +1073,8 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
 
     if (this.activeTransition) {
       if (this.activeTransition.iid !== iid) {
-        console.warn("[" + this.lightbulb.displayName + "] iid of current adaptive lighting transition (" + this.activeTransition.iid + ") doesn't match the requested one " + iid);
+        console.warn("[" + this.lightbulb.displayName + "] iid of current adaptive lighting transition (" + this.activeTransition.iid
+          + ") doesn't match the requested one " + iid);
         throw new HapStatusError(HAPStatus.INVALID_VALUE_IN_REQUEST);
       }
 
@@ -1089,7 +1096,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
           ValueTransitionConfigurationTypes.UNKNOWN_3, 1,
           ValueTransitionConfigurationTypes.TRANSITION_CURVE_CONFIGURATION, tlv.encode(
             TransitionCurveConfigurationTypes.TRANSITION_ENTRY, this.activeTransition.transitionCurve.map((entry, index, array) => {
-              let duration = array[index - 1]?.duration ?? 0; // we store stuff differently :sweat_smile:
+              const duration = array[index - 1]?.duration ?? 0; // we store stuff differently :sweat_smile:
 
               return tlv.encode(
                 TransitionEntryTypes.ADJUSTMENT_FACTOR, tlv.writeFloat32LE(entry.brightnessAdjustmentFactor),
@@ -1100,7 +1107,9 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
             }),
             TransitionCurveConfigurationTypes.ADJUSTMENT_CHARACTERISTIC_IID, tlv.writeVariableUIntLE(this.activeTransition.brightnessCharacteristicIID),
             TransitionCurveConfigurationTypes.ADJUSTMENT_MULTIPLIER_RANGE, tlv.encode(
+              // eslint-disable-next-line max-len
               TransitionAdjustmentMultiplierRange.MINIMUM_ADJUSTMENT_MULTIPLIER, tlv.writeUInt32(this.activeTransition.brightnessAdjustmentRange.minBrightnessValue),
+              // eslint-disable-next-line max-len
               TransitionAdjustmentMultiplierRange.MAXIMUM_ADJUSTMENT_MULTIPLIER, tlv.writeUInt32(this.activeTransition.brightnessAdjustmentRange.maxBrightnessValue),
             ),
           ),

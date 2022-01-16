@@ -21,7 +21,6 @@ export type IPv4Address = string;
 export type IPv6Address = string;
 export type IPAddress = IPv4Address | IPv6Address;
 
-export type Callback = (...args: any[]) => void;
 export type NodeCallback<T> = (err: Nullable<Error> | undefined, data?: T) => void;
 export type VoidCallback = (err?: Nullable<Error>) => void;
 export type PrimitiveTypes = string | number | boolean;

@@ -1,7 +1,4 @@
 import os from "os";
-import createDebug from "debug";
-
-const debug = createDebug("HAP-NodeJS:net-utils");
 
 export function findLoopbackAddress(): string {
   let ipv6: string | undefined = undefined; // ::1/128

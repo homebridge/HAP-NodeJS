@@ -5,8 +5,8 @@ import {
   Characteristic,
   CharacteristicEventTypes,
   Service,
-  uuid
-} from '../';
+  uuid,
+} from "../";
 
 // here's a fake hardware device that we'll expose to HomeKit
 const FAKE_LOCK = {
@@ -21,23 +21,22 @@ const FAKE_LOCK = {
   },
   identify: () => {
     console.log("Identify the lock!");
-  }
+  },
 };
 
 // Generate a consistent UUID for our Lock Accessory that will remain the same even when
 // restarting our server. We use the `uuid.generate` helper function to create a deterministic
 // UUID based on an arbitrary "namespace" and the word "lock".
-const lockUUID = uuid.generate('hap-nodejs:accessories:lock');
+const lockUUID = uuid.generate("hap-nodejs:accessories:lock");
 
 // This is the Accessory that we'll return to HAP-NodeJS that represents our fake lock.
-const lock = exports.accessory = new Accessory('Lock', lockUUID);
+const lock = exports.accessory = new Accessory("Lock", lockUUID);
 
 // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
-// @ts-ignore
+// @ts-expect-error: Core/BridgeCore API
 lock.username = "C1:5D:3A:EE:5E:FA";
-// @ts-ignore
+// @ts-expect-error: Core/BridgeCore API
 lock.pincode = "031-45-154";
-// @ts-ignore
 lock.category = Categories.DOOR_LOCK;
 
 // set some basic properties (these values are arbitrary and setting them is optional)
@@ -59,13 +58,13 @@ const service = new Service.LockMechanism("Fake Lock");
 service.getCharacteristic(Characteristic.LockTargetState)
   .on(CharacteristicEventTypes.SET, (value, callback) => {
 
-    if (value == Characteristic.LockTargetState.UNSECURED) {
+    if (value === Characteristic.LockTargetState.UNSECURED) {
       FAKE_LOCK.unlock();
       callback(); // Our fake Lock is synchronous - this value has been successfully set
 
       // now we want to set our lock's "actual state" to be unsecured so it shows as unlocked in iOS apps
       service.updateCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.UNSECURED);
-    } else if (value == Characteristic.LockTargetState.SECURED) {
+    } else if (value === Characteristic.LockTargetState.SECURED) {
       FAKE_LOCK.lock();
       callback(); // Our fake Lock is synchronous - this value has been successfully set
 

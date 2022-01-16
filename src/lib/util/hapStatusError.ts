@@ -12,7 +12,7 @@ export class HapStatusError extends Error {
   public hapStatus: HAPStatus;
 
   constructor(status: HAPStatus) {
-    super('HAP Status Error: ' + status);
+    super("HAP Status Error: " + status);
 
     Object.setPrototypeOf(this, HapStatusError.prototype);
 

@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 import { Characteristic } from "../Characteristic";
-import type { AccessControl } from '../definitions';
+import type { AccessControl } from "../definitions";
 import { Service } from "../Service";
 import * as tlv from "../util/tlv";
 
@@ -55,7 +55,7 @@ export class AccessControlManagement extends EventEmitter {
    */
   private accessLevel: AccessLevel = 0;
 
-  private passwordRequired: boolean = false;
+  private passwordRequired = false;
   private password?: string; // undefined if passwordRequired = false
 
   /**
