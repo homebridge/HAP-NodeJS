@@ -81,9 +81,10 @@ export interface CameraControllerOptions {
    * This config section configures optional sensors for the camera.
    * It e.g. may be used to set up a {@link EventTriggerOption.MOTION} trigger when configuring Secure Video.
    *
-   * You may specify to enable the desired services either as a `boolean` flag. In this case the controller will create
-   * and maintain the service for you. Otherwise, you can supply an already created instance of the respective {@link Service}.
-   * In this case you are responsible to manage the service yourself (e.g. creating, restoring, adding to accessory, ...).
+   * You may either specify and provide the desired {@link Service}s or specify their creation and maintenance using a `boolean` flag.
+   * In this case the controller will create and maintain the service for you.
+   * Otherwise, when you supply an already created instance of the {@link Service}, you are responsible yourself to manage the service
+   * (e.g. creating, restoring, adding to the accessory, ...).
    *
    * The services can be accessed through the documented property after the call to {@link Accessory.configureController} has returned.
    */

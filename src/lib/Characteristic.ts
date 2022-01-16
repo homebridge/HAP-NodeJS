@@ -1482,7 +1482,7 @@ export class Characteristic extends EventEmitter {
   /**
    * This method acts similarly to {@link updateValue} by setting the current value of the characteristic
    * without calling any {@link CharacteristicEventTypes.SET} or {@link onSet} handlers.
-   * The difference is that this method forces a event notification sent (updateValue only sends one if the value changed).
+   * The difference is that this method forces an event notification sent (updateValue only sends one if the value changed).
    * This is especially useful for characteristics like {@link Characteristic.ButtonEvent} or {@link Characteristic.ProgrammableSwitchEvent}.
    *
    * @param value - The new value.
