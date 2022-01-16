@@ -54,9 +54,9 @@ export interface ServiceNetworkOptions {
    * If defined it restricts the service to be advertised on the specified
    * ip addresses or interface names.
    *
-   * If a interface name is specified, ANY address on that given interface will be advertised
-   * (if a IP address of the given interface is also given in the array, it will be overridden).
-   * If a IP address is specified, the service will only be advertised for the given addresses.
+   * If an interface name is specified, ANY address on that given interface will be advertised
+   * (if an IP address of the given interface is also given in the array, it will be overridden).
+   * If an IP address is specified, the service will only be advertised for the given addresses.
    *
    * Interface names and addresses can be mixed in the array.
    * If an ip address is given, the ip address must be valid at the time of service creation.
