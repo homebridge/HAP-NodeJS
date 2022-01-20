@@ -10,6 +10,8 @@ import {
   DataStreamManagement,
   DataStreamProtocolHandler,
   EventHandler,
+  HDSConnectionError,
+  HDSConnectionErrorType,
   HDSProtocolError,
   HDSProtocolSpecificErrorReason,
   HDSStatus,
@@ -520,6 +522,7 @@ export class RecordingManagement {
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     this.recordingStream = new CameraRecordingStream(connection, this.delegate, id, streamId);
     this.recordingStream.on(CameraRecordingStreamEvents.CLOSED, () => {
+      debug("[HDS %s] Removing active recoding session from recording management!");
       this.recordingStream = undefined;
     });
 
@@ -905,6 +908,10 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
     // tracks if the last received RecordingPacket was yielded with `isLast=true`.
     let lastFragmentWasMarkedLast = false;
 
+    // in the `finally` block we ensure that when we exit this loop, we are properly freeing this recording stream.
+    // With this property we save a close reason if we encounter any to provide context to the delegate.
+    let finallyCloseReason: HDSProtocolSpecificErrorReason | undefined = HDSProtocolSpecificErrorReason.UNEXPECTED_FAILURE;
+
     try {
       this.generator = this.delegate.handleRecordingStreamRequest(this.streamId);
 
@@ -969,18 +976,23 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
       if (this.closed) {
         console.warn(`[HDS ${this.connection.remoteAddress}] Encountered unexpected error on already closed recording stream ${this.streamId}: ${error.stack}`);
       } else {
-        let closeReason = HDSProtocolSpecificErrorReason.UNEXPECTED_FAILURE;
+        finallyCloseReason = HDSProtocolSpecificErrorReason.UNEXPECTED_FAILURE;
 
         if (error instanceof HDSProtocolError) {
-          closeReason = error.reason;
-          debug("[HDS %s] Delegate signaled to close the recording stream %d", this.connection.remoteAddress, this.streamId);
+          finallyCloseReason = error.reason;
+          debug("[HDS %s] Delegate signaled to close the recording stream %d.", this.connection.remoteAddress, this.streamId);
+        } else if (error instanceof HDSConnectionError && error.type === HDSConnectionErrorType.CLOSED_SOCKET) {
+          // we are probably on a shutdown or just late. Connection is dead. End the stream!
+          finallyCloseReason = undefined; // undefined reason signals connection close
+          debug("[HDS %s] Exited recording stream due to closed HDS socket: stream id %d.", this.connection.remoteAddress, this.streamId);
+          return; // execute finally and then exit (most importantly: we skip the `sendEvent` below)
         } else {
           console.error(`[HDS ${this.connection.remoteAddress}] Encountered unexpected error for recording stream ${this.streamId}: ${error.stack}`);
         }
 
         this.connection.sendEvent(Protocols.DATA_SEND, Topics.CLOSE, {
           streamId: this.streamId,
-          reason: closeReason,
+          reason: finallyCloseReason!,
         });
       }
       return;
@@ -989,6 +1001,11 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
 
       if (this.generatorTimeout) {
         clearTimeout(this.generatorTimeout);
+      }
+
+      // ensure the stream is properly closed!
+      if (!this.closed) {
+        this.close(finallyCloseReason);
       }
     }
 
@@ -1065,14 +1082,14 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
    * This method can be used to close a recording session from the outside.
    * @param reason - The reason to close the stream with.
    */
-  close(reason: HDSProtocolSpecificErrorReason): void {
+  close(reason: HDSProtocolSpecificErrorReason | undefined): void {
     if (this.closed) {
       return;
     }
 
     debug("[HDS %s] Recording stream %d was closed manually with reason %s.",
       // @ts-expect-error: forceConsistentCasingInFileNames compiler option
-      this.connection.remoteAddress, this.streamId, HDSProtocolSpecificErrorReason[reason]);
+      this.connection.remoteAddress, this.streamId, reason ? HDSProtocolSpecificErrorReason[reason] : "CLOSED");
 
     this.connection.sendEvent(Protocols.DATA_SEND, Topics.CLOSE, {
       streamId: this.streamId,
