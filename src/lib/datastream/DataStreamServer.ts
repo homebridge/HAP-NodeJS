@@ -1043,6 +1043,10 @@ export class DataStreamConnection extends EventEmitter {
     this.socket.end();
   }
 
+  isConsideredClosed(): boolean {
+    return this.state >= ConnectionState.CLOSING;
+  }
+
   private onHAPSessionClosed() {
     // If the hap connection is closed it is probably also a good idea to close the data stream connection
     debug("[%s] HAP connection disconnected. Also closing DataStream connection now.", this.remoteAddress);
