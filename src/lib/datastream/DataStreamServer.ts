@@ -493,6 +493,21 @@ export declare interface DataStreamConnection {
   emit(event: "closed"): boolean;
 }
 
+export const enum HDSConnectionErrorType {
+  ILLEGAL_STATE = 1,
+  CLOSED_SOCKET = 2,
+  MAX_PAYLOAD_LENGTH = 3,
+}
+
+export class HDSConnectionError extends Error {
+  readonly type: HDSConnectionErrorType;
+
+  constructor(message: string, type: HDSConnectionErrorType) {
+    super(message);
+    this.type = type;
+  }
+}
+
 /**
  * DataStream connection which holds any necessary state information, encryption an decryption keys, manages
  * protocol handlers and also handles sending and receiving of data stream frames.
@@ -655,7 +670,7 @@ export class DataStreamConnection extends EventEmitter {
       delete this.responseHandlers[requestId];
       delete this.responseTimers[requestId];
 
-      // handler should be able to cleanup their stuff
+      // handler should be able to clean up their stuff
       handler(new Error("timeout"), undefined, {});
     }, 10000); // 10s timer
 
@@ -894,7 +909,7 @@ export class DataStreamConnection extends EventEmitter {
     frames.forEach(frame => {
       const payload = frame.plaintextPayload;
       if (!payload) {
-        throw new Error("Reached illegal state. Encountered HDSFrame with wasn't decrypted yet!");
+        throw new HDSConnectionError("Reached illegal state. Encountered HDSFrame with wasn't decrypted yet!", HDSConnectionErrorType.ILLEGAL_STATE);
       }
 
       const headerLength = payload.readUInt8(0);
@@ -966,7 +981,7 @@ export class DataStreamConnection extends EventEmitter {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private sendHDSFrame(header: Record<any, any>, message: Record<any, any>) {
     if (this.state >= ConnectionState.CLOSING) {
-      throw Error("Cannot send message on closing/closed socket!");
+      throw new HDSConnectionError("Cannot send message on closing/closed socket!", HDSConnectionErrorType.CLOSED_SOCKET);
     }
 
     const headerWriter = new DataStreamWriter();
@@ -980,7 +995,10 @@ export class DataStreamConnection extends EventEmitter {
     payloadHeaderBuffer.writeUInt8(headerWriter.length(), 0);
     const payloadBuffer = Buffer.concat([payloadHeaderBuffer, headerWriter.getData(), messageWriter.getData()]);
     if (payloadBuffer.length > DataStreamConnection.MAX_PAYLOAD_LENGTH) {
-      throw new Error("Tried sending payload with length larger than the maximum allowed for data stream");
+      throw new HDSConnectionError(
+        "Tried sending payload with length larger than the maximum allowed for data stream",
+        HDSConnectionErrorType.MAX_PAYLOAD_LENGTH,
+      );
     }
 
     const frameTypeBuffer = Buffer.alloc(1);
@@ -1023,6 +1041,10 @@ export class DataStreamConnection extends EventEmitter {
 
     this.state = ConnectionState.CLOSING;
     this.socket.end();
+  }
+
+  isConsideredClosed(): boolean {
+    return this.state >= ConnectionState.CLOSING;
   }
 
   private onHAPSessionClosed() {

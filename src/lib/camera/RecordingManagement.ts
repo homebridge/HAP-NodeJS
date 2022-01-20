@@ -10,6 +10,8 @@ import {
   DataStreamManagement,
   DataStreamProtocolHandler,
   EventHandler,
+  HDSConnectionError,
+  HDSConnectionErrorType,
   HDSProtocolError,
   HDSProtocolSpecificErrorReason,
   HDSStatus,
@@ -520,6 +522,7 @@ export class RecordingManagement {
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     this.recordingStream = new CameraRecordingStream(connection, this.delegate, id, streamId);
     this.recordingStream.on(CameraRecordingStreamEvents.CLOSED, () => {
+      debug("[HDS %s] Removing active recoding session from recording management!");
       this.recordingStream = undefined;
     });
 
@@ -871,7 +874,17 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
   private readonly closeListener: () => void;
 
   private generator?: AsyncGenerator<RecordingPacket>;
+  /**
+   * This timeout is used to detect non-returning generators.
+   * When we signal the delegate that it is being closed its generator must return withing 10s.
+   */
   private generatorTimeout?: NodeJS.Timeout;
+  /**
+   * This timer is used to check if the stream is properly closed when we expect it to do so.
+   * When we expect a close signal from the remote, we wait 4s for it. Otherwise, we abort and close it ourselves.
+   * This ensures memory is freed, and that we recover fast from erroneous states.
+   */
+  private closingTimeout?: NodeJS.Timeout;
 
   constructor(connection: DataStreamConnection, delegate: CameraRecordingDelegate, requestId: number, streamId: number) {
     super();
@@ -973,15 +986,17 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
 
         if (error instanceof HDSProtocolError) {
           closeReason = error.reason;
-          debug("[HDS %s] Delegate signaled to close the recording stream %d", this.connection.remoteAddress, this.streamId);
+          debug("[HDS %s] Delegate signaled to close the recording stream %d.", this.connection.remoteAddress, this.streamId);
+        } else if (error instanceof HDSConnectionError && error.type === HDSConnectionErrorType.CLOSED_SOCKET) {
+          // we are probably on a shutdown or just late. Connection is dead. End the stream!
+          debug("[HDS %s] Exited recording stream due to closed HDS socket: stream id %d.", this.connection.remoteAddress, this.streamId);
+          return; // execute finally and then exit (we want to skip the `sendEvent` below)
         } else {
           console.error(`[HDS ${this.connection.remoteAddress}] Encountered unexpected error for recording stream ${this.streamId}: ${error.stack}`);
         }
 
-        this.connection.sendEvent(Protocols.DATA_SEND, Topics.CLOSE, {
-          streamId: this.streamId,
-          reason: closeReason,
-        });
+        // call close to go through standard close routine!
+        this.close(closeReason);
       }
       return;
     } finally {
@@ -989,6 +1004,13 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
 
       if (this.generatorTimeout) {
         clearTimeout(this.generatorTimeout);
+      }
+
+      if (!this.closed) {
+        // e.g. when returning with `endOfStream` we rely on the HomeHub to send an ACK event to close the recording.
+        // With this timer we ensure that the HomeHub has the chance to close the stream gracefully but at the same time
+        // ensure that if something fails the recording stream is freed nonetheless.
+        this.kickOfCloseTimeout();
       }
     }
 
@@ -1040,6 +1062,11 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
   private handleClosed(closure: () => void): void {
     this.closed = true;
 
+    if (this.closingTimeout) {
+      clearTimeout(this.closingTimeout);
+      this.closingTimeout = undefined;
+    }
+
     this.connection.removeProtocolHandler(Protocols.DATA_SEND, this);
     this.connection.removeListener(DataStreamConnectionEvent.CLOSED, this.closeListener);
 
@@ -1047,8 +1074,8 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
       // when this variable is defined, the generator hasn't returned yet.
       // we start a timeout to uncover potential programming mistakes where we await forever and can't free resources.
       this.generatorTimeout = setTimeout(() => {
-        console.error("[HDS %s] Recording download stream %d is still awaiting generator although stream was closed 10s ago!",
-          this.connection.remoteAddress, this.streamId);
+        console.error("[HDS %s] Recording download stream %d is still awaiting generator although stream was closed 10s ago! " +
+          "This is a programming mistake by the camera implementation which prevents freeing up resources.", this.connection.remoteAddress, this.streamId);
       }, 10000);
     }
 
@@ -1065,20 +1092,38 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
    * This method can be used to close a recording session from the outside.
    * @param reason - The reason to close the stream with.
    */
-  close(reason: HDSProtocolSpecificErrorReason): void {
+  close(reason: HDSProtocolSpecificErrorReason | undefined): void {
     if (this.closed) {
       return;
     }
 
     debug("[HDS %s] Recording stream %d was closed manually with reason %s.",
       // @ts-expect-error: forceConsistentCasingInFileNames compiler option
-      this.connection.remoteAddress, this.streamId, HDSProtocolSpecificErrorReason[reason]);
+      this.connection.remoteAddress, this.streamId, reason ? HDSProtocolSpecificErrorReason[reason] : "CLOSED");
 
-    this.connection.sendEvent(Protocols.DATA_SEND, Topics.CLOSE, {
-      streamId: this.streamId,
-      reason: reason,
-    });
+    // the `isConsideredClosed` check just ensures that the won't ever throw here and that `handledClosed` is always executed.
+    if (!this.connection.isConsideredClosed()) {
+      this.connection.sendEvent(Protocols.DATA_SEND, Topics.CLOSE, {
+        streamId: this.streamId,
+        reason: reason,
+      });
+    }
 
     this.handleClosed(() => this.delegate.closeRecordingStream(this.streamId, reason));
+  }
+
+  private kickOfCloseTimeout(): void {
+    if (this.closingTimeout) {
+      clearTimeout(this.closingTimeout);
+    }
+
+    this.closingTimeout = setTimeout(() => {
+      if (this.closed) {
+        return;
+      }
+
+      debug("[HDS %s] Recording stream %d took longer than expected to fully close. Force closing now!", this.connection.remoteAddress, this.streamId);
+      this.close(undefined);
+    }, 4000);
   }
 }
