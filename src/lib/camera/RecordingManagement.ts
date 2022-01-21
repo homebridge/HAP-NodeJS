@@ -881,7 +881,7 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
   private generatorTimeout?: NodeJS.Timeout;
   /**
    * This timer is used to check if the stream is properly closed when we expect it to do so.
-   * When we expect a close signal from the remote, we wait 4s for it. Otherwise, we abort and close it ourselves.
+   * When we expect a close signal from the remote, we wait 12s for it. Otherwise, we abort and close it ourselves.
    * This ensures memory is freed, and that we recover fast from erroneous states.
    */
   private closingTimeout?: NodeJS.Timeout;
@@ -1010,7 +1010,7 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
         // e.g. when returning with `endOfStream` we rely on the HomeHub to send an ACK event to close the recording.
         // With this timer we ensure that the HomeHub has the chance to close the stream gracefully but at the same time
         // ensure that if something fails the recording stream is freed nonetheless.
-        this.kickOfCloseTimeout();
+        this.kickOffCloseTimeout();
       }
     }
 
@@ -1092,7 +1092,7 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
    * This method can be used to close a recording session from the outside.
    * @param reason - The reason to close the stream with.
    */
-  close(reason: HDSProtocolSpecificErrorReason | undefined): void {
+  close(reason: HDSProtocolSpecificErrorReason): void {
     if (this.closed) {
       return;
     }
@@ -1112,7 +1112,7 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
     this.handleClosed(() => this.delegate.closeRecordingStream(this.streamId, reason));
   }
 
-  private kickOfCloseTimeout(): void {
+  private kickOffCloseTimeout(): void {
     if (this.closingTimeout) {
       clearTimeout(this.closingTimeout);
     }
@@ -1123,7 +1123,7 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
       }
 
       debug("[HDS %s] Recording stream %d took longer than expected to fully close. Force closing now!", this.connection.remoteAddress, this.streamId);
-      this.close(undefined);
-    }, 4000);
+      this.close(HDSProtocolSpecificErrorReason.CANCELLED);
+    }, 12000);
   }
 }
