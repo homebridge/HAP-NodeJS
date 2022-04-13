@@ -430,7 +430,7 @@ export class HAPServer extends EventEmitter {
       return;
     }
 
-    this.emit(HAPServerEventTypes.IDENTIFY, once((err: Error) => {
+    this.emit(HAPServerEventTypes.IDENTIFY, once(err => {
       if (!err) {
         debug("[%s] Identification success", this.accessoryInfo.username);
         response.writeHead(HAPHTTPCode.NO_CONTENT);
@@ -602,7 +602,7 @@ export class HAPServer extends EventEmitter {
     const encrypted = hapCrypto.chacha20_poly1305_encryptAndSeal(hkdfEncKey, Buffer.from("PS-Msg06"), null, message);
 
     // finally, notify listeners that we have been paired with a client
-    this.emit(HAPServerEventTypes.PAIR, clientUsername.toString(), clientLTPK, once((err?: Error) => {
+    this.emit(HAPServerEventTypes.PAIR, clientUsername.toString(), clientLTPK, once(err => {
       if (err) {
         debug("[%s] Error adding pairing info: %s", this.accessoryInfo.username, err.message);
         response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
@@ -812,7 +812,7 @@ export class HAPServer extends EventEmitter {
       return;
     }
     // call out to listeners to retrieve the latest accessories JSON
-    this.emit(HAPServerEventTypes.ACCESSORIES, connection, once((error: HAPHttpError | undefined, result: AccessoriesResponse) => {
+    this.emit(HAPServerEventTypes.ACCESSORIES, connection, once((error, result) => {
       if (error) {
         response.writeHead(error.httpCode, { "Content-Type": "application/hap+json" });
         response.end(JSON.stringify({ status: error.status }));
@@ -861,14 +861,15 @@ export class HAPServer extends EventEmitter {
         HAPServerEventTypes.GET_CHARACTERISTICS,
         connection,
         readRequest,
-        once((error: HAPHttpError | undefined, readResponse: CharacteristicsReadResponse) => {
+        once((error, readResponse) => {
           if (error) {
             response.writeHead(error.httpCode, { "Content-Type": "application/hap+json" });
             response.end(JSON.stringify({ status: error.status }));
             return;
           }
 
-          const characteristics = readResponse.characteristics;
+          // typescript can't type that this exists if error doesnt
+          const characteristics = readResponse!.characteristics;
 
           let errorOccurred = false; // determine if we send a 207 Multi-Status
           for (const data of characteristics) {
@@ -911,14 +912,15 @@ export class HAPServer extends EventEmitter {
         HAPServerEventTypes.SET_CHARACTERISTICS,
         connection,
         writeRequest,
-        once((error: HAPHttpError | undefined, writeResponse: CharacteristicsWriteResponse) => {
+        once((error, writeResponse) => {
           if (error) {
             response.writeHead(error.httpCode, { "Content-Type": "application/hap+json" });
             response.end(JSON.stringify({ status: error.status }));
             return;
           }
 
-          const characteristics = writeResponse.characteristics;
+          // typescript can't type that this exists if error doesnt
+          const characteristics = writeResponse!.characteristics;
 
           let multiStatus = false;
           for (const data of characteristics) {
@@ -1012,7 +1014,7 @@ export class HAPServer extends EventEmitter {
 
       const resourceRequest = JSON.parse(data.toString()) as ResourceRequest;
       // call out to listeners to retrieve the resource, snapshot only right now
-      this.emit(HAPServerEventTypes.REQUEST_RESOURCE, resourceRequest, once((error: HAPHttpError | undefined, resource: Buffer) => {
+      this.emit(HAPServerEventTypes.REQUEST_RESOURCE, resourceRequest, once((error, resource) => {
         if (error) {
           response.writeHead(error.httpCode, { "Content-Type": "application/hap+json" });
           response.end(JSON.stringify({ status: error.status }));

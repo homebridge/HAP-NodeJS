@@ -1589,7 +1589,7 @@ export class Characteristic extends EventEmitter {
 
     return new Promise((resolve, reject) => {
       try {
-        this.emit(CharacteristicEventTypes.GET, once((status?: Error | HAPStatus | null, value?: Nullable<CharacteristicValue>) => {
+        this.emit(CharacteristicEventTypes.GET, once((status, value) => {
           if (status) {
             if (typeof status === "number") {
               const hapStatusError = new HapStatusError(status);
@@ -1722,7 +1722,7 @@ export class Characteristic extends EventEmitter {
     } else {
       return new Promise((resolve, reject) => {
         try {
-          this.emit(CharacteristicEventTypes.SET, value, once((status?: Error | HAPStatus | null, writeResponse?: Nullable<CharacteristicValue>) => {
+          this.emit(CharacteristicEventTypes.SET, value, once((status, writeResponse) => {
             if (status) {
               if (typeof status === "number") {
                 const hapStatusError = new HapStatusError(status);
