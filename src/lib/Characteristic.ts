@@ -1134,7 +1134,7 @@ export class Characteristic extends EventEmitter {
         } else if (props.maxValue < numericLowerBound(this.props.format)) {
           this.characteristicWarning(
             "Characteristic Property 'maxValue' was set to " + props.maxValue + ", but for numeric format " +
-            this.props.format + " minimum possible is " + numericUpperBound(this.props.format),
+            this.props.format + " minimum possible is " + numericLowerBound(this.props.format),
             CharacteristicWarningType.ERROR_MESSAGE,
           );
           props.maxValue = numericUpperBound(this.props.format);
