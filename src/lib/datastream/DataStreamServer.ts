@@ -734,6 +734,9 @@ export class DataStreamConnection extends EventEmitter {
 
           // below listener is removed in .close()
           this.connection.on(HAPConnectionEvent.CLOSED, this.hapConnectionClosedListener); // register close listener
+
+          debug("[%s] Registering CLOSED handler to HAP connection. Connection currently has %d close handlers!",
+            this.remoteAddress, this.connection.listeners(HAPConnectionEvent.CLOSED).length);
         }
       });
 
@@ -1037,8 +1040,6 @@ export class DataStreamConnection extends EventEmitter {
       return; // connection is already closing/closed
     }
 
-    this.connection?.removeListener(HAPConnectionEvent.CLOSED, this.hapConnectionClosedListener);
-
     this.state = ConnectionState.CLOSING;
     this.socket.end();
   }
@@ -1062,6 +1063,8 @@ export class DataStreamConnection extends EventEmitter {
     // this instance is now considered completely dead
     this.state = ConnectionState.CLOSED;
     this.emit(DataStreamConnectionEvent.CLOSED);
+
+    this.connection?.removeListener(HAPConnectionEvent.CLOSED, this.hapConnectionClosedListener);
     this.removeAllListeners();
   }
 
