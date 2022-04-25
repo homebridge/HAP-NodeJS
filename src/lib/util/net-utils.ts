@@ -13,11 +13,11 @@ export function findLoopbackAddress(): string {
       }
 
       internal = true;
-      if (info.family === "IPv4" || info.family === 4) { //nodejs18 uses numbers 4 or 6
+      if (info.family === "IPv4" || info.family == 4) { //nodejs18 uses numbers 4 or 6
         if (!ipv4) {
           ipv4 = info.address;
         }
-      } else if (info.family === "IPv6" || info.family === 6) {
+      } else if (info.family === "IPv6" || info.family == 6) {
         if (info.scopeid) {
           if (!ipv6LinkLocal) {
             ipv6LinkLocal = info.address + "%" + name; // ipv6 link local addresses are only valid with a scope
