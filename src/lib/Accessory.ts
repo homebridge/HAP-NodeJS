@@ -1838,6 +1838,7 @@ export class Accessory extends EventEmitter {
           controller = accessory.activeCameraController;
         }
       } else if (this.activeCameraController) { // aid was not supplied, check if this accessory is a camera
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
         accessory = this;
         controller = this.activeCameraController;
       }
