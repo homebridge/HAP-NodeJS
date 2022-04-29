@@ -553,15 +553,19 @@ export class RecordingManagement {
   private handleSelectedCameraRecordingConfigurationWrite(value: any): void {
     const configuration = this.parseSelectedConfiguration(value);
 
+    const changed = this.selectedConfiguration?.base64 !== value;
+
     this.selectedConfiguration = {
       parsed: configuration,
       base64: value,
     };
 
-    this.delegate.updateRecordingConfiguration(this.selectedConfiguration.parsed);
+    if (changed) {
+      this.delegate.updateRecordingConfiguration(this.selectedConfiguration.parsed);
 
-    // notify controller storage about updated values!
-    this.stateChangeDelegate?.();
+      // notify controller storage about updated values!
+      this.stateChangeDelegate?.();
+    }
   }
 
   private parseSelectedConfiguration(value: string): CameraRecordingConfiguration {
