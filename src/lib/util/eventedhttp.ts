@@ -713,7 +713,8 @@ export class HAPConnection extends EventEmitter {
 
     if (ipVersion === "ipv4") {
       for (const info of infos) {
-        if (info.family === "IPv4") {
+        // @ts-expect-error Nodejs 18+ uses the number 4 the string "IPv4"
+        if (info.family === "IPv4" || info.family === 4) {
           return info.address;
         }
       }
@@ -723,7 +724,8 @@ export class HAPConnection extends EventEmitter {
       let localUniqueAddress: string | undefined = undefined;
 
       for (const info of infos) {
-        if (info.family === "IPv6") {
+        // @ts-expect-error Nodejs 18+ uses the number 6 instead of the string "IPv6"
+        if (info.family === "IPv6" || info.family === 6) {
           if (!info.scopeid) {
             return info.address;
           } else if (!localUniqueAddress) {
