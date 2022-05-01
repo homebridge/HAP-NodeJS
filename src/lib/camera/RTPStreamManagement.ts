@@ -754,7 +754,6 @@ export class RTPStreamManagement {
     default:
       debug(`Unhandled request type ${SessionControlCommand[requestType]}`);
       callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
-      // TODO should we call stop stream?
       return;
     }
   }
