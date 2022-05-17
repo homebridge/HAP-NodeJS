@@ -1223,8 +1223,8 @@ export class Accessory extends EventEmitter {
     let selectedAdvertiser = info.advertiser ?? MDNSAdvertiser.BONJOUR;
     if (info.advertiser === MDNSAdvertiser.AVAHI && !await AvahiAdvertiser.isAvailable()) {
       console.error(
-        `[${this.displayName}] The selected advertiser, "${MDNSAdvertiser.AVAHI}" isn't available this the platform. ` +
-        ` Reverting to "${MDNSAdvertiser.BONJOUR}"`,
+        `[${this.displayName}] The selected advertiser, "${MDNSAdvertiser.AVAHI}", isn't available on this platform. ` +
+        `Reverting to "${MDNSAdvertiser.BONJOUR}"`,
       );
       selectedAdvertiser = MDNSAdvertiser.BONJOUR;
     }
