@@ -2071,8 +2071,9 @@ export class Characteristic extends EventEmitter {
         if (stepValue === 1) {
           value = Math.round(value);
         } else if (stepValue > 1) {
+          const eps = 1; // stable constant for floating point precision
           value = Math.round(value);
-          value = value - (value % stepValue);
+          value = value - ((value + eps) % stepValue) + eps;
         } // for stepValue < 1 rounding is done only when formatting the response. We can't store the "perfect" .step anyways
       }
 
