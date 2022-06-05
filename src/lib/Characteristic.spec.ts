@@ -1095,32 +1095,28 @@ describe("Characteristic", () => {
     });
 
     it("should validate Formats.FLOAT with precision with minimum steps", () => {
-      const steps = (100 / 6);
-      const characteristic = createCharacteristicWithProps({
-        format: Formats.FLOAT,
-        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-        minValue: 0,
-        maxValue: 100,
-        minStep: steps,
-      });
+      const pad = 1;
+      const characteristic = createCharacteristic(Formats.FLOAT);
 
-      characteristic.setValue(steps);
-      expect(characteristic.value).toEqual(steps);
+      // takes up to 3 minutes
+      for(let ceil = 1; ceil <= 100; ceil++) {
+        const steps = (ceil / 6);
+        for(let maxValue = ceil; maxValue > 0; maxValue--) {
+          for(let minValue = 0; minValue < maxValue; minValue++) {
+            characteristic.setProps({
+              minValue: minValue,
+              maxValue: maxValue,
+              minStep: steps,
+            });
+            for(let amp = 0; amp < (ceil / steps) + pad; amp++) {
+              const desiredValue = Math.min(Math.max(steps * amp, minValue), maxValue);
 
-      characteristic.setValue(steps * 2);
-      expect(characteristic.value).toEqual(steps * 2);
-
-      characteristic.setValue(steps * 3);
-      expect(characteristic.value).toEqual(steps * 3);
-
-      characteristic.setValue(steps * 4);
-      expect(characteristic.value).toEqual(steps * 4);
-
-      characteristic.setValue(steps * 5);
-      expect(characteristic.value).toEqual(steps * 5);
-
-      characteristic.setValue(steps * 6);
-      expect(characteristic.value).toEqual(steps * 6);
+              characteristic.setValue(steps * amp);
+              expect(characteristic.value).toEqual(desiredValue);
+            }
+          }
+        }
+      }
     });
 
     it("should allow negative floats in range for Formats.FLOAT", () => {
