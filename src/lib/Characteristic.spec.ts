@@ -1109,9 +1109,8 @@ describe("Characteristic", () => {
               minStep: steps,
             });
             for(let amp = 0; amp < (ceil / steps) + pad; amp++) {
-              const desiredValue = Math.min(Math.max(steps * amp, minValue), maxValue);
-
-              characteristic.setValue(steps * amp);
+              const desiredValue = Math.min(Math.max(steps * amp + minValue, minValue), maxValue);
+              characteristic.setValue(steps * amp + minValue);
               expect(characteristic.value).toEqual(desiredValue);
             }
           }

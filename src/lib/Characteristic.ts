@@ -2042,7 +2042,8 @@ export class Characteristic extends EventEmitter {
       }
 
       if (stepValue != null) {
-        value = stepValue * Math.round(value / stepValue);
+        const minValue = numericMin != null ? numericMin : 0;
+        value = stepValue * Math.round((value - minValue) / stepValue) + minValue;
       }
 
       if (numericMin != null && value < numericMin) {
