@@ -2037,11 +2037,16 @@ export class Characteristic extends EventEmitter {
       let stepValue: number | undefined = undefined;
       if (this.props.format === Formats.FLOAT) {
         stepValue = this.props.minStep;
+        if (stepValue == null) {
+          this.characteristicWarning("characteristic was supplied illegal value: step size undefined");
+        } else if (stepValue <= 0) {
+          this.characteristicWarning(`characteristic was supplied illegal value: step size ${stepValue} lower than zero`);
+        }
       } else {
         stepValue = maxWithUndefined(this.props.minStep, 1);
       }
 
-      if (stepValue != null) {
+      if (stepValue != null && stepValue > 0) {
         const minValue = numericMin != null ? numericMin : 0;
         value = stepValue * Math.round((value - minValue) / stepValue) + minValue;
       }
