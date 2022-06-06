@@ -805,6 +805,7 @@ describe("Characteristic", () => {
       const characteristic = createCharacteristicWithProps({
         format: Formats.FLOAT,
         minStep: 0.001,
+        minValue: 0,
         perms: [Perms.NOTIFY],
       });
       // @ts-expect-error: private access
@@ -1095,26 +1096,43 @@ describe("Characteristic", () => {
     });
 
     it("should validate Formats.FLOAT with precision with minimum steps", () => {
-      const pad = 1;
       const characteristic = createCharacteristic(Formats.FLOAT);
+      let minStep;
 
-      // takes up to 3 minutes
-      for(let ceil = 1; ceil <= 100; ceil++) {
-        const steps = (ceil / 6);
-        for(let maxValue = ceil; maxValue > 0; maxValue--) {
-          for(let minValue = 0; minValue < maxValue; minValue++) {
-            characteristic.setProps({
-              minValue: minValue,
-              maxValue: maxValue,
-              minStep: steps,
-            });
-            for(let amp = 0; amp < (ceil / steps) + pad; amp++) {
-              const desiredValue = Math.min(Math.max(steps * amp + minValue, minValue), maxValue);
-              characteristic.setValue(steps * amp + minValue);
-              expect(characteristic.value).toEqual(desiredValue);
-            }
-          }
-        }
+      minStep = 100 / 6;
+      characteristic.setProps({
+        minValue: 0,
+        maxValue: 100,
+        minStep: minStep,
+      });
+      for(let i = 1; i <= 7; i++) {
+        const desiredValue = Math.min(Math.max(i * minStep, 0), 100);
+        characteristic.setValue(i * minStep);
+        expect(characteristic.value).toEqual(desiredValue);
+      }
+
+      minStep = 1;
+      characteristic.setProps({
+        minValue: 0.5,
+        maxValue: 2.5,
+        minStep: minStep,
+      });
+      for(let i = 1; i <= 4; i++) {
+        const desiredValue = Math.min(Math.max(i * minStep + 0.5, 0.5), 2.5);
+        characteristic.setValue(i * minStep + 0.5);
+        expect(characteristic.value).toEqual(desiredValue);
+      }
+
+      minStep = 100 / 3;
+      characteristic.setProps({
+        minValue: 0,
+        maxValue: 100,
+        minStep: minStep,
+      });
+      for(let i = 1; i <= 4; i++) {
+        const desiredValue = Math.min(Math.max(i * minStep, 0), 100);
+        characteristic.setValue(i * minStep);
+        expect(characteristic.value).toEqual(desiredValue);
       }
     });
 
