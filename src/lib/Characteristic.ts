@@ -2041,6 +2041,11 @@ export class Characteristic extends EventEmitter {
         stepValue = maxWithUndefined(this.props.minStep, 1);
       }
 
+      if (stepValue != null && stepValue > 0) {
+        const minValue = numericMin != null ? numericMin : 0;
+        value = stepValue * Math.round((value - minValue) / stepValue) + minValue;
+      }
+
       if (numericMin != null && value < numericMin) {
         this.characteristicWarning(`characteristic was supplied illegal value: number ${value} exceeded minimum of ${numericMin}`);
         value = numericMin;
@@ -2065,16 +2070,6 @@ export class Characteristic extends EventEmitter {
           ${this.props.validValueRanges}, supplying illegal values will throw errors in the future`);
           value = this.props.validValueRanges[1];
         }
-      }
-
-      if (stepValue != null) {
-        if (stepValue === 1) {
-          value = Math.round(value);
-        } else if (stepValue > 1) {
-          const eps = 1; // stable constant for floating point precision
-          value = Math.round(value);
-          value = value - ((value + eps) % stepValue) + eps;
-        } // for stepValue < 1 rounding is done only when formatting the response. We can't store the "perfect" .step anyways
       }
 
       return value;

@@ -805,6 +805,7 @@ describe("Characteristic", () => {
       const characteristic = createCharacteristicWithProps({
         format: Formats.FLOAT,
         minStep: 0.001,
+        minValue: 0,
         perms: [Perms.NOTIFY],
       });
       // @ts-expect-error: private access
@@ -1095,32 +1096,44 @@ describe("Characteristic", () => {
     });
 
     it("should validate Formats.FLOAT with precision with minimum steps", () => {
-      const steps = (100 / 6);
-      const characteristic = createCharacteristicWithProps({
-        format: Formats.FLOAT,
-        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      const characteristic = createCharacteristic(Formats.FLOAT);
+      let minStep;
+
+      minStep = 100 / 6;
+      characteristic.setProps({
         minValue: 0,
         maxValue: 100,
-        minStep: steps,
+        minStep: minStep,
       });
+      for(let i = 1; i <= 7; i++) {
+        const desiredValue = Math.min(Math.max(i * minStep, 0), 100);
+        characteristic.setValue(i * minStep);
+        expect(characteristic.value).toEqual(desiredValue);
+      }
 
-      characteristic.setValue(steps);
-      expect(characteristic.value).toEqual(steps);
+      minStep = 1;
+      characteristic.setProps({
+        minValue: 0.5,
+        maxValue: 2.5,
+        minStep: minStep,
+      });
+      for(let i = 1; i <= 4; i++) {
+        const desiredValue = Math.min(Math.max(i * minStep + 0.5, 0.5), 2.5);
+        characteristic.setValue(i * minStep + 0.5);
+        expect(characteristic.value).toEqual(desiredValue);
+      }
 
-      characteristic.setValue(steps * 2);
-      expect(characteristic.value).toEqual(steps * 2);
-
-      characteristic.setValue(steps * 3);
-      expect(characteristic.value).toEqual(steps * 3);
-
-      characteristic.setValue(steps * 4);
-      expect(characteristic.value).toEqual(steps * 4);
-
-      characteristic.setValue(steps * 5);
-      expect(characteristic.value).toEqual(steps * 5);
-
-      characteristic.setValue(steps * 6);
-      expect(characteristic.value).toEqual(steps * 6);
+      minStep = 100 / 3;
+      characteristic.setProps({
+        minValue: 0,
+        maxValue: 100,
+        minStep: minStep,
+      });
+      for(let i = 1; i <= 4; i++) {
+        const desiredValue = Math.min(Math.max(i * minStep, 0), 100);
+        characteristic.setValue(i * minStep);
+        expect(characteristic.value).toEqual(desiredValue);
+      }
     });
 
     it("should allow negative floats in range for Formats.FLOAT", () => {
