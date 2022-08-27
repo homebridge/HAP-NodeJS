@@ -29,7 +29,7 @@ import {
   VoidCallback,
   WithUUID,
 } from "../types";
-import { Advertiser, AdvertiserEvent, BonjourHAPAdvertiser, CiaoAdvertiser, AvahiAdvertiser } from "./Advertiser";
+import { Advertiser, AdvertiserEvent, BonjourHAPAdvertiser, CiaoAdvertiser, AvahiAdvertiser, ResolvedAdvertiser } from "./Advertiser";
 // noinspection JSDeprecatedSymbols
 import { LegacyCameraSource, LegacyCameraSourceAdapter, StreamController } from "./camera";
 import {
@@ -281,6 +281,10 @@ export const enum MDNSAdvertiser {
    * Use Avahi/D-Bus as advertiser.
    */
   AVAHI = "avahi",
+  /**
+   * Use systemd-resolved/D-Bus as advertiser.
+   */
+  RESOLVED = "resolved",
 }
 
 export type AccessoryCharacteristicChange = ServiceCharacteristicChange &  {
@@ -1221,9 +1225,12 @@ export class Accessory extends EventEmitter {
     const parsed = Accessory.parseBindOption(info);
 
     let selectedAdvertiser = info.advertiser ?? MDNSAdvertiser.BONJOUR;
-    if (info.advertiser === MDNSAdvertiser.AVAHI && !await AvahiAdvertiser.isAvailable()) {
+    if (
+      (info.advertiser === MDNSAdvertiser.AVAHI && !await AvahiAdvertiser.isAvailable()) ||
+      (info.advertiser === MDNSAdvertiser.RESOLVED && !await ResolvedAdvertiser.isAvailable())
+    ) {
       console.error(
-        `[${this.displayName}] The selected advertiser, "${MDNSAdvertiser.AVAHI}", isn't available on this platform. ` +
+        `[${this.displayName}] The selected advertiser, "${info.advertiser}", isn't available on this platform. ` +
         `Reverting to "${MDNSAdvertiser.BONJOUR}"`,
       );
       selectedAdvertiser = MDNSAdvertiser.BONJOUR;
@@ -1247,6 +1254,9 @@ export class Accessory extends EventEmitter {
       break;
     case MDNSAdvertiser.AVAHI:
       this._advertiser = new AvahiAdvertiser(this._accessoryInfo);
+      break;
+    case MDNSAdvertiser.RESOLVED:
+      this._advertiser = new ResolvedAdvertiser(this._accessoryInfo);
       break;
     default:
       throw new Error("Unsupported advertiser setting: '" + info.advertiser + "'");

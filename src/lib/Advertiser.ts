@@ -422,3 +422,171 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
     });
   }
 }
+
+type ResolvedServiceTxt = {
+  [key: string]: Buffer;
+}
+
+/**
+ * Advertiser based on the systemd-resolved D-Bus library.
+ * For docs on the interface, see: https://www.freedesktop.org/software/systemd/man/org.freedesktop.resolve1.html
+ */
+export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
+  private readonly accessoryInfo: AccessoryInfo;
+  private readonly setupHash: string;
+
+  private port?: number;
+
+  private bus?: MessageBus;
+  private path?: string;
+
+  constructor(accessoryInfo: AccessoryInfo) {
+    super();
+    this.accessoryInfo = accessoryInfo;
+    this.setupHash = CiaoAdvertiser.computeSetupHash(accessoryInfo);
+
+    this.bus = dbus.systemBus();
+
+    debug(`Preparing Advertiser for '${this.accessoryInfo.displayName}' using systemd-resolved backend!`);
+  }
+
+  private createTxt(): ResolvedServiceTxt {
+    const result: ResolvedServiceTxt = {};
+
+    for (const [key, val] of Object.entries(CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash))) {
+      result[key] = Buffer.from(val.toString());
+    }
+
+    return result;
+  }
+
+  public initPort(port: number): void {
+    this.port = port;
+  }
+
+  public async startAdvertising(): Promise<void> {
+    if (this.port == null) {
+      throw new Error("Tried starting systemd-resolved advertisement without initializing port!");
+    }
+    if (!this.bus) {
+      throw new Error("Tried to start systemd-resolved advertisement on a destroyed advertiser!");
+    }
+
+    debug(`Starting to advertise '${this.accessoryInfo.displayName}' using systemd-resolved backend!`);
+
+    this.path = await ResolvedAdvertiser.resolvedInvoke(this.bus, "RegisterService", {
+      body: [
+        this.accessoryInfo.displayName, // name
+        this.accessoryInfo.displayName, // name_template
+        "_hap._tcp", // type
+        this.port, // service_port
+        0, // service_priority
+        0, // service_weight
+        this.createTxt(), // txt_datas
+      ],
+      signature: "sssqqqaa{say}",
+    });
+  }
+
+  public async updateAdvertisement(silent?: boolean): Promise<void> {
+    if (!this.bus) {
+      throw new Error("Tried to update systemd-resolved advertisement on a destroyed advertiser!");
+    }
+
+    debug("Updating txt record (txt: %o, silent: %d)", CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash), silent);
+
+    await this.stopAdvertising();
+    await this.startAdvertising();
+  }
+
+  private async stopAdvertising(): Promise<void> {
+    if (!this.bus) {
+      throw new Error("Tried to destroy systemd-resolved advertisement on a destroyed advertiser!");
+    }
+
+    if (this.path) {
+      try {
+        await ResolvedAdvertiser.resolvedInvoke(this.bus, "UnregisterService", {
+          body: [this.path],
+          signature: "o",
+        });
+      } catch (error) {
+        // Typically, this fails if e.g. systemd-resolved service was stopped in the meantime.
+        debug("Destroying systemd-resolved advertisement failed: " + error);
+      }
+      this.path = undefined;
+    }
+  }
+
+  public async destroy(): Promise<void> {
+    if (!this.bus) {
+      throw new Error("Tried to destroy systemd-resolved advertisement on a destroyed advertiser!");
+    }
+
+    await this.stopAdvertising();
+
+    this.bus.connection.stream.destroy();
+    this.bus = undefined;
+  }
+
+  public static async isAvailable(): Promise<boolean> {
+    const bus = dbus.systemBus();
+
+    try {
+      try {
+        await this.messageBusConnectionResult(bus);
+      } catch (error) {
+        debug("systemd-resolved/DBus classified unavailable due to missing dbus interface!");
+        return false;
+      }
+
+      try {
+        // Ensure that systemd-resolved is accessible.
+        await this.resolvedInvoke(bus, "ResolveHostname", {
+          body: [0, "127.0.0.1", 0, 0],
+          signature: "isit",
+        });
+        debug("Detected systemd-resolved over DBus interface running version.");
+      } catch (error) {
+        debug("systemd-resolved/DBus classified unavailable due to missing systemd-resolved interface!");
+        return false;
+      }
+
+      return true;
+    } finally {
+      bus.connection.stream.destroy();
+    }
+  }
+
+  private static messageBusConnectionResult(bus: MessageBus): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const errorHandler = (error: Error) => {
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
+        bus.connection.removeListener("connect", connectHandler);
+        reject(error);
+      };
+      const connectHandler = () => {
+        bus.connection.removeListener("error", errorHandler);
+        resolve();
+      };
+
+      bus.connection.once("connect", connectHandler);
+      bus.connection.once("error", errorHandler);
+    });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private static resolvedInvoke(bus: MessageBus, member: string, others?: any): Promise<any> {
+    return new Promise((resolve, reject) => {
+      const command = { destination: "org.freedesktop.resolve1", path: "/org/freedesktop/resolve1", interface: "org.freedesktop.resolve1.Manager", member, ...(others || {}) };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      bus.invoke(command, (err: any, result: any) => {
+        if (err) {
+          reject(new Error(`resolvedInvoke error: ${JSON.stringify(err)}`));
+        } else {
+          resolve(result);
+        }
+      });
+    });
+  }
+}
