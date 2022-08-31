@@ -423,9 +423,7 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
   }
 }
 
-type ResolvedServiceTxt = {
-  [key: string]: Buffer;
-}
+type ResolvedServiceTxt = Array<Array<string | Buffer>>;
 
 /**
  * Advertiser based on the systemd-resolved D-Bus library.
@@ -451,13 +449,9 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
   }
 
   private createTxt(): ResolvedServiceTxt {
-    const result: ResolvedServiceTxt = {};
-
-    for (const [key, val] of Object.entries(CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash))) {
-      result[key] = Buffer.from(val.toString());
-    }
-
-    return result;
+    return Object
+      .entries(CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash))
+      .map((el: Array<string>) => [el[0].toString(), Buffer.from(el[1].toString())]);
   }
 
   public initPort(port: number): void {
@@ -482,7 +476,7 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
         this.port, // service_port
         0, // service_priority
         0, // service_weight
-        this.createTxt(), // txt_datas
+        [this.createTxt()], // txt_datas
       ],
       signature: "sssqqqaa{say}",
     });
