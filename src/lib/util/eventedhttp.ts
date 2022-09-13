@@ -543,6 +543,10 @@ export class HAPConnection extends EventEmitter {
   private writeEventNotification(notification: EventNotification): void {
     debugCon("[%s] Sending HAP event notifications %o", this.remoteAddress, notification.characteristics);
 
+    // Apple backend processes events in reverse order, so we need to reverse the array
+    // so that events are processed in chronological order.
+    notification.characteristics.reverse();
+
     const dataBuffer = Buffer.from(JSON.stringify(notification), "utf8");
     const header = Buffer.from(
       "EVENT/1.0 200 OK\r\n" +
