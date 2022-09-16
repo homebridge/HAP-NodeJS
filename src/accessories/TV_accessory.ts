@@ -9,23 +9,22 @@ import {
   CharacteristicSetCallback,
   CharacteristicValue,
   Service,
-  uuid
-} from '..';
+  uuid,
+} from "..";
 
 // Generate a consistent UUID for TV that will remain the same even when
 // restarting our server. We use the `uuid.generate` helper function to create a deterministic
 // UUID based on an arbitrary "namespace" and the word "tv".
-const tvUUID = uuid.generate('hap-nodejs:accessories:tv');
+const tvUUID = uuid.generate("hap-nodejs:accessories:tv");
 
 // This is the Accessory that we'll return to HAP-NodeJS.
-const tv = exports.accessory = new Accessory('TV', tvUUID);
+const tv = exports.accessory = new Accessory("TV", tvUUID);
 
 // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
-// @ts-ignore
+// @ts-expect-error: Core/BridgeCore API
 tv.username = "A3:FB:3D:4D:2E:AC";
-// @ts-ignore
+// @ts-expect-error: Core/BridgeCore API
 tv.pincode = "031-45-154";
-// @ts-ignore
 tv.category = Categories.TELEVISION;
 
 // Add the actual TV Service and listen for change events from iOS.
@@ -37,7 +36,7 @@ televisionService
 televisionService
   .setCharacteristic(
     Characteristic.SleepDiscoveryMode,
-    Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE
+    Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE,
   );
 
 televisionService

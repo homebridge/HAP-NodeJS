@@ -152,6 +152,15 @@ body.dark {
     --external-icon: var(--dark-external-icon);
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    line-height: 1.2;
+}
+
 h1 {
     font-size: 2em;
     margin: 0.67em 0;
@@ -640,6 +649,10 @@ dl.tsd-comment-tags p {
 footer {
     border-top: 1px solid var(--color-panel-divider);
     background-color: var(--color-panel);
+}
+footer:after {
+    content: "";
+    display: table;
 }
 footer.with-border-bottom {
     border-bottom: 1px solid var(--color-panel-divider);
@@ -1381,4 +1394,20 @@ input[type="checkbox"]:checked + .tsd-widget:before {
 
 img {
     max-width: 100%;
+}
+
+.tsd-anchor-icon {
+    margin-left: 10px;
+    vertical-align: middle;
+    color: var(--color-text);
+}
+
+.tsd-anchor-icon svg {
+    width: 1em;
+    height: 1em;
+    visibility: hidden;
+}
+
+.tsd-anchor-link:hover > .tsd-anchor-icon svg {
+    visibility: visible;
 }

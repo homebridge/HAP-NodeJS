@@ -5,12 +5,12 @@ import {
   Characteristic,
   CharacteristicEventTypes,
   CharacteristicSetCallback,
-  CharacteristicValue, ColorUtils,
+  CharacteristicValue,
   NodeCallback,
   Service,
   uuid,
-  VoidCallback
-} from '..';
+  VoidCallback,
+} from "..";
 
 class LightControllerClass {
 
@@ -29,47 +29,65 @@ class LightControllerClass {
   outputLogs = true; //output logs
 
   setPower(status: CharacteristicValue) { //set power of accessory
-    if(this.outputLogs) console.log("Turning the '%s' %s", this.name, status ? "on" : "off");
+    if(this.outputLogs) {
+      console.log("Turning the '%s' %s", this.name, status ? "on" : "off");
+    }
     this.power = status;
   }
 
   getPower() { //get power of accessory
-    if(this.outputLogs) console.log("'%s' is %s.", this.name, this.power ? "on" : "off");
+    if(this.outputLogs) {
+      console.log("'%s' is %s.", this.name, this.power ? "on" : "off");
+    }
     return this.power;
   }
 
   setBrightness(brightness: CharacteristicValue) { //set brightness
-    if(this.outputLogs) console.log("Setting '%s' brightness to %s", this.name, brightness);
+    if(this.outputLogs) {
+      console.log("Setting '%s' brightness to %s", this.name, brightness);
+    }
     this.brightness = brightness;
   }
 
   getBrightness() { //get brightness
-    if(this.outputLogs) console.log("'%s' brightness is %s", this.name, this.brightness);
+    if(this.outputLogs) {
+      console.log("'%s' brightness is %s", this.name, this.brightness);
+    }
     return this.brightness;
   }
 
   setSaturation(saturation: CharacteristicValue) { //set brightness
-    if(this.outputLogs) console.log("Setting '%s' saturation to %s", this.name, saturation);
+    if(this.outputLogs) {
+      console.log("Setting '%s' saturation to %s", this.name, saturation);
+    }
     this.saturation = saturation;
   }
 
   getSaturation() { //get brightness
-    if(this.outputLogs) console.log("'%s' saturation is %s", this.name, this.saturation);
+    if(this.outputLogs) {
+      console.log("'%s' saturation is %s", this.name, this.saturation);
+    }
     return this.saturation;
   }
 
   setHue(hue: CharacteristicValue) { //set brightness
-    if(this.outputLogs) console.log("Setting '%s' hue to %s", this.name, hue);
+    if(this.outputLogs) {
+      console.log("Setting '%s' hue to %s", this.name, hue);
+    }
     this.hue = hue;
   }
 
   getHue() { //get hue
-    if(this.outputLogs) console.log("'%s' hue is %s", this.name, this.hue);
+    if(this.outputLogs) {
+      console.log("'%s' hue is %s", this.name, this.hue);
+    }
     return this.hue;
   }
 
   identify() { //identify the accessory
-    if(this.outputLogs) console.log("Identify the '%s'", this.name);
+    if(this.outputLogs) {
+      console.log("Identify the '%s'", this.name);
+    }
   }
 }
 
@@ -78,25 +96,24 @@ const LightController = new LightControllerClass();
 // Generate a consistent UUID for our light Accessory that will remain the same even when
 // restarting our server. We use the `uuid.generate` helper function to create a deterministic
 // UUID based on an arbitrary "namespace" and the word "light".
-const lightUUID = uuid.generate('hap-nodejs:accessories:light' + LightController.name);
+const lightUUID = uuid.generate("hap-nodejs:accessories:light" + LightController.name);
 
 // This is the Accessory that we'll return to HAP-NodeJS that represents our light.
 const lightAccessory = exports.accessory = new Accessory(LightController.name as string, lightUUID);
 
 // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
-// @ts-ignore
+// @ts-expect-error: Core/BridgeCore API
 lightAccessory.username = LightController.username;
-// @ts-ignore
+// @ts-expect-error: Core/BridgeCore API
 lightAccessory.pincode = LightController.pincode;
-// @ts-ignore
 lightAccessory.category = Categories.LIGHTBULB;
 
 // set some basic properties (these values are arbitrary and setting them is optional)
 lightAccessory
   .getService(Service.AccessoryInformation)!
-    .setCharacteristic(Characteristic.Manufacturer, LightController.manufacturer)
-    .setCharacteristic(Characteristic.Model, LightController.model)
-    .setCharacteristic(Characteristic.SerialNumber, LightController.serialNumber);
+  .setCharacteristic(Characteristic.Manufacturer, LightController.manufacturer)
+  .setCharacteristic(Characteristic.Model, LightController.model)
+  .setCharacteristic(Characteristic.SerialNumber, LightController.serialNumber);
 
 // listen for the "identify" event for this Accessory
 lightAccessory.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
@@ -104,7 +121,8 @@ lightAccessory.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: Void
   callback();
 });
 
-const lightbulb = lightAccessory.addService(Service.Lightbulb, LightController.name); // services exposed to the user should have "names" like "Light" for this case
+// services exposed to the user should have "names" like "Light" for this case
+const lightbulb = lightAccessory.addService(Service.Lightbulb, LightController.name);
 
 lightbulb.getCharacteristic(Characteristic.On)
   .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {

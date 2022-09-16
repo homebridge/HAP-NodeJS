@@ -45,7 +45,7 @@ export const CharacteristicDeprecatedNames: Map<string, string> = new Map([ // k
 
 export const CharacteristicValidValuesOverride: Map<string, Record<string, string>> = new Map([
   ["closed-captions", { "0": "Disabled", "1": "Enabled" }],
-  ["input-device-type", { "0": "Other", "1": "TV", "2": "Recording", "3": "Tuner", "4": "Playback", "5": "Audio System"}],
+  ["input-device-type", { "0": "Other", "1": "TV", "2": "Recording", "3": "Tuner", "4": "Playback", "5": "Audio System" }],
   ["input-source-type", { "0": "Other", "1": "Home Screen", "2": "Tuner", "3": "HDMI", "4": "Composite Video", "5": "S Video",
     "6": "Component Video", "7": "DVI", "8": "AirPlay", "9": "USB", "10": "Application" }],
   ["managed-network-enable", { "0": "Disabled", "1": "Enabled" }],
@@ -54,11 +54,11 @@ export const CharacteristicValidValuesOverride: Map<string, Record<string, strin
   ["media-state.target", { "0": "Play", "1": "Pause", "2": "Stop" }],
   ["picture-mode", { "0": "Other", "1": "Standard", "2": "Calibrated", "3": "Calibrated Dark", "4": "Vivid", "5": "Game", "6": "Computer", "7": "Custom" }],
   ["power-mode-selection", { "0": "Show", "1": "Hide" }],
-  ["recording-audio-active", { "0": "Disable", "1": "Enable"}],
+  ["recording-audio-active", { "0": "Disable", "1": "Enable" }],
   ["remote-key", { "0": "Rewind", "1": "Fast Forward", "2": "Next Track", "3": "Previous Track", "4": "Arrow Up", "5": "Arrow Down",
     "6": "Arrow Left", "7": "Arrow Right", "8": "Select", "9": "Back", "10": "Exit", "11": "Play Pause", "15": "Information" }],
   ["router-status", { "0": "Ready", "1": "Not Ready" }],
-  ["siri-input-type", { "0": "Push Button Triggered Apple TV"}],
+  ["siri-input-type", { "0": "Push Button Triggered Apple TV" }],
   ["sleep-discovery-mode", { "0": "Not Discoverable", "1": "Always Discoverable" }],
   ["visibility-state.current", { "0": "Shown", "1": "Hidden" }],
   ["visibility-state.target", { "0": "Shown", "1": "Hidden" }],
@@ -68,7 +68,9 @@ export const CharacteristicValidValuesOverride: Map<string, Record<string, strin
 ] as [string, Record<string, string>][]);
 
 export const CharacteristicClassAdditions: Map<string, string[]> = new Map([
-  ["humidifier-dehumidifier.state.target", ["/**\n   * @deprecated Removed in iOS 11. Use {@link HUMIDIFIER_OR_DEHUMIDIFIER} instead.\n   */\n  public static readonly AUTO = 0;"]]
+  ["humidifier-dehumidifier.state.target", [
+    "/**\n   * @deprecated Removed in iOS 11. Use {@link HUMIDIFIER_OR_DEHUMIDIFIER} instead.\n   */\n  public static readonly AUTO = 0;",
+  ]],
 ]);
 
 export const CharacteristicOverriding: Map<string, (generated: GeneratedCharacteristic) => void> = new Map([
@@ -116,7 +118,7 @@ export const CharacteristicOverriding: Map<string, (generated: GeneratedCharacte
     generated.adminOnlyAccess = [Access.READ, Access.WRITE];
   }],
   ["slat.state.current", generated => {
-    generated.maxValue = 2
+    generated.maxValue = 2;
   }],
   ["event-snapshots-active", generated => {
     generated.format = "uint8";
@@ -139,34 +141,34 @@ export const CharacteristicOverriding: Map<string, (generated: GeneratedCharacte
 
   }],
   ["input-device-type", generated => {
-    // @ts-ignore
+    // @ts-expect-error: undefined access
     generated.validValues[6] = null;
   }],
   ["pairing-features", generated => {
     generated.properties &= ~PropertyId.WRITE;
   }],
   ["picture-mode", generated => {
-    // @ts-ignore
+    // @ts-expect-error: undefined access
     generated.validValues[8] = null;
-    // @ts-ignore
+    // @ts-expect-error: undefined access
     generated.validValues[9] = null;
-    // @ts-ignore
+    // @ts-expect-error: undefined access
     generated.validValues[10] = null;
-    // @ts-ignore
+    // @ts-expect-error: undefined access
     generated.validValues[11] = null;
-    // @ts-ignore
+    // @ts-expect-error: undefined access
     generated.validValues[12] = null;
-    // @ts-ignore
+    // @ts-expect-error: undefined access
     generated.validValues[13] = null;
   }],
   ["remote-key", generated => {
-    // @ts-ignore
+    // @ts-expect-error: undefined access
     generated.validValues[12] = null;
-    // @ts-ignore
+    // @ts-expect-error: undefined access
     generated.validValues[13] = null;
-    // @ts-ignore
+    // @ts-expect-error: undefined access
     generated.validValues[14] = null;
-    // @ts-ignore
+    // @ts-expect-error: undefined access
     generated.validValues[16] = null;
   }],
   ["service-label-namespace", generated => {
@@ -191,7 +193,7 @@ export const CharacteristicOverriding: Map<string, (generated: GeneratedCharacte
   ["nfc-access-control-point", generated => {
     generated.properties |= PropertyId.WRITE_RESPONSE;
   }],
-])
+]);
 
 export const CharacteristicManualAdditions: Map<string, GeneratedCharacteristic> = new Map([
   ["diagonal-field-of-view", {
@@ -410,7 +412,18 @@ export const ServiceManualAdditions: Map<string, GeneratedService> = new Map([
     deprecatedNotice: "This service has no usage anymore and will be ignored by iOS",
 
     requiredCharacteristics: ["on"],
-    optionalCharacteristics: ["horizontal-tilt.current", "vertical-tilt.current", "horizontal-tilt.target", "vertical-tilt.target", "night-vision", "optical-zoom", "digital-zoom", "image-rotation", "image-mirroring", "name"]
+    optionalCharacteristics: [
+      "horizontal-tilt.current",
+      "vertical-tilt.current",
+      "horizontal-tilt.target",
+      "vertical-tilt.target",
+      "night-vision",
+      "optical-zoom",
+      "digital-zoom",
+      "image-rotation",
+      "image-mirroring",
+      "name",
+    ],
   }],
   ["time-information", {
     id: "time-information",
@@ -441,7 +454,12 @@ export const ServiceManualAdditions: Map<string, GeneratedService> = new Map([
     className: "BridgeConfiguration",
     deprecatedNotice: "Removed and not used anymore",
 
-    requiredCharacteristics: ["configure-bridged-accessory-status", "discover-bridged-accessories", "discovered-bridged-accessories", "configure-bridged-accessory"],
+    requiredCharacteristics: [
+      "configure-bridged-accessory-status",
+      "discover-bridged-accessories",
+      "discovered-bridged-accessories",
+      "configure-bridged-accessory",
+    ],
     optionalCharacteristics: ["name"],
   }],
 ]);

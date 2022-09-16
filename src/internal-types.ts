@@ -1,32 +1,12 @@
 import { Formats, Perms, Units } from "./lib/Characteristic";
+import { ResourceRequestReason } from "./lib/controller";
 import { HAPStatus } from "./lib/HAPServer";
 import { CharacteristicValue, Nullable } from "./types";
 
-/*
-type HAPProps = Pick<CharacteristicProps, 'perms' | 'format' | 'description' | 'unit' | 'maxValue' | 'minValue' | 'minStep' | 'maxLen'>
-  & {
-  "valid-values"?: number[],
-  "valid-values-range"?: [number, number],
-}
-export type HapCharacteristic = HAPProps & {
-  iid: number;
-  type: string;
-  value: string | number | {} | null;
-}
-export type HapService = {
-  iid: number;
-  type: string;
-
-  characteristics: HapCharacteristic[];
-  primary: boolean;
-  hidden: boolean;
-  linked: number[];
-}
- */
 export interface CharacteristicJsonObject {
   type: string, // uuid or short uuid
   iid: number,
-  value?: Nullable<CharacteristicValue>, // undefined for non readable characteristics
+  value?: Nullable<CharacteristicValue>, // undefined for non-readable characteristics
 
   perms: Perms[],
   format: Formats | string,
@@ -181,6 +161,7 @@ export interface ResourceRequest {
   aid?: number;
   "image-height": number;
   "image-width": number;
+  "reason": ResourceRequestReason;
   "resource-type": ResourceRequestType;
 }
 

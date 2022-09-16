@@ -1,4 +1,4 @@
-import {Service} from "../Service";
+import { Service } from "../Service";
 
 /**
  * A ControllerServiceMap represents all services used by a Controller.
@@ -9,8 +9,8 @@ export interface ControllerServiceMap {
 }
 
 /**
- * ControllerType is basically a string uniquely identifying the type of a {@link Controller}.
- * An {@link Accessory} only allows one type of a {@link Controller} to be configured.
+ * ControllerType is basically a string uniquely identifying the type of {@link Controller}.
+ * An {@link Accessory} only allows one type of {@link Controller} to be configured.
  *
  * There are predefined types {@link DefaultControllerType} for all controller implementations provided by hap-nodejs.
  * You can define custom ControllerTypes if you wish to, but be careful that it does not collide with any known definitions.
@@ -46,7 +46,7 @@ export interface ControllerConstructor {
  *
  * The constructor of a Controller should only initialize controller specific configuration and states
  * and MUST NOT create any services or characteristics.
- * Additionally it must implement all necessary methods as noted below. Those methods will get called
+ * Additionally, it must implement all necessary methods as noted below. Those methods will get called
  * when the accessory gets added to an Accessory or a Accessory is restored from disk.
  */
 export interface Controller<M extends ControllerServiceMap = ControllerServiceMap> {
@@ -131,6 +131,7 @@ export interface Controller<M extends ControllerServiceMap = ControllerServiceMa
  * A SerializableController is a Controller which additionally carries states/data (beside services and characteristics)
  * which needs to be persistently stored. For example current target configuration for an AppleTV remote.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface SerializableController<M extends ControllerServiceMap = ControllerServiceMap, S = any> extends Controller<M> {
     /**
      * This method can be used to persistently save controller related configuration across reboots.
@@ -168,5 +169,5 @@ export interface SerializableController<M extends ControllerServiceMap = Control
 }
 
 export function isSerializableController(controller: Controller): controller is SerializableController {
-    return "serialize" in controller && "deserialize" in controller && "setupStateChangeDelegate" in controller;
+  return "serialize" in controller && "deserialize" in controller && "setupStateChangeDelegate" in controller;
 }

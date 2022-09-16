@@ -1,7 +1,7 @@
-import { HAPStatus } from '../HAPServer';
-import { HapStatusError } from './hapStatusError';
+import { HAPStatus } from "../HAPServer";
+import { HapStatusError } from "./hapStatusError";
 
-describe('HapStatusError', () => {
+describe("HapStatusError", () => {
   beforeEach(() => {
     jest.resetAllMocks();
   });
@@ -12,8 +12,7 @@ describe('HapStatusError', () => {
   });
 
   it("reverts to SERVICE_COMMUNICATION_FAILURE if an invalid code is passed in", async () => {
-    const error = new HapStatusError(23452352352323423423);
+    const error = new HapStatusError(234523323423423);
     expect(error.hapStatus).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
   });
-
 });

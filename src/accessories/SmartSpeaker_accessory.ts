@@ -7,19 +7,19 @@ import {
   CharacteristicSetCallback,
   CharacteristicValue,
   Service,
-  uuid
+  uuid,
 } from "..";
 
-const speakerUUID = uuid.generate('hap-nodejs:accessories:smart-speaker');
-const speaker = exports.accessory = new Accessory('SmartSpeaker', speakerUUID);
+const speakerUUID = uuid.generate("hap-nodejs:accessories:smart-speaker");
+const speaker = exports.accessory = new Accessory("SmartSpeaker", speakerUUID);
 
-// @ts-ignore
+// @ts-expect-error: Core/BridgeCore API
 speaker.username = "89:A8:E4:1E:95:EE";
-// @ts-ignore
+// @ts-expect-error: Core/BridgeCore API
 speaker.pincode = "676-54-344";
 speaker.category = Categories.SPEAKER;
 
-const service = new Service.SmartSpeaker('Smart Speaker', '');
+const service = new Service.SmartSpeaker("Smart Speaker", "");
 
 let currentMediaState: number = Characteristic.CurrentMediaState.PAUSE;
 let targetMediaState: number = Characteristic.TargetMediaState.PAUSE;

@@ -1,6 +1,7 @@
-//In This example we create an air conditioner Accessory that Has a Thermostat linked to a Fan Service.
-//For example, I've also put a Light Service that should be hidden to represent a light in the closet that is part of the AC. It is to show how to hide services.
-//The linking and Hiding does NOT appear to be reflected in Home
+// In This example we create an air conditioner Accessory that Has a Thermostat linked to a Fan Service.
+// For example, I've also put a Light Service that should be hidden to represent a light in the closet that is part of the AC.
+// It is to show how to hide services.
+// The linking and Hiding does NOT appear to be reflected in Home
 
 // here's a fake hardware device that we'll expose to HomeKit
 import {
@@ -14,8 +15,8 @@ import {
   CharacteristicValue,
   Service,
   uuid,
-} from '..';
-import { VoidCallback } from '../types';
+} from "..";
+import { VoidCallback } from "../types";
 
 const ACTest_data: Record<string, CharacteristicValue> = {
   fanPowerOn: false,
@@ -25,24 +26,23 @@ const ACTest_data: Record<string, CharacteristicValue> = {
   CurrentTemperature: 33,
   TargetTemperature: 32,
   TemperatureDisplayUnits: 1,
-  LightOn: false
+  LightOn: false,
 };
 
 // This is the Accessory that we'll return to HAP-NodeJS that represents our fake fan.
-const ACTest = exports.accessory = new Accessory('Air Conditioner', uuid.generate('hap-nodejs:accessories:airconditioner'));
+const ACTest = exports.accessory = new Accessory("Air Conditioner", uuid.generate("hap-nodejs:accessories:airconditioner"));
 
 // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
-// @ts-ignore
+// @ts-expect-error: Core/BridgeCore API
 ACTest.username = "1A:2B:3C:4D:5E:FF";
-// @ts-ignore
+// @ts-expect-error: Core/BridgeCore API
 ACTest.pincode = "031-45-154";
-// @ts-ignore
 ACTest.category = Categories.THERMOSTAT;
 
 // set some basic properties (these values are arbitrary and setting them is optional)
 ACTest
   .getService(Service.AccessoryInformation)!
-  .setCharacteristic(Characteristic.Manufacturer, "Sample Company")
+  .setCharacteristic(Characteristic.Manufacturer, "Sample Company");
 
 // listen for the "identify" event for this Accessory
 ACTest.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
@@ -56,7 +56,7 @@ const FanService = ACTest.addService(Service.Fan, "Blower"); // services exposed
 FanService.getCharacteristic(Characteristic.On)!
   .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
     console.log("Fan Power Changed To "+value);
-    ACTest_data.fanPowerOn=value
+    ACTest_data.fanPowerOn=value;
     callback(); // Our fake Fan is synchronous - this value has been successfully set
   });
 
@@ -73,8 +73,7 @@ FanService.getCharacteristic(Characteristic.On)!
 
     if (ACTest_data.fanPowerOn) {
       callback(err, true);
-    }
-    else {
+    } else {
       callback(err, false);
     }
   });
@@ -87,9 +86,9 @@ FanService.addCharacteristic(Characteristic.RotationSpeed)
   })
   .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
     console.log("Setting fan rSpeed to %s", value);
-    ACTest_data.rSpeed=value
+    ACTest_data.rSpeed=value;
     callback();
-  })
+  });
 
 const ThermostatService = ACTest.addService(Service.Thermostat, "Thermostat");
 ThermostatService.addLinkedService(FanService);
@@ -101,60 +100,60 @@ ThermostatService.getCharacteristic(Characteristic.CurrentHeatingCoolingState)!
     callback(null, ACTest_data.CurrentHeatingCoolingState);
   })
   .on(CharacteristicEventTypes.SET,(value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-      ACTest_data.CurrentHeatingCoolingState=value;
-      console.log( "Characteristic CurrentHeatingCoolingState changed to %s",value);
-      callback();
-    });
+    ACTest_data.CurrentHeatingCoolingState=value;
+    console.log( "Characteristic CurrentHeatingCoolingState changed to %s",value);
+    callback();
+  });
 
  ThermostatService.getCharacteristic(Characteristic.TargetHeatingCoolingState)!
-  .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-    callback(null, ACTest_data.TargetHeatingCoolingState);
-  })
-  .on(CharacteristicEventTypes.SET,(value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-      ACTest_data.TargetHeatingCoolingState=value;
-      console.log( "Characteristic TargetHeatingCoolingState changed to %s",value);
-      callback();
-    });
+   .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+     callback(null, ACTest_data.TargetHeatingCoolingState);
+   })
+   .on(CharacteristicEventTypes.SET,(value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+     ACTest_data.TargetHeatingCoolingState=value;
+     console.log( "Characteristic TargetHeatingCoolingState changed to %s",value);
+     callback();
+   });
 
  ThermostatService.getCharacteristic(Characteristic.CurrentTemperature)!
-  .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-    callback(null, ACTest_data.CurrentTemperature);
-  })
-  .on(CharacteristicEventTypes.SET,(value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-      ACTest_data.CurrentTemperature=value;
-      console.log( "Characteristic CurrentTemperature changed to %s",value);
-      callback();
-    });
+   .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+     callback(null, ACTest_data.CurrentTemperature);
+   })
+   .on(CharacteristicEventTypes.SET,(value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+     ACTest_data.CurrentTemperature=value;
+     console.log( "Characteristic CurrentTemperature changed to %s",value);
+     callback();
+   });
 
  ThermostatService.getCharacteristic(Characteristic.TargetTemperature)!
-  .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-    callback(null, ACTest_data.TargetTemperature);
-  })
-  .on(CharacteristicEventTypes.SET,(value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-      ACTest_data.TargetTemperature=value;
-      console.log( "Characteristic TargetTemperature changed to %s",value);
-      callback();
-    });
+   .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+     callback(null, ACTest_data.TargetTemperature);
+   })
+   .on(CharacteristicEventTypes.SET,(value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+     ACTest_data.TargetTemperature=value;
+     console.log( "Characteristic TargetTemperature changed to %s",value);
+     callback();
+   });
 
  ThermostatService.getCharacteristic(Characteristic.TemperatureDisplayUnits)!
-  .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-    callback(null, ACTest_data.TemperatureDisplayUnits);
-  })
-  .on(CharacteristicEventTypes.SET,(value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-      ACTest_data.TemperatureDisplayUnits=value;
-      console.log( "Characteristic TemperatureDisplayUnits changed to %s",value);
-      callback();
-    });
+   .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+     callback(null, ACTest_data.TemperatureDisplayUnits);
+   })
+   .on(CharacteristicEventTypes.SET,(value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+     ACTest_data.TemperatureDisplayUnits=value;
+     console.log( "Characteristic TemperatureDisplayUnits changed to %s",value);
+     callback();
+   });
 
 
-const LightService = ACTest.addService(Service.Lightbulb, 'AC Light');
+const LightService = ACTest.addService(Service.Lightbulb, "AC Light");
 LightService.getCharacteristic(Characteristic.On)!
-    .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-      callback(null, ACTest_data.LightOn);
-    })
-    .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-      ACTest_data.LightOn=value;
-      console.log( "Characteristic Light On changed to %s",value);
-      callback();
-    });
+  .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+    callback(null, ACTest_data.LightOn);
+  })
+  .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+    ACTest_data.LightOn=value;
+    console.log( "Characteristic Light On changed to %s",value);
+    callback();
+  });
 LightService.setHiddenService();
