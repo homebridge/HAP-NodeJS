@@ -572,7 +572,13 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static resolvedInvoke(bus: MessageBus, member: string, others?: any): Promise<any> {
     return new Promise((resolve, reject) => {
-      const command = { destination: "org.freedesktop.resolve1", path: "/org/freedesktop/resolve1", interface: "org.freedesktop.resolve1.Manager", member, ...(others || {}) };
+      const command = {
+        destination: "org.freedesktop.resolve1",
+        path: "/org/freedesktop/resolve1",
+        interface: "org.freedesktop.resolve1.Manager",
+        member,
+        ...(others || {}),
+      };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       bus.invoke(command, (err: any, result: any) => {
         if (err) {
