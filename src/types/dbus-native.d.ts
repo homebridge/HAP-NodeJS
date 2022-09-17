@@ -33,7 +33,7 @@ declare module "@homebridge/dbus-native" {
     public as(name: string): DBusInterface;
   }
 
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   export class DBusInterface extends EventEmitter implements Record<string, any> {
     public $parent: DBusObject;
     public $name: string; // string interface name
