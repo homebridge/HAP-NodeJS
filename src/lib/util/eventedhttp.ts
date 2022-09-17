@@ -677,7 +677,6 @@ export class HAPConnection extends EventEmitter {
     }
 
     request.socket.setNoDelay(true);
-    response.connection.setNoDelay(true); // deprecated since 13.0.0
 
     debugCon("[%s] HTTP request: %s", this.remoteAddress, request.url);
     this.emit(HAPConnectionEvent.REQUEST, request, response);
