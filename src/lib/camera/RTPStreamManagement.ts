@@ -510,7 +510,7 @@ export class RTPStreamManagement {
    */
   connectionID?: SessionIdentifier;
   private activeConnection?: HAPConnection;
-  private activeConnectionClosedListener?: () => void;
+  private readonly activeConnectionClosedListener: (callback?: CharacteristicSetCallback) => void;
   sessionIdentifier?: StreamSessionIdentifier = undefined;
   streamStatus: StreamingStatus = StreamingStatus.AVAILABLE; // use _updateStreamStatus to update this property
   private ipVersion?: "ipv4" | "ipv6"; // ip version for the current session
@@ -557,6 +557,8 @@ export class RTPStreamManagement {
     this.supportedRTPConfiguration = RTPStreamManagement._supportedRTPConfiguration(this.supportedCryptoSuites);
     this.supportedVideoStreamConfiguration = RTPStreamManagement._supportedVideoStreamConfiguration(options.video);
     this.supportedAudioStreamConfiguration = this._supportedAudioStreamConfiguration(options.audio);
+
+    this.activeConnectionClosedListener = this._handleStopStream.bind(this);
 
     this.service = service || this.constructService(id);
     this.setupServiceHandlers();
@@ -667,14 +669,13 @@ export class RTPStreamManagement {
     this.resetSelectedStreamConfiguration();
     this.resetSetupEndpointsResponse();
 
-    if (this.activeConnectionClosedListener && this.activeConnection) {
+    if (this.activeConnection) {
       this.activeConnection.removeListener(HAPConnectionEvent.CLOSED, this.activeConnectionClosedListener);
-      this.activeConnectionClosedListener = undefined;
+      this.activeConnection = undefined;
     }
 
     this._updateStreamStatus(StreamingStatus.AVAILABLE);
     this.sessionIdentifier = undefined;
-    this.activeConnection = undefined;
     // noinspection JSDeprecatedSymbols
     this.connectionID = undefined;
     this.ipVersion = undefined;
@@ -691,13 +692,11 @@ export class RTPStreamManagement {
 
   private streamingIsDisabled(callback?: CharacteristicSetCallback): boolean {
     if (!this.service.getCharacteristic(Characteristic.Active).value) {
-      console.log("STREAMING DISABLED ACTIVE");
       callback && callback(new HapStatusError(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE));
       return true;
     }
 
     if (this.disabledThroughOperatingMode?.()) {
-      console.log("STREAMING DISABLED OPERATION MODE!");
       callback && callback(new HapStatusError(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE));
       return true;
     }
@@ -982,8 +981,11 @@ export class RTPStreamManagement {
       return;
     }
 
+    assert(this.activeConnection == null,
+      "Found non-nil `activeConnection` when trying to setup streaming endpoints, even though streamStatus is reported to be AVAILABLE!");
+
     this.activeConnection = connection;
-    this.activeConnection.on(HAPConnectionEvent.CLOSED, (this.activeConnectionClosedListener = this._handleStopStream.bind(this)));
+    this.activeConnection.on(HAPConnectionEvent.CLOSED, this.activeConnectionClosedListener);
 
     // noinspection JSDeprecatedSymbols
     this.connectionID = connection.sessionID;

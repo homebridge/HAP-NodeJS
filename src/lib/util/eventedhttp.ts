@@ -15,6 +15,7 @@ import * as uuid from "./uuid";
 
 const debug = createDebug("HAP-NodeJS:EventedHTTPServer");
 const debugCon = createDebug("HAP-NodeJS:EventedHTTPServer:Connection");
+const debugEvents = createDebug("HAP-NodeJS:EventEmitter");
 
 export type HAPUsername = string;
 export type EventName = string; // "<aid>.<iid>"
@@ -361,6 +362,47 @@ export class HAPConnection extends EventEmitter {
     this.internalHttpServer.listen(0, this.internalHttpServerAddress = getOSLoopbackAddressIfAvailable());
   }
 
+  private debugListenerRegistration(event: string | symbol, registration = true, beforeCount = -1): void {
+    const stackTrace = new Error().stack!.split("\n")[3];
+    const eventCount = this.listeners(event).length;
+
+    const tabs1 = event === HAPConnectionEvent.AUTHENTICATED ? "\t" : "\t\t";
+    const tabs2 = !registration ? "\t" : "\t\t";
+
+    // eslint-disable-next-line max-len
+    debugEvents(`[${this.remoteAddress}] ${registration ? "Registered" : "Unregistered"} event '${String(event).toUpperCase()}' ${tabs1}(total: ${eventCount}${!registration ? " Before: " + beforeCount : ""}) ${tabs2}${stackTrace}`);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  on(event: string | symbol, listener: (...args: any[]) => void): this {
+    const result =  super.on(event, listener);
+    this.debugListenerRegistration(event);
+    return result;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  addListener(event: string | symbol, listener: (...args: any[]) => void): this {
+    const result = super.addListener(event, listener);
+    this.debugListenerRegistration(event);
+    return result;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  removeListener(event: string | symbol, listener: (...args: any[]) => void): this {
+    const beforeCount = this.listeners(event).length;
+    const result = super.removeListener(event, listener);
+    this.debugListenerRegistration(event, false, beforeCount);
+    return result;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  off(event: string | symbol, listener: (...args: any[]) => void): this {
+    const result =  super.off(event, listener);
+    const beforeCount = this.listeners(event).length;
+    this.debugListenerRegistration(event, false, beforeCount);
+    return result;
+  }
+
   /**
    * This method is called once the connection has gone through pair-verify.
    * As any HomeKit controller will initiate a pair-verify after the pair-setup procedure, this method gets
@@ -500,6 +542,10 @@ export class HAPConnection extends EventEmitter {
    */
   private writeEventNotification(notification: EventNotification): void {
     debugCon("[%s] Sending HAP event notifications %o", this.remoteAddress, notification.characteristics);
+
+    // Apple backend processes events in reverse order, so we need to reverse the array
+    // so that events are processed in chronological order.
+    notification.characteristics.reverse();
 
     const dataBuffer = Buffer.from(JSON.stringify(notification), "utf8");
     const header = Buffer.from(
