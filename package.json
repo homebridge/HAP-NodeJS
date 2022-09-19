@@ -52,7 +52,7 @@
   ],
   "dependencies": {
     "@homebridge/ciao": "^1.1.5",
-    "@homebridge/dbus-native": "^0.4.1",
+    "@homebridge/dbus-native": "^0.4.2",
     "bonjour-hap": "~3.6.3",
     "debug": "^4.3.4",
     "fast-srp-hap": "2.0.4",
