@@ -602,9 +602,9 @@ function extractHAPStatusFromError(error: Error) {
 }
 
 function maxWithUndefined(a?: number, b?: number): number | undefined {
-  if (a === undefined) {
+  if (a == null) {
     return b;
-  } else if (b === undefined) {
+  } else if (b == null) {
     return a;
   } else {
     return Math.max(a, b);
@@ -612,9 +612,9 @@ function maxWithUndefined(a?: number, b?: number): number | undefined {
 }
 
 function minWithUndefined(a?: number, b?: number): number | undefined {
-  if (a === undefined) {
+  if (a == null) {
     return b;
-  } else if (b === undefined) {
+  } else if (b == null) {
     return a;
   } else {
     return Math.min(a, b);
@@ -2042,7 +2042,7 @@ export class Characteristic extends EventEmitter {
       }
 
       if (stepValue != null && stepValue > 0) {
-        const minValue = numericMin != null ? numericMin : 0;
+        const minValue = this.props.minValue != null ? this.props.minValue : 0;
         value = stepValue * Math.round((value - minValue) / stepValue) + minValue;
       }
 
