@@ -1063,6 +1063,22 @@ describe("Characteristic", () => {
       expect(characteristic.value).toEqual(0.1);
     });
 
+    it("should accept Formats.FLOAT with non-defined min/max value", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.FLOAT,
+        minStep: 0.01,
+        perms: [Perms.PAIRED_READ, Perms.NOTIFY],
+      }, uuid.generate("051"));
+
+      // @ts-expect-error - spying on private property
+      const mock = jest.spyOn(characteristic, "characteristicWarning");
+
+      mock.mockReset();
+      characteristic.updateValue(0.09);
+      expect(characteristic.value).toEqual(0.09);
+      expect(mock).toBeCalledTimes(0);
+    });
+
     it("should validate Formats.FLOAT with precision", () => {
       const characteristic = new Characteristic.CurrentAmbientLightLevel();
 
