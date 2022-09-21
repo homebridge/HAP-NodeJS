@@ -106,22 +106,11 @@ export class EventedHTTPServer extends EventEmitter {
    */
   private readonly connectionsByUsername: Map<HAPUsername, HAPConnection[]> = new Map();
   private connectionIdleTimeout?: NodeJS.Timeout;
+  private connectionLoggingInterval?: NodeJS.Timeout;
 
   constructor() {
     super();
     this.tcpServer = net.createServer();
-
-    const interval = setInterval(() => {
-      let connectionString = "";
-      for (const connection of this.connections) {
-        if (connectionString) {
-          connectionString += ", ";
-        }
-        connectionString += connection.remoteAddress + ":" + connection.remotePort;
-      }
-      debug("Currently " + this.connections.size + " hap connections open: " + connectionString);
-    }, 60000);
-    interval.unref();
   }
 
   private scheduleNextConnectionIdleTimeout(): void {
@@ -152,11 +141,24 @@ export class EventedHTTPServer extends EventEmitter {
     }
   }
 
+  public address(): AddressInfo {
+    return this.tcpServer.address() as AddressInfo;
+  }
+
   public listen(targetPort: number, hostname?: string): void {
     this.tcpServer.listen(targetPort, hostname, () => {
       const address = this.tcpServer.address() as AddressInfo; // address() is only a string when listening to unix domain sockets
 
       debug("Server listening on %s:%s", address.family === "IPv6"? `[${address.address}]`: address.address, address.port);
+
+      this.connectionLoggingInterval = setInterval(() => {
+        const connectionInformation = [...this.connections]
+          .map(connection => `${connection.remoteAddress}:${connection.remotePort}`)
+          .join(", ");
+        debug("Currently %d hap connections open: %s", this.connections.size, connectionInformation);
+      }, 60_000);
+      this.connectionLoggingInterval.unref();
+
       this.emit(EventedHTTPServerEvent.LISTENING, address.port, address.address);
     });
 
@@ -164,6 +166,16 @@ export class EventedHTTPServer extends EventEmitter {
   }
 
   public stop(): void {
+    if (this.connectionLoggingInterval != null) {
+      clearInterval(this.connectionLoggingInterval);
+      this.connectionLoggingInterval = undefined;
+    }
+
+    if (this.connectionIdleTimeout != null) {
+      clearTimeout(this.connectionIdleTimeout);
+      this.connectionIdleTimeout = undefined;
+    }
+
     this.tcpServer.close();
     for (const connection of this.connections) {
       connection.close();
@@ -247,7 +259,17 @@ export class EventedHTTPServer extends EventEmitter {
     }
   }
 
-  public static destroyExistingConnectionsAfterUnpair(initiator: HAPConnection, username: string): void {
+  /**
+   * This method is to be called when a given {@link HAPConnection} performs a request that should result in the disconnection
+   * of all other {@link HAPConnection} with the same {@link HAPUsername}.
+   *
+   * The initiator MUST be in the middle of a http request were the response was not served yet.
+   * Otherwise, the initiator connection might reside in a state where it isn't disconnected and can't make any further requests.
+   *
+   * @param initiator - The connection that requested to disconnect all connections of the same username.
+   * @param username - The username for which all connections shall be closed.
+   */
+  public static destroyExistingConnectionsAfterUnpair(initiator: HAPConnection, username: HAPUsername): void {
     const connections: HAPConnection[] | undefined = initiator.server.connectionsByUsername.get(username);
 
     if (connections) {
@@ -325,8 +347,10 @@ export class HAPConnection extends EventEmitter {
   private registeredEvents: Set<EventName> = new Set();
   private eventsTimer?: NodeJS.Timeout;
   private readonly queuedEvents: CharacteristicEventNotification[] = [];
-  // queue of unencrypted event data waiting to be sent until after an in-progress HTTP response is being written
-  private readonly pendingEventData: Buffer[] = [];
+  /**
+   * If true, the above {@link queuedEvents} contains events which are set to be delivered immediately!
+   */
+  private eventsQueuedForImmediateDelivery = false;
 
   timedWritePid?: number;
   timedWriteTimeout?: NodeJS.Timeout;
@@ -448,6 +472,7 @@ export class HAPConnection extends EventEmitter {
     const eventName = aid + "." + iid;
 
     if (!this.registeredEvents.has(eventName)) {
+      // non verified connections can't register events, so this case is covered!
       return;
     }
 
@@ -461,9 +486,11 @@ export class HAPConnection extends EventEmitter {
       // some characteristics are required to deliver notifications immediately
       // we will flush all other events too, on that occasion.
       this.queuedEvents.push(event);
+      this.eventsQueuedForImmediateDelivery = true;
 
       if (this.eventsTimer) {
         clearTimeout(this.eventsTimer);
+        this.eventsTimer = undefined;
       }
       this.handleEventsTimeout();
       return;
@@ -485,9 +512,8 @@ export class HAPConnection extends EventEmitter {
 
     this.queuedEvents.push(event);
 
-    // if we are handling a request or there is already a timer running we just add it in the queue.
-    // remember: we flush the event queue after we send out the response.
-    if (!this.handlingRequest && !this.eventsTimer) {
+    // if there is already a timer running we just add it in the queue.
+    if (!this.eventsTimer) {
       this.eventsTimer = setTimeout(this.handleEventsTimeout.bind(this), 250);
       this.eventsTimer.unref();
     }
@@ -495,25 +521,23 @@ export class HAPConnection extends EventEmitter {
 
   private handleEventsTimeout(): void {
     this.eventsTimer = undefined;
-    if (this.state > HAPConnectionState.AUTHENTICATED || this.handlingRequest) {
+    if (this.state > HAPConnectionState.AUTHENTICATED) {
       // connection is closed or about to be closed. no need to send any further events
-      // OR we are currently sending a response
       return;
     }
 
     this.writeQueuedEventNotifications();
   }
 
-  private writePendingEventNotifications(): void {
-    for (const buffer of this.pendingEventData) {
-      this.tcpSocket.write(this.encrypt(buffer));
-    }
-    this.pendingEventData.splice(0, this.pendingEventData.length);
-  }
-
   private writeQueuedEventNotifications(): void {
-    if (this.queuedEvents.length === 0 || this.eventsTimer) {
-      return; // don't send empty event notifications or if there is a timeout running
+    if (this.queuedEvents.length === 0 || this.handlingRequest) {
+      return; // don't send empty event notifications or if we are currently handling a request
+    }
+
+    if (this.eventsTimer) {
+      // this method might be called when we have enqueued data AND data that is queued for immediate delivery!
+      clearTimeout(this.eventsTimer);
+      this.eventsTimer = undefined;
     }
 
     const eventData: EventNotification = {
@@ -529,6 +553,7 @@ export class HAPConnection extends EventEmitter {
     }
 
     this.queuedEvents.splice(0, this.queuedEvents.length);
+    this.eventsQueuedForImmediateDelivery = false;
 
     this.writeEventNotification(eventData);
   }
@@ -542,6 +567,7 @@ export class HAPConnection extends EventEmitter {
    */
   private writeEventNotification(notification: EventNotification): void {
     debugCon("[%s] Sending HAP event notifications %o", this.remoteAddress, notification.characteristics);
+    assert(!this.handlingRequest, "Can't write event notifications while handling a request!");
 
     // Apple backend processes events in reverse order, so we need to reverse the array
     // so that events are processed in chronological order.
@@ -557,12 +583,7 @@ export class HAPConnection extends EventEmitter {
     );
 
     const buffer = Buffer.concat([header, dataBuffer]);
-    if (this.handlingRequest) {
-      // it is important that we not encrypt the pending event data. This would increment the nonce used in encryption
-      this.pendingEventData.push(buffer);
-    } else {
-      this.tcpSocket.write(this.encrypt(buffer), this.handleTCPSocketWriteFulfilled.bind(this));
-    }
+    this.tcpSocket.write(this.encrypt(buffer), this.handleTCPSocketWriteFulfilled.bind(this));
   }
 
   public enableEventNotifications(aid: number, iid: number): void {
@@ -698,8 +719,11 @@ export class HAPConnection extends EventEmitter {
     if (this.state === HAPConnectionState.TO_BE_TEARED_DOWN) {
       setTimeout(() => this.close(), 10);
     } else if (this.state < HAPConnectionState.TO_BE_TEARED_DOWN) {
-      this.writePendingEventNotifications();
-      this.writeQueuedEventNotifications();
+      if (!this.eventsTimer || this.eventsQueuedForImmediateDelivery) {
+        // we deliver events if there is no eventsTimer (meaning it ran out in the meantime)
+        // or when the queue contains events set to be delivered immediately
+        this.writeQueuedEventNotifications();
+      }
     }
   }
 

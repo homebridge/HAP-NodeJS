@@ -13,8 +13,7 @@ import {
   Service,
   uuid,
 } from "..";
-import { PromiseTimeout } from "./util/promise-utils";
-import EventEmitter = NodeJS.EventEmitter;
+import { awaitEventOnce, PromiseTimeout } from "./util/promise-utils";
 
 
 class TestController implements Controller {
@@ -53,26 +52,6 @@ class TestController implements Controller {
 }
 
 const TEST_USERNAME = "AB:CD:EF:00:11:22";
-
-// eslint-disable-next-line @typescript-eslint/ban-types
-function awaitEvent<Object extends EventEmitter, Event extends string>(element: Object, event: Event, timeout = 5000): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    // eslint-disable-next-line prefer-const
-    let timeoutId: NodeJS.Timeout;
-
-    const resolveListener = () => {
-      clearTimeout(timeoutId);
-      resolve();
-    };
-
-    timeoutId = setTimeout(() => {
-      element.removeListener(event, resolveListener);
-      reject(new Error(`awaitEvent for event ${event} timed out!`));
-    }, timeout);
-
-    element.once(event, resolveListener);
-  });
-}
 
 describe("Accessory", () => {
 
@@ -142,7 +121,7 @@ describe("Accessory", () => {
       expect(accessory.displayName.startsWith(DEFAULT_DISPLAY_NAME));
       expect(accessory.displayName.length).toEqual(DEFAULT_DISPLAY_NAME.length + 1 + 4); // added hash!
 
-      await awaitEvent(accessory, AccessoryEventTypes.ADVERTISED);
+      await awaitEventOnce(accessory, AccessoryEventTypes.ADVERTISED);
 
       const displayNameWithIdentifyingMaterial = accessory.displayName;
 
@@ -160,7 +139,7 @@ describe("Accessory", () => {
       // ensure unification isn't done twice!
       expect(accessory.displayName).toEqual(displayNameWithIdentifyingMaterial);
 
-      await awaitEvent(accessory, AccessoryEventTypes.ADVERTISED);
+      await awaitEventOnce(accessory, AccessoryEventTypes.ADVERTISED);
 
       await accessory.unpublish();
     });
@@ -183,7 +162,7 @@ describe("Accessory", () => {
       expect(accessory.displayName.startsWith(DEFAULT_DISPLAY_NAME));
       expect(accessory.displayName.length).toEqual(DEFAULT_DISPLAY_NAME.length + 1 + 4); // added hash!
 
-      await awaitEvent(accessory, AccessoryEventTypes.ADVERTISED);
+      await awaitEventOnce(accessory, AccessoryEventTypes.ADVERTISED);
 
       await accessory.unpublish();
     });
