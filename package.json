@@ -1,6 +1,6 @@
 {
   "name": "hap-nodejs",
-  "version": "0.10.3",
+  "version": "0.10.4",
   "description": "HAP-NodeJS is a Node.js implementation of HomeKit Accessory Server.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -52,7 +52,7 @@
   ],
   "dependencies": {
     "@homebridge/ciao": "^1.1.5",
-    "@homebridge/dbus-native": "^0.4.1",
+    "@homebridge/dbus-native": "^0.4.2",
     "bonjour-hap": "~3.6.3",
     "debug": "^4.3.4",
     "fast-srp-hap": "2.0.4",
