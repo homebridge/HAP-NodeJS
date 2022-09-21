@@ -110,7 +110,7 @@ describe("eventedhttp", () => {
 
     await PromiseTimeout(200);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect((secondAgent as any).totalSocketCount).toBe(0); // assert that the client side was closed!
+    expect((secondAgent as any).totalSocketCount <= 0).toBeTruthy(); // assert that the client side was closed!
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect((httpAgent as any).totalSocketCount).toBe(1); // the other socket shouldn't be closed yet
 
@@ -121,7 +121,7 @@ describe("eventedhttp", () => {
 
     await PromiseTimeout(200);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect((httpAgent as any).totalSocketCount).toBe(0); // the other socket shall now be closed!
+    expect((httpAgent as any).totalSocketCount <= 0).toBeTruthy(); // the other socket shall now be closed!
   });
 
   test("event notifications", async () => {
