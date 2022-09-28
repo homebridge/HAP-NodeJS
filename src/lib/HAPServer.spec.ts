@@ -1,6 +1,28 @@
-import { HAPStatus, IsKnownHAPStatusError } from "./HAPServer";
+import axios, { AxiosResponse } from "axios";
+import { Agent } from "http";
+import { Accessory } from "./Accessory";
+import { HAPServer, HAPServerEventTypes, HAPStatus, IdentifyCallback, IsKnownHAPStatusError } from "./HAPServer";
+import { AccessoryInfo } from "./model/AccessoryInfo";
+import { awaitEventOnce } from "./util/promise-utils";
 
 describe("HAPServer", () => {
+  let accessoryInfo: AccessoryInfo;
+  let httpAgent: Agent;
+
+  beforeEach(() => {
+    accessoryInfo = AccessoryInfo.create("AA:AA:AA:AA:AA:AA");
+    // @ts-expect-error: private access
+    accessoryInfo.setupID = Accessory._generateSetupID();
+    accessoryInfo.displayName = "Outlet";
+    accessoryInfo.category = 7;
+    accessoryInfo.pincode = " 031-45-154";
+
+    // used to do long living http connections without own tcp interface
+    httpAgent = new Agent({
+      keepAlive: true,
+    });
+  });
+
   describe(IsKnownHAPStatusError, () => {
     it("should approve all defined error codes", () => {
       // @ts-expect-error: forceConsistentCasingInFileNames compiler option
@@ -32,5 +54,25 @@ describe("HAPServer", () => {
       // @ts-expect-error: deliberate illegal input
       expect(IsKnownHAPStatusError([])).toBe(false);
     });
+  });
+
+  test("simple unpaired identify", async () => {
+    const server = new HAPServer(accessoryInfo);
+
+    const listenPromise: Promise<[number, string]> = awaitEventOnce(server, HAPServerEventTypes.LISTENING);
+    server.listen();
+    const [port] = await listenPromise;
+
+    const promise: Promise<IdentifyCallback> = awaitEventOnce(server, HAPServerEventTypes.IDENTIFY);
+
+    const request: Promise<AxiosResponse<string>> = axios.post(`http://localhost:${port}/identify`, { httpAgent });
+
+    const callback = await promise;
+    callback(); // signal successful identify!
+
+    const response = await request;
+    expect(response.data).toBeFalsy();
+
+    server.stop();
   });
 });

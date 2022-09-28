@@ -1,19 +1,10 @@
-import {
-  Accessory,
-  AccessoryEventTypes,
-  Bridge,
-  Categories,
-  Characteristic,
-  CharacteristicEventTypes,
-  Controller,
-  ControllerIdentifier,
-  ControllerServiceMap,
-  MDNSAdvertiser,
-  PublishInfo,
-  Service,
-  uuid,
-} from "..";
+import { Accessory, AccessoryEventTypes, Categories, MDNSAdvertiser, PublishInfo } from "./Accessory";
+import { Bridge } from "./Bridge";
+import { Characteristic, CharacteristicEventTypes } from "./Characteristic";
+import { Controller, ControllerIdentifier, ControllerServiceMap } from "./controller";
+import { Service } from "./Service";
 import { awaitEventOnce, PromiseTimeout } from "./util/promise-utils";
+import * as uuid from "./util/uuid";
 
 
 class TestController implements Controller {

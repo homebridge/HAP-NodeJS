@@ -1,4 +1,7 @@
-import { Characteristic, SerializedService, Service, uuid } from "..";
+import { Characteristic } from "./Characteristic";
+import { SerializedService, Service } from "./Service";
+import * as uuid from "./util/uuid";
+
 
 const createService = () => {
   return new Service("Test", uuid.generate("Foo"), "subtype");

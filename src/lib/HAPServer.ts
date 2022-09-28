@@ -424,7 +424,7 @@ export class HAPServer extends EventEmitter {
    */
   private handleIdentifyRequest(connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse): void {
     // POST body is empty
-    if (!this.allowInsecureRequest && this.accessoryInfo.paired()) {
+    if (this.accessoryInfo.paired() && !this.allowInsecureRequest) {
       response.writeHead(HAPHTTPCode.BAD_REQUEST, { "Content-Type": "application/hap+json" });
       response.end(JSON.stringify({ status: HAPStatus.INSUFFICIENT_PRIVILEGES }));
       return;

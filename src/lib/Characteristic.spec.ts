@@ -1,3 +1,5 @@
+import { HAPStatus } from "./HAPServer";
+import * as uuid from "./util/uuid";
 import {
   Access,
   Characteristic,
@@ -6,12 +8,10 @@ import {
   CharacteristicProps,
   CharacteristicWarningType,
   Formats,
-  HAPStatus,
   Perms,
   SerializedCharacteristic,
   Units,
-  uuid,
-} from "..";
+} from "./Characteristic";
 import { SelectedRTPStreamConfiguration } from "./definitions";
 import { HapStatusError } from "./util/hapStatusError";
 
