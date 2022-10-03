@@ -489,6 +489,7 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
 
     debug("Updating txt record (txt: %o, silent: %d)", CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash), silent);
 
+    // Currently, systemd-resolved has no way to update an existing record.
     await this.stopAdvertising();
     await this.startAdvertising();
   }
