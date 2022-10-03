@@ -264,6 +264,46 @@ export class BonjourHAPAdvertiser extends EventEmitter implements Advertiser {
 
 }
 
+function messageBusConnectionResult(bus: MessageBus): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const errorHandler = (error: Error) => {
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
+      bus.connection.removeListener("connect", connectHandler);
+      reject(error);
+    };
+    const connectHandler = () => {
+      bus.connection.removeListener("error", errorHandler);
+      resolve();
+    };
+
+    bus.connection.once("connect", connectHandler);
+    bus.connection.once("error", errorHandler);
+  });
+}
+
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function dbusInvoke(bus: MessageBus,
+                    destination: string,
+                    path: string,
+                    interface: string,
+                    member: string,
+                    others?: any): Promise<Any> {
+  return new Promise((resolve, reject) => {
+    const command = {destination, path, interface, member, ...(others || {})};
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    bus.invoke(command, (err: any, result: any) => {
+      if (err) {
+        reject(new Error(`dbusInvoke error: ${JSON.stringify(err)}`));
+      } else {
+        resolve(result);
+      }
+    });
+
+  });
+}
+
 /**
  * Advertiser based on the Avahi D-Bus library.
  * For (very crappy) docs on the interface, see the XML files at: https://github.com/lathiat/avahi/tree/master/avahi-daemon.
@@ -370,7 +410,7 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
 
     try {
       try {
-        await this.messageBusConnectionResult(bus);
+        await messageBusConnectionResult(bus);
       } catch (error) {
         debug("Avahi/DBus classified unavailable due to missing dbus interface!");
         return false;
@@ -390,36 +430,16 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
     }
   }
 
-  private static messageBusConnectionResult(bus: MessageBus): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const errorHandler = (error: Error) => {
-        // eslint-disable-next-line @typescript-eslint/no-use-before-define
-        bus.connection.removeListener("connect", connectHandler);
-        reject(error);
-      };
-      const connectHandler = () => {
-        bus.connection.removeListener("error", errorHandler);
-        resolve();
-      };
-
-      bus.connection.once("connect", connectHandler);
-      bus.connection.once("error", errorHandler);
-    });
-  }
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static avahiInvoke(bus: MessageBus, path: string, dbusInterface: string, member: string, others?: any): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const command = { destination: "org.freedesktop.Avahi", path, interface: "org.freedesktop.Avahi." + dbusInterface, member, ...(others || {}) };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      bus.invoke(command, (err: any, result: any) => {
-        if (err) {
-          reject(new Error(`avahiInvoke error: ${JSON.stringify(err)}`));
-        } else {
-          resolve(result);
-        }
-      });
-    });
+    return dbusInvoke(
+      bus,
+      "org.freedesktop.Avahi",
+      path,
+      `org.freedesktop.Avahi.${dbusInterface}`,
+      member,
+      others,
+    );
   }
 }
 
@@ -529,7 +549,7 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
 
     try {
       try {
-        await this.messageBusConnectionResult(bus);
+        await messageBusConnectionResult(bus);
       } catch (error) {
         debug("systemd-resolved/DBus classified unavailable due to missing dbus interface!");
         return false;
@@ -553,41 +573,15 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
     }
   }
 
-  private static messageBusConnectionResult(bus: MessageBus): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const errorHandler = (error: Error) => {
-        // eslint-disable-next-line @typescript-eslint/no-use-before-define
-        bus.connection.removeListener("connect", connectHandler);
-        reject(error);
-      };
-      const connectHandler = () => {
-        bus.connection.removeListener("error", errorHandler);
-        resolve();
-      };
-
-      bus.connection.once("connect", connectHandler);
-      bus.connection.once("error", errorHandler);
-    });
-  }
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static resolvedInvoke(bus: MessageBus, member: string, others?: any): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const command = {
-        destination: "org.freedesktop.resolve1",
-        path: "/org/freedesktop/resolve1",
-        interface: "org.freedesktop.resolve1.Manager",
-        member,
-        ...(others || {}),
-      };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      bus.invoke(command, (err: any, result: any) => {
-        if (err) {
-          reject(new Error(`resolvedInvoke error: ${JSON.stringify(err)}`));
-        } else {
-          resolve(result);
-        }
-      });
-    });
+    return dbusInvoke(
+      bus,
+      "org.freedesktop.resolve1",
+      "/org/freedesktop/resolve1",
+      "org.freedesktop.resolve1.Manager",
+      member,
+      others,
+    );
   }
 }
