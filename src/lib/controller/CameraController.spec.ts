@@ -88,7 +88,7 @@ const mockRecordingOptions: CameraRecordingOptions = {
   },
 };
 
-class MockDelegate implements CameraStreamingDelegate, CameraRecordingDelegate {
+export class MockDelegate implements CameraStreamingDelegate, CameraRecordingDelegate {
   handleSnapshotRequest(request: SnapshotRequest, callback: SnapshotRequestCallback): void {
     callback(undefined, IMAGE);
   }
@@ -124,7 +124,7 @@ class MockDelegate implements CameraStreamingDelegate, CameraRecordingDelegate {
   }
 }
 
-function createOptions(
+export function createOptions(
   recordingOptions: CameraRecordingOptions = mockRecordingOptions,
   streamingOptions: CameraStreamingOptions = mockStreamingOptions,
   cameraStreamCount = 2,
