@@ -634,6 +634,7 @@ export class HAPServer extends EventEmitter {
   }
 
   private handlePairVerifyM1(connection: HAPConnection, request: IncomingMessage, response: ServerResponse, tlvData: Record<number, Buffer>): void {
+    // TODO check if we are paired at all?
     debug("[%s] Pair verify step 1/2", this.accessoryInfo.username);
     const clientPublicKey = tlvData[TLVValues.PUBLIC_KEY]; // Buffer
     // generate new encryption keys for this session
