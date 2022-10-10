@@ -77,6 +77,7 @@ export function encode(type: number, data: TLVEncodable | TLVEncodable[], ...arg
  * Note: Please use {@link decodeWithLists} which properly decodes list elements.
  */
 export function decode(buffer: Buffer): Record<number, Buffer> {
+  assert(buffer instanceof Buffer, "Illegal argument. tlv.decode() expects Buffer type!");
   const objects: Record<number, Buffer> = {};
 
   let leftLength = buffer.length;

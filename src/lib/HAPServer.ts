@@ -31,7 +31,7 @@ import * as tlv from "./util/tlv";
 
 const debug = createDebug("HAP-NodeJS:HAPServer");
 
-const enum TLVValues {
+export const enum TLVValues {
   // noinspection JSUnusedGlobalSymbols
   REQUEST_TYPE = 0x00,
   METHOD = 0x00, // (match the terminology of the spec sheet but keep backwards compatibility with entry above)
@@ -54,7 +54,7 @@ const enum TLVValues {
   SEPARATOR = 0x0FF // Zero-length TLV that separates different TLVs in a list.
 }
 
-const enum PairMethods {
+export const enum PairMethods {
   // noinspection JSUnusedGlobalSymbols
   PAIR_SETUP = 0x00,
   PAIR_SETUP_WITH_AUTH = 0x01,
@@ -67,7 +67,7 @@ const enum PairMethods {
 /**
  * Pairing states (pair-setup or pair-verify). Encoded in {@link TLVValues.SEQUENCE_NUM}.
  */
-const enum PairingStates {
+export const enum PairingStates {
   M1 = 0x01,
   M2 = 0x02,
   M3 = 0x03,
@@ -93,18 +93,58 @@ export const enum TLVErrorCode {
 
 export const enum HAPStatus {
   // noinspection JSUnusedGlobalSymbols
+
+  /**
+   * Success of the request.
+   */
   SUCCESS = 0,
+  /**
+   * The request was rejected due to insufficient privileges.
+   */
   INSUFFICIENT_PRIVILEGES = -70401,
+  /**
+   * Operation failed due to some communication failure with the characteristic.
+   */
   SERVICE_COMMUNICATION_FAILURE = -70402,
+  /**
+   * The resource is busy. Try again.
+   */
   RESOURCE_BUSY = -70403,
-  READ_ONLY_CHARACTERISTIC = -70404, // cannot write to read only
-  WRITE_ONLY_CHARACTERISTIC = -70405, // cannot read from write only
+  /**
+   * Cannot write a read-only characteristic ({@see Perms.PAIRED_WRITE} not defined).
+   */
+  READ_ONLY_CHARACTERISTIC = -70404,
+  /**
+   * Cannot read from a write-only characteristic ({@link Perms.PAIRED_READ} not defined).
+   */
+  WRITE_ONLY_CHARACTERISTIC = -70405,
+  /**
+   * Event notifications are not supported for the requested characteristic ({@link Perms.NOTIFY} not defined).
+   */
   NOTIFICATION_NOT_SUPPORTED = -70406,
+  /**
+   * The device is out of resources to process the request.
+   */
   OUT_OF_RESOURCE = -70407,
+  /**
+   * The operation timed out.
+   */
   OPERATION_TIMED_OUT = -70408,
+  /**
+   * The given resource does not exist.
+   */
   RESOURCE_DOES_NOT_EXIST = -70409,
+  /**
+   * Received an invalid value in the given request for the given characteristic.
+   */
   INVALID_VALUE_IN_REQUEST = -70410,
+  /**
+   * Insufficient authorization.
+   */
   INSUFFICIENT_AUTHORIZATION = -70411,
+  /**
+   * Operation not allowed in the current state.
+   */
   NOT_ALLOWED_IN_CURRENT_STATE = -70412,
 
   // when adding new status codes, remember to update bounds in IsKnownHAPStatusError below
