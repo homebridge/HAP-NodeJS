@@ -65,7 +65,12 @@ export function chacha20_poly1305_decryptAndVerify(key: Buffer, nonce: Buffer, a
   return plaintext;
 }
 
-export function chacha20_poly1305_encryptAndSeal(key: Buffer, nonce: Buffer, aad: Buffer | null, plaintext: Buffer): { ciphertext: Buffer, authTag: Buffer } {
+export interface EncryptedData {
+  ciphertext: Buffer;
+  authTag: Buffer;
+}
+
+export function chacha20_poly1305_encryptAndSeal(key: Buffer, nonce: Buffer, aad: Buffer | null, plaintext: Buffer): EncryptedData {
   if (nonce.length < 12) { // openssl 3.x.x requires 98 bits nonce length
     nonce = Buffer.concat([
       Buffer.alloc(12 - nonce.length, 0),
