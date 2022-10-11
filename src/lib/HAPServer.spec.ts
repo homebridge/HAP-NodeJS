@@ -406,7 +406,7 @@ describe("HAPServer", () => {
   );
 
   test("test non-existence resource", async () => {
-    const server = new HAPServer(accessoryInfoUnpaired);
+    server = new HAPServer(accessoryInfoUnpaired);
     const [port] = await bindServer(server);
 
     try {
