@@ -139,7 +139,9 @@ describe("eventedhttp", () => {
     const freeSockets = ((httpAgent as any).freeSockets as Record<string, [Socket]>);
     expect(Object.values(freeSockets).length).toBe(1);
     const tcpSocket: Socket = Object.values(freeSockets)[0][0];
+    // TODO reuse!
 
+    // TODO reuse!
     const events: string[] = [];
     const dataListener = (data: Buffer) => {
       // packets shall fit into a single TCP segment, no need to write a parser!
@@ -200,10 +202,12 @@ describe("eventedhttp", () => {
     const testEventDelivery = async (sendEvents: () => Promise<void>, assertResult: () => Promise<void>) => {
       const queuedRequestPromise: Promise<[HAPConnection, IncomingMessage, ServerResponse]> = awaitEventOnce(server, EventedHTTPServerEvent.REQUEST);
       // we can't use axios here, as our special EVENT http message is involved!
+
+      // TODO reuse!
       tcpSocket.write(Buffer.from("GET / HTTP/1.1\r\n" +
         "Accept: application/json, text/plain, */*\r\n" +
         "User-Agent: axios/0.27.2\r\n" +
-        "Host: " + address.address + ": " + address.port + "\r\n" +
+        "Host: " + address.address + ":" + address.port + "\r\n" +
         "Connection: keep-alive\r\n" +
         "\r\n", "ascii"));
       const queuedResponse = (await queuedRequestPromise)[2];

@@ -1,24 +1,36 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
 import { SRP, SrpClient } from "fast-srp-hap";
 import { Agent } from "http";
+import { Socket } from "net";
 import tweetnacl, { BoxKeyPair } from "tweetnacl";
 import { Accessory } from "./Accessory";
-import { PairVerify } from "./definitions";
 import {
+  AccessoriesCallback,
   HAPHTTPCode,
   HAPPairingHTTPCode,
   HAPServer,
   HAPServerEventTypes,
   HAPStatus,
   IdentifyCallback,
-  IsKnownHAPStatusError, PairCallback,
-  PairingStates, PairMethods, TLVValues,
+  IsKnownHAPStatusError,
+  PairCallback,
+  PairingStates,
+  PairMethods,
+  TLVValues,
 } from "./HAPServer";
 import { AccessoryInfo, PermissionTypes } from "./model/AccessoryInfo";
-import { EncryptedData } from "./util/hapCrypto";
-import { awaitEventOnce } from "./util/promise-utils";
-import * as tlv from "./util/tlv";
+import { HAPConnection, HAPEncryption } from "./util/eventedhttp";
 import * as hapCrypto from "./util/hapCrypto";
+import { EncryptedData } from "./util/hapCrypto";
+import { awaitEventOnce, PromiseTimeout } from "./util/promise-utils";
+import * as tlv from "./util/tlv";
+
+function accessUnderlyingTOPSSocketOfSingletonAgent(httpAgent: Agent) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const freeSockets = ((httpAgent as any).freeSockets as Record<string, [Socket]>);
+  expect(Object.values(freeSockets).length).toBe(1);
+  return Object.values(freeSockets)[0][0];
+}
 
 describe("HAPServer", () => {
   const serverUsername = "AA:AA:AA:AA:AA:AA";
@@ -135,18 +147,16 @@ describe("HAPServer", () => {
     const [username, clientLTPK, callback] = await pair;
     expect(username).toEqual(clientUsername);
     expect(clientLTPK).toEqual(clientPublicKey);
+
     callback();
 
     const responseM5 = await requestM5;
     pairSetup.parseM6(responseM5.data, M4, M5);
-
-
-    // TODO verify pair-setup!!!
   });
 
   test("test successful /pair-verify", async () => {
     server = new HAPServer(accessoryInfoPaired);
-    const [port] = await bindServer(server);
+    const [port, address] = await bindServer(server);
 
     const pairVerify = new PairVerifyClient(port, httpAgent);
 
@@ -171,7 +181,53 @@ describe("HAPServer", () => {
     // M4
     const M4 = pairVerify.parseM4(responseM3.data, M2);
 
-    // TODO test that encryption works!!!
+    // verify that encryption works!
+    const encryption = new HAPEncryption(
+      accessoryInfoPaired.signPk,
+      clientPrivateKey,
+      clientPublicKey,
+      M2.sharedSecret,
+      M2.sessionKey,
+    );
+
+    // our HAPCrypto is engineered for the server side, so we have to switch the keys here (deliberately wrongfully)
+    // such that hapCrypto uses the controllerToAccessoryKey for encryption!
+    encryption.accessoryToControllerKey = M4.controllerToAccessoryKey;
+    encryption.controllerToAccessoryKey = M4.accessoryToControllerKey;
+
+
+    const tcpSocket = accessUnderlyingTOPSSocketOfSingletonAgent(httpAgent);
+
+    const segments: Buffer[] = [];
+    const dataListener = (data: Buffer) => {
+      // packets shall fit into a single TCP segment, no need to write a parser!
+      segments.push(data);
+    };
+    tcpSocket.on("data", dataListener);
+
+    const accessoriesPromise: Promise<[connection: HAPConnection, callback: AccessoriesCallback]> = awaitEventOnce(server, HAPServerEventTypes.ACCESSORIES);
+
+    // TODO reuse!
+    const httpRequest = Buffer.from("GET /accessories HTTP/1.1\r\n" +
+      "Accept: application/json, text/plain, */*\r\n" +
+      "User-Agent: axios/0.27.2\r\n" +
+      "Host: " + address + ":" + port + "\r\n" +
+      "Connection: keep-alive\r\n" +
+      "\r\n", "ascii");
+    tcpSocket.write(hapCrypto.layerEncrypt(httpRequest, encryption));
+
+    const [connection, callback] = await accessoriesPromise;
+    expect(connection.encryption).not.toBeUndefined();
+    callback(undefined, { accessories: [] }); // we respond with empty accessories!
+
+    await PromiseTimeout(100);
+
+    expect(segments.length).toEqual(1);
+    const response = segments[0];
+
+    let plaintext = Buffer.alloc(0);
+    expect(() => plaintext = hapCrypto.layerDecrypt(response, encryption)).not.toThrow();
+    expect(plaintext.toString().includes("{\"accessories\":[]}")).toBeTruthy();
   });
 
   // TODO test not paired pair-verify
@@ -196,6 +252,8 @@ describe("HAPServer", () => {
     },
   );
 
+  // TODO test for each protected endpoint: access prevented (in paired and unpaired state!)
+
   test("test non-existence resource", async () => {
     server = new HAPServer(accessoryInfoUnpaired);
     const [port] = await bindServer(server);
@@ -210,7 +268,6 @@ describe("HAPServer", () => {
     }
   });
 
-  // TODO test for each protected endpoint: access prevented (in paired and unpaired state!)
 });
 
 describe(IsKnownHAPStatusError, () => {
