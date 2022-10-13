@@ -138,7 +138,7 @@ describe("eventedhttp", () => {
     client.attachSocket(); // capture the free socket of the http agent!
 
     connection.enableEventNotifications(1, 1);
-    // we implicitly test-utils below that this event won't be delivered!
+    // we implicitly test below that this event won't be delivered!
     connection.sendEvent(0, 0, "string");
 
     expect(connection.hasEventNotifications(1, 1)).toBeTruthy();
@@ -184,7 +184,7 @@ describe("eventedhttp", () => {
     await PromiseTimeout(10);
     expect(client.receiveBufferCount).toBe(0);
 
-    // NOW we test-utils event delivery when there is ongoing request
+    // NOW we test event delivery when there is ongoing request
     const testEventDelivery = async (sendEvents: () => Promise<void>, assertResult: () => Promise<void>) => {
       const queuedRequestPromise: Promise<[HAPConnection, IncomingMessage, ServerResponse]> = awaitEventOnce(server, EventedHTTPServerEvent.REQUEST);
       // we can't use axios here, as our special EVENT http message is involved!
@@ -245,9 +245,15 @@ describe("eventedhttp", () => {
         await PromiseTimeout(300); // the timeout runs out while the request is still processed
       },
       async () => {
-        expect(client.receiveBufferCount).toBe(1);
+        expect(client.receiveBufferCount > 0).toBeTruthy();
 
-        const eventMessage = client.popReceiveBuffer().toString();
+        let eventMessage = "";
+        // sometimes the HTTP response message and the EVENT message are combined
+        // into a single TCP segment, sometimes they get sent separately.
+        while (client.receiveBufferCount > 0) {
+          eventMessage = client.popReceiveBuffer().toString();
+        }
+
         expect(eventMessage.includes("EVENT/1.0")).toBeTruthy();
         const event = eventMessage.substring(eventMessage.indexOf("EVENT")); // splicing away the http response!
         expect(event).toBe("EVENT/1.0 200 OK\r\n" +
@@ -261,5 +267,5 @@ describe("eventedhttp", () => {
     client.releaseSocket();
   });
 
-  // TODO test-utils events not delivered while in a request!
+  // TODO test events not delivered while in a request!
 });

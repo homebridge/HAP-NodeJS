@@ -390,7 +390,7 @@ export class HAPServer extends EventEmitter {
    * @param value - The newly set value of the characteristic.
    * @param originator - If specified, the connection will not get a event message.
    * @param immediateDelivery - The HAP spec requires some characteristics to be delivery immediately.
-   *   Namely for the {@link ButtonEvent} and the {@link ProgrammableSwitchEvent} characteristics.
+   *   Namely, for the {@link ButtonEvent} and the {@link ProgrammableSwitchEvent} characteristics.
    */
   public sendEventNotifications(aid: number, iid: number, value: Nullable<CharacteristicValue>, originator?: HAPConnection, immediateDelivery?: boolean): void {
     try {
@@ -486,6 +486,7 @@ export class HAPServer extends EventEmitter {
   private handlePairSetup(connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse): void {
     // Can only be directly paired with one iOS device
     if (!this.allowInsecureRequest && this.accessoryInfo.paired()) {
+      // TODO move to M1 only?
       response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
       response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.UNAVAILABLE));
       return;
@@ -674,7 +675,6 @@ export class HAPServer extends EventEmitter {
   }
 
   private handlePairVerifyM1(connection: HAPConnection, request: IncomingMessage, response: ServerResponse, tlvData: Record<number, Buffer>): void {
-    // TODO check if we are paired at all?
     debug("[%s] Pair verify step 1/2", this.accessoryInfo.username);
     const clientPublicKey = tlvData[TLVValues.PUBLIC_KEY]; // Buffer
     // generate new encryption keys for this session
@@ -885,8 +885,8 @@ export class HAPServer extends EventEmitter {
       for (const entry of idParam.split(",")) { // ["1.9","2.14"]
         const split = entry.split("."); // ["1","9"]
         ids.push({
-          aid: parseInt(split[0], 10), // accessory Id
-          iid: parseInt(split[1], 10), // (characteristic) instance Id
+          aid: parseInt(split[0], 10), // accessory id
+          iid: parseInt(split[1], 10), // (characteristic) instance id
         });
       }
 
@@ -909,7 +909,6 @@ export class HAPServer extends EventEmitter {
             return;
           }
 
-          // typescript can't type that this exists if error doesnt
           const characteristics = readResponse!.characteristics;
 
           let errorOccurred = false; // determine if we send a 207 Multi-Status

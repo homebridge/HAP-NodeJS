@@ -71,6 +71,7 @@
     "@typescript-eslint/parser": "^5.21.0",
     "commander": "^6.2.1",
     "escape-html": "^1.0.3",
+    "http-parser-js": "^0.5.8",
     "eslint": "^8.14.0",
     "jest": "^27.5.1",
     "rimraf": "^3.0.2",

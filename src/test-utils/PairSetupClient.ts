@@ -3,9 +3,9 @@ import { SRP, SrpClient } from "fast-srp-hap";
 import { Agent } from "http";
 import tweetnacl from "tweetnacl";
 import { PairingStates, PairMethods, TLVValues } from "../lib/HAPServer";
+import * as hapCrypto from "../lib/util/hapCrypto";
 import { EncryptedData } from "../lib/util/hapCrypto";
 import * as tlv from "../lib/util/tlv";
-import * as hapCrypto from "../lib/util/hapCrypto";
 
 export interface PairSetupM2 {
   serverPublicKey: Buffer;
@@ -25,6 +25,17 @@ export interface PairSetupM5 {
   encryptedData: EncryptedData;
 }
 
+export interface PairSetupM6 {
+  accessoryLTPK: Buffer,
+  accessoryIdentifier: string,
+}
+
+export interface PairSetupClientInfo {
+  username: string;
+  publicKey: Buffer;
+  privateKey: Buffer
+}
+
 export class PairSetupClient {
   private readonly port: number;
   private readonly httpAgent: Agent;
@@ -32,6 +43,22 @@ export class PairSetupClient {
   constructor(port: number, httpAgent: Agent) {
     this.port = port;
     this.httpAgent = httpAgent;
+  }
+
+  async sendPairSetup(pincode: string, clientInfo: PairSetupClientInfo): Promise<PairSetupM6> {
+    const responseM1 = await this.sendM1();
+
+    const M2 = this.parseM2(responseM1.data);
+
+    const M3 = await this.prepareM3(M2, pincode);
+    const responseM3 = await this.sendM3(M3);
+
+    const M4 = this.parseM4(responseM3.data, M3);
+
+    const M5 = this.prepareM5(M4, clientInfo);
+    const responseM5 = await this.sendM5(M5);
+
+    return this.parseM6(responseM5.data, M4, M5);
   }
 
   sendM1(): Promise<AxiosResponse<Buffer>> {
@@ -67,7 +94,6 @@ export class PairSetupClient {
   }
 
   sendM3(m3: PairSetupM3): Promise<AxiosResponse<Buffer>> {
-    // TODO make a `sendRequest`?
     return axios.post(
       `http://localhost:${this.port}/pair-setup`,
       tlv.encode(
@@ -95,7 +121,7 @@ export class PairSetupClient {
     };
   }
 
-  prepareM5(m4: PairSetupM4, clientInfo: { username: string, publicKey: Buffer, privateKey: Buffer}): PairSetupM5 {
+  prepareM5(m4: PairSetupM4, clientInfo: PairSetupClientInfo): PairSetupM5 {
     const iOSDeviceX = hapCrypto.HKDF(
       "sha512",
       Buffer.from("Pair-Setup-Controller-Sign-Salt"),
@@ -145,7 +171,7 @@ export class PairSetupClient {
     );
   }
 
-  parseM6(responseM5: Buffer, m4: PairSetupM4, m5: PairSetupM5): void {
+  parseM6(responseM5: Buffer, m4: PairSetupM4, m5: PairSetupM5): PairSetupM6 {
     const objectsM6 = tlv.decode(responseM5);
     expect(objectsM6[TLVValues.ERROR_CODE]).toBeUndefined();
     expect(objectsM6[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M6);
@@ -187,5 +213,10 @@ export class PairSetupClient {
     expect(
       tweetnacl.sign.detached.verify(accessoryInfo, accessorySignature, accessoryLTPK),
     ).toEqual(true);
+
+    return {
+      accessoryLTPK,
+      accessoryIdentifier: accessoryIdentifier.toString(),
+    };
   }
 }

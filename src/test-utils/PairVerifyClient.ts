@@ -2,6 +2,7 @@ import axios, { AxiosResponse } from "axios";
 import { Agent } from "http";
 import tweetnacl, { BoxKeyPair } from "tweetnacl";
 import { PairingStates, TLVValues } from "../lib/HAPServer";
+import { HAPEncryption } from "../lib/util/eventedhttp";
 import * as hapCrypto from "../lib/util/hapCrypto";
 import { EncryptedData } from "../lib/util/hapCrypto";
 import * as tlv from "../lib/util/tlv";
@@ -21,6 +22,16 @@ export interface PairVerifyM4 {
   controllerToAccessoryKey: Buffer,
 }
 
+export interface PairVerifyServerInfo {
+  username: string;
+  publicKey: Buffer;
+}
+
+export interface PairVerifyClientInfo {
+  username: string;
+  privateKey: Buffer;
+}
+
 export class PairVerifyClient {
   private readonly port: number;
   private readonly httpAgent: Agent;
@@ -34,6 +45,39 @@ export class PairVerifyClient {
     this.ephemeralKeyPair = ephemeralKeyPair ?? hapCrypto.generateCurve25519KeyPair();
   }
 
+  async sendPairVerify(serverInfo: PairVerifyServerInfo, clientInfo: PairVerifyClientInfo & { publicKey: Buffer }): Promise<HAPEncryption> {
+    // M1
+    const responseM1 = await this.sendM1();
+
+    // M2
+    const M2 = this.parseM2(responseM1.data, serverInfo);
+
+    // M3
+    const M3 = this.prepareM3(M2, clientInfo);
+
+    // step 11 & 12
+    const responseM3 = await this.sendM3(M3);
+
+    // M4
+    const M4 = this.parseM4(responseM3.data, M2);
+
+    // verify that encryption works!
+    const encryption = new HAPEncryption(
+      serverInfo.publicKey,
+      clientInfo.privateKey,
+      clientInfo.publicKey,
+      M2.sharedSecret,
+      M2.sessionKey,
+    );
+
+    // our HAPCrypto is engineered for the server side, so we have to switch the keys here (deliberately wrongfully)
+    // such that hapCrypto uses the controllerToAccessoryKey for encryption!
+    encryption.accessoryToControllerKey = M4.controllerToAccessoryKey;
+    encryption.controllerToAccessoryKey = M4.accessoryToControllerKey;
+
+    return encryption;
+  }
+
   sendM1(): Promise<AxiosResponse<Buffer>> {
     return axios.post(
       `http://localhost:${this.port}/pair-verify`,
@@ -45,7 +89,7 @@ export class PairVerifyClient {
     );
   }
 
-  parseM2(responseM1: Buffer, serverInfo: { username: string, publicKey: Buffer }): PairVerifyM2 {
+  parseM2(responseM1: Buffer, serverInfo: PairVerifyServerInfo): PairVerifyM2 {
     const objectsM2 = tlv.decode(responseM1);
     expect(objectsM2[TLVValues.ERROR_CODE]).toBeUndefined();
     expect(objectsM2[TLVValues.STATE].readUInt8(0)).toBe(PairingStates.M2);
@@ -104,7 +148,7 @@ export class PairVerifyClient {
     };
   }
 
-  prepareM3(m2: PairVerifyM2, clientInfo: { username: string, privateKey: Buffer }): PairVerifyM3 {
+  prepareM3(m2: PairVerifyM2, clientInfo: PairVerifyClientInfo): PairVerifyM3 {
     // step 7
     const iOSDeviceInfo = Buffer.concat([
       this.ephemeralKeyPair.publicKey,
