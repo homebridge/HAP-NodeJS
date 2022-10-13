@@ -63,4 +63,6 @@ describe("hapCrypto", () => {
       expect(hkdf.toString("hex")).toBe(result.toString("hex"));
     });
   });
+
+  // TODO layerEncrypt and layerDecrypt tests!
 });

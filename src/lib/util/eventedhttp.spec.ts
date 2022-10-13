@@ -1,6 +1,6 @@
 import axios, { AxiosResponse } from "axios";
 import { Agent, IncomingMessage, ServerResponse } from "http";
-import { Socket } from "net";
+import { HTTPClient } from "../../test-utils/HTTPClient";
 import { HAPHTTPCode } from "../HAPServer";
 import { EventedHTTPServer, EventedHTTPServerEvent, HAPConnection, HAPConnectionEvent } from "./eventedhttp";
 import { awaitEventOnce, PromiseTimeout } from "./promise-utils";
@@ -134,23 +134,11 @@ describe("eventedhttp", () => {
     expect(result.data).toEqual("Hello World");
     const connection = await connectionOpened;
 
-    // we extract the underlying TCP socket!
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const freeSockets = ((httpAgent as any).freeSockets as Record<string, [Socket]>);
-    expect(Object.values(freeSockets).length).toBe(1);
-    const tcpSocket: Socket = Object.values(freeSockets)[0][0];
-    // TODO reuse!
-
-    // TODO reuse!
-    const events: string[] = [];
-    const dataListener = (data: Buffer) => {
-      // packets shall fit into a single TCP segment, no need to write a parser!
-      events.push(data.toString());
-    };
-    tcpSocket.on("data", dataListener);
+    const client = new HTTPClient(httpAgent, address.address, address.port);
+    client.attachSocket(); // capture the free socket of the http agent!
 
     connection.enableEventNotifications(1, 1);
-    // we implicitly test below that this event won't be delivered!
+    // we implicitly test-utils below that this event won't be delivered!
     connection.sendEvent(0, 0, "string");
 
     expect(connection.hasEventNotifications(1, 1)).toBeTruthy();
@@ -165,11 +153,11 @@ describe("eventedhttp", () => {
 
     // no immediate delivery!
     await PromiseTimeout(50);
-    expect(events.length).toBe(0);
+    expect(client.receiveBufferCount).toBe(0);
 
     await PromiseTimeout(300);
-    expect(events.length).toBe(1);
-    expect(events[0]).toBe("EVENT/1.0 200 OK\r\n" +
+    expect(client.receiveBufferCount).toBe(1);
+    expect(client.popReceiveBuffer().toString()).toBe("EVENT/1.0 200 OK\r\n" +
       "Content-Type: application/hap+json\r\n" +
       "Content-Length: 143\r\n" +
       "\r\n" +
@@ -178,39 +166,31 @@ describe("eventedhttp", () => {
       ",{\"aid\":1,\"iid\":1,\"value\":\"Hello Mars!\"}," +
       "{\"aid\":1,\"iid\":1,\"value\":\"Hello World!\"}" +
       "]}");
-    events.splice(0, events.length);
 
 
     server.broadcastEvent(1, 1, "Hello Sun!", undefined, false);
     // event with immediate delivery shall send currently queued events. Nothing gets out of order!
     connection.sendEvent(1, 1, "Hello Mars!", true);
     await PromiseTimeout(10);
-    expect(events.length).toBe(1);
-    expect(events[0]).toBe("EVENT/1.0 200 OK\r\n" +
+    expect(client.receiveBufferCount).toBe(1);
+    expect(client.popReceiveBuffer().toString()).toBe("EVENT/1.0 200 OK\r\n" +
       "Content-Type: application/hap+json\r\n" +
       "Content-Length: 100\r\n" +
       "\r\n" +
       "{\"characteristics\":[{\"aid\":1,\"iid\":1,\"value\":\"Hello Mars!\"},{\"aid\":1,\"iid\":1,\"value\":\"Hello Sun!\"}]}");
-    events.splice(0, events.length);
 
 
     server.broadcastEvent(1, 1, "Hello Sun!", connection, true);
     await PromiseTimeout(10);
-    expect(events.length).toBe(0);
+    expect(client.receiveBufferCount).toBe(0);
 
-    // NOW we test event delivery when there is ongoing request
+    // NOW we test-utils event delivery when there is ongoing request
     const testEventDelivery = async (sendEvents: () => Promise<void>, assertResult: () => Promise<void>) => {
       const queuedRequestPromise: Promise<[HAPConnection, IncomingMessage, ServerResponse]> = awaitEventOnce(server, EventedHTTPServerEvent.REQUEST);
       // we can't use axios here, as our special EVENT http message is involved!
 
-      // TODO reuse!
-      tcpSocket.write(Buffer.from("GET / HTTP/1.1\r\n" +
-        "Accept: application/json, text/plain, */*\r\n" +
-        "User-Agent: axios/0.27.2\r\n" +
-        "Host: " + address.address + ":" + address.port + "\r\n" +
-        "Connection: keep-alive\r\n" +
-        "\r\n", "ascii"));
-      const queuedResponse = (await queuedRequestPromise)[2];
+      client.writeHTTPRequest("GET", "/");
+      const queuedResponse: ServerResponse = (await queuedRequestPromise)[2];
 
       await sendEvents();
 
@@ -227,15 +207,16 @@ describe("eventedhttp", () => {
         connection.sendEvent(1, 1, "Hello Mars!");
       },
       async () => {
-        expect(events.length).toBe(1);
-        expect(events[0].includes("EVENT/1.0")).toBeTruthy();
-        const event = events[0].substring(events[0].indexOf("EVENT")); // splicing away the http response!
+        expect(client.receiveBufferCount).toBe(1);
+
+        const eventMessage = client.popReceiveBuffer().toString();
+        expect(eventMessage.includes("EVENT/1.0")).toBeTruthy();
+        const event = eventMessage.substring(eventMessage.indexOf("EVENT")); // splicing away the http response!
         expect(event).toBe("EVENT/1.0 200 OK\r\n" +
           "Content-Type: application/hap+json\r\n" +
           "Content-Length: 102\r\n" +
           "\r\n" +
           "{\"characteristics\":[{\"aid\":1,\"iid\":1,\"value\":\"Hello Mars!\"},{\"aid\":1,\"iid\":1,\"value\":\"Hello World!\"}]}");
-        events.splice(0, events.length);
       },
     );
 
@@ -245,18 +226,16 @@ describe("eventedhttp", () => {
         connection.sendEvent(1, 1, "Hello Sun!");
       },
       async () => {
-        expect(events.length).toBe(1);
-        expect(events[0].includes("EVENT")).toBeFalsy();
-        events.splice(0, events.length);
+        expect(client.receiveBufferCount).toBe(1);
+        expect(client.popReceiveBuffer().toString().includes("EVENT")).toBeFalsy();
 
         await PromiseTimeout(300);
-        expect(events.length).toBe(1);
-        expect(events[0]).toBe("EVENT/1.0 200 OK\r\n" +
+        expect(client.receiveBufferCount).toBe(1);
+        expect(client.popReceiveBuffer().toString()).toBe("EVENT/1.0 200 OK\r\n" +
           "Content-Type: application/hap+json\r\n" +
           "Content-Length: 100\r\n" +
           "\r\n" +
           "{\"characteristics\":[{\"aid\":1,\"iid\":1,\"value\":\"Hello Sun!\"},{\"aid\":1,\"iid\":1,\"value\":\"Hello Mars!\"}]}");
-        events.splice(0, events.length);
       },
     );
 
@@ -266,18 +245,21 @@ describe("eventedhttp", () => {
         await PromiseTimeout(300); // the timeout runs out while the request is still processed
       },
       async () => {
-        expect(events.length).toBe(1);
-        expect(events[0].includes("EVENT/1.0")).toBeTruthy();
-        const event = events[0].substring(events[0].indexOf("EVENT")); // splicing away the http response!
+        expect(client.receiveBufferCount).toBe(1);
+
+        const eventMessage = client.popReceiveBuffer().toString();
+        expect(eventMessage.includes("EVENT/1.0")).toBeTruthy();
+        const event = eventMessage.substring(eventMessage.indexOf("EVENT")); // splicing away the http response!
         expect(event).toBe("EVENT/1.0 200 OK\r\n" +
           "Content-Type: application/hap+json\r\n" +
           "Content-Length: 61\r\n" +
           "\r\n" +
           "{\"characteristics\":[{\"aid\":1,\"iid\":1,\"value\":\"Hello Mars!\"}]}");
-        events.splice(0, events.length);
       },
     );
+
+    client.releaseSocket();
   });
 
-  // TODO test events not delivered while in a request!
+  // TODO test-utils events not delivered while in a request!
 });
