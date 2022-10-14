@@ -382,7 +382,7 @@ describe("HAPServer", () => {
     expect(responseJSON).toEqual({ accessories: [] });
   });
 
-  test("test successful /characteristics", async () => {
+  test("test successful GET /characteristics", async () => {
     server = new HAPServer(accessoryInfoPaired);
     const [port, address] = await bindServer(server);
 
@@ -437,7 +437,7 @@ describe("HAPServer", () => {
     expect(responseJSON).toEqual({ characteristics: readData });
   });
 
-  test("test /characteristics with errors", async () => {
+  test("test GET /characteristics with errors", async () => {
     server = new HAPServer(accessoryInfoPaired);
     const [port, address] = await bindServer(server);
 
@@ -493,6 +493,44 @@ describe("HAPServer", () => {
       readData[1],
     ] });
   });
+
+  test("test successful GET /characteristics value write", async () => {
+    server = new HAPServer(accessoryInfoPaired);
+    const [port, address] = await bindServer(server);
+
+    const pairVerify = new PairVerifyClient(port, httpAgent);
+    const encryption = await pairVerify.sendPairVerify(serverInfoPaired, clientInfo);
+
+    const client = new HTTPClient(httpAgent, address, port);
+    client.attachSocket();
+
+    server.on(HAPServerEventTypes.SET_CHARACTERISTICS, (connection, request, callback) => {
+      expect(connection.encryption).not.toBeUndefined();
+      // TODO validate
+      callback(undefined, { characteristics: [] }); // TODO response!
+    });
+
+    const httpRequest = client.formatHTTPRequest(
+      "PUT",
+      "/characteristics",
+      Buffer.from(JSON.stringify({
+
+      })),
+      "application/hap+json",
+    );
+    client.write(httpRequest, encryption);
+    await PromiseTimeout(10);
+
+    const plaintext = client.popReceiveBuffer(encryption);
+    const response = client.parseHTTPResponse(plaintext);
+    expect(response.statusCode).toEqual(HAPHTTPCode.NO_CONTENT);
+  });
+
+  // TODO PUT /characteristic with MULTI_STATUS resposnse!
+
+  // TODO test write reponse?
+
+  // TODO test illegal json formatting!
 
   test.each(["pairings", "accessories", "characteristics", "prepare", "resource"])(
     "request to \"/%s\" should be rejected in unverified state",

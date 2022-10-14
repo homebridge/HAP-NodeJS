@@ -941,11 +941,12 @@ export class HAPServer extends EventEmitter {
         }
       }
       if (data.length === 0) {
-        response.writeHead(400, { "Content-Type": "application/hap+json" });
+        response.writeHead(HAPHTTPCode.BAD_REQUEST, { "Content-Type": "application/hap+json" });
         response.end(JSON.stringify({ status: HAPStatus.INVALID_VALUE_IN_REQUEST }));
         return;
       }
 
+      // TODO catch parsing errors?
       const writeRequest = JSON.parse(data.toString("utf8")) as CharacteristicsWriteRequest;
 
       this.emit(
@@ -959,13 +960,13 @@ export class HAPServer extends EventEmitter {
             return;
           }
 
-          // typescript can't type that this exists if error doesnt
+          // typescript can't type that this exists if error doesn't
           const characteristics = writeResponse!.characteristics;
 
           let multiStatus = false;
           for (const data of characteristics) {
             if (data.status || data.value !== undefined) {
-            // also send multiStatus on write response requests
+              // also send multiStatus on write response requests
               multiStatus = true;
               break;
             }
