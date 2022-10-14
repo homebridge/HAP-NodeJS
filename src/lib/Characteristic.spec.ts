@@ -973,7 +973,7 @@ describe("Characteristic", () => {
         characteristic.setValue("SOME STRING");
         expect(characteristic.value).toEqual(50);
         expect(mock).toBeCalledTimes(1);
-        expect(mock).toBeCalledWith(expect.stringContaining("NaN"));
+        expect(mock).toBeCalledWith("characteristic value expected valid finite number and received \"NaN\" (number)", "warn-message");
 
         // handle NaN: number from number value
         mock.mockReset();
@@ -981,7 +981,7 @@ describe("Characteristic", () => {
         characteristic.setValue(NaN);
         expect(characteristic.value).toEqual(50);
         expect(mock).toBeCalledTimes(1);
-        expect(mock).toBeCalledWith(expect.stringContaining("NaN"));
+        expect(mock).toBeCalledWith("characteristic value expected valid finite number and received \"NaN\" (number)", "warn-message");
 
         // handle object, restore last known value, trigger warning
         mock.mockReset();
@@ -1296,7 +1296,7 @@ describe("Characteristic", () => {
       mock.mockReset();
       characteristic.setValue(null as unknown as boolean);
       expect(characteristic.value).toEqual(0);
-      expect(mock).toBeCalledTimes(2);
+      expect(mock).toBeCalledTimes(1);
 
       // if the value has been previously set, and null is received, the previous value should be returned,
       mock.mockReset();

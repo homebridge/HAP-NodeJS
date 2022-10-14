@@ -40,6 +40,7 @@ import {
   Fanv2,
   Faucet,
   FilterMaintenance,
+  FirmwareUpdate,
   GarageDoorOpener,
   HeaterCooler,
   HumidifierDehumidifier,
@@ -70,6 +71,7 @@ import {
   StatefulProgrammableSwitch,
   StatelessProgrammableSwitch,
   Switch,
+  TapManagement,
   TargetControl,
   TargetControlManagement,
   Television,
@@ -211,6 +213,7 @@ export class Service extends EventEmitter {
   public static Fanv2: typeof Fanv2;
   public static Faucet: typeof Faucet;
   public static FilterMaintenance: typeof FilterMaintenance;
+  public static FirmwareUpdate: typeof FirmwareUpdate;
   public static GarageDoorOpener: typeof GarageDoorOpener;
   public static HeaterCooler: typeof HeaterCooler;
   public static HumidifierDehumidifier: typeof HumidifierDehumidifier;
@@ -249,6 +252,7 @@ export class Service extends EventEmitter {
   public static StatefulProgrammableSwitch: typeof StatefulProgrammableSwitch;
   public static StatelessProgrammableSwitch: typeof StatelessProgrammableSwitch;
   public static Switch: typeof Switch;
+  public static TapManagement: typeof TapManagement;
   public static TargetControl: typeof TargetControl;
   public static TargetControlManagement: typeof TargetControlManagement;
   public static Television: typeof Television;
