@@ -286,11 +286,11 @@ function messageBusConnectionResult(bus: MessageBus): Promise<void> {
 function dbusInvoke(bus: MessageBus,
                     destination: string,
                     path: string,
-                    interface: string,
+                    dbusInterface: string,
                     member: string,
-                    others?: any): Promise<Any> {
+                    others?: any): Promise<any> {
   return new Promise((resolve, reject) => {
-    const command = {destination, path, interface, member, ...(others || {})};
+    const command = {destination, path, interface: dbusInterface, member, ...(others || {})};
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     bus.invoke(command, (err: any, result: any) => {
