@@ -1,14 +1,12 @@
-name: Release Drafter
+name: PR Labeler
 
 on:
-  push:
-    branches: [master]
   pull_request: # required for autolabeler
     types: [opened, reopened, synchronize]
   workflow_dispatch:
 
 jobs:
   stale:
-    uses: homebridge/.github/.github/workflows/release-drafter.yml@main
+    uses: homebridge/.github/.github/workflows/pr-labeler.yml@main
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}

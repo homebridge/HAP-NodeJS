@@ -378,6 +378,11 @@ export class RecordingManagement {
    */
   sensorServices: Service[] = [];
 
+  /**
+   * Defines if recording is enabled for this recording management.
+   */
+  private recordingActive = false;
+
   constructor(
     options: CameraRecordingOptions,
     delegate: CameraRecordingDelegate,
@@ -436,7 +441,14 @@ export class RecordingManagement {
       .setProps({ adminOnlyAccess: [Access.WRITE] });
 
     this.recordingManagementService.getCharacteristic(Characteristic.Active)
-      .onSet(value => this.delegate.updateRecordingActive(!!value))
+      .onSet(value => {
+        if (!!value === this.recordingActive) {
+          return; // skip delegate call if state didn't change!
+        }
+
+        this.recordingActive = !!value;
+        this.delegate.updateRecordingActive(this.recordingActive);
+      })
       .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate?.())
       .setProps({ adminOnlyAccess: [Access.WRITE] });
 
@@ -486,7 +498,7 @@ export class RecordingManagement {
       return;
     }
 
-    if (!this.recordingManagementService.getCharacteristic(Characteristic.Active).value) {
+    if (!this.recordingActive) {
       connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, id, HDSStatus.PROTOCOL_SPECIFIC_ERROR, {
         status: HDSProtocolSpecificErrorReason.NOT_ALLOWED,
       });
@@ -541,15 +553,19 @@ export class RecordingManagement {
   private handleSelectedCameraRecordingConfigurationWrite(value: any): void {
     const configuration = this.parseSelectedConfiguration(value);
 
+    const changed = this.selectedConfiguration?.base64 !== value;
+
     this.selectedConfiguration = {
       parsed: configuration,
       base64: value,
     };
 
-    this.delegate.updateRecordingConfiguration(this.selectedConfiguration.parsed);
+    if (changed) {
+      this.delegate.updateRecordingConfiguration(this.selectedConfiguration.parsed);
 
-    // notify controller storage about updated values!
-    this.stateChangeDelegate?.();
+      // notify controller storage about updated values!
+      this.stateChangeDelegate?.();
+    }
   }
 
   private parseSelectedConfiguration(value: string): CameraRecordingConfiguration {
@@ -749,7 +765,7 @@ export class RecordingManagement {
       },
       selectedConfiguration: this.selectedConfiguration?.base64,
 
-      recordingActive: !!this.recordingManagementService.getCharacteristic(Characteristic.Active).value,
+      recordingActive: this.recordingActive,
       recordingAudioActive: !!this.recordingManagementService.getCharacteristic(Characteristic.RecordingAudioActive).value,
 
       eventSnapshotsActive: !!this.operatingModeService.getCharacteristic(Characteristic.EventSnapshotsActive).value,
@@ -777,6 +793,7 @@ export class RecordingManagement {
       }
     }
 
+    this.recordingActive = serialized.recordingActive;
     this.recordingManagementService.updateCharacteristic(Characteristic.Active, serialized.recordingActive);
     this.recordingManagementService.updateCharacteristic(Characteristic.RecordingAudioActive, serialized.recordingAudioActive);
 
