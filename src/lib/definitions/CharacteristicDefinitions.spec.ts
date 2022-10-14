@@ -244,6 +244,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("CryptoHash", () => {
+    it("should be able to construct", () => {
+      new Characteristic.CryptoHash();
+    });
+  });
+
   describe("CurrentAirPurifierState", () => {
     it("should be able to construct", () => {
       new Characteristic.CurrentAirPurifierState();
@@ -634,6 +640,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("MetricsBufferFullState", () => {
+    it("should be able to construct", () => {
+      new Characteristic.MetricsBufferFullState();
+    });
+  });
+
   describe("Model", () => {
     it("should be able to construct", () => {
       new Characteristic.Model();
@@ -976,6 +988,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("SelectedSleepConfiguration", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SelectedSleepConfiguration();
+    });
+  });
+
   describe("SerialNumber", () => {
     it("should be able to construct", () => {
       new Characteristic.SerialNumber();
@@ -1198,6 +1216,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("SupportedMetrics", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SupportedMetrics();
+    });
+  });
+
   describe("SupportedRouterConfiguration", () => {
     it("should be able to construct", () => {
       new Characteristic.SupportedRouterConfiguration();
@@ -1207,6 +1231,12 @@ describe("CharacteristicDefinitions", () => {
   describe("SupportedRTPConfiguration", () => {
     it("should be able to construct", () => {
       new Characteristic.SupportedRTPConfiguration();
+    });
+  });
+
+  describe("SupportedSleepConfiguration", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SupportedSleepConfiguration();
     });
   });
 
@@ -1231,6 +1261,12 @@ describe("CharacteristicDefinitions", () => {
   describe("SwingMode", () => {
     it("should be able to construct", () => {
       new Characteristic.SwingMode();
+    });
+  });
+
+  describe("TapType", () => {
+    it("should be able to construct", () => {
+      new Characteristic.TapType();
     });
   });
 
@@ -1381,6 +1417,12 @@ describe("CharacteristicDefinitions", () => {
   describe("TimeUpdate", () => {
     it("should be able to construct", () => {
       new Characteristic.TimeUpdate();
+    });
+  });
+
+  describe("Token", () => {
+    it("should be able to construct", () => {
+      new Characteristic.Token();
     });
   });
 
