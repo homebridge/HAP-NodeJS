@@ -804,6 +804,23 @@ export class CoolingThresholdTemperature extends Characteristic {
 Characteristic.CoolingThresholdTemperature = CoolingThresholdTemperature;
 
 /**
+ * Characteristic "Crypto Hash"
+ */
+export class CryptoHash extends Characteristic {
+
+  public static readonly UUID: string = "00000250-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Crypto Hash", CryptoHash.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.CryptoHash = CryptoHash;
+
+/**
  * Characteristic "Current Air Purifier State"
  */
 export class CurrentAirPurifierState extends Characteristic {
@@ -2174,6 +2191,23 @@ export class MaximumTransmitPower extends Characteristic {
 Characteristic.MaximumTransmitPower = MaximumTransmitPower;
 
 /**
+ * Characteristic "Metrics Buffer Full State"
+ */
+export class MetricsBufferFullState extends Characteristic {
+
+  public static readonly UUID: string = "00000272-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Metrics Buffer Full State", MetricsBufferFullState.UUID, {
+      format: Formats.BOOL,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.MetricsBufferFullState = MetricsBufferFullState;
+
+/**
  * Characteristic "Model"
  */
 export class Model extends Characteristic {
@@ -3309,6 +3343,23 @@ export class SelectedRTPStreamConfiguration extends Characteristic {
 Characteristic.SelectedRTPStreamConfiguration = SelectedRTPStreamConfiguration;
 
 /**
+ * Characteristic "Selected Sleep Configuration"
+ */
+export class SelectedSleepConfiguration extends Characteristic {
+
+  public static readonly UUID: string = "00000252-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Selected Sleep Configuration", SelectedSleepConfiguration.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SelectedSleepConfiguration = SelectedSleepConfiguration;
+
+/**
  * Characteristic "Serial Number"
  */
 export class SerialNumber extends Characteristic {
@@ -4025,6 +4076,23 @@ export class SupportedFirmwareUpdateConfiguration extends Characteristic {
 Characteristic.SupportedFirmwareUpdateConfiguration = SupportedFirmwareUpdateConfiguration;
 
 /**
+ * Characteristic "Supported Metrics"
+ */
+export class SupportedMetrics extends Characteristic {
+
+  public static readonly UUID: string = "00000271-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Supported Metrics", SupportedMetrics.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SupportedMetrics = SupportedMetrics;
+
+/**
  * Characteristic "Supported Router Configuration"
  */
 export class SupportedRouterConfiguration extends Characteristic {
@@ -4057,6 +4125,23 @@ export class SupportedRTPConfiguration extends Characteristic {
   }
 }
 Characteristic.SupportedRTPConfiguration = SupportedRTPConfiguration;
+
+/**
+ * Characteristic "Supported Sleep Configuration"
+ */
+export class SupportedSleepConfiguration extends Characteristic {
+
+  public static readonly UUID: string = "00000251-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Supported Sleep Configuration", SupportedSleepConfiguration.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SupportedSleepConfiguration = SupportedSleepConfiguration;
 
 /**
  * Characteristic "Supported Transfer Transport Configuration"
@@ -4133,6 +4218,23 @@ export class SwingMode extends Characteristic {
   }
 }
 Characteristic.SwingMode = SwingMode;
+
+/**
+ * Characteristic "Tap Type"
+ */
+export class TapType extends Characteristic {
+
+  public static readonly UUID: string = "0000022F-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Tap Type", TapType.UUID, {
+      format: Formats.UINT16,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.TapType = TapType;
 
 /**
  * Characteristic "Target Air Purifier State"
@@ -4685,6 +4787,23 @@ export class TimeUpdate extends Characteristic {
 }
 // noinspection JSDeprecatedSymbols
 Characteristic.TimeUpdate = TimeUpdate;
+
+/**
+ * Characteristic "Token"
+ */
+export class Token extends Characteristic {
+
+  public static readonly UUID: string = "00000231-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Token", Token.UUID, {
+      format: Formats.DATA,
+      perms: [Perms.PAIRED_WRITE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.Token = Token;
 
 /**
  * Characteristic "Transmit Power"

@@ -86,6 +86,8 @@ export class AccessoryMetrics extends Service {
 
     // Required Characteristics
     this.addCharacteristic(Characteristic.Active);
+    this.addCharacteristic(Characteristic.MetricsBufferFullState);
+    this.addCharacteristic(Characteristic.SupportedMetrics);
   }
 }
 Service.AccessoryMetrics = AccessoryMetrics;
@@ -356,10 +358,10 @@ export class CameraRecordingManagement extends Service {
 
     // Required Characteristics
     this.addCharacteristic(Characteristic.Active);
+    this.addCharacteristic(Characteristic.SelectedCameraRecordingConfiguration);
+    this.addCharacteristic(Characteristic.SupportedAudioRecordingConfiguration);
     this.addCharacteristic(Characteristic.SupportedCameraRecordingConfiguration);
     this.addCharacteristic(Characteristic.SupportedVideoRecordingConfiguration);
-    this.addCharacteristic(Characteristic.SupportedAudioRecordingConfiguration);
-    this.addCharacteristic(Characteristic.SelectedCameraRecordingConfiguration);
 
     // Optional Characteristics
     this.addOptionalCharacteristic(Characteristic.RecordingAudioActive);
@@ -656,6 +658,27 @@ export class FilterMaintenance extends Service {
   }
 }
 Service.FilterMaintenance = FilterMaintenance;
+
+/**
+ * Service "Firmware Update"
+ */
+export class FirmwareUpdate extends Service {
+
+  public static readonly UUID: string = "00000236-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, FirmwareUpdate.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.FirmwareUpdateReadiness);
+    this.addCharacteristic(Characteristic.FirmwareUpdateStatus);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.StagedFirmwareVersion);
+    this.addOptionalCharacteristic(Characteristic.SupportedFirmwareUpdateConfiguration);
+  }
+}
+Service.FirmwareUpdate = FirmwareUpdate;
 
 /**
  * Service "Garage Door Opener"
@@ -1063,6 +1086,10 @@ export class PowerManagement extends Service {
 
     // Required Characteristics
     this.addCharacteristic(Characteristic.WakeConfiguration);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.SelectedSleepConfiguration);
+    this.addOptionalCharacteristic(Characteristic.SupportedSleepConfiguration);
   }
 }
 Service.PowerManagement = PowerManagement;
@@ -1318,6 +1345,25 @@ export class Switch extends Service {
   }
 }
 Service.Switch = Switch;
+
+/**
+ * Service "Tap Management"
+ */
+export class TapManagement extends Service {
+
+  public static readonly UUID: string = "0000022E-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, TapManagement.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.Active);
+    this.addCharacteristic(Characteristic.CryptoHash);
+    this.addCharacteristic(Characteristic.TapType);
+    this.addCharacteristic(Characteristic.Token);
+  }
+}
+Service.TapManagement = TapManagement;
 
 /**
  * Service "Target Control"
