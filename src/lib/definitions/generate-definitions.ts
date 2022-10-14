@@ -653,7 +653,7 @@ function generatePermsString(id: string, propertiesBitMap: number): string {
   }
 
   const result =  perms.join(", ");
-  assert(!result, "perms string cannot be empty (" + propertiesBitMap + ")");
+  assert(!!result, "perms string cannot be empty (" + propertiesBitMap + ")");
   return result;
 }
 

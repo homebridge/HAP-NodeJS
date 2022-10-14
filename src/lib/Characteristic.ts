@@ -45,6 +45,7 @@ import {
   ConfiguredName,
   ContactSensorState,
   CoolingThresholdTemperature,
+  CryptoHash,
   CurrentAirPurifierState,
   CurrentAmbientLightLevel,
   CurrentDoorState,
@@ -110,6 +111,7 @@ import {
   ManuallyDisabled,
   Manufacturer,
   MaximumTransmitPower,
+  MetricsBufferFullState,
   Model,
   MotionDetected,
   MultifunctionButton,
@@ -167,6 +169,7 @@ import {
   SelectedCameraRecordingConfiguration,
   SelectedDiagnosticsModes,
   SelectedRTPStreamConfiguration,
+  SelectedSleepConfiguration,
   SerialNumber,
   ServiceLabelIndex,
   ServiceLabelNamespace,
@@ -204,12 +207,15 @@ import {
   SupportedDiagnosticsModes,
   SupportedDiagnosticsSnapshot,
   SupportedFirmwareUpdateConfiguration,
+  SupportedMetrics,
   SupportedRouterConfiguration,
   SupportedRTPConfiguration,
+  SupportedSleepConfiguration,
   SupportedTransferTransportConfiguration,
   SupportedVideoRecordingConfiguration,
   SupportedVideoStreamConfiguration,
   SwingMode,
+  TapType,
   TargetAirPurifierState,
   TargetAirQuality,
   TargetControlList,
@@ -235,6 +241,7 @@ import {
   ThreadOpenThreadVersion,
   ThreadStatus,
   TimeUpdate,
+  Token,
   TransmitPower,
   TunnelConnectionTimeout,
   TunneledAccessoryAdvertising,
@@ -700,6 +707,7 @@ export class Characteristic extends EventEmitter {
   public static ConfiguredName: typeof ConfiguredName;
   public static ContactSensorState: typeof ContactSensorState;
   public static CoolingThresholdTemperature: typeof CoolingThresholdTemperature;
+  public static CryptoHash: typeof CryptoHash;
   public static CurrentAirPurifierState: typeof CurrentAirPurifierState;
   public static CurrentAmbientLightLevel: typeof CurrentAmbientLightLevel;
   public static CurrentDoorState: typeof CurrentDoorState;
@@ -780,6 +788,7 @@ export class Characteristic extends EventEmitter {
   public static ManuallyDisabled: typeof ManuallyDisabled;
   public static Manufacturer: typeof Manufacturer;
   public static MaximumTransmitPower: typeof MaximumTransmitPower;
+  public static MetricsBufferFullState: typeof MetricsBufferFullState;
   public static Model: typeof Model;
   public static MotionDetected: typeof MotionDetected;
   public static MultifunctionButton: typeof MultifunctionButton;
@@ -840,6 +849,7 @@ export class Characteristic extends EventEmitter {
   public static SelectedCameraRecordingConfiguration: typeof SelectedCameraRecordingConfiguration;
   public static SelectedDiagnosticsModes: typeof SelectedDiagnosticsModes;
   public static SelectedRTPStreamConfiguration: typeof SelectedRTPStreamConfiguration;
+  public static SelectedSleepConfiguration: typeof SelectedSleepConfiguration;
   public static SerialNumber: typeof SerialNumber;
   public static ServiceLabelIndex: typeof ServiceLabelIndex;
   public static ServiceLabelNamespace: typeof ServiceLabelNamespace;
@@ -877,12 +887,15 @@ export class Characteristic extends EventEmitter {
   public static SupportedDiagnosticsModes: typeof SupportedDiagnosticsModes;
   public static SupportedDiagnosticsSnapshot: typeof SupportedDiagnosticsSnapshot;
   public static SupportedFirmwareUpdateConfiguration: typeof SupportedFirmwareUpdateConfiguration;
+  public static SupportedMetrics: typeof SupportedMetrics;
   public static SupportedRouterConfiguration: typeof SupportedRouterConfiguration;
   public static SupportedRTPConfiguration: typeof SupportedRTPConfiguration;
+  public static SupportedSleepConfiguration: typeof SupportedSleepConfiguration;
   public static SupportedTransferTransportConfiguration: typeof SupportedTransferTransportConfiguration;
   public static SupportedVideoRecordingConfiguration: typeof SupportedVideoRecordingConfiguration;
   public static SupportedVideoStreamConfiguration: typeof SupportedVideoStreamConfiguration;
   public static SwingMode: typeof SwingMode;
+  public static TapType: typeof TapType;
   public static TargetAirPurifierState: typeof TargetAirPurifierState;
   /**
    * @deprecated Removed and not used anymore
@@ -917,6 +930,7 @@ export class Characteristic extends EventEmitter {
    * @deprecated Removed and not used anymore
    */
   public static TimeUpdate: typeof TimeUpdate;
+  public static Token: typeof Token;
   public static TransmitPower: typeof TransmitPower;
   public static TunnelConnectionTimeout: typeof TunnelConnectionTimeout;
   public static TunneledAccessoryAdvertising: typeof TunneledAccessoryAdvertising;
