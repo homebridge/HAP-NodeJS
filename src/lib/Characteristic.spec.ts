@@ -4,6 +4,7 @@ import {
   CharacteristicChange,
   CharacteristicEventTypes,
   CharacteristicProps,
+  CharacteristicWarningType,
   Formats,
   HAPStatus,
   Perms,
@@ -200,6 +201,239 @@ describe("Characteristic", () => {
       expect(characteristic.props.maxValue).toEqual(undefined);
       expect(mock).toBeCalledTimes(1);
       expect(mock).toBeCalledWith(expect.stringContaining("Property 'maxValue' must be a finite number"), expect.anything());
+    });
+
+    test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
+      "numeric values of format %p should be corrected on setProps call with min/max restrictions", format => {
+        const characteristic = createCharacteristicWithProps({
+          format: format,
+          perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+        });
+
+        const changedMock = jest.fn();
+        characteristic.on(CharacteristicEventTypes.CHANGE, changedMock);
+        // @ts-expect-error: spying on private property
+        const warningMock = jest.spyOn(characteristic, "characteristicWarning");
+
+        const expectNoChange = () => {
+          expect(changedMock).toBeCalledTimes(0);
+          expect(warningMock).toBeCalledTimes(0);
+        };
+
+        const expectChange = () => {
+          expect(changedMock).toBeCalledTimes(1);
+          expect(warningMock).toBeCalledTimes(1);
+          expect(warningMock).toBeCalledWith(expect.anything(), CharacteristicWarningType.DEBUG_MESSAGE);
+        };
+
+        const reset = () => {
+          changedMock.mockReset();
+          warningMock.mockReset();
+        };
+
+        reset();
+
+        characteristic.setProps({
+          minValue: 0,
+          maxValue: 100,
+        });
+
+        // a value of null must not be corrected!
+        expectNoChange();
+
+        characteristic.setValue(0);
+
+        reset();
+        characteristic.setProps({
+          minValue: 10,
+          maxValue: 100,
+        });
+
+        // value should be corrected to 10. If changing the min/max value bounds, users should change the value first!
+        expectChange();
+        expect(characteristic.value).toEqual(10);
+
+        reset();
+        characteristic.setProps({
+          minValue: null,
+          maxValue: null,
+        });
+
+        // unsetting min/max value restriction must not make a difference
+        expectNoChange();
+
+        reset();
+        characteristic.setProps({
+          validValueRanges: [20, 100],
+        });
+
+        // value should be corrected to 20
+        expectChange();
+        expect(characteristic.value).toEqual(20);
+
+        reset();
+        characteristic.setProps({
+          validValueRanges: null,
+        });
+
+        // unsetting min/max value restriction must not make a difference
+        expectNoChange();
+
+        reset();
+        characteristic.setProps({
+          validValues: [1, 2, 3],
+        });
+
+        // value should be corrected to the first valid value
+        expectChange();
+        expect(characteristic.value).toBe(1);
+      });
+
+    test("string values should be corrected on setProps call with length restrictions", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.STRING,
+        perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      });
+
+      const changedMock = jest.fn();
+      characteristic.on(CharacteristicEventTypes.CHANGE, changedMock);
+      // @ts-expect-error: spying on private property
+      const warningMock = jest.spyOn(characteristic, "characteristicWarning");
+
+      const expectNoChange = () => {
+        expect(changedMock).toBeCalledTimes(0);
+        expect(warningMock).toBeCalledTimes(0);
+      };
+
+      const expectChange = () => {
+        expect(changedMock).toBeCalledTimes(1);
+        expect(warningMock).toBeCalledTimes(1);
+        expect(warningMock).toBeCalledWith(expect.anything(), CharacteristicWarningType.DEBUG_MESSAGE);
+      };
+
+      const reset = () => {
+        changedMock.mockReset();
+        warningMock.mockReset();
+      };
+
+      reset();
+      characteristic.setProps({
+        maxLen: 256,
+      });
+
+      expectNoChange();
+      expect(characteristic.value).toBeNull();
+
+      characteristic.setValue("Hello World");
+
+      reset();
+      characteristic.setProps({
+        maxLen: 5,
+      });
+
+      expectChange();
+      expect(characteristic.value).toBe("Hello"); // TODO string length cutting should happen on read only?
+
+      reset();
+      characteristic.setProps({
+        maxLen: null,
+      });
+
+      expectNoChange();
+    });
+
+    test("setProps call should not remove error state", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.STRING,
+        perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      });
+
+      const changedMock = jest.fn();
+      characteristic.on(CharacteristicEventTypes.CHANGE, changedMock);
+      // @ts-expect-error: spying on private property
+      const warningMock = jest.spyOn(characteristic, "characteristicWarning");
+
+      characteristic.setValue("Hello World");
+      characteristic.updateValue(new HapStatusError(HAPStatus.SERVICE_COMMUNICATION_FAILURE));
+
+      changedMock.mockReset();
+      warningMock.mockReset();
+
+      characteristic.setProps({
+        maxLen: 5,
+      });
+
+      expect(changedMock).toBeCalledTimes(0);
+      expect(warningMock).toBeCalledTimes(0);
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+    });
+
+    test("setProps should not try to correct value if impossible", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.STRING,
+        perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      });
+
+      const changedMock = jest.fn();
+      characteristic.on(CharacteristicEventTypes.CHANGE, changedMock);
+      // @ts-expect-error: spying on private property
+      const warningMock = jest.spyOn(characteristic, "characteristicWarning");
+
+      characteristic.setValue("Hello World");
+
+      changedMock.mockReset();
+      warningMock.mockReset();
+
+      characteristic.setProps({
+        format: Formats.INT,
+      });
+
+      expect(changedMock).toBeCalledTimes(0);
+      expect(warningMock).toBeCalledTimes(0);
+      expect(characteristic.value).toEqual("Hello World");
+      // when changing the format, users must change the value after changing setProps!
+    });
+
+    test("setProps must not emit a change event for event-type characteristics: ProgrammableSwitchEvent", () => {
+      const switchEvent = new Characteristic.ProgrammableSwitchEvent();
+
+      const changedMock = jest.fn();
+      switchEvent.on(CharacteristicEventTypes.CHANGE, changedMock);
+      // @ts-expect-error: spying on private property
+      const warningMock = jest.spyOn(switchEvent, "characteristicWarning");
+
+      switchEvent.updateValue(Characteristic.ProgrammableSwitchEvent.DOUBLE_PRESS);
+      changedMock.mockReset();
+      warningMock.mockReset();
+
+      switchEvent.setProps({
+        validValues: [0, 2],
+      });
+
+      expect(changedMock).toBeCalledTimes(0);
+      expect(warningMock).toBeCalledTimes(0);
+      expect(switchEvent.value).toEqual(1);
+    });
+
+    test("setProps must not emit a change event for event-type characteristics: ButtonEvent", () => {
+      const buttonEvent = new Characteristic.ButtonEvent();
+
+      const changedMock = jest.fn();
+      buttonEvent.on(CharacteristicEventTypes.CHANGE, changedMock);
+      // @ts-expect-error: spying on private property
+      const warningMock = jest.spyOn(buttonEvent, "characteristicWarning");
+
+      buttonEvent.updateValue("0000"); // some empty tlv
+      changedMock.mockReset();
+      warningMock.mockReset();
+
+      // we actually don't modify anything
+      buttonEvent.setProps({
+      });
+
+      expect(changedMock).toBeCalledTimes(0);
+      expect(warningMock).toBeCalledTimes(0);
+      expect(buttonEvent.value).toEqual("0000");
     });
   });
 
@@ -1296,7 +1530,7 @@ describe("Characteristic", () => {
       mock.mockReset();
       characteristic.setValue(null as unknown as boolean);
       expect(characteristic.value).toEqual(0);
-      expect(mock).toBeCalledTimes(1);
+      expect(mock).toBeCalledTimes(2);
 
       // if the value has been previously set, and null is received, the previous value should be returned,
       mock.mockReset();
