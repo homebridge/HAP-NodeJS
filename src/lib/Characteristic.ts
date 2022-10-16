@@ -2,7 +2,7 @@ import assert from "assert";
 import createDebug from "debug";
 import { EventEmitter } from "events";
 import { CharacteristicJsonObject } from "../internal-types";
-import { CharacteristicValue, Nullable, VoidCallback } from "../types";
+import { CharacteristicValue, Nullable, PartialAllowingNull, VoidCallback } from "../types";
 import { CharacteristicWarningType } from "./Accessory";
 import {
   AccessCodeControlPoint,
@@ -1064,12 +1064,15 @@ export class Characteristic extends EventEmitter {
    *
    * @param props - Partial properties object with the desired updates.
    */
-  public setProps(props: Partial<CharacteristicProps>): Characteristic {
+  public setProps(props: PartialAllowingNull<CharacteristicProps>): Characteristic {
     assert(props, "props cannot be undefined when setting props");
     // TODO calling setProps after publish doesn't lead to a increment in the current configuration number
 
+    let formatDidChange = false;
+
     // for every value "null" can be used to reset props, except for required props
     if (props.format) {
+      formatDidChange = this.props.format !== props.format;
       this.props.format = props.format;
     }
     if (props.perms) {
@@ -1236,8 +1239,26 @@ export class Characteristic extends EventEmitter {
       }
     }
 
-    // validateUserInput when called from setProps is intended to clamp value withing allowed range. It is why warnings should not be displayed.
-    this.updateValue(this.validateUserInput(this.value, CharacteristicWarningType.DEBUG_MESSAGE));
+    if ((isNumericFormat(this.props.format) || this.props.format === Formats.STRING)
+      && this.value != null
+      && !formatDidChange
+      && this.statusCode === HAPStatus.SUCCESS
+      && this.UUID !== Characteristic.ProgrammableSwitchEvent.UUID) {
+      // explaining the if statement above:
+      // - We only do a check for numeric and string formats as they are the only ones affected by characteristic property restrictions.
+      // - There must be a value to begin with. Otherwise, it should just stay not having a value at all (anything else is guess work).
+      // - If the format is changed through `setProps` we rely on the user to supply a valid value after the `setProps` call!
+      // - If the characteristic is marked as erroneous the value is not considered valid anyway, and we must not remove the `statusCode`.
+      // - Special case for `ProgrammableSwitchEvent` where every change in value is considered an event which would result in ghost button presses
+
+      // validateUserInput when called from setProps is intended to clamp value withing allowed range. It is why warnings should not be displayed.
+      const correctedValue = this.validateUserInput(this.value, CharacteristicWarningType.DEBUG_MESSAGE);
+
+      if (correctedValue !== this.value) {
+        // we don't want to emit a CHANGE event if the value didn't change at all!
+        this.updateValue(correctedValue);
+      }
+    }
 
     return this;
   }
@@ -2075,7 +2096,7 @@ export class Characteristic extends EventEmitter {
       }
 
       if (this.props.validValues && !this.props.validValues.includes(value)) {
-        this.characteristicWarning(`characteristic value ${value} is not contained in valid values array`);
+        this.characteristicWarning(`characteristic value ${value} is not contained in valid values array`, warningType);
         return this.props.validValues.includes(this.value as number) ? this.value : (this.props.validValues[0] || 0);
       }
 
