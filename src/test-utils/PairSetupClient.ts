@@ -2,7 +2,7 @@ import axios, { AxiosResponse } from "axios";
 import { SRP, SrpClient } from "fast-srp-hap";
 import { Agent } from "http";
 import tweetnacl from "tweetnacl";
-import { PairingStates, PairMethods, TLVValues } from "../lib/HAPServer";
+import { PairingStates, PairMethods, TLVValues } from "../internal-types";
 import * as hapCrypto from "../lib/util/hapCrypto";
 import { EncryptedData } from "../lib/util/hapCrypto";
 import * as tlv from "../lib/util/tlv";

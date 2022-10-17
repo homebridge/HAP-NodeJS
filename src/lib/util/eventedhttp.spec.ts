@@ -1,6 +1,6 @@
 import axios, { AxiosResponse } from "axios";
 import { Agent, IncomingMessage, ServerResponse } from "http";
-import { HTTPClient } from "../../test-utils/HTTPClient";
+import { HAPHTTPClient } from "../../test-utils/HAPHTTPClient";
 import { HAPHTTPCode } from "../HAPServer";
 import { EventedHTTPServer, EventedHTTPServerEvent, HAPConnection, HAPConnectionEvent } from "./eventedhttp";
 import { awaitEventOnce, PromiseTimeout } from "./promise-utils";
@@ -134,7 +134,7 @@ describe("eventedhttp", () => {
     expect(result.data).toEqual("Hello World");
     const connection = await connectionOpened;
 
-    const client = new HTTPClient(httpAgent, address.address, address.port);
+    const client = new HAPHTTPClient(httpAgent, address.address, address.port);
     client.attachSocket(); // capture the free socket of the http agent!
 
     connection.enableEventNotifications(1, 1);
@@ -189,7 +189,7 @@ describe("eventedhttp", () => {
       const queuedRequestPromise: Promise<[HAPConnection, IncomingMessage, ServerResponse]> = awaitEventOnce(server, EventedHTTPServerEvent.REQUEST);
       // we can't use axios here, as our special EVENT http message is involved!
 
-      client.writeHTTPRequest("GET", "/");
+      client.write(client.formatHTTPRequest("GET", "/"));
       const queuedResponse: ServerResponse = (await queuedRequestPromise)[2];
 
       await sendEvents();
@@ -207,9 +207,15 @@ describe("eventedhttp", () => {
         connection.sendEvent(1, 1, "Hello Mars!");
       },
       async () => {
-        expect(client.receiveBufferCount).toBe(1);
+        expect(client.receiveBufferCount > 0).toBeTruthy();
 
-        const eventMessage = client.popReceiveBuffer().toString();
+        let eventMessage = "";
+        // sometimes the HTTP response message and the EVENT message are combined
+        // into a single TCP segment, sometimes they get sent separately.
+        while (client.receiveBufferCount > 0) {
+          eventMessage = client.popReceiveBuffer().toString();
+        }
+
         expect(eventMessage.includes("EVENT/1.0")).toBeTruthy();
         const event = eventMessage.substring(eventMessage.indexOf("EVENT")); // splicing away the http response!
         expect(event).toBe("EVENT/1.0 200 OK\r\n" +

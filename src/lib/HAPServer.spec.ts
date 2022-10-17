@@ -2,12 +2,22 @@ import axios, { AxiosError, AxiosResponse } from "axios";
 import crypto from "crypto";
 import { Agent } from "http";
 import tweetnacl from "tweetnacl";
-import { CharacteristicReadData } from "../internal-types";
-import { HTTPClient } from "../test-utils/HTTPClient";
+import {
+  AccessoriesResponse,
+  CharacteristicId,
+  CharacteristicReadData,
+  CharacteristicsWriteRequest,
+  CharacteristicsWriteResponse,
+  PairingStates,
+  ResourceRequest,
+  ResourceRequestType,
+  TLVValues,
+} from "../internal-types";
+import { HAPHTTPClient } from "../test-utils/HAPHTTPClient";
 import { PairSetupClient } from "../test-utils/PairSetupClient";
 import { PairVerifyClient } from "../test-utils/PairVerifyClient";
 import { Accessory } from "./Accessory";
-import { Characteristic } from "./Characteristic";
+import { Characteristic, Formats, Perms } from "./Characteristic";
 import {
   HAPHTTPCode,
   HAPPairingHTTPCode,
@@ -16,13 +26,11 @@ import {
   HAPStatus,
   IdentifyCallback,
   IsKnownHAPStatusError,
-  PairingStates,
-  PairMethods,
   TLVErrorCode,
-  TLVValues,
 } from "./HAPServer";
-import { AccessoryInfo, PermissionTypes } from "./model/AccessoryInfo";
-import * as hapCrypto from "./util/hapCrypto";
+import { AccessoryInfo, PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
+import { Service } from "./Service";
+import { HAPConnection, HAPEncryption } from "./util/eventedhttp";
 import { awaitEventOnce, PromiseTimeout } from "./util/promise-utils";
 import * as tlv from "./util/tlv";
 
@@ -50,7 +58,7 @@ describe("HAPServer", () => {
   };
 
   let httpAgent: Agent;
-  let server: HAPServer | undefined;
+  let server: HAPServer;
 
   async function bindServer(server: HAPServer, port = 0, host = "localhost"): Promise<[port: number, string: string]> {
     const listenPromise: Promise<[number, string]> = awaitEventOnce(server, HAPServerEventTypes.LISTENING);
@@ -59,8 +67,6 @@ describe("HAPServer", () => {
   }
 
   beforeEach(() => {
-    server = undefined;
-
     accessoryInfoUnpaired = AccessoryInfo.create(serverUsername);
     // @ts-expect-error: private access
     accessoryInfoUnpaired.setupID = Accessory._generateSetupID();
@@ -91,7 +97,6 @@ describe("HAPServer", () => {
   afterEach(() => {
     server?.stop();
     server?.destroy();
-    server = undefined;
   });
 
   test("simple unpaired identify", async () => {
@@ -126,10 +131,6 @@ describe("HAPServer", () => {
   test("test-utils successful /pair-setup", async () => {
     server = new HAPServer(accessoryInfoUnpaired);
     const [port] = await bindServer(server);
-
-    // TODO TLVValues, pairing states, pair methods are now public API?
-
-    // TODO HAPServer doesn't check for the post method?
 
     server.on(HAPServerEventTypes.PAIR, (username, clientLTPK, callback) => {
       expect(username).toEqual(clientUsername);
@@ -202,10 +203,6 @@ describe("HAPServer", () => {
     }
   });
 
-  // TODO test 100 tries?
-
-  // TODO reject second pair-setup while one is going on?
-
   test("test successful /pair-verify", async () => {
     server = new HAPServer(accessoryInfoPaired);
     const [port] = await bindServer(server);
@@ -214,99 +211,79 @@ describe("HAPServer", () => {
     await pairVerify.sendPairVerify(serverInfoPaired, clientInfo);
   });
 
-  // TODO test-utils not paired pair-verify
-
-  test("test /pairings ADD_PAIRING", async () => {
-    server = new HAPServer(accessoryInfoPaired);
-    const [port, address] = await bindServer(server);
+  test("test /pair-verify with not being paired", async () => {
+    server = new HAPServer(accessoryInfoUnpaired);
+    const [port] = await bindServer(server);
 
     const pairVerify = new PairVerifyClient(port, httpAgent);
-    const encryption = await pairVerify.sendPairVerify(serverInfoPaired, clientInfo);
 
-    const client = new HTTPClient(httpAgent, address, port);
-    client.attachSocket();
+    // M1
+    const responseM1 = await pairVerify.sendM1();
 
-    server.on(HAPServerEventTypes.ADD_PAIRING, (connection, username, publicKey, permission, callback) => {
-      expect(connection.encryption).not.toBeUndefined();
-      expect(username).toEqual(thirdUsername);
-      expect(publicKey).toEqual(Buffer.alloc(32, 0));
-      expect(permission).toEqual(PermissionTypes.ADMIN);
-      callback(0);
-    });
+    // M2
+    const M2 = pairVerify.parseM2(responseM1.data, serverInfoUnpaired);
 
-    const requestTLV = tlv.encode(
-      TLVValues.METHOD, PairMethods.ADD_PAIRING,
-      TLVValues.STATE, PairingStates.M1,
-      TLVValues.IDENTIFIER, thirdUsername,
-      TLVValues.PUBLIC_KEY, Buffer.alloc(32, 0),
-      TLVValues.PERMISSIONS, PermissionTypes.ADMIN,
-    );
-    const httpRequest = client.formatHTTPRequest("POST", "/pairings", requestTLV, "application/pairing+tlv8");
-    client.write(httpRequest, encryption);
+    // M3
+    const M3 = pairVerify.prepareM3(M2, clientInfo);
 
-    await PromiseTimeout(10);
+    const responseM3 = await pairVerify.sendM3(M3);
+    const objectsM4 = tlv.decode(responseM3.data);
 
-    expect(client.receiveBufferCount).toEqual(1);
-
-    const plaintext = client.popReceiveBuffer(encryption);
-    const response = client.parseHTTPResponse(plaintext);
-    expect(response.statusCode).toEqual(HAPPairingHTTPCode.OK);
-    expect(response.headers["Content-Type"]).toEqual("application/pairing+tlv8");
-
-    const responseTLV = tlv.decode(response.body);
-    expect(responseTLV[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
+    expect(objectsM4[TLVValues.STATE].readUInt8(0)).toBe(PairingStates.M4);
+    expect(objectsM4[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.AUTHENTICATION);
   });
 
-  test("test /pairings REMOVE_PAIRING", async () => {
-    server = new HAPServer(accessoryInfoPaired);
-    const [port, address] = await bindServer(server);
+  describe("tests with paired and pair-verified connection", () => {
+    let port: number;
+    let address: string;
+    let encryption: HAPEncryption;
+    let client: HAPHTTPClient;
 
-    const pairVerify = new PairVerifyClient(port, httpAgent);
-    const encryption = await pairVerify.sendPairVerify(serverInfoPaired, clientInfo);
+    beforeEach(async () => {
+      server = new HAPServer(accessoryInfoPaired);
+      const addressInformation = await bindServer(server);
+      port = addressInformation[0];
+      address = addressInformation[1];
 
-    const client = new HTTPClient(httpAgent, address, port);
-    client.attachSocket();
+      const pairVerify = new PairVerifyClient(port, httpAgent);
+      encryption = await pairVerify.sendPairVerify(serverInfoPaired, clientInfo);
 
-    server.on(HAPServerEventTypes.REMOVE_PAIRING, (connection, username, callback) => {
-      expect(connection.encryption).not.toBeUndefined();
-      expect(username).toEqual(thirdUsername);
-      callback(0);
+      client = new HAPHTTPClient(httpAgent, address, port);
+      client.attachSocket();
+
+      client.enableEncryption(encryption);
     });
 
-    const requestTLV = tlv.encode(
-      TLVValues.METHOD, PairMethods.REMOVE_PAIRING,
-      TLVValues.STATE, PairingStates.M1,
-      TLVValues.IDENTIFIER, thirdUsername,
-    );
-    const httpRequest = client.formatHTTPRequest("POST", "/pairings", requestTLV, "application/pairing+tlv8");
-    client.write(httpRequest, encryption);
+    afterEach(() => {
+      client.releaseSocket();
+    });
 
-    await PromiseTimeout(10);
+    test("test /pairings ADD_PAIRING", async () => {
+      const exampleKey = crypto.randomBytes(32);
 
-    expect(client.receiveBufferCount).toEqual(1);
+      server.on(HAPServerEventTypes.ADD_PAIRING, (connection, username, publicKey, permission, callback) => {
+        expect(connection.encryption).not.toBeUndefined();
+        expect(username).toEqual(thirdUsername);
+        expect(publicKey).toEqual(exampleKey);
+        expect(permission).toEqual(PermissionTypes.ADMIN);
+        callback(0);
+      });
 
-    const plaintext = client.popReceiveBuffer(encryption);
-    const response = client.parseHTTPResponse(plaintext);
-    expect(response.statusCode).toEqual(HAPPairingHTTPCode.OK);
-    expect(response.headers["Content-Type"]).toEqual("application/pairing+tlv8");
+      await client.sendAddPairingRequest(thirdUsername, exampleKey, PermissionTypes.ADMIN);
+    });
 
-    const responseTLV = tlv.decode(response.body);
-    expect(responseTLV[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
-  });
+    test("test /pairings REMOVE_PAIRING", async () => {
+      server.on(HAPServerEventTypes.REMOVE_PAIRING, (connection, username, callback) => {
+        expect(connection.encryption).not.toBeUndefined();
+        expect(username).toEqual(thirdUsername);
+        callback(0);
+      });
 
-  test("test /pairings LIST_PAIRINGS", async () => {
-    server = new HAPServer(accessoryInfoPaired);
-    const [port, address] = await bindServer(server);
+      await client.sendRemovePairingRequest(thirdUsername);
+    });
 
-    const pairVerify = new PairVerifyClient(port, httpAgent);
-    const encryption = await pairVerify.sendPairVerify(serverInfoPaired, clientInfo);
-
-    const client = new HTTPClient(httpAgent, address, port);
-    client.attachSocket();
-
-    server.on(HAPServerEventTypes.LIST_PAIRINGS, (connection, callback) => {
-      expect(connection.encryption).not.toBeUndefined();
-      callback(0, [
+    test("test /pairings LIST_PAIRINGS", async () => {
+      const list: PairingInformation[] = [
         {
           username: clientUsername,
           publicKey: clientInfo.publicKey,
@@ -314,228 +291,280 @@ describe("HAPServer", () => {
         },
         {
           username: thirdUsername,
-          publicKey: Buffer.alloc(32, 0),
+          publicKey: crypto.randomBytes(32),
           permission: PermissionTypes.USER,
         },
-      ]);
+      ];
+
+      server.on(HAPServerEventTypes.LIST_PAIRINGS, (connection, callback) => {
+        expect(connection.encryption).not.toBeUndefined();
+        callback(0, list);
+      });
+
+      const response = await client.sendListPairingsRequest();
+      expect(response).toEqual(list);
     });
 
-    const requestTLV = tlv.encode(
-      TLVValues.METHOD, PairMethods.LIST_PAIRINGS,
-      TLVValues.STATE, PairingStates.M1,
-    );
-    const httpRequest = client.formatHTTPRequest("POST", "/pairings", requestTLV, "application/pairing+tlv8");
-    client.write(httpRequest, encryption);
+    test("test /accessories", async () => {
+      const accessoryResponse: AccessoriesResponse = {
+        accessories: [{
+          aid: 1,
+          services: [{
+            iid: 2,
+            type: Service.Switch.UUID,
+            characteristics: [{
+              iid: 3,
+              format: Formats.STRING,
+              perms: [Perms.PAIRED_READ],
+              value: "Hello World",
+              type: Characteristic.Name.UUID,
+            }],
+          }],
+        }],
+      };
 
-    await PromiseTimeout(10);
+      server.on(HAPServerEventTypes.ACCESSORIES, (connection, callback) => {
+        expect(connection.encryption).not.toBeUndefined();
+        callback(undefined, accessoryResponse);
+      });
 
-    expect(client.receiveBufferCount).toEqual(1);
-
-    const plaintext = client.popReceiveBuffer(encryption);
-    const response = client.parseHTTPResponse(plaintext);
-    expect(response.statusCode).toEqual(HAPPairingHTTPCode.OK);
-    expect(response.headers["Content-Type"]).toEqual("application/pairing+tlv8");
-
-    // assert STATE=M2
-    expect(response.body.slice(0, 3)).toEqual(Buffer.from("060102", "hex"));
-
-    const responseTLV = tlv.decodeList(response.body.slice(3), TLVValues.IDENTIFIER);
-    expect(responseTLV.length).toEqual(2);
-
-    expect(responseTLV[0][TLVValues.IDENTIFIER].toString()).toEqual(clientUsername);
-    expect(responseTLV[0][TLVValues.PUBLIC_KEY]).toEqual(clientInfo.publicKey);
-    expect(responseTLV[0][TLVValues.PERMISSIONS].readUInt8(0)).toEqual(PermissionTypes.ADMIN);
-
-    expect(responseTLV[1][TLVValues.IDENTIFIER].toString()).toEqual(thirdUsername);
-    expect(responseTLV[1][TLVValues.PUBLIC_KEY]).toEqual(Buffer.alloc(32, 0));
-    expect(responseTLV[1][TLVValues.PERMISSIONS].readUInt8(0)).toEqual(PermissionTypes.USER);
-  });
-
-  test("test /accessories", async () => {
-    server = new HAPServer(accessoryInfoPaired);
-    const [port, address] = await bindServer(server);
-
-    const pairVerify = new PairVerifyClient(port, httpAgent);
-    const encryption = await pairVerify.sendPairVerify(serverInfoPaired, clientInfo);
-
-    const client = new HTTPClient(httpAgent, address, port);
-    client.attachSocket();
-
-    server.on(HAPServerEventTypes.ACCESSORIES, (connection, callback) => {
-      expect(connection.encryption).not.toBeUndefined();
-      callback(undefined, { accessories: [] }); // we respond with empty accessories!
+      const accessories = await client.sendAccessoriesRequest();
+      expect(accessories).toEqual(accessoryResponse);
     });
 
-    const httpRequest = client.formatHTTPRequest("GET", "/accessories");
-    client.write(httpRequest, encryption);
+    test("test successful GET /characteristics", async () => {
+      const ids: CharacteristicId[] = [ { aid: 1, iid: 9 }, { aid: 2, iid: 14 } ];
+      const readData: CharacteristicReadData[] = [
+        {
+          ...ids[0],
+          value: "Hello World",
+          type: Characteristic.Name.UUID,
+          ev: true,
+        },
+        {
+          ...ids[1],
+          value: true,
+          type: Characteristic.Active.UUID,
+          ev: false,
+        },
+      ];
 
-    await PromiseTimeout(10);
+      server.on(HAPServerEventTypes.GET_CHARACTERISTICS, (connection, request, callback) => {
+        expect(connection.encryption).not.toBeUndefined();
+        expect(request.ids).toEqual(ids);
+        expect(request.includeMeta).toBeFalsy();
+        expect(request.includePerms).toBeFalsy();
+        expect(request.includeType).toBeTruthy();
+        expect(request.includeEvent).toBeTruthy();
+        callback(undefined, { characteristics: readData });
+      });
 
-    expect(client.receiveBufferCount).toEqual(1);
-
-    const plaintext = client.popReceiveBuffer(encryption);
-    const response = client.parseHTTPResponse(plaintext);
-    expect(response.statusCode).toEqual(HAPHTTPCode.OK);
-    expect(response.headers["Content-Type"]).toEqual("application/hap+json");
-
-    const responseJSON = JSON.parse(response.body.toString());
-    expect(responseJSON).toEqual({ accessories: [] });
-  });
-
-  test("test successful GET /characteristics", async () => {
-    server = new HAPServer(accessoryInfoPaired);
-    const [port, address] = await bindServer(server);
-
-    const pairVerify = new PairVerifyClient(port, httpAgent);
-    const encryption = await pairVerify.sendPairVerify(serverInfoPaired, clientInfo);
-
-    const client = new HTTPClient(httpAgent, address, port);
-    client.attachSocket();
-
-    const readData: CharacteristicReadData[] = [
-      {
-        aid: 1,
-        iid: 9,
-        value: "Hello World",
-        type: Characteristic.Name.UUID,
-        ev: true,
-      },
-      {
-        aid: 2,
-        iid: 14,
-        value: true,
-        type: Characteristic.Active.UUID,
-        ev: false,
-      },
-    ];
-
-    server.on(HAPServerEventTypes.GET_CHARACTERISTICS, (connection, request, callback) => {
-      expect(connection.encryption).not.toBeUndefined();
-      expect(request.ids).toEqual([ { aid: 1, iid: 9 }, { aid: 2, iid: 14 } ]);
-      expect(request.includeMeta).toBeFalsy();
-      expect(request.includePerms).toBeFalsy();
-      expect(request.includeType).toBeTruthy();
-      expect(request.includeEvent).toBeTruthy();
-      callback(undefined, { characteristics: readData });
+      const httpResponse = await client.sendCharacteristicRead(ids, false, false, true, true);
+      expect(httpResponse.statusCode).toEqual(HAPHTTPCode.OK);
+      expect(httpResponse.body).toEqual({ characteristics: readData });
     });
 
-    const httpRequest = client.formatHTTPRequest(
-      "GET",
-      "/characteristics?id=1.9,2.14&meta=false&perms=0&type=true&ev=1",
-    );
-    client.write(httpRequest, encryption);
-    await PromiseTimeout(10);
+    test("test GET /characteristics with errors", async () => {
+      const ids: CharacteristicId[] = [ { aid: 1, iid: 9 }, { aid: 2, iid: 14 } ];
+      const readData: CharacteristicReadData[] = [
+        {
+          ...ids[0],
+          value: "Hello World",
+        },
+        {
+          ...ids[1],
+          status: HAPStatus.SERVICE_COMMUNICATION_FAILURE,
+        },
+      ];
 
-    expect(client.receiveBufferCount).toEqual(1);
+      server.on(HAPServerEventTypes.GET_CHARACTERISTICS, (connection, request, callback) => {
+        expect(connection.encryption).not.toBeUndefined();
+        expect(request.ids).toEqual(ids);
+        expect(request.includeMeta).toBeFalsy();
+        expect(request.includePerms).toBeFalsy();
+        expect(request.includeType).toBeFalsy();
+        expect(request.includeEvent).toBeFalsy();
+        callback(undefined, { characteristics: readData });
+      });
 
-    const plaintext = client.popReceiveBuffer(encryption);
-    const response = client.parseHTTPResponse(plaintext);
-    expect(response.statusCode).toEqual(HAPHTTPCode.OK);
-    expect(response.headers["Content-Type"]).toEqual("application/hap+json");
-
-    const responseJSON = JSON.parse(response.body.toString());
-    expect(responseJSON).toEqual({ characteristics: readData });
-  });
-
-  test("test GET /characteristics with errors", async () => {
-    server = new HAPServer(accessoryInfoPaired);
-    const [port, address] = await bindServer(server);
-
-    const pairVerify = new PairVerifyClient(port, httpAgent);
-    const encryption = await pairVerify.sendPairVerify(serverInfoPaired, clientInfo);
-
-    const client = new HTTPClient(httpAgent, address, port);
-    client.attachSocket();
-
-    const readData: CharacteristicReadData[] = [
-      {
-        aid: 1,
-        iid: 9,
-        value: "Hello World",
-      },
-      {
-        aid: 2,
-        iid: 14,
-        status: HAPStatus.SERVICE_COMMUNICATION_FAILURE,
-      },
-    ];
-
-    server.on(HAPServerEventTypes.GET_CHARACTERISTICS, (connection, request, callback) => {
-      expect(connection.encryption).not.toBeUndefined();
-      expect(request.ids).toEqual([ { aid: 1, iid: 9 }, { aid: 2, iid: 14 } ]);
-      expect(request.includeMeta).toBeFalsy();
-      expect(request.includePerms).toBeFalsy();
-      expect(request.includeType).toBeFalsy();
-      expect(request.includeEvent).toBeFalsy();
-      callback(undefined, { characteristics: readData });
+      const httpResponse = await client.sendCharacteristicRead(ids);
+      expect(httpResponse.statusCode).toEqual(HAPHTTPCode.MULTI_STATUS);
+      expect(httpResponse.body).toEqual({
+        characteristics: [
+          {
+            ...readData[0],
+            status: HAPStatus.SUCCESS,
+          },
+          readData[1],
+        ],
+      });
     });
 
-    const httpRequest = client.formatHTTPRequest(
-      "GET",
-      "/characteristics?id=1.9,2.14",
-    );
-    client.write(httpRequest, encryption);
-    await PromiseTimeout(10);
+    test("test successful PUT /characteristics value write NO_CONTENT", async () => {
+      const writeRequest: CharacteristicsWriteRequest = {
+        characteristics: [
+          {
+            aid: 1,
+            iid: 9,
+            value: "Hello World",
+          },
+          {
+            aid: 2,
+            iid: 14,
+            value: true,
+          },
+        ],
+      };
 
-    expect(client.receiveBufferCount).toEqual(1);
+      const hapResponse: CharacteristicsWriteResponse = {
+        characteristics: [
+          {
+            aid: 1,
+            iid: 9,
+            status: HAPStatus.SUCCESS,
+          },
+          {
+            aid: 2,
+            iid: 14,
+            status: HAPStatus.SUCCESS,
+          },
+        ],
+      };
 
-    const plaintext = client.popReceiveBuffer(encryption);
-    const response = client.parseHTTPResponse(plaintext);
-    expect(response.statusCode).toEqual(HAPHTTPCode.MULTI_STATUS);
-    expect(response.headers["Content-Type"]).toEqual("application/hap+json");
+      server.on(HAPServerEventTypes.SET_CHARACTERISTICS, (connection, request, callback) => {
+        expect(connection.encryption).not.toBeUndefined();
+        expect(request).toEqual(writeRequest);
+        callback(undefined, hapResponse);
+      });
 
-    const responseJSON = JSON.parse(response.body.toString());
-    expect(responseJSON).toEqual({ characteristics: [
-      {
-        ...readData[0],
-        status: HAPStatus.SUCCESS,
-      },
-      readData[1],
-    ] });
-  });
-
-  test("test successful GET /characteristics value write", async () => {
-    server = new HAPServer(accessoryInfoPaired);
-    const [port, address] = await bindServer(server);
-
-    const pairVerify = new PairVerifyClient(port, httpAgent);
-    const encryption = await pairVerify.sendPairVerify(serverInfoPaired, clientInfo);
-
-    const client = new HTTPClient(httpAgent, address, port);
-    client.attachSocket();
-
-    server.on(HAPServerEventTypes.SET_CHARACTERISTICS, (connection, request, callback) => {
-      expect(connection.encryption).not.toBeUndefined();
-      // TODO validate
-      callback(undefined, { characteristics: [] }); // TODO response!
+      const httpResponse = await client.sendCharacteristicWrite(writeRequest);
+      expect(httpResponse.statusCode).toEqual(HAPHTTPCode.NO_CONTENT);
     });
 
-    const httpRequest = client.formatHTTPRequest(
-      "PUT",
-      "/characteristics",
-      Buffer.from(JSON.stringify({
+    test("test PUT /characteristics value with MULTI_STATUS", async () => {
+      const ids: CharacteristicId[] = [ { aid: 1, iid: 9 }, { aid: 2, iid: 14 } ];
+      const writeRequest: CharacteristicsWriteRequest = {
+        characteristics: [
+          {
+            ...ids[0],
+            value: "Hello World",
+          },
+          {
+            ...ids[1],
+            value: true,
+            ev: true,
+          },
+        ],
+        pid: 1337,
+      };
 
-      })),
-      "application/hap+json",
-    );
-    client.write(httpRequest, encryption);
-    await PromiseTimeout(10);
+      const hapResponse: CharacteristicsWriteResponse = {
+        characteristics: [
+          {
+            ...ids[0],
+            status: HAPStatus.SUCCESS,
+          },
+          {
+            ...ids[1],
+            status: HAPStatus.SERVICE_COMMUNICATION_FAILURE,
+          },
+        ],
+      };
 
-    const plaintext = client.popReceiveBuffer(encryption);
-    const response = client.parseHTTPResponse(plaintext);
-    expect(response.statusCode).toEqual(HAPHTTPCode.NO_CONTENT);
+      server.on(HAPServerEventTypes.SET_CHARACTERISTICS, (connection, request, callback) => {
+        expect(connection.encryption).not.toBeUndefined();
+        expect(request).toEqual(writeRequest);
+        callback(undefined, hapResponse);
+      });
+
+      const httpResponse = await client.sendCharacteristicWrite(writeRequest);
+      expect(httpResponse.statusCode).toEqual(HAPHTTPCode.MULTI_STATUS);
+    });
+
+    test("test PUT /characteristics value with write response", async () => {
+      const ids: CharacteristicId[] = [ { aid: 1, iid: 9 } ];
+      const writeRequest: CharacteristicsWriteRequest = {
+        characteristics: [
+          {
+            ...ids[0],
+            value: "Hello",
+          },
+        ],
+      };
+
+      const hapResponse: CharacteristicsWriteResponse = {
+        characteristics: [
+          {
+            ...ids[0],
+            status: HAPStatus.SUCCESS,
+            value: "World",
+          },
+        ],
+      };
+
+      server.on(HAPServerEventTypes.SET_CHARACTERISTICS, (connection, request, callback) => {
+        expect(connection.encryption).not.toBeUndefined();
+        expect(request).toEqual(writeRequest);
+        callback(undefined, hapResponse);
+      });
+
+      const httpResponse = await client.sendCharacteristicWrite(writeRequest);
+      expect(httpResponse.statusCode).toEqual(HAPHTTPCode.MULTI_STATUS);
+    });
+
+    test("test prepare write request", async () => {
+      await client.sendPrepareWrite({
+        pid: 1337,
+        ttl: 1000,
+      });
+
+      await PromiseTimeout(50);
+
+      // testing that pid is overwritten!
+      await client.sendPrepareWrite({
+        pid: 13337,
+        ttl: 100,
+      });
+
+      // we just do a /accessories request to get hold onto the HAPConnection object
+      let hapConnection!: HAPConnection;
+      server.on(HAPServerEventTypes.ACCESSORIES, (connection, callback) => {
+        hapConnection = connection;
+        callback(undefined, { accessories:[] });
+      });
+      await client.sendAccessoriesRequest();
+
+      expect(hapConnection.timedWriteTimeout).not.toBeUndefined();
+      expect(hapConnection.timedWritePid).toBe(13337);
+
+      await PromiseTimeout(120);
+
+      expect(hapConnection.timedWriteTimeout).toBeUndefined();
+      expect(hapConnection.timedWritePid).toBeUndefined();
+    });
+
+    test("test resource request", async () => {
+      const image = crypto.randomBytes(256);
+      const request: ResourceRequest = {
+        "image-height": 256,
+        "image-width": 512,
+        "resource-type": ResourceRequestType.IMAGE,
+      };
+
+      server.on(HAPServerEventTypes.REQUEST_RESOURCE, (resource, callback) => {
+        expect(resource).toEqual(request);
+        callback(undefined, image);
+      });
+
+      const result = await client.sendResourceRequest(request);
+      expect(result).toEqual(image);
+    });
   });
-
-  // TODO PUT /characteristic with MULTI_STATUS resposnse!
-
-  // TODO test write reponse?
-
-  // TODO test illegal json formatting!
 
   test.each(["pairings", "accessories", "characteristics", "prepare", "resource"])(
-    "request to \"/%s\" should be rejected in unverified state",
+    "request to \"/%s\" should be rejected in unpaired and unverified state",
     async (route: string) => {
-      const server = new HAPServer(accessoryInfoUnpaired);
+      server = new HAPServer(accessoryInfoUnpaired);
       const [port] = await bindServer(server);
 
       try {
@@ -546,12 +575,25 @@ describe("HAPServer", () => {
         expect(error.response?.status).toBe(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED);
         expect(error.response?.data).toEqual({ status: HAPStatus.INSUFFICIENT_PRIVILEGES });
       }
-
-      server.stop();
     },
   );
 
-  // TODO test for each protected endpoint: access prevented (in paired and unpaired state!)
+  test.each(["pairings", "accessories", "characteristics", "prepare", "resource"])(
+    "request to \"/%s\" should be rejected in paired and unverified state",
+    async (route: string) => {
+      server = new HAPServer(accessoryInfoPaired);
+      const [port] = await bindServer(server);
+
+      try {
+        const response = await axios.post(`http://localhost:${port}/${route}`, { httpAgent });
+        fail(`Expected erroneous response, got ${response}`);
+      } catch (error) {
+        expect(error).toBeInstanceOf(AxiosError);
+        expect(error.response?.status).toBe(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED);
+        expect(error.response?.data).toEqual({ status: HAPStatus.INSUFFICIENT_PRIVILEGES });
+      }
+    },
+  );
 
   test("test non-existence resource", async () => {
     server = new HAPServer(accessoryInfoUnpaired);
@@ -594,7 +636,7 @@ describe(IsKnownHAPStatusError, () => {
 
   it("should reject invalid user input", () => {
     // @ts-expect-error: deliberate illegal input
-    expect(IsKnownHAPStatusError("asdjw")).toBe(false);
+    expect(IsKnownHAPStatusError("aaaa")).toBe(false);
     // @ts-expect-error: deliberate illegal input
     expect(IsKnownHAPStatusError({ "key": "value" })).toBe(false);
     // @ts-expect-error: deliberate illegal input

@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from "axios";
 import { Agent } from "http";
 import tweetnacl, { BoxKeyPair } from "tweetnacl";
-import { PairingStates, TLVValues } from "../lib/HAPServer";
+import { PairingStates, TLVValues } from "../internal-types";
 import { HAPEncryption } from "../lib/util/eventedhttp";
 import * as hapCrypto from "../lib/util/hapCrypto";
 import { EncryptedData } from "../lib/util/hapCrypto";
