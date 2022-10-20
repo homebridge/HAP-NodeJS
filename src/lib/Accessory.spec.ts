@@ -1,54 +1,47 @@
 import { Accessory, AccessoryEventTypes, Categories, MDNSAdvertiser, PublishInfo } from "./Accessory";
+import { CiaoAdvertiser } from "./Advertiser";
 import { Bridge } from "./Bridge";
 import { Characteristic, CharacteristicEventTypes } from "./Characteristic";
 import { Controller, ControllerIdentifier, ControllerServiceMap } from "./controller";
+import { AccessoryInfo } from "./model/AccessoryInfo";
 import { Service } from "./Service";
 import { awaitEventOnce, PromiseTimeout } from "./util/promise-utils";
 import * as uuid from "./util/uuid";
-
-
-class TestController implements Controller {
-
-  controllerId(): ControllerIdentifier {
-    return "test-id";
-  }
-
-  constructServices(): ControllerServiceMap {
-    const lightService = new Service.Lightbulb("", "");
-    const switchService = new Service.Switch("", "");
-
-    return {
-      light: lightService,
-      switch: switchService,
-    };
-  }
-
-  initWithServices(serviceMap: ControllerServiceMap): void | ControllerServiceMap {
-    // serviceMap will be altered here to test update procedure
-    delete serviceMap.switch;
-    serviceMap.light = new Service.LightSensor("", "");
-    serviceMap.outlet = new Service.Outlet("", "");
-
-    return serviceMap;
-  }
-
-  configureServices(): void {
-    // do nothing
-  }
-
-  handleControllerRemoved(): void {
-    // do nothing
-  }
-
-}
+import Mock = jest.Mock;
 
 const TEST_USERNAME = "AB:CD:EF:00:11:22";
+const TEST_DISPLAY_NAME = "Test Accessory";
+const TEST_UUID = uuid.generate("HAP-NODEJS-TEST-ACCESSORY!");
 
 describe("Accessory", () => {
+  let accessory: Accessory;
 
-  describe("#constructor()", () => {
+  let accessoryInfoUnpaired: AccessoryInfo;
+  const saveMock: Mock = jest.fn();
 
-    it("should identify itself with a valid UUID", () => {
+  beforeEach(() => {
+    accessoryInfoUnpaired = AccessoryInfo.create(TEST_USERNAME);
+    // @ts-expect-error: private access
+    accessoryInfoUnpaired.setupID = Accessory._generateSetupID();
+    accessoryInfoUnpaired.displayName = "Outlet";
+    accessoryInfoUnpaired.category = 7;
+    accessoryInfoUnpaired.pincode = " 031-45-154";
+    accessoryInfoUnpaired.save = saveMock;
+
+    // ensure we start with a clean Accessory for every test
+    Accessory.cleanupAccessoryData(TEST_USERNAME);
+    accessory = new Accessory(TEST_DISPLAY_NAME, TEST_UUID);
+
+    saveMock.mockReset();
+  });
+
+  afterEach(async () => {
+    await accessory.unpublish();
+    await accessory.destroy();
+  });
+
+  describe("constructor", () => {
+    test("identify itself with a valid UUID", () => {
       const accessory = new Accessory("Test", uuid.generate("Foo"));
 
       const VALUE = true;
@@ -56,38 +49,29 @@ describe("Accessory", () => {
       accessory.getService(Service.AccessoryInformation)!
         .getCharacteristic(Characteristic.Identify)!
         .on(CharacteristicEventTypes.SET, (value, callback) => {
+          // TODO is this ever called?
           expect(value).toEqual(VALUE);
           callback();
         });
     });
 
-    it("should fail to load with no display name", () => {
-      expect(() => {
-        new Accessory("", "");
-      }).toThrow("non-empty displayName");
+    test("fail to load with no display name", () => {
+      expect(() => new Accessory("", ""))
+        .toThrow("non-empty displayName");
     });
 
-    it("should fail to load with no UUID", () => {
-      expect(() => {
-        new Accessory("Test", "");
-      }).toThrow("valid UUID");
+    test("fail to load with no UUID", () => {
+      expect(() => new Accessory("Test", ""))
+        .toThrow("valid UUID");
     });
 
-    it("should fail to load with an invalid UUID", () => {
-      expect(() => {
-        new Accessory("Test", "test");
-      }).toThrow("not a valid UUID");
+    test("fail to load with an invalid UUID", () => {
+      expect(() => new Accessory("Test", "test"))
+        .toThrow("not a valid UUID");
     });
   });
 
-  describe("Accessory Publishing", () => {
-    const DEFAULT_DISPLAY_NAME = "Test Accessory";
-
-    beforeEach(() => {
-      // ensure we start with a clean Accessory for every test
-      Accessory.cleanupAccessoryData(TEST_USERNAME);
-    });
-
+  describe("publish", () => {
     test.each`
       advertiser                 | republish
       ${MDNSAdvertiser.BONJOUR}  | ${false}
@@ -95,8 +79,6 @@ describe("Accessory", () => {
       ${MDNSAdvertiser.BONJOUR}  | ${true}
       ${MDNSAdvertiser.CIAO}     | ${true}
     `("Clean Accessory publish and unpublish (advertiser: $advertiser; republish: $republish)", async ({ advertiser, republish }) => {
-      const accessory = new Accessory(DEFAULT_DISPLAY_NAME, uuid.generate("foo"));
-
       const switchService = new Service.Switch("My Example Switch");
       accessory.addService(switchService);
 
@@ -109,8 +91,8 @@ describe("Accessory", () => {
 
       await accessory.publish(publishInfo);
 
-      expect(accessory.displayName.startsWith(DEFAULT_DISPLAY_NAME));
-      expect(accessory.displayName.length).toEqual(DEFAULT_DISPLAY_NAME.length + 1 + 4); // added hash!
+      expect(accessory.displayName.startsWith(TEST_DISPLAY_NAME));
+      expect(accessory.displayName.length).toEqual(TEST_DISPLAY_NAME.length + 1 + 4); // added hash!
 
       await awaitEventOnce(accessory, AccessoryEventTypes.ADVERTISED);
 
@@ -131,13 +113,9 @@ describe("Accessory", () => {
       expect(accessory.displayName).toEqual(displayNameWithIdentifyingMaterial);
 
       await awaitEventOnce(accessory, AccessoryEventTypes.ADVERTISED);
-
-      await accessory.unpublish();
     });
 
     test("Clean Accessory publish and unpublish with default advertiser selection", async () => {
-      const accessory = new Accessory(DEFAULT_DISPLAY_NAME, uuid.generate("foo"));
-
       const switchService = new Service.Switch("My Example Switch");
       accessory.addService(switchService);
 
@@ -150,18 +128,25 @@ describe("Accessory", () => {
 
       await accessory.publish(publishInfo);
 
-      expect(accessory.displayName.startsWith(DEFAULT_DISPLAY_NAME));
-      expect(accessory.displayName.length).toEqual(DEFAULT_DISPLAY_NAME.length + 1 + 4); // added hash!
+      expect(accessory.displayName.startsWith(TEST_DISPLAY_NAME));
+      expect(accessory.displayName.length).toEqual(TEST_DISPLAY_NAME.length + 1 + 4); // added hash!
 
       await awaitEventOnce(accessory, AccessoryEventTypes.ADVERTISED);
+    });
+  });
 
-      await accessory.unpublish();
+  describe("pairing", () => {
+    test("finish setup-pair", async () => {
+      const advertiser = new CiaoAdvertiser(accessoryInfoUnpaired);
+      advertiser.updateAdvertisement = jest.fn();
+      accessory._advertiser = advertiser;
+
+      // TODO accessory.handleInitialPairSetupFinished()
     });
   });
 
   describe("characteristicWarning", () => {
-    it("should emit characteristic warning", () => {
-      const accessory = new Accessory("Test Accessory", uuid.generate("Test"));
+    test("emit characteristic warning", () => {
       const handler = jest.fn();
       accessory.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, handler);
 
@@ -172,10 +157,9 @@ describe("Accessory", () => {
       expect(handler).toHaveBeenCalledTimes(1);
     });
 
-    it("should forward characteristic on bridged accessory", () => {
+    test("forward characteristic on bridged accessory", () => {
       const bridge = new Bridge("Test bridge", uuid.generate("bridge test"));
 
-      const accessory = new Accessory("Test Accessory", uuid.generate("Test"));
       bridge.addBridgedAccessory(accessory);
 
       const handler = jest.fn();
@@ -190,7 +174,6 @@ describe("Accessory", () => {
     });
 
     it("should run without characteristic warning handler", () => {
-      const accessory = new Accessory("Test Accessory", uuid.generate("Test"));
       const service = accessory.addService(Service.Lightbulb, "Light");
       const on = service.getCharacteristic(Characteristic.On);
 
@@ -198,9 +181,8 @@ describe("Accessory", () => {
     });
   });
 
-  describe("#serialize", () => {
-    it("should serialize accessory", () => {
-      const accessory = new Accessory("TestAccessory", uuid.generate("foo"));
+  describe("serialize", () => {
+    test("serialize accessory", () => {
       accessory.category = Categories.LIGHTBULB;
 
       const lightService = new Service.Lightbulb("TestLight", "subtype");
@@ -223,8 +205,8 @@ describe("Accessory", () => {
     });
   });
 
-  describe("#deserialize", () => {
-    it("should deserialize legacy json from homebridge", () => {
+  describe("deserialize", () => {
+    test("deserialize legacy json from homebridge", () => {
       const json = JSON.parse("{\"plugin\":\"homebridge-samplePlatform\",\"platform\":\"SamplePlatform\"," +
           "\"displayName\":\"2020-01-17T18:45:41.049Z\",\"UUID\":\"dc3951d8-662e-46f7-b6fe-d1b5b5e1a995\",\"category\":1," +
           "\"context\":{},\"linkedServices\":{\"0000003E-0000-1000-8000-0026BB765291\":[],\"00000043-0000-1000-8000-0026BB765291\":[]}," +
@@ -262,7 +244,7 @@ describe("Accessory", () => {
       expect(accessory.services.length).toEqual(2);
     });
 
-    it("should deserialize complete json", () => {
+    test("deserialize complete json", () => {
       // json for a light accessory
       const json = JSON.parse("{\"displayName\":\"TestAccessory\",\"UUID\":\"0beec7b5-ea3f-40fd-bc95-d0dd47f3c5bc\"," +
           "\"category\":5,\"services\":[{\"UUID\":\"0000003E-0000-1000-8000-0026BB765291\",\"hiddenService\":false," +
@@ -339,7 +321,9 @@ describe("Accessory", () => {
       expect(accessory.getService(Service.Lightbulb)!.linkedServices.length).toEqual(1);
       expect(accessory.getService(Service.Lightbulb)!.linkedServices[0].UUID).toEqual(Service.Switch.UUID);
     });
+  });
 
+  describe("Controller", () => {
     it("should deserialize controllers and remove/add/replace services correctly", () => {
       const accessory = new Accessory("TestAccessory", uuid.generate("test-controller-accessory"));
 
@@ -358,6 +342,40 @@ describe("Accessory", () => {
       expect(restoredAccessory.getService(Service.Outlet)).toBeDefined();
       expect(restoredAccessory.getService(Service.Switch)).toBeUndefined();
     });
-
   });
 });
+
+class TestController implements Controller {
+
+  controllerId(): ControllerIdentifier {
+    return "test-id";
+  }
+
+  constructServices(): ControllerServiceMap {
+    const lightService = new Service.Lightbulb("", "");
+    const switchService = new Service.Switch("", "");
+
+    return {
+      light: lightService,
+      switch: switchService,
+    };
+  }
+
+  initWithServices(serviceMap: ControllerServiceMap): void | ControllerServiceMap {
+    // serviceMap will be altered here to test update procedure
+    delete serviceMap.switch;
+    serviceMap.light = new Service.LightSensor("", "");
+    serviceMap.outlet = new Service.Outlet("", "");
+
+    return serviceMap;
+  }
+
+  configureServices(): void {
+    // do nothing
+  }
+
+  handleControllerRemoved(): void {
+    // do nothing
+  }
+
+}

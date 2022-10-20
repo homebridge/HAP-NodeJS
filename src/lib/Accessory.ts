@@ -571,7 +571,7 @@ export class Accessory extends EventEmitter {
 
   /**
    * Returns the bridging accessory if this accessory is bridged.
-   * Otherwise returns itself.
+   * Otherwise, returns itself.
    *
    * @returns the primary accessory
    */
@@ -1349,7 +1349,7 @@ export class Accessory extends EventEmitter {
     }, 1000);
     this.configurationChangeDebounceTimeout.unref();
     // 1d is fine, HomeKit is built that with configuration updates no iid or aid conflicts occur.
-    // Thus the only thing happening when the txt update arrives late is already removed accessories/services
+    // Thus, the only thing happening when the txt update arrives late is already removed accessories/services
     // not responding or new accessories/services not yet shown
   }
 
@@ -1371,7 +1371,7 @@ export class Accessory extends EventEmitter {
     this._accessoryInfo && this._accessoryInfo.addPairedClient(username, publicKey, PermissionTypes.ADMIN);
     this._accessoryInfo && this._accessoryInfo.save();
 
-    // update our advertisement so it can pick up on the paired status of AccessoryInfo
+    // update our advertisement, so it can pick up on the paired status of AccessoryInfo
     this._advertiser && this._advertiser.updateAdvertisement();
 
     callback();

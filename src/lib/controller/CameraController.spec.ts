@@ -66,7 +66,7 @@ const mockStreamingOptions: CameraStreamingOptions = {
   },
 };
 
-const mockRecordingOptions: CameraRecordingOptions = {
+export const mockRecordingOptions: CameraRecordingOptions = {
   prebufferLength: 4000,
   mediaContainerConfiguration: [{
     type: MediaContainerType.FRAGMENTED_MP4,

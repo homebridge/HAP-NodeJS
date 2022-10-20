@@ -82,7 +82,7 @@ export class HAPHTTPClient {
   }
 
   popReceiveBuffer(): Buffer {
-    expect(this.currentSocket).not.toBeUndefined();
+    expect(this.currentSocket).toBeDefined();
     expect(this.dataQueue.length > 0).toBeTruthy();
     const buffer = this.dataQueue.splice(0, 1)[0];
     if (this.encryption) {
@@ -131,7 +131,7 @@ export class HAPHTTPClient {
     if (this.encryption) {
       data = hapCrypto.layerEncrypt(data, this.encryption);
     }
-    expect(this.currentSocket).not.toBeUndefined();
+    expect(this.currentSocket).toBeDefined();
     this.currentSocket!.write(data);
   }
 

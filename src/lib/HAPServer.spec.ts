@@ -262,7 +262,7 @@ describe("HAPServer", () => {
       const exampleKey = crypto.randomBytes(32);
 
       server.on(HAPServerEventTypes.ADD_PAIRING, (connection, username, publicKey, permission, callback) => {
-        expect(connection.encryption).not.toBeUndefined();
+        expect(connection.encryption).toBeDefined();
         expect(username).toEqual(thirdUsername);
         expect(publicKey).toEqual(exampleKey);
         expect(permission).toEqual(PermissionTypes.ADMIN);
@@ -274,7 +274,7 @@ describe("HAPServer", () => {
 
     test("test /pairings REMOVE_PAIRING", async () => {
       server.on(HAPServerEventTypes.REMOVE_PAIRING, (connection, username, callback) => {
-        expect(connection.encryption).not.toBeUndefined();
+        expect(connection.encryption).toBeDefined();
         expect(username).toEqual(thirdUsername);
         callback(0);
       });
@@ -297,7 +297,7 @@ describe("HAPServer", () => {
       ];
 
       server.on(HAPServerEventTypes.LIST_PAIRINGS, (connection, callback) => {
-        expect(connection.encryption).not.toBeUndefined();
+        expect(connection.encryption).toBeDefined();
         callback(0, list);
       });
 
@@ -324,7 +324,7 @@ describe("HAPServer", () => {
       };
 
       server.on(HAPServerEventTypes.ACCESSORIES, (connection, callback) => {
-        expect(connection.encryption).not.toBeUndefined();
+        expect(connection.encryption).toBeDefined();
         callback(undefined, accessoryResponse);
       });
 
@@ -350,7 +350,7 @@ describe("HAPServer", () => {
       ];
 
       server.on(HAPServerEventTypes.GET_CHARACTERISTICS, (connection, request, callback) => {
-        expect(connection.encryption).not.toBeUndefined();
+        expect(connection.encryption).toBeDefined();
         expect(request.ids).toEqual(ids);
         expect(request.includeMeta).toBeFalsy();
         expect(request.includePerms).toBeFalsy();
@@ -378,7 +378,7 @@ describe("HAPServer", () => {
       ];
 
       server.on(HAPServerEventTypes.GET_CHARACTERISTICS, (connection, request, callback) => {
-        expect(connection.encryption).not.toBeUndefined();
+        expect(connection.encryption).toBeDefined();
         expect(request.ids).toEqual(ids);
         expect(request.includeMeta).toBeFalsy();
         expect(request.includePerms).toBeFalsy();
@@ -432,7 +432,7 @@ describe("HAPServer", () => {
       };
 
       server.on(HAPServerEventTypes.SET_CHARACTERISTICS, (connection, request, callback) => {
-        expect(connection.encryption).not.toBeUndefined();
+        expect(connection.encryption).toBeDefined();
         expect(request).toEqual(writeRequest);
         callback(undefined, hapResponse);
       });
@@ -472,7 +472,7 @@ describe("HAPServer", () => {
       };
 
       server.on(HAPServerEventTypes.SET_CHARACTERISTICS, (connection, request, callback) => {
-        expect(connection.encryption).not.toBeUndefined();
+        expect(connection.encryption).toBeDefined();
         expect(request).toEqual(writeRequest);
         callback(undefined, hapResponse);
       });
@@ -503,7 +503,7 @@ describe("HAPServer", () => {
       };
 
       server.on(HAPServerEventTypes.SET_CHARACTERISTICS, (connection, request, callback) => {
-        expect(connection.encryption).not.toBeUndefined();
+        expect(connection.encryption).toBeDefined();
         expect(request).toEqual(writeRequest);
         callback(undefined, hapResponse);
       });
@@ -534,7 +534,7 @@ describe("HAPServer", () => {
       });
       await client.sendAccessoriesRequest();
 
-      expect(hapConnection.timedWriteTimeout).not.toBeUndefined();
+      expect(hapConnection.timedWriteTimeout).toBeDefined();
       expect(hapConnection.timedWritePid).toBe(13337);
 
       await PromiseTimeout(120);
