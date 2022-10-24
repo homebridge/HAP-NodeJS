@@ -76,6 +76,11 @@ export const enum EventTriggerOption {
   MOTION = 0x01,
   /**
    * The Doorbell trigger. If enabled a doorbell button press should trigger the start of a recording.
+   *
+   * Note: While the doorbell is defined by the HomeKit specification and HAP-NodeJS supports (and the
+   * {@link RecordingManagement} advertises support for it), HomeKit HomeHubs will (as of now, iOS 15-16)
+   * never enable Doorbell triggers. Seemingly this is currently unsupported by Apple.
+   * See https://github.com/homebridge/HAP-NodeJS/issues/976#issuecomment-1280301989.
    */
   DOORBELL = 0x02,
 }
