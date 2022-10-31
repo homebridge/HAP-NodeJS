@@ -33,6 +33,10 @@ export const enum PairingFeatureFlag {
 }
 
 export const enum AdvertiserEvent {
+  /**
+   * Emitted if the underlying mDNS advertisers signals, that the service name
+   * was automatically changed due to some naming conflicts on the network.
+   */
   UPDATED_NAME = "updated-name",
 }
 
@@ -66,8 +70,12 @@ export interface ServiceNetworkOptions {
   disabledIpv6?: boolean;
 }
 
+/**
+ * A generic Advertiser interface required for any MDNS Advertiser backend implementations.
+ *
+ * All implementations have to extend NodeJS' {@link EventEmitter} and emit the events defined in {@link AdvertiserEvent}.
+ */
 export interface Advertiser {
-
   initPort(port: number): void;
 
   startAdvertising(): Promise<void>;
@@ -75,7 +83,6 @@ export interface Advertiser {
   updateAdvertisement(silent?: boolean): void;
 
   destroy(): void;
-
 }
 
 /**
@@ -87,7 +94,6 @@ export interface Advertiser {
  * mdns payload).
  */
 export class CiaoAdvertiser extends EventEmitter implements Advertiser {
-
   static protocolVersion = "1.1";
   static protocolVersionService = "1.1.0";
 
@@ -175,14 +181,12 @@ export class CiaoAdvertiser extends EventEmitter implements Advertiser {
     flags.forEach(flag => value |= flag);
     return value;
   }
-
 }
 
 /**
  * Advertiser base on the legacy "bonjour-hap" library.
  */
 export class BonjourHAPAdvertiser extends EventEmitter implements Advertiser {
-
   private readonly accessoryInfo: AccessoryInfo;
   private readonly setupHash: string;
   private readonly serviceOptions?: ServiceNetworkOptions;
