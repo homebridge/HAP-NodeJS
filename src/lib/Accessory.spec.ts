@@ -1,9 +1,10 @@
+import crypto from "crypto";
 import { Accessory, AccessoryEventTypes, Categories, MDNSAdvertiser, PublishInfo } from "./Accessory";
-import { CiaoAdvertiser } from "./Advertiser";
+import { BonjourHAPAdvertiser } from "./Advertiser";
 import { Bridge } from "./Bridge";
 import { Characteristic, CharacteristicEventTypes } from "./Characteristic";
 import { Controller, ControllerIdentifier, ControllerServiceMap } from "./controller";
-import { AccessoryInfo } from "./model/AccessoryInfo";
+import { AccessoryInfo, PermissionTypes } from "./model/AccessoryInfo";
 import { Service } from "./Service";
 import { awaitEventOnce, PromiseTimeout } from "./util/promise-utils";
 import * as uuid from "./util/uuid";
@@ -36,8 +37,8 @@ describe("Accessory", () => {
   });
 
   afterEach(async () => {
-    await accessory.unpublish();
-    await accessory.destroy();
+    await accessory?.unpublish();
+    await accessory?.destroy();
   });
 
   describe("constructor", () => {
@@ -137,11 +138,30 @@ describe("Accessory", () => {
 
   describe("pairing", () => {
     test("finish setup-pair", async () => {
-      const advertiser = new CiaoAdvertiser(accessoryInfoUnpaired);
+      // TODO fix: CiaoAdvertiser constructor creates open handles!
+      // const advertiser = new CiaoAdvertiser(accessoryInfoUnpaired);
+
+      const advertiser = new BonjourHAPAdvertiser(accessoryInfoUnpaired);
       advertiser.updateAdvertisement = jest.fn();
       accessory._advertiser = advertiser;
 
-      // TODO accessory.handleInitialPairSetupFinished()
+      accessoryInfoUnpaired.addPairedClient = jest.fn();
+      accessory._accessoryInfo = accessoryInfoUnpaired;
+
+      const publicKey = crypto.randomBytes(32);
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      const callback = jest.fn();
+      // @ts-expect-error: private access
+      accessory.handleInitialPairSetupFinished(TEST_USERNAME, publicKey, callback);
+
+      expect(accessoryInfoUnpaired.addPairedClient).toBeCalledTimes(1);
+      expect(accessoryInfoUnpaired.addPairedClient).toBeCalledWith(TEST_USERNAME, publicKey, PermissionTypes.ADMIN);
+
+      expect(saveMock).toBeCalledTimes(1);
+
+      expect(advertiser.updateAdvertisement).toBeCalledTimes(1);
+
+      await advertiser.destroy();
     });
   });
 
@@ -325,8 +345,6 @@ describe("Accessory", () => {
 
   describe("Controller", () => {
     it("should deserialize controllers and remove/add/replace services correctly", () => {
-      const accessory = new Accessory("TestAccessory", uuid.generate("test-controller-accessory"));
-
       accessory.configureController(new TestController());
 
       const serialized = Accessory.serialize(accessory);
