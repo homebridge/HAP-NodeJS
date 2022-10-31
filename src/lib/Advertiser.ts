@@ -1,19 +1,12 @@
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference path="../../@types/bonjour-hap.d.ts" />
-import ciao, {
-  CiaoService,
-  MDNSServerOptions,
-  Responder,
-  ServiceEvent,
-  ServiceTxt,
-  ServiceType,
-} from "@homebridge/ciao";
+import ciao, { CiaoService, MDNSServerOptions, Responder, ServiceEvent, ServiceTxt, ServiceType } from "@homebridge/ciao";
 import { InterfaceName, IPAddress } from "@homebridge/ciao/lib/NetworkManager";
+import dbus, { DBusInterface, MessageBus } from "@homebridge/dbus-native";
 import assert from "assert";
 import bonjour, { BonjourHAP, BonjourHAPService, MulticastOptions } from "bonjour-hap";
 import crypto from "crypto";
 import createDebug from "debug";
-import dbus, { MessageBus } from "@homebridge/dbus-native";
 import { EventEmitter } from "events";
 import { AccessoryInfo } from "./model/AccessoryInfo";
 import { PromiseTimeout } from "./util/promise-utils";
@@ -40,6 +33,10 @@ export const enum PairingFeatureFlag {
 }
 
 export const enum AdvertiserEvent {
+  /**
+   * Emitted if the underlying mDNS advertisers signals, that the service name
+   * was automatically changed due to some naming conflicts on the network.
+   */
   UPDATED_NAME = "updated-name",
 }
 
@@ -73,8 +70,12 @@ export interface ServiceNetworkOptions {
   disabledIpv6?: boolean;
 }
 
+/**
+ * A generic Advertiser interface required for any MDNS Advertiser backend implementations.
+ *
+ * All implementations have to extend NodeJS' {@link EventEmitter} and emit the events defined in {@link AdvertiserEvent}.
+ */
 export interface Advertiser {
-
   initPort(port: number): void;
 
   startAdvertising(): Promise<void>;
@@ -82,7 +83,6 @@ export interface Advertiser {
   updateAdvertisement(silent?: boolean): void;
 
   destroy(): void;
-
 }
 
 /**
@@ -94,7 +94,6 @@ export interface Advertiser {
  * mdns payload).
  */
 export class CiaoAdvertiser extends EventEmitter implements Advertiser {
-
   static protocolVersion = "1.1";
   static protocolVersionService = "1.1.0";
 
@@ -182,14 +181,12 @@ export class CiaoAdvertiser extends EventEmitter implements Advertiser {
     flags.forEach(flag => value |= flag);
     return value;
   }
-
 }
 
 /**
  * Advertiser base on the legacy "bonjour-hap" library.
  */
 export class BonjourHAPAdvertiser extends EventEmitter implements Advertiser {
-
   private readonly accessoryInfo: AccessoryInfo;
   private readonly setupHash: string;
   private readonly serviceOptions?: ServiceNetworkOptions;
@@ -285,7 +282,13 @@ function messageBusConnectionResult(bus: MessageBus): Promise<void> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function dbusInvoke( bus: MessageBus, destination: string, path: string, dbusInterface: string, member: string, others?: any): Promise<any> {
   return new Promise((resolve, reject) => {
-    const command = { destination, path, interface: dbusInterface, member, ...(others || {}) };
+    const command = {
+      destination,
+      path,
+      interface: dbusInterface,
+      member,
+      ...(others || {}),
+    };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     bus.invoke(command, (err: any, result: any) => {
@@ -299,9 +302,27 @@ function dbusInvoke( bus: MessageBus, destination: string, path: string, dbusInt
   });
 }
 
+
+/**
+ * AvahiServerState.
+ *
+ * Refer to https://github.com/lathiat/avahi/blob/fd482a74625b8db8547b8cfca3ee3d3c6c721423/avahi-common/defs.h#L220-L227.
+ */
+const enum AvahiServerState {
+  // noinspection JSUnusedGlobalSymbols
+  INVALID = 0,
+  REGISTERING,
+  RUNNING,
+  COLLISION,
+  FAILURE
+}
+
 /**
  * Advertiser based on the Avahi D-Bus library.
  * For (very crappy) docs on the interface, see the XML files at: https://github.com/lathiat/avahi/tree/master/avahi-daemon.
+ *
+ * Refer to https://github.com/lathiat/avahi/blob/fd482a74625b8db8547b8cfca3ee3d3c6c721423/avahi-common/defs.h#L120-L155 for a
+ * rough API usage guide of Avahi.
  */
 export class AvahiAdvertiser extends EventEmitter implements Advertiser {
   private readonly accessoryInfo: AccessoryInfo;
@@ -310,16 +331,21 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
   private port?: number;
 
   private bus?: MessageBus;
+  private avahiServerInterface?: DBusInterface;
   private path?: string;
+
+  private readonly stateChangeHandler: (state: AvahiServerState) => void;
 
   constructor(accessoryInfo: AccessoryInfo) {
     super();
     this.accessoryInfo = accessoryInfo;
     this.setupHash = CiaoAdvertiser.computeSetupHash(accessoryInfo);
 
+    debug(`Preparing Advertiser for '${this.accessoryInfo.displayName}' using Avahi backend!`);
+
     this.bus = dbus.systemBus();
 
-    debug(`Preparing Advertiser for '${this.accessoryInfo.displayName}' using Avahi backend!`);
+    this.stateChangeHandler = this.handleStateChangedEvent.bind(this);
   }
 
   private createTxt(): Array<Buffer> {
@@ -342,6 +368,11 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
 
     debug(`Starting to advertise '${this.accessoryInfo.displayName}' using Avahi backend!`);
 
+    if (!this.avahiServerInterface) {
+      this.avahiServerInterface = await AvahiAdvertiser.avahiInterface(this.bus, "Server");
+      this.avahiServerInterface.on("StateChanged", this.stateChangeHandler);
+    }
+
     this.path = await AvahiAdvertiser.avahiInvoke(this.bus, "/", "Server", "EntryGroupNew") as string;
     await AvahiAdvertiser.avahiInvoke(this.bus, this.path, "EntryGroup", "AddService", {
       body: [
@@ -358,6 +389,20 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
       signature: "iiussssqaay",
     });
     await AvahiAdvertiser.avahiInvoke(this.bus, this.path, "EntryGroup", "Commit");
+  }
+
+  /**
+   * Event handler for the `StateChanged` event of the `org.freedesktop.Avahi.Server` DBus interface.
+   *
+   * This is called once the state of the running avahi-daemon changes its running state.
+   * @param state - The state the server changed into {@see AvahiServerState}.
+   */
+  private handleStateChangedEvent(state: AvahiServerState): void {
+    if (state === AvahiServerState.RUNNING && this.path) {
+      debug("Found Avahi daemon to have restarted!");
+      this.startAdvertising()
+        .catch(reason => console.error("Could not (re-)create mDNS advertisement. The HAP-Server won't be discoverable: " + reason));
+    }
   }
 
   public async updateAdvertisement(silent?: boolean): Promise<void> {
@@ -394,6 +439,11 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
         debug("Destroying Avahi advertisement failed: " + error);
       }
       this.path = undefined;
+    }
+
+    if (this.avahiServerInterface) {
+      this.avahiServerInterface.removeListener("StateChanged", this.stateChangeHandler);
+      this.avahiServerInterface = undefined;
     }
 
     this.bus.connection.stream.destroy();
@@ -435,6 +485,20 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
       member,
       others,
     );
+  }
+
+  private static avahiInterface(bus: MessageBus, dbusInterface: string): Promise<DBusInterface> {
+    return new Promise((resolve, reject) => {
+      bus
+        .getService("org.freedesktop.Avahi")
+        .getInterface("/", "org.freedesktop.Avahi." + dbusInterface, (error, iface) => {
+          if (error || !iface) {
+            reject(error ?? new Error("Interface not present!"));
+          } else {
+            resolve(iface);
+          }
+        });
+    });
   }
 }
 

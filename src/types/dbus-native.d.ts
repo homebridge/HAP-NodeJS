@@ -9,9 +9,34 @@ declare module "@homebridge/dbus-native" {
 
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types,@typescript-eslint/no-explicit-any
     public invoke(message: any, callback: any): void;
+
+    public getService(name: string): DBusService;
   }
 
   export class BusConnection extends EventEmitter {
     public stream: Socket;
+  }
+
+  export class DBusService {
+    public name: string;
+    public bus: MessageBus;
+
+    // the dbus object has additional properties `proxy` and `nodes´ added to it!
+    public getObject(name: string, callback: (error: null | Error, obj?: DBusObject) => void): DBusObject;
+    public getInterface(objName: string, ifaceName: string, callback: (error: null | Error, iface?: DBusInterface) => void): void;
+  }
+
+  export class DBusObject {
+    public name: string;
+    public service: DBusService;
+
+    public as(name: string): DBusInterface;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  export class DBusInterface extends EventEmitter implements Record<string, any> {
+    public $parent: DBusObject;
+    public $name: string; // string interface name
+
   }
 }

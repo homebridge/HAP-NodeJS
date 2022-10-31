@@ -283,6 +283,10 @@ export const enum MDNSAdvertiser {
   AVAHI = "avahi",
   /**
    * Use systemd-resolved/D-Bus as advertiser.
+   *
+   * Note: The systemd-resolved D-Bus interface doesn't provide means to detect restarts of the service.
+   * Therefore, we can't detect if our advertisement might be lost due to a restart of the systemd-resolved daemon restart.
+   * Consequentially, treat this feature as an experimental feature.
    */
   RESOLVED = "resolved",
 }
