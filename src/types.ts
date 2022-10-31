@@ -3,6 +3,13 @@ export type Nullable<T> = T | null;
 export type WithUUID<T> = T & { UUID: string };
 
 /**
+ * {@see Partial} but allowing null as a value.
+ */
+export type PartialAllowingNull<T> = {
+  [P in keyof T]?: T[P] | null;
+}
+
+/**
  * UUID string uniquely identifying every HAP connection.
  */
 export type SessionIdentifier = string;
