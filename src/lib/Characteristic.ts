@@ -386,7 +386,7 @@ export interface CharacteristicProps {
    */
   maxDataLen?: number;
   /**
-   * Defines a array of valid values to be used for the characteristic.
+   * Defines an array of valid values to be used for the characteristic.
    */
   validValues?: number[];
   /**
@@ -421,7 +421,7 @@ export const enum ChangeReason {
    */
   UPDATE = "update",
   /**
-   * Used when when HomeKit reads a value or the API user calls the deprecated method {@link Characteristic.getValue}.
+   * Used when HomeKit reads a value or the API user calls the deprecated method {@link Characteristic.getValue}.
    */
   READ = "read",
   /**
@@ -1028,7 +1028,7 @@ export class Characteristic extends EventEmitter {
 
   /**
    * Accepts a function that will be called when setting the value of a Characteristic.
-   * If the characteristic supports {@link Perms.WRITE_RESPONSE} and the request requests a write response value,
+   * If the characteristic supports {@link Perms.WRITE_RESPONSE} and the request requests a write-response value,
    * the returned value will be used.
    * May optionally return a promise.
    *
@@ -1264,7 +1264,7 @@ export class Characteristic extends EventEmitter {
   }
 
   /**
-   * This method can be used to gain a Iterator to loop over all valid values defined for this characteristic.
+   * This method can be used to gain an Iterator to loop over all valid values defined for this characteristic.
    *
    * The range of valid values can be defined using three different ways via the {@link CharacteristicProps} object
    * (set via the {@link setProps} method):
@@ -1297,10 +1297,10 @@ export class Characteristic extends EventEmitter {
 
   // noinspection JSUnusedGlobalSymbols
   /**
-   * This method can be used to setup additional authorization for a characteristic.
-   * For one it adds the {@link Perms.ADDITIONAL_AUTHORIZATION} permission to the characteristic
+   * This method can be used to set up additional authorization for a characteristic.
+   * For one, it adds the {@link Perms.ADDITIONAL_AUTHORIZATION} permission to the characteristic
    * (if it wasn't already) to signal support for additional authorization to HomeKit.
-   * Additionally an {@link AdditionalAuthorizationHandler} is setup up which is called
+   * Additionally, an {@link AdditionalAuthorizationHandler} is set up which is called
    * before a write request is performed.
    *
    * Additional Authorization Data can be added to SET request via a custom iOS App.
@@ -1342,32 +1342,41 @@ export class Characteristic extends EventEmitter {
 
   /**
    * This updates the value by calling the {@link CharacteristicEventTypes.SET} event handler associated with the characteristic.
-   * This acts the same way as when a HomeKit controller sends a /characteristics request to update the characteristic.
-   * A event notification will be sent to all connected HomeKit controllers which are registered
+   * This acts the same way as when a HomeKit controller sends a `/characteristics` request to update the characteristic.
+   * An event notification will be sent to all connected HomeKit controllers which are registered
    * to receive event notifications for this characteristic.
    *
    * This method behaves like a {@link updateValue} call with the addition that the own {@link CharacteristicEventTypes.SET}
    * event handler is called.
    *
    * @param value - The new value.
+   *
+   * Note: If you don't want the {@link CharacteristicEventTypes.SET} to be called, refer to {@link updateValue}.
    */
   setValue(value: CharacteristicValue): Characteristic
   /**
    * Sets the state of the characteristic to an errored state.
-   * If a onGet or GET handler is set up, the errored state will be ignored and the characteristic
-   * will always query the latest state by calling the provided handler.
+   *
+   * If a {@link onGet} or {@link CharacteristicEventTypes.GET} handler is set up,
+   * the errored state will be ignored and the characteristic will always query the latest state by calling the provided handler.
    *
    * If a generic error object is supplied, the characteristic tries to extract a {@link HAPStatus} code
    * from the error message string. If not possible a generic {@link HAPStatus.SERVICE_COMMUNICATION_FAILURE} will be used.
    * If the supplied error object is an instance of {@link HapStatusError} the corresponding status will be used.
    *
+   * This doesn't call any registered {@link onSet} or {@link CharacteristicEventTypes.SET} handlers.
+   *
    * @param error - The error object
+   *
+   * Note: Erroneous state is never **pushed** to the client side. Only, if the HomeKit client requests the current
+   *  state of the Characteristic, the corresponding {@link HapStatusError} is returned. As described above,
+   *  any {@link onGet} or {@link CharacteristicEventTypes.GET} handlers have precedence.
    */
   setValue(error: HapStatusError | Error): Characteristic;
   /**
    * This updates the value by calling the {@link CharacteristicEventTypes.SET} event handler associated with the characteristic.
-   * This acts the same way as when a HomeKit controller sends a /characteristics request to update the characteristic.
-   * A event notification will be sent to all connected HomeKit controllers which are registered
+   * This acts the same way as when a HomeKit controller sends a `/characteristics` request to update the characteristic.
+   * An event notification will be sent to all connected HomeKit controllers which are registered
    * to receive event notifications for this characteristic.
    *
    * This method behaves like a {@link updateValue} call with the addition that the own {@link CharacteristicEventTypes.SET}
@@ -1377,13 +1386,14 @@ export class Characteristic extends EventEmitter {
    * @param callback - Deprecated parameter there to provide backwards compatibility. Called once the
    *   {@link CharacteristicEventTypes.SET} event handler returns.
    * @param context - Passed to the {@link CharacteristicEventTypes.SET} and {@link CharacteristicEventTypes.CHANGE} event handler.
-   * @deprecated Parameter callback is deprecated.
+   *
+   * @deprecated Parameter `callback` is deprecated.
    */
   setValue(value: CharacteristicValue, callback?: CharacteristicSetCallback, context?: CharacteristicContext): Characteristic
   /**
    * This updates the value by calling the {@link CharacteristicEventTypes.SET} event handler associated with the characteristic.
-   * This acts the same way as when a HomeKit controller sends a /characteristics request to update the characteristic.
-   * A event notification will be sent to all connected HomeKit controllers which are registered
+   * This acts the same way as when a HomeKit controller sends a `/characteristics` request to update the characteristic.
+   * An event notification will be sent to all connected HomeKit controllers which are registered
    * to receive event notifications for this characteristic.
    *
    * This method behaves like a {@link updateValue} call with the addition that the own {@link CharacteristicEventTypes.SET}
@@ -1391,6 +1401,8 @@ export class Characteristic extends EventEmitter {
    *
    * @param value - The new value.
    * @param context - Passed to the {@link CharacteristicEventTypes.SET} and {@link CharacteristicEventTypes.CHANGE} event handler.
+   *
+   * Note: If you don't want the {@link CharacteristicEventTypes.SET} to be called, refer to {@link updateValue}.
    */
   setValue(value: CharacteristicValue, context?: CharacteristicContext): Characteristic;
   setValue(value: CharacteristicValue | Error, callback?: CharacteristicSetCallback, context?: CharacteristicContext): Characteristic {
@@ -1438,36 +1450,50 @@ export class Characteristic extends EventEmitter {
   }
 
   /**
-   * This updates the value of the characteristic. If the value changed, a event notification will be sent to all connected
+   * This updates the value of the characteristic. If the value changed, an event notification will be sent to all connected
    * HomeKit controllers which are registered to receive event notifications for this characteristic.
    *
    * @param value - The new value or a `Error` or {@link HapStatusError}.
+   *
+   * Note: Refer to the respective overloads for {@link CharacteristicValue} or {@link HapStatusError} for respective documentation.
    */
   updateValue(value: Nullable<CharacteristicValue> | Error | HapStatusError): Characteristic;
   /**
+   * This updates the value of the characteristic. If the value changed, an event notification will be sent to all connected
+   * HomeKit controllers which are registered to receive event notifications for this characteristic.
+   *
+   * @param value - The new value.
+   */
+  updateValue(value: Nullable<CharacteristicValue>): Characteristic;
+  /**
    * Sets the state of the characteristic to an errored state.
-   * If a onGet or GET handler is set up, the errored state will be ignored and the characteristic
-   * will always query the latest state by calling the provided handler.
+   * If a {@link onGet} or {@link CharacteristicEventTypes.GET} handler is set up,
+   * the errored state will be ignored and the characteristic will always query the latest state by calling the provided handler.
    *
    * If a generic error object is supplied, the characteristic tries to extract a {@link HAPStatus} code
    * from the error message string. If not possible a generic {@link HAPStatus.SERVICE_COMMUNICATION_FAILURE} will be used.
    * If the supplied error object is an instance of {@link HapStatusError} the corresponding status will be used.
    *
    * @param error - The error object
+   *
+   * Note: Erroneous state is never **pushed** to the client side. Only, if the HomeKit client requests the current
+   *  state of the Characteristic, the corresponding {@link HapStatusError} is returned. As described above,
+   *  any {@link onGet} or {@link CharacteristicEventTypes.GET} handlers have precedence.
    */
   updateValue(error: Error | HapStatusError): Characteristic;
   /**
-   * This updates the value of the characteristic. If the value changed, a event notification will be sent to all connected
+   * This updates the value of the characteristic. If the value changed, an event notification will be sent to all connected
    * HomeKit controllers which are registered to receive event notifications for this characteristic.
    *
    * @param value - The new value.
    * @param callback - Deprecated parameter there to provide backwards compatibility. Callback is called instantly.
    * @param context - Passed to the {@link CharacteristicEventTypes.CHANGE} event handler.
-   * @deprecated Parameter callback is deprecated.
+   *
+   * @deprecated Parameter `callback` is deprecated.
    */
   updateValue(value: Nullable<CharacteristicValue>, callback?: () => void, context?: CharacteristicContext): Characteristic;
   /**
-   * This updates the value of the characteristic. If the value changed, a event notification will be sent to all connected
+   * This updates the value of the characteristic. If the value changed, an event notification will be sent to all connected
    * HomeKit controllers which are registered to receive event notifications for this characteristic.
    *
    * @param value - The new value.
@@ -1682,8 +1708,8 @@ export class Characteristic extends EventEmitter {
    * @param value - The updated value
    * @param connection - The connection from which the request originated from
    * @param context - Deprecated parameter. There for backwards compatibility.
-   * @returns Promise resolve to void in normal operation. When characteristic supports write response, the
-   *  HAP request requests write response and the set handler returns a write response value, the respective
+   * @returns Promise resolve to void in normal operation. When characteristic supports write-response, HAP
+   *  requests a write-response and the set handler returns a write-response value, the respective
    *  write response value is resolved.
    * @private
    */
@@ -1816,7 +1842,7 @@ export class Characteristic extends EventEmitter {
   }
 
   /**
-   * Called once a HomeKit controller subscribes to events of this characteristics.
+   * Called once a HomeKit controller subscribes to events of this characteristic.
    * @private
    */
   subscribe(): void {
@@ -1827,7 +1853,7 @@ export class Characteristic extends EventEmitter {
   }
 
   /**
-   * Called once a HomeKit controller unsubscribe to events of this characteristics or a HomeKit controller
+   * Called once a HomeKit controller unsubscribe to events of this characteristic or a HomeKit controller
    * which was subscribed to this characteristic disconnects.
    * @private
    */
@@ -1992,7 +2018,7 @@ export class Characteristic extends EventEmitter {
 
   /**
    * Checks if the value received from the API call is valid.
-   * It adjust the value where it makes sense, prints a warning where values may be rejected with an error
+   * It adjusts the value where it makes sense, prints a warning where values may be rejected with an error
    * in the future and throws an error which can't be converted to a valid value.
    *
    * @param value - The value received from the API call
@@ -2015,13 +2041,13 @@ export class Characteristic extends EventEmitter {
        * null is actually a perfectly valid value for characteristics to have.
        * The Home app will show "no response" for some characteristics for which it can't handle null
        * but ultimately its valid and the developers decision what the return.
-       * BUT: out of history hap-nodejs did replaced null with the last known value and thus
+       * BUT: out of history hap-nodejs did replace null with the last known value and thus
        * homebridge devs started to adopting this method as a way of not changing the value in a GET handler.
        * As an intermediate step we kept the behavior but added a warning printed to the console.
        * In a future update we will do the breaking change of return null below!
        */
 
-      if (this.UUID.endsWith(BASE_UUID)) { // we have a apple defined characteristic (at least assuming nobody else uses the UUID namespace)
+      if (this.UUID.endsWith(BASE_UUID)) { // we have an apple defined characteristic (at least assuming nobody else uses the UUID namespace)
         if (this.UUID === ProgrammableSwitchEvent.UUID) {
           return value; // null is allowed as a value for ProgrammableSwitchEvent
         }
