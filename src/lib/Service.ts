@@ -91,6 +91,7 @@ import {
 } from "./definitions";
 import { IdentifierCache } from "./model/IdentifierCache";
 import { HAPConnection } from "./util/eventedhttp";
+import { HapStatusError } from "./util/hapStatusError";
 import { toShortForm } from "./util/uuid";
 
 const debug = createDebug("HAP-NodeJS:Service");
@@ -147,7 +148,7 @@ export declare interface Service {
  * "Door Lock Mechanism" service might contain two values, one for the "desired lock state" and one for the
  * "current lock state". A particular Service is distinguished from others by its "type", which is a UUID.
  * HomeKit provides a set of known Service UUIDs defined in HomeKit.ts along with a corresponding
- * concrete subclass that you can instantiate directly to setup the necessary values. These natively-supported
+ * concrete subclass that you can instantiate directly to set up the necessary values. These natively-supported
  * Services are expected to contain a particular set of Characteristics.
  *
  * Unlike Characteristics, where you cannot have two Characteristics with the same UUID in the same Service,
@@ -320,7 +321,7 @@ export class Service extends EventEmitter {
   }
 
   /**
-   * Returns an id which uniquely identifies an service on the associated accessory.
+   * Returns an id which uniquely identifies a service on the associated accessory.
    * The serviceId is a concatenation of the UUID for the service (defined by HAP) and the subtype (could be empty)
    * which is programmatically defined by the programmer.
    *
@@ -475,13 +476,79 @@ export class Service extends EventEmitter {
     return false;
   }
 
-  public setCharacteristic<T extends WithUUID<{new (): Characteristic}>>(name: string | T, value: CharacteristicValue): Service {
+  /**
+   * This updates the value by calling the {@link CharacteristicEventTypes.SET} event handler associated with the characteristic.
+   * This acts the same way as when a HomeKit controller sends a `/characteristics` request to update the characteristic.
+   * An event notification will be sent to all connected HomeKit controllers which are registered
+   * to receive event notifications for this characteristic.
+   *
+   * This method behaves like a {@link updateValue} call with the addition that the own {@link CharacteristicEventTypes.SET}
+   * event handler is called.
+   *
+   * @param name - The name or the constructor of the desired {@link Characteristic}.
+   * @param value - The updated value.
+   *
+   * Note: If you don't want the {@link CharacteristicEventTypes.SET} to be called, refer to {@link updateCharacteristic}.
+   */
+  public setCharacteristic<T extends WithUUID<{new (): Characteristic}>>(name: string | T, value: CharacteristicValue): Service;
+  /**
+   * Sets the state of the characteristic to an errored state.
+   *
+   * If a {@link onGet} or {@link CharacteristicEventTypes.GET} handler is set up,
+   * the errored state will be ignored and the characteristic will always query the latest state by calling the provided handler.
+   *
+   * If a generic error object is supplied, the characteristic tries to extract a {@link HAPStatus} code
+   * from the error message string. If not possible a generic {@link HAPStatus.SERVICE_COMMUNICATION_FAILURE} will be used.
+   * If the supplied error object is an instance of {@link HapStatusError} the corresponding status will be used.
+   *
+   * This doesn't call any registered {@link onSet} or {@link CharacteristicEventTypes.SET} handlers.
+   *
+   * @param name - The name or the constructor of the desired {@link Characteristic}.
+   * @param error - The error object
+   *
+   * Note: Erroneous state is never **pushed** to the client side. Only, if the HomeKit client requests the current
+   *  state of the Characteristic, the corresponding {@link HapStatusError} is returned. As described above,
+   *  any {@link onGet} or {@link CharacteristicEventTypes.GET} handlers have preference.
+   */
+  public setCharacteristic<T extends WithUUID<{new (): Characteristic}>>(name: string | T, error: HapStatusError | Error): Service
+  public setCharacteristic<T extends WithUUID<{new (): Characteristic}>>(
+    name: string | T,
+    value: CharacteristicValue | HapStatusError | Error,
+  ): Service {
+    // @ts-expect-error: We know that both overloads exists individually. There is just no publicly exposed type for that!
     this.getCharacteristic(name)!.setValue(value);
     return this; // for chaining
   }
 
-  // A function to only updating the remote value, but not firing the 'set' event.
-  public updateCharacteristic<T extends WithUUID<{new (): Characteristic}>>(name: string | T, value: CharacteristicValue): Service {
+  /**
+   * This updates the value of the characteristic. If the value changed, an event notification will be sent to all connected
+   * HomeKit controllers which are registered to receive event notifications for this characteristic.
+   *
+   * @param name - The name or the constructor of the desired {@link Characteristic}.
+   * @param value - The new value.
+   */
+  public updateCharacteristic<T extends WithUUID<{new (): Characteristic}>>(name: string | T, value: Nullable<CharacteristicValue>): Service;
+  /**
+   * Sets the state of the characteristic to an errored state.
+   * If a {@link onGet} or {@link CharacteristicEventTypes.GET} handler is set up,
+   * the errored state will be ignored and the characteristic will always query the latest state by calling the provided handler.
+   *
+   * If a generic error object is supplied, the characteristic tries to extract a {@link HAPStatus} code
+   * from the error message string. If not possible a generic {@link HAPStatus.SERVICE_COMMUNICATION_FAILURE} will be used.
+   * If the supplied error object is an instance of {@link HapStatusError} the corresponding status will be used.
+   *
+   * @param name - The name or the constructor of the desired {@link Characteristic}.
+   * @param error - The error object
+   *
+   * Note: Erroneous state is never **pushed** to the client side. Only, if the HomeKit client requests the current
+   *  state of the Characteristic, the corresponding {@link HapStatusError} is returned. As described above,
+   *  any {@link onGet} or {@link CharacteristicEventTypes.GET} handlers have precedence.
+   */
+  public updateCharacteristic<T extends WithUUID<{new (): Characteristic}>>(name: string | T, error: HapStatusError | Error): Service
+  public updateCharacteristic<T extends WithUUID<{new (): Characteristic}>>(
+    name: string | T,
+    value: Nullable<CharacteristicValue> | HapStatusError | Error,
+  ): Service {
     this.getCharacteristic(name)!.updateValue(value);
     return this;
   }
@@ -500,7 +567,7 @@ export class Service extends EventEmitter {
   /**
    * This method was created to copy all characteristics from another service to this.
    * It's only adopting is currently in homebridge to merge the AccessoryInformation service. So some things
-   * my be explicitly tailored towards this use case.
+   * may be explicitly tailored towards this use case.
    *
    * It will not remove characteristics which are present currently but not added on the other characteristic.
    * It will not replace the characteristic if the value is falsy (except of '0' or 'false')
@@ -521,7 +588,7 @@ export class Service extends EventEmitter {
         delete foreignCharacteristics[characteristic.UUID];
 
         if (!foreignCharacteristic.value && foreignCharacteristic.value !== 0 && foreignCharacteristic.value !== false) {
-          return; // ignore falsy values except if its the number zero or literally false
+          return; // ignore falsy values except if it's the number zero or literally false
         }
 
         characteristic.replaceBy(foreignCharacteristic);
