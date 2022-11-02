@@ -547,7 +547,7 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
 
     debug(`Starting to advertise '${this.accessoryInfo.displayName}' using systemd-resolved backend!`);
 
-    this.path = await ResolvedAdvertiser.resolvedInvoke(this.bus, "RegisterService", {
+    this.path = await ResolvedAdvertiser.managerInvoke(this.bus, "RegisterService", {
       body: [
         this.accessoryInfo.displayName, // name
         this.accessoryInfo.displayName, // name_template
@@ -580,7 +580,7 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
 
     if (this.path) {
       try {
-        await ResolvedAdvertiser.resolvedInvoke(this.bus, "UnregisterService", {
+        await ResolvedAdvertiser.managerInvoke(this.bus, "UnregisterService", {
           body: [this.path],
           signature: "o",
         });
@@ -616,13 +616,37 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
 
       try {
         // Ensure that systemd-resolved is accessible.
-        await this.resolvedInvoke(bus, "ResolveHostname", {
+        await this.managerInvoke(bus, "ResolveHostname", {
           body: [0, "127.0.0.1", 0, 0],
           signature: "isit",
         });
         debug("Detected systemd-resolved over DBus interface running version.");
       } catch (error) {
         debug("systemd-resolved/DBus classified unavailable due to missing systemd-resolved interface!");
+        return false;
+      }
+
+      try {
+        const mdnsStatus = await this.resolvedInvoke(
+          bus,
+          "org.freedesktop.DBus.Properties",
+          "Get",
+          {
+            body: ["org.freedesktop.resolve1.Manager", "MulticastDNS"],
+            signature: "ss",
+          },
+        );
+
+        if (mdnsStatus[0].type !== "s") {
+          throw new Error("Invalid type for MulticastDNS");
+        }
+
+        if (mdnsStatus[1][0] !== "yes" ) {
+          debug("systemd-resolved/DBus classified unavailable because MulticastDNS is not enabled!");
+          return false;
+        }
+      } catch (error) {
+        debug("systemd-resolved/DBus classified unavailable due to failure checking system status: " + error);
         return false;
       }
 
@@ -633,14 +657,19 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private static resolvedInvoke(bus: MessageBus, member: string, others?: any): Promise<any> {
+  private static resolvedInvoke(bus: MessageBus, dbusInterface: string, member: string, others?: any): Promise<any> {
     return dbusInvoke(
       bus,
       "org.freedesktop.resolve1",
       "/org/freedesktop/resolve1",
-      "org.freedesktop.resolve1.Manager",
+      dbusInterface,
       member,
       others,
     );
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private static managerInvoke(bus: MessageBus, member: string, others?: any): Promise<any> {
+    return this.resolvedInvoke(bus, "org.freedesktop.resolve1.Manager", member, others);
   }
 }
