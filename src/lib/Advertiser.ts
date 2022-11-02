@@ -547,18 +547,23 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
 
     debug(`Starting to advertise '${this.accessoryInfo.displayName}' using systemd-resolved backend!`);
 
-    this.path = await ResolvedAdvertiser.managerInvoke(this.bus, "RegisterService", {
-      body: [
-        this.accessoryInfo.displayName, // name
-        this.accessoryInfo.displayName, // name_template
-        "_hap._tcp", // type
-        this.port, // service_port
-        0, // service_priority
-        0, // service_weight
-        [this.createTxt()], // txt_datas
-      ],
-      signature: "sssqqqaa{say}",
-    });
+    try {
+      this.path = await ResolvedAdvertiser.managerInvoke(this.bus, "RegisterService", {
+        body: [
+          this.accessoryInfo.displayName, // name
+          this.accessoryInfo.displayName, // name_template
+          "_hap._tcp", // type
+          this.port, // service_port
+          0, // service_priority
+          0, // service_weight
+          [this.createTxt()], // txt_datas
+        ],
+        signature: "sssqqqaa{say}",
+      });
+    } catch (error) {
+      error.message = `Possible permissions issue. Check the wiki for details. ${error.message}`;
+      throw error;
+    }
   }
 
   public async updateAdvertisement(silent?: boolean): Promise<void> {
