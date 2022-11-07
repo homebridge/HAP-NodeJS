@@ -1,4 +1,6 @@
 import crypto from "crypto";
+import { AccessoriesResponse, CharacteristicJsonObject } from "../internal-types";
+import { CharacteristicValue } from "../types";
 import { Accessory, AccessoryEventTypes, Categories, MDNSAdvertiser, PublishInfo } from "./Accessory";
 import { BonjourHAPAdvertiser } from "./Advertiser";
 import { Bridge } from "./Bridge";
@@ -10,6 +12,7 @@ import { Service } from "./Service";
 import { EventedHTTPServer, HAPConnection } from "./util/eventedhttp";
 import { awaitEventOnce, PromiseTimeout } from "./util/promise-utils";
 import * as uuid from "./util/uuid";
+import { toShortForm } from "./util/uuid";
 import Mock = jest.Mock;
 
 describe("Accessory", () => {
@@ -17,18 +20,23 @@ describe("Accessory", () => {
   const TEST_UUID = uuid.generate("HAP-NODEJS-TEST-ACCESSORY!");
 
   let accessory: Accessory;
+  let connection: HAPConnection;
 
   const serverUsername = "AB:CD:EF:00:11:22";
   const clientUsername0 = "AB:CD:EF:00:11:23";
   let clientPublicKey0: Buffer;
   const clientUsername1 = "AB:CD:EF:00:11:24";
   let clientPublicKey1: Buffer;
-  const clientUsername2 = "AB:CD:EF:00:11:25";
+  const clientUsername2 = "AB:CD:EF:00:11:25"; // TODO remove third client?
   let clientPublicKey2: Buffer;
 
   let accessoryInfoUnpaired: AccessoryInfo;
   let accessoryInfoPaired: AccessoryInfo;
   const saveMock: Mock = jest.fn();
+
+  let callback: Mock;
+  // a void promise to wait for the above callback to be called!
+  let callbackPromise: Promise<void>;
 
   beforeEach(() => {
     clientPublicKey0 = crypto.randomBytes(32);
@@ -55,6 +63,16 @@ describe("Accessory", () => {
     // ensure we start with a clean Accessory for every test
     Accessory.cleanupAccessoryData(serverUsername);
     accessory = new Accessory(TEST_DISPLAY_NAME, TEST_UUID);
+
+    connection = {
+      username: clientUsername0,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any;
+
+    callbackPromise = new Promise(resolve => {
+      callback = jest.fn();
+      callback.mockImplementationOnce(() => resolve());
+    });
 
     saveMock.mockReset();
   });
@@ -160,18 +178,9 @@ describe("Accessory", () => {
   });
 
   describe("pairing", () => {
-    let connection: HAPConnection;
-    let callback: Mock;
-
     let defaultPairingInfo: PairingInformation;
 
     beforeEach(() => {
-      connection = {
-        username: clientUsername0,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
-      callback = jest.fn();
-
       defaultPairingInfo = { username: clientUsername0, publicKey: clientPublicKey0, permission: PermissionTypes.ADMIN };
     });
 
@@ -387,6 +396,98 @@ describe("Accessory", () => {
         accessory.handleListPairings(connection, callback);
         expect(callback).toBeCalledWith(0, [ defaultPairingInfo ]);
       });
+    });
+  });
+
+  describe("handleAccessories", () => {
+    let switchService: Service;
+
+    const characteristicHAPInfo = async (
+      characteristicConstructor: new () => Characteristic,
+      iid: number,
+      value?: CharacteristicValue,
+    ): Promise<CharacteristicJsonObject>  => {
+      const characteristic = new characteristicConstructor();
+      if (value !== undefined) {
+        characteristic.value = value;
+      }
+      characteristic.iid = iid;
+      return characteristic.toHAP(connection);
+    };
+
+    beforeEach(() => {
+      const loadBackup = AccessoryInfo.load;
+      AccessoryInfo.load = jest.fn(() => {
+        // inject our mocked accessoryInfo object
+        return accessoryInfoPaired;
+      });
+
+      const publishInfo: PublishInfo = {
+        username: serverUsername,
+        pincode: "000-00-000",
+        category: Categories.SWITCH,
+      };
+
+      switchService = new Service.Switch("Switch");
+      accessory.addService(switchService);
+
+      accessory.publish(publishInfo);
+
+      AccessoryInfo.load = loadBackup;
+
+      // saveMock may be called in `publish`
+      saveMock.mockReset();
+    });
+
+    test("test accessories database retrieval", async () => {
+      // @ts-expect-error: private access
+      accessory.handleAccessories(connection, callback);
+
+      await callbackPromise;
+
+      // TODO test Service.toHAP and Characteristic.toHAP!
+      const expected: AccessoriesResponse = {
+        accessories: [{
+          aid: 1,
+          services: [
+            {
+              iid: 1,
+              type: toShortForm(Service.AccessoryInformation.UUID),
+              hidden: undefined,
+              primary: undefined,
+              characteristics: [
+                await characteristicHAPInfo(Characteristic.Identify, 2),
+                await characteristicHAPInfo(Characteristic.Manufacturer, 3),
+                await characteristicHAPInfo(Characteristic.Model, 4),
+                await characteristicHAPInfo(Characteristic.Name, 5, accessory.displayName),
+                await characteristicHAPInfo(Characteristic.SerialNumber, 6),
+                await characteristicHAPInfo(Characteristic.FirmwareRevision, 7),
+              ],
+            },
+            {
+              iid: 8,
+              type: toShortForm(Service.Switch.UUID),
+              hidden: undefined,
+              primary: undefined,
+              characteristics: [
+                await characteristicHAPInfo(Characteristic.Name, 9, "Switch"),
+                await characteristicHAPInfo(Characteristic.On, 10, false),
+              ],
+            },
+            {
+              iid: 11,
+              type: toShortForm(Service.ProtocolInformation.UUID),
+              hidden: undefined,
+              primary: undefined,
+              characteristics: [
+                await characteristicHAPInfo(Characteristic.Version, 12, "1.1.0"),
+              ],
+            },
+          ],
+        }],
+      };
+      expect(callback).toBeCalledTimes(1);
+      expect(callback).toBeCalledWith(undefined, expected);
     });
   });
 
