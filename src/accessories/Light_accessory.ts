@@ -14,7 +14,7 @@ import {
 
 class LightControllerClass {
 
-  name: CharacteristicValue = "Simple Light"; //name of accessory
+  name = "Simple Light"; //name of accessory
   pincode: CharacteristicValue = "031-45-154";
   username: CharacteristicValue = "FA:3C:ED:5A:1A:1A"; // MAC like address used by HomeKit to differentiate accessories.
   manufacturer: CharacteristicValue = "HAP-NodeJS"; //manufacturer (optional)
@@ -135,7 +135,7 @@ lightbulb.getCharacteristic(Characteristic.On)
     // requests from HomeKit.
     callback();
   })
-  // We want to intercept requests for our current power state so we can query the hardware itself instead of
+  // We want to intercept requests for our current power state, so we can query the hardware itself instead of
   // allowing HAP-NodeJS to return the cached Characteristic.value.
   .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
     callback(null, LightController.getPower());
