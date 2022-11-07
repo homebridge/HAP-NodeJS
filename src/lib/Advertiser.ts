@@ -2,7 +2,7 @@
 /// <reference path="../../@types/bonjour-hap.d.ts" />
 import ciao, { CiaoService, MDNSServerOptions, Responder, ServiceEvent, ServiceTxt, ServiceType } from "@homebridge/ciao";
 import { InterfaceName, IPAddress } from "@homebridge/ciao/lib/NetworkManager";
-import dbus, { DBusInterface, MessageBus } from "@homebridge/dbus-native";
+import dbus, { DBusInterface, InvokeError, MessageBus } from "@homebridge/dbus-native";
 import assert from "assert";
 import bonjour, { BonjourHAP, BonjourHAPService, MulticastOptions } from "bonjour-hap";
 import crypto from "crypto";
@@ -278,6 +278,21 @@ function messageBusConnectionResult(bus: MessageBus): Promise<void> {
   });
 }
 
+export class DBusInvokeError extends Error {
+  readonly name: string;
+  readonly message: string;
+
+  constructor(errorObject: InvokeError) {
+    super(`dbusInvoke error: ${JSON.stringify(errorObject)}`);
+    this.name = errorObject.name;
+
+    if (Array.isArray(errorObject.message) && errorObject.message.length === 1) {
+      this.message = errorObject.message[0];
+    } else {
+      this.message = errorObject.message.toString();
+    }
+  }
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function dbusInvoke( bus: MessageBus, destination: string, path: string, dbusInterface: string, member: string, others?: any): Promise<any> {
@@ -290,10 +305,9 @@ function dbusInvoke( bus: MessageBus, destination: string, path: string, dbusInt
       ...(others || {}),
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    bus.invoke(command, (err: any, result: any) => {
+    bus.invoke(command, (err, result) => {
       if (err) {
-        reject(new Error(`dbusInvoke error: ${JSON.stringify(err)}`));
+        reject(new DBusInvokeError(err));
       } else {
         resolve(result);
       }
