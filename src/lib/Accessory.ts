@@ -75,6 +75,7 @@ import { EventName, HAPConnection, HAPUsername } from "./util/eventedhttp";
 import { formatOutgoingCharacteristicValue } from "./util/request-util";
 import * as uuid from "./util/uuid";
 import { toShortForm } from "./util/uuid";
+import ConstructorArgsType = jest.ConstructorArgsType;
 
 const debug = createDebug("HAP-NodeJS:Accessory");
 const MAX_ACCESSORIES = 149; // Maximum number of bridged accessories per bridge.
@@ -183,7 +184,7 @@ export interface PublishInfo {
    * Specify the category for the HomeKit accessory.
    * The category is used only in the mdns advertisement and specifies the devices type
    * for the HomeKit controller.
-   * Currently this only affects the icon shown in the pairing screen.
+   * Currently, this only affects the icon shown in the pairing screen.
    * For the Television and Smart Speaker service it also affects the icon shown in
    * the Home app when paired.
    */
@@ -226,8 +227,8 @@ export interface PublishInfo {
    *      This will bind the HAP server to the address 0.0.0.0.
    *      The mdns advertisement will only advertise the A record 169.254.104.90.
    *      If the given network interface of that address encounters an ip address change (to a different address),
-   *      the mdns advertisement will result in not advertising a address at all.
-   *      So it is advised to specify a interface name instead of a specific address.
+   *      the mdns advertisement will result in not advertising an address at all.
+   *      So it is advised to specify an interface name instead of a specific address.
    *      This is identical with ipv6 addresses.
    *
    *  - bind: ["169.254.104.90", "192.168.1.4"]
@@ -236,8 +237,8 @@ export interface PublishInfo {
    *      :: if a mixture or only ipv6 addresses are supplied).
    *      The mdns advertisement will only advertise the specified ip addresses.
    *      If the given network interface of that address encounters an ip address change (to different addresses),
-   *      the mdns advertisement will result in not advertising a address at all.
-   *      So it is advised to specify a interface name instead of a specific address.
+   *      the mdns advertisement will result in not advertising an address at all.
+   *      So it is advised to specify an interface name instead of a specific address.
    *
    */
   bind?: (InterfaceName | IPAddress) | (InterfaceName | IPAddress)[];
@@ -460,6 +461,21 @@ export class Accessory extends EventEmitter {
     }
   }
 
+  /**
+   * Add the given service instance to the Accessory.
+   *
+   * @param service - A {@link Service} instance.
+   * @returns Returns the service instance passed to the method call.
+   */
+  public addService(service: Service): Service
+  /**
+   * Adds a given service by calling the provided {@link Service} constructor with the provided constructor arguments.
+   * @param serviceConstructor - A {@link Service} service constructor (e.g. {@link Service.Switch}).
+   * @param constructorArgs - The arguments passed to the given constructor.
+   * @returns Returns the constructed service instance.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public addService<S extends typeof Service>(serviceConstructor: S, ...constructorArgs: ConstructorArgsType<S>): Service
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public addService(serviceParam: Service | typeof Service, ...constructorArgs: any[]): Service {
     // service might be a constructor like `Service.AccessoryInformation` instead of an instance
@@ -759,7 +775,7 @@ export class Accessory extends EventEmitter {
   }
 
   /**
-   * This method is used to setup a new Controller for this accessory. See {@see Controller} for a more detailed
+   * This method is used to set up a new Controller for this accessory. See {@see Controller} for a more detailed
    * explanation what a Controller is and what it is capable of.
    *
    * The controller can be passed as an instance of the class or as a constructor (without any necessary parameters)
@@ -767,7 +783,7 @@ export class Accessory extends EventEmitter {
    * Only one Controller of a given {@link ControllerIdentifier} can be configured for a given Accessory.
    *
    * When called, it will be checked if there are any services and persistent data the Controller (for the given
-   * {@link ControllerIdentifier}) can be restored from. Otherwise the Controller will be created with new services.
+   * {@link ControllerIdentifier}) can be restored from. Otherwise, the Controller will be created with new services.
    *
    *
    * @param controllerConstructor {Controller | ControllerConstructor}
@@ -897,8 +913,8 @@ export class Accessory extends EventEmitter {
       const updatedService = updatedServiceMap[name];
 
       if (service && updatedService) { // we check all names contained in both ServiceMaps for changes
-        delete originalServiceMap[name]; // delete from original ServiceMap so it will only contain deleted services at the end
-        delete updatedServiceMap[name]; // delete from updated ServiceMap so it will only contain added services at the end
+        delete originalServiceMap[name]; // delete from original ServiceMap, so it will only contain deleted services at the end
+        delete updatedServiceMap[name]; // delete from updated ServiceMap, so it will only contain added services at the end
 
         if (service !== updatedService) {
           this.removeService(service);
@@ -1052,7 +1068,7 @@ export class Accessory extends EventEmitter {
 
   /**
    * Manually purge the unused ids if you like, comes handy
-   * when you have disabled auto purge so you can do it manually
+   * when you have disabled auto purge, so you can do it manually
    */
   purgeUnusedIDs(): void {
     //Cache the state of the purge mechanism and set it to true
@@ -1157,7 +1173,7 @@ export class Accessory extends EventEmitter {
     }
 
     if (!this.initialized && (info.addIdentifyingMaterial ?? true)) {
-      // adding some identifying material to our displayName if its our first publish() call
+      // adding some identifying material to our displayName if it's our first publish() call
       this.displayName = this.displayName + " " + crypto.createHash("sha512")
         .update(info.username, "utf8")
         .digest("hex").slice(0, 4).toUpperCase();
@@ -1190,7 +1206,7 @@ export class Accessory extends EventEmitter {
     this._accessoryInfo.pincode = info.pincode;
     this._accessoryInfo.save();
 
-    // create our IdentifierCache so we can provide clients with stable aid/iid's
+    // create our IdentifierCache, so we can provide clients with stable aid/iid's
     this._identifierCache = IdentifierCache.load(info.username);
 
     // if we don't have one, create a new one.
@@ -1199,10 +1215,10 @@ export class Accessory extends EventEmitter {
       this._identifierCache = new IdentifierCache(info.username);
     }
 
-    //If it's bridge and there are not accessories already assigned to the bridge
-    //probably purge is not needed since it's going to delete all the ids
-    //of accessories that might be added later. Useful when dynamically adding
-    //accessories.
+    // If it's bridge and there are no accessories already assigned to the bridge
+    // probably purge is not needed since it's going to delete all the ids
+    // of accessories that might be added later. Useful when dynamically adding
+    // accessories.
     if (this._isBridge && this.bridgedAccessories.length === 0) {
       this.disableUnusedIDPurge();
       this.controllerStorage.purgeUnidentifiedAccessoryData = false;
@@ -1488,7 +1504,7 @@ export class Accessory extends EventEmitter {
           characteristic.displayName + "' on the accessory '" + accessory.displayName + "' was slow to respond!");
       }
 
-      // after a total of 10s we do not longer wait for a request to appear and just return status code timeout
+      // after a total of 10s we do no longer wait for a request to appear and just return status code timeout
       timeout = setTimeout(() => {
         timeout = undefined;
 
@@ -1659,7 +1675,7 @@ export class Accessory extends EventEmitter {
           characteristic.displayName + "' on the accessory '" + accessory.displayName + "' was slow to respond!");
       }
 
-      // after a total of 10s we do not longer wait for a request to appear and just return status code timeout
+      // after a total of 10s we do no longer wait for a request to appear and just return status code timeout
       timeout = setTimeout(() => {
         timeout = undefined;
 
@@ -1743,7 +1759,7 @@ export class Accessory extends EventEmitter {
     if (data.ev != null) { // register/unregister event notifications
       const notificationsEnabled = connection.hasEventNotifications(data.aid, data.iid);
 
-      // it seems like the Home App sends unregister requests for characteristics which don't have notify permissions
+      // it seems like the Home App sends unregister requests for characteristics which don't have `notify` permissions
       // see https://github.com/homebridge/HAP-NodeJS/issues/868
       if (notificationsEnabled !== data.ev) {
         if (!characteristic.props.perms.includes(Perms.NOTIFY)) { // check if notify is allowed for this characteristic
@@ -2188,7 +2204,7 @@ export class Accessory extends EventEmitter {
 
         const entry = entries.values().next().value; // grab the first one
 
-        const version = net.isIP(entry); // check if ip address was specified or a interface name
+        const version = net.isIP(entry); // check if ip address was specified or an interface name
         if (version) {
           serverAddress = version === 4? "0.0.0.0": "::"; // we currently bind to unspecified addresses so config-ui always has a connection via loopback
         } else {
