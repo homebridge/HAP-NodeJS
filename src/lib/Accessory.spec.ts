@@ -1,12 +1,18 @@
 import crypto from "crypto";
-import { AccessoriesResponse, CharacteristicJsonObject } from "../internal-types";
+import {
+  AccessoriesResponse,
+  CharacteristicJsonObject,
+  CharacteristicReadData,
+  CharacteristicsReadRequest,
+  CharacteristicsReadResponse,
+} from "../internal-types";
 import { CharacteristicValue } from "../types";
 import { Accessory, AccessoryEventTypes, Categories, MDNSAdvertiser, PublishInfo } from "./Accessory";
 import { BonjourHAPAdvertiser } from "./Advertiser";
 import { Bridge } from "./Bridge";
 import { Characteristic, CharacteristicEventTypes } from "./Characteristic";
 import { Controller, ControllerIdentifier, ControllerServiceMap } from "./controller";
-import { TLVErrorCode } from "./HAPServer";
+import { HAPStatus, TLVErrorCode } from "./HAPServer";
 import { AccessoryInfo, PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
 import { Service } from "./Service";
 import { EventedHTTPServer, HAPConnection } from "./util/eventedhttp";
@@ -69,10 +75,17 @@ describe("Accessory", () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
 
-    callbackPromise = new Promise(resolve => {
-      callback = jest.fn();
-      callback.mockImplementationOnce(() => resolve());
-    });
+    callback = jest.fn();
+    const originalReset = callback.mockReset;
+    callback.mockReset = () => {
+      const resetResult = originalReset();
+      callbackPromise = new Promise(resolve => {
+        callback.mockImplementationOnce(() => resolve());
+      });
+      return resetResult;
+    };
+
+    callback.mockReset();
 
     saveMock.mockReset();
   });
@@ -399,23 +412,14 @@ describe("Accessory", () => {
     });
   });
 
-  describe("handleAccessories", () => {
+  describe("published switch service", () => {
     let switchService: Service;
 
-    const characteristicHAPInfo = async (
-      characteristicConstructor: new () => Characteristic,
-      iid: number,
-      value?: CharacteristicValue,
-    ): Promise<CharacteristicJsonObject>  => {
-      const characteristic = new characteristicConstructor();
-      if (value !== undefined) {
-        characteristic.value = value;
-      }
-      characteristic.iid = iid;
-      return characteristic.toHAP(connection);
-    };
+    let aid: number;
+    let iidSwitch: number;
+    let iidOnCharacteristic: number;
 
-    beforeEach(() => {
+    beforeEach(() => { // TODO duplication!
       const loadBackup = AccessoryInfo.load;
       AccessoryInfo.load = jest.fn(() => {
         // inject our mocked accessoryInfo object
@@ -437,57 +441,144 @@ describe("Accessory", () => {
 
       // saveMock may be called in `publish`
       saveMock.mockReset();
+
+      aid = accessory.aid!;
+      iidSwitch = switchService.iid!;
+      iidOnCharacteristic = switchService.getCharacteristic(Characteristic.On).iid!;
     });
 
-    test("test accessories database retrieval", async () => {
-      // @ts-expect-error: private access
-      accessory.handleAccessories(connection, callback);
-
-      await callbackPromise;
-
-      // TODO test Service.toHAP and Characteristic.toHAP!
-      const expected: AccessoriesResponse = {
-        accessories: [{
-          aid: 1,
-          services: [
-            {
-              iid: 1,
-              type: toShortForm(Service.AccessoryInformation.UUID),
-              hidden: undefined,
-              primary: undefined,
-              characteristics: [
-                await characteristicHAPInfo(Characteristic.Identify, 2),
-                await characteristicHAPInfo(Characteristic.Manufacturer, 3),
-                await characteristicHAPInfo(Characteristic.Model, 4),
-                await characteristicHAPInfo(Characteristic.Name, 5, accessory.displayName),
-                await characteristicHAPInfo(Characteristic.SerialNumber, 6),
-                await characteristicHAPInfo(Characteristic.FirmwareRevision, 7),
-              ],
-            },
-            {
-              iid: 8,
-              type: toShortForm(Service.Switch.UUID),
-              hidden: undefined,
-              primary: undefined,
-              characteristics: [
-                await characteristicHAPInfo(Characteristic.Name, 9, "Switch"),
-                await characteristicHAPInfo(Characteristic.On, 10, false),
-              ],
-            },
-            {
-              iid: 11,
-              type: toShortForm(Service.ProtocolInformation.UUID),
-              hidden: undefined,
-              primary: undefined,
-              characteristics: [
-                await characteristicHAPInfo(Characteristic.Version, 12, "1.1.0"),
-              ],
-            },
-          ],
-        }],
+    describe("handleAccessories", () => {
+      const characteristicHAPInfo = async (
+        characteristicConstructor: new () => Characteristic,
+        iid: number,
+        value?: CharacteristicValue,
+      ): Promise<CharacteristicJsonObject>  => {
+        const characteristic = new characteristicConstructor();
+        if (value !== undefined) {
+          characteristic.value = value;
+        }
+        characteristic.iid = iid;
+        return characteristic.toHAP(connection);
       };
-      expect(callback).toBeCalledTimes(1);
-      expect(callback).toBeCalledWith(undefined, expected);
+
+      test("test accessories database retrieval", async () => {
+        // @ts-expect-error: private access
+        accessory.handleAccessories(connection, callback);
+
+        await callbackPromise;
+
+        // TODO test Service.toHAP and Characteristic.toHAP!
+        const expected: AccessoriesResponse = {
+          accessories: [{
+            aid: 1,
+            services: [
+              {
+                iid: 1,
+                type: toShortForm(Service.AccessoryInformation.UUID),
+                hidden: undefined,
+                primary: undefined,
+                characteristics: [
+                  await characteristicHAPInfo(Characteristic.Identify, 2),
+                  await characteristicHAPInfo(Characteristic.Manufacturer, 3),
+                  await characteristicHAPInfo(Characteristic.Model, 4),
+                  await characteristicHAPInfo(Characteristic.Name, 5, accessory.displayName),
+                  await characteristicHAPInfo(Characteristic.SerialNumber, 6),
+                  await characteristicHAPInfo(Characteristic.FirmwareRevision, 7),
+                ],
+              },
+              {
+                iid: 8,
+                type: toShortForm(Service.Switch.UUID),
+                hidden: undefined,
+                primary: undefined,
+                characteristics: [
+                  await characteristicHAPInfo(Characteristic.Name, 9, "Switch"),
+                  await characteristicHAPInfo(Characteristic.On, 10, false),
+                ],
+              },
+              {
+                iid: 11,
+                type: toShortForm(Service.ProtocolInformation.UUID),
+                hidden: undefined,
+                primary: undefined,
+                characteristics: [
+                  await characteristicHAPInfo(Characteristic.Version, 12, "1.1.0"),
+                ],
+              },
+            ],
+          }],
+        };
+        expect(callback).toBeCalledTimes(1);
+        expect(callback).toBeCalledWith(undefined, expected);
+        // TODO add test coverage badge to README!
+      });
+    });
+
+    describe("handleGetCharacteristic", () => {
+      const testRequestResponse = async (
+        request: Partial<CharacteristicsReadRequest>,
+        ...expectedReadData: CharacteristicReadData[]
+      ): Promise<void> => {
+        // TODO hasEventNotification method on HAPConnection?
+        // @ts-expect-error: private access
+        accessory.handleGetCharacteristics(connection, {
+          ids: [],
+          includeMeta: false,
+          includeEvent: false,
+          includeType: false,
+          includePerms: false,
+          ...request,
+        }, callback);
+
+        await callbackPromise;
+
+        const expectedResponse: CharacteristicsReadResponse = {
+          characteristics: expectedReadData,
+        };
+
+        expect(callback).toBeCalledTimes(1);
+        expect(callback).toBeCalledWith(undefined, expectedResponse);
+
+        callback.mockReset();
+      };
+
+      test("read Switch.On characteristic", async () => {
+        await testRequestResponse({
+          ids: [{ aid: aid, iid: iidOnCharacteristic }],
+        }, {
+          aid: aid,
+          iid: iidOnCharacteristic,
+          value: 0,
+        });
+      });
+
+      test("read non-existent characteristic", async () => {
+        await testRequestResponse({
+          ids: [{ aid: 2, iid: iidOnCharacteristic }],
+        }, {
+          aid: 2,
+          iid: iidOnCharacteristic,
+          status: HAPStatus.INVALID_VALUE_IN_REQUEST,
+        });
+
+        await testRequestResponse({
+          ids: [{ aid: aid, iid: 15 }],
+        }, {
+          aid: aid,
+          iid: 15,
+          status: HAPStatus.INVALID_VALUE_IN_REQUEST,
+        });
+      });
+
+      test("reading write-only characteristic", async () => {
+        await testRequestResponse({
+          ids: [{ aid: aid, iid: 2 }], // TODO identify
+        }, {
+          aid: aid,
+          iid: 2,
+          status: HAPStatus.WRITE_ONLY_CHARACTERISTIC,
+        });
+      });
     });
   });
 

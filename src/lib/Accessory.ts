@@ -1626,7 +1626,7 @@ export class Accessory extends EventEmitter {
 
       return data;
     }, (reason: HAPStatus) => {
-      // @ts-expect-error: forceConsistentCasingInFileNames compiler option
+      // @ts-expect-error: preserveConstEnums compiler option
       debug("[%s] Error getting value for characteristic \"%s\": %s", this.displayName, characteristic.displayName, HAPStatus[reason]);
       return { status: reason };
     });
