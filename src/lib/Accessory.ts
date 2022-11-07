@@ -1452,7 +1452,7 @@ export class Accessory extends EventEmitter {
     this._assignIDs(this._identifierCache!); // make sure our aid/iid's are all assigned
 
     const now = Date.now();
-    const contactGetHandlers = now - this.lastAccessoriesRequest > 5_000; // we query latest value if last /accessories was more than 5s ago
+    const contactGetHandlers = now - this.lastAccessoriesRequest > 5_000; // we query the latest value if last /accessories was more than 5s ago
     this.lastAccessoriesRequest = now;
 
     this.toHAP(connection, contactGetHandlers).then(value => {
@@ -1899,10 +1899,10 @@ export class Accessory extends EventEmitter {
 
   private handleServiceConfigurationChangeEvent(service: Service): void {
     if (!service.isPrimaryService && service === this.primaryService) {
-      // service changed form primary to non primary service
+      // service changed form primary to non-primary service
       this.primaryService = undefined;
     } else if (service.isPrimaryService && service !== this.primaryService) {
-      // service changed from non primary to primary service
+      // service changed from non-primary to primary service
       if (this.primaryService !== undefined) {
         this.primaryService.isPrimaryService = false;
       }

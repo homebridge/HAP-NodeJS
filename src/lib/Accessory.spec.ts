@@ -4,24 +4,38 @@ import { BonjourHAPAdvertiser } from "./Advertiser";
 import { Bridge } from "./Bridge";
 import { Characteristic, CharacteristicEventTypes } from "./Characteristic";
 import { Controller, ControllerIdentifier, ControllerServiceMap } from "./controller";
-import { AccessoryInfo, PermissionTypes } from "./model/AccessoryInfo";
+import { TLVErrorCode } from "./HAPServer";
+import { AccessoryInfo, PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
 import { Service } from "./Service";
+import { EventedHTTPServer, HAPConnection } from "./util/eventedhttp";
 import { awaitEventOnce, PromiseTimeout } from "./util/promise-utils";
 import * as uuid from "./util/uuid";
 import Mock = jest.Mock;
 
-const TEST_USERNAME = "AB:CD:EF:00:11:22";
-const TEST_DISPLAY_NAME = "Test Accessory";
-const TEST_UUID = uuid.generate("HAP-NODEJS-TEST-ACCESSORY!");
-
 describe("Accessory", () => {
+  const TEST_DISPLAY_NAME = "Test Accessory";
+  const TEST_UUID = uuid.generate("HAP-NODEJS-TEST-ACCESSORY!");
+
   let accessory: Accessory;
 
+  const serverUsername = "AB:CD:EF:00:11:22";
+  const clientUsername0 = "AB:CD:EF:00:11:23";
+  let clientPublicKey0: Buffer;
+  const clientUsername1 = "AB:CD:EF:00:11:24";
+  let clientPublicKey1: Buffer;
+  const clientUsername2 = "AB:CD:EF:00:11:25";
+  let clientPublicKey2: Buffer;
+
   let accessoryInfoUnpaired: AccessoryInfo;
+  let accessoryInfoPaired: AccessoryInfo;
   const saveMock: Mock = jest.fn();
 
   beforeEach(() => {
-    accessoryInfoUnpaired = AccessoryInfo.create(TEST_USERNAME);
+    clientPublicKey0 = crypto.randomBytes(32);
+    clientPublicKey1 = crypto.randomBytes(32);
+    clientPublicKey2 = crypto.randomBytes(32);
+
+    accessoryInfoUnpaired = AccessoryInfo.create(serverUsername);
     // @ts-expect-error: private access
     accessoryInfoUnpaired.setupID = Accessory._generateSetupID();
     accessoryInfoUnpaired.displayName = "Outlet";
@@ -29,8 +43,17 @@ describe("Accessory", () => {
     accessoryInfoUnpaired.pincode = " 031-45-154";
     accessoryInfoUnpaired.save = saveMock;
 
+    accessoryInfoPaired = AccessoryInfo.create(serverUsername);
+    // @ts-expect-error: private access
+    accessoryInfoPaired.setupID = Accessory._generateSetupID();
+    accessoryInfoPaired.displayName = "Outlet";
+    accessoryInfoPaired.category = 7;
+    accessoryInfoPaired.pincode = " 031-45-154";
+    accessoryInfoPaired.addPairedClient(clientUsername0, clientPublicKey0, PermissionTypes.ADMIN);
+    accessoryInfoPaired.save = saveMock;
+
     // ensure we start with a clean Accessory for every test
-    Accessory.cleanupAccessoryData(TEST_USERNAME);
+    Accessory.cleanupAccessoryData(serverUsername);
     accessory = new Accessory(TEST_DISPLAY_NAME, TEST_UUID);
 
     saveMock.mockReset();
@@ -84,7 +107,7 @@ describe("Accessory", () => {
       accessory.addService(switchService);
 
       const publishInfo: PublishInfo = {
-        username: TEST_USERNAME,
+        username: serverUsername,
         pincode: "000-00-000",
         category: Categories.SWITCH,
         advertiser: advertiser,
@@ -121,7 +144,7 @@ describe("Accessory", () => {
       accessory.addService(switchService);
 
       const publishInfo: PublishInfo = {
-        username: TEST_USERNAME,
+        username: serverUsername,
         pincode: "000-00-000",
         category: Categories.SWITCH,
         advertiser: undefined,
@@ -137,7 +160,22 @@ describe("Accessory", () => {
   });
 
   describe("pairing", () => {
-    test("finish setup-pair", async () => {
+    let connection: HAPConnection;
+    let callback: Mock;
+
+    let defaultPairingInfo: PairingInformation;
+
+    beforeEach(() => {
+      connection = {
+        username: clientUsername0,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
+      callback = jest.fn();
+
+      defaultPairingInfo = { username: clientUsername0, publicKey: clientPublicKey0, permission: PermissionTypes.ADMIN };
+    });
+
+    test("handleInitialPairSetupFinished", async () => {
       // TODO fix: CiaoAdvertiser constructor creates open handles!
       // const advertiser = new CiaoAdvertiser(accessoryInfoUnpaired);
 
@@ -152,16 +190,203 @@ describe("Accessory", () => {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       const callback = jest.fn();
       // @ts-expect-error: private access
-      accessory.handleInitialPairSetupFinished(TEST_USERNAME, publicKey, callback);
+      accessory.handleInitialPairSetupFinished(clientUsername0, publicKey, callback);
 
       expect(accessoryInfoUnpaired.addPairedClient).toBeCalledTimes(1);
-      expect(accessoryInfoUnpaired.addPairedClient).toBeCalledWith(TEST_USERNAME, publicKey, PermissionTypes.ADMIN);
+      expect(accessoryInfoUnpaired.addPairedClient).toBeCalledWith(clientUsername0, publicKey, PermissionTypes.ADMIN);
 
       expect(saveMock).toBeCalledTimes(1);
 
       expect(advertiser.updateAdvertisement).toBeCalledTimes(1);
 
       await advertiser.destroy();
+    });
+
+    describe("handleAddPairing", () => {
+      test("unavailable", () => {
+        // @ts-expect-error: private access
+        accessory.handleAddPairing(connection, clientUsername1, clientPublicKey1, PermissionTypes.USER, callback);
+        expect(callback).toBeCalledWith(TLVErrorCode.UNAVAILABLE);
+      });
+
+      test("missing admin permissions", () => {
+        accessory._accessoryInfo = accessoryInfoUnpaired;
+        // @ts-expect-error: private access
+        accessory.handleAddPairing(connection, clientUsername1, clientPublicKey1, PermissionTypes.USER, callback);
+        expect(callback).toBeCalledWith(TLVErrorCode.AUTHENTICATION);
+      });
+
+      test.each([PermissionTypes.USER, PermissionTypes.ADMIN])(
+        "adding pairing: %p", type => {
+          accessory._accessoryInfo = accessoryInfoPaired;
+
+          // @ts-expect-error: private access
+          accessory.handleAddPairing(connection, clientUsername1, clientPublicKey1, type, callback);
+          expect(callback).toBeCalledWith(0);
+
+          const expectedPairings: PairingInformation[] = [
+            defaultPairingInfo,
+            { username: clientUsername1, publicKey: clientPublicKey1, permission: type },
+          ];
+          expect(accessoryInfoPaired.listPairings()).toEqual(expectedPairings);
+
+          expect(accessoryInfoPaired.pairedAdminClients)
+            .toEqual(type === PermissionTypes.ADMIN ? 2 : 1);
+
+          expect(saveMock).toBeCalledTimes(1);
+        });
+
+      test.each([
+        { previous: PermissionTypes.USER, update: PermissionTypes.ADMIN },
+        { previous: PermissionTypes.ADMIN, update: PermissionTypes.USER },
+        { previous: PermissionTypes.USER, update: PermissionTypes.USER },
+        { previous: PermissionTypes.ADMIN, update: PermissionTypes.ADMIN },
+      ])(
+        "update pairing: %p", type => {
+          accessory._accessoryInfo = accessoryInfoPaired;
+          accessoryInfoPaired.addPairedClient(clientUsername1, clientPublicKey1, type.previous);
+          expect(accessoryInfoPaired.pairedAdminClients)
+            .toEqual(type.previous === PermissionTypes.ADMIN ? 2 : 1);
+
+          // @ts-expect-error: private access
+          accessory.handleAddPairing(connection, clientUsername1, clientPublicKey1, type.update, callback);
+          expect(callback).toBeCalledWith(0);
+
+          const expectedPairings: PairingInformation[] = [
+            defaultPairingInfo,
+            { username: clientUsername1, publicKey: clientPublicKey1, permission: type.update },
+          ];
+          expect(accessoryInfoPaired.listPairings()).toEqual(expectedPairings);
+
+          expect(accessoryInfoPaired.pairedAdminClients)
+            .toEqual(type.update === PermissionTypes.ADMIN ? 2 : 1);
+
+          expect(saveMock).toBeCalledTimes(1);
+        });
+
+      test("update permission with non-matching public key", () => {
+        accessory._accessoryInfo = accessoryInfoPaired;
+        accessoryInfoPaired.addPairedClient(clientUsername1, clientPublicKey1, PermissionTypes.USER);
+
+        // @ts-expect-error: private access
+        accessory.handleAddPairing(connection, clientUsername1, clientPublicKey2, PermissionTypes.ADMIN, callback);
+        expect(callback).toBeCalledWith(TLVErrorCode.UNKNOWN);
+      });
+    });
+
+    describe("handleRemovePairing", () => {
+      let storage: typeof EventedHTTPServer.destroyExistingConnectionsAfterUnpair;
+      beforeEach(() => {
+        storage = EventedHTTPServer.destroyExistingConnectionsAfterUnpair;
+        EventedHTTPServer.destroyExistingConnectionsAfterUnpair = jest.fn();
+      });
+
+      afterEach(() => {
+        EventedHTTPServer.destroyExistingConnectionsAfterUnpair = storage;
+      });
+
+      test("unavailable", () => {
+        // @ts-expect-error: private access
+        accessory.handleRemovePairing(connection, clientUsername1, callback);
+        expect(callback).toBeCalledWith(TLVErrorCode.UNAVAILABLE);
+      });
+
+      test("missing admin permissions", () => {
+        accessory._accessoryInfo = accessoryInfoUnpaired;
+        // @ts-expect-error: private access
+        accessory.handleRemovePairing(connection, clientUsername1, callback);
+        expect(callback).toBeCalledWith(TLVErrorCode.AUTHENTICATION);
+      });
+
+      test.each([PermissionTypes.ADMIN, PermissionTypes.USER])(
+        "remove pairing: %s", type => {
+          const count = type === PermissionTypes.ADMIN ? 2 : 1;
+          accessory._accessoryInfo = accessoryInfoPaired;
+          accessoryInfoPaired.addPairedClient(clientUsername1, clientPublicKey1, type);
+          expect(accessoryInfoPaired.pairedAdminClients).toEqual(count);
+
+          // @ts-expect-error: private access
+          accessory.handleRemovePairing(connection, clientUsername1, callback);
+          expect(callback).toBeCalledWith(0);
+
+          expect(accessoryInfoPaired.listPairings())
+            .toEqual([ defaultPairingInfo ]);
+          expect(accessoryInfoPaired.pairedAdminClients).toEqual(1);
+
+          expect(EventedHTTPServer.destroyExistingConnectionsAfterUnpair).toBeCalledTimes(1);
+          expect(EventedHTTPServer.destroyExistingConnectionsAfterUnpair)
+            .toBeCalledWith(connection, clientUsername1);
+        });
+
+      test("remove last ADMIN pairing", () => {
+        accessory._accessoryInfo = accessoryInfoPaired;
+        accessoryInfoPaired.addPairedClient(clientUsername1, clientPublicKey1, PermissionTypes.USER);
+
+        // a mock which just forwards to the normal function call, so that data integrity is ensured
+        const _removePairedClient0Mock = jest.fn();
+        // @ts-expect-error: private access
+        _removePairedClient0Mock.mockImplementation(accessoryInfoPaired._removePairedClient0);
+        // @ts-expect-error: private access
+        accessoryInfoPaired._removePairedClient0 = _removePairedClient0Mock;
+
+        expect(accessoryInfoPaired.pairedAdminClients).toEqual(1);
+
+        // after we removed pairing we also expect that the accessory is advertised as unpaired
+        const advertiser = new BonjourHAPAdvertiser(accessoryInfoUnpaired);
+        advertiser.updateAdvertisement = jest.fn();
+        accessory._advertiser = advertiser;
+        const eventMock = jest.fn();
+        accessory.on(AccessoryEventTypes.UNPAIRED, eventMock);
+
+        // @ts-expect-error: private access
+        accessory.handleRemovePairing(connection, clientUsername0, callback);
+        expect(callback).toBeCalledWith(0);
+
+        expect(accessoryInfoPaired.listPairings()).toEqual([]);
+        expect(accessoryInfoPaired.pairedAdminClients).toEqual(0);
+
+        // verify calls to _removePairedClient0
+        expect(_removePairedClient0Mock).toBeCalledTimes(2);
+        expect(_removePairedClient0Mock)
+          .toHaveBeenNthCalledWith(1, connection, clientUsername0);
+        expect(_removePairedClient0Mock)
+          .toHaveBeenNthCalledWith(2, connection, clientUsername1); // it shall also remove the user pairing
+
+        expect(EventedHTTPServer.destroyExistingConnectionsAfterUnpair).toBeCalledTimes(2);
+
+        // verify that accessory is marked as unpaired again
+        expect(advertiser.updateAdvertisement).toBeCalledTimes(1);
+        expect(eventMock).toBeCalledTimes(1);
+      });
+    });
+
+    describe("handleListPairings", () => {
+      test("unavailable", () => {
+        // @ts-expect-error: private access
+        accessory.handleListPairings(connection, callback);
+        expect(callback).toBeCalledWith(TLVErrorCode.UNAVAILABLE);
+      });
+
+      test("missing admin permissions", () => {
+        accessory._accessoryInfo = accessoryInfoUnpaired;
+        // @ts-expect-error: private access
+        accessory.handleListPairings(connection, callback);
+        expect(callback).toBeCalledWith(TLVErrorCode.AUTHENTICATION);
+
+        accessory._accessoryInfo = accessoryInfoPaired;
+        accessoryInfoPaired.addPairedClient(clientUsername1, clientPublicKey1, PermissionTypes.USER);
+        connection.username = clientUsername1;
+        // @ts-expect-error: private access
+        accessory.handleListPairings(connection, callback);
+        expect(callback).toBeCalledWith(TLVErrorCode.AUTHENTICATION);
+      });
+
+      test("list pairings", () => {
+        accessory._accessoryInfo = accessoryInfoPaired;
+        // @ts-expect-error: private access
+        accessory.handleListPairings(connection, callback);
+        expect(callback).toBeCalledWith(0, [ defaultPairingInfo ]);
+      });
     });
   });
 
