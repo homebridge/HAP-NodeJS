@@ -279,12 +279,16 @@ function messageBusConnectionResult(bus: MessageBus): Promise<void> {
 }
 
 export class DBusInvokeError extends Error {
-  readonly name: string;
-  readonly message: string;
+  readonly errorName: string;
 
   constructor(errorObject: InvokeError) {
-    super(`dbusInvoke error: ${JSON.stringify(errorObject)}`);
-    this.name = errorObject.name;
+    super();
+
+    Object.setPrototypeOf(this, DBusInvokeError.prototype);
+
+    this.name = "DBusInvokeError";
+
+    this.errorName = errorObject.name;
 
     if (Array.isArray(errorObject.message) && errorObject.message.length === 1) {
       this.message = errorObject.message[0];
