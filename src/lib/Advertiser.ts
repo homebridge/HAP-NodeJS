@@ -671,7 +671,7 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
           },
         );
 
-        if (mdnsStatus[0].type !== "s") {
+        if (mdnsStatus[0][0].type !== "s") {
           throw new Error("Invalid type for MulticastDNS");
         }
 
