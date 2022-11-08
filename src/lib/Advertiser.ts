@@ -2,7 +2,7 @@
 /// <reference path="../../@types/bonjour-hap.d.ts" />
 import ciao, { CiaoService, MDNSServerOptions, Responder, ServiceEvent, ServiceTxt, ServiceType } from "@homebridge/ciao";
 import { InterfaceName, IPAddress } from "@homebridge/ciao/lib/NetworkManager";
-import dbus, { DBusInterface, MessageBus } from "@homebridge/dbus-native";
+import dbus, { DBusInterface, InvokeError, MessageBus } from "@homebridge/dbus-native";
 import assert from "assert";
 import bonjour, { BonjourHAP, BonjourHAPService, MulticastOptions } from "bonjour-hap";
 import crypto from "crypto";
@@ -278,6 +278,25 @@ function messageBusConnectionResult(bus: MessageBus): Promise<void> {
   });
 }
 
+export class DBusInvokeError extends Error {
+  readonly errorName: string;
+
+  constructor(errorObject: InvokeError) {
+    super();
+
+    Object.setPrototypeOf(this, DBusInvokeError.prototype);
+
+    this.name = "DBusInvokeError";
+
+    this.errorName = errorObject.name;
+
+    if (Array.isArray(errorObject.message) && errorObject.message.length === 1) {
+      this.message = errorObject.message[0];
+    } else {
+      this.message = errorObject.message.toString();
+    }
+  }
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function dbusInvoke( bus: MessageBus, destination: string, path: string, dbusInterface: string, member: string, others?: any): Promise<any> {
@@ -290,10 +309,9 @@ function dbusInvoke( bus: MessageBus, destination: string, path: string, dbusInt
       ...(others || {}),
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    bus.invoke(command, (err: any, result: any) => {
+    bus.invoke(command, (err, result) => {
       if (err) {
-        reject(new Error(`dbusInvoke error: ${JSON.stringify(err)}`));
+        reject(new DBusInvokeError(err));
       } else {
         resolve(result);
       }
@@ -504,6 +522,13 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
 
 type ResolvedServiceTxt = Array<Array<string | Buffer>>;
 
+const RESOLVED_PERMISSIONS_ERRORS = [
+  "org.freedesktop.DBus.Error.AccessDenied",
+  "org.freedesktop.DBus.Error.AuthFailed",
+  "org.freedesktop.DBus.Error.InteractiveAuthorizationRequired",
+];
+
+
 /**
  * Advertiser based on the systemd-resolved D-Bus library.
  * For docs on the interface, see: https://www.freedesktop.org/software/systemd/man/org.freedesktop.resolve1.html
@@ -547,18 +572,27 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
 
     debug(`Starting to advertise '${this.accessoryInfo.displayName}' using systemd-resolved backend!`);
 
-    this.path = await ResolvedAdvertiser.resolvedInvoke(this.bus, "RegisterService", {
-      body: [
-        this.accessoryInfo.displayName, // name
-        this.accessoryInfo.displayName, // name_template
-        "_hap._tcp", // type
-        this.port, // service_port
-        0, // service_priority
-        0, // service_weight
-        [this.createTxt()], // txt_datas
-      ],
-      signature: "sssqqqaa{say}",
-    });
+    try {
+      this.path = await ResolvedAdvertiser.managerInvoke(this.bus, "RegisterService", {
+        body: [
+          this.accessoryInfo.displayName, // name
+          this.accessoryInfo.displayName, // name_template
+          "_hap._tcp", // type
+          this.port, // service_port
+          0, // service_priority
+          0, // service_weight
+          [this.createTxt()], // txt_datas
+        ],
+        signature: "sssqqqaa{say}",
+      });
+    } catch (error) {
+      if (error instanceof DBusInvokeError) {
+        if (RESOLVED_PERMISSIONS_ERRORS.includes(error.errorName)) {
+          error.message = `Permissions issue. See https://homebridge.io/w/mDNS-Options for more info. ${error.message}`;
+        }
+      }
+      throw error;
+    }
   }
 
   public async updateAdvertisement(silent?: boolean): Promise<void> {
@@ -580,7 +614,7 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
 
     if (this.path) {
       try {
-        await ResolvedAdvertiser.resolvedInvoke(this.bus, "UnregisterService", {
+        await ResolvedAdvertiser.managerInvoke(this.bus, "UnregisterService", {
           body: [this.path],
           signature: "o",
         });
@@ -616,13 +650,37 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
 
       try {
         // Ensure that systemd-resolved is accessible.
-        await this.resolvedInvoke(bus, "ResolveHostname", {
+        await this.managerInvoke(bus, "ResolveHostname", {
           body: [0, "127.0.0.1", 0, 0],
           signature: "isit",
         });
         debug("Detected systemd-resolved over DBus interface running version.");
       } catch (error) {
         debug("systemd-resolved/DBus classified unavailable due to missing systemd-resolved interface!");
+        return false;
+      }
+
+      try {
+        const mdnsStatus = await this.resolvedInvoke(
+          bus,
+          "org.freedesktop.DBus.Properties",
+          "Get",
+          {
+            body: ["org.freedesktop.resolve1.Manager", "MulticastDNS"],
+            signature: "ss",
+          },
+        );
+
+        if (mdnsStatus[0][0].type !== "s") {
+          throw new Error("Invalid type for MulticastDNS");
+        }
+
+        if (mdnsStatus[1][0] !== "yes" ) {
+          debug("systemd-resolved/DBus classified unavailable because MulticastDNS is not enabled!");
+          return false;
+        }
+      } catch (error) {
+        debug("systemd-resolved/DBus classified unavailable due to failure checking system status: " + error);
         return false;
       }
 
@@ -633,14 +691,19 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private static resolvedInvoke(bus: MessageBus, member: string, others?: any): Promise<any> {
+  private static resolvedInvoke(bus: MessageBus, dbusInterface: string, member: string, others?: any): Promise<any> {
     return dbusInvoke(
       bus,
       "org.freedesktop.resolve1",
       "/org/freedesktop/resolve1",
-      "org.freedesktop.resolve1.Manager",
+      dbusInterface,
       member,
       others,
     );
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private static managerInvoke(bus: MessageBus, member: string, others?: any): Promise<any> {
+    return this.resolvedInvoke(bus, "org.freedesktop.resolve1.Manager", member, others);
   }
 }
