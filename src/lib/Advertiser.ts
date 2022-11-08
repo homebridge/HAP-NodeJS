@@ -522,6 +522,13 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
 
 type ResolvedServiceTxt = Array<Array<string | Buffer>>;
 
+const RESOLVED_PERMISSIONS_ERRORS = [
+  "org.freedesktop.DBus.Error.AccessDenied",
+  "org.freedesktop.DBus.Error.AuthFailed",
+  "org.freedesktop.DBus.Error.InteractiveAuthorizationRequired",
+];
+
+
 /**
  * Advertiser based on the systemd-resolved D-Bus library.
  * For docs on the interface, see: https://www.freedesktop.org/software/systemd/man/org.freedesktop.resolve1.html
@@ -579,7 +586,11 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
         signature: "sssqqqaa{say}",
       });
     } catch (error) {
-      error.message = `Possible permissions issue. Check the wiki for details. ${error.message}`;
+      if (error instanceof DBusInvokeError) {
+        if (RESOLVED_PERMISSIONS_ERRORS.includes(error.errorName)) {
+          error.message = `Permissions issue. See https://homebridge.io/w/mDNS-Options for more info. ${error.message}`;
+        }
+      }
       throw error;
     }
   }
