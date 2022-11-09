@@ -19,17 +19,8 @@ import {
   ResourceRequest,
   ResourceRequestType,
 } from "../internal-types";
-import {
-  CharacteristicValue,
-  HAPPincode,
-  InterfaceName,
-  IPAddress,
-  MacAddress,
-  Nullable,
-  VoidCallback,
-  WithUUID,
-} from "../types";
-import { Advertiser, AdvertiserEvent, BonjourHAPAdvertiser, CiaoAdvertiser, AvahiAdvertiser, ResolvedAdvertiser } from "./Advertiser";
+import { CharacteristicValue, HAPPincode, InterfaceName, IPAddress, MacAddress, Nullable, VoidCallback, WithUUID } from "../types";
+import { Advertiser, AdvertiserEvent, AvahiAdvertiser, BonjourHAPAdvertiser, CiaoAdvertiser, ResolvedAdvertiser } from "./Advertiser";
 // noinspection JSDeprecatedSymbols
 import { LegacyCameraSource, LegacyCameraSourceAdapter, StreamController } from "./camera";
 import {
@@ -1586,9 +1577,8 @@ export class Accessory extends EventEmitter {
     }
 
     if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.READ)) {
-      let verifiable = true;
-      if (!connection.username || !this._accessoryInfo) {
-        verifiable = false;
+      const verifiable = this._accessoryInfo && connection.username;
+      if (!verifiable) {
         debug("[%s] Could not verify admin permissions for Characteristic which requires admin permissions for reading (aid of %s and iid of %s)",
           this.displayName, id.aid, id.iid);
       }
@@ -1618,7 +1608,7 @@ export class Accessory extends EventEmitter {
         data.perms = characteristic.props.perms;
       }
       if (request.includeType) {
-        data.type = toShortForm(this.UUID);
+        data.type = toShortForm(characteristic.UUID);
       }
       if (request.includeEvent) {
         data.ev = connection.hasEventNotifications(id.aid, id.iid);
@@ -1745,7 +1735,6 @@ export class Accessory extends EventEmitter {
     writeState: WriteRequestState,
   ): Promise<PartialCharacteristicWriteData> {
     const characteristic = this.findCharacteristic(data.aid, data.iid);
-    let evResponse: boolean | undefined = undefined;
 
     if (!characteristic) {
       debug("[%s] Could not find a Characteristic with aid of %s and iid of %s", this.displayName, data.aid, data.iid);
@@ -1756,44 +1745,40 @@ export class Accessory extends EventEmitter {
       return { status: HAPStatus.INVALID_VALUE_IN_REQUEST };
     }
 
+    if (data.ev == null && data.value == null) {
+      return { status: HAPStatus.INVALID_VALUE_IN_REQUEST };
+    }
+
     if (data.ev != null) { // register/unregister event notifications
-      const notificationsEnabled = connection.hasEventNotifications(data.aid, data.iid);
+      if (!characteristic.props.perms.includes(Perms.NOTIFY)) { // check if notify is allowed for this characteristic
+        debug("[%s] Tried %s notifications for Characteristic which does not allow notify (aid of %s and iid of %s)",
+          this.displayName, data.ev? "enabling": "disabling", data.aid, data.iid);
+        return { status: HAPStatus.NOTIFICATION_NOT_SUPPORTED };
+      }
 
-      // it seems like the Home App sends unregister requests for characteristics which don't have `notify` permissions
-      // see https://github.com/homebridge/HAP-NodeJS/issues/868
-      if (notificationsEnabled !== data.ev) {
-        if (!characteristic.props.perms.includes(Perms.NOTIFY)) { // check if notify is allowed for this characteristic
-          debug("[%s] Tried %s notifications for Characteristic which does not allow notify (aid of %s and iid of %s)",
-            this.displayName, data.ev? "enabling": "disabling", data.aid, data.iid);
-          return { status: HAPStatus.NOTIFICATION_NOT_SUPPORTED };
+      if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.NOTIFY)) {
+        const verifiable = connection.username && this._accessoryInfo;
+        if (!verifiable) {
+          debug("[%s] Could not verify admin permissions for Characteristic which requires admin permissions for notify (aid of %s and iid of %s)",
+            this.displayName, data.aid, data.iid);
         }
 
-        if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.NOTIFY)) {
-          let verifiable = true;
-          if (!connection.username || !this._accessoryInfo) {
-            verifiable = false;
-            debug("[%s] Could not verify admin permissions for Characteristic which requires admin permissions for notify (aid of %s and iid of %s)",
-              this.displayName, data.aid, data.iid);
-          }
-
-          if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(connection.username!)) {
-            return { status: HAPStatus.INSUFFICIENT_PRIVILEGES };
-          }
-        }
-
-        // we already checked that data.ev != notificationsEnabled, thus just do whatever the connection asks for
-        if (data.ev) {
-          connection.enableEventNotifications(data.aid, data.iid);
-          characteristic.subscribe();
-          evResponse = true;
-          debug("[%s] Registered Characteristic \"%s\" on \"%s\" for events", connection.remoteAddress, characteristic.displayName, this.displayName);
-        } else {
-          characteristic.unsubscribe();
-          connection.disableEventNotifications(data.aid, data.iid);
-          evResponse = false;
-          debug("[%s] Unregistered Characteristic \"%s\" on \"%s\" for events", connection.remoteAddress, characteristic.displayName, this.displayName);
+        if (!verifiable || !this._accessoryInfo!.hasAdminPermissions(connection.username!)) {
+          return { status: HAPStatus.INSUFFICIENT_PRIVILEGES };
         }
       }
+
+      const notificationsEnabled = connection.hasEventNotifications(data.aid, data.iid);
+      if (data.ev && !notificationsEnabled) {
+        connection.enableEventNotifications(data.aid, data.iid);
+        characteristic.subscribe();
+        debug("[%s] Registered Characteristic \"%s\" on \"%s\" for events", connection.remoteAddress, characteristic.displayName, this.displayName);
+      } else if (!data.ev && notificationsEnabled) {
+        characteristic.unsubscribe();
+        connection.disableEventNotifications(data.aid, data.iid);
+        debug("[%s] Unregistered Characteristic \"%s\" on \"%s\" for events", connection.remoteAddress, characteristic.displayName, this.displayName);
+      }
+
       // response is returned below in the else block
     }
 
@@ -1804,9 +1789,8 @@ export class Accessory extends EventEmitter {
       }
 
       if (characteristic.props.adminOnlyAccess && characteristic.props.adminOnlyAccess.includes(Access.WRITE)) {
-        let verifiable = true;
-        if (!connection.username || !this._accessoryInfo) {
-          verifiable = false;
+        const verifiable = connection.username && this._accessoryInfo;
+        if (!verifiable) {
           debug("[%s] Could not verify admin permissions for Characteristic which requires admin permissions for write (aid of %s and iid of %s)",
             this.displayName, data.aid, data.iid);
         }
@@ -1845,7 +1829,7 @@ export class Accessory extends EventEmitter {
           // if write response is requests and value is provided, return that
           value: data.r && value? formatOutgoingCharacteristicValue(value, characteristic.props): undefined,
 
-          ev: evResponse,
+          status: HAPStatus.SUCCESS,
         };
       }, (status: HAPStatus) => {
         // @ts-expect-error: forceConsistentCasingInFileNames compiler option
@@ -1853,9 +1837,9 @@ export class Accessory extends EventEmitter {
 
         return { status: status };
       });
-    } else {
-      return { ev: evResponse };
     }
+
+    return { status: HAPStatus.SUCCESS };
   }
 
   private handleResource(data: ResourceRequest, callback: ResourceRequestCallback): void {

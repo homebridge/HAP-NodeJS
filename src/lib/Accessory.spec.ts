@@ -5,17 +5,21 @@ import {
   CharacteristicReadData,
   CharacteristicsReadRequest,
   CharacteristicsReadResponse,
+  CharacteristicsWriteRequest,
+  CharacteristicsWriteResponse,
+  CharacteristicWriteData,
 } from "../internal-types";
 import { CharacteristicValue } from "../types";
 import { Accessory, AccessoryEventTypes, Categories, MDNSAdvertiser, PublishInfo } from "./Accessory";
 import { BonjourHAPAdvertiser } from "./Advertiser";
 import { Bridge } from "./Bridge";
-import { Characteristic, CharacteristicEventTypes } from "./Characteristic";
+import { Access, Characteristic, CharacteristicEventTypes, Formats, Perms, Units } from "./Characteristic";
 import { Controller, ControllerIdentifier, ControllerServiceMap } from "./controller";
 import { HAPStatus, TLVErrorCode } from "./HAPServer";
 import { AccessoryInfo, PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
 import { Service } from "./Service";
 import { EventedHTTPServer, HAPConnection } from "./util/eventedhttp";
+import { HapStatusError } from "./util/hapStatusError";
 import { awaitEventOnce, PromiseTimeout } from "./util/promise-utils";
 import * as uuid from "./util/uuid";
 import { toShortForm } from "./util/uuid";
@@ -415,11 +419,25 @@ describe("Accessory", () => {
   describe("published switch service", () => {
     let switchService: Service;
 
-    let aid: number;
-    let iidSwitch: number;
-    let iidOnCharacteristic: number;
+    const aid = 1;
+    const iids = {
+      accessoryInformation: 1,
+      identify: 2,
+      manufacturer: 3,
+      model: 4,
+      accessoryName: 5,
+      serialNumber: 6,
+      firmwareRevision: 7,
 
-    beforeEach(() => { // TODO duplication!
+      switch: 8,
+      switchName: 9,
+      on: 10,
+
+      protocolInformation: 11,
+      version: 12,
+    };
+
+    beforeEach(() => {
       const loadBackup = AccessoryInfo.load;
       AccessoryInfo.load = jest.fn(() => {
         // inject our mocked accessoryInfo object
@@ -442,9 +460,7 @@ describe("Accessory", () => {
       // saveMock may be called in `publish`
       saveMock.mockReset();
 
-      aid = accessory.aid!;
-      iidSwitch = switchService.iid!;
-      iidOnCharacteristic = switchService.getCharacteristic(Characteristic.On).iid!;
+      expect(aid).toEqual(accessory.aid);
     });
 
     describe("handleAccessories", () => {
@@ -467,42 +483,42 @@ describe("Accessory", () => {
 
         await callbackPromise;
 
-        // TODO test Service.toHAP and Characteristic.toHAP!
+        // TODO test Service.toHAP and Characteristic.toHAP separately!
         const expected: AccessoriesResponse = {
           accessories: [{
-            aid: 1,
+            aid: aid,
             services: [
               {
-                iid: 1,
+                iid: iids.accessoryInformation,
                 type: toShortForm(Service.AccessoryInformation.UUID),
                 hidden: undefined,
                 primary: undefined,
                 characteristics: [
-                  await characteristicHAPInfo(Characteristic.Identify, 2),
-                  await characteristicHAPInfo(Characteristic.Manufacturer, 3),
-                  await characteristicHAPInfo(Characteristic.Model, 4),
-                  await characteristicHAPInfo(Characteristic.Name, 5, accessory.displayName),
-                  await characteristicHAPInfo(Characteristic.SerialNumber, 6),
-                  await characteristicHAPInfo(Characteristic.FirmwareRevision, 7),
+                  await characteristicHAPInfo(Characteristic.Identify, iids.identify),
+                  await characteristicHAPInfo(Characteristic.Manufacturer, iids.manufacturer),
+                  await characteristicHAPInfo(Characteristic.Model, iids.model),
+                  await characteristicHAPInfo(Characteristic.Name, iids.accessoryName, accessory.displayName),
+                  await characteristicHAPInfo(Characteristic.SerialNumber, iids.serialNumber),
+                  await characteristicHAPInfo(Characteristic.FirmwareRevision, iids.firmwareRevision),
                 ],
               },
               {
-                iid: 8,
+                iid: iids.switch,
                 type: toShortForm(Service.Switch.UUID),
                 hidden: undefined,
                 primary: undefined,
                 characteristics: [
-                  await characteristicHAPInfo(Characteristic.Name, 9, "Switch"),
-                  await characteristicHAPInfo(Characteristic.On, 10, false),
+                  await characteristicHAPInfo(Characteristic.Name, iids.switchName, "Switch"),
+                  await characteristicHAPInfo(Characteristic.On, iids.on, false),
                 ],
               },
               {
-                iid: 11,
+                iid: iids.protocolInformation,
                 type: toShortForm(Service.ProtocolInformation.UUID),
                 hidden: undefined,
                 primary: undefined,
                 characteristics: [
-                  await characteristicHAPInfo(Characteristic.Version, 12, "1.1.0"),
+                  await characteristicHAPInfo(Characteristic.Version, iids.version, "1.1.0"),
                 ],
               },
             ],
@@ -510,7 +526,6 @@ describe("Accessory", () => {
         };
         expect(callback).toBeCalledTimes(1);
         expect(callback).toBeCalledWith(undefined, expected);
-        // TODO add test coverage badge to README!
       });
     });
 
@@ -519,7 +534,6 @@ describe("Accessory", () => {
         request: Partial<CharacteristicsReadRequest>,
         ...expectedReadData: CharacteristicReadData[]
       ): Promise<void> => {
-        // TODO hasEventNotification method on HAPConnection?
         // @ts-expect-error: private access
         accessory.handleGetCharacteristics(connection, {
           ids: [],
@@ -544,20 +558,34 @@ describe("Accessory", () => {
 
       test("read Switch.On characteristic", async () => {
         await testRequestResponse({
-          ids: [{ aid: aid, iid: iidOnCharacteristic }],
+          ids: [{ aid: aid, iid: iids.on }],
         }, {
           aid: aid,
-          iid: iidOnCharacteristic,
+          iid: iids.on,
           value: 0,
+        });
+
+        // testing that errors are forwarded properly!
+        switchService.getCharacteristic(Characteristic.On)
+          .onGet(() => {
+            throw new HapStatusError(HAPStatus.OUT_OF_RESOURCE);
+          });
+
+        await testRequestResponse({
+          ids: [{ aid: aid, iid: iids.on }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.OUT_OF_RESOURCE,
         });
       });
 
       test("read non-existent characteristic", async () => {
         await testRequestResponse({
-          ids: [{ aid: 2, iid: iidOnCharacteristic }],
+          ids: [{ aid: 2, iid: iids.on }],
         }, {
           aid: 2,
-          iid: iidOnCharacteristic,
+          iid: iids.on,
           status: HAPStatus.INVALID_VALUE_IN_REQUEST,
         });
 
@@ -572,17 +600,514 @@ describe("Accessory", () => {
 
       test("reading write-only characteristic", async () => {
         await testRequestResponse({
-          ids: [{ aid: aid, iid: 2 }], // TODO identify
+          ids: [{ aid: aid, iid: iids.identify }],
         }, {
           aid: aid,
-          iid: 2,
+          iid: iids.identify,
           status: HAPStatus.WRITE_ONLY_CHARACTERISTIC,
+        });
+      });
+
+      test("read includeMeta, includePerms, includeType, includeEvent", async () => {
+        const ids = [{ aid: aid, iid: iids.on }];
+        const partialExpectedResponse = {
+          aid: aid,
+          iid: iids.on,
+          value: 0,
+        };
+
+        const customCharacteristic = new Characteristic("Custom", uuid.generate("custom"), {
+          format: Formats.UINT64,
+          perms: [Perms.PAIRED_READ],
+          unit: Units.SECONDS,
+          minValue: 10,
+          maxValue: 100,
+          minStep: 2,
+        });
+        customCharacteristic.value = 20;
+        switchService.addCharacteristic(customCharacteristic);
+        accessory._assignIDs(accessory._identifierCache!);
+
+        await testRequestResponse({
+          ids: ids,
+          includeMeta: true,
+        }, {
+          ...partialExpectedResponse,
+          format: Formats.BOOL,
+        });
+
+        await testRequestResponse({
+          ids: [{ aid: aid, iid: customCharacteristic.iid! }],
+          includeMeta: true,
+        }, {
+          aid: aid,
+          iid: customCharacteristic.iid!,
+          value: 20,
+          format: Formats.UINT64,
+          unit: Units.SECONDS,
+          minValue: 10,
+          maxValue: 100,
+          minStep: 2,
+        });
+
+        await testRequestResponse({
+          ids: [{ aid: aid, iid: iids.serialNumber }],
+          includeMeta: true,
+        }, {
+          aid: aid,
+          iid: 6,
+          value: "Default-SerialNumber",
+          format: Formats.STRING,
+          maxLen: 64,
+        });
+
+        await testRequestResponse({
+          ids: ids,
+          includePerms: true,
+        }, {
+          ...partialExpectedResponse,
+          perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+        });
+
+        await testRequestResponse({
+          ids: ids,
+          includeType: true,
+        }, {
+          ...partialExpectedResponse,
+          type: toShortForm(Characteristic.On.UUID),
+        });
+
+
+        const hasEventNotificationsMock: Mock<boolean, [number, number]> = jest.fn();
+        connection.hasEventNotifications = hasEventNotificationsMock;
+
+        hasEventNotificationsMock.mockImplementationOnce(() => true);
+        await testRequestResponse({
+          ids: ids,
+          includeEvent: true,
+        }, {
+          ...partialExpectedResponse,
+          ev: true,
+        });
+        expect(hasEventNotificationsMock).toHaveBeenCalledWith(aid, iids.on);
+        hasEventNotificationsMock.mockReset();
+
+        hasEventNotificationsMock.mockImplementationOnce(() => false);
+        await testRequestResponse({
+          ids: ids,
+          includeEvent: true,
+        }, {
+          ...partialExpectedResponse,
+          ev: false,
+        });
+        expect(hasEventNotificationsMock).toHaveBeenCalledWith(aid, iids.on);
+      });
+
+      test("reading adminOnly", async () => {
+        switchService.getCharacteristic(Characteristic.On)
+          .setProps({
+            adminOnlyAccess: [Access.READ],
+          });
+
+        await testRequestResponse({
+          ids: [{ aid: aid, iid: iids.on }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          value: 0,
+        });
+
+        connection.username = clientUsername1;
+        await testRequestResponse({
+          ids: [{ aid: aid, iid: iids.on }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.INSUFFICIENT_PRIVILEGES,
+        });
+
+        connection.username = undefined;
+        accessory._accessoryInfo = undefined;
+
+        await testRequestResponse({
+          ids: [{ aid: aid, iid: iids.on }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.INSUFFICIENT_PRIVILEGES,
+        });
+      });
+    });
+
+    describe("handleSetCharacteristic", () => {
+      const testRequestResponse = async (
+        request: Partial<CharacteristicsWriteRequest>,
+        ...expectedReadData: CharacteristicWriteData[]
+      ): Promise<void> => {
+        // @ts-expect-error: private access
+        accessory.handleSetCharacteristics(connection, {
+          characteristics: [],
+          ...request,
+        }, callback);
+
+        await callbackPromise;
+
+        const expectedResponse: CharacteristicsWriteResponse = {
+          characteristics: expectedReadData,
+        };
+
+        expect(callback).toBeCalledTimes(1);
+        expect(callback).toBeCalledWith(undefined, expectedResponse);
+
+        callback.mockReset();
+      };
+
+      test("write Switch.On characteristic", async () => {
+        await testRequestResponse({
+          characteristics: [{
+            aid: aid,
+            iid: iids.on,
+            value: true,
+          }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.SUCCESS,
+        });
+
+        expect(switchService.getCharacteristic(Characteristic.On).value).toEqual(true);
+
+        // testing that errors are forwarder properly
+        switchService.getCharacteristic(Characteristic.On)
+          .onSet(() => {
+            throw new HapStatusError(HAPStatus.RESOURCE_BUSY);
+          });
+
+        await testRequestResponse({
+          characteristics: [{
+            aid: aid,
+            iid: iids.on,
+            value: true,
+          }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.RESOURCE_BUSY,
+        });
+      });
+
+      test("write non-existent characteristic", async () => {
+        await testRequestResponse({
+          characteristics: [{ aid: 2, iid: iids.on, value: true }],
+        }, {
+          aid: 2,
+          iid: iids.on,
+          status: HAPStatus.INVALID_VALUE_IN_REQUEST,
+        });
+
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: 15, value: true }],
+        }, {
+          aid: aid,
+          iid: 15,
+          status: HAPStatus.INVALID_VALUE_IN_REQUEST,
+        });
+      });
+
+      test("writing read-only characteristic", async () => {
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.model, value: "New Model" }],
+        }, {
+          aid: aid,
+          iid: iids.model,
+          status: HAPStatus.READ_ONLY_CHARACTERISTIC,
+        });
+      });
+
+      test("writing adminOnly", async () => {
+        switchService.getCharacteristic(Characteristic.On)
+          .setProps({
+            adminOnlyAccess: [Access.WRITE],
+          });
+
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.on, value: true }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.SUCCESS,
+        });
+
+        connection.username = clientUsername1; // changing to non-adming username
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.on, value: true }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.INSUFFICIENT_PRIVILEGES,
+        });
+
+        connection.username = undefined;
+        accessory._accessoryInfo = undefined;
+
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.on, value: true }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.INSUFFICIENT_PRIVILEGES,
+        });
+      });
+
+      test("enabling and disabling event notifications", async () => {
+        const hasEventNotificationsMock: Mock<boolean, [number, number]> = jest.fn();
+        connection.hasEventNotifications = hasEventNotificationsMock;
+        connection.enableEventNotifications = jest.fn();
+        connection.disableEventNotifications = jest.fn();
+
+        const characteristic = switchService.getCharacteristic(Characteristic.On);
+
+        hasEventNotificationsMock.mockImplementationOnce(() => false);
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.on, ev: false }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.SUCCESS,
+        });
+        expect(connection.enableEventNotifications).not.toBeCalled();
+        expect(connection.disableEventNotifications).not.toBeCalled();
+        // @ts-expect-error: private access
+        expect(characteristic.subscriptions).toEqual(0);
+
+        hasEventNotificationsMock.mockImplementationOnce(() => false);
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.on, ev: true }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.SUCCESS,
+        });
+        expect(connection.enableEventNotifications).toHaveBeenCalledWith(aid, iids.on);
+        // @ts-expect-error: private access
+        expect(characteristic.subscriptions).toEqual(1);
+
+        hasEventNotificationsMock.mockImplementationOnce(() => true);
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.on, ev: true }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.SUCCESS,
+        });
+        expect(connection.enableEventNotifications).toBeCalledTimes(1); // >stays< at 1 invocation
+        expect(connection.disableEventNotifications).not.toBeCalled();
+        // @ts-expect-error: private access
+        expect(characteristic.subscriptions).toEqual(1);
+
+        hasEventNotificationsMock.mockImplementationOnce(() => true);
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.on, ev: false }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.SUCCESS,
+        });
+        expect(connection.disableEventNotifications).toHaveBeenCalledWith(aid, iids.on);
+        // @ts-expect-error: private access
+        expect(characteristic.subscriptions).toEqual(0);
+      });
+
+      test("unsupported event notifications", async () => {
+        connection.hasEventNotifications = jest.fn(() => false);
+
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.model, ev: true }],
+        }, {
+          aid: aid,
+          iid: iids.model,
+          status: HAPStatus.NOTIFICATION_NOT_SUPPORTED,
+        });
+
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.model, ev: false }],
+        }, {
+          aid: aid,
+          iid: iids.model,
+          status: HAPStatus.NOTIFICATION_NOT_SUPPORTED,
+        });
+      });
+
+      test("adminOnly notifications", async () => {
+        connection.hasEventNotifications = jest.fn(() => false);
+        connection.enableEventNotifications = jest.fn();
+        connection.disableEventNotifications = jest.fn();
+
+        switchService.getCharacteristic(Characteristic.On)
+          .setProps({
+            adminOnlyAccess: [Access.NOTIFY],
+          });
+
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.on, ev: true }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.SUCCESS,
+        });
+        expect(connection.enableEventNotifications).toHaveBeenCalledTimes(1);
+
+        connection.username = clientUsername1; // changing to non-admin username
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.on, ev: true }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.INSUFFICIENT_PRIVILEGES,
+        });
+
+
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.on, ev: false }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.INSUFFICIENT_PRIVILEGES,
+        });
+
+        connection.username = undefined;
+        accessory._accessoryInfo = undefined;
+
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.on, ev: true }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.INSUFFICIENT_PRIVILEGES,
+        });
+      });
+
+      test("write with additional authorization", async () => {
+        const handler: Mock<boolean, (string | undefined)[]> = jest.fn();
+
+        // write with no handler
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.on, value: true, authData: "xyz" }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.SUCCESS,
+        });
+
+        switchService.getCharacteristic(Characteristic.On)
+          .setupAdditionalAuthorization(handler);
+
+        // allowed to write
+        handler.mockImplementationOnce(() => true);
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.on, value: true, authData: "xyz" }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.SUCCESS,
+        });
+        expect(handler).toHaveBeenCalledWith("xyz");
+
+        // rejected write
+        handler.mockImplementationOnce(() => false);
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.on, value: true, authData: "xyz" }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.INSUFFICIENT_AUTHORIZATION,
+        });
+        expect(handler).toHaveBeenCalledWith("xyz");
+
+        // exception
+        handler.mockImplementationOnce(() => {
+          throw new Error("EXPECTED TEST ERROR");
+        });
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.on, value: true, authData: "xyz" }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.INSUFFICIENT_AUTHORIZATION,
+        });
+        expect(handler).toHaveBeenCalledWith("xyz");
+      });
+
+      test.each([false, true])(
+        "timed write with timed write being required: %s", async timedWriteRequired => {
+          if (timedWriteRequired) {
+            switchService.getCharacteristic(Characteristic.On).props.perms.push(Perms.TIMED_WRITE);
+
+            await testRequestResponse({
+              characteristics: [{ aid: aid, iid: iids.on, value: true }],
+            }, {
+              aid: aid,
+              iid: iids.on,
+              status: HAPStatus.INVALID_VALUE_IN_REQUEST,
+            });
+          }
+
+          await testRequestResponse({
+            characteristics: [{ aid: aid, iid: iids.on, value: true }],
+            pid: 1337, // pid already expired
+          }, {
+            aid: aid,
+            iid: iids.on,
+            status: HAPStatus.INVALID_VALUE_IN_REQUEST,
+          });
+
+          connection.timedWritePid = 1337;
+          connection.timedWriteTimeout = setTimeout(() => {
+            fail(new Error("timed-write timeout was never cleared"));
+          }, 1000);
+
+          await testRequestResponse({
+            characteristics: [{ aid: aid, iid: iids.on, value: true }],
+            pid: 1336, // invalid pid
+          }, {
+            aid: aid,
+            iid: iids.on,
+            status: HAPStatus.INVALID_VALUE_IN_REQUEST,
+          });
+
+          await testRequestResponse({
+            characteristics: [{ aid: aid, iid: iids.on, value: true }],
+            pid: 1337, // correct pid
+          }, {
+            aid: aid,
+            iid: iids.on,
+            status: HAPStatus.SUCCESS,
+          });
+
+          await testRequestResponse({
+            characteristics: [{ aid: aid, iid: iids.on, value: true }],
+            pid: 1337, // can't reuse pid
+          }, {
+            aid: aid,
+            iid: iids.on,
+            status: HAPStatus.INVALID_VALUE_IN_REQUEST,
+          });
+        });
+
+      test("empty write", async () => {
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.on }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.INVALID_VALUE_IN_REQUEST,
         });
       });
     });
   });
 
   describe("characteristicWarning", () => {
+    // TODO test read and write timeouts!
     test("emit characteristic warning", () => {
       const handler = jest.fn();
       accessory.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, handler);

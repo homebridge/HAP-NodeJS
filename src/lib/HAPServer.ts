@@ -911,7 +911,6 @@ export class HAPServer extends EventEmitter {
             return;
           }
 
-          // typescript can't type that this exists if error doesn't
           const characteristics = writeResponse!.characteristics;
 
           let multiStatus = false;
@@ -924,12 +923,6 @@ export class HAPServer extends EventEmitter {
           }
 
           if (multiStatus) {
-            for (const data of characteristics) { // on a 207 Multi-Status EVERY characteristic MUST include a status property
-              if (data.status === undefined) {
-                data.status = HAPStatus.SUCCESS;
-              }
-            }
-
             // 207 is "multi-status" since HomeKit may be setting multiple things and any one can fail independently
             response.writeHead(HAPHTTPCode.MULTI_STATUS, { "Content-Type": HAPMimeTypes.HAP_JSON });
             response.end(JSON.stringify({ characteristics: characteristics }));

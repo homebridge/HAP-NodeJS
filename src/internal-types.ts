@@ -120,9 +120,8 @@ export interface CharacteristicsWriteRequest {
 
 export interface PartialCharacteristicWriteDataValue {
   value?: CharacteristicValue | null,
-  ev?: boolean, // event
 
-  status?: HAPStatus.SUCCESS,
+  status: HAPStatus.SUCCESS,
 }
 
 export interface PartialCharacteristicWriteError {
