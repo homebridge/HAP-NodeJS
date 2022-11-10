@@ -599,15 +599,17 @@ export class Accessory extends EventEmitter {
   }
 
   public addBridgedAccessory(accessory: Accessory, deferUpdate = false): Accessory {
-    if (accessory._isBridge) {
-      throw new Error("Cannot Bridge another Bridge!");
+    if (accessory._isBridge || accessory === this) {
+      throw new Error("Illegal state: either trying to bridge a bridge or trying to bridge itself!");
     }
 
-    // check for UUID conflict
-    for (const existing of this.bridgedAccessories) {
-      if (existing.UUID === accessory.UUID) {
-        throw new Error("Cannot add a bridged Accessory with the same UUID as another bridged Accessory: " + existing.UUID);
-      }
+    if (accessory.initialized) {
+      throw new Error("Tried to bridge an accessory which was already published once!");
+    }
+
+    if (accessory.bridge != null) {
+      // this also prevents that we bridge the same accessory twice!
+      throw new Error("Tried to bridge " + accessory.displayName + " while it was already bridged by " + accessory.bridge.displayName);
     }
 
     if (this.bridgedAccessories.length >= MAX_ACCESSORIES) {
@@ -641,22 +643,17 @@ export class Accessory extends EventEmitter {
     this.enqueueConfigurationUpdate();
   }
 
-  public removeBridgedAccessory(accessory: Accessory, deferUpdate: boolean): void {
-    if (accessory._isBridge) {
-      throw new Error("Cannot Bridge another Bridge!");
-    }
-
+  public removeBridgedAccessory(accessory: Accessory, deferUpdate = false): void {
     // check for UUID conflict
-    const foundMatchAccessory = this.bridgedAccessories.findIndex((existing) => {
-      return existing.UUID === accessory.UUID;
-    });
-
-    if (foundMatchAccessory === -1) {
+    const accessoryIndex = this.bridgedAccessories.indexOf(accessory);
+    if (accessoryIndex === -1) {
       throw new Error("Cannot find the bridged Accessory to remove.");
     }
 
-    this.bridgedAccessories.splice(foundMatchAccessory, 1);
+    this.bridgedAccessories.splice(accessoryIndex, 1);
 
+    accessory.bridged = false;
+    accessory.bridge = undefined;
     accessory.removeAllListeners();
 
     if(!deferUpdate) {
@@ -690,17 +687,11 @@ export class Accessory extends EventEmitter {
   }
 
   protected getAccessoryByAID(aid: number): Accessory | undefined {
-    if (aid === 1) {
+    if (this.aid === aid) {
       return this;
     }
 
-    for (const accessory of this.bridgedAccessories) {
-      if (accessory.aid === aid) {
-        return accessory;
-      }
-    }
-
-    return undefined;
+    return this.bridgedAccessories.find(value => value.aid === aid);
   }
 
   protected findCharacteristic(aid: number, iid: number): Characteristic | undefined {
@@ -933,23 +924,23 @@ export class Accessory extends EventEmitter {
       return this._setupURI;
     }
 
-    const buffer = Buffer.alloc(8);
-    const setupCode = this._accessoryInfo && parseInt(this._accessoryInfo.pincode.replace(/-/g, ""), 10);
+    assert(!!this._accessoryInfo, "Cannot generate setupURI on an accessory that isn't published yet!");
 
-    let value_low = setupCode!;
-    const value_high = this._accessoryInfo && this._accessoryInfo.category >> 1;
+    const buffer = Buffer.alloc(8);
+    let value_low = parseInt(this._accessoryInfo.pincode.replace(/-/g, ""), 10);
+    const value_high = this._accessoryInfo.category >> 1;
 
     value_low |= 1 << 28; // Supports IP;
 
     buffer.writeUInt32BE(value_low, 4);
 
-    if (this._accessoryInfo && this._accessoryInfo.category & 1) {
+    if (this._accessoryInfo.category & 1) {
       buffer[4] = buffer[4] | 1 << 7;
     }
 
-    buffer.writeUInt32BE(value_high!, 0);
+    buffer.writeUInt32BE(value_high, 0);
 
-    let encodedPayload = (buffer.readUInt32BE(4) + (buffer.readUInt32BE(0) * Math.pow(2, 32))).toString(36).toUpperCase();
+    let encodedPayload = (buffer.readUInt32BE(4) + (buffer.readUInt32BE(0) * 0x100000000)).toString(36).toUpperCase();
 
     if (encodedPayload.length !== 9) {
       for (let i = 0; i <= 9 - encodedPayload.length; i++) {
@@ -1138,6 +1129,10 @@ export class Accessory extends EventEmitter {
    *                                new Accessory.
    */
   public async publish(info: PublishInfo, allowInsecureRequest?: boolean): Promise<void> {
+    if (this.bridged) {
+      throw new Error("Can't publish in accessory which is bridged by another accessory. Bridged by " + this.bridge?.displayName);
+    }
+
     // noinspection JSDeprecatedSymbols
     if (!info.advertiser && info.useLegacyAdvertiser != null) {
       // noinspection JSDeprecatedSymbols
@@ -1355,7 +1350,7 @@ export class Accessory extends EventEmitter {
       }
     }, 1000);
     this.configurationChangeDebounceTimeout.unref();
-    // 1d is fine, HomeKit is built that with configuration updates no iid or aid conflicts occur.
+    // 1s is fine, HomeKit is built that with configuration updates no iid or aid conflicts occur.
     // Thus, the only thing happening when the txt update arrives late is already removed accessories/services
     // not responding or new accessories/services not yet shown
   }

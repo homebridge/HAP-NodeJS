@@ -8,15 +8,19 @@ import {
   CharacteristicsWriteRequest,
   CharacteristicsWriteResponse,
   CharacteristicWriteData,
+  ResourceRequest,
+  ResourceRequestType,
 } from "../internal-types";
 import { CharacteristicValue } from "../types";
 import { Accessory, AccessoryEventTypes, Categories, MDNSAdvertiser, PublishInfo } from "./Accessory";
 import { BonjourHAPAdvertiser } from "./Advertiser";
 import { Bridge } from "./Bridge";
 import { Access, Characteristic, CharacteristicEventTypes, Formats, Perms, Units } from "./Characteristic";
-import { Controller, ControllerIdentifier, ControllerServiceMap } from "./controller";
-import { HAPStatus, TLVErrorCode } from "./HAPServer";
+import { CameraController, Controller, ControllerIdentifier, ControllerServiceMap } from "./controller";
+import { createCameraControllerOptions, MOCK_IMAGE } from "./controller/CameraController.spec";
+import { HAPHTTPCode, HAPStatus, IdentifyCallback, TLVErrorCode } from "./HAPServer";
 import { AccessoryInfo, PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
+import { IdentifierCache } from "./model/IdentifierCache";
 import { Service } from "./Service";
 import { EventedHTTPServer, HAPConnection } from "./util/eventedhttp";
 import { HapStatusError } from "./util/hapStatusError";
@@ -37,8 +41,6 @@ describe("Accessory", () => {
   let clientPublicKey0: Buffer;
   const clientUsername1 = "AB:CD:EF:00:11:24";
   let clientPublicKey1: Buffer;
-  const clientUsername2 = "AB:CD:EF:00:11:25"; // TODO remove third client?
-  let clientPublicKey2: Buffer;
 
   let accessoryInfoUnpaired: AccessoryInfo;
   let accessoryInfoPaired: AccessoryInfo;
@@ -51,7 +53,6 @@ describe("Accessory", () => {
   beforeEach(() => {
     clientPublicKey0 = crypto.randomBytes(32);
     clientPublicKey1 = crypto.randomBytes(32);
-    clientPublicKey2 = crypto.randomBytes(32);
 
     accessoryInfoUnpaired = AccessoryInfo.create(serverUsername);
     // @ts-expect-error: private access
@@ -130,6 +131,178 @@ describe("Accessory", () => {
     });
   });
 
+  describe("handling services", () => {
+    // TODO handleServiceConfigurationChangeEvent (primary services?)
+    // TODO handleCharactersitic change event?
+    test("addService", () => {
+      const existingCount = 1; // accessoryInformation service; protocolInformation is only added on publish
+
+      const instance = new Service.Switch("Switch");
+      expect(accessory.services.length).toEqual(existingCount);
+
+      const switchService = accessory.addService(instance);
+      expect(accessory.services.length).toEqual(existingCount + 1);
+      expect(accessory.services.includes(instance)).toBeTruthy();
+      expect(switchService).toBe(instance);
+
+      const outletService = accessory.addService(Service.Outlet, "Outlet");
+      expect(outletService.displayName).toEqual("Outlet");
+      expect(accessory.services.length).toEqual(existingCount + 2);
+      expect(accessory.services.includes(outletService)).toBeTruthy();
+
+      // CHECKING DUPLICATES
+      const instance0 = new Service.Switch("Switch1");
+      expect(() => accessory.addService(instance0)).toThrow();
+
+      const instance1 = accessory.addService(Service.Switch, "Switch2", "subtype");
+      expect(instance1.displayName).toEqual("Switch2");
+      expect(() => accessory.addService(Service.Switch, "Switch3", "subtype")).toThrow();
+
+      expect(accessory.getService(Service.Switch))
+        .toBe(instance);
+      expect(accessory.getService("Switch"))
+        .toBe(instance);
+
+      expect(accessory.getServiceById(Service.Switch, "subtype"))
+        .toBe(instance1);
+      expect(accessory.getServiceById("Switch2", "subtype"))
+        .toBe(instance1);
+      expect(accessory.getServiceById("Switch3", "subtype"))
+        .toBeUndefined();
+    });
+
+    test("removeService", () => {
+      const existingCount = 1; // accessoryInformation service; protocolInformation is only added on publish
+
+      const instance = new Service.Switch("Switch");
+      instance.setPrimaryService();
+      expect(accessory.services.length).toEqual(existingCount);
+
+
+      accessory.addService(instance);
+      expect(accessory.services.length).toEqual(existingCount + 1);
+
+      const outlet = accessory.addService(Service.Outlet);
+      outlet.addLinkedService(instance);
+      expect(accessory.services.length).toEqual(existingCount + 2);
+
+      accessory.removeService(instance);
+      expect(accessory.services.length).toEqual(existingCount + 1);
+      expect(accessory.services.includes(instance)).toBeFalsy();
+
+      // HANDLING PRIMARY AND LINKED SERVICES
+      // @ts-expect-error: private access
+      expect(accessory.primaryService).toBe(undefined);
+      expect(instance.isPrimaryService).toBeTruthy();
+      expect(outlet.linkedServices.length).toEqual(0);
+    });
+
+    test("primary service handling", () => {
+      const instance = new Service.Switch("Switch");
+      instance.setPrimaryService();
+      accessory.addService(instance);
+
+      // @ts-expect-error: private access
+      expect(accessory.primaryService).toBe(instance);
+
+      const outlet = new Service.Outlet("Outlet");
+      // noinspection JSDeprecatedSymbols
+      accessory.setPrimaryService(outlet);
+      accessory.addService(outlet);
+
+      // @ts-expect-error: private access
+      expect(accessory.primaryService).toBe(outlet);
+      expect(instance.isPrimaryService).toBeFalsy();
+      expect(outlet.isPrimaryService).toBeTruthy();
+
+      instance.setPrimaryService();
+      // @ts-expect-error: private access
+      expect(accessory.primaryService).toBe(instance);
+      expect(instance.isPrimaryService).toBeTruthy();
+      expect(outlet.isPrimaryService).toBeFalsy();
+
+      instance.setPrimaryService(false);
+      // @ts-expect-error: private access
+      expect(accessory.primaryService).toBe(undefined);
+      expect(instance.isPrimaryService).toBeFalsy();
+      expect(outlet.isPrimaryService).toBeFalsy();
+    });
+
+    // TODO handle primaryService (and changes to it!)
+  });
+
+  describe("bridged accessories", () => {
+    test("addBridgedAccessory", () => {
+      const bridge = new Bridge("TestBridge", uuid.generate("bridge test"));
+
+      // TODO don't bridge an published accessory!
+      bridge.addBridgedAccessories([ accessory ]);
+      expect(bridge.bridged).toBeFalsy();
+      expect(bridge.bridge).toBeUndefined();
+      expect(accessory.bridged).toBeTruthy();
+      expect(accessory.bridge).toBe(bridge);
+
+      expect(bridge.getPrimaryAccessory()).toBe(bridge);
+      expect(accessory.getPrimaryAccessory()).toBe(bridge);
+
+      expect(bridge.bridgedAccessories.includes(accessory)).toBeTruthy();
+
+      expect(() => bridge.addBridgedAccessory(accessory)).toThrow();
+      expect(() => bridge.addBridgedAccessory(new Bridge("asdf", uuid.generate("asdf"))))
+        .toThrow();
+    });
+
+    test("removeBridgedAccessory", () => {
+      const bridge = new Bridge("TestBridge", uuid.generate("bridge test"));
+
+      const validate = () => {
+        expect(bridge.bridged).toBeFalsy();
+        expect(bridge.bridge).toBeUndefined();
+        expect(accessory.bridged).toBeFalsy();
+        expect(accessory.bridge).toBeUndefined();
+
+        expect(bridge.getPrimaryAccessory()).toBe(bridge);
+        expect(accessory.getPrimaryAccessory()).toBe(accessory);
+
+        expect(bridge.bridgedAccessories.includes(accessory)).toBeFalsy();
+      };
+
+      bridge.addBridgedAccessories([ accessory ]);
+      bridge.removeBridgedAccessory(accessory);
+      validate();
+
+      bridge.addBridgedAccessories([ accessory ]);
+      bridge.removeBridgedAccessories([ accessory ]);
+      validate();
+
+      bridge.addBridgedAccessories([ accessory ]);
+      bridge.removeAllBridgedAccessories();
+      validate();
+
+      expect(() => bridge.removeBridgedAccessory(accessory)).toThrow();
+    });
+
+    test("getAccessoryByAID", () => {
+      const bridge = new Bridge("TestBridge", uuid.generate("bridge test"));
+      bridge.addBridgedAccessory(accessory);
+
+      bridge._identifierCache = new IdentifierCache(serverUsername);
+      bridge._assignIDs(bridge._identifierCache);
+
+      // @ts-expect-error: private access
+      expect(bridge.getAccessoryByAID(1)).toBe(bridge);
+      // @ts-expect-error: private access
+      expect(bridge.getAccessoryByAID(2)).toBe(accessory);
+      // @ts-expect-error: private access
+      expect(accessory.getAccessoryByAID(2)).toBe(accessory);
+    });
+  });
+
+  describe("accessory controllers", () => {
+
+  });
+
+  // TODO bind option! (parseBindOption)
   describe("publish", () => {
     test.each`
       advertiser                 | republish
@@ -295,7 +468,7 @@ describe("Accessory", () => {
         accessoryInfoPaired.addPairedClient(clientUsername1, clientPublicKey1, PermissionTypes.USER);
 
         // @ts-expect-error: private access
-        accessory.handleAddPairing(connection, clientUsername1, clientPublicKey2, PermissionTypes.ADMIN, callback);
+        accessory.handleAddPairing(connection, clientUsername1, crypto.randomBytes(32), PermissionTypes.ADMIN, callback);
         expect(callback).toBeCalledWith(TLVErrorCode.UNKNOWN);
       });
     });
@@ -446,7 +619,7 @@ describe("Accessory", () => {
 
       const publishInfo: PublishInfo = {
         username: serverUsername,
-        pincode: "000-00-000",
+        pincode: "123-45-678",
         category: Categories.SWITCH,
       };
 
@@ -461,6 +634,59 @@ describe("Accessory", () => {
       saveMock.mockReset();
 
       expect(aid).toEqual(accessory.aid);
+    });
+
+    test("purgeUnusedIDs", () => {
+      expect(accessory.shouldPurgeUnusedIDs).toBeTruthy();
+      accessory.purgeUnusedIDs();
+      expect(accessory.shouldPurgeUnusedIDs).toBeTruthy();
+
+      accessory.disableUnusedIDPurge();
+
+      expect(accessory.shouldPurgeUnusedIDs).toBeFalsy();
+      accessory.purgeUnusedIDs();
+      expect(accessory.shouldPurgeUnusedIDs).toBeFalsy();
+
+      accessory.enableUnusedIDPurge();
+      expect(accessory.shouldPurgeUnusedIDs).toBeTruthy();
+    });
+
+    test("setupURI", () => {
+      let setupURI = accessory.setupURI();
+
+      const originalSetupURI = setupURI;
+
+      expect(setupURI.startsWith("X-HM://")).toBeTruthy();
+      setupURI = setupURI.substring(7);
+
+      const encodedPayload = setupURI.substring(0, 9);
+      const setupId = setupURI.substring(9);
+
+      expect(setupId).toEqual(accessory._setupID);
+
+      const payload = parseInt(encodedPayload, 36);
+      const low = payload & 0xFFFFFFFF;
+      const high = (payload - low) / 0x100000000;
+
+      const setupCode = low & 0x7FFFFFF;
+      const pairedWithController = (low >> 27) & 0x01;
+      const supportsIP = (low >> 28) & 0x01;
+      const supportsBLE = (low >> 29) & 0x01;
+      const supportsWAC = (low >> 30) & 0x01;
+      const category = ((low >> 31) & 0x01) + ((high & 0x7F) << 1);
+      const reserved = (high >> 8) & 0xF;
+      const version = (high >> 12) & 0x7;
+
+      expect(setupCode).toEqual(parseInt(accessory._accessoryInfo!.pincode.replace(/-/g, ""), 10));
+      expect(pairedWithController).toEqual(0);
+      expect(supportsIP).toEqual(1);
+      expect(supportsBLE).toEqual(0);
+      expect(supportsWAC).toEqual(0);
+      expect(category).toEqual(Categories.SWITCH);
+      expect(reserved).toEqual(0);
+      expect(version).toEqual(0);
+
+      expect(accessory.setupURI()).toEqual(originalSetupURI);
     });
 
     describe("handleAccessories", () => {
@@ -938,6 +1164,47 @@ describe("Accessory", () => {
         });
       });
 
+      test("clearing event notifications on disconnect", async () => {
+        const hasEventNotificationsMock: Mock<boolean, [number, number]> = jest.fn();
+        connection.hasEventNotifications = hasEventNotificationsMock;
+        connection.enableEventNotifications = jest.fn();
+
+        const characteristic = switchService.getCharacteristic(Characteristic.On);
+
+        hasEventNotificationsMock.mockImplementationOnce(() => false);
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.on, ev: true }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.SUCCESS,
+        });
+        expect(connection.enableEventNotifications).toBeCalled();
+        // @ts-expect-error: private access
+        expect(characteristic.subscriptions).toEqual(1);
+
+        connection.getRegisteredEvents = jest.fn(() => {
+          return new Set([aid + "." + iids.on]);
+        });
+        connection.clearRegisteredEvents = jest.fn();
+
+        // @ts-expect-error: private access
+        const originalImplementation = accessory.findCharacteristic.bind(accessory);
+        // @ts-expect-error: private access
+        accessory.findCharacteristic = jest.fn((aid, iid) => {
+          return originalImplementation(aid, iid);
+        });
+
+        // @ts-expect-error: private access
+        accessory.handleHAPConnectionClosed(connection);
+
+        expect(connection.clearRegisteredEvents).toBeCalled();
+        // @ts-expect-error: private access
+        expect(accessory.findCharacteristic).toHaveBeenCalledWith(aid, iids.on);
+        // @ts-expect-error: private access
+        expect(characteristic.subscriptions).toEqual(0);
+      });
+
       test("adminOnly notifications", async () => {
         connection.hasEventNotifications = jest.fn(() => false);
         connection.enableEventNotifications = jest.fn();
@@ -1102,6 +1369,133 @@ describe("Accessory", () => {
           iid: iids.on,
           status: HAPStatus.INVALID_VALUE_IN_REQUEST,
         });
+      });
+
+      test("Identify Write", async () => {
+        // PAIRED IDENTIFY
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.identify, value: true }],
+        }, {
+          aid: aid,
+          iid: iids.identify,
+          status: HAPStatus.SUCCESS,
+        });
+
+        const eventPromise: Promise<[boolean, IdentifyCallback]> = awaitEventOnce(accessory, AccessoryEventTypes.IDENTIFY);
+        const response = testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.identify, value: true }],
+        }, {
+          aid: aid,
+          iid: iids.identify,
+          status: HAPStatus.SUCCESS,
+        });
+
+        const eventResult = await eventPromise;
+        expect(eventResult[0]).toEqual(true);
+        eventResult[1]();
+
+        await response;
+      });
+    });
+
+    describe("handleResource", () => {
+      let cameraController: CameraController;
+      beforeEach(() => {
+        cameraController = new CameraController(createCameraControllerOptions());
+        accessory.configureController(cameraController);
+      });
+
+      const testRequestResponse = async (partial: Partial<ResourceRequest> = {}) => {
+        // @ts-expect-error: private access
+        accessory.handleResource({
+          "resource-type": ResourceRequestType.IMAGE,
+          "image-width": 200,
+          "image-height": 200,
+          ...partial,
+        }, callback);
+
+        await callbackPromise;
+
+      };
+
+      test("unknown resource type", () => {
+        // @ts-expect-error: private access
+        accessory.handleResource({ "resource-type": "unknown" }, callback);
+
+        expect(callback).toHaveBeenCalledWith({
+          httpCode: HAPHTTPCode.NOT_FOUND,
+          status: HAPStatus.RESOURCE_DOES_NOT_EXIST,
+        });
+      });
+
+      test("missing camera controller", () => {
+        accessory.removeController(cameraController);
+
+        // @ts-expect-error: private access
+        accessory.handleResource({
+          "resource-type": ResourceRequestType.IMAGE,
+          "image-width": 200,
+          "image-height": 200,
+        }, callback);
+
+        expect(callback).toHaveBeenCalledWith({
+          httpCode: HAPHTTPCode.NOT_FOUND,
+          status: HAPStatus.RESOURCE_DOES_NOT_EXIST,
+        });
+      });
+
+      test("retrieve image resource", async () => {
+        await testRequestResponse();
+        expect(callback).toHaveBeenCalledWith(undefined, MOCK_IMAGE);
+
+        await testRequestResponse({ aid: 1 });
+        expect(callback).toHaveBeenCalledWith(undefined, MOCK_IMAGE);
+      });
+
+      test("retrieve image resource on bridge", async () => {
+        accessory.addBridgedAccessory(new Accessory("Bridged accessory", uuid.generate("bridged")));
+        accessory._assignIDs(accessory._identifierCache!);
+
+        await testRequestResponse();
+        expect(callback).toHaveBeenCalledWith(undefined, MOCK_IMAGE);
+
+        await testRequestResponse({ aid: 1 });
+        expect(callback).toHaveBeenCalledWith(undefined, MOCK_IMAGE);
+      });
+
+      test("retrieve image resource on bridged accessory", async () => {
+        accessory.removeController(cameraController);
+
+        const bridged = new Accessory("Bridged accessory", uuid.generate("bridged"));
+        bridged.configureController(cameraController);
+
+        accessory.addBridgedAccessory(bridged);
+        accessory._assignIDs(accessory._identifierCache!);
+        expect(bridged.aid).toBeDefined();
+
+        await testRequestResponse();
+        expect(callback).toHaveBeenCalledWith({
+          httpCode: HAPHTTPCode.NOT_FOUND,
+          status: HAPStatus.RESOURCE_DOES_NOT_EXIST,
+        });
+
+        await testRequestResponse({ aid: 1 });
+        expect(callback).toHaveBeenCalledWith({
+          httpCode: HAPHTTPCode.NOT_FOUND,
+          status: HAPStatus.RESOURCE_DOES_NOT_EXIST,
+        });
+
+        await testRequestResponse({ aid: bridged.aid! });
+        expect(callback).toHaveBeenCalledWith(undefined, MOCK_IMAGE);
+      });
+
+      test("properly forward erroneous conditions", async () => {
+        cameraController.recordingManagement!.operatingModeService
+          .getCharacteristic(Characteristic.HomeKitCameraActive)
+          .value = false;
+
+        await testRequestResponse();
+        expect(callback).toHaveBeenCalledWith({ httpCode: HAPHTTPCode.MULTI_STATUS, status: HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE });
       });
     });
   });

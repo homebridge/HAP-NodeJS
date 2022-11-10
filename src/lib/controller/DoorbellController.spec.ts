@@ -1,10 +1,10 @@
 import { EventTriggerOption } from "../camera";
-import { createOptions } from "./CameraController.spec";
+import { createCameraControllerOptions } from "./CameraController.spec";
 import { DoorbellController } from "./DoorbellController";
 
 describe("DoorbellController", () => {
   test("event trigger options", () => {
-    const controller = new DoorbellController(createOptions());
+    const controller = new DoorbellController(createCameraControllerOptions());
 
     // @ts-expect-error: protected access
     const options = controller.retrieveEventTriggerOptions();
