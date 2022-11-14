@@ -11,13 +11,22 @@ import {
   ResourceRequest,
   ResourceRequestType,
 } from "../internal-types";
-import { CharacteristicValue } from "../types";
-import { Accessory, AccessoryEventTypes, Categories, MDNSAdvertiser, PublishInfo } from "./Accessory";
+import { CharacteristicValue, InterfaceName, IPAddress } from "../types";
+import { Accessory, AccessoryEventTypes, Categories, CharacteristicWarningType, MDNSAdvertiser, PublishInfo } from "./Accessory";
 import { BonjourHAPAdvertiser } from "./Advertiser";
 import { Bridge } from "./Bridge";
-import { Access, Characteristic, CharacteristicEventTypes, Formats, Perms, Units } from "./Characteristic";
+import {
+  Access,
+  Characteristic,
+  CharacteristicEventTypes,
+  CharacteristicGetCallback,
+  CharacteristicSetCallback,
+  Formats,
+  Perms,
+  Units,
+} from "./Characteristic";
 import { CameraController, Controller, ControllerIdentifier, ControllerServiceMap } from "./controller";
-import { createCameraControllerOptions, MOCK_IMAGE } from "./controller/CameraController.spec";
+import { createCameraControllerOptions, MOCK_IMAGE, MockLegacyCameraSource } from "./controller/CameraController.spec";
 import { HAPHTTPCode, HAPStatus, IdentifyCallback, TLVErrorCode } from "./HAPServer";
 import { AccessoryInfo, PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
 import { IdentifierCache } from "./model/IdentifierCache";
@@ -101,20 +110,6 @@ describe("Accessory", () => {
   });
 
   describe("constructor", () => {
-    test("identify itself with a valid UUID", () => {
-      const accessory = new Accessory("Test", uuid.generate("Foo"));
-
-      const VALUE = true;
-
-      accessory.getService(Service.AccessoryInformation)!
-        .getCharacteristic(Characteristic.Identify)!
-        .on(CharacteristicEventTypes.SET, (value, callback) => {
-          // TODO is this ever called?
-          expect(value).toEqual(VALUE);
-          callback();
-        });
-    });
-
     test("fail to load with no display name", () => {
       expect(() => new Accessory("", ""))
         .toThrow("non-empty displayName");
@@ -227,15 +222,12 @@ describe("Accessory", () => {
       expect(instance.isPrimaryService).toBeFalsy();
       expect(outlet.isPrimaryService).toBeFalsy();
     });
-
-    // TODO handle primaryService (and changes to it!)
   });
 
   describe("bridged accessories", () => {
     test("addBridgedAccessory", () => {
       const bridge = new Bridge("TestBridge", uuid.generate("bridge test"));
 
-      // TODO don't bridge an published accessory!
       bridge.addBridgedAccessories([ accessory ]);
       expect(bridge.bridged).toBeFalsy();
       expect(bridge.bridge).toBeUndefined();
@@ -299,10 +291,59 @@ describe("Accessory", () => {
   });
 
   describe("accessory controllers", () => {
+    test("configureController deserialize controllers and remove/add/replace services correctly", () => {
+      accessory.configureController(new TestController());
 
+      const serialized = Accessory.serialize(accessory);
+
+      const restoredAccessory = Accessory.deserialize(serialized);
+      restoredAccessory.configureController(new TestController()); // restore Controller;
+
+      expect(restoredAccessory.services).toBeDefined();
+      expect(restoredAccessory.services.length).toEqual(3); // accessory information, light sensor, outlet
+
+      expect(restoredAccessory.getService(Service.Lightbulb)).toBeUndefined();
+      expect(restoredAccessory.getService(Service.LightSensor)).toBeDefined();
+      expect(restoredAccessory.getService(Service.Outlet)).toBeDefined();
+      expect(restoredAccessory.getService(Service.Switch)).toBeUndefined();
+    });
+
+    test("legacy configure camera source", async () => {
+      const microphone = new Service.Microphone();
+      const source = new MockLegacyCameraSource(2);
+      source.services.push(microphone);
+
+      const expectedOptions = source.streamControllers[0].options;
+
+      // noinspection JSDeprecatedSymbols
+      accessory.configureCameraSource(source);
+
+      expect(accessory.getServiceById(Service.CameraRTPStreamManagement, "0")).toBeDefined();
+      expect(accessory.getServiceById(Service.CameraRTPStreamManagement, "1")).toBeDefined();
+      expect(accessory.getService(Service.Microphone)).toBe(microphone);
+
+      // @ts-expect-error: private access
+      const cameraController = accessory.activeCameraController!;
+      expect(cameraController).toBeDefined();
+
+      // @ts-expect-error: private access
+      expect(cameraController.streamCount).toEqual(2);
+      // @ts-expect-error: private access
+      expect(cameraController.streamingOptions).toEqual(expectedOptions);
+
+      // @ts-expect-error: private access
+      accessory.handleResource({
+        "resource-type": ResourceRequestType.IMAGE,
+        "image-width": 200,
+        "image-height": 200,
+      }, callback);
+
+      await callbackPromise;
+
+      expect(callback).toHaveBeenCalledWith(undefined, MOCK_IMAGE);
+    });
   });
 
-  // TODO bind option! (parseBindOption)
   describe("publish", () => {
     test.each`
       advertiser                 | republish
@@ -591,6 +632,7 @@ describe("Accessory", () => {
 
   describe("published switch service", () => {
     let switchService: Service;
+    let onCharacteristic: Characteristic;
 
     const aid = 1;
     const iids = {
@@ -625,6 +667,8 @@ describe("Accessory", () => {
 
       switchService = new Service.Switch("Switch");
       accessory.addService(switchService);
+
+      onCharacteristic = switchService.getCharacteristic(Characteristic.On);
 
       accessory.publish(publishInfo);
 
@@ -792,10 +836,9 @@ describe("Accessory", () => {
         });
 
         // testing that errors are forwarded properly!
-        switchService.getCharacteristic(Characteristic.On)
-          .onGet(() => {
-            throw new HapStatusError(HAPStatus.OUT_OF_RESOURCE);
-          });
+        onCharacteristic.onGet(() => {
+          throw new HapStatusError(HAPStatus.OUT_OF_RESOURCE);
+        });
 
         await testRequestResponse({
           ids: [{ aid: aid, iid: iids.on }],
@@ -930,10 +973,9 @@ describe("Accessory", () => {
       });
 
       test("reading adminOnly", async () => {
-        switchService.getCharacteristic(Characteristic.On)
-          .setProps({
-            adminOnlyAccess: [Access.READ],
-          });
+        onCharacteristic.setProps({
+          adminOnlyAccess: [Access.READ],
+        });
 
         await testRequestResponse({
           ids: [{ aid: aid, iid: iids.on }],
@@ -1001,13 +1043,12 @@ describe("Accessory", () => {
           status: HAPStatus.SUCCESS,
         });
 
-        expect(switchService.getCharacteristic(Characteristic.On).value).toEqual(true);
+        expect(onCharacteristic.value).toEqual(true);
 
         // testing that errors are forwarder properly
-        switchService.getCharacteristic(Characteristic.On)
-          .onSet(() => {
-            throw new HapStatusError(HAPStatus.RESOURCE_BUSY);
-          });
+        onCharacteristic.onSet(() => {
+          throw new HapStatusError(HAPStatus.RESOURCE_BUSY);
+        });
 
         await testRequestResponse({
           characteristics: [{
@@ -1051,10 +1092,9 @@ describe("Accessory", () => {
       });
 
       test("writing adminOnly", async () => {
-        switchService.getCharacteristic(Characteristic.On)
-          .setProps({
-            adminOnlyAccess: [Access.WRITE],
-          });
+        onCharacteristic.setProps({
+          adminOnlyAccess: [Access.WRITE],
+        });
 
         await testRequestResponse({
           characteristics: [{ aid: aid, iid: iids.on, value: true }],
@@ -1091,8 +1131,6 @@ describe("Accessory", () => {
         connection.enableEventNotifications = jest.fn();
         connection.disableEventNotifications = jest.fn();
 
-        const characteristic = switchService.getCharacteristic(Characteristic.On);
-
         hasEventNotificationsMock.mockImplementationOnce(() => false);
         await testRequestResponse({
           characteristics: [{ aid: aid, iid: iids.on, ev: false }],
@@ -1104,7 +1142,7 @@ describe("Accessory", () => {
         expect(connection.enableEventNotifications).not.toBeCalled();
         expect(connection.disableEventNotifications).not.toBeCalled();
         // @ts-expect-error: private access
-        expect(characteristic.subscriptions).toEqual(0);
+        expect(onCharacteristic.subscriptions).toEqual(0);
 
         hasEventNotificationsMock.mockImplementationOnce(() => false);
         await testRequestResponse({
@@ -1116,7 +1154,7 @@ describe("Accessory", () => {
         });
         expect(connection.enableEventNotifications).toHaveBeenCalledWith(aid, iids.on);
         // @ts-expect-error: private access
-        expect(characteristic.subscriptions).toEqual(1);
+        expect(onCharacteristic.subscriptions).toEqual(1);
 
         hasEventNotificationsMock.mockImplementationOnce(() => true);
         await testRequestResponse({
@@ -1129,7 +1167,7 @@ describe("Accessory", () => {
         expect(connection.enableEventNotifications).toBeCalledTimes(1); // >stays< at 1 invocation
         expect(connection.disableEventNotifications).not.toBeCalled();
         // @ts-expect-error: private access
-        expect(characteristic.subscriptions).toEqual(1);
+        expect(onCharacteristic.subscriptions).toEqual(1);
 
         hasEventNotificationsMock.mockImplementationOnce(() => true);
         await testRequestResponse({
@@ -1141,7 +1179,7 @@ describe("Accessory", () => {
         });
         expect(connection.disableEventNotifications).toHaveBeenCalledWith(aid, iids.on);
         // @ts-expect-error: private access
-        expect(characteristic.subscriptions).toEqual(0);
+        expect(onCharacteristic.subscriptions).toEqual(0);
       });
 
       test("unsupported event notifications", async () => {
@@ -1169,8 +1207,6 @@ describe("Accessory", () => {
         connection.hasEventNotifications = hasEventNotificationsMock;
         connection.enableEventNotifications = jest.fn();
 
-        const characteristic = switchService.getCharacteristic(Characteristic.On);
-
         hasEventNotificationsMock.mockImplementationOnce(() => false);
         await testRequestResponse({
           characteristics: [{ aid: aid, iid: iids.on, ev: true }],
@@ -1181,7 +1217,7 @@ describe("Accessory", () => {
         });
         expect(connection.enableEventNotifications).toBeCalled();
         // @ts-expect-error: private access
-        expect(characteristic.subscriptions).toEqual(1);
+        expect(onCharacteristic.subscriptions).toEqual(1);
 
         connection.getRegisteredEvents = jest.fn(() => {
           return new Set([aid + "." + iids.on]);
@@ -1202,7 +1238,7 @@ describe("Accessory", () => {
         // @ts-expect-error: private access
         expect(accessory.findCharacteristic).toHaveBeenCalledWith(aid, iids.on);
         // @ts-expect-error: private access
-        expect(characteristic.subscriptions).toEqual(0);
+        expect(onCharacteristic.subscriptions).toEqual(0);
       });
 
       test("adminOnly notifications", async () => {
@@ -1210,10 +1246,9 @@ describe("Accessory", () => {
         connection.enableEventNotifications = jest.fn();
         connection.disableEventNotifications = jest.fn();
 
-        switchService.getCharacteristic(Characteristic.On)
-          .setProps({
-            adminOnlyAccess: [Access.NOTIFY],
-          });
+        onCharacteristic.setProps({
+          adminOnlyAccess: [Access.NOTIFY],
+        });
 
         await testRequestResponse({
           characteristics: [{ aid: aid, iid: iids.on, ev: true }],
@@ -1266,8 +1301,7 @@ describe("Accessory", () => {
           status: HAPStatus.SUCCESS,
         });
 
-        switchService.getCharacteristic(Characteristic.On)
-          .setupAdditionalAuthorization(handler);
+        onCharacteristic.setupAdditionalAuthorization(handler);
 
         // allowed to write
         handler.mockImplementationOnce(() => true);
@@ -1308,7 +1342,7 @@ describe("Accessory", () => {
       test.each([false, true])(
         "timed write with timed write being required: %s", async timedWriteRequired => {
           if (timedWriteRequired) {
-            switchService.getCharacteristic(Characteristic.On).props.perms.push(Perms.TIMED_WRITE);
+            onCharacteristic.props.perms.push(Perms.TIMED_WRITE);
 
             await testRequestResponse({
               characteristics: [{ aid: aid, iid: iids.on, value: true }],
@@ -1498,19 +1532,179 @@ describe("Accessory", () => {
         expect(callback).toHaveBeenCalledWith({ httpCode: HAPHTTPCode.MULTI_STATUS, status: HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE });
       });
     });
+
+    // TODO write response tests?
+
+    describe("characteristic read/write characteristicWarning", () => {
+      // @ts-expect-error: private access
+      const originalWarning = Accessory.TIMEOUT_WARNING;
+      // @ts-expect-error: private access
+      const originalTimeoutAfterWarning = Accessory.TIMEOUT_AFTER_WARNING;
+
+      let characteristicWarningHandler: Mock<void, [Characteristic, CharacteristicWarningType, string]>;
+
+      const adjustTimeouts = (warning: number, timeout: number) => {
+        // @ts-expect-error: private access
+        Accessory.TIMEOUT_WARNING = warning;
+        // @ts-expect-error: private access
+        Accessory.TIMEOUT_AFTER_WARNING = timeout;
+      };
+
+      beforeEach(() => {
+        characteristicWarningHandler = jest.fn();
+        // @ts-expect-error: private access
+        accessory.sendCharacteristicWarning = characteristicWarningHandler;
+      });
+
+      afterEach(() => {
+        adjustTimeouts(originalWarning, originalTimeoutAfterWarning);
+      });
+
+      test("slow read notification", async () => {
+        adjustTimeouts(60, 10000);
+
+        const getEvent: Promise<[CharacteristicGetCallback]> = awaitEventOnce(onCharacteristic, CharacteristicEventTypes.GET);
+
+        // @ts-expect-error: private access
+        accessory.handleGetCharacteristics(connection, {
+          ids: [{ aid: aid, iid: iids.on }],
+          includeMeta: false,
+          includeEvent: false,
+          includeType: false,
+          includePerms: false,
+        }, callback);
+
+        await PromiseTimeout(2);
+        expect(callback).not.toHaveBeenCalled();
+
+        await PromiseTimeout(70);
+        expect(characteristicWarningHandler)
+          .toHaveBeenCalledWith(onCharacteristic, CharacteristicWarningType.SLOW_READ, expect.anything());
+
+        const eventResult = await getEvent;
+        eventResult[0](undefined, true);
+
+        await callbackPromise;
+        expect(callback).toHaveBeenCalledWith(undefined, {
+          characteristics: [{
+            aid: aid,
+            iid: iids.on,
+            value: 1,
+          }],
+        });
+      });
+
+      test("timeout read notification", async () => {
+        adjustTimeouts(10, 50);
+
+        const getEvent: Promise<[CharacteristicGetCallback]> = awaitEventOnce(onCharacteristic, CharacteristicEventTypes.GET);
+
+        // @ts-expect-error: private access
+        accessory.handleGetCharacteristics(connection, {
+          ids: [{ aid: aid, iid: iids.on }],
+          includeMeta: false,
+          includeEvent: false,
+          includeType: false,
+          includePerms: false,
+        }, callback);
+
+        await PromiseTimeout(2);
+        expect(callback).not.toHaveBeenCalled();
+
+        await PromiseTimeout(70);
+        expect(characteristicWarningHandler)
+          .toHaveBeenCalledWith(onCharacteristic, CharacteristicWarningType.SLOW_READ, expect.anything());
+        expect(characteristicWarningHandler)
+          .toHaveBeenCalledWith(onCharacteristic, CharacteristicWarningType.TIMEOUT_READ, expect.anything());
+
+        const eventResult = await getEvent;
+        eventResult[0](undefined, true);
+
+        await callbackPromise;
+        expect(callback).toHaveBeenCalledWith(undefined, {
+          characteristics: [{
+            aid: aid,
+            iid: iids.on,
+            status: HAPStatus.OPERATION_TIMED_OUT,
+          }],
+        });
+      });
+
+      test("slow write notification", async () => {
+        adjustTimeouts(60, 10000);
+
+        const setEvent: Promise<[CharacteristicValue, CharacteristicSetCallback]> = awaitEventOnce(onCharacteristic, CharacteristicEventTypes.SET);
+
+        // @ts-expect-error: private access
+        accessory.handleSetCharacteristics(connection, {
+          characteristics: [{ aid: aid, iid: iids.on, value: true }],
+        }, callback);
+
+        await PromiseTimeout(2);
+        expect(callback).not.toHaveBeenCalled();
+
+        await PromiseTimeout(70);
+        expect(characteristicWarningHandler)
+          .toHaveBeenCalledWith(onCharacteristic, CharacteristicWarningType.SLOW_WRITE, expect.anything());
+
+        const eventResult = await setEvent;
+        expect(eventResult[0]).toBe(true);
+        eventResult[1]();
+
+        await callbackPromise;
+        expect(callback).toHaveBeenCalledWith(undefined, {
+          characteristics: [{
+            aid: aid,
+            iid: iids.on,
+            status: HAPStatus.SUCCESS,
+          }],
+        });
+      });
+
+      test("timeout read notification", async () => {
+        adjustTimeouts(10, 50);
+
+        const setEvent: Promise<[CharacteristicValue, CharacteristicSetCallback]> = awaitEventOnce(onCharacteristic, CharacteristicEventTypes.SET);
+
+        // @ts-expect-error: private access
+        accessory.handleSetCharacteristics(connection, {
+          characteristics: [{ aid: aid, iid: iids.on, value: true }],
+        }, callback);
+
+        await PromiseTimeout(2);
+        expect(callback).not.toHaveBeenCalled();
+
+        await PromiseTimeout(70);
+        expect(characteristicWarningHandler)
+          .toHaveBeenCalledWith(onCharacteristic, CharacteristicWarningType.SLOW_WRITE, expect.anything());
+        expect(characteristicWarningHandler)
+          .toHaveBeenCalledWith(onCharacteristic, CharacteristicWarningType.TIMEOUT_WRITE, expect.anything());
+
+        const eventResult = await setEvent;
+        expect(eventResult[0]).toBe(true);
+        eventResult[1]();
+
+        await callbackPromise;
+        expect(callback).toHaveBeenCalledWith(undefined, {
+          characteristics: [{
+            aid: aid,
+            iid: iids.on,
+            status: HAPStatus.OPERATION_TIMED_OUT,
+          }],
+        });
+      });
+    });
   });
 
   describe("characteristicWarning", () => {
-    // TODO test read and write timeouts!
     test("emit characteristic warning", () => {
-      const handler = jest.fn();
-      accessory.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, handler);
+      accessory.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, callback);
 
       const service = accessory.addService(Service.Lightbulb, "Light");
       const on = service.getCharacteristic(Characteristic.On);
 
       on.updateValue({});
-      expect(handler).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledTimes(1);
     });
 
     test("forward characteristic on bridged accessory", () => {
@@ -1518,15 +1712,14 @@ describe("Accessory", () => {
 
       bridge.addBridgedAccessory(accessory);
 
-      const handler = jest.fn();
-      bridge.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, handler);
-      accessory.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, handler);
+      bridge.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, callback);
+      accessory.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, callback);
 
       const service = accessory.addService(Service.Lightbulb, "Light");
       const on = service.getCharacteristic(Characteristic.On);
 
       on.updateValue({});
-      expect(handler).toHaveBeenCalledTimes(2);
+      expect(callback).toHaveBeenCalledTimes(2);
     });
 
     it("should run without characteristic warning handler", () => {
@@ -1679,28 +1872,97 @@ describe("Accessory", () => {
     });
   });
 
-  describe("Controller", () => {
-    it("should deserialize controllers and remove/add/replace services correctly", () => {
-      accessory.configureController(new TestController());
+  describe("parseBindOption", () => {
+    const basePublishInfo: PublishInfo = {
+      username: serverUsername,
+      pincode: "000-00-000",
+      category: Categories.SWITCH,
+    };
 
-      const serialized = Accessory.serialize(accessory);
+    const callParseBindOption = (bind: (InterfaceName | IPAddress) | (InterfaceName | IPAddress)[]): {
+      advertiserAddress?: string[],
+      serviceRestrictedAddress?: string[],
+      serviceDisableIpv6?: boolean,
+      serverAddress?: string,
+    } => {
+      const info: PublishInfo = {
+        ...basePublishInfo,
+        bind: bind,
+      };
 
-      const restoredAccessory = Accessory.deserialize(serialized);
-      restoredAccessory.configureController(new TestController()); // restore Controller;
+      // @ts-expect-error: private access
+      return Accessory.parseBindOption(info);
+    };
 
-      expect(restoredAccessory.services).toBeDefined();
-      expect(restoredAccessory.services.length).toEqual(3); // accessory information, light sensor, outlet
+    test("parse unspecified ipv6 address", () => {
+      expect(callParseBindOption("::")).toEqual({
+        serverAddress: "::",
+      });
+    });
 
-      expect(restoredAccessory.getService(Service.Lightbulb)).toBeUndefined();
-      expect(restoredAccessory.getService(Service.LightSensor)).toBeDefined();
-      expect(restoredAccessory.getService(Service.Outlet)).toBeDefined();
-      expect(restoredAccessory.getService(Service.Switch)).toBeUndefined();
+    test("parse unspecified ipv4 address", () => {
+      expect(callParseBindOption("0.0.0.0")).toEqual({
+        serverAddress: "0.0.0.0",
+        serviceDisableIpv6: true,
+      });
+    });
+
+    test("parse interface names", () => {
+      expect(callParseBindOption(["en0", "lo0"])).toEqual({
+        serverAddress: "::",
+        advertiserAddress: ["en0", "lo0"],
+        serviceRestrictedAddress: ["en0", "lo0"],
+      });
+    });
+
+    test("parse interface names with explicit ipv6 support", () => {
+      expect(callParseBindOption(["en0", "lo0", "::"])).toEqual({
+        serverAddress: "::",
+        advertiserAddress: ["en0", "lo0"],
+        serviceRestrictedAddress: ["en0", "lo0"],
+      });
+    });
+
+    test("parse interface names ipv4 only", () => {
+      expect(callParseBindOption(["en0", "lo0", "0.0.0.0"])).toEqual({
+        serverAddress: "0.0.0.0",
+        advertiserAddress: ["en0", "lo0"],
+        serviceRestrictedAddress: ["en0", "lo0"],
+        serviceDisableIpv6: true,
+      });
+    });
+
+    test("parse ipv4 address", () => {
+      expect(callParseBindOption("169.254.104.90")).toEqual({
+        serverAddress: "0.0.0.0",
+        advertiserAddress: ["169.254.104.90"],
+        serviceRestrictedAddress: ["169.254.104.90"],
+      });
+
+      expect(callParseBindOption(["169.254.104.90", "192.168.1.4"])).toEqual({
+        serverAddress: "0.0.0.0",
+        advertiserAddress: ["169.254.104.90", "192.168.1.4"],
+        serviceRestrictedAddress: ["169.254.104.90", "192.168.1.4"],
+      });
+    });
+
+    test("parse ipv6 address", () => {
+      expect(callParseBindOption("2001:db8::")).toEqual({
+        serverAddress: "::",
+        advertiserAddress: ["2001:db8::"],
+        serviceRestrictedAddress: ["2001:db8::"],
+      });
+
+      expect(callParseBindOption(["2001:db8::", "2001:db8::1"])).toEqual({
+        serverAddress: "::",
+        advertiserAddress: ["2001:db8::", "2001:db8::1"],
+        serviceRestrictedAddress: ["2001:db8::", "2001:db8::1"],
+      });
     });
   });
 });
 
 class TestController implements Controller {
-
   controllerId(): ControllerIdentifier {
     return "test-id";
   }
@@ -1731,5 +1993,4 @@ class TestController implements Controller {
   handleControllerRemoved(): void {
     // do nothing
   }
-
 }

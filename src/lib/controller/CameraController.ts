@@ -976,6 +976,7 @@ export class CameraController extends EventEmitter implements SerializableContro
 
     // now do the actual snapshot request.
     return new Promise((resolve, reject) => {
+      // TODO test and make timeouts configurable!
       let timeout: NodeJS.Timeout | undefined = setTimeout(() => {
         console.warn(
           `[${accessoryName}] The image snapshot handler for the given accessory is slow to respond! See https://homebridge.io/w/JtMGR for more info.`,

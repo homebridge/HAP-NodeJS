@@ -371,12 +371,16 @@ export declare interface Accessory {
  * Accessories, Services, and Characteristics for iOS clients to reference later.
  */
 export class Accessory extends EventEmitter {
-
   /**
    * @deprecated Please use the Categories const enum above.
    */
   // @ts-expect-error: forceConsistentCasingInFileNames compiler option
   static Categories = Categories;
+
+  /// Timeout in milliseconds until a characteristic warning is issue
+  private static readonly TIMEOUT_WARNING = 3000;
+  /// Timeout in milliseconds after `TIMEOUT_WARNING` until the operation on the characteristic is considered timed out.
+  private static readonly TIMEOUT_AFTER_WARNING = 6000;
 
   // NOTICE: when adding/changing properties, remember to possibly adjust the serialize/deserialize functions
   aid: Nullable<number> = null; // assigned by us in assignIDs() or by a Bridge
@@ -843,7 +847,7 @@ export class Accessory extends EventEmitter {
     if (storedController) {
       if (storedController.controller !== controller) {
         throw new Error("[" + this.displayName + "] tried removing a controller with the id/type '" + id +
-          "' though provided controller isn't the same which is registered!");
+          "' though provided controller isn't the same instance that is registered!");
       }
 
       if (isSerializableController(controller)) {
@@ -1514,9 +1518,9 @@ export class Accessory extends EventEmitter {
         missingCharacteristics.clear();
 
         callback(undefined, response);
-      }, 6000);
+      }, Accessory.TIMEOUT_AFTER_WARNING);
       timeout.unref();
-    }, 3000);
+    }, Accessory.TIMEOUT_WARNING);
     timeout.unref();
 
     for (const id of request.ids) {
@@ -1684,9 +1688,9 @@ export class Accessory extends EventEmitter {
         missingCharacteristics.clear();
 
         callback(undefined, response);
-      }, 6000);
+      }, Accessory.TIMEOUT_AFTER_WARNING);
       timeout.unref();
-    }, 3000);
+    }, Accessory.TIMEOUT_WARNING);
     timeout.unref();
 
     for (const data of writeRequest.characteristics) {
@@ -2157,7 +2161,7 @@ export class Accessory extends EventEmitter {
     serverAddress?: string,
   } {
     let advertiserAddress: string[] | undefined = undefined;
-    let disableIpv6 = false;
+    let disableIpv6: boolean | undefined = undefined;
     let serverAddress: string | undefined = undefined;
 
     if (info.bind) {

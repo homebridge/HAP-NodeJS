@@ -10,34 +10,36 @@ import {
   SnapshotRequestCallback,
   StreamRequestCallback,
 } from ".";
+import { NodeCallback, SessionIdentifier } from "../../types";
 import {
   AudioRecordingCodecType,
   AudioRecordingSamplerate,
   AudioStreamingCodecType,
-  AudioStreamingSamplerate,
+  AudioStreamingSamplerate, Camera,
   CameraRecordingConfiguration,
   CameraRecordingOptions,
   CameraStreamingOptions,
   EventTriggerOption,
   H264Level,
   H264Profile,
-  MediaContainerType,
+  MediaContainerType, PreparedStreamRequestCallback,
   PrepareStreamRequest,
   RecordingPacket,
   SnapshotRequest,
-  SRTPCryptoSuites,
-  StreamingRequest,
+  SRTPCryptoSuites, StreamController,
+  StreamingRequest, StreamRequest,
   VideoCodecType,
 } from "../camera";
 import { Characteristic } from "../Characteristic";
 import { HDSProtocolSpecificErrorReason } from "../datastream";
 import "../definitions";
 import { HAPStatus } from "../HAPServer";
+import { Service } from "../Service";
 import { AudioBitrate } from "./RemoteController";
 
 export const MOCK_IMAGE = crypto.randomBytes(64);
 
-const mockStreamingOptions: CameraStreamingOptions = {
+export const mockStreamingOptions: CameraStreamingOptions = {
   supportedCryptoSuites: [SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80],
   video: {
     codec: {
@@ -122,6 +124,47 @@ export class MockDelegate implements CameraStreamingDelegate, CameraRecordingDel
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   updateRecordingConfiguration(configuration: CameraRecordingConfiguration | undefined): void {
     // do nothing
+  }
+}
+
+export class MockLegacyCameraSource implements Camera {
+  services: Service[] = [];
+  // noinspection JSDeprecatedSymbols
+  streamControllers: StreamController[] = [];
+
+  constructor(size: number, options?: CameraStreamingOptions) {
+    const opt = options ?? {
+      video: mockStreamingOptions.video,
+      audio: mockStreamingOptions.audio,
+      srtp: true,
+    };
+
+    for (let i = 0; i < size; i++) {
+      const controller = new StreamController(i, opt, this);
+      this.streamControllers.push(controller);
+      this.services.push(controller.getService());
+    }
+  }
+
+  handleCloseConnection(connectionID: SessionIdentifier): void {
+    for (const controller of this.streamControllers) {
+      // noinspection JSDeprecatedSymbols
+      controller.handleCloseConnection(connectionID);
+    }
+  }
+
+  handleSnapshotRequest(request: SnapshotRequest, callback: NodeCallback<Buffer>): void {
+    callback(undefined, MOCK_IMAGE);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  handleStreamRequest(request: StreamRequest): void {
+    throw Error("Unsupported!");
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  prepareStream(request: PrepareStreamRequest, callback: PreparedStreamRequestCallback): void {
+    throw Error("Unsupported!");
   }
 }
 
