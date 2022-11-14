@@ -127,8 +127,6 @@ describe("Accessory", () => {
   });
 
   describe("handling services", () => {
-    // TODO handleServiceConfigurationChangeEvent (primary services?)
-    // TODO handleCharactersitic change event?
     test("addService", () => {
       const existingCount = 1; // accessoryInformation service; protocolInformation is only added on publish
 
@@ -416,9 +414,6 @@ describe("Accessory", () => {
     });
 
     test("handleInitialPairSetupFinished", async () => {
-      // TODO fix: CiaoAdvertiser constructor creates open handles!
-      // const advertiser = new CiaoAdvertiser(accessoryInfoUnpaired);
-
       const advertiser = new BonjourHAPAdvertiser(accessoryInfoUnpaired);
       advertiser.updateAdvertisement = jest.fn();
       accessory._advertiser = advertiser;
@@ -1063,6 +1058,28 @@ describe("Accessory", () => {
         });
       });
 
+      test.each([true, false])(
+        "write-response characteristic with requesting r: %s", async rValue => {
+          onCharacteristic.props.perms.push(Perms.WRITE_RESPONSE);
+
+          const setEventPromise: Promise<[CharacteristicValue, CharacteristicSetCallback]> = awaitEventOnce(onCharacteristic, CharacteristicEventTypes.SET);
+
+          const responsePromise = testRequestResponse({
+            characteristics: [{ aid: aid, iid: iids.on, value: false, r: rValue }],
+          }, {
+            aid: aid,
+            iid: iids.on,
+            status: HAPStatus.SUCCESS,
+            value: rValue ? 1 : undefined,
+          });
+
+          const event = await setEventPromise;
+          expect(event[0]).toEqual(false);
+          event[1](undefined, true);
+
+          await responsePromise;
+        });
+
       test("write non-existent characteristic", async () => {
         await testRequestResponse({
           characteristics: [{ aid: 2, iid: iids.on, value: true }],
@@ -1532,8 +1549,6 @@ describe("Accessory", () => {
         expect(callback).toHaveBeenCalledWith({ httpCode: HAPHTTPCode.MULTI_STATUS, status: HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE });
       });
     });
-
-    // TODO write response tests?
 
     describe("characteristic read/write characteristicWarning", () => {
       // @ts-expect-error: private access

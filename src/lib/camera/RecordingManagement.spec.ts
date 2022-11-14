@@ -15,7 +15,6 @@ describe("RecordingManagement", () => {
   test("handleSelectedCameraRecordingConfiguration", () => {
     const base64Input = "AR0BBKAPAAACCAEAAAAAAAAAAwsBAQACBgEEoA8AAAIkAQEAAhIBAQECAQIDBNAHAAAEBKAPAAADCwECsAQCAkAGAwEYAxQBAQACDwEBAQIBAAMBAwQEQAAAAA==";
 
-    // TODO placemenet of the mocks and stuff!
     const management = new RecordingManagement(
       mockRecordingOptions,
       new MockDelegate(),
