@@ -1062,9 +1062,12 @@ describe("Accessory", () => {
         "write-response characteristic with requesting r: %s", async rValue => {
           onCharacteristic.props.perms.push(Perms.WRITE_RESPONSE);
 
-          const setEventPromise: Promise<[CharacteristicValue, CharacteristicSetCallback]> = awaitEventOnce(onCharacteristic, CharacteristicEventTypes.SET);
+          onCharacteristic.on(CharacteristicEventTypes.SET, (value, callback) => {
+            expect(value).toEqual(false);
+            callback(undefined, true);
+          });
 
-          const responsePromise = testRequestResponse({
+          await testRequestResponse({
             characteristics: [{ aid: aid, iid: iids.on, value: false, r: rValue }],
           }, {
             aid: aid,
@@ -1072,13 +1075,21 @@ describe("Accessory", () => {
             status: HAPStatus.SUCCESS,
             value: rValue ? 1 : undefined,
           });
-
-          const event = await setEventPromise;
-          expect(event[0]).toEqual(false);
-          event[1](undefined, true);
-
-          await responsePromise;
         });
+
+      test("requesting write-response on non-write-response characteristic", async () => {
+        onCharacteristic.onSet(() => {
+          return true; // write response
+        });
+
+        await testRequestResponse({
+          characteristics: [{ aid: aid, iid: iids.on, value: false, r: true }],
+        }, {
+          aid: aid,
+          iid: iids.on,
+          status: HAPStatus.SUCCESS,
+        });
+      });
 
       test("write non-existent characteristic", async () => {
         await testRequestResponse({
