@@ -10,7 +10,7 @@ import {
   CharacteristicEventTypes,
   SerializedCharacteristic,
 } from "./Characteristic";
-import {
+import type {
   AccessCode,
   AccessControl,
   AccessoryInformation,
@@ -828,3 +828,8 @@ export class Service extends EventEmitter {
   }
 
 }
+
+// We have a cyclic dependency problem. Within this file we have the definitions of "./definitions" as
+// type imports only (in order to define the static properties). Setting those properties is done outside
+// this file, within the definition files. Therefore, we import it at the end of this file. Seems weird, but is important.
+import "./definitions/ServiceDefinitions";

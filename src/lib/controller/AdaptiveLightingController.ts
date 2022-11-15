@@ -1,8 +1,11 @@
 import assert from "assert";
+import { HAPStatus } from "../HAPServer";
+import { ColorUtils } from "../util/color-utils";
+import { HapStatusError } from "../util/hapStatusError";
+import { epochMillisFromMillisSince2001_01_01Buffer } from "../util/time";
 import * as uuid from "../util/uuid";
 import createDebug from "debug";
 import { EventEmitter } from "events";
-import { ColorUtils, epochMillisFromMillisSince2001_01_01Buffer, HAPStatus, HapStatusError } from "../..";
 import { CharacteristicValue } from "../../types";
 import {
   ChangeReason,

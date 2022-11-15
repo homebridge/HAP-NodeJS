@@ -6,6 +6,7 @@
   <a href="https://www.npmjs.com/package/hap-nodejs/v/beta"><img title="npm version beta" src="https://badgen.net/npm/v/hap-nodejs/beta" ></a>
   <a href="https://www.npmjs.com/package/hap-nodejs"><img title="npm downloads" src="https://badgen.net/npm/dt/hap-nodejs" ></a>
   <a href="https://github.com/homebridge/HAP-NodeJS/actions/workflows/build.yml"><img title="Node Build" src="https://github.com/homebridge/HAP-NodeJS/actions/workflows/build.yml/badge.svg" ></a>
+  <a href='https://coveralls.io/github/homebridge/HAP-NodeJS'><img src='https://coveralls.io/repos/github/homebridge/HAP-NodeJS/badge.svg' alt='Coverage Status' /></a>
 
 </span>
 

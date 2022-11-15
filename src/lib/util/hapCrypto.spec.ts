@@ -1,4 +1,6 @@
-import { chacha20_poly1305_decryptAndVerify, chacha20_poly1305_encryptAndSeal, HKDF } from "./hapCrypto";
+import { HAPEncryption } from "./eventedhttp";
+import * as hapCrypto from "./hapCrypto";
+import crypto from "crypto";
 
 function fromHex(hex: string): Buffer {
   return Buffer.from(hex.trim().replace(/ /g, ""), "hex");
@@ -10,7 +12,6 @@ function fromHex(hex: string): Buffer {
  */
 
 describe("hapCrypto", () => {
-
   describe("chacha20-poly1305", () => {
     const key = fromHex("09b29329 4514f14e e8437501 674e268f 7d85b193 85d38b54 8f5be259 c678fb52");
     const input = fromHex(
@@ -32,13 +33,13 @@ describe("hapCrypto", () => {
     );
 
     it("should encrypt chacha20-poly1305 correctly", () => {
-      const encrypted = chacha20_poly1305_encryptAndSeal(key, nonce, aad, input);
+      const encrypted = hapCrypto.chacha20_poly1305_encryptAndSeal(key, nonce, aad, input);
       expect(encrypted.ciphertext.toString("hex")).toBe(output.toString("hex"));
       expect(encrypted.authTag.toString("hex")).toBe(tag.toString("hex"));
     });
 
     it("should decrypt chacha20-poly1305 correctly", () => {
-      const plaintext = chacha20_poly1305_decryptAndVerify(key, nonce, aad, output, tag);
+      const plaintext = hapCrypto.chacha20_poly1305_decryptAndVerify(key, nonce, aad, output, tag);
       expect(plaintext.toString("hex")).toBe(input.toString("hex"));
     });
 
@@ -47,7 +48,7 @@ describe("hapCrypto", () => {
       output.copy(manipulated);
       manipulated[3] = 5;
 
-      expect(() => chacha20_poly1305_decryptAndVerify(key, nonce, aad, manipulated, tag)).toThrow();
+      expect(() => hapCrypto.chacha20_poly1305_decryptAndVerify(key, nonce, aad, manipulated, tag)).toThrow();
     });
   });
 
@@ -59,8 +60,99 @@ describe("hapCrypto", () => {
 
       const result = fromHex("f81b8748 1a18b664 936daeb2 22f58cba 0ebc55f5 c85996b9 f1cb396c 327b70bb");
 
-      const hkdf = HKDF("sha512", salt, ikm, info, 32);
+      const hkdf = hapCrypto.HKDF("sha512", salt, ikm, info, 32);
       expect(hkdf.toString("hex")).toBe(result.toString("hex"));
+    });
+  });
+
+  describe("layer encryption", () => {
+    let serverEncryption: HAPEncryption;
+    let clientEncryption: HAPEncryption;
+
+    const message0 = Buffer.from("Hello World");
+    const message1 = Buffer.from("Hello Mars");
+    const message2 = Buffer.from("Foo");
+    const message3 = Buffer.from("Bar");
+
+    beforeEach(() => {
+      const salt = Buffer.from("Test-Salt");
+      const readInfo = Buffer.from("Control-Read-Encryption-Key");
+      const writeInfo = Buffer.from("Control-Write-Encryption-Key");
+
+      const sharedSecret = crypto.randomBytes(32);
+
+      const accessoryToControllerKey = hapCrypto.HKDF("sha512", salt, sharedSecret, readInfo, 32);
+      const controllerToAccessoryKey = hapCrypto.HKDF("sha512", salt, sharedSecret, writeInfo, 32);
+
+      const empty = Buffer.alloc(0);
+      serverEncryption = new HAPEncryption(empty, empty, empty, sharedSecret, empty);
+      clientEncryption = new HAPEncryption(empty, empty, empty, sharedSecret, empty);
+
+      serverEncryption.accessoryToControllerKey = accessoryToControllerKey;
+      serverEncryption.controllerToAccessoryKey = controllerToAccessoryKey;
+
+      clientEncryption.accessoryToControllerKey = controllerToAccessoryKey;
+      clientEncryption.controllerToAccessoryKey = accessoryToControllerKey;
+    });
+
+    test("simple encryption and decryption", () => {
+      const encrypted = hapCrypto.layerEncrypt(message0, serverEncryption);
+
+      const decrypted = hapCrypto.layerDecrypt(encrypted, clientEncryption);
+      expect(decrypted).toEqual(message0);
+    });
+
+    test("multiple frames encryption and decryption", () => {
+      const encrypted0 = hapCrypto.layerEncrypt(message0, serverEncryption);
+      const encrypted1 = hapCrypto.layerEncrypt(message1, serverEncryption);
+      const encrypted2 = hapCrypto.layerEncrypt(message2, serverEncryption);
+
+      const decrypted = hapCrypto.layerDecrypt(Buffer.concat([encrypted0, encrypted1, encrypted2]), clientEncryption);
+      expect(decrypted).toEqual(Buffer.concat([message0, message1, message2]));
+    });
+
+    test("multiple frames encryption and decryption intertwined", () => {
+      const S_encrypted0 = hapCrypto.layerEncrypt(message0, serverEncryption);
+      const S_encrypted1 = hapCrypto.layerEncrypt(message1, serverEncryption);
+      const S_encrypted2 = hapCrypto.layerEncrypt(message2, serverEncryption);
+
+      const C_encrypted0 = hapCrypto.layerEncrypt(message1, clientEncryption);
+      const C_encrypted1 = hapCrypto.layerEncrypt(message3, clientEncryption);
+
+      const S_decrypted = hapCrypto.layerDecrypt(Buffer.concat([S_encrypted0, S_encrypted1, S_encrypted2]), clientEncryption);
+      expect(S_decrypted).toEqual(Buffer.concat([message0, message1, message2]));
+
+      const C_decrypted = hapCrypto.layerDecrypt(Buffer.concat([C_encrypted0, C_encrypted1]), serverEncryption);
+      expect(C_decrypted).toEqual(Buffer.concat([message1, message3]));
+    });
+
+    test("incomplete frames decryption; first", () => {
+      const S_encrypted0 = hapCrypto.layerEncrypt(message0, serverEncryption);
+      const S_encrypted1 = hapCrypto.layerEncrypt(message1, serverEncryption);
+      const S_encrypted2 = hapCrypto.layerEncrypt(message2, serverEncryption);
+
+      const C_encrypted0 = hapCrypto.layerEncrypt(message2, clientEncryption);
+      const C_encrypted1 = hapCrypto.layerEncrypt(message3, clientEncryption);
+
+      expect(hapCrypto.layerDecrypt(C_encrypted0.slice(0, 5), serverEncryption)).toEqual(Buffer.alloc(0));
+
+      const S_decrypted0 = hapCrypto.layerDecrypt(
+        Buffer.concat([S_encrypted0, S_encrypted1.slice(0, 5)]),
+        clientEncryption,
+      );
+      expect(S_decrypted0).toEqual(message0);
+
+      const C_decrypted = hapCrypto.layerDecrypt(
+        Buffer.concat([C_encrypted0.slice(5), C_encrypted1]),
+        serverEncryption,
+      );
+      expect(C_decrypted).toEqual(Buffer.concat([message2, message3]));
+
+      const S_decrypted1 = hapCrypto.layerDecrypt(
+        Buffer.concat([S_encrypted1.slice(5), S_encrypted2]),
+        clientEncryption,
+      );
+      expect(S_decrypted1).toEqual(Buffer.concat([message1, message2]));
     });
   });
 });
