@@ -843,7 +843,7 @@ export class RemoteController extends EventEmitter
     );
 
     const timestampTlv = tlv.encode(
-      ButtonEvent.TIMESTAMP, tlv.writeUInt64(new Date().getTime()),
+      ButtonEvent.TIMESTAMP, tlv.writeVariableUIntLE(new Date().getTime()),
       // timestamp should be uint64. bigint though is only supported by node 10.4.0 and above
       // thus we just interpret timestamp as a regular number
     );
@@ -959,7 +959,7 @@ export class RemoteController extends EventEmitter
     );
 
     const ticksPerSecond = tlv.encode(
-      TargetControlCommands.TICKS_PER_SECOND, tlv.writeUInt64(configuration.ticksPerSecond),
+      TargetControlCommands.TICKS_PER_SECOND, tlv.writeVariableUIntLE(configuration.ticksPerSecond),
     );
 
     const supportedButtonConfigurationBuffers: Uint8Array[] = [];

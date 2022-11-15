@@ -411,7 +411,7 @@ export class ColorUtils {
    *
    * @param colorTemperature - The color temperature in mired.
    * @param roundResults - The lookup table has a precision of .1 decimal places. The given characteristics only have a step value of 1.
-   *  Thus the method will round the results by default to an integer value. This can be turned of using this option.
+   *  Thus, the method will round the results by default to an integer value. This can be turned off using this option.
    * @returns An number array of length 2 with the first element being the saturation and the second argument being the hue.
    */
   public static colorTemperatureToHueAndSaturation(colorTemperature: number, roundResults = true): { saturation: number, hue: number } {

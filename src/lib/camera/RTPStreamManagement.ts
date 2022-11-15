@@ -2,25 +2,19 @@ import assert from "assert";
 import crypto from "crypto";
 import createDebug from "debug";
 import net from "net";
-// noinspection JSDeprecatedSymbols
-import {
-  Access,
-  HAPStatus,
-  HapStatusError,
-  LegacyCameraSource,
-  LegacyCameraSourceAdapter,
-  once,
-  ResourceRequestReason,
-  StateChangeDelegate,
-  uuid,
-} from "../../index";
 import { CharacteristicValue, SessionIdentifier } from "../../types";
-import { Characteristic, CharacteristicEventTypes, CharacteristicSetCallback } from "../Characteristic";
-import { CameraController, CameraStreamingDelegate } from "../controller";
+import { Access, Characteristic, CharacteristicEventTypes, CharacteristicSetCallback } from "../Characteristic";
+import { CameraController, CameraStreamingDelegate, ResourceRequestReason, StateChangeDelegate } from "../controller";
 import type { CameraRTPStreamManagement } from "../definitions";
+import { HAPStatus } from "../HAPServer";
 import { Service } from "../Service";
 import { HAPConnection, HAPConnectionEvent } from "../util/eventedhttp";
+import { HapStatusError } from "../util/hapStatusError";
+import { once } from "../util/once";
 import * as tlv from "../util/tlv";
+import * as uuid from "../util/uuid";
+// noinspection JSDeprecatedSymbols
+import { LegacyCameraSource, LegacyCameraSourceAdapter } from "./Camera";
 import RTPProxy from "./RTPProxy";
 
 const debug = createDebug("HAP-NodeJS:Camera:RTPStreamManagement");

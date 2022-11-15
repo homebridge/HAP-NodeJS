@@ -67,4 +67,9 @@ describe("request-util", () => {
     });
     expect(formatOutgoingCharacteristicValue(2.3, props)).toBe(2.3);
   });
+
+  it("should leave string as is", () => {
+    const props = createProps(Formats.STRING, {});
+    expect(formatOutgoingCharacteristicValue("Hello World!", props)).toBe("Hello World!");
+  });
 });

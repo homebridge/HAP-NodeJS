@@ -4,7 +4,7 @@ import { EventEmitter } from "events";
 import { CharacteristicJsonObject } from "../internal-types";
 import { CharacteristicValue, Nullable, PartialAllowingNull, VoidCallback } from "../types";
 import { CharacteristicWarningType } from "./Accessory";
-import {
+import type {
   AccessCodeControlPoint,
   AccessCodeSupportedConfiguration,
   AccessControlLevel,
@@ -262,7 +262,7 @@ import {
   WiFiConfigurationControl,
   WiFiSatelliteStatus,
 } from "./definitions";
-import { HAPStatus, IsKnownHAPStatusError } from "./HAPServer";
+import { HAPStatus, IdentifyCallback, IsKnownHAPStatusError } from "./HAPServer";
 import { IdentifierCache } from "./model/IdentifierCache";
 import { clone } from "./util/clone";
 import { HAPConnection } from "./util/eventedhttp";
@@ -2048,7 +2048,7 @@ export class Characteristic extends EventEmitter {
        */
 
       if (this.UUID.endsWith(BASE_UUID)) { // we have an apple defined characteristic (at least assuming nobody else uses the UUID namespace)
-        if (this.UUID === ProgrammableSwitchEvent.UUID) {
+        if (this.UUID === Characteristic.ProgrammableSwitchEvent.UUID) {
           return value; // null is allowed as a value for ProgrammableSwitchEvent
         }
 
@@ -2351,3 +2351,8 @@ export class Characteristic extends EventEmitter {
   }
 
 }
+
+// We have a cyclic dependency problem. Within this file we have the definitions of "./definitions" as
+// type imports only (in order to define the static properties). Setting those properties is done outside
+// this file, within the definition files. Therefore, we import it at the end of this file. Seems weird, but is important.
+import "./definitions/CharacteristicDefinitions";

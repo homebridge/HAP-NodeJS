@@ -53,9 +53,9 @@
   "dependencies": {
     "@homebridge/ciao": "^1.1.5",
     "@homebridge/dbus-native": "^0.5.0",
-    "bonjour-hap": "~3.6.3",
+    "bonjour-hap": "~3.6.4",
     "debug": "^4.3.4",
-    "fast-srp-hap": "2.0.4",
+    "fast-srp-hap": "~2.0.4",
     "futoin-hkdf": "~1.4.3",
     "node-persist": "^0.0.11",
     "source-map-support": "^0.5.21",
@@ -71,6 +71,7 @@
     "@typescript-eslint/parser": "^5.21.0",
     "commander": "^6.2.1",
     "escape-html": "^1.0.3",
+    "http-parser-js": "^0.5.8",
     "eslint": "^8.14.0",
     "jest": "^27.5.1",
     "rimraf": "^3.0.2",
@@ -79,6 +80,7 @@
     "ts-jest": "^27.1.4",
     "ts-node": "^10.7.0",
     "typedoc": "^0.22.15",
-    "typescript": "~4.5.4"
+    "typescript": "~4.5.4",
+    "axios": "^0.27.2"
   }
 }

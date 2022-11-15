@@ -1,19 +1,19 @@
+import { CharacteristicWarningType } from "./Accessory";
 import {
   Access,
   Characteristic,
   CharacteristicChange,
   CharacteristicEventTypes,
   CharacteristicProps,
-  CharacteristicWarningType,
   Formats,
-  HAPStatus,
   Perms,
   SerializedCharacteristic,
   Units,
-  uuid,
-} from "..";
+} from "./Characteristic";
 import { SelectedRTPStreamConfiguration } from "./definitions";
+import { HAPStatus } from "./HAPServer";
 import { HapStatusError } from "./util/hapStatusError";
+import * as uuid from "./util/uuid";
 
 function createCharacteristic(type: Formats, customUUID?: string): Characteristic {
   return new Characteristic("Test", customUUID || uuid.generate("Foo"), { format: type, perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE] });
