@@ -503,6 +503,10 @@ export class Service extends EventEmitter {
    *
    * This doesn't call any registered {@link onSet} or {@link CharacteristicEventTypes.SET} handlers.
    *
+   * Have a look at the
+   * {@link https://github.com/homebridge/HAP-NodeJS/wiki/Presenting-Erroneous-Accessory-State-to-the-User Presenting Erroneous Accessory State to the User}
+   * guide for more information on how to present erroneous state to the user.
+   *
    * @param name - The name or the constructor of the desired {@link Characteristic}.
    * @param error - The error object
    *
@@ -539,6 +543,10 @@ export class Service extends EventEmitter {
    *
    * @param name - The name or the constructor of the desired {@link Characteristic}.
    * @param error - The error object
+   *
+   * Have a look at the
+   * {@link https://github.com/homebridge/HAP-NodeJS/wiki/Presenting-Erroneous-Accessory-State-to-the-User Presenting Erroneous Accessory State to the User}
+   * guide for more information on how to present erroneous state to the user.
    *
    * Note: Erroneous state is never **pushed** to the client side. Only, if the HomeKit client requests the current
    *  state of the Characteristic, the corresponding {@link HapStatusError} is returned. As described above,

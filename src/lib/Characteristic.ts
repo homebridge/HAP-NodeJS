@@ -1366,6 +1366,10 @@ export class Characteristic extends EventEmitter {
    *
    * This doesn't call any registered {@link onSet} or {@link CharacteristicEventTypes.SET} handlers.
    *
+   * Have a look at the
+   * {@link https://github.com/homebridge/HAP-NodeJS/wiki/Presenting-Erroneous-Accessory-State-to-the-User Presenting Erroneous Accessory State to the User}
+   * guide for more information on how to present erroneous state to the user.
+   *
    * @param error - The error object
    *
    * Note: Erroneous state is never **pushed** to the client side. Only, if the HomeKit client requests the current
@@ -1473,6 +1477,10 @@ export class Characteristic extends EventEmitter {
    * If a generic error object is supplied, the characteristic tries to extract a {@link HAPStatus} code
    * from the error message string. If not possible a generic {@link HAPStatus.SERVICE_COMMUNICATION_FAILURE} will be used.
    * If the supplied error object is an instance of {@link HapStatusError} the corresponding status will be used.
+   *
+   * Have a look at the
+   * {@link https://github.com/homebridge/HAP-NodeJS/wiki/Presenting-Erroneous-Accessory-State-to-the-User Presenting Erroneous Accessory State to the User}
+   * guide for more information on how to present erroneous state to the user.
    *
    * @param error - The error object
    *
