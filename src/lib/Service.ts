@@ -438,14 +438,12 @@ export class Service extends EventEmitter {
     for (const characteristic of this.characteristics) {
       if (typeof name === "string" && characteristic.displayName === name) {
         return characteristic;
-        // @ts-expect-error: UUID field
       } else if (typeof name === "function" && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
         return characteristic;
       }
     }
     if (typeof name === "function") {
       for (const characteristic of this.optionalCharacteristics) {
-        // @ts-expect-error: UUID field
         if ((characteristic instanceof name) || (name.UUID === characteristic.UUID)) {
           return this.addCharacteristic(name);
         }
@@ -453,7 +451,6 @@ export class Service extends EventEmitter {
 
       const instance = this.addCharacteristic(name);
       // Not found in optional Characteristics. Adding anyway, but warning about it if it isn't the Name.
-      // @ts-expect-error: UUID field
       if (name.UUID !== Characteristic.Name.UUID) {
         this.emitCharacteristicWarningEvent(instance, CharacteristicWarningType.WARN_MESSAGE,
           "Characteristic not in required or optional characteristic section for service " + this.constructor.name + ". Adding anyway.");
@@ -468,7 +465,6 @@ export class Service extends EventEmitter {
     for (const characteristic of this.characteristics) {
       if (typeof name === "string" && characteristic.displayName === name) {
         return true;
-        // @ts-expect-error: UUID field
       } else if (typeof name === "function" && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
         return true;
       }

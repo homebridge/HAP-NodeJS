@@ -15,10 +15,10 @@ import { HAPHTTPCode, HAPPairingHTTPCode } from "../lib/HAPServer";
 import { PairingInformation, PermissionTypes } from "../lib/model/AccessoryInfo";
 import { HAPEncryption, HAPUsername } from "../lib/util/eventedhttp";
 import * as hapCrypto from "../lib/util/hapCrypto";
-import { HAPHTTPError } from "../lib/util/HAPHTTPError";
+import { HAPHTTPError } from "./HAPHTTPError";
 import { PromiseTimeout } from "../lib/util/promise-utils";
 import * as tlv from "../lib/util/tlv";
-import { TLVError } from "../lib/util/tlvError";
+import { TLVError } from "./tlvError";
 
 export interface HTTPResponse<T = Buffer> {
   shouldKeepAlive: boolean;
