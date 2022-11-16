@@ -10,6 +10,11 @@ export type PartialAllowingNull<T> = {
 }
 
 /**
+ * Type of the constructor arguments of the provided constructor type.
+ */
+export type ConstructorArgs<C> = C extends new (...args: infer A) => any ? A : never; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+/**
  * UUID string uniquely identifying every HAP connection.
  */
 export type SessionIdentifier = string;
