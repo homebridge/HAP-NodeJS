@@ -2,20 +2,19 @@ import axios, { AxiosError, AxiosResponse } from "axios";
 import crypto from "crypto";
 import { Agent } from "http";
 import tweetnacl from "tweetnacl";
+import { PairingStates, TLVValues } from "../internal-types";
+import { HAPHTTPClient } from "../test-utils/HAPHTTPClient";
+import { PairSetupClient } from "../test-utils/PairSetupClient";
+import { PairVerifyClient } from "../test-utils/PairVerifyClient";
 import {
   AccessoriesResponse,
   CharacteristicId,
   CharacteristicReadData,
   CharacteristicsWriteRequest,
   CharacteristicsWriteResponse,
-  PairingStates,
   ResourceRequest,
   ResourceRequestType,
-  TLVValues,
-} from "../internal-types";
-import { HAPHTTPClient } from "../test-utils/HAPHTTPClient";
-import { PairSetupClient } from "../test-utils/PairSetupClient";
-import { PairVerifyClient } from "../test-utils/PairVerifyClient";
+} from "../types";
 import { Accessory } from "./Accessory";
 import { Characteristic, Formats, Perms } from "./Characteristic";
 import {
