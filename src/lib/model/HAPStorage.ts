@@ -2,6 +2,9 @@
 // @ts-ignore
 import storage, { LocalStorage } from "node-persist";
 
+/**
+ * @group Model
+ */
 export class HAPStorage {
 
   private static readonly INSTANCE = new HAPStorage();

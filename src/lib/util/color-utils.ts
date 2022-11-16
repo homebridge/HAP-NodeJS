@@ -404,6 +404,9 @@ const lookupTable: Map<number, [number, number]> = new Map([ // <MIRED, [SATURAT
   [500, [64.1, 28.3]],
 ]);
 
+/**
+ * @group Utils
+ */
 export class ColorUtils {
 
   /**

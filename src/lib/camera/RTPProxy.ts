@@ -1,5 +1,8 @@
 import dgram, { Socket, SocketType } from "dgram";
 
+/**
+ * @group Camera
+ */
 export interface RTPProxyOptions {
   disabled: boolean;
   isIPV6?: boolean;
@@ -15,6 +18,7 @@ export interface RTPProxyOptions {
  * The proxy was created to deal with RTCP and SSRC related stuff from external streams back in that days.
  * Later HomeKit removed support for unencrypted stream so it’s mostly no longer useful anymore, only really for testing
  * with a custom HAP controller.
+ * @group Camera
  */
 export default class RTPProxy {
   startingPort = 10000;

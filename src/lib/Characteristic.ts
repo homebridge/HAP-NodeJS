@@ -1,8 +1,7 @@
 import assert from "assert";
 import createDebug from "debug";
 import { EventEmitter } from "events";
-import { CharacteristicJsonObject } from "../internal-types";
-import { CharacteristicValue, Nullable, PartialAllowingNull, VoidCallback } from "../types";
+import { CharacteristicJsonObject, CharacteristicValue, Nullable, PartialAllowingNull, VoidCallback } from "../types";
 import { CharacteristicWarningType } from "./Accessory";
 import type {
   AccessCodeControlPoint,
@@ -262,7 +261,7 @@ import type {
   WiFiConfigurationControl,
   WiFiSatelliteStatus,
 } from "./definitions";
-import { HAPStatus, IdentifyCallback, IsKnownHAPStatusError } from "./HAPServer";
+import { HAPStatus, IsKnownHAPStatusError } from "./HAPServer";
 import { IdentifierCache } from "./model/IdentifierCache";
 import { clone } from "./util/clone";
 import { HAPConnection } from "./util/eventedhttp";
@@ -280,6 +279,9 @@ import { BASE_UUID, toShortForm } from "./util/uuid";
 
 const debug = createDebug("HAP-NodeJS:Characteristic");
 
+/**
+ * @group Characteristic
+ */
 export const enum Formats {
   BOOL = "bool",
   /**
@@ -328,6 +330,9 @@ export const enum Formats {
   DICTIONARY = "dict",
 }
 
+/**
+ * @group Characteristic
+ */
 export const enum Units {
   /**
    * Celsius is the only temperature unit in the HomeKit Accessory Protocol.
@@ -341,6 +346,9 @@ export const enum Units {
   SECONDS = "seconds",
 }
 
+/**
+ * @group Characteristic
+ */
 export const enum Perms {
   // noinspection JSUnusedGlobalSymbols
   /**
@@ -361,6 +369,9 @@ export const enum Perms {
   WRITE_RESPONSE = "wr",
 }
 
+/**
+ * @group Characteristic
+ */
 export interface CharacteristicProps {
   format: Formats | string;
   perms: Perms[];
@@ -397,12 +408,23 @@ export interface CharacteristicProps {
   adminOnlyAccess?: Access[];
 }
 
+/**
+ * Describes the abstract access to a {@link Characteristic}.
+ * It abstracts the more granular access described by {@link Perms}.
+ *
+ * It is used in {@link CharacteristicProps.adminOnlyAccess}.
+ *
+ * @group Characteristic
+ */
 export const enum Access {
   READ = 0x00,
   WRITE = 0x01,
   NOTIFY = 0x02
 }
 
+/**
+ * @group Characteristic
+ */
 export type CharacteristicChange = {
   originator?: HAPConnection,
   newValue: Nullable<CharacteristicValue>;
@@ -411,6 +433,9 @@ export type CharacteristicChange = {
   context?: CharacteristicContext;
 };
 
+/**
+ * @group Characteristic
+ */
 export const enum ChangeReason {
   /**
    * Reason used when HomeKit writes a value or the API user calls {@link Characteristic.setValue}.
@@ -421,7 +446,7 @@ export const enum ChangeReason {
    */
   UPDATE = "update",
   /**
-   * Used when HomeKit reads a value or the API user calls the deprecated method {@link Characteristic.getValue}.
+   * Used when HomeKit reads a value or the API user calls the deprecated method `Characteristic.getValue`.
    */
   READ = "read",
   /**
@@ -434,6 +459,8 @@ export const enum ChangeReason {
  * This format for a context object can be used to pass to any characteristic write operation.
  * It can contain additional information used by the internal event handlers of hap-nodejs.
  * The context object can be combined with any custom data for own use.
+ *
+ * @group Characteristic
  */
 export interface CharacteristicOperationContext {
   /**
@@ -445,7 +472,7 @@ export interface CharacteristicOperationContext {
 }
 
 /**
- * @private
+ * @group Characteristic
  */
 export interface SerializedCharacteristic {
   displayName: string,
@@ -457,6 +484,9 @@ export interface SerializedCharacteristic {
   props: CharacteristicProps,
 }
 
+/**
+ * @group Characteristic
+ */
 export const enum CharacteristicEventTypes {
   /**
    * This event is thrown when a HomeKit controller wants to read the current value of the characteristic.
@@ -491,18 +521,38 @@ export const enum CharacteristicEventTypes {
   CHARACTERISTIC_WARNING = "characteristic-warning",
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type CharacteristicContext = any
+/**
+ * @group Characteristic
+ */
+export type CharacteristicContext = any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
+/**
+ * @group Characteristic
+ */
 export type CharacteristicGetCallback = (status?: HAPStatus | null | Error, value?: Nullable<CharacteristicValue>) => void;
+/**
+ * @group Characteristic
+ */
 export type CharacteristicSetCallback = (error?: HAPStatus | null | Error, writeResponse?: Nullable<CharacteristicValue>) => void;
+/**
+ * @group Characteristic
+ */
 export type CharacteristicGetHandler = (context: CharacteristicContext, connection?: HAPConnection)
   => Promise<Nullable<CharacteristicValue>> | Nullable<CharacteristicValue>;
+/**
+ * @group Characteristic
+ */
 export type CharacteristicSetHandler = (value: CharacteristicValue, context: CharacteristicContext, connection?: HAPConnection)
   => Promise<Nullable<CharacteristicValue> | void> | Nullable<CharacteristicValue> | void;
 
+/**
+ * @group Characteristic
+ */
 export type AdditionalAuthorizationHandler = (additionalAuthorizationData: string | undefined) => boolean;
 
+/**
+ * @group Characteristic
+ */
 export declare interface Characteristic {
 
   on(event: "get", listener: (callback: CharacteristicGetCallback, context: CharacteristicContext, connection?: HAPConnection) => void): this;
@@ -551,6 +601,9 @@ export declare interface Characteristic {
 
 }
 
+/**
+ * @group Characteristic
+ */
 class ValidValuesIterable implements Iterable<number> {
 
   private readonly props: CharacteristicProps;
@@ -637,6 +690,8 @@ function minWithUndefined(a?: number, b?: number): number | undefined {
  *
  * You can also define custom Characteristics by providing your own UUID. Custom Characteristics can be added
  * to any native or custom Services, but Siri will likely not be able to work with these.
+ *
+ * @group Characteristic
  */
 export class Characteristic extends EventEmitter {
 
@@ -658,297 +713,1041 @@ export class Characteristic extends EventEmitter {
 
   // Pattern below is for automatic detection of the section of defined characteristics. Used by the generator
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  /**
+   * @group Characteristic Definitions
+   */
   public static AccessCodeControlPoint: typeof AccessCodeControlPoint;
+  /**
+   * @group Characteristic Definitions
+   */
   public static AccessCodeSupportedConfiguration: typeof AccessCodeSupportedConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static AccessControlLevel: typeof AccessControlLevel;
+  /**
+   * @group Characteristic Definitions
+   */
   public static AccessoryFlags: typeof AccessoryFlags;
+  /**
+   * @group Characteristic Definitions
+   */
   public static AccessoryIdentifier: typeof AccessoryIdentifier;
+  /**
+   * @group Characteristic Definitions
+   */
   public static Active: typeof Active;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ActiveIdentifier: typeof ActiveIdentifier;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ActivityInterval: typeof ActivityInterval;
+  /**
+   * @group Characteristic Definitions
+   */
   public static AdministratorOnlyAccess: typeof AdministratorOnlyAccess;
+  /**
+   * @group Characteristic Definitions
+   */
   public static AirParticulateDensity: typeof AirParticulateDensity;
+  /**
+   * @group Characteristic Definitions
+   */
   public static AirParticulateSize: typeof AirParticulateSize;
+  /**
+   * @group Characteristic Definitions
+   */
   public static AirPlayEnable: typeof AirPlayEnable;
+  /**
+   * @group Characteristic Definitions
+   */
   public static AirQuality: typeof AirQuality;
+  /**
+   * @group Characteristic Definitions
+   */
   public static AppMatchingIdentifier: typeof AppMatchingIdentifier;
+  /**
+   * @group Characteristic Definitions
+   */
   public static AssetUpdateReadiness: typeof AssetUpdateReadiness;
+  /**
+   * @group Characteristic Definitions
+   */
   public static AudioFeedback: typeof AudioFeedback;
+  /**
+   * @group Characteristic Definitions
+   */
   public static BatteryLevel: typeof BatteryLevel;
+  /**
+   * @group Characteristic Definitions
+   */
   public static Brightness: typeof Brightness;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ButtonEvent: typeof ButtonEvent;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CameraOperatingModeIndicator: typeof CameraOperatingModeIndicator;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CarbonDioxideDetected: typeof CarbonDioxideDetected;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CarbonDioxideLevel: typeof CarbonDioxideLevel;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CarbonDioxidePeakLevel: typeof CarbonDioxidePeakLevel;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CarbonMonoxideDetected: typeof CarbonMonoxideDetected;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CarbonMonoxideLevel: typeof CarbonMonoxideLevel;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CarbonMonoxidePeakLevel: typeof CarbonMonoxidePeakLevel;
   /**
+   * @group Characteristic Definitions
    * @deprecated Removed and not used anymore
    */
   public static Category: typeof Category;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CCAEnergyDetectThreshold: typeof CCAEnergyDetectThreshold;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CCASignalDetectThreshold: typeof CCASignalDetectThreshold;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CharacteristicValueActiveTransitionCount: typeof CharacteristicValueActiveTransitionCount;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CharacteristicValueTransitionControl: typeof CharacteristicValueTransitionControl;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ChargingState: typeof ChargingState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ClosedCaptions: typeof ClosedCaptions;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ColorTemperature: typeof ColorTemperature;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ConfigurationState: typeof ConfigurationState;
   /**
+   * @group Characteristic Definitions
    * @deprecated Removed and not used anymore
    */
   public static ConfigureBridgedAccessory: typeof ConfigureBridgedAccessory;
   /**
+   * @group Characteristic Definitions
    * @deprecated Removed and not used anymore
    */
   public static ConfigureBridgedAccessoryStatus: typeof ConfigureBridgedAccessoryStatus;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ConfiguredName: typeof ConfiguredName;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ContactSensorState: typeof ContactSensorState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CoolingThresholdTemperature: typeof CoolingThresholdTemperature;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CryptoHash: typeof CryptoHash;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CurrentAirPurifierState: typeof CurrentAirPurifierState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CurrentAmbientLightLevel: typeof CurrentAmbientLightLevel;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CurrentDoorState: typeof CurrentDoorState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CurrentFanState: typeof CurrentFanState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CurrentHeaterCoolerState: typeof CurrentHeaterCoolerState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CurrentHeatingCoolingState: typeof CurrentHeatingCoolingState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CurrentHorizontalTiltAngle: typeof CurrentHorizontalTiltAngle;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CurrentHumidifierDehumidifierState: typeof CurrentHumidifierDehumidifierState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CurrentMediaState: typeof CurrentMediaState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CurrentPosition: typeof CurrentPosition;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CurrentRelativeHumidity: typeof CurrentRelativeHumidity;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CurrentSlatState: typeof CurrentSlatState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CurrentTemperature: typeof CurrentTemperature;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CurrentTiltAngle: typeof CurrentTiltAngle;
   /**
+   * @group Characteristic Definitions
    * @deprecated Removed and not used anymore
    */
   public static CurrentTime: typeof CurrentTime;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CurrentTransport: typeof CurrentTransport;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CurrentVerticalTiltAngle: typeof CurrentVerticalTiltAngle;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CurrentVisibilityState: typeof CurrentVisibilityState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static DataStreamHAPTransport: typeof DataStreamHAPTransport;
+  /**
+   * @group Characteristic Definitions
+   */
   public static DataStreamHAPTransportInterrupt: typeof DataStreamHAPTransportInterrupt;
   /**
+   * @group Characteristic Definitions
    * @deprecated Removed and not used anymore
    */
   public static DayoftheWeek: typeof DayoftheWeek;
+  /**
+   * @group Characteristic Definitions
+   */
   public static DiagonalFieldOfView: typeof DiagonalFieldOfView;
+  /**
+   * @group Characteristic Definitions
+   */
   public static DigitalZoom: typeof DigitalZoom;
   /**
+   * @group Characteristic Definitions
    * @deprecated Removed and not used anymore
    */
   public static DiscoverBridgedAccessories: typeof DiscoverBridgedAccessories;
   /**
+   * @group Characteristic Definitions
    * @deprecated Removed and not used anymore
    */
   public static DiscoveredBridgedAccessories: typeof DiscoveredBridgedAccessories;
+  /**
+   * @group Characteristic Definitions
+   */
   public static DisplayOrder: typeof DisplayOrder;
+  /**
+   * @group Characteristic Definitions
+   */
   public static EventRetransmissionMaximum: typeof EventRetransmissionMaximum;
+  /**
+   * @group Characteristic Definitions
+   */
   public static EventSnapshotsActive: typeof EventSnapshotsActive;
+  /**
+   * @group Characteristic Definitions
+   */
   public static EventTransmissionCounters: typeof EventTransmissionCounters;
+  /**
+   * @group Characteristic Definitions
+   */
   public static FilterChangeIndication: typeof FilterChangeIndication;
+  /**
+   * @group Characteristic Definitions
+   */
   public static FilterLifeLevel: typeof FilterLifeLevel;
+  /**
+   * @group Characteristic Definitions
+   */
   public static FirmwareRevision: typeof FirmwareRevision;
+  /**
+   * @group Characteristic Definitions
+   */
   public static FirmwareUpdateReadiness: typeof FirmwareUpdateReadiness;
+  /**
+   * @group Characteristic Definitions
+   */
   public static FirmwareUpdateStatus: typeof FirmwareUpdateStatus;
+  /**
+   * @group Characteristic Definitions
+   */
   public static HardwareFinish: typeof HardwareFinish;
+  /**
+   * @group Characteristic Definitions
+   */
   public static HardwareRevision: typeof HardwareRevision;
+  /**
+   * @group Characteristic Definitions
+   */
   public static HeartBeat: typeof HeartBeat;
+  /**
+   * @group Characteristic Definitions
+   */
   public static HeatingThresholdTemperature: typeof HeatingThresholdTemperature;
+  /**
+   * @group Characteristic Definitions
+   */
   public static HoldPosition: typeof HoldPosition;
+  /**
+   * @group Characteristic Definitions
+   */
   public static HomeKitCameraActive: typeof HomeKitCameraActive;
+  /**
+   * @group Characteristic Definitions
+   */
   public static Hue: typeof Hue;
+  /**
+   * @group Characteristic Definitions
+   */
   public static Identifier: typeof Identifier;
+  /**
+   * @group Characteristic Definitions
+   */
   public static Identify: typeof Identify;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ImageMirroring: typeof ImageMirroring;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ImageRotation: typeof ImageRotation;
+  /**
+   * @group Characteristic Definitions
+   */
   public static InputDeviceType: typeof InputDeviceType;
+  /**
+   * @group Characteristic Definitions
+   */
   public static InputSourceType: typeof InputSourceType;
+  /**
+   * @group Characteristic Definitions
+   */
   public static InUse: typeof InUse;
+  /**
+   * @group Characteristic Definitions
+   */
   public static IsConfigured: typeof IsConfigured;
+  /**
+   * @group Characteristic Definitions
+   */
   public static LeakDetected: typeof LeakDetected;
   /**
+   * @group Characteristic Definitions
    * @deprecated Removed and not used anymore
    */
   public static LinkQuality: typeof LinkQuality;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ListPairings: typeof ListPairings;
+  /**
+   * @group Characteristic Definitions
+   */
   public static LockControlPoint: typeof LockControlPoint;
+  /**
+   * @group Characteristic Definitions
+   */
   public static LockCurrentState: typeof LockCurrentState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static LockLastKnownAction: typeof LockLastKnownAction;
+  /**
+   * @group Characteristic Definitions
+   */
   public static LockManagementAutoSecurityTimeout: typeof LockManagementAutoSecurityTimeout;
+  /**
+   * @group Characteristic Definitions
+   */
   public static LockPhysicalControls: typeof LockPhysicalControls;
+  /**
+   * @group Characteristic Definitions
+   */
   public static LockTargetState: typeof LockTargetState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static Logs: typeof Logs;
+  /**
+   * @group Characteristic Definitions
+   */
   public static MACRetransmissionMaximum: typeof MACRetransmissionMaximum;
+  /**
+   * @group Characteristic Definitions
+   */
   public static MACTransmissionCounters: typeof MACTransmissionCounters;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ManagedNetworkEnable: typeof ManagedNetworkEnable;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ManuallyDisabled: typeof ManuallyDisabled;
+  /**
+   * @group Characteristic Definitions
+   */
   public static Manufacturer: typeof Manufacturer;
+  /**
+   * @group Characteristic Definitions
+   */
   public static MaximumTransmitPower: typeof MaximumTransmitPower;
+  /**
+   * @group Characteristic Definitions
+   */
   public static MetricsBufferFullState: typeof MetricsBufferFullState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static Model: typeof Model;
+  /**
+   * @group Characteristic Definitions
+   */
   public static MotionDetected: typeof MotionDetected;
+  /**
+   * @group Characteristic Definitions
+   */
   public static MultifunctionButton: typeof MultifunctionButton;
+  /**
+   * @group Characteristic Definitions
+   */
   public static Mute: typeof Mute;
+  /**
+   * @group Characteristic Definitions
+   */
   public static Name: typeof Name;
+  /**
+   * @group Characteristic Definitions
+   */
   public static NetworkAccessViolationControl: typeof NetworkAccessViolationControl;
+  /**
+   * @group Characteristic Definitions
+   */
   public static NetworkClientProfileControl: typeof NetworkClientProfileControl;
+  /**
+   * @group Characteristic Definitions
+   */
   public static NetworkClientStatusControl: typeof NetworkClientStatusControl;
+  /**
+   * @group Characteristic Definitions
+   */
   public static NFCAccessControlPoint: typeof NFCAccessControlPoint;
+  /**
+   * @group Characteristic Definitions
+   */
   public static NFCAccessSupportedConfiguration: typeof NFCAccessSupportedConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static NightVision: typeof NightVision;
+  /**
+   * @group Characteristic Definitions
+   */
   public static NitrogenDioxideDensity: typeof NitrogenDioxideDensity;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ObstructionDetected: typeof ObstructionDetected;
+  /**
+   * @group Characteristic Definitions
+   */
   public static OccupancyDetected: typeof OccupancyDetected;
+  /**
+   * @group Characteristic Definitions
+   */
   public static On: typeof On;
+  /**
+   * @group Characteristic Definitions
+   */
   public static OperatingStateResponse: typeof OperatingStateResponse;
+  /**
+   * @group Characteristic Definitions
+   */
   public static OpticalZoom: typeof OpticalZoom;
+  /**
+   * @group Characteristic Definitions
+   */
   public static OutletInUse: typeof OutletInUse;
+  /**
+   * @group Characteristic Definitions
+   */
   public static OzoneDensity: typeof OzoneDensity;
+  /**
+   * @group Characteristic Definitions
+   */
   public static PairingFeatures: typeof PairingFeatures;
+  /**
+   * @group Characteristic Definitions
+   */
   public static PairSetup: typeof PairSetup;
+  /**
+   * @group Characteristic Definitions
+   */
   public static PairVerify: typeof PairVerify;
+  /**
+   * @group Characteristic Definitions
+   */
   public static PasswordSetting: typeof PasswordSetting;
+  /**
+   * @group Characteristic Definitions
+   */
   public static PeriodicSnapshotsActive: typeof PeriodicSnapshotsActive;
+  /**
+   * @group Characteristic Definitions
+   */
   public static PictureMode: typeof PictureMode;
+  /**
+   * @group Characteristic Definitions
+   */
   public static Ping: typeof Ping;
+  /**
+   * @group Characteristic Definitions
+   */
   public static PM10Density: typeof PM10Density;
+  /**
+   * @group Characteristic Definitions
+   */
   public static PM2_5Density: typeof PM2_5Density;
+  /**
+   * @group Characteristic Definitions
+   */
   public static PositionState: typeof PositionState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static PowerModeSelection: typeof PowerModeSelection;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ProductData: typeof ProductData;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ProgrammableSwitchEvent: typeof ProgrammableSwitchEvent;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ProgrammableSwitchOutputState: typeof ProgrammableSwitchOutputState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ProgramMode: typeof ProgramMode;
   /**
+   * @group Characteristic Definitions
    * @deprecated Removed and not used anymore
    */
   public static Reachable: typeof Reachable;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ReceivedSignalStrengthIndication: typeof ReceivedSignalStrengthIndication;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ReceiverSensitivity: typeof ReceiverSensitivity;
+  /**
+   * @group Characteristic Definitions
+   */
   public static RecordingAudioActive: typeof RecordingAudioActive;
+  /**
+   * @group Characteristic Definitions
+   */
   public static RelativeHumidityDehumidifierThreshold: typeof RelativeHumidityDehumidifierThreshold;
+  /**
+   * @group Characteristic Definitions
+   */
   public static RelativeHumidityHumidifierThreshold: typeof RelativeHumidityHumidifierThreshold;
+  /**
+   * @group Characteristic Definitions
+   */
   public static RelayControlPoint: typeof RelayControlPoint;
+  /**
+   * @group Characteristic Definitions
+   */
   public static RelayEnabled: typeof RelayEnabled;
+  /**
+   * @group Characteristic Definitions
+   */
   public static RelayState: typeof RelayState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static RemainingDuration: typeof RemainingDuration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static RemoteKey: typeof RemoteKey;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ResetFilterIndication: typeof ResetFilterIndication;
+  /**
+   * @group Characteristic Definitions
+   */
   public static RotationDirection: typeof RotationDirection;
+  /**
+   * @group Characteristic Definitions
+   */
   public static RotationSpeed: typeof RotationSpeed;
+  /**
+   * @group Characteristic Definitions
+   */
   public static RouterStatus: typeof RouterStatus;
+  /**
+   * @group Characteristic Definitions
+   */
   public static Saturation: typeof Saturation;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SecuritySystemAlarmType: typeof SecuritySystemAlarmType;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SecuritySystemCurrentState: typeof SecuritySystemCurrentState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SecuritySystemTargetState: typeof SecuritySystemTargetState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SelectedAudioStreamConfiguration: typeof SelectedAudioStreamConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SelectedCameraRecordingConfiguration: typeof SelectedCameraRecordingConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SelectedDiagnosticsModes: typeof SelectedDiagnosticsModes;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SelectedRTPStreamConfiguration: typeof SelectedRTPStreamConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SelectedSleepConfiguration: typeof SelectedSleepConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SerialNumber: typeof SerialNumber;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ServiceLabelIndex: typeof ServiceLabelIndex;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ServiceLabelNamespace: typeof ServiceLabelNamespace;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SetDuration: typeof SetDuration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SetupDataStreamTransport: typeof SetupDataStreamTransport;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SetupEndpoints: typeof SetupEndpoints;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SetupTransferTransport: typeof SetupTransferTransport;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SignalToNoiseRatio: typeof SignalToNoiseRatio;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SiriEnable: typeof SiriEnable;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SiriEndpointSessionStatus: typeof SiriEndpointSessionStatus;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SiriEngineVersion: typeof SiriEngineVersion;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SiriInputType: typeof SiriInputType;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SiriLightOnUse: typeof SiriLightOnUse;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SiriListening: typeof SiriListening;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SiriTouchToUse: typeof SiriTouchToUse;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SlatType: typeof SlatType;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SleepDiscoveryMode: typeof SleepDiscoveryMode;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SleepInterval: typeof SleepInterval;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SmokeDetected: typeof SmokeDetected;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SoftwareRevision: typeof SoftwareRevision;
+  /**
+   * @group Characteristic Definitions
+   */
   public static StagedFirmwareVersion: typeof StagedFirmwareVersion;
+  /**
+   * @group Characteristic Definitions
+   */
   public static StatusActive: typeof StatusActive;
+  /**
+   * @group Characteristic Definitions
+   */
   public static StatusFault: typeof StatusFault;
+  /**
+   * @group Characteristic Definitions
+   */
   public static StatusJammed: typeof StatusJammed;
+  /**
+   * @group Characteristic Definitions
+   */
   public static StatusLowBattery: typeof StatusLowBattery;
+  /**
+   * @group Characteristic Definitions
+   */
   public static StatusTampered: typeof StatusTampered;
+  /**
+   * @group Characteristic Definitions
+   */
   public static StreamingStatus: typeof StreamingStatus;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SulphurDioxideDensity: typeof SulphurDioxideDensity;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SupportedAssetTypes: typeof SupportedAssetTypes;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SupportedAudioRecordingConfiguration: typeof SupportedAudioRecordingConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SupportedAudioStreamConfiguration: typeof SupportedAudioStreamConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SupportedCameraRecordingConfiguration: typeof SupportedCameraRecordingConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SupportedCharacteristicValueTransitionConfiguration: typeof SupportedCharacteristicValueTransitionConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SupportedDataStreamTransportConfiguration: typeof SupportedDataStreamTransportConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SupportedDiagnosticsModes: typeof SupportedDiagnosticsModes;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SupportedDiagnosticsSnapshot: typeof SupportedDiagnosticsSnapshot;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SupportedFirmwareUpdateConfiguration: typeof SupportedFirmwareUpdateConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SupportedMetrics: typeof SupportedMetrics;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SupportedRouterConfiguration: typeof SupportedRouterConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SupportedRTPConfiguration: typeof SupportedRTPConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SupportedSleepConfiguration: typeof SupportedSleepConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SupportedTransferTransportConfiguration: typeof SupportedTransferTransportConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SupportedVideoRecordingConfiguration: typeof SupportedVideoRecordingConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SupportedVideoStreamConfiguration: typeof SupportedVideoStreamConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SwingMode: typeof SwingMode;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TapType: typeof TapType;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TargetAirPurifierState: typeof TargetAirPurifierState;
   /**
+   * @group Characteristic Definitions
    * @deprecated Removed and not used anymore
    */
   public static TargetAirQuality: typeof TargetAirQuality;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TargetControlList: typeof TargetControlList;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TargetControlSupportedConfiguration: typeof TargetControlSupportedConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TargetDoorState: typeof TargetDoorState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TargetFanState: typeof TargetFanState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TargetHeaterCoolerState: typeof TargetHeaterCoolerState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TargetHeatingCoolingState: typeof TargetHeatingCoolingState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TargetHorizontalTiltAngle: typeof TargetHorizontalTiltAngle;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TargetHumidifierDehumidifierState: typeof TargetHumidifierDehumidifierState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TargetMediaState: typeof TargetMediaState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TargetPosition: typeof TargetPosition;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TargetRelativeHumidity: typeof TargetRelativeHumidity;
   /**
+   * @group Characteristic Definitions
    * @deprecated Removed and not used anymore
    */
   public static TargetSlatState: typeof TargetSlatState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TargetTemperature: typeof TargetTemperature;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TargetTiltAngle: typeof TargetTiltAngle;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TargetVerticalTiltAngle: typeof TargetVerticalTiltAngle;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TargetVisibilityState: typeof TargetVisibilityState;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TemperatureDisplayUnits: typeof TemperatureDisplayUnits;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ThirdPartyCameraActive: typeof ThirdPartyCameraActive;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ThreadControlPoint: typeof ThreadControlPoint;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ThreadNodeCapabilities: typeof ThreadNodeCapabilities;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ThreadOpenThreadVersion: typeof ThreadOpenThreadVersion;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ThreadStatus: typeof ThreadStatus;
   /**
+   * @group Characteristic Definitions
    * @deprecated Removed and not used anymore
    */
   public static TimeUpdate: typeof TimeUpdate;
+  /**
+   * @group Characteristic Definitions
+   */
   public static Token: typeof Token;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TransmitPower: typeof TransmitPower;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TunnelConnectionTimeout: typeof TunnelConnectionTimeout;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TunneledAccessoryAdvertising: typeof TunneledAccessoryAdvertising;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TunneledAccessoryConnected: typeof TunneledAccessoryConnected;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TunneledAccessoryStateNumber: typeof TunneledAccessoryStateNumber;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ValveType: typeof ValveType;
+  /**
+   * @group Characteristic Definitions
+   */
   public static Version: typeof Version;
+  /**
+   * @group Characteristic Definitions
+   */
   public static VideoAnalysisActive: typeof VideoAnalysisActive;
+  /**
+   * @group Characteristic Definitions
+   */
   public static VOCDensity: typeof VOCDensity;
+  /**
+   * @group Characteristic Definitions
+   */
   public static Volume: typeof Volume;
+  /**
+   * @group Characteristic Definitions
+   */
   public static VolumeControlType: typeof VolumeControlType;
+  /**
+   * @group Characteristic Definitions
+   */
   public static VolumeSelector: typeof VolumeSelector;
+  /**
+   * @group Characteristic Definitions
+   */
   public static WakeConfiguration: typeof WakeConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
   public static WANConfigurationList: typeof WANConfigurationList;
+  /**
+   * @group Characteristic Definitions
+   */
   public static WANStatusList: typeof WANStatusList;
+  /**
+   * @group Characteristic Definitions
+   */
   public static WaterLevel: typeof WaterLevel;
+  /**
+   * @group Characteristic Definitions
+   */
   public static WiFiCapabilities: typeof WiFiCapabilities;
+  /**
+   * @group Characteristic Definitions
+   */
   public static WiFiConfigurationControl: typeof WiFiConfigurationControl;
+  /**
+   * @group Characteristic Definitions
+   */
   public static WiFiSatelliteStatus: typeof WiFiSatelliteStatus;
   // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -969,12 +1768,12 @@ export class Characteristic extends EventEmitter {
   props: CharacteristicProps;
 
   /**
-   * The {@link onGet} handler
+   * The {@link Characteristic.onGet} handler
    */
   private getHandler?: CharacteristicGetHandler;
 
   /**
-   * The {@link onSet} handler
+   * The {@link Characteristic.onSet} handler
    */
   private setHandler?: CharacteristicSetHandler;
 
@@ -1366,6 +2165,10 @@ export class Characteristic extends EventEmitter {
    *
    * This doesn't call any registered {@link onSet} or {@link CharacteristicEventTypes.SET} handlers.
    *
+   * Have a look at the
+   * {@link https://github.com/homebridge/HAP-NodeJS/wiki/Presenting-Erroneous-Accessory-State-to-the-User Presenting Erroneous Accessory State to the User}
+   * guide for more information on how to present erroneous state to the user.
+   *
    * @param error - The error object
    *
    * Note: Erroneous state is never **pushed** to the client side. Only, if the HomeKit client requests the current
@@ -1473,6 +2276,10 @@ export class Characteristic extends EventEmitter {
    * If a generic error object is supplied, the characteristic tries to extract a {@link HAPStatus} code
    * from the error message string. If not possible a generic {@link HAPStatus.SERVICE_COMMUNICATION_FAILURE} will be used.
    * If the supplied error object is an instance of {@link HapStatusError} the corresponding status will be used.
+   *
+   * Have a look at the
+   * {@link https://github.com/homebridge/HAP-NodeJS/wiki/Presenting-Erroneous-Accessory-State-to-the-User Presenting Erroneous Accessory State to the User}
+   * guide for more information on how to present erroneous state to the user.
    *
    * @param error - The error object
    *

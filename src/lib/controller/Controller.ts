@@ -3,6 +3,8 @@ import { Service } from "../Service";
 /**
  * A ControllerServiceMap represents all services used by a Controller.
  * It is up to the Controller to choose unique and persistent names for its services.
+ *
+ * @group Controller API
  */
 export interface ControllerServiceMap {
     [name: string]: Service | undefined,
@@ -14,8 +16,13 @@ export interface ControllerServiceMap {
  *
  * There are predefined types {@link DefaultControllerType} for all controller implementations provided by hap-nodejs.
  * You can define custom ControllerTypes if you wish to, but be careful that it does not collide with any known definitions.
+ * @group Controller API
  */
 export type ControllerType = string | DefaultControllerType;
+
+/**
+ * @group Controller API
+ */
 export const enum DefaultControllerType {
     CAMERA = "camera", // or doorbell
     REMOTE = "remote",
@@ -24,10 +31,20 @@ export const enum DefaultControllerType {
     LOCK = "lock",
     CHARACTERISTIC_TRANSITION = "characteristic-transition",
 }
+
+/**
+ * @group Controller API
+ */
 export type ControllerIdentifier = string | ControllerType;
 
+/**
+ * @group Controller API
+ */
 export type StateChangeDelegate = () => void;
 
+/**
+ * @group Controller API
+ */
 export interface ControllerConstructor {
     new(): Controller;
 }
@@ -48,6 +65,7 @@ export interface ControllerConstructor {
  * and MUST NOT create any services or characteristics.
  * Additionally, it must implement all necessary methods as noted below. Those methods will get called
  * when the accessory gets added to an Accessory or a Accessory is restored from disk.
+ * @group Controller API
  */
 export interface Controller<M extends ControllerServiceMap = ControllerServiceMap> {
 
@@ -64,7 +82,7 @@ export interface Controller<M extends ControllerServiceMap = ControllerServiceMa
 
     /**
      * This method is called by the accessory the controller is added to. This method is only called if a new controller
-     * is constructed (aka the controller is not restored from disk {@see initWithServices}).
+     * is constructed (aka the controller is not restored from disk {@link initWithServices}).
      * It MUST create all needed services and characteristics.
      * It MAY create links between services or mark them as hidden or primary.
      * It MUST NOT configure any event handlers.
@@ -90,8 +108,8 @@ export interface Controller<M extends ControllerServiceMap = ControllerServiceMa
      * It MUST NOT return a ServiceMap if the service configuration did not change!
      * It MUST be able to restore services using a ServiceMap from any point in time.
      *
-     * @param serviceMap {ControllerServiceMap} - represents all services of a controller indexed by the controller chosen name.
-     * @returns optionally a {ControllerServiceMap}. This can be used to alter the services configuration of a controller.
+     * @param serviceMap - A {@link ControllerServiceMap} that represents all services of a controller indexed by the controller chosen name.
+     * @returns optionally a {@link ControllerServiceMap}. This can be used to alter the services configuration of a controller.
      */
     initWithServices(serviceMap: M): M | void;
 
@@ -130,6 +148,7 @@ export interface Controller<M extends ControllerServiceMap = ControllerServiceMa
 /**
  * A SerializableController is a Controller which additionally carries states/data (beside services and characteristics)
  * which needs to be persistently stored. For example current target configuration for an AppleTV remote.
+ * @group Controller API
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface SerializableController<M extends ControllerServiceMap = ControllerServiceMap, S = any> extends Controller<M> {
@@ -163,11 +182,15 @@ export interface SerializableController<M extends ControllerServiceMap = Control
      * to disk.
      * The delegate parameter can be undefined when the controller is removed and the state change delegate is reset.
      *
-     * @param delegate {StateChangeDelegate} - the delegate to call when controller state has changed
+     * @param delegate - The {@link StateChangeDelegate} to call when controller state has changed
      */
     setupStateChangeDelegate(delegate?: StateChangeDelegate): void;
 }
 
+/**
+ * @param controller
+ * @group Controller API
+ */
 export function isSerializableController(controller: Controller): controller is SerializableController {
   return "serialize" in controller && "deserialize" in controller && "setupStateChangeDelegate" in controller;
 }

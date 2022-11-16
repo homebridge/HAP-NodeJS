@@ -12,6 +12,8 @@ const enum AccessControlTypes {
 /**
  * This defines the Access Level for TVs and Speakers. It is pretty much only used for the AirPlay 2 protocol
  * so this information is not really useful.
+ *
+ * @group Television
  */
 export const enum AccessLevel {
   // noinspection JSUnusedGlobalSymbols
@@ -33,11 +35,17 @@ export const enum AccessLevel {
   // so don't know what's the use of it.
 }
 
+/**
+ * @group Television
+ */
 export const enum AccessControlEvent {
   ACCESS_LEVEL_UPDATED = "update-control-level",
   PASSWORD_SETTING_UPDATED = "update-password",
 }
 
+/**
+ * @group Television
+ */
 export declare interface AccessControlManagement {
   on(event: "update-control-level", listener: (accessLevel: AccessLevel) => void): this;
   on(event: "update-password", listener: (password: string | undefined, passwordRequired: boolean) => void): this;
@@ -46,6 +54,9 @@ export declare interface AccessControlManagement {
   emit(event: "update-password", password: string | undefined, passwordRequired: boolean): boolean;
 }
 
+/**
+ * @group Television
+ */
 export class AccessControlManagement extends EventEmitter {
 
   private readonly accessControlService: AccessControl;

@@ -1,5 +1,4 @@
 import { Characteristic } from "../Characteristic";
-import { AudioBitrate } from "../controller";
 import { MockDelegate, mockRecordingOptions } from "../controller/CameraController.spec";
 import {
   AudioRecordingCodecType,
@@ -9,7 +8,7 @@ import {
   MediaContainerType,
   RecordingManagement,
 } from "./RecordingManagement";
-import { H264Level, H264Profile, VideoCodecType } from "./RTPStreamManagement";
+import { AudioBitrate, H264Level, H264Profile, VideoCodecType } from "./RTPStreamManagement";
 
 describe("RecordingManagement", () => {
   test("handleSelectedCameraRecordingConfiguration", () => {

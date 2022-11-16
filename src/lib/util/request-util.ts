@@ -10,6 +10,7 @@ import { CharacteristicProps, Formats } from "../Characteristic";
  * @param value - The value which should be formatted
  * @param props - The characteristic properties used to format the value.
  * @private
+ * @group Utils
  */
 export function formatOutgoingCharacteristicValue(value: Nullable<CharacteristicValue>, props: CharacteristicProps): Nullable<CharacteristicValue>;
 export function formatOutgoingCharacteristicValue(value: CharacteristicValue, props: CharacteristicProps): CharacteristicValue
@@ -30,6 +31,9 @@ export function formatOutgoingCharacteristicValue(value: Nullable<Characteristic
   return value;
 }
 
+/**
+ * @group Utils
+ */
 export function isNumericFormat(format: Formats | string): boolean {
   switch (format) {
   case Formats.INT:
@@ -44,6 +48,9 @@ export function isNumericFormat(format: Formats | string): boolean {
   }
 }
 
+/**
+ * @group Utils
+ */
 export function isUnsignedNumericFormat(format: Formats | string): boolean {
   switch (format) {
   case Formats.UINT8:
@@ -56,6 +63,9 @@ export function isUnsignedNumericFormat(format: Formats | string): boolean {
   }
 }
 
+/**
+ * @group Utils
+ */
 export function isIntegerNumericFormat(format: Formats | string): boolean {
   switch (format) {
   case Formats.INT:
@@ -69,6 +79,9 @@ export function isIntegerNumericFormat(format: Formats | string): boolean {
   }
 }
 
+/**
+ * @group Utils
+ */
 export function numericLowerBound(format: Formats | string): number {
   switch (format) {
   case Formats.INT:
@@ -85,6 +98,9 @@ export function numericLowerBound(format: Formats | string): number {
   }
 }
 
+/**
+ * @group Utils
+ */
 export function numericUpperBound(format: Formats | string): number {
   switch (format) {
   case Formats.INT:

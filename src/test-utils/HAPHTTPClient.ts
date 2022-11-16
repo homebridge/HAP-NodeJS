@@ -2,23 +2,24 @@ import assert from "assert";
 import { Agent } from "http";
 import { HeaderObject, HTTPParser } from "http-parser-js";
 import { Socket } from "net";
+import { HAPMimeTypes, PairingStates, PairMethods, TLVValues } from "../internal-types";
+import { HAPHTTPCode, HAPPairingHTTPCode } from "../lib/HAPServer";
+import { PairingInformation, PermissionTypes } from "../lib/model/AccessoryInfo";
+import { HAPEncryption, HAPUsername } from "../lib/util/eventedhttp";
+import * as hapCrypto from "../lib/util/hapCrypto";
+import { PromiseTimeout } from "../lib/util/promise-utils";
+import * as tlv from "../lib/util/tlv";
 import {
   AccessoriesResponse,
   CharacteristicId,
   CharacteristicsReadResponse,
   CharacteristicsWriteRequest,
-  CharacteristicsWriteResponse, HAPMimeTypes, PairingStates, PairMethods,
+  CharacteristicsWriteResponse,
   PrepareWriteRequest,
-  ResourceRequest, TLVValues,
-} from "../internal-types";
-import { HAPHTTPCode, HAPPairingHTTPCode } from "../lib/HAPServer";
-import { PairingInformation, PermissionTypes } from "../lib/model/AccessoryInfo";
-import { HAPEncryption, HAPUsername } from "../lib/util/eventedhttp";
-import * as hapCrypto from "../lib/util/hapCrypto";
-import { HAPHTTPError } from "../lib/util/HAPHTTPError";
-import { PromiseTimeout } from "../lib/util/promise-utils";
-import * as tlv from "../lib/util/tlv";
-import { TLVError } from "../lib/util/tlvError";
+  ResourceRequest,
+} from "../types";
+import { HAPHTTPError } from "./HAPHTTPError";
+import { TLVError } from "./tlvError";
 
 export interface HTTPResponse<T = Buffer> {
   shouldKeepAlive: boolean;

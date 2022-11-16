@@ -11,6 +11,9 @@ import { DataStreamParser, DataStreamReader, DataStreamWriter, Int64 } from "./D
 
 const debug = createDebug("HAP-NodeJS:DataStream:Server");
 
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export type PreparedDataStreamSession = {
 
   connection: HAPConnection, // reference to the hap session which created the request
@@ -25,29 +28,58 @@ export type PreparedDataStreamSession = {
 
 }
 
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export type PrepareSessionCallback = (error?: Error, preparedSession?: PreparedDataStreamSession) => void;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type EventHandler = (message: Record<any, any>) => void;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type RequestHandler = (id: number, message: Record<any, any>) => void;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type ResponseHandler = (error: Error | undefined, status: HDSStatus | undefined, message: Record<any, any>) => void;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type GlobalEventHandler = (connection: DataStreamConnection, message: Record<any, any>) => void;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type GlobalRequestHandler = (connection: DataStreamConnection, id: number, message: Record<any, any>) => void;
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
+export type EventHandler = (message: Record<any, any>) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
+export type RequestHandler = (id: number, message: Record<any, any>) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
+export type ResponseHandler = (
+  error: Error | undefined,
+  status: HDSStatus | undefined,
+  message: Record<any, any>) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
+export type GlobalEventHandler = (
+  connection: DataStreamConnection,
+  message: Record<any, any>) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
+export type GlobalRequestHandler = (
+  connection: DataStreamConnection, id: number,
+  message: Record<any, any>) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
 
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export interface DataStreamProtocolHandler {
   eventHandler?: Record<string, EventHandler>;
   requestHandler?: Record<string, RequestHandler>;
 }
 
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export const enum Protocols { // a collection of currently known protocols
   CONTROL = "control",
   TARGET_CONTROL = "targetControl",
   DATA_SEND = "dataSend",
 }
 
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export const enum Topics { // a collection of currently known topics grouped by their protocol
   // control
   HELLO = "hello",
@@ -62,6 +94,9 @@ export const enum Topics { // a collection of currently known topics grouped by 
   CLOSE = "close",
 }
 
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export enum HDSStatus {
   // noinspection JSUnusedGlobalSymbols
   SUCCESS = 0,
@@ -74,9 +109,13 @@ export enum HDSStatus {
 }
 
 /**
+ * @group HomeKit Data Streams (HDS)
  * @deprecated Renamed to {@link HDSProtocolSpecificErrorReason}.
  */
 export type DataSendCloseReason = HDSProtocolSpecificErrorReason;
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export const enum HDSProtocolSpecificErrorReason { // close reason used in the dataSend protocol
   // noinspection JSUnusedGlobalSymbols
   NORMAL = 0,
@@ -94,6 +133,7 @@ export const enum HDSProtocolSpecificErrorReason { // close reason used in the d
 /**
  * An error indicating a protocol level HDS error.
  * E.g. it may be used to encode a {@link HDSStatus.PROTOCOL_SPECIFIC_ERROR} in the {@link Protocols.DATA_SEND} protocol.
+ * @group HomeKit Data Streams (HDS)
  */
 export class HDSProtocolError extends Error {
   reason: HDSProtocolSpecificErrorReason;
@@ -126,22 +166,29 @@ const enum ConnectionState {
   CLOSED,
 }
 
-type HDSFrame = {
-
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
+export type HDSFrame = {
   header: Buffer,
   cipheredPayload: Buffer,
   authTag: Buffer,
   plaintextPayload?: Buffer,
-
 }
 
-const enum MessageType {
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
+export const enum MessageType {
   EVENT = 1,
   REQUEST = 2,
   RESPONSE = 3,
 }
 
-type DataStreamMessage = {
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
+export type DataStreamMessage = {
   type: MessageType,
 
   protocol: string,
@@ -153,6 +200,9 @@ type DataStreamMessage = {
   message: Record<any, any>,
 }
 
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export const enum DataStreamServerEvent {
   /**
    * This event is emitted when a new client socket is received. At this point we have no idea to what
@@ -165,6 +215,9 @@ export const enum DataStreamServerEvent {
   CONNECTION_CLOSED = "connection-closed",
 }
 
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export declare interface DataStreamServer {
   on(event: "connection-opened", listener: (connection: DataStreamConnection) => void): this;
   on(event: "connection-closed", listener: (connection: DataStreamConnection) => void): this;
@@ -175,6 +228,7 @@ export declare interface DataStreamServer {
 
 /**
  * DataStreamServer which listens for incoming tcp connections and handles identification of new connections
+ * @group HomeKit Data Streams (HDS)
  */
 export class DataStreamServer extends EventEmitter {
 
@@ -203,9 +257,9 @@ export class DataStreamServer extends EventEmitter {
    * The handler is only called for a connection if for the give protocol no ProtocolHandler
    * was registered on the connection level.
    *
-   * @param protocol {string | Protocols} - name of the protocol to register the handler for
-   * @param event {string | Topics} - name of the event (also referred to as topic. See {Topics} for some known ones)
-   * @param handler {GlobalEventHandler} - function to be called for every occurring event
+   * @param protocol - name of the protocol to register the handler for
+   * @param event - name of the event (also referred to as topic. See {@link Topics} for some known ones)
+   * @param handler - function to be called for every occurring event
    */
   public onEventMessage(protocol: string | Protocols, event: string | Topics, handler: GlobalEventHandler): this {
     this.internalEventEmitter.on(protocol + "-e-" + event, handler);
@@ -213,11 +267,11 @@ export class DataStreamServer extends EventEmitter {
   }
 
   /**
-   * Removes an registered event handler.
+   * Removes a registered event handler.
    *
-   * @param protocol {string | Protocols} - name of the protocol to unregister the handler for
-   * @param event {string | Topics} - name of the event (also referred to as topic. See {Topics} for some known ones)
-   * @param handler {GlobalEventHandler} - registered event handler
+   * @param protocol - name of the protocol to unregister the handler for
+   * @param event - name of the event (also referred to as topic. See {@link Topics} for some known ones)
+   * @param handler - registered event handler
    */
   public removeEventHandler(protocol: string | Protocols, event: string | Topics, handler: GlobalEventHandler): this {
     this.internalEventEmitter.removeListener(protocol + "-e-" + event, handler);
@@ -229,9 +283,9 @@ export class DataStreamServer extends EventEmitter {
    * The handler is only called for a connection if for the give protocol no ProtocolHandler
    * was registered on the connection level.
    *
-   * @param protocol {string | Protocols} - name of the protocol to register the handler for
-   * @param request {string | Topics} - name of the request (also referred to as topic. See {Topics} for some known ones)
-   * @param handler {GlobalRequestHandler} - function to be called for every occurring request
+   * @param protocol - name of the protocol to register the handler for
+   * @param request - name of the request (also referred to as topic. See {@link Topics} for some known ones)
+   * @param handler - function to be called for every occurring request
    */
   public onRequestMessage(protocol: string | Protocols, request: string | Topics, handler: GlobalRequestHandler): this {
     this.internalEventEmitter.on(protocol + "-r-" + request, handler);
@@ -239,11 +293,11 @@ export class DataStreamServer extends EventEmitter {
   }
 
   /**
-   * Removes an registered request handler.
+   * Removes a registered request handler.
    *
-   * @param protocol {string | Protocols} - name of the protocol to unregister the handler for
-   * @param request {string | Topics} - name of the request (also referred to as topic. See {Topics} for some known ones)
-   * @param handler {GlobalRequestHandler} - registered request handler
+   * @param protocol - name of the protocol to unregister the handler for
+   * @param request - name of the request (also referred to as topic. See {@link Topics} for some known ones)
+   * @param handler - registered request handler
    */
   public removeRequestHandler(protocol: string | Protocols, request: string | Topics, handler: GlobalRequestHandler): this {
     this.internalEventEmitter.removeListener(protocol + "-r-" + request, handler);
@@ -463,8 +517,14 @@ export class DataStreamServer extends EventEmitter {
 
 }
 
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export type IdentificationCallback = (identifiedSession?: PreparedDataStreamSession) => void;
 
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export const enum DataStreamConnectionEvent {
   /**
    * This event is emitted when the first HDSFrame is received from a new connection.
@@ -474,7 +534,7 @@ export const enum DataStreamConnectionEvent {
    */
   IDENTIFICATION = "identification",
   /**
-   * This event is emitted when no handler could be found for the given protocol of a event or request message.
+   * This event is emitted when no handler could be found for the given protocol of an event or request message.
    */
   HANDLE_MESSAGE_GLOBALLY = "handle-message-globally",
   /**
@@ -483,6 +543,9 @@ export const enum DataStreamConnectionEvent {
   CLOSED = "closed",
 }
 
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export declare interface DataStreamConnection {
   on(event: "identification", listener: (frame: HDSFrame, callback: IdentificationCallback) => void): this;
   on(event: "handle-message-globally", listener: (message: DataStreamMessage) => void): this;
@@ -493,12 +556,18 @@ export declare interface DataStreamConnection {
   emit(event: "closed"): boolean;
 }
 
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export const enum HDSConnectionErrorType {
   ILLEGAL_STATE = 1,
   CLOSED_SOCKET = 2,
   MAX_PAYLOAD_LENGTH = 3,
 }
 
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export class HDSConnectionError extends Error {
   readonly type: HDSConnectionErrorType;
 
@@ -509,8 +578,10 @@ export class HDSConnectionError extends Error {
 }
 
 /**
- * DataStream connection which holds any necessary state information, encryption an decryption keys, manages
+ * DataStream connection which holds any necessary state information, encryption and decryption keys, manages
  * protocol handlers and also handles sending and receiving of data stream frames.
+ *
+ * @group HomeKit Data Streams (HDS)
  */
 export class DataStreamConnection extends EventEmitter {
 
@@ -600,8 +671,8 @@ export class DataStreamConnection extends EventEmitter {
    * Registers a new protocol handler to handle incoming messages.
    * The same protocol cannot be registered multiple times.
    *
-   * @param protocol {string | Protocols} - name of the protocol to register the handler for
-   * @param protocolHandler {DataStreamProtocolHandler} - object to be registered as protocol handler
+   * @param protocol - name of the protocol to register the handler for
+   * @param protocolHandler - object to be registered as protocol handler
    */
   addProtocolHandler(protocol: string | Protocols, protocolHandler: DataStreamProtocolHandler): boolean {
     if (this.protocolHandlers[protocol] !== undefined) {
@@ -615,8 +686,8 @@ export class DataStreamConnection extends EventEmitter {
   /**
    * Removes a protocol handler if it is registered.
    *
-   * @param protocol {string | Protocols} - name of the protocol to unregister the handler for
-   * @param protocolHandler {DataStreamProtocolHandler} - object which will be unregistered
+   * @param protocol - name of the protocol to unregister the handler for
+   * @param protocolHandler - object which will be unregistered
    */
   removeProtocolHandler(protocol: string | Protocols, protocolHandler: DataStreamProtocolHandler): void {
     const current = this.protocolHandlers[protocol];
@@ -629,9 +700,9 @@ export class DataStreamConnection extends EventEmitter {
   /**
    * Sends a new event message to the connected client.
    *
-   * @param protocol {string | Protocols} - name of the protocol
-   * @param event {string | Topics} - name of the event (also referred to as topic. See {Topics} for some known ones)
-   * @param message {Record<any, any>} - message dictionary which gets sent along the event
+   * @param protocol - name of the protocol
+   * @param event - name of the event (also referred to as topic. See {@link Topics} for some known ones)
+   * @param message - message dictionary which gets sent along the event
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sendEvent(protocol: string | Protocols, event: string | Topics, message: Record<any, any> = {}): void {
@@ -646,11 +717,11 @@ export class DataStreamConnection extends EventEmitter {
   /**
    * Sends a new request message to the connected client.
    *
-   * @param protocol {string | Protocols} - name of the protocol
-   * @param request {string | Topics} - name of the request (also referred to as topic. See {Topics} for some known ones)
-   * @param message {Record<any, any>} - message dictionary which gets sent along the request
-   * @param callback {ResponseHandler} - handler which gets supplied with an error object if the response didn't
-   *                                     arrive in time or the status and the message dictionary from the response
+   * @param protocol - name of the protocol
+   * @param request - name of the request (also referred to as topic. See {@link Topics} for some known ones)
+   * @param message - message dictionary which gets sent along the request
+   * @param callback - handler which gets supplied with an error object if the response didn't
+   *                   arrive in time or the status and the message dictionary from the response
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sendRequest(protocol: string | Protocols, request: string | Topics, message: Record<any, any> = {}, callback: ResponseHandler): void {
@@ -686,11 +757,11 @@ export class DataStreamConnection extends EventEmitter {
   /**
    * Send a new response message to a received request message to the client.
    *
-   * @param protocol {string | Protocols} - name of the protocol
-   * @param response {string | Topics} - name of the response (also referred to as topic. See {Topics} for some known ones)
-   * @param id {number} - id from the request, to associate the response to the request
-   * @param status {HDSStatus} - status indication if the request was successful. A status of zero indicates success.
-   * @param message {Record<any, any>} - message dictionary which gets sent along the response
+   * @param protocol - name of the protocol
+   * @param response - name of the response (also referred to as topic. See {@link Topics} for some known ones)
+   * @param id - id from the request, to associate the response to the request
+   * @param status - status indication if the request was successful. A status of zero indicates success.
+   * @param message - message dictionary which gets sent along the response
    */
   sendResponse(
     protocol: string | Protocols,
@@ -769,7 +840,7 @@ export class DataStreamConnection extends EventEmitter {
 
     messages.forEach(message => {
       if (message.type === MessageType.RESPONSE) {
-        // protocol and topic are currently not tested here; just assumed their are correct;
+        // protocol and topic are currently not tested here; just assumed they are correct;
         // probably they are as the requestId is unique per connection no matter what protocol is used
         const responseHandler = this.responseHandlers[message.id!];
         const responseTimer = this.responseTimers[message.id!];
@@ -891,6 +962,9 @@ export class DataStreamConnection extends EventEmitter {
     return frames;
   }
 
+  /**
+   * @private file-private API
+   */
   decryptHDSFrame(frame: HDSFrame, keyOverwrite?: Buffer): boolean {
     hapCrypto.writeUInt64LE(this.controllerToAccessoryNonce, this.controllerToAccessoryNonceBuffer, 0); // update nonce buffer
 

@@ -8,8 +8,14 @@ import * as hapCrypto from "../util/hapCrypto";
 
 const EMPTY_TLV_TYPE = 0x00; // and empty tlv with id 0 is usually used as delimiter for tlv lists
 
+/**
+ * @group TLV8
+ */
 export type TLVEncodable = Buffer | number | string;
 
+/**
+ * @group TLV8
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function encode(type: number, data: TLVEncodable | TLVEncodable[], ...args: any[]): Buffer {
   const encodedTLVBuffers: Buffer[] = [];
@@ -75,6 +81,8 @@ export function encode(type: number, data: TLVEncodable | TLVEncodable[], ...arg
  * @param buffer - TLV8 data
  *
  * Note: Please use {@link decodeWithLists} which properly decodes list elements.
+ *
+ * @group TLV8
  */
 export function decode(buffer: Buffer): Record<number, Buffer> {
   assert(buffer instanceof Buffer, "Illegal argument. tlv.decode() expects Buffer type!");
@@ -110,6 +118,8 @@ export function decode(buffer: Buffer): Record<number, Buffer> {
  * This method decodes multiple entries split by a TLV delimiter properly into Buffer arrays.
  * It properly reassembles tlv entries if they were split across multiple entries due to exceeding the max tlv entry size of 255 bytes.
  * @param buffer - The Buffer containing TLV8 encoded data.
+ *
+ * @group TLV8
  */
 export function decodeWithLists(buffer: Buffer): Record<number, Buffer | Buffer[]> {
   const result: Record<number, Buffer | Buffer[]> = {};
@@ -178,6 +188,8 @@ export function decodeWithLists(buffer: Buffer): Record<number, Buffer | Buffer[
  *
  * @param data - The concatenated tlv8 list entries (probably output of {@link decode}).
  * @param entryStartId - The tlv id that marks the beginning of a new tlv8 entry.
+ *
+ * @group TLV8
  */
 export function decodeList(data: Buffer, entryStartId: number): Record<number, Buffer>[] {
   const objectsList: Record<number, Buffer>[] = [];
@@ -223,6 +235,8 @@ export function decodeList(data: Buffer, entryStartId: number): Record<number, B
 
 /**
  * @deprecated This implementation is considered broken. Don't use it.
+ *
+ * @group TLV8
  */
 export function writeUInt64(value: number): Buffer {
   const float64 = new Float64Array(1);
@@ -240,12 +254,17 @@ export function writeUInt64(value: number): Buffer {
 // noinspection JSUnusedGlobalSymbols
 /**
  * @deprecated This implementation is considered broken. Don't use it.
+ *
+ * @group TLV8
  */
 export function readUInt64(buffer: Buffer): number {
   const float64 = new Float64Array(buffer);
   return float64[0];
 }
 
+/**
+ * @group TLV8
+ */
 export function readUInt64LE(buffer: Buffer, offset = 0): number {
   const low = buffer.readUInt32LE(offset);
   // javascript doesn't allow to shift by 32(?), therefore we multiply here
@@ -255,6 +274,7 @@ export function readUInt64LE(buffer: Buffer, offset = 0): number {
 // noinspection JSUnusedGlobalSymbols
 /**
  * @deprecated The method was named wrongfully and actually reads an UInt64 in **little endian** format.
+ * @group TLV8
  */
 export function readUInt64BE(buffer: Buffer, offset = 0): number {
   return readUInt64LE(buffer, offset);
@@ -262,6 +282,7 @@ export function readUInt64BE(buffer: Buffer, offset = 0): number {
 
 /**
  * `writeUint32LE`
+ * @group TLV8
  */
 export function writeUInt32(value: number): Buffer {
   const buffer = Buffer.alloc(4);
@@ -273,11 +294,15 @@ export function writeUInt32(value: number): Buffer {
 
 /**
  * `readUInt32LE`
+ * @group TLV8
  */
 export function readUInt32(buffer: Buffer): number {
   return buffer.readUInt32LE(0);
 }
 
+/**
+ * @group TLV8
+ */
 export function writeFloat32LE(value: number): Buffer {
   const buffer = Buffer.alloc(4);
   buffer.writeFloatLE(value, 0);
@@ -286,6 +311,7 @@ export function writeFloat32LE(value: number): Buffer {
 
 /**
  * `writeUInt16LE`
+ * @group TLV8
  */
 export function writeUInt16(value: number): Buffer {
   const buffer = Buffer.alloc(2);
@@ -297,6 +323,7 @@ export function writeUInt16(value: number): Buffer {
 
 /**
  * `readUInt16LE`
+ * @group TLV8
  */
 export function readUInt16(buffer: Buffer): number {
   return buffer.readUInt16LE(0);
@@ -304,12 +331,14 @@ export function readUInt16(buffer: Buffer): number {
 
 
 /**
- * Reads variable size unsigned integer {@see writeVariableUIntLE}.
+ * Reads variable size unsigned integer {@link writeVariableUIntLE}.
  * @param buffer - The buffer to read from. It must have exactly the size of the given integer.
+ * @group TLV8
  */
 export function readVariableUIntLE(buffer: Buffer): number;
 /**
  * @deprecated Can't define an offset. The original implementation messed up here!
+ * @group TLV8
  */
 export function readVariableUIntLE(buffer: Buffer, offset: number): number;
 export function readVariableUIntLE(buffer: Buffer, offset = 0): number {
@@ -336,10 +365,12 @@ export function readVariableUIntLE(buffer: Buffer, offset = 0): number {
  * - `UInt16LE`
  * - `UInt32LE`
  * @param number
+ * @group TLV8
  */
 export function writeVariableUIntLE(number: number, ): Buffer;
 /**
  * @deprecated Can't define an offset. The original implementation messed up here!
+ * @group TLV8
  */
 export function writeVariableUIntLE(number: number, offset: number): Buffer;
 export function writeVariableUIntLE(number: number, offset = 0): Buffer {

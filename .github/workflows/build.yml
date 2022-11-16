@@ -16,3 +16,6 @@ jobs:
   lint:
     needs: build_and_test
     uses: homebridge/.github/.github/workflows/eslint.yml@main
+  lint-docs:
+    needs: build_and_test
+    uses: homebridge/.github/.github/workflows/lint-docs.yml@main

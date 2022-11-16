@@ -10,6 +10,7 @@ import { HAPStorage } from "./HAPStorage";
  * that sets your Alarm System's "Target Alarm State" Characteristic to "Arm Away", that Scene will store whatever
  * "Instance ID" it was given for the "Target Alarm State" Characteristic. If the ID changes later on this server,
  * the scene will stop working.
+ * @group Model
  */
 export class IdentifierCache {
   _cache: Record<string, number> = {}; // cache[key:string] = id:number
