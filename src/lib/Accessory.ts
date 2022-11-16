@@ -19,7 +19,7 @@ import {
   ResourceRequest,
   ResourceRequestType,
 } from "../internal-types";
-import { CharacteristicValue, HAPPincode, InterfaceName, IPAddress, MacAddress, Nullable, VoidCallback, WithUUID } from "../types";
+import { CharacteristicValue, ConstructorArgs, HAPPincode, InterfaceName, IPAddress, MacAddress, Nullable, VoidCallback, WithUUID } from "../types";
 import { Advertiser, AdvertiserEvent, AvahiAdvertiser, BonjourHAPAdvertiser, CiaoAdvertiser, ResolvedAdvertiser } from "./Advertiser";
 // noinspection JSDeprecatedSymbols
 import { LegacyCameraSource, LegacyCameraSourceAdapter, StreamController } from "./camera";
@@ -469,8 +469,7 @@ export class Accessory extends EventEmitter {
    * @param constructorArgs - The arguments passed to the given constructor.
    * @returns Returns the constructed service instance.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public addService<S extends typeof Service>(serviceConstructor: S, ...constructorArgs: ConstructorArgsType<S>): Service
+  public addService<S extends typeof Service>(serviceConstructor: S, ...constructorArgs: ConstructorArgs<S>): Service
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public addService(serviceParam: Service | typeof Service, ...constructorArgs: any[]): Service {
     // service might be a constructor like `Service.AccessoryInformation` instead of an instance
