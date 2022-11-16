@@ -16,20 +16,26 @@ import { NodeCallback, SessionIdentifier } from "../../types";
 
 // noinspection JSDeprecatedSymbols
 /**
+ * @group Camera
  * @deprecated
  */
 export type PreparedStreamRequestCallback = (response: PreparedStreamResponse) => void;
 /**
+ * @group Camera
  * @deprecated
  */
 export type PreparedStreamResponse = PrepareStreamResponse;
 
+/**
+ * @group Camera
+ */
 // noinspection JSDeprecatedSymbols,JSUnusedGlobalSymbols
 export type Camera = LegacyCameraSource; // provide backwards compatibility
 // noinspection JSDeprecatedSymbols
 /**
- * Interface of and old style CameraSource. See {@see configureCameraSource} for more Information.
+ * Interface of and old style CameraSource. See {@link Accessory.configureCameraSource} for more Information.
  *
+ * @group Camera
  * @deprecated was replaced by {@link CameraStreamingDelegate} utilized by the {@link CameraController}
  */
 export interface LegacyCameraSource {
@@ -46,6 +52,9 @@ export interface LegacyCameraSource {
 
 }
 
+/**
+ * @group Camera
+ */
 // noinspection JSDeprecatedSymbols
 export class LegacyCameraSourceAdapter implements CameraStreamingDelegate {
 

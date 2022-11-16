@@ -37,6 +37,9 @@ import { ControllerIdentifier, ControllerServiceMap, DefaultControllerType, Seri
 
 const debug = createDebug("HAP-NodeJS:Camera:Controller");
 
+/**
+ * @group Camera
+ */
 export interface CameraControllerOptions {
   /**
    * Amount of parallel camera streams the accessory is capable of running.
@@ -63,7 +66,7 @@ export interface CameraControllerOptions {
    * and {@link Service.DataStreamTransportManagement} services.
    *
    * NOTE: The controller only initializes the required characteristics for the {@link Service.CameraOperatingMode}.
-   *   You may add optional characteristics, if required, by accessing the service directly {@link CameraController.recordingManagement.operatingModeService}.
+   *   You may add optional characteristics, if required, by accessing the service directly `CameraController.recordingManagement.operatingModeService`.
    */
   recording?: {
     /**
@@ -113,10 +116,22 @@ export interface CameraControllerOptions {
   }
 }
 
+/**
+ * @group Camera
+ */
 export type SnapshotRequestCallback = (error?: Error | HAPStatus, buffer?: Buffer) => void;
+/**
+ * @group Camera
+ */
 export type PrepareStreamCallback = (error?: Error, response?: PrepareStreamResponse) => void;
+/**
+ * @group Camera
+ */
 export type StreamRequestCallback = (error?: Error) => void;
 
+/**
+ * @group Camera
+ */
 export const enum ResourceRequestReason {
   /**
    * The reason describes periodic resource requests.
@@ -130,6 +145,9 @@ export const enum ResourceRequestReason {
   EVENT = 1
 }
 
+/**
+ * @group Camera
+ */
 export interface CameraStreamingDelegate {
 
   /**
@@ -152,8 +170,8 @@ export interface CameraStreamingDelegate {
 /**
  * A `CameraRecordingDelegate` is responsible for handling recordings of a HomeKit Secure Video camera.
  *
- * It is responsible for maintaining the prebuffer (see {@see CameraRecordingOptions.prebufferLength},
- * once recording was activated (see {@see updateRecordingActive}).
+ * It is responsible for maintaining the prebuffer (see {@link CameraRecordingOptions.prebufferLength},
+ * once recording was activated (see {@link updateRecordingActive}).
  *
  * Before recording is considered enabled two things must happen:
  * - Recording must be enabled by the user. Signaled through {@link updateRecordingActive}.
@@ -174,8 +192,10 @@ export interface CameraStreamingDelegate {
  *   It will continue to send the remaining fragments of the currently ongoing recording stream request.
  * - The camera will either reach the end of the recording (and signal this via {@link RecordingPacket.isLast}. Also see {@link acknowledgeStream})
  *   or it will continue to stream til the HomeKit Controller closes
- *   the stream {@link closeRecordingStream with reason {@link HDSProtocolSpecificErrorReason.NORMAL}}.
+ *   the stream {@link closeRecordingStream} with reason {@link HDSProtocolSpecificErrorReason.NORMAL}.
  * - The camera goes back into idle mode.
+ *
+ * @group Camera
  */
 export interface CameraRecordingDelegate {
   /**
@@ -230,12 +250,12 @@ export interface CameraRecordingDelegate {
    * The first packet MUST always be the {@link PacketDataType.MEDIA_INITIALIZATION} packet.
    * Any following packet will transport the actual mp4 fragments in {@link PacketDataType.MEDIA_FRAGMENT} packets,
    * starting with the content of the prebuffer. Every {@link PacketDataType.MEDIA_FRAGMENT} starts with a key frame
-   * and must not be longer than the specified duration set via the {@link CameraRecordingConfiguration.mediaContainerConfiguration.fragmentLength}
+   * and must not be longer than the specified duration set via the `CameraRecordingConfiguration.mediaContainerConfiguration.fragmentLength`
    * **selected** by the HomeKit Controller in {@link updateRecordingConfiguration}.
    *
    * NOTE: You MUST respect the value of {@link Characteristic.RecordingAudioActive} characteristic of the {@link Service.CameraOperatingMode}
    *   service. When the characteristic is set to false you MUST NOT include audio in the mp4 fragments. You can access the characteristic via
-   *   the {@link CameraController.recordingManagement.operatingModeService} property.
+   *   the `CameraController.recordingManagement.operatingModeService` property.
    *
    * You might throw an error in this method if encountering a non-recoverable state.
    * You may throw a {@link HDSProtocolError} to manually define the {@link HDSProtocolSpecificErrorReason} for the `DATA_SEND` `CLOSE` event.
@@ -288,7 +308,7 @@ export interface CameraRecordingDelegate {
 }
 
 /**
- * @private
+ * @group Camera
  */
 export interface CameraControllerServiceMap extends ControllerServiceMap {
   // "streamManagement%d": CameraRTPStreamManagement, // format to map all stream management services; indexed by zero
@@ -308,11 +328,17 @@ export interface CameraControllerServiceMap extends ControllerServiceMap {
   doorbell?: Doorbell;
 }
 
-interface CameraControllerState {
+/**
+ * @group Camera
+ */
+export interface CameraControllerState {
   streamManagements: RTPStreamManagementState[];
   recordingManagement?: RecordingManagementState;
 }
 
+/**
+ * @group Camera
+ */
 export const enum CameraControllerEvents {
   /**
    *  Emitted when the mute state or the volume changed. The Apple Home App typically does not set those values
@@ -327,6 +353,9 @@ export const enum CameraControllerEvents {
   SPEAKER_PROPERTIES_CHANGED = "speaker-change",
 }
 
+/**
+ * @group Camera
+ */
 export declare interface CameraController {
   on(event: "microphone-change", listener: (muted: boolean, volume: number) => void): this;
   on(event: "speaker-change", listener: (muted: boolean, volume: number) => void): this;
@@ -337,6 +366,8 @@ export declare interface CameraController {
 
 /**
  * Everything needed to expose a HomeKit Camera.
+ *
+ * @group Camera
  */
 export class CameraController extends EventEmitter implements SerializableController<CameraControllerServiceMap, CameraControllerState> {
   private static readonly STREAM_MANAGEMENT = "streamManagement"; // key to index all RTPStreamManagement services
@@ -411,7 +442,7 @@ export class CameraController extends EventEmitter implements SerializableContro
    * Call this method if you want to forcefully suspend an ongoing streaming session.
    * This would be adequate if the rtp server or media encoding encountered an unexpected error.
    *
-   * @param sessionId {SessionIdentifier} - id of the current ongoing streaming session
+   * @param sessionId - id of the current ongoing streaming session
    */
   public forceStopStreamingSession(sessionId: SessionIdentifier): void {
     this.streamManagements.forEach(management => {

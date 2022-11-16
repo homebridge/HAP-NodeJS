@@ -9,14 +9,23 @@ if (!crypto.getCiphers().includes("chacha20-poly1305")) {
     "At least a nodejs version of v10.17.0 (excluding v11.0 and v11.1) is required!");
 }
 
+/**
+ * @group Cryptography
+ */
 export function generateCurve25519KeyPair(): BoxKeyPair {
   return tweetnacl.box.keyPair();
 }
 
+/**
+ * @group Cryptography
+ */
 export function generateCurve25519SharedSecKey(priKey: Uint8Array, pubKey: Uint8Array): Uint8Array {
   return tweetnacl.scalarMult(priKey, pubKey);
 }
 
+/**
+ * @group Cryptography
+ */
 export function HKDF(hashAlg: string, salt: Buffer, ikm: Buffer, info: Buffer, size: number): Buffer {
   return hkdf(ikm, size, { hash: hashAlg, salt: salt, info: info });
 }
@@ -37,6 +46,9 @@ function uintHighLow(number: number) {
   return [high, low];
 }
 
+/**
+ * @group Utils
+ */
 export function writeUInt64LE (number: number, buffer: Buffer, offset = 0): void {
   const hl = uintHighLow(number);
   buffer.writeUInt32LE(hl[1], offset);
@@ -45,6 +57,9 @@ export function writeUInt64LE (number: number, buffer: Buffer, offset = 0): void
 
 //Security Layer Enc/Dec
 
+/**
+ * @group Cryptography
+ */
 export function chacha20_poly1305_decryptAndVerify(key: Buffer, nonce: Buffer, aad: Buffer | null, ciphertext: Buffer, authTag: Buffer): Buffer {
   if (nonce.length < 12) { // openssl 3.x.x requires 98 bits nonce length
     nonce = Buffer.concat([
@@ -65,11 +80,17 @@ export function chacha20_poly1305_decryptAndVerify(key: Buffer, nonce: Buffer, a
   return plaintext;
 }
 
+/**
+ * @group Cryptography
+ */
 export interface EncryptedData {
   ciphertext: Buffer;
   authTag: Buffer;
 }
 
+/**
+ * @group Cryptography
+ */
 export function chacha20_poly1305_encryptAndSeal(key: Buffer, nonce: Buffer, aad: Buffer | null, plaintext: Buffer): EncryptedData {
   if (nonce.length < 12) { // openssl 3.x.x requires 98 bits nonce length
     nonce = Buffer.concat([
@@ -95,6 +116,9 @@ export function chacha20_poly1305_encryptAndSeal(key: Buffer, nonce: Buffer, aad
   };
 }
 
+/**
+ * @group Cryptography
+ */
 export function layerEncrypt(data: Buffer, encryption: HAPEncryption): Buffer {
   let result = Buffer.alloc(0);
   const total = data.length;
@@ -114,6 +138,9 @@ export function layerEncrypt(data: Buffer, encryption: HAPEncryption): Buffer {
   return result;
 }
 
+/**
+ * @group Cryptography
+ */
 export function layerDecrypt(packet: Buffer, encryption: HAPEncryption): Buffer {
   if (encryption.incompleteFrame) {
     packet = Buffer.concat([encryption.incompleteFrame, packet]);

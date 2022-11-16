@@ -1,6 +1,6 @@
 import crypto from "crypto";
 
-type Binary = Buffer | NodeJS.TypedArray | DataView;
+export type Binary = Buffer | NodeJS.TypedArray | DataView;
 export type BinaryLike = string | Binary;
 
 export const BASE_UUID = "-0000-1000-8000-0026BB765291";

@@ -14,6 +14,10 @@ import * as uuid from "./util/uuid";
 
 const debug = createDebug("HAP-NodeJS:AccessoryLoader");
 
+/**
+ * @group Utils
+ * @deprecated Legacy Accessory Loader
+ */
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types,@typescript-eslint/no-explicit-any
 export function parseCharacteristicJSON(json: any): Characteristic {
   const characteristicUUID = json.cType;
@@ -60,6 +64,10 @@ export function parseCharacteristicJSON(json: any): Characteristic {
   return characteristic;
 }
 
+/**
+ * @group Utils
+ * @deprecated Legacy Accessory Loader
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/explicit-module-boundary-types
 export function parseServiceJSON(json: any): Service {
   const serviceUUID = json.sType;
@@ -98,6 +106,8 @@ export function parseServiceJSON(json: any): Service {
 /**
  * Accepts object-literal JSON structures from previous versions of HAP-NodeJS and parses them into
  * newer-style structures of Accessory/Service/Characteristic objects.
+ * @group Utils
+ * @deprecated Legacy Accessory Loader
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/explicit-module-boundary-types
 export function parseAccessoryJSON(json: any): Accessory {
@@ -145,6 +155,8 @@ export function parseAccessoryJSON(json: any): Accessory {
 /**
  * Loads all accessories from the given folder. Handles object-literal-style accessories, "accessory factories",
  * and new-API style modules.
+ * @group Utils
+ * @deprecated Legacy Accessory Loader
  */
 export function loadDirectory(dir: string): Accessory[] {
 

@@ -56,25 +56,37 @@ const enum VideoAttributesTypes {
   FRAME_RATE = 0x03
 }
 
+/**
+ * @group Camera
+ */
 export const enum VideoCodecType {
   H264 = 0x00,
   // while the namespace is already reserved for H265 it isn't currently supported.
   // H265 = 0x01,
 }
 
+/**
+ * @group Camera
+ */
 export const enum H264Profile {
   BASELINE = 0x00,
   MAIN = 0x01,
   HIGH = 0x02,
 }
 
+/**
+ * @group Camera
+ */
 export const enum H264Level {
   LEVEL3_1 = 0x00,
   LEVEL3_2 = 0x01,
   LEVEL4_0 = 0x02,
 }
 
-const enum VideoCodecPacketizationMode {
+/**
+ * @group Camera
+ */
+export const enum VideoCodecPacketizationMode {
   NON_INTERLEAVED = 0x00
 }
 
@@ -112,12 +124,18 @@ const enum AudioCodecParametersTypes {
   PACKET_TIME = 0x04 // only present in selected audio codec parameters tlv
 }
 
-const enum AudioBitrate {
+/**
+ * @group Camera
+ */
+export const enum AudioBitrate {
   VARIABLE = 0x00,
   CONSTANT = 0x01
 }
 
-const enum AudioSamplerate {
+/**
+ * @group Camera
+ */
+export const enum AudioSamplerate {
   KHZ_8 = 0x00,
   KHZ_16 = 0x01,
   KHZ_24 = 0x02
@@ -131,6 +149,9 @@ const enum SupportedRTPConfigurationTypes {
   SRTP_CRYPTO_SUITE = 0x02,
 }
 
+/**
+ * @group Camera
+ */
 export const enum SRTPCryptoSuites { // public API
   AES_CM_128_HMAC_SHA1_80 = 0x00,
   AES_CM_256_HMAC_SHA1_80 = 0x01,
@@ -239,11 +260,18 @@ const enum AudioRTPParametersTypes {
 // ---------------------------------- TLV DEFINITIONS END ------------------------------------
 
 /**
- * @deprecated renamed to {@see CameraStreamingOptions}
+ * @group Camera
+ * @deprecated renamed to {@link CameraStreamingOptions}
  */
 export type StreamControllerOptions = CameraStreamingOptions;
+/**
+ * @group Camera
+ */
 export type CameraStreamingOptions = CameraStreamingOptionsBase & (CameraStreamingOptionsLegacySRTP | CameraStreamingOptionsSupportedCryptoSuites)
-interface CameraStreamingOptionsBase {
+/**
+ * @group Camera
+ */
+export interface CameraStreamingOptionsBase {
   proxy?: boolean; // default false
   disable_audio_proxy?: boolean; // default false; If proxy = true, you can opt out audio proxy via this
 
@@ -256,10 +284,17 @@ interface CameraStreamingOptionsBase {
   audio?: AudioStreamingOptions;
 }
 
-interface CameraStreamingOptionsLegacySRTP {
+/**
+ * @group Camera
+ */
+export interface CameraStreamingOptionsLegacySRTP {
   srtp: boolean; // a value of true indicates support of AES_CM_128_HMAC_SHA1_80
 }
-interface CameraStreamingOptionsSupportedCryptoSuites {
+
+/**
+ * @group Camera
+ */
+export interface CameraStreamingOptionsSupportedCryptoSuites {
   supportedCryptoSuites: SRTPCryptoSuites[], // Suite NONE should only be used for testing and will probably be never selected by iOS!
 }
 
@@ -268,25 +303,40 @@ function isLegacySRTPOptions(options: any): options is CameraStreamingOptionsLeg
   return "srtp" in options;
 }
 
+/**
+ * @group Camera
+ */
 export type VideoStreamingOptions = {
   codec: H264CodecParameters,
   resolutions: Resolution[],
   cvoId?: number,
 }
 
+/**
+ * @group Camera
+ */
 export interface H264CodecParameters {
   levels: H264Level[],
   profiles: H264Profile[],
 }
 
+/**
+ * @group Camera
+ */
 export type Resolution = [number, number, number]; // width, height, framerate
 
+/**
+ * @group Camera
+ */
 export type AudioStreamingOptions = {
   codecs: AudioStreamingCodec[],
   twoWayAudio?: boolean, // default false, indicates support of 2way audio (will add the Speaker service and Speaker volume control)
   comfort_noise?: boolean, // default false
 }
 
+/**
+ * @group Camera
+ */
 export type AudioStreamingCodec = {
   type: AudioStreamingCodecType | string, // string type for backwards compatibility
   audioChannels?: number, // default 1
@@ -294,6 +344,9 @@ export type AudioStreamingCodec = {
   samplerate: AudioStreamingSamplerate[] | AudioStreamingSamplerate, // OPUS or AAC-ELD must support samplerate at 16k and 25k
 }
 
+/**
+ * @group Camera
+ */
 export const enum AudioStreamingCodecType { // codecs as defined by the HAP spec; only AAC-ELD and OPUS seem to work
   PCMU = "PCMU",
   PCMA = "PCMA",
@@ -304,6 +357,9 @@ export const enum AudioStreamingCodecType { // codecs as defined by the HAP spec
   AMR_WB = "AMR-WB",
 }
 
+/**
+ * @group Camera
+ */
 export const enum AudioStreamingSamplerate {
   KHZ_8 = 8,
   KHZ_16 = 16,
@@ -311,8 +367,14 @@ export const enum AudioStreamingSamplerate {
 }
 
 
+/**
+ * @group Camera
+ */
 export type StreamSessionIdentifier = string; // uuid provided by HAP to identify a streaming session
 
+/**
+ * @group Camera
+ */
 export type SnapshotRequest = {
   height: number;
   width: number;
@@ -325,6 +387,9 @@ export type SnapshotRequest = {
   reason?: ResourceRequestReason
 }
 
+/**
+ * @group Camera
+ */
 export type PrepareStreamRequest = {
   sessionID: StreamSessionIdentifier,
   targetAddress: string,
@@ -333,6 +398,9 @@ export type PrepareStreamRequest = {
   video: Source,
 }
 
+/**
+ * @group Camera
+ */
 export type Source = {
   port: number,
 
@@ -344,6 +412,9 @@ export type Source = {
   proxy_rtcp?: number,
 };
 
+/**
+ * @group Camera
+ */
 export type PrepareStreamResponse = {
   /**
    * @deprecated The local ip address will be automatically determined by HAP-NodeJS.
@@ -362,6 +433,7 @@ export type PrepareStreamResponse = {
 }
 
 /**
+ * @group Camera
  * @deprecated just supply the address directly in {@link PrepareStreamRequest}
  */
 export type Address = {
@@ -369,6 +441,9 @@ export type Address = {
   type?: "v4" | "v6";
 }
 
+/**
+ * @group Camera
+ */
 export interface SourceResponse {
   port: number, // RTP/RTCP port of streaming server
   ssrc: number, // synchronization source of the stream
@@ -377,6 +452,9 @@ export interface SourceResponse {
   srtp_salt?: Buffer, // SRTP Salt. Required if SRTP is used for the current stream
 }
 
+/**
+ * @group Camera
+ */
 export interface ProxiedSourceResponse {
   proxy_pt: number, // Payload Type of input stream
   proxy_server_address: string, // IP address of RTP server
@@ -384,14 +462,21 @@ export interface ProxiedSourceResponse {
   proxy_server_rtcp: number, // RTCP port
 }
 
+/**
+ * @group Camera
+ */
 export const enum StreamRequestTypes {
   RECONFIGURE = "reconfigure",
   START = "start",
   STOP = "stop",
 }
 
+/**
+ * @group Camera
+ */
 export type StreamingRequest = StartStreamRequest | ReconfigureStreamRequest | StopStreamRequest;
 /**
+ * @group Camera
  * @deprecated replaced by {@link StreamingRequest}
  */
 export type StreamRequest = {
@@ -401,6 +486,9 @@ export type StreamRequest = {
   audio?: AudioInfo;
 }
 
+/**
+ * @group Camera
+ */
 export type StartStreamRequest = {
   sessionID: StreamSessionIdentifier,
   type: StreamRequestTypes.START,
@@ -408,17 +496,26 @@ export type StartStreamRequest = {
   audio: AudioInfo,
 }
 
+/**
+ * @group Camera
+ */
 export type ReconfigureStreamRequest = {
   sessionID: StreamSessionIdentifier,
   type: StreamRequestTypes.RECONFIGURE,
   video: ReconfiguredVideoInfo,
 }
 
+/**
+ * @group Camera
+ */
 export type StopStreamRequest = {
   sessionID: StreamSessionIdentifier,
   type: StreamRequestTypes.STOP,
 }
 
+/**
+ * @group Camera
+ */
 export type AudioInfo = {
   codec: AudioStreamingCodecType, // block size for AAC-ELD must be 480 samples
 
@@ -436,6 +533,9 @@ export type AudioInfo = {
   comfortNoiseEnabled: boolean,
 };
 
+/**
+ * @group Camera
+ */
 export type VideoInfo = {  // minimum keyframe interval is about 5 seconds
   codec: VideoCodecType;
   profile: H264Profile,
@@ -454,6 +554,9 @@ export type VideoInfo = {  // minimum keyframe interval is about 5 seconds
   mtu: number, // maximum transmissions unit, default values: ipv4: 1378 bytes; ipv6: 1228 bytes
 };
 
+/**
+ * @group Camera
+ */
 export type ReconfiguredVideoInfo = {
   width: number,
   height: number,
@@ -463,11 +566,17 @@ export type ReconfiguredVideoInfo = {
   rtcp_interval: number, // minimum rtcp interval in seconds (floating point number)
 }
 
+/**
+ * @group Camera
+ */
 export interface RTPStreamManagementState {
   id: number;
   active: boolean;
 }
 
+/**
+ * @group Camera
+ */
 export class RTPStreamManagement {
   /**
    * @deprecated Please use the SRTPCryptoSuites const enum above.
@@ -506,13 +615,22 @@ export class RTPStreamManagement {
   private activeConnection?: HAPConnection;
   private readonly activeConnectionClosedListener: (callback?: CharacteristicSetCallback) => void;
   sessionIdentifier?: StreamSessionIdentifier = undefined;
+  /**
+   * @private private API
+   */
   streamStatus: StreamingStatus = StreamingStatus.AVAILABLE; // use _updateStreamStatus to update this property
   private ipVersion?: "ipv4" | "ipv6"; // ip version for the current session
 
   selectedConfiguration = ""; // base64 representation of the currently selected configuration
   setupEndpointsResponse = ""; // response of the SetupEndpoints Characteristic
 
+  /**
+   * @private deprecated API
+   */
   audioProxy?: RTPProxy;
+  /**
+   * @private deprecated API
+   */
   videoProxy?: RTPProxy;
 
   /**
@@ -1468,12 +1586,13 @@ export class RTPStreamManagement {
 }
 
 /**
- * @deprecated - only there for backwards compatibility, please use {@see RTPStreamManagement} directly
+ * @group Camera
+ * @deprecated - only there for backwards compatibility, please use {@link RTPStreamManagement} directly
  */
 export class StreamController extends RTPStreamManagement {
 
   /**
-   *  options get saved so we can still support {@link configureCameraSource}
+   *  options get saved so we can still support {@link Accessory.configureCameraSource}
    */
   options: CameraStreamingOptions;
 

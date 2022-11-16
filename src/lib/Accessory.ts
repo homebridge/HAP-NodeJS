@@ -12,14 +12,22 @@ import {
   CharacteristicsReadResponse,
   CharacteristicsWriteRequest,
   CharacteristicsWriteResponse,
+  CharacteristicValue,
   CharacteristicWrite,
   CharacteristicWriteData,
+  ConstructorArgs,
+  HAPPincode,
+  InterfaceName,
+  IPAddress,
+  MacAddress,
+  Nullable,
   PartialCharacteristicReadData,
   PartialCharacteristicWriteData,
   ResourceRequest,
   ResourceRequestType,
-} from "../internal-types";
-import { CharacteristicValue, ConstructorArgs, HAPPincode, InterfaceName, IPAddress, MacAddress, Nullable, VoidCallback, WithUUID } from "../types";
+  VoidCallback,
+  WithUUID,
+} from "../types";
 import { Advertiser, AdvertiserEvent, AvahiAdvertiser, BonjourHAPAdvertiser, CiaoAdvertiser, ResolvedAdvertiser } from "./Advertiser";
 // noinspection JSDeprecatedSymbols
 import { LegacyCameraSource, LegacyCameraSourceAdapter, StreamController } from "./camera";
@@ -66,13 +74,16 @@ import { EventName, HAPConnection, HAPUsername } from "./util/eventedhttp";
 import { formatOutgoingCharacteristicValue } from "./util/request-util";
 import * as uuid from "./util/uuid";
 import { toShortForm } from "./util/uuid";
-import ConstructorArgsType = jest.ConstructorArgsType;
 
 const debug = createDebug("HAP-NodeJS:Accessory");
 const MAX_ACCESSORIES = 149; // Maximum number of bridged accessories per bridge.
 const MAX_SERVICES = 100;
 
-// Known category values. Category is a hint to iOS clients about what "type" of Accessory this represents, for UI only.
+/**
+ * Known category values. Category is a hint to iOS clients about what "type" of Accessory this represents, for UI only.
+ *
+ * @group Accessory
+ */
 export const enum Categories {
   // noinspection JSUnusedGlobalSymbols
   OTHER = 1,
@@ -116,7 +127,7 @@ export const enum Categories {
 }
 
 /**
- * @private
+ * @group Accessory
  */
 export interface SerializedAccessory {
   displayName: string,
@@ -130,20 +141,29 @@ export interface SerializedAccessory {
 }
 
 /**
- * @private
+ * @group Controller API
  */
 export interface SerializedControllerContext {
   type: ControllerIdentifier, // this field is called type out of history
   services: SerializedServiceMap,
 }
 
+/**
+ * @group Controller API
+ */
 export type SerializedServiceMap = Record<string, ServiceId>; // maps controller defined name (from the ControllerServiceMap) to serviceId
 
+/**
+ * @group Controller API
+ */
 export interface ControllerContext {
   controller: Controller
   serviceMap: ControllerServiceMap,
 }
 
+/**
+ * @group Accessory
+ */
 export const enum CharacteristicWarningType {
   SLOW_WRITE = "slow-write",
   TIMEOUT_WRITE = "timeout-write",
@@ -154,6 +174,9 @@ export const enum CharacteristicWarningType {
   DEBUG_MESSAGE = "debug-message",
 }
 
+/**
+ * @group Accessory
+ */
 export interface CharacteristicWarning {
   characteristic: Characteristic,
   type: CharacteristicWarningType,
@@ -163,11 +186,15 @@ export interface CharacteristicWarning {
 }
 
 /**
+ * @group Characteristic
  * @deprecated
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type CharacteristicEvents = Record<string, any>;
 
+/**
+ * @group Accessory
+ */
 export interface PublishInfo {
   username: MacAddress;
   pincode: HAPPincode;
@@ -260,6 +287,9 @@ export interface PublishInfo {
   useLegacyAdvertiser?: boolean;
 }
 
+/**
+ * @group Accessory
+ */
 export const enum MDNSAdvertiser {
   /**
    * Use the `@homebridge/ciao` module as advertiser.
@@ -283,10 +313,16 @@ export const enum MDNSAdvertiser {
   RESOLVED = "resolved",
 }
 
+/**
+ * @group Accessory
+ */
 export type AccessoryCharacteristicChange = ServiceCharacteristicChange &  {
   service: Service;
 };
 
+/**
+ * @group Service
+ */
 export interface ServiceConfigurationChange {
   service: Service;
 }
@@ -300,9 +336,13 @@ const enum WriteRequestState {
 // noinspection JSUnusedGlobalSymbols
 /**
  * @deprecated Use AccessoryEventTypes instead
+ * @group Accessory
  */
 export type EventAccessory = "identify" | "listening" | "service-configurationChange" | "service-characteristic-change";
 
+/**
+ * @group Accessory
+ */
 export const enum AccessoryEventTypes {
   /**
    * Emitted when an iOS device wishes for this Accessory to identify itself. If `paired` is false, then
@@ -334,6 +374,9 @@ export const enum AccessoryEventTypes {
   CHARACTERISTIC_WARNING = "characteristic-warning",
 }
 
+/**
+ * @group Accessory
+ */
 export declare interface Accessory {
   on(event: "identify", listener: (paired: boolean, callback: VoidCallback) => void): this;
   on(event: "listening", listener: (port: number, address: string) => void): this;
@@ -369,6 +412,8 @@ export declare interface Accessory {
  * are hosted by the Bridge. This UUID must be "stable" and unchanging, even when the server is restarted. This
  * is required so that the Bridge can provide consistent "Accessory IDs" (aid) and "Instance IDs" (iid) for all
  * Accessories, Services, and Characteristics for iOS clients to reference later.
+ *
+ * @group Accessory
  */
 export class Accessory extends EventEmitter {
   /**
@@ -405,12 +450,33 @@ export class Accessory extends EventEmitter {
   private serializedControllers?: Record<ControllerIdentifier, ControllerServiceMap>; // store uninitialized controller data after a Accessory.deserialize call
   private activeCameraController?: CameraController;
 
+  /**
+   * @private Private API.
+   */
   _accessoryInfo?: Nullable<AccessoryInfo>;
+  /**
+   * @private Private API.
+   */
   _setupID: Nullable<string> = null;
+  /**
+   * @private Private API.
+   */
   _identifierCache?: Nullable<IdentifierCache>;
+  /**
+   * @private Private API.
+   */
   controllerStorage: ControllerStorage = new ControllerStorage(this);
+  /**
+   * @private Private API.
+   */
   _advertiser?: Advertiser;
+  /**
+   * @private Private API.
+   */
   _server?: HAPServer;
+  /**
+   * @private Private API.
+   */
   _setupURI?: string;
 
   private configurationChangeDebounceTimeout?: NodeJS.Timeout;
@@ -557,7 +623,6 @@ export class Accessory extends EventEmitter {
     for (const service of this.services) {
       if (typeof name === "string" && (service.displayName === name || service.name === name || service.subtype === name)) {
         return service;
-      // @ts-expect-error: UUID property
       } else if (typeof name === "function" && ((service instanceof name) || (name.UUID === service.UUID))) {
         return service;
       }
@@ -570,7 +635,6 @@ export class Accessory extends EventEmitter {
     for (const service of this.services) {
       if (typeof uuid === "string" && (service.displayName === uuid || service.name === uuid) && service.subtype === subType) {
         return service;
-      // @ts-expect-error: UUID property
       } else if (typeof uuid === "function" && ((service instanceof uuid) || (uuid.UUID === service.UUID)) && service.subtype === subType) {
         return service;
       }
@@ -722,8 +786,8 @@ export class Accessory extends EventEmitter {
    *     - CameraOperatingMode
    *     - CameraEventRecordingManagement
    *
-   * @param cameraSource {LegacyCameraSource}
-   * @deprecated please refer to the new {@see CameraController} API and {@link configureController}
+   * @param cameraSource - The instance of the legacy camera source
+   * @deprecated please refer to the new {@link CameraController} API and {@link configureController}
    */
   public configureCameraSource(cameraSource: LegacyCameraSource): CameraController {
     if (cameraSource.streamControllers.length === 0) {
@@ -760,7 +824,7 @@ export class Accessory extends EventEmitter {
   }
 
   /**
-   * This method is used to set up a new Controller for this accessory. See {@see Controller} for a more detailed
+   * This method is used to set up a new Controller for this accessory. See {@link Controller} for a more detailed
    * explanation what a Controller is and what it is capable of.
    *
    * The controller can be passed as an instance of the class or as a constructor (without any necessary parameters)
@@ -771,7 +835,7 @@ export class Accessory extends EventEmitter {
    * {@link ControllerIdentifier}) can be restored from. Otherwise, the Controller will be created with new services.
    *
    *
-   * @param controllerConstructor {Controller | ControllerConstructor}
+   * @param controllerConstructor - The Controller instance or constructor to the Controller with no required arguments.
    */
   public configureController(controllerConstructor: Controller | ControllerConstructor): void {
     const controller = typeof controllerConstructor === "function"
@@ -999,6 +1063,7 @@ export class Accessory extends EventEmitter {
   /**
    * Assigns aid/iid to ourselves, any Accessories we are bridging, and all associated Services+Characteristics. Uses
    * the provided identifierCache to keep IDs stable.
+   * @private Private API
    */
   _assignIDs(identifierCache: IdentifierCache): void {
 

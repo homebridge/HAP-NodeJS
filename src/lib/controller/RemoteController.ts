@@ -3,6 +3,7 @@ import createDebug from "debug";
 import { EventEmitter } from "events";
 import { CharacteristicValue } from "../../types";
 import { Accessory } from "../Accessory";
+import { AudioBitrate, AudioSamplerate } from "../camera";
 import {
   Characteristic,
   CharacteristicEventTypes,
@@ -57,6 +58,9 @@ const enum SupportedButtonConfigurationTypes {
   BUTTON_TYPE = 0x02
 }
 
+/**
+ * @group Apple TV Remote
+ */
 export const enum ButtonType {
   // noinspection JSUnusedGlobalSymbols
   UNDEFINED = 0x00,
@@ -98,6 +102,9 @@ const enum TargetConfigurationTypes {
   BUTTON_CONFIGURATION = 0x04
 }
 
+/**
+ * @group Apple TV Remote
+ */
 export const enum TargetCategory {
   // noinspection JSUnusedGlobalSymbols
   UNDEFINED = 0x00,
@@ -117,12 +124,18 @@ const enum ButtonEvent {
   ACTIVE_IDENTIFIER = 0x04,
 }
 
+/**
+ * @group Apple TV Remote
+ */
 export const enum ButtonState {
   UP = 0x00,
   DOWN = 0x01
 }
 
 
+/**
+ * @group Apple TV Remote
+ */
 export type SupportedConfiguration = {
   maximumTargets: number,
   ticksPerSecond: number,
@@ -130,11 +143,17 @@ export type SupportedConfiguration = {
   hardwareImplemented: boolean
 }
 
+/**
+ * @group Apple TV Remote
+ */
 export type SupportedButtonConfiguration = {
   buttonID: number,
   buttonType: ButtonType
 }
 
+/**
+ * @group Apple TV Remote
+ */
 export type TargetConfiguration = {
   targetIdentifier: number,
   targetName?: string, // on Operation.UPDATE targetName is left out
@@ -142,6 +161,9 @@ export type TargetConfiguration = {
   buttonConfiguration: Record<number, ButtonConfiguration> // button configurations indexed by their ID
 }
 
+/**
+ * @group Apple TV Remote
+ */
 export type ButtonConfiguration = {
   buttonID: number,
   buttonType: ButtonType,
@@ -166,6 +188,9 @@ const enum AudioCodecConfigurationTypes {
   CODEC_PARAMETERS = 0x02,
 }
 
+/**
+ * @group Camera
+ */
 export const enum AudioCodecTypes { // only really by HAP supported codecs are AAC-ELD and OPUS
   // noinspection JSUnusedGlobalSymbols
   PCMU = 0x00,
@@ -184,19 +209,6 @@ const enum AudioCodecParametersTypes {
   PACKET_TIME = 0x04 // only present in selected audio codec parameters tlv
 }
 
-export const enum AudioBitrate {
-  VARIABLE = 0x00,
-  CONSTANT = 0x01
-}
-
-export const enum AudioSamplerate {
-  KHZ_8 = 0x00,
-  KHZ_16 = 0x01,
-  KHZ_24 = 0x02
-  // 3, 4, 5 are theoretically defined, but no idea to what kHz value they correspond to
-  // probably KHZ_32, KHZ_44_1, KHZ_48 (as supported by Secure Video recordings)
-}
-
 // ----------
 
 type SupportedAudioStreamConfiguration = {
@@ -207,11 +219,17 @@ type SelectedAudioStreamConfiguration = {
   audioCodecConfiguration: AudioCodecConfiguration,
 }
 
+/**
+ * @group Apple TV Remote
+ */
 export type AudioCodecConfiguration = {
   codecType: AudioCodecTypes,
   parameters: AudioCodecParameters,
 }
 
+/**
+ * @group Apple TV Remote
+ */
 export type AudioCodecParameters = {
   channels: number, // number of audio channels, default is 1
   bitrate: AudioBitrate,
@@ -219,6 +237,9 @@ export type AudioCodecParameters = {
   rtpTime?: RTPTime, // only present in SelectedAudioCodecParameters TLV
 }
 
+/**
+ * @group Apple TV Remote
+ */
 export type RTPTime = 20 | 30 | 40 | 60;
 
 
@@ -235,23 +256,35 @@ type DataSendMessageData = {
   endOfStream: boolean,
 }
 
+/**
+ * @group Apple TV Remote
+ */
 export type AudioFrame = {
   data: Buffer,
-  rms: number, // root mean square
+  rms: number, // root-mean-square
 }
 
 type AudioFramePacket = {
   data: Buffer,
   metadata: {
-    rms: Float32, // root mean square
+    rms: Float32, // root-mean-square
     sequenceNumber: Int64,
   },
 }
 
 
+/**
+ * @group Apple TV Remote
+ */
 export type FrameHandler = (frame: AudioFrame) => void;
+/**
+ * @group Apple TV Remote
+ */
 export type ErrorHandler = (error: HDSProtocolSpecificErrorReason) => void;
 
+/**
+ * @group Apple TV Remote
+ */
 export interface SiriAudioStreamProducer {
 
   startAudioProduction(selectedAudioConfiguration: AudioCodecConfiguration): void;
@@ -260,13 +293,16 @@ export interface SiriAudioStreamProducer {
 
 }
 
+/**
+ * @group Apple TV Remote
+ */
 export interface SiriAudioStreamProducerConstructor {
 
   /**
    * Creates a new instance of a SiriAudioStreamProducer
    *
-   * @param frameHandler {FrameHandler} - called for every opus frame recorded
-   * @param errorHandler {ErrorHandler} - should be called with a appropriate reason when the producing process errored
+   * @param frameHandler - called for every opus frame recorded
+   * @param errorHandler - should be called with an appropriate reason when the producing process errored
    * @param options - optional parameter for passing any configuration related options
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -274,6 +310,9 @@ export interface SiriAudioStreamProducerConstructor {
 
 }
 
+/**
+ * @group Apple TV Remote
+ */
 export const enum TargetUpdates {
   NAME,
   CATEGORY,
@@ -281,10 +320,13 @@ export const enum TargetUpdates {
   REMOVED_BUTTONS,
 }
 
+/**
+ * @group Apple TV Remote
+ */
 export const enum RemoteControllerEvents {
   /**
    * This event is emitted when the active state of the remote has changed.
-   * active = true indicates that there is currently an apple tv listening of button presses and audio streams.
+   * active = true indicates that there is currently an Apple TV listening of button presses and audio streams.
    */
   ACTIVE_CHANGE = "active-change",
   /**
@@ -301,12 +343,12 @@ export const enum RemoteControllerEvents {
    */
   TARGET_ADDED = "target-add",
   /**
-   * This event is emitted when a existing target was updated.
+   * This event is emitted when an existing target was updated.
    * The 'updates' array indicates what exactly was changed for the target.
    */
   TARGET_UPDATED = "target-update",
   /**
-   * This event is emitted when a existing configuration for a target was removed.
+   * This event is emitted when an existing configuration for a target was removed.
    */
   TARGET_REMOVED = "target-remove",
   /**
@@ -317,6 +359,9 @@ export const enum RemoteControllerEvents {
   TARGETS_RESET = "targets-reset",
 }
 
+/**
+ * @group Apple TV Remote
+ */
 export declare interface RemoteController {
   on(event: "active-change", listener: (active: boolean) => void): this;
   on(event: "active-identifier-change", listener: (activeIdentifier: number) => void): this;
@@ -335,7 +380,10 @@ export declare interface RemoteController {
   emit(event: "targets-reset"): boolean;
 }
 
-interface RemoteControllerServiceMap extends ControllerServiceMap {
+/**
+ * @group Apple TV Remote
+ */
+export interface RemoteControllerServiceMap extends ControllerServiceMap {
   targetControlManagement: TargetControlManagement,
   targetControl: TargetControl,
 
@@ -344,13 +392,18 @@ interface RemoteControllerServiceMap extends ControllerServiceMap {
   dataStreamTransportManagement?: DataStreamTransportManagement
 }
 
-interface SerializedControllerState {
+/**
+ * @group Apple TV Remote
+ */
+export interface SerializedControllerState {
   activeIdentifier: number,
   targetConfigurations: Record<number, TargetConfiguration>;
 }
 
 /**
  * Handles everything needed to implement a fully working HomeKit remote controller.
+ *
+ * @group Apple TV Remote
  */
 export class RemoteController extends EventEmitter
   implements SerializableController<RemoteControllerServiceMap, SerializedControllerState>, DataStreamProtocolHandler {
@@ -399,11 +452,11 @@ export class RemoteController extends EventEmitter
   /**
    * Creates a new RemoteController.
    * If siri voice input is supported the constructor to an SiriAudioStreamProducer needs to be supplied.
-   * Otherwise a remote without voice support will be created.
+   * Otherwise, a remote without voice support will be created.
    *
    * For every audio session a new SiriAudioStreamProducer will be constructed.
    *
-   * @param audioProducerConstructor {SiriAudioStreamProducerConstructor} - constructor for a SiriAudioStreamProducer
+   * @param audioProducerConstructor - constructor for a SiriAudioStreamProducer
    * @param producerOptions - if supplied this argument will be supplied as third argument of the SiriAudioStreamProducer
    *                          constructor. This should be used to supply configurations to the stream producer.
    */
@@ -444,7 +497,7 @@ export class RemoteController extends EventEmitter
   /**
    * Set a new target as active target. A value of 0 indicates that no target is selected currently.
    *
-   * @param activeIdentifier {number} - target identifier
+   * @param activeIdentifier - target identifier
    */
   public setActiveIdentifier(activeIdentifier: number): void {
     if (activeIdentifier === this.activeIdentifier) {
@@ -477,7 +530,7 @@ export class RemoteController extends EventEmitter
   /**
    * Checks if the supplied targetIdentifier is configured.
    *
-   * @param targetIdentifier {number}
+   * @param targetIdentifier - The target identifier.
    */
   public isConfigured(targetIdentifier: number): boolean {
     return this.targetConfigurations.has(targetIdentifier);
@@ -486,8 +539,8 @@ export class RemoteController extends EventEmitter
   /**
    * Returns the targetIdentifier for a give device name
    *
-   * @param name {string} - the name of the device
-   * @returns the targetIdentifier of the device or undefined if not existent
+   * @param name - The name of the device.
+   * @returns The targetIdentifier of the device or undefined if not existent.
    */
   public getTargetIdentifierByName(name: string): number | undefined {
     for (const [ activeIdentifier, configuration ] of Object.entries(this.targetConfigurations)) {
@@ -502,7 +555,7 @@ export class RemoteController extends EventEmitter
   /**
    * Sends a button event to press the supplied button.
    *
-   * @param button {ButtonType} - button to be pressed
+   * @param button - button to be pressed
    */
   public pushButton(button: ButtonType): void {
     this.sendButtonEvent(button, ButtonState.DOWN);
@@ -511,7 +564,7 @@ export class RemoteController extends EventEmitter
   /**
    * Sends a button event that the supplied button was released.
    *
-   * @param button {ButtonType} - button which was released
+   * @param button - button which was released
    */
   public releaseButton(button: ButtonType): void {
     this.sendButtonEvent(button, ButtonState.UP);
@@ -520,8 +573,8 @@ export class RemoteController extends EventEmitter
   /**
    * Presses a supplied button for a given time.
    *
-   * @param button {ButtonType} - button to be pressed and released
-   * @param time {number} - time in milliseconds (defaults to 200ms)
+   * @param button - button to be pressed and released
+   * @param time - time in milliseconds (defaults to 200ms)
    */
   public pushAndReleaseButton(button: ButtonType, time = 200): void {
     this.pushButton(button);
@@ -531,7 +584,7 @@ export class RemoteController extends EventEmitter
   /**
    * This method adds and configures the remote services for a give accessory.
    *
-   * @param accessory {Accessory} - the give accessory this remote should be added to
+   * @param accessory - the give accessory this remote should be added to
    * @deprecated - use {@link Accessory.configureController} instead
    */
   addServicesToAccessory(accessory: Accessory): void {
@@ -821,7 +874,7 @@ export class RemoteController extends EventEmitter
       throw new Error("Tried sending button event although no target was selected");
     }
 
-    if (!this.isActive()) { // cannot press button if device is not active (aka no apple tv is listening)
+    if (!this.isActive()) { // cannot press button if device is not active (aka no Apple TV is listening)
       throw new Error("Tried sending button event although target was not marked as active");
     }
 
@@ -1341,14 +1394,21 @@ export class RemoteController extends EventEmitter
 }
 // noinspection JSUnusedGlobalSymbols
 /**
- * @deprecated - only there for backwards compatibility, please use {@see RemoteController} directly
+ * @deprecated - only there for backwards compatibility, please use {@link RemoteController} directly
+ * @group Apple TV Remote
  */
 export class HomeKitRemoteController extends RemoteController {} // backwards compatibility
 
+/**
+ * @group Apple TV Remote
+ */
 export const enum SiriAudioSessionEvents {
   CLOSE = "close",
 }
 
+/**
+ * @group Apple TV Remote
+ */
 export declare interface SiriAudioSession {
   on(event: "close", listener: () => void): this;
 
@@ -1357,6 +1417,7 @@ export declare interface SiriAudioSession {
 
 /**
  * Represents an ongoing audio transmission
+ * @group Apple TV Remote
  */
 export class SiriAudioSession extends EventEmitter {
   readonly connection: DataStreamConnection;
@@ -1366,6 +1427,9 @@ export class SiriAudioSession extends EventEmitter {
   private producerRunning = false; // indicates if the producer is running
   private producerTimer?: NodeJS.Timeout; // producer has a 3s timeout to produce the first frame, otherwise transmission will be cancelled
 
+  /**
+   * @private file private API
+   */
   state: SiriAudioSessionState = SiriAudioSessionState.STARTING;
   streamId?: number; // present when state >= SENDING
   endOfStream = false;

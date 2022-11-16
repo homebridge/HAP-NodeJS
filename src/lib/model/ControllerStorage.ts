@@ -28,6 +28,9 @@ interface ControllerData {
   purgeOnNextLoad?: boolean,
 }
 
+/**
+ * @group Model
+ */
 export class ControllerStorage {
 
   private readonly accessoryUUID: string;

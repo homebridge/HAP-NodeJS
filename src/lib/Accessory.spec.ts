@@ -7,11 +7,13 @@ import {
   CharacteristicsReadResponse,
   CharacteristicsWriteRequest,
   CharacteristicsWriteResponse,
+  CharacteristicValue,
   CharacteristicWriteData,
+  InterfaceName,
+  IPAddress,
   ResourceRequest,
   ResourceRequestType,
-} from "../internal-types";
-import { CharacteristicValue, InterfaceName, IPAddress } from "../types";
+} from "../types";
 import { Accessory, AccessoryEventTypes, Categories, CharacteristicWarningType, MDNSAdvertiser, PublishInfo } from "./Accessory";
 import { BonjourHAPAdvertiser } from "./Advertiser";
 import { Bridge } from "./Bridge";

@@ -12,22 +12,27 @@ import {
 } from ".";
 import { NodeCallback, SessionIdentifier } from "../../types";
 import {
+  AudioBitrate,
   AudioRecordingCodecType,
   AudioRecordingSamplerate,
   AudioStreamingCodecType,
-  AudioStreamingSamplerate, Camera,
+  AudioStreamingSamplerate,
+  Camera,
   CameraRecordingConfiguration,
   CameraRecordingOptions,
   CameraStreamingOptions,
   EventTriggerOption,
   H264Level,
   H264Profile,
-  MediaContainerType, PreparedStreamRequestCallback,
+  MediaContainerType,
+  PreparedStreamRequestCallback,
   PrepareStreamRequest,
   RecordingPacket,
   SnapshotRequest,
-  SRTPCryptoSuites, StreamController,
-  StreamingRequest, StreamRequest,
+  SRTPCryptoSuites,
+  StreamController,
+  StreamingRequest,
+  StreamRequest,
   VideoCodecType,
 } from "../camera";
 import { Characteristic } from "../Characteristic";
@@ -35,7 +40,6 @@ import { HDSProtocolSpecificErrorReason } from "../datastream";
 import "../definitions";
 import { HAPStatus } from "../HAPServer";
 import { Service } from "../Service";
-import { AudioBitrate } from "./RemoteController";
 
 export const MOCK_IMAGE = crypto.randomBytes(64);
 

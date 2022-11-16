@@ -123,6 +123,9 @@ interface SavedLastTransitionPointInfo {
   lowerBoundTimeOffset: number;
 }
 
+/**
+ * @group Adaptive Lighting
+ */
 export interface ActiveAdaptiveLightingTransition {
   /**
    * The instance id for the characteristic for which this transition applies to (aka the ColorTemperature characteristic).
@@ -179,6 +182,9 @@ export interface ActiveAdaptiveLightingTransition {
   notifyIntervalThreshold: number;
 }
 
+/**
+ * @group Adaptive Lighting
+ */
 export interface AdaptiveLightingTransitionPoint {
   /**
    * This is the time offset from the transition start to the {@link lowerBound}.
@@ -192,6 +198,9 @@ export interface AdaptiveLightingTransitionPoint {
   upperBound: AdaptiveLightingTransitionCurveEntry;
 }
 
+/**
+ * @group Adaptive Lighting
+ */
 export interface AdaptiveLightingTransitionCurveEntry {
   /**
    * The color temperature in mired.
@@ -241,11 +250,17 @@ export interface AdaptiveLightingTransitionCurveEntry {
   transitionTime: number;
 }
 
+/**
+ * @group Adaptive Lighting
+ */
 export interface BrightnessAdjustmentMultiplierRange {
   minBrightnessValue: number;
   maxBrightnessValue: number;
 }
 
+/**
+ * @group Adaptive Lighting
+ */
 export interface AdaptiveLightingOptions {
   /**
    * Defines how the controller will operate.
@@ -267,6 +282,7 @@ export interface AdaptiveLightingOptions {
 
 /**
  * Defines in which mode the {@link AdaptiveLightingController} will operate in.
+ * @group Adaptive Lighting
  */
 export const enum AdaptiveLightingControllerMode {
   /**
@@ -280,6 +296,9 @@ export const enum AdaptiveLightingControllerMode {
   MANUAL = 2,
 }
 
+/**
+ * @group Adaptive Lighting
+ */
 export const enum AdaptiveLightingControllerEvents {
   /**
    * This event is called once a HomeKit controller enables Adaptive Lighting
@@ -295,6 +314,9 @@ export const enum AdaptiveLightingControllerEvents {
   DISABLED = "disable",
 }
 
+/**
+ * @group Adaptive Lighting
+ */
 export declare interface AdaptiveLightingController {
   /**
    * See {@link AdaptiveLightingControllerEvents.UPDATE}
@@ -315,7 +337,10 @@ export declare interface AdaptiveLightingController {
   emit(event: "disable"): boolean;
 }
 
-interface SerializedAdaptiveLightingControllerState {
+/**
+ * @group Adaptive Lighting
+ */
+export interface SerializedAdaptiveLightingControllerState {
   activeTransition: ActiveAdaptiveLightingTransition;
 }
 
@@ -414,6 +439,8 @@ interface SerializedAdaptiveLightingControllerState {
  *  Lastly you should set up a event handler for the {@link AdaptiveLightingControllerEvents.DISABLED} event.
  *  In yet unknown circumstances HomeKit may also send a dedicated disable command via the control point characteristic.
  *  Be prepared to handle that.
+ *
+ *  @group Adaptive Lighting
  */
 export class AdaptiveLightingController
   extends EventEmitter
