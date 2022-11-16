@@ -16,6 +16,8 @@ const debug = createDebug("HAP-NodeJS:Advertiser");
 /**
  * This enum lists all bitmasks for all known status flags.
  * When the bit for the given bitmask is set, it represents the state described by the name.
+ *
+ * @group Advertiser
  */
 export const enum StatusFlag {
   NOT_PAIRED = 0x01,
@@ -26,12 +28,17 @@ export const enum StatusFlag {
 /**
  * This enum lists all bitmasks for all known pairing feature flags.
  * When the bit for the given bitmask is set, it represents the state described by the name.
+ *
+ * @group Advertiser
  */
 export const enum PairingFeatureFlag {
   SUPPORTS_HARDWARE_AUTHENTICATION = 0x01,
   SUPPORTS_SOFTWARE_AUTHENTICATION = 0x02,
 }
 
+/**
+ * @group Advertiser
+ */
 export const enum AdvertiserEvent {
   /**
    * Emitted if the underlying mDNS advertisers signals, that the service name
@@ -40,12 +47,18 @@ export const enum AdvertiserEvent {
   UPDATED_NAME = "updated-name",
 }
 
+/**
+ * @group Advertiser
+ */
 export declare interface Advertiser {
   on(event: "updated-name", listener: (name: string) => void): this;
 
   emit(event: "updated-name", name: string): boolean;
 }
 
+/**
+ * @group Advertiser
+ */
 export interface ServiceNetworkOptions {
   /**
    * If defined it restricts the service to be advertised on the specified
@@ -74,6 +87,8 @@ export interface ServiceNetworkOptions {
  * A generic Advertiser interface required for any MDNS Advertiser backend implementations.
  *
  * All implementations have to extend NodeJS' {@link EventEmitter} and emit the events defined in {@link AdvertiserEvent}.
+ *
+ * @group Advertiser
  */
 export interface Advertiser {
   initPort(port: number): void;
@@ -92,6 +107,8 @@ export interface Advertiser {
  * accessories with multiple iOS devices in your home, Apple intends for you to use Home Sharing.
  * To support this requirement, we provide the ability to be "discoverable" or not (via a "service flag" on the
  * mdns payload).
+ *
+ * @group Advertiser
  */
 export class CiaoAdvertiser extends EventEmitter implements Advertiser {
   static protocolVersion = "1.1";
@@ -185,6 +202,8 @@ export class CiaoAdvertiser extends EventEmitter implements Advertiser {
 
 /**
  * Advertiser base on the legacy "bonjour-hap" library.
+ *
+ * @group Advertiser
  */
 export class BonjourHAPAdvertiser extends EventEmitter implements Advertiser {
   private readonly accessoryInfo: AccessoryInfo;
@@ -278,6 +297,9 @@ function messageBusConnectionResult(bus: MessageBus): Promise<void> {
   });
 }
 
+/**
+ * @group Advertiser
+ */
 export class DBusInvokeError extends Error {
   readonly errorName: string;
 
@@ -325,6 +347,8 @@ function dbusInvoke( bus: MessageBus, destination: string, path: string, dbusInt
  * AvahiServerState.
  *
  * Refer to https://github.com/lathiat/avahi/blob/fd482a74625b8db8547b8cfca3ee3d3c6c721423/avahi-common/defs.h#L220-L227.
+ *
+ * @group Advertiser
  */
 const enum AvahiServerState {
   // noinspection JSUnusedGlobalSymbols
@@ -341,6 +365,8 @@ const enum AvahiServerState {
  *
  * Refer to https://github.com/lathiat/avahi/blob/fd482a74625b8db8547b8cfca3ee3d3c6c721423/avahi-common/defs.h#L120-L155 for a
  * rough API usage guide of Avahi.
+ *
+ * @group Advertiser
  */
 export class AvahiAdvertiser extends EventEmitter implements Advertiser {
   private readonly accessoryInfo: AccessoryInfo;
@@ -532,6 +558,8 @@ const RESOLVED_PERMISSIONS_ERRORS = [
 /**
  * Advertiser based on the systemd-resolved D-Bus library.
  * For docs on the interface, see: https://www.freedesktop.org/software/systemd/man/org.freedesktop.resolve1.html
+ *
+ * @group Advertiser
  */
 export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
   private readonly accessoryInfo: AccessoryInfo;

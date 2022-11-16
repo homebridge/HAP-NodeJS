@@ -1,12 +1,21 @@
 import { EventEmitter } from "events";
 
+/**
+ * @group Utils
+ */
 export function PromiseTimeout(timeout: number): Promise<void> {
   return new Promise<void>(resolve => {
     setTimeout(() => resolve(), timeout);
   });
 }
 
+/**
+ * @group Utils
+ */
 export function awaitEventOnce<Obj extends EventEmitter, Event extends string, T>(element: Obj, event: Event, timeout?: number): Promise<T>;
+/**
+ * @group Utils
+ */
 export function awaitEventOnce<Obj extends EventEmitter, Event extends string>(element: Obj, event: Event, timeout?: number): Promise<void>;
 // eslint-disable-next-line @typescript-eslint/ban-types
 export function awaitEventOnce<Object extends EventEmitter, Event extends string, T>(element: Object, event: Event, timeout = 5000): Promise<void | T> {

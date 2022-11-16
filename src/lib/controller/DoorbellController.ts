@@ -7,6 +7,8 @@ import { ControllerServiceMap } from "./Controller";
 
 /**
  * Options which are additionally supplied for a {@link DoorbellController}.
+ *
+ * @group Doorbell
  */
 export interface DoorbellOptions {
   /**
@@ -27,12 +29,14 @@ export interface DoorbellOptions {
 /**
  * The `DoorbellController` to efficiently manage doorbell implementations with HAP-NodeJS.
  *
- * NOTICE: We subclass from the CameraController here and deliberately do not introduce/set an
+ * NOTICE: We subclass from the {@link CameraController} here and deliberately do not introduce/set an
  * own/custom ControllerType for Doorbells, as Cameras and Doorbells are pretty much the same thing
  * and would collide otherwise.
  * As the possibility exists, both the CameraController and DoorbellController are written to support migration
  * from one to another. Meaning a serialized CameraController can be initialized as a DoorbellController
  * (on startup in {@link initWithServices}) and vice versa.
+ *
+ * @group Doorbell
  */
 export class DoorbellController extends CameraController {
   private doorbellService?: Doorbell;

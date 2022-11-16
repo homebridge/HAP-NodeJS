@@ -687,7 +687,7 @@ function rewriteProperties(className: string, properties: [key: string, value: G
 
   for (; i < lines.length; i++) {
     const line = lines[i];
-    if (line === "import {") {
+    if (line === "import type {") {
       importStart = i; // save last import start;
     } else if (line === "} from \"./definitions\";") {
       importEnd = i;
@@ -742,11 +742,13 @@ function rewriteProperties(className: string, properties: [key: string, value: G
       deprecatedNotice = "Please use {@link " + className + "." + value.className + "}." // prepend deprecated notice
         + (deprecatedNotice? " " + deprecatedNotice: "");
     }
+
+    line += "  /**\n";
+    line += "   * @group " + className + " Definitions\n";
     if (deprecatedNotice) {
-      line += "  /**\n";
       line += "   * @deprecated " + deprecatedNotice + "\n";
-      line += "   */\n";
     }
+    line += "   */\n";
 
     line += "  public static " + key + ": typeof " + value.className + ";";
     return line;

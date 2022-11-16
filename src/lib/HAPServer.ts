@@ -5,6 +5,7 @@ import { SRP, SrpServer } from "fast-srp-hap";
 import { IncomingMessage, ServerResponse } from "http";
 import tweetnacl from "tweetnacl";
 import { URL } from "url";
+import { consideredTrue, HAPMimeTypes, PairingStates, PairMethods, TLVValues } from "../internal-types";
 import {
   AccessoriesResponse,
   CharacteristicId,
@@ -12,15 +13,12 @@ import {
   CharacteristicsReadResponse,
   CharacteristicsWriteRequest,
   CharacteristicsWriteResponse,
-  consideredTrue,
-  HAPMimeTypes,
-  PairingStates,
-  PairMethods,
+  CharacteristicValue,
+  Nullable,
   PrepareWriteRequest,
   ResourceRequest,
-  TLVValues,
-} from "../internal-types";
-import { CharacteristicValue, Nullable, VoidCallback } from "../types";
+  VoidCallback,
+} from "../types";
 import { AccessoryInfo, PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
 import { EventedHTTPServer, EventedHTTPServerEvent, HAPConnection, HAPEncryption, HAPUsername } from "./util/eventedhttp";
 import * as hapCrypto from "./util/hapCrypto";
@@ -30,7 +28,9 @@ import * as tlv from "./util/tlv";
 const debug = createDebug("HAP-NodeJS:HAPServer");
 
 /**
- * TLV error codes for the {@link TLVValues.ERROR_CODE} field.
+ * TLV error codes for the `TLVValues.ERROR_CODE` field.
+ *
+ * @group HAP Accessory Server
  */
 export const enum TLVErrorCode {
   // noinspection JSUnusedGlobalSymbols
@@ -44,6 +44,9 @@ export const enum TLVErrorCode {
   BUSY = 0x07 // cannot accept pairing request at this time
 }
 
+/**
+ * @group HAP Accessory Server
+ */
 export const enum HAPStatus {
   // noinspection JSUnusedGlobalSymbols
 
@@ -64,7 +67,7 @@ export const enum HAPStatus {
    */
   RESOURCE_BUSY = -70403,
   /**
-   * Cannot write a read-only characteristic ({@see Perms.PAIRED_WRITE} not defined).
+   * Cannot write a read-only characteristic ({@link Perms.PAIRED_WRITE} not defined).
    */
   READ_ONLY_CHARACTERISTIC = -70404,
   /**
@@ -105,6 +108,8 @@ export const enum HAPStatus {
 
 /**
  * Determines if the given status code is a known {@link HAPStatus} error code.
+ *
+ * @group HAP Accessory Server
  */
 export function IsKnownHAPStatusError(status: HAPStatus): boolean {
   return (
@@ -117,12 +122,14 @@ export function IsKnownHAPStatusError(status: HAPStatus): boolean {
 
 // noinspection JSUnusedGlobalSymbols
 /**
+ * @group HAP Accessory Server
  * @deprecated please use {@link TLVErrorCode} as naming is more precise
  */
 // @ts-expect-error (as we use const enums with --preserveConstEnums)
 export const Codes = TLVErrorCode;
 // noinspection JSUnusedGlobalSymbols
 /**
+ * @group HAP Accessory Server
  * @deprecated please use {@link HAPStatus} as naming is more precise
  */
 // @ts-expect-error (as we use const enums with --preserveConstEnums)
@@ -135,6 +142,8 @@ export const Status = HAPStatus;
  * must include a status {@link HAPStatus} property.
  *
  * When the response is a MULTI_STATUS EVERY entry in the characteristics property MUST include a status property (even success).
+ *
+ * @group HAP Accessory Server
  */
 export const enum HAPHTTPCode {
   // noinspection JSUnusedGlobalSymbols
@@ -155,6 +164,8 @@ export const enum HAPHTTPCode {
 /**
  * When in a request is made to the pairing endpoints, and mime type is 'application/pairing+tlv8'
  * one should use the below status codes.
+ *
+ * @group HAP Accessory Server
  */
 export const enum HAPPairingHTTPCode {
   // noinspection JSUnusedGlobalSymbols
@@ -170,20 +181,56 @@ export const enum HAPPairingHTTPCode {
 
 type HAPRequestHandler = (connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse) => void;
 
+/**
+ * @group HAP Accessory Server
+ */
 export type IdentifyCallback = VoidCallback;
 
+/**
+ * @group HAP Accessory Server
+ */
 export type HAPHttpError = { httpCode: HAPHTTPCode, status: HAPStatus};
 
+/**
+ * @group HAP Accessory Server
+ */
 export type PairingsCallback<T = void> = (error: TLVErrorCode | 0, data?: T) => void;
+/**
+ * @group HAP Accessory Server
+ */
 export type AddPairingCallback = PairingsCallback;
+/**
+ * @group HAP Accessory Server
+ */
 export type RemovePairingCallback = PairingsCallback;
+/**
+ * @group HAP Accessory Server
+ */
 export type ListPairingsCallback = PairingsCallback<PairingInformation[]>;
+/**
+ * @group HAP Accessory Server
+ */
 export type PairCallback = VoidCallback;
+/**
+ * @group HAP Accessory Server
+ */
 export type AccessoriesCallback = (error: HAPHttpError | undefined, result?: AccessoriesResponse) => void;
+/**
+ * @group HAP Accessory Server
+ */
 export type ReadCharacteristicsCallback = (error: HAPHttpError | undefined, response?: CharacteristicsReadResponse) => void;
+/**
+ * @group HAP Accessory Server
+ */
 export type WriteCharacteristicsCallback = (error: HAPHttpError | undefined, response?: CharacteristicsWriteResponse) => void;
+/**
+ * @group HAP Accessory Server
+ */
 export type ResourceRequestCallback = (error: HAPHttpError | undefined, resource?: Buffer) => void;
 
+/**
+ * @group HAP Accessory Server
+ */
 export const enum HAPServerEventTypes {
   /**
    * Emitted when the server is fully set up and ready to receive connections.
@@ -228,6 +275,9 @@ export const enum HAPServerEventTypes {
   CONNECTION_CLOSED = "connection-closed",
 }
 
+/**
+ * @group HAP Accessory Server
+ */
 export declare interface HAPServer {
   on(event: "listening", listener: (port: number, address: string) => void): this;
   on(event: "identify", listener: (callback: IdentifyCallback) => void): this;
@@ -294,7 +344,9 @@ export declare interface HAPServer {
  * the connection is open, the server can elect to issue "EVENT/1.0 200 OK" HTTP-style responses. These are
  * typically sent to inform the iOS device of a characteristic change for the accessory (like "Door was Unlocked").
  *
- * See eventedhttp.js for more detail on the implementation of this protocol.
+ * See {@link EventedHTTPServer} for more detail on the implementation of this protocol.
+ *
+ * @group HAP Accessory Server
  */
 export class HAPServer extends EventEmitter {
 
@@ -336,14 +388,14 @@ export class HAPServer extends EventEmitter {
 
   /**
    * Send an even notification for given characteristic and changed value to all connected clients.
-   * If {@param originator} is specified, the given {@link HAPConnection} will be excluded from the broadcast.
+   * If `originator` is specified, the given {@link HAPConnection} will be excluded from the broadcast.
    *
    * @param aid - The accessory id of the updated characteristic.
    * @param iid - The instance id of the updated characteristic.
    * @param value - The newly set value of the characteristic.
    * @param originator - If specified, the connection will not get an event message.
    * @param immediateDelivery - The HAP spec requires some characteristics to be delivery immediately.
-   *   Namely, for the {@link ButtonEvent} and the {@link ProgrammableSwitchEvent} characteristics.
+   *   Namely, for the {@link Characteristic.ButtonEvent} and the {@link Characteristic.ProgrammableSwitchEvent} characteristics.
    */
   public sendEventNotifications(aid: number, iid: number, value: Nullable<CharacteristicValue>, originator?: HAPConnection, immediateDelivery?: boolean): void {
     try {

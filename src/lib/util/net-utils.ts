@@ -1,5 +1,8 @@
 import os from "os";
 
+/**
+ * @group Utils
+ */
 export function findLoopbackAddress(): string {
   let ipv6: string | undefined = undefined; // ::1/128
   let ipv6LinkLocal: string | undefined = undefined; // fe80::/10
@@ -48,6 +51,8 @@ let loopbackAddress: string | undefined = undefined; // loopback addressed used 
  * Uses IPV4 loopback address by default and falls back to global unique IPv6 loopback and then
  * link local IPv6 loopback address.
  * If no loopback interface could be found a error is thrown.
+ *
+ * @group Utils
  */
 export function getOSLoopbackAddress(): string {
   return loopbackAddress ?? (loopbackAddress = findLoopbackAddress());
@@ -56,6 +61,8 @@ export function getOSLoopbackAddress(): string {
 /**
  * Refer to {@link getOSLoopbackAddress}.
  * Instead of throwing an error, undefined is returned if loopback interface couldn't be detected.
+ *
+ * @group Utils
  */
 export function getOSLoopbackAddressIfAvailable(): string | undefined {
   try {

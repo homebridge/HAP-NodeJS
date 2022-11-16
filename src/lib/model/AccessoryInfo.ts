@@ -2,8 +2,7 @@ import assert from "assert";
 import crypto from "crypto";
 import tweetnacl from "tweetnacl";
 import util from "util";
-import { AccessoryJsonObject } from "../../internal-types";
-import { MacAddress } from "../../types";
+import { AccessoryJsonObject, MacAddress } from "../../types";
 import { Categories } from "../Accessory";
 import { EventedHTTPServer, HAPConnection, HAPUsername } from "../util/eventedhttp";
 import { HAPStorage } from "./HAPStorage";
@@ -15,13 +14,19 @@ function getVersion(): string {
   return packageJson.version;
 }
 
+/**
+ * @group Model
+ */
 export const enum PermissionTypes {
   // noinspection JSUnusedGlobalSymbols
   USER = 0x00,
   ADMIN = 0x01, // admins are the only ones who can add/remove/list pairings (additionally some characteristics are restricted)
 }
 
-export type PairingInformation = {
+/**
+ * @group Model
+ */
+export interface PairingInformation {
   username: HAPUsername,
   publicKey: Buffer,
   permission: PermissionTypes,
@@ -30,6 +35,7 @@ export type PairingInformation = {
 /**
  * AccessoryInfo is a model class containing a subset of Accessory data relevant to the internal HAP server,
  * such as encryption keys and username. It is persisted to disk.
+ * @group Model
  */
 export class AccessoryInfo {
 

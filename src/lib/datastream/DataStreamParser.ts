@@ -12,6 +12,9 @@ class Magics {
   static readonly TERMINATOR = { type: "terminator" };
 }
 
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export class ValueWrapper<T> { // basically used to differentiate between different sized integers when encoding (to force certain encoding)
 
   value: T;
@@ -26,13 +29,43 @@ export class ValueWrapper<T> { // basically used to differentiate between differ
 
 }
 
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export class Int8 extends ValueWrapper<number> {}
+
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export class Int16 extends ValueWrapper<number> {}
+
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export class Int32 extends ValueWrapper<number> {}
+
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export class Int64 extends ValueWrapper<number> {}
+
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export class Float32 extends ValueWrapper<number> {}
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export class Float64 extends ValueWrapper<number> {}
+
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export class SecondsSince2001 extends ValueWrapper<number> {}
+
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export class UUID extends ValueWrapper<string> {
 
   constructor(value: string) {
@@ -42,6 +75,9 @@ export class UUID extends ValueWrapper<string> {
 
 }
 
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export const enum DataFormatTags {
   INVALID = 0x00,
 
@@ -92,6 +128,9 @@ export const enum DataFormatTags {
   DICTIONARY_TERMINATED = 0xEF,
 }
 
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export class DataStreamParser {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public static decode(buffer: DataStreamReader): any {
@@ -294,6 +333,9 @@ export class DataStreamParser {
   }
 }
 
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export class DataStreamReader {
 
   private readonly data: Buffer;
@@ -569,6 +611,9 @@ class WrittenDataList { // wrapper class since javascript doesn't really have a 
   }
 }
 
+/**
+ * @group HomeKit Data Streams (HDS)
+ */
 export class DataStreamWriter {
 
   private static readonly chunkSize = 128; // seems to be a good default

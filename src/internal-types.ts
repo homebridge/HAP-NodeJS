@@ -1,179 +1,24 @@
-import { Formats, Perms, Units } from "./lib/Characteristic";
-import { ResourceRequestReason } from "./lib/controller";
-import { HAPStatus } from "./lib/HAPServer";
 import { CharacteristicValue, Nullable } from "./types";
 
-export interface CharacteristicJsonObject {
-  type: string, // uuid or short uuid
-  iid: number,
-  value?: Nullable<CharacteristicValue>, // undefined for non-readable characteristics
-
-  perms: Perms[],
-  format: Formats | string,
-
-  description?: string,
-
-  unit?: Units | string,
-  minValue?: number,
-  maxValue?: number,
-  minStep?: number,
-  maxLen?: number,
-  maxDataLen?: number,
-  "valid-values"?: number[],
-  "valid-values-range"?: [min: number, max: number],
-}
-
-export interface ServiceJsonObject {
-  type: string,
-  iid: number,
-  characteristics: CharacteristicJsonObject[], // must not be empty, max 100 characteristics
-  hidden?: boolean,
-  primary?: boolean,
-  linked?: number[], // iid array
-}
-
-export interface AccessoryJsonObject {
-  aid: number,
-  services: ServiceJsonObject[], // must not be empty, max 100 services
-}
-
-export interface AccessoriesResponse {
-  accessories: AccessoryJsonObject[],
-}
-
-export interface CharacteristicId {
-  aid: number,
-  iid: number,
-}
-
-export interface CharacteristicsReadRequest {
-  ids: CharacteristicId[],
-  includeMeta: boolean;
-  includePerms: boolean,
-  includeType: boolean,
-  includeEvent: boolean,
-}
-
-export interface PartialCharacteristicReadDataValue {
-  value: CharacteristicValue | null,
-
-  status?: HAPStatus.SUCCESS,
-
-  // type
-  type?: string, // characteristics uuid
-
-  // metadata
-  format?: string,
-  unit?: string,
-  minValue?: number,
-  maxValue?: number,
-  minStep?: number,
-  maxLen?: number,
-
-  // perms
-  perms?: Perms[],
-
-  // event
-  ev?: boolean,
-}
-
-export interface PartialCharacteristicReadError {
-  status: HAPStatus,
-}
-
-export interface CharacteristicReadDataValue extends PartialCharacteristicReadDataValue {
-  aid: number,
-  iid: number,
-}
-
-export interface CharacteristicReadError extends PartialCharacteristicReadError {
-  aid: number,
-  iid: number,
-}
-
-export type PartialCharacteristicReadData = PartialCharacteristicReadDataValue | PartialCharacteristicReadError;
-export type CharacteristicReadData = CharacteristicReadDataValue | CharacteristicReadError;
-
-export interface CharacteristicsReadResponse {
-  characteristics: CharacteristicReadData[],
-}
-
-export interface CharacteristicWrite {
-  aid: number,
-  iid: number,
-
-  value?: CharacteristicValue,
-  ev?: boolean, // enable/disable event notifications for the accessory
-
-  authData?: string, // base64 encoded string used for custom authorisation
-  /**
-   * @deprecated This indicated if access was done via the old iCloud relay
-   */
-  remote?: boolean, // remote access used
-  r?: boolean, // write response
-}
-
-export interface CharacteristicsWriteRequest {
-  characteristics: CharacteristicWrite[],
-  pid?: number
-}
-
-export interface PartialCharacteristicWriteDataValue {
-  value?: CharacteristicValue | null,
-
-  status: HAPStatus.SUCCESS,
-}
-
-export interface PartialCharacteristicWriteError {
-  status: HAPStatus,
-
-  value?: undefined, // defined to make things easier
-}
-
-export interface CharacteristicWriteDataValue extends PartialCharacteristicWriteDataValue {
-  aid: number,
-  iid: number,
-}
-
-export interface CharacteristicWriteError extends PartialCharacteristicWriteError {
-  aid: number,
-  iid: number,
-}
-
-export type PartialCharacteristicWriteData = PartialCharacteristicWriteDataValue | PartialCharacteristicWriteError;
-export type CharacteristicWriteData = CharacteristicWriteDataValue | CharacteristicWriteError;
-
-export interface CharacteristicsWriteResponse {
-  characteristics: CharacteristicWriteData[],
-}
-
-export type PrepareWriteRequest = {
-  ttl: number,
-  pid: number
-}
-
-export const enum ResourceRequestType {
-  IMAGE = "image",
-}
-
-export interface ResourceRequest {
-  aid?: number;
-  "image-height": number;
-  "image-width": number;
-  "reason"?: ResourceRequestReason;
-  "resource-type": ResourceRequestType;
-}
-
+/**
+ * @group HAP Accessory Server
+ */
 export interface EventNotification {
   characteristics: CharacteristicEventNotification[],
 }
 
+/**
+ * @group HAP Accessory Server
+ */
 export interface CharacteristicEventNotification {
   aid: number,
   iid: number,
   value: Nullable<CharacteristicValue>,
 }
 
+/**
+ * @group Utils
+ */
 export function consideredTrue(input: string | null): boolean {
   if (!input) {
     return false;
@@ -182,6 +27,9 @@ export function consideredTrue(input: string | null): boolean {
   return input === "true" || input === "1";
 }
 
+/**
+ * @group HAP Accessory Server
+ */
 export const enum TLVValues {
   // noinspection JSUnusedGlobalSymbols
   REQUEST_TYPE = 0x00,
@@ -205,6 +53,9 @@ export const enum TLVValues {
   SEPARATOR = 0x0FF // Zero-length TLV that separates different TLVs in a list.
 }
 
+/**
+ * @group HAP Accessory Server
+ */
 export const enum PairMethods {
   // noinspection JSUnusedGlobalSymbols
   PAIR_SETUP = 0x00,
@@ -217,6 +68,8 @@ export const enum PairMethods {
 
 /**
  * Pairing states (pair-setup or pair-verify). Encoded in {@link TLVValues.SEQUENCE_NUM}.
+ *
+ * @group HAP Accessory Server
  */
 export const enum PairingStates {
   M1 = 0x01,
@@ -227,6 +80,9 @@ export const enum PairingStates {
   M6 = 0x06
 }
 
+/**
+ * @group HAP Accessory Server
+ */
 export const enum HAPMimeTypes {
   PAIRING_TLV8 = "application/pairing+tlv8",
   HAP_JSON = "application/hap+json",

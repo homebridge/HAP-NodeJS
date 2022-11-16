@@ -7,6 +7,8 @@ import { HAPStatus, IsKnownHAPStatusError } from "../HAPServer";
  * ```ts
  * throw new HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
  * ```
+ *
+ * @group Utils
  */
 export class HapStatusError extends Error {
   public hapStatus: HAPStatus;

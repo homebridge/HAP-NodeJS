@@ -17,13 +17,20 @@ const debug = createDebug("HAP-NodeJS:EventedHTTPServer");
 const debugCon = createDebug("HAP-NodeJS:EventedHTTPServer:Connection");
 const debugEvents = createDebug("HAP-NodeJS:EventEmitter");
 
+/**
+ * @group HAP Accessory Server
+ */
 export type HAPUsername = string;
+/**
+ * @group HAP Accessory Server
+ */
 export type EventName = string; // "<aid>.<iid>"
 
 /**
  * Simple struct to hold vars needed to support HAP encryption.
+ *
+ * @group Cryptography
  */
-
 export class HAPEncryption {
 
   readonly clientPublicKey: Buffer;
@@ -51,6 +58,9 @@ export class HAPEncryption {
   }
 }
 
+/**
+ * @group HAP Accessory Server
+ */
 export const enum EventedHTTPServerEvent {
   LISTENING = "listening",
   CONNECTION_OPENED = "connection-opened",
@@ -58,6 +68,9 @@ export const enum EventedHTTPServerEvent {
   CONNECTION_CLOSED = "connection-closed",
 }
 
+/**
+ * @group HAP Accessory Server
+ */
 export declare interface EventedHTTPServer {
 
   on(event: "listening", listener: (port: number, address: string) => void): this;
@@ -88,6 +101,8 @@ export declare interface EventedHTTPServer {
  *
  * Each connection to the main TCP server gets its own internal HTTP server, so we can track ongoing requests/responses
  * for safe event insertion.
+ *
+ * @group HAP Accessory Server
  */
 export class EventedHTTPServer extends EventEmitter {
 
@@ -189,14 +204,14 @@ export class EventedHTTPServer extends EventEmitter {
 
   /**
    * Send an event notification for given characteristic and changed value to all connected clients.
-   * If {@param originator} is specified, the given {@link HAPConnection} will be excluded from the broadcast.
+   * If `originator` is specified, the given {@link HAPConnection} will be excluded from the broadcast.
    *
    * @param aid - The accessory id of the updated characteristic.
    * @param iid - The instance id of the updated characteristic.
    * @param value - The newly set value of the characteristic.
    * @param originator - If specified, the connection will not get an event message.
    * @param immediateDelivery - The HAP spec requires some characteristics to be delivery immediately.
-   *   Namely, for the {@link ButtonEvent} and the {@link ProgrammableSwitchEvent} characteristics.
+   *   Namely, for the {@link Characteristic.ButtonEvent} and the {@link Characteristic.ProgrammableSwitchEvent} characteristics.
    */
   public broadcastEvent(aid: number, iid: number, value: Nullable<CharacteristicValue>, originator?: HAPConnection, immediateDelivery?: boolean): void {
     for (const connection of this.connections) {
@@ -283,6 +298,7 @@ export class EventedHTTPServer extends EventEmitter {
 
 /**
  * @private
+ * @group HAP Accessory Server
  */
 export const enum HAPConnectionState {
   CONNECTING, // initial state, setup is going on
@@ -296,12 +312,18 @@ export const enum HAPConnectionState {
   CLOSED, // dead
 }
 
+/**
+ * @group HAP Accessory Server
+ */
 export const enum HAPConnectionEvent {
   REQUEST = "request",
   AUTHENTICATED = "authenticated",
   CLOSED = "closed",
 }
 
+/**
+ * @group HAP Accessory Server
+ */
 export declare interface HAPConnection {
   on(event: "request", listener: (request: IncomingMessage, response: ServerResponse) => void): this;
   on(event: "authenticated", listener: (username: HAPUsername) => void): this;
@@ -314,10 +336,12 @@ export declare interface HAPConnection {
 
 /**
  * Manages a single iOS-initiated HTTP connection during its lifetime.
- * @private
+ * @group HAP Accessory Server
  */
 export class HAPConnection extends EventEmitter {
-
+  /**
+   * @private file-private API
+   */
   readonly server: EventedHTTPServer;
 
   readonly sessionID: SessionIdentifier; // uuid unique to every HAP connection
