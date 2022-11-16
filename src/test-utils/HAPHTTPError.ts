@@ -1,4 +1,4 @@
-import { HAPHTTPCode, HAPStatus } from "../HAPServer";
+import { HAPHTTPCode, HAPStatus } from "../lib/HAPServer";
 
 /**
  * Encapsulates a {@link HAPHTTPCode} and a {@link HAPStatus}

@@ -1,4 +1,4 @@
-import { TLVErrorCode } from "../HAPServer";
+import { TLVErrorCode } from "../lib/HAPServer";
 
 /**
  * Encapsulates a {@link TLVErrorCode} in an error object.
