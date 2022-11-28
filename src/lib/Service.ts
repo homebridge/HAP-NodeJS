@@ -16,15 +16,12 @@ import type {
   Assistant,
   AudioStreamManagement,
   Battery,
-  BridgeConfiguration,
-  BridgingState,
   CameraControl,
   CameraOperatingMode,
   CameraRecordingManagement,
   CameraRTPStreamManagement,
   CarbonDioxideSensor,
   CarbonMonoxideSensor,
-  CloudRelay,
   ContactSensor,
   DataStreamTransportManagement,
   Diagnostics,
@@ -73,9 +70,7 @@ import type {
   TemperatureSensor,
   Thermostat,
   ThreadTransport,
-  TimeInformation,
   TransferTransportManagement,
-  Tunnel,
   Valve,
   WiFiRouter,
   WiFiSatellite,
@@ -230,16 +225,6 @@ export class Service extends EventEmitter {
   public static BatteryService: typeof Battery;
   /**
    * @group Service Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static BridgeConfiguration: typeof BridgeConfiguration;
-  /**
-   * @group Service Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static BridgingState: typeof BridgingState;
-  /**
-   * @group Service Definitions
    * @deprecated This service has no usage anymore and will be ignored by iOS
    */
   public static CameraControl: typeof CameraControl;
@@ -268,10 +253,6 @@ export class Service extends EventEmitter {
    * @group Service Definitions
    */
   public static CarbonMonoxideSensor: typeof CarbonMonoxideSensor;
-  /**
-   * @group Service Definitions
-   */
-  public static CloudRelay: typeof CloudRelay;
   /**
    * @group Service Definitions
    */
@@ -390,11 +371,6 @@ export class Service extends EventEmitter {
   public static ProtocolInformation: typeof ProtocolInformation;
   /**
    * @group Service Definitions
-   * @deprecated Please use {@link Service.CloudRelay}.
-   */
-  public static Relay: typeof CloudRelay;
-  /**
-   * @group Service Definitions
    */
   public static SecuritySystem: typeof SecuritySystem;
   /**
@@ -476,22 +452,8 @@ export class Service extends EventEmitter {
   public static ThreadTransport: typeof ThreadTransport;
   /**
    * @group Service Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static TimeInformation: typeof TimeInformation;
-  /**
-   * @group Service Definitions
    */
   public static TransferTransportManagement: typeof TransferTransportManagement;
-  /**
-   * @group Service Definitions
-   */
-  public static Tunnel: typeof Tunnel;
-  /**
-   * @group Service Definitions
-   * @deprecated Please use {@link Service.Tunnel}.
-   */
-  public static TunneledBTLEAccessoryService: typeof Tunnel;
   /**
    * @group Service Definitions
    */
