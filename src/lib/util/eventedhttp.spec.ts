@@ -30,7 +30,7 @@ describe("eventedhttp", () => {
     await awaitEventOnce(server, EventedHTTPServerEvent.LISTENING);
 
     const address = server.address();
-    baseUrl = `http://${address.address}:${address.port}`;
+    baseUrl = `http://${"localhost"}:${address.port}`;
   });
 
   afterEach(() => {
@@ -130,7 +130,7 @@ describe("eventedhttp", () => {
     server.once(EventedHTTPServerEvent.REQUEST, defaultRequestHandler);
 
     const connectionOpened: Promise<HAPConnection> = awaitEventOnce(server, EventedHTTPServerEvent.CONNECTION_OPENED);
-    const result: AxiosResponse<string> = await axios.get(`http://${address.address}:${address.port}/test?query=true`, { httpAgent });
+    const result: AxiosResponse<string> = await axios.get(`${baseUrl}/test?query=true`, { httpAgent });
     expect(result.data).toEqual("Hello World");
     const connection = await connectionOpened;
 
