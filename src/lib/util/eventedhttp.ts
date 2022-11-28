@@ -803,7 +803,7 @@ export class HAPConnection extends EventEmitter {
   }
 
   public getLocalAddress(ipVersion: "ipv4" | "ipv6"): string {
-    const infos = os.networkInterfaces()[this.networkInterface];
+    const infos = os.networkInterfaces()[this.networkInterface] ?? [];
 
     if (ipVersion === "ipv4") {
       for (const info of infos) {
@@ -849,7 +849,7 @@ export class HAPConnection extends EventEmitter {
 
     const interfaces = os.networkInterfaces();
     for (const [name, infos] of Object.entries(interfaces)) {
-      for (const info of infos) {
+      for (const info of infos ?? []) {
         if (info.address === localAddress) {
           return name;
         }
@@ -859,7 +859,7 @@ export class HAPConnection extends EventEmitter {
     // we couldn't map the address from above, we try now to match subnets (see https://github.com/homebridge/HAP-NodeJS/issues/847)
     const family = net.isIPv4(localAddress)? "IPv4": "IPv6";
     for (const [name, infos] of Object.entries(interfaces)) {
-      for (const info of infos) {
+      for (const info of infos ?? []) {
         if (info.family !== family) {
           continue;
         }
