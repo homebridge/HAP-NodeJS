@@ -10,7 +10,7 @@ export function findLoopbackAddress(): string {
 
   for (const [name, infos] of Object.entries(os.networkInterfaces())) {
     let internal = false;
-    for (const info of infos) {
+    for (const info of infos ?? []) {
       if (!info.internal) {
         continue;
       }
