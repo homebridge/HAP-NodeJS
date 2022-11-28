@@ -30,7 +30,6 @@ import type {
   CarbonMonoxideDetected,
   CarbonMonoxideLevel,
   CarbonMonoxidePeakLevel,
-  Category,
   CCAEnergyDetectThreshold,
   CCASignalDetectThreshold,
   CharacteristicValueActiveTransitionCount,
@@ -39,8 +38,6 @@ import type {
   ClosedCaptions,
   ColorTemperature,
   ConfigurationState,
-  ConfigureBridgedAccessory,
-  ConfigureBridgedAccessoryStatus,
   ConfiguredName,
   ContactSensorState,
   CoolingThresholdTemperature,
@@ -59,17 +56,13 @@ import type {
   CurrentSlatState,
   CurrentTemperature,
   CurrentTiltAngle,
-  CurrentTime,
   CurrentTransport,
   CurrentVerticalTiltAngle,
   CurrentVisibilityState,
   DataStreamHAPTransport,
   DataStreamHAPTransportInterrupt,
-  DayoftheWeek,
   DiagonalFieldOfView,
   DigitalZoom,
-  DiscoverBridgedAccessories,
-  DiscoveredBridgedAccessories,
   DisplayOrder,
   EventRetransmissionMaximum,
   EventSnapshotsActive,
@@ -95,7 +88,6 @@ import type {
   InUse,
   IsConfigured,
   LeakDetected,
-  LinkQuality,
   ListPairings,
   LockControlPoint,
   LockCurrentState,
@@ -145,15 +137,11 @@ import type {
   ProgrammableSwitchEvent,
   ProgrammableSwitchOutputState,
   ProgramMode,
-  Reachable,
   ReceivedSignalStrengthIndication,
   ReceiverSensitivity,
   RecordingAudioActive,
   RelativeHumidityDehumidifierThreshold,
   RelativeHumidityHumidifierThreshold,
-  RelayControlPoint,
-  RelayEnabled,
-  RelayState,
   RemainingDuration,
   RemoteKey,
   ResetFilterIndication,
@@ -239,13 +227,8 @@ import type {
   ThreadNodeCapabilities,
   ThreadOpenThreadVersion,
   ThreadStatus,
-  TimeUpdate,
   Token,
   TransmitPower,
-  TunnelConnectionTimeout,
-  TunneledAccessoryAdvertising,
-  TunneledAccessoryConnected,
-  TunneledAccessoryStateNumber,
   ValveType,
   Version,
   VideoAnalysisActive,
@@ -819,11 +802,6 @@ export class Characteristic extends EventEmitter {
   public static CarbonMonoxidePeakLevel: typeof CarbonMonoxidePeakLevel;
   /**
    * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static Category: typeof Category;
-  /**
-   * @group Characteristic Definitions
    */
   public static CCAEnergyDetectThreshold: typeof CCAEnergyDetectThreshold;
   /**
@@ -854,16 +832,6 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static ConfigurationState: typeof ConfigurationState;
-  /**
-   * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static ConfigureBridgedAccessory: typeof ConfigureBridgedAccessory;
-  /**
-   * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static ConfigureBridgedAccessoryStatus: typeof ConfigureBridgedAccessoryStatus;
   /**
    * @group Characteristic Definitions
    */
@@ -938,11 +906,6 @@ export class Characteristic extends EventEmitter {
   public static CurrentTiltAngle: typeof CurrentTiltAngle;
   /**
    * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static CurrentTime: typeof CurrentTime;
-  /**
-   * @group Characteristic Definitions
    */
   public static CurrentTransport: typeof CurrentTransport;
   /**
@@ -963,27 +926,12 @@ export class Characteristic extends EventEmitter {
   public static DataStreamHAPTransportInterrupt: typeof DataStreamHAPTransportInterrupt;
   /**
    * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static DayoftheWeek: typeof DayoftheWeek;
-  /**
-   * @group Characteristic Definitions
    */
   public static DiagonalFieldOfView: typeof DiagonalFieldOfView;
   /**
    * @group Characteristic Definitions
    */
   public static DigitalZoom: typeof DigitalZoom;
-  /**
-   * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static DiscoverBridgedAccessories: typeof DiscoverBridgedAccessories;
-  /**
-   * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static DiscoveredBridgedAccessories: typeof DiscoveredBridgedAccessories;
   /**
    * @group Characteristic Definitions
    */
@@ -1084,11 +1032,6 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static LeakDetected: typeof LeakDetected;
-  /**
-   * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static LinkQuality: typeof LinkQuality;
   /**
    * @group Characteristic Definitions
    */
@@ -1287,11 +1230,6 @@ export class Characteristic extends EventEmitter {
   public static ProgramMode: typeof ProgramMode;
   /**
    * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static Reachable: typeof Reachable;
-  /**
-   * @group Characteristic Definitions
    */
   public static ReceivedSignalStrengthIndication: typeof ReceivedSignalStrengthIndication;
   /**
@@ -1310,18 +1248,6 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static RelativeHumidityHumidifierThreshold: typeof RelativeHumidityHumidifierThreshold;
-  /**
-   * @group Characteristic Definitions
-   */
-  public static RelayControlPoint: typeof RelayControlPoint;
-  /**
-   * @group Characteristic Definitions
-   */
-  public static RelayEnabled: typeof RelayEnabled;
-  /**
-   * @group Characteristic Definitions
-   */
-  public static RelayState: typeof RelayState;
   /**
    * @group Characteristic Definitions
    */
@@ -1666,33 +1592,12 @@ export class Characteristic extends EventEmitter {
   public static ThreadStatus: typeof ThreadStatus;
   /**
    * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static TimeUpdate: typeof TimeUpdate;
-  /**
-   * @group Characteristic Definitions
    */
   public static Token: typeof Token;
   /**
    * @group Characteristic Definitions
    */
   public static TransmitPower: typeof TransmitPower;
-  /**
-   * @group Characteristic Definitions
-   */
-  public static TunnelConnectionTimeout: typeof TunnelConnectionTimeout;
-  /**
-   * @group Characteristic Definitions
-   */
-  public static TunneledAccessoryAdvertising: typeof TunneledAccessoryAdvertising;
-  /**
-   * @group Characteristic Definitions
-   */
-  public static TunneledAccessoryConnected: typeof TunneledAccessoryConnected;
-  /**
-   * @group Characteristic Definitions
-   */
-  public static TunneledAccessoryStateNumber: typeof TunneledAccessoryStateNumber;
   /**
    * @group Characteristic Definitions
    */

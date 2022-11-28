@@ -244,54 +244,6 @@ Service.BatteryService = Battery;
 Service.Battery = Battery;
 
 /**
- * Service "Bridge Configuration"
- * @deprecated Removed and not used anymore
- */
-export class BridgeConfiguration extends Service {
-
-  public static readonly UUID: string = "000000A1-0000-1000-8000-0026BB765291";
-
-  constructor(displayName?: string, subtype?: string) {
-    super(displayName, BridgeConfiguration.UUID, subtype);
-
-    // Required Characteristics
-    this.addCharacteristic(Characteristic.ConfigureBridgedAccessoryStatus);
-    this.addCharacteristic(Characteristic.DiscoverBridgedAccessories);
-    this.addCharacteristic(Characteristic.DiscoveredBridgedAccessories);
-    this.addCharacteristic(Characteristic.ConfigureBridgedAccessory);
-
-    // Optional Characteristics
-    this.addOptionalCharacteristic(Characteristic.Name);
-  }
-}
-// noinspection JSDeprecatedSymbols
-Service.BridgeConfiguration = BridgeConfiguration;
-
-/**
- * Service "Bridging State"
- * @deprecated Removed and not used anymore
- */
-export class BridgingState extends Service {
-
-  public static readonly UUID: string = "00000062-0000-1000-8000-0026BB765291";
-
-  constructor(displayName?: string, subtype?: string) {
-    super(displayName, BridgingState.UUID, subtype);
-
-    // Required Characteristics
-    this.addCharacteristic(Characteristic.Reachable);
-    this.addCharacteristic(Characteristic.LinkQuality);
-    this.addCharacteristic(Characteristic.AccessoryIdentifier);
-    this.addCharacteristic(Characteristic.Category);
-
-    // Optional Characteristics
-    this.addOptionalCharacteristic(Characteristic.Name);
-  }
-}
-// noinspection JSDeprecatedSymbols
-Service.BridgingState = BridgingState;
-
-/**
  * Service "Camera Control"
  * @deprecated This service has no usage anymore and will be ignored by iOS
  */
@@ -444,26 +396,6 @@ export class CarbonMonoxideSensor extends Service {
   }
 }
 Service.CarbonMonoxideSensor = CarbonMonoxideSensor;
-
-/**
- * Service "Cloud Relay"
- */
-export class CloudRelay extends Service {
-
-  public static readonly UUID: string = "0000005A-0000-1000-8000-0026BB765291";
-
-  constructor(displayName?: string, subtype?: string) {
-    super(displayName, CloudRelay.UUID, subtype);
-
-    // Required Characteristics
-    this.addCharacteristic(Characteristic.RelayControlPoint);
-    this.addCharacteristic(Characteristic.RelayState);
-    this.addCharacteristic(Characteristic.RelayEnabled);
-  }
-}
-// noinspection JSDeprecatedSymbols
-Service.Relay = CloudRelay;
-Service.CloudRelay = CloudRelay;
 
 /**
  * Service "Contact Sensor"
@@ -1539,29 +1471,6 @@ export class ThreadTransport extends Service {
 Service.ThreadTransport = ThreadTransport;
 
 /**
- * Service "Time Information"
- * @deprecated Removed and not used anymore
- */
-export class TimeInformation extends Service {
-
-  public static readonly UUID: string = "00000099-0000-1000-8000-0026BB765291";
-
-  constructor(displayName?: string, subtype?: string) {
-    super(displayName, TimeInformation.UUID, subtype);
-
-    // Required Characteristics
-    this.addCharacteristic(Characteristic.CurrentTime);
-    this.addCharacteristic(Characteristic.DayoftheWeek);
-    this.addCharacteristic(Characteristic.TimeUpdate);
-
-    // Optional Characteristics
-    this.addOptionalCharacteristic(Characteristic.Name);
-  }
-}
-// noinspection JSDeprecatedSymbols
-Service.TimeInformation = TimeInformation;
-
-/**
  * Service "Transfer Transport Management"
  */
 export class TransferTransportManagement extends Service {
@@ -1577,28 +1486,6 @@ export class TransferTransportManagement extends Service {
   }
 }
 Service.TransferTransportManagement = TransferTransportManagement;
-
-/**
- * Service "Tunnel"
- */
-export class Tunnel extends Service {
-
-  public static readonly UUID: string = "00000056-0000-1000-8000-0026BB765291";
-
-  constructor(displayName?: string, subtype?: string) {
-    super(displayName, Tunnel.UUID, subtype);
-
-    // Required Characteristics
-    this.addCharacteristic(Characteristic.AccessoryIdentifier);
-    this.addCharacteristic(Characteristic.TunnelConnectionTimeout);
-    this.addCharacteristic(Characteristic.TunneledAccessoryAdvertising);
-    this.addCharacteristic(Characteristic.TunneledAccessoryConnected);
-    this.addCharacteristic(Characteristic.TunneledAccessoryStateNumber);
-  }
-}
-// noinspection JSDeprecatedSymbols
-Service.TunneledBTLEAccessoryService = Tunnel;
-Service.Tunnel = Tunnel;
 
 /**
  * Service "Valve"
