@@ -54,7 +54,7 @@ If you wish to do a contribution please read through our [CONTRIBUTING][contribu
 
 Special thanks to [Alex Skalozub][link-alex-skalozub], who reverse-engineeredthe server side HAP.
 ~~You can find his research [here][link-homekit-research].~~
-(Sadly, on Nov 4, Apple sent the [DMCA][link-apple-dmca] request to Github to remove the research.)
+(Sadly, on Nov 4 2014, Apple sent the [DMCA][link-apple-dmca] request to Github to remove the research.)
 
 [There](http://instagram.com/p/t4cPlcDksQ/) is a video demo running this project on Intel Edison.
 
