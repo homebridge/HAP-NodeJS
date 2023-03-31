@@ -1637,17 +1637,17 @@ export class WaterQualitySensor extends Service {
     super(displayName, WaterQualitySensor.UUID, subtype);
 
     // Required Characteristics
-    this.addCharacteristic(Characteristic.AirQuality);
+    this.addCharacteristic(Characteristic.WaterQuality);
 
     // Optional Characteristics
-    this.addOptionalCharacteristic(Characteristic.NitrogenDioxideDensity);
+    this.addOptionalCharacteristic(Characteristic.BatteryLevel);
+    this.addOptionalCharacteristic(Characteristic.ReceivedSignalStrengthIndication);
+    this.addOptionalCharacteristic(Characteristic.Conductivity);
+    this.addOptionalCharacteristic(Characteristic.FreeChlorine);
+    this.addOptionalCharacteristic(Characteristic.PH);
+    this.addOptionalCharacteristic(Characteristic.OxygenReductionPotential);
     this.addOptionalCharacteristic(Characteristic.OzoneDensity);
-    this.addOptionalCharacteristic(Characteristic.PM10Density);
-    this.addOptionalCharacteristic(Characteristic.PM2_5Density);
-    this.addOptionalCharacteristic(Characteristic.SulphurDioxideDensity);
-    this.addOptionalCharacteristic(Characteristic.VOCDensity);
-    this.addOptionalCharacteristic(Characteristic.Name);
-    this.addOptionalCharacteristic(Characteristic.StatusActive);
+    this.addOptionalCharacteristic(Characteristic.TDS);
     this.addOptionalCharacteristic(Characteristic.StatusFault);
     this.addOptionalCharacteristic(Characteristic.StatusLowBattery);
     this.addOptionalCharacteristic(Characteristic.StatusTampered);

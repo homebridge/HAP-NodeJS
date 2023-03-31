@@ -686,7 +686,7 @@ export class ColorTemperature extends Characteristic {
 Characteristic.ColorTemperature = ColorTemperature;
 
 /**
- * Characteristic "Color Temperature"
+ * Characteristic "Conductivity"
  */
 export class Conductivity extends Characteristic {
 
@@ -1556,7 +1556,7 @@ export class FirmwareUpdateStatus extends Characteristic {
 Characteristic.FirmwareUpdateStatus = FirmwareUpdateStatus;
 
 /**
- * Characteristic "Firmware Update Status"
+ * Characteristic "FreeChlorine"
  */
 export class FreeChlorine extends Characteristic {
 
