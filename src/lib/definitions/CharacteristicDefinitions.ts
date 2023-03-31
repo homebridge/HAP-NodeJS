@@ -686,6 +686,23 @@ export class ColorTemperature extends Characteristic {
 Characteristic.ColorTemperature = ColorTemperature;
 
 /**
+ * Characteristic "Color Temperature"
+ */
+export class Conductivity extends Characteristic {
+
+  public static readonly UUID: string = "000002CE-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Conductivity", Conductivity.UUID, {
+      format: Formats.FLOAT,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.Conductivity = Conductivity;
+
+/**
  * Characteristic "Configuration State"
  * @since iOS 15
  */
@@ -1537,6 +1554,23 @@ export class FirmwareUpdateStatus extends Characteristic {
   }
 }
 Characteristic.FirmwareUpdateStatus = FirmwareUpdateStatus;
+
+/**
+ * Characteristic "Firmware Update Status"
+ */
+export class FreeChlorine extends Characteristic {
+
+  public static readonly UUID: string = "00000419-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Free Chlorine", FreeChlorine.UUID, {
+      format: Formats.FLOAT,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.FreeChlorine = FreeChlorine;
 
 /**
  * Characteristic "Hardware Finish"
@@ -2532,6 +2566,26 @@ export class OutletInUse extends Characteristic {
 Characteristic.OutletInUse = OutletInUse;
 
 /**
+ * Characteristic "Oxygen Reduction Potential"
+ */
+export class OxygenReductionPotential extends Characteristic {
+
+  public static readonly UUID: string = "009800C3-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Oxygen Reduction Potential", OxygenReductionPotential.UUID, {
+      format: Formats.INT,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      minValue: 0,
+      maxValue: 1000,
+      minStep: 1,
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.OxygenReductionPotential = OxygenReductionPotential;
+
+/**
  * Characteristic "Ozone Density"
  */
 export class OzoneDensity extends Characteristic {
@@ -2639,6 +2693,28 @@ export class PeriodicSnapshotsActive extends Characteristic {
   }
 }
 Characteristic.PeriodicSnapshotsActive = PeriodicSnapshotsActive;
+
+/**
+ * Characteristic "pH (Acidity)"
+ */
+export class PH extends Characteristic {
+
+  public static readonly UUID: string = "00201225-0000-1000-8000-0026BB765291";
+
+  public static readonly DISABLE = 0;
+  public static readonly ENABLE = 1;
+
+  constructor() {
+    super("pH", PH.UUID, {
+      format: Formats.FLOAT,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      minValue: 0,
+      maxValue: 14,
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.PH = PH;
 
 /**
  * Characteristic "Picture Mode"
@@ -4806,6 +4882,23 @@ export class Token extends Characteristic {
 Characteristic.Token = Token;
 
 /**
+ * Characteristic "TDS (ppm)"
+ */
+export class TDS extends Characteristic {
+
+  public static readonly UUID: string = "00000420-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Total Dissolved Solids", TDS.UUID, {
+      format: Formats.INT,
+      perms: [Perms.PAIRED_READ, Perms.NOTIFY],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.TDS = TDS;
+
+/**
  * Characteristic "Transmit Power"
  * @since iOS 14
  */
@@ -5116,6 +5209,34 @@ export class WaterLevel extends Characteristic {
   }
 }
 Characteristic.WaterLevel = WaterLevel;
+
+/**
+ * Characteristic "Water Quality"
+ */
+export class WaterQuality extends Characteristic {
+
+  public static readonly UUID: string = "00000195-0000-1000-8000-0026BB765291";
+
+  public static readonly UNKNOWN = 0;
+  public static readonly EXCELLENT = 1;
+  public static readonly GOOD = 2;
+  public static readonly FAIR = 3;
+  public static readonly INFERIOR = 4;
+  public static readonly POOR = 5;
+
+  constructor() {
+    super("Water Quality", WaterQuality.UUID, {
+      format: Formats.UINT8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      minValue: 0,
+      maxValue: 5,
+      minStep: 1,
+      validValues: [0, 1, 2, 3, 4, 5],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.WaterQuality = WaterQuality;
 
 /**
  * Characteristic "Wi-Fi Capabilities"

@@ -853,6 +853,10 @@ export class Characteristic extends EventEmitter {
   /**
    * @group Characteristic Definitions
    */
+  public static Conductivity: typeof Conductivity;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ConfigurationState: typeof ConfigurationState;
   /**
    * @group Characteristic Definitions
@@ -1020,6 +1024,10 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static FirmwareUpdateStatus: typeof FirmwareUpdateStatus;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static FreeChlorine: typeof FreeChlorine;
   /**
    * @group Characteristic Definitions
    */
@@ -1224,6 +1232,10 @@ export class Characteristic extends EventEmitter {
   /**
    * @group Characteristic Definitions
    */
+  public static OxygenReductionPotential: typeof OxygenReductionPotential;
+  /**
+   * @group Characteristic Definitions
+   */
   public static OzoneDensity: typeof OzoneDensity;
   /**
    * @group Characteristic Definitions
@@ -1245,6 +1257,10 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static PeriodicSnapshotsActive: typeof PeriodicSnapshotsActive;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static PH: typeof PH;
   /**
    * @group Characteristic Definitions
    */
@@ -1676,6 +1692,10 @@ export class Characteristic extends EventEmitter {
   /**
    * @group Characteristic Definitions
    */
+  public static TDS: typeof TDS;
+  /**
+   * @group Characteristic Definitions
+   */
   public static TransmitPower: typeof TransmitPower;
   /**
    * @group Characteristic Definitions
@@ -1737,6 +1757,10 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static WaterLevel: typeof WaterLevel;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static WaterQuality: typeof WaterQuality;
   /**
    * @group Characteristic Definitions
    */
@@ -3163,3 +3187,4 @@ export class Characteristic extends EventEmitter {
 // type imports only (in order to define the static properties). Setting those properties is done outside
 // this file, within the definition files. Therefore, we import it at the end of this file. Seems weird, but is important.
 import "./definitions/CharacteristicDefinitions";
+import { Conductivity, FreeChlorine, OxygenReductionPotential, PH, TDS, WaterQuality } from "./definitions";
