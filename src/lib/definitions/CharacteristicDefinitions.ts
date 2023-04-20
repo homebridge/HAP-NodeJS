@@ -1,5 +1,5 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=880
+// V=884
 
 import { Access, Characteristic, Formats, Perms, Units } from "../Characteristic";
 
@@ -524,27 +524,6 @@ export class CarbonMonoxidePeakLevel extends Characteristic {
 Characteristic.CarbonMonoxidePeakLevel = CarbonMonoxidePeakLevel;
 
 /**
- * Characteristic "Category"
- * @deprecated Removed and not used anymore
- */
-export class Category extends Characteristic {
-
-  public static readonly UUID: string = "000000A3-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Category", Category.UUID, {
-      format: Formats.UINT16,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
-      minValue: 1,
-      maxValue: 16,
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-// noinspection JSDeprecatedSymbols
-Characteristic.Category = Category;
-
-/**
  * Characteristic "CCA Energy Detect Threshold"
  * @since iOS 14
  */
@@ -702,44 +681,6 @@ export class ConfigurationState extends Characteristic {
   }
 }
 Characteristic.ConfigurationState = ConfigurationState;
-
-/**
- * Characteristic "Configure Bridged Accessory"
- * @deprecated Removed and not used anymore
- */
-export class ConfigureBridgedAccessory extends Characteristic {
-
-  public static readonly UUID: string = "000000A0-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Configure Bridged Accessory", ConfigureBridgedAccessory.UUID, {
-      format: Formats.TLV8,
-      perms: [Perms.PAIRED_WRITE],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-// noinspection JSDeprecatedSymbols
-Characteristic.ConfigureBridgedAccessory = ConfigureBridgedAccessory;
-
-/**
- * Characteristic "Configure Bridged Accessory Status"
- * @deprecated Removed and not used anymore
- */
-export class ConfigureBridgedAccessoryStatus extends Characteristic {
-
-  public static readonly UUID: string = "0000009D-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Configure Bridged Accessory Status", ConfigureBridgedAccessoryStatus.UUID, {
-      format: Formats.TLV8,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-// noinspection JSDeprecatedSymbols
-Characteristic.ConfigureBridgedAccessoryStatus = ConfigureBridgedAccessoryStatus;
 
 /**
  * Characteristic "Configured Name"
@@ -1152,25 +1093,6 @@ export class CurrentTiltAngle extends Characteristic {
 Characteristic.CurrentTiltAngle = CurrentTiltAngle;
 
 /**
- * Characteristic "Current Time"
- * @deprecated Removed and not used anymore
- */
-export class CurrentTime extends Characteristic {
-
-  public static readonly UUID: string = "0000009B-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Current Time", CurrentTime.UUID, {
-      format: Formats.STRING,
-      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-// noinspection JSDeprecatedSymbols
-Characteristic.CurrentTime = CurrentTime;
-
-/**
  * Characteristic "Current Transport"
  * @since iOS 14
  */
@@ -1270,27 +1192,6 @@ export class DataStreamHAPTransportInterrupt extends Characteristic {
 Characteristic.DataStreamHAPTransportInterrupt = DataStreamHAPTransportInterrupt;
 
 /**
- * Characteristic "Day of the Week"
- * @deprecated Removed and not used anymore
- */
-export class DayoftheWeek extends Characteristic {
-
-  public static readonly UUID: string = "00000098-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Day of the Week", DayoftheWeek.UUID, {
-      format: Formats.UINT8,
-      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-      minValue: 1,
-      maxValue: 7,
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-// noinspection JSDeprecatedSymbols
-Characteristic.DayoftheWeek = DayoftheWeek;
-
-/**
  * Characteristic "Diagonal Field Of View"
  * @since iOS 13.2
  */
@@ -1328,44 +1229,6 @@ export class DigitalZoom extends Characteristic {
   }
 }
 Characteristic.DigitalZoom = DigitalZoom;
-
-/**
- * Characteristic "Discover Bridged Accessories"
- * @deprecated Removed and not used anymore
- */
-export class DiscoverBridgedAccessories extends Characteristic {
-
-  public static readonly UUID: string = "0000009E-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Discover Bridged Accessories", DiscoverBridgedAccessories.UUID, {
-      format: Formats.UINT8,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-// noinspection JSDeprecatedSymbols
-Characteristic.DiscoverBridgedAccessories = DiscoverBridgedAccessories;
-
-/**
- * Characteristic "Discovered Bridged Accessories"
- * @deprecated Removed and not used anymore
- */
-export class DiscoveredBridgedAccessories extends Characteristic {
-
-  public static readonly UUID: string = "0000009F-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Discovered Bridged Accessories", DiscoveredBridgedAccessories.UUID, {
-      format: Formats.UINT16,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-// noinspection JSDeprecatedSymbols
-Characteristic.DiscoveredBridgedAccessories = DiscoveredBridgedAccessories;
 
 /**
  * Characteristic "Display Order"
@@ -1879,27 +1742,6 @@ export class LeakDetected extends Characteristic {
 Characteristic.LeakDetected = LeakDetected;
 
 /**
- * Characteristic "Link Quality"
- * @deprecated Removed and not used anymore
- */
-export class LinkQuality extends Characteristic {
-
-  public static readonly UUID: string = "0000009C-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Link Quality", LinkQuality.UUID, {
-      format: Formats.UINT8,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
-      minValue: 1,
-      maxValue: 4,
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-// noinspection JSDeprecatedSymbols
-Characteristic.LinkQuality = LinkQuality;
-
-/**
  * Characteristic "List Pairings"
  */
 export class ListPairings extends Characteristic {
@@ -2171,6 +2013,40 @@ export class Manufacturer extends Characteristic {
   }
 }
 Characteristic.Manufacturer = Manufacturer;
+
+/**
+ * Characteristic "Matter Firmware Revision Number"
+ */
+export class MatterFirmwareRevisionNumber extends Characteristic {
+
+  public static readonly UUID: string = "0000026D-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Matter Firmware Revision Number", MatterFirmwareRevisionNumber.UUID, {
+      format: Formats.UINT32,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.MatterFirmwareRevisionNumber = MatterFirmwareRevisionNumber;
+
+/**
+ * Characteristic "Matter Firmware Update Status"
+ */
+export class MatterFirmwareUpdateStatus extends Characteristic {
+
+  public static readonly UUID: string = "0000026E-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Matter Firmware Update Status", MatterFirmwareUpdateStatus.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.MatterFirmwareUpdateStatus = MatterFirmwareUpdateStatus;
 
 /**
  * Characteristic "Maximum Transmit Power"
@@ -2865,25 +2741,6 @@ export class ProgramMode extends Characteristic {
 Characteristic.ProgramMode = ProgramMode;
 
 /**
- * Characteristic "Reachable"
- * @deprecated Removed and not used anymore
- */
-export class Reachable extends Characteristic {
-
-  public static readonly UUID: string = "00000063-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Reachable", Reachable.UUID, {
-      format: Formats.BOOL,
-      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-// noinspection JSDeprecatedSymbols
-Characteristic.Reachable = Reachable;
-
-/**
  * Characteristic "Received Signal Strength Indication"
  * @since iOS 14
  */
@@ -2981,60 +2838,6 @@ export class RelativeHumidityHumidifierThreshold extends Characteristic {
   }
 }
 Characteristic.RelativeHumidityHumidifierThreshold = RelativeHumidityHumidifierThreshold;
-
-/**
- * Characteristic "Relay Control Point"
- */
-export class RelayControlPoint extends Characteristic {
-
-  public static readonly UUID: string = "0000005E-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Relay Control Point", RelayControlPoint.UUID, {
-      format: Formats.TLV8,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-Characteristic.RelayControlPoint = RelayControlPoint;
-
-/**
- * Characteristic "Relay Enabled"
- */
-export class RelayEnabled extends Characteristic {
-
-  public static readonly UUID: string = "0000005B-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Relay Enabled", RelayEnabled.UUID, {
-      format: Formats.BOOL,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-Characteristic.RelayEnabled = RelayEnabled;
-
-/**
- * Characteristic "Relay State"
- */
-export class RelayState extends Characteristic {
-
-  public static readonly UUID: string = "0000005C-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Relay State", RelayState.UUID, {
-      format: Formats.UINT8,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
-      minValue: 0,
-      maxValue: 5,
-      minStep: 1,
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-Characteristic.RelayState = RelayState;
 
 /**
  * Characteristic "Remaining Duration"
@@ -4770,25 +4573,6 @@ export class ThreadStatus extends Characteristic {
 Characteristic.ThreadStatus = ThreadStatus;
 
 /**
- * Characteristic "Time Update"
- * @deprecated Removed and not used anymore
- */
-export class TimeUpdate extends Characteristic {
-
-  public static readonly UUID: string = "0000009A-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Time Update", TimeUpdate.UUID, {
-      format: Formats.BOOL,
-      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-// noinspection JSDeprecatedSymbols
-Characteristic.TimeUpdate = TimeUpdate;
-
-/**
  * Characteristic "Token"
  */
 export class Token extends Characteristic {
@@ -4822,74 +4606,6 @@ export class TransmitPower extends Characteristic {
   }
 }
 Characteristic.TransmitPower = TransmitPower;
-
-/**
- * Characteristic "Tunnel Connection Timeout"
- */
-export class TunnelConnectionTimeout extends Characteristic {
-
-  public static readonly UUID: string = "00000061-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Tunnel Connection Timeout", TunnelConnectionTimeout.UUID, {
-      format: Formats.INT,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-Characteristic.TunnelConnectionTimeout = TunnelConnectionTimeout;
-
-/**
- * Characteristic "Tunneled Accessory Advertising"
- */
-export class TunneledAccessoryAdvertising extends Characteristic {
-
-  public static readonly UUID: string = "00000060-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Tunneled Accessory Advertising", TunneledAccessoryAdvertising.UUID, {
-      format: Formats.BOOL,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-Characteristic.TunneledAccessoryAdvertising = TunneledAccessoryAdvertising;
-
-/**
- * Characteristic "Tunneled Accessory Connected"
- */
-export class TunneledAccessoryConnected extends Characteristic {
-
-  public static readonly UUID: string = "00000059-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Tunneled Accessory Connected", TunneledAccessoryConnected.UUID, {
-      format: Formats.BOOL,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-Characteristic.TunneledAccessoryConnected = TunneledAccessoryConnected;
-
-/**
- * Characteristic "Tunneled Accessory State Number"
- */
-export class TunneledAccessoryStateNumber extends Characteristic {
-
-  public static readonly UUID: string = "00000058-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Tunneled Accessory State Number", TunneledAccessoryStateNumber.UUID, {
-      format: Formats.INT,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-Characteristic.TunneledAccessoryStateNumber = TunneledAccessoryStateNumber;
 
 /**
  * Characteristic "Valve Type"

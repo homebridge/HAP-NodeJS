@@ -128,28 +128,28 @@ export class GStreamerAudioProducer implements SiriAudioStreamProducer {
         debug("Failed to kill gstreamer process: " + error.message);
       }
     });
-    this.process.stdout.on("data", (data: Buffer) => {
+    this.process.stdout!.on("data", (data: Buffer) => {
       if (!this.running) { // received data after it was closed
         return;
       }
 
       /*
-                This listener seems to get called with only one opus frame most of the time.
-                Though it happens regularly that another or many more frames get appended.
-                This causes some problems as opus frames don't contain their data length in the "header".
-                Opus relies on the container format to specify the length of the frame.
-                Although sometimes multiple opus frames are squashed together the decoder seems to be able
-                to handle that as it just creates a not very noticeable distortion.
-                If we would want to make this perfect we would need to write a nodejs c++ submodule or something
-                to interface directly with gstreamer api.
-             */
+      This listener seems to get called with only one opus frame most of the time.
+      Though it happens regularly that another or many more frames get appended.
+      This causes some problems as opus frames don't contain their data length in the "header".
+      Opus relies on the container format to specify the length of the frame.
+      Although sometimes multiple opus frames are squashed together the decoder seems to be able
+      to handle that as it just creates a not very noticeable distortion.
+      If we wanted to make this perfect we would need to write a nodejs c++ submodule or something
+      to interface directly with gstreamer api.
+      */
 
       this.frameHandler({
         data: data,
         rms: 0.25, // only way currently to extract rms from gstreamer is by interfacing with the api directly (nodejs c++ submodule could be a solution)
       });
     });
-    this.process.stderr.on("data", data => {
+    this.process.stderr!.on("data", data => {
       debug("GStreamer process reports the following error: " + String(data));
     });
     this.process.on("exit", (code, signal) => {

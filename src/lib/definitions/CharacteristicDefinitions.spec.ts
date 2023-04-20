@@ -160,12 +160,6 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
-  describe("Category", () => {
-    it("should be able to construct", () => {
-      new Characteristic.Category();
-    });
-  });
-
   describe("CCAEnergyDetectThreshold", () => {
     it("should be able to construct", () => {
       new Characteristic.CCAEnergyDetectThreshold();
@@ -211,18 +205,6 @@ describe("CharacteristicDefinitions", () => {
   describe("ConfigurationState", () => {
     it("should be able to construct", () => {
       new Characteristic.ConfigurationState();
-    });
-  });
-
-  describe("ConfigureBridgedAccessory", () => {
-    it("should be able to construct", () => {
-      new Characteristic.ConfigureBridgedAccessory();
-    });
-  });
-
-  describe("ConfigureBridgedAccessoryStatus", () => {
-    it("should be able to construct", () => {
-      new Characteristic.ConfigureBridgedAccessoryStatus();
     });
   });
 
@@ -334,12 +316,6 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
-  describe("CurrentTime", () => {
-    it("should be able to construct", () => {
-      new Characteristic.CurrentTime();
-    });
-  });
-
   describe("CurrentTransport", () => {
     it("should be able to construct", () => {
       new Characteristic.CurrentTransport();
@@ -370,12 +346,6 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
-  describe("DayoftheWeek", () => {
-    it("should be able to construct", () => {
-      new Characteristic.DayoftheWeek();
-    });
-  });
-
   describe("DiagonalFieldOfView", () => {
     it("should be able to construct", () => {
       new Characteristic.DiagonalFieldOfView();
@@ -385,18 +355,6 @@ describe("CharacteristicDefinitions", () => {
   describe("DigitalZoom", () => {
     it("should be able to construct", () => {
       new Characteristic.DigitalZoom();
-    });
-  });
-
-  describe("DiscoverBridgedAccessories", () => {
-    it("should be able to construct", () => {
-      new Characteristic.DiscoverBridgedAccessories();
-    });
-  });
-
-  describe("DiscoveredBridgedAccessories", () => {
-    it("should be able to construct", () => {
-      new Characteristic.DiscoveredBridgedAccessories();
     });
   });
 
@@ -550,12 +508,6 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
-  describe("LinkQuality", () => {
-    it("should be able to construct", () => {
-      new Characteristic.LinkQuality();
-    });
-  });
-
   describe("ListPairings", () => {
     it("should be able to construct", () => {
       new Characteristic.ListPairings();
@@ -631,6 +583,18 @@ describe("CharacteristicDefinitions", () => {
   describe("Manufacturer", () => {
     it("should be able to construct", () => {
       new Characteristic.Manufacturer();
+    });
+  });
+
+  describe("MatterFirmwareRevisionNumber", () => {
+    it("should be able to construct", () => {
+      new Characteristic.MatterFirmwareRevisionNumber();
+    });
+  });
+
+  describe("MatterFirmwareUpdateStatus", () => {
+    it("should be able to construct", () => {
+      new Characteristic.MatterFirmwareUpdateStatus();
     });
   });
 
@@ -850,12 +814,6 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
-  describe("Reachable", () => {
-    it("should be able to construct", () => {
-      new Characteristic.Reachable();
-    });
-  });
-
   describe("ReceivedSignalStrengthIndication", () => {
     it("should be able to construct", () => {
       new Characteristic.ReceivedSignalStrengthIndication();
@@ -883,24 +841,6 @@ describe("CharacteristicDefinitions", () => {
   describe("RelativeHumidityHumidifierThreshold", () => {
     it("should be able to construct", () => {
       new Characteristic.RelativeHumidityHumidifierThreshold();
-    });
-  });
-
-  describe("RelayControlPoint", () => {
-    it("should be able to construct", () => {
-      new Characteristic.RelayControlPoint();
-    });
-  });
-
-  describe("RelayEnabled", () => {
-    it("should be able to construct", () => {
-      new Characteristic.RelayEnabled();
-    });
-  });
-
-  describe("RelayState", () => {
-    it("should be able to construct", () => {
-      new Characteristic.RelayState();
     });
   });
 
@@ -1414,12 +1354,6 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
-  describe("TimeUpdate", () => {
-    it("should be able to construct", () => {
-      new Characteristic.TimeUpdate();
-    });
-  });
-
   describe("Token", () => {
     it("should be able to construct", () => {
       new Characteristic.Token();
@@ -1429,30 +1363,6 @@ describe("CharacteristicDefinitions", () => {
   describe("TransmitPower", () => {
     it("should be able to construct", () => {
       new Characteristic.TransmitPower();
-    });
-  });
-
-  describe("TunnelConnectionTimeout", () => {
-    it("should be able to construct", () => {
-      new Characteristic.TunnelConnectionTimeout();
-    });
-  });
-
-  describe("TunneledAccessoryAdvertising", () => {
-    it("should be able to construct", () => {
-      new Characteristic.TunneledAccessoryAdvertising();
-    });
-  });
-
-  describe("TunneledAccessoryConnected", () => {
-    it("should be able to construct", () => {
-      new Characteristic.TunneledAccessoryConnected();
-    });
-  });
-
-  describe("TunneledAccessoryStateNumber", () => {
-    it("should be able to construct", () => {
-      new Characteristic.TunneledAccessoryStateNumber();
     });
   });
 
