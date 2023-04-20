@@ -1,5 +1,5 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=880
+// V=884
 
 import { Characteristic } from "../Characteristic";
 import { Service } from "../Service";
@@ -66,6 +66,7 @@ export class AccessoryInformation extends Service {
     this.addOptionalCharacteristic(Characteristic.AccessoryFlags);
     this.addOptionalCharacteristic(Characteristic.AppMatchingIdentifier);
     this.addOptionalCharacteristic(Characteristic.ConfiguredName);
+    this.addOptionalCharacteristic(Characteristic.MatterFirmwareRevisionNumber);
     this.addOptionalCharacteristic(Characteristic.HardwareFinish);
     this.addOptionalCharacteristic(Characteristic.HardwareRevision);
     this.addOptionalCharacteristic(Characteristic.ProductData);
@@ -606,6 +607,7 @@ export class FirmwareUpdate extends Service {
     this.addCharacteristic(Characteristic.FirmwareUpdateStatus);
 
     // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.MatterFirmwareUpdateStatus);
     this.addOptionalCharacteristic(Characteristic.StagedFirmwareVersion);
     this.addOptionalCharacteristic(Characteristic.SupportedFirmwareUpdateConfiguration);
   }
