@@ -101,6 +101,8 @@ import type {
   ManagedNetworkEnable,
   ManuallyDisabled,
   Manufacturer,
+  MatterFirmwareRevisionNumber,
+  MatterFirmwareUpdateStatus,
   MaximumTransmitPower,
   MetricsBufferFullState,
   Model,
@@ -1084,6 +1086,14 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static Manufacturer: typeof Manufacturer;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static MatterFirmwareRevisionNumber: typeof MatterFirmwareRevisionNumber;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static MatterFirmwareUpdateStatus: typeof MatterFirmwareUpdateStatus;
   /**
    * @group Characteristic Definitions
    */

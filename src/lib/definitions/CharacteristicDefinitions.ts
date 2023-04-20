@@ -1,5 +1,5 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=880
+// V=884
 
 import { Access, Characteristic, Formats, Perms, Units } from "../Characteristic";
 
@@ -2013,6 +2013,40 @@ export class Manufacturer extends Characteristic {
   }
 }
 Characteristic.Manufacturer = Manufacturer;
+
+/**
+ * Characteristic "Matter Firmware Revision Number"
+ */
+export class MatterFirmwareRevisionNumber extends Characteristic {
+
+  public static readonly UUID: string = "0000026D-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Matter Firmware Revision Number", MatterFirmwareRevisionNumber.UUID, {
+      format: Formats.UINT32,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.MatterFirmwareRevisionNumber = MatterFirmwareRevisionNumber;
+
+/**
+ * Characteristic "Matter Firmware Update Status"
+ */
+export class MatterFirmwareUpdateStatus extends Characteristic {
+
+  public static readonly UUID: string = "0000026E-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Matter Firmware Update Status", MatterFirmwareUpdateStatus.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.MatterFirmwareUpdateStatus = MatterFirmwareUpdateStatus;
 
 /**
  * Characteristic "Maximum Transmit Power"

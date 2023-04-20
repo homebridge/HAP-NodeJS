@@ -586,6 +586,18 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("MatterFirmwareRevisionNumber", () => {
+    it("should be able to construct", () => {
+      new Characteristic.MatterFirmwareRevisionNumber();
+    });
+  });
+
+  describe("MatterFirmwareUpdateStatus", () => {
+    it("should be able to construct", () => {
+      new Characteristic.MatterFirmwareUpdateStatus();
+    });
+  });
+
   describe("MaximumTransmitPower", () => {
     it("should be able to construct", () => {
       new Characteristic.MaximumTransmitPower();
