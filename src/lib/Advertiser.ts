@@ -412,11 +412,6 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
 
     debug(`Starting to advertise '${this.accessoryInfo.displayName}' using Avahi backend!`);
 
-    if (!this.avahiServerInterface) {
-      this.avahiServerInterface = await AvahiAdvertiser.avahiInterface(this.bus, "Server");
-      this.avahiServerInterface.on("StateChanged", this.stateChangeHandler);
-    }
-
     this.path = await AvahiAdvertiser.avahiInvoke(this.bus, "/", "Server", "EntryGroupNew") as string;
     await AvahiAdvertiser.avahiInvoke(this.bus, this.path, "EntryGroup", "AddService", {
       body: [
@@ -433,6 +428,20 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
       signature: "iiussssqaay",
     });
     await AvahiAdvertiser.avahiInvoke(this.bus, this.path, "EntryGroup", "Commit");
+
+    try {
+      if (!this.avahiServerInterface) {
+        this.avahiServerInterface = await AvahiAdvertiser.avahiInterface(this.bus, "Server");
+        this.avahiServerInterface.on("StateChanged", this.stateChangeHandler);
+      }
+    } catch (error) {
+      // We have some problem on Synology https://github.com/homebridge/HAP-NodeJS/issues/993
+      console.warn("Failed to create listener for avahi-daemon server state. The system will not be notified about restarts of avahi-daemon " +
+        "and will therefore stay undiscoverable in those instances. Error message: " + error);
+      if (error.stack) {
+        debug("Detailed error: " + error.stack);
+      }
+    }
   }
 
   /**
