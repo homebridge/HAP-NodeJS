@@ -4,17 +4,11 @@ declare module "@homebridge/dbus-native" {
 
   function systemBus(): MessageBus;
 
-  export class InvokeError {
-    name: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    message: any;
-  }
-
   export class MessageBus {
     connection: BusConnection;
 
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types,@typescript-eslint/no-explicit-any
-    public invoke(message: any, callback: (error: InvokeError | undefined, value: any) => void): void;
+    public invoke(message: any, callback: (error: { name: string, message: any } | undefined, value: any) => void): void;
 
     public getService(name: string): DBusService;
   }

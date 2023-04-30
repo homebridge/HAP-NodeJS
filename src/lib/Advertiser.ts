@@ -2,7 +2,7 @@
 /// <reference path="../../@types/bonjour-hap.d.ts" />
 import ciao, { CiaoService, MDNSServerOptions, Responder, ServiceEvent, ServiceTxt, ServiceType } from "@homebridge/ciao";
 import { InterfaceName, IPAddress } from "@homebridge/ciao/lib/NetworkManager";
-import dbus, { DBusInterface, InvokeError, MessageBus } from "@homebridge/dbus-native";
+import dbus, { DBusInterface, MessageBus } from "@homebridge/dbus-native";
 import assert from "assert";
 import bonjour, { BonjourHAP, BonjourHAPService, MulticastOptions } from "bonjour-hap";
 import crypto from "crypto";
@@ -303,7 +303,8 @@ function messageBusConnectionResult(bus: MessageBus): Promise<void> {
 export class DBusInvokeError extends Error {
   readonly errorName: string;
 
-  constructor(errorObject: InvokeError) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  constructor(errorObject: { name: string, message: any }) {
     super();
 
     Object.setPrototypeOf(this, DBusInvokeError.prototype);
