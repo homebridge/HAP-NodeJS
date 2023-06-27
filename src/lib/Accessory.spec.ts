@@ -480,9 +480,8 @@ describe("Accessory", () => {
       };
 
       await accessoryBadName.publish(publishInfo);
-      console.log(accessoryBadName.displayName);
       expect(accessoryBadName.displayName.startsWith(TEST_DISPLAY_NAME));
-      expect(consoleLogSpy).toBeCalledTimes(1);
+      expect(consoleLogSpy).toBeCalledTimes(2);
       // eslint-disable-next-line max-len
       expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory ''Bad Name 7430' is getting published with the characteristic 'Name' not following HomeKit naming rules (''Bad Name 7430'). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
 
