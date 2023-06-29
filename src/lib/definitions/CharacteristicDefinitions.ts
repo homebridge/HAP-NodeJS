@@ -2848,7 +2848,7 @@ export class ProgramMode extends Characteristic {
 
   public static readonly NO_PROGRAM_SCHEDULED = 0;
   public static readonly PROGRAM_SCHEDULED = 1;
-  public static readonly PROGRAM_SCHEDULED_MANUAL_MODE_ = 2;
+  public static readonly PROGRAM_SCHEDULED_MANUAL_MODE = 2;
 
   constructor() {
     super("Program Mode", ProgramMode.UUID, {
