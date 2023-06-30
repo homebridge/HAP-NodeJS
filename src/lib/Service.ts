@@ -87,6 +87,7 @@ import { IdentifierCache } from "./model/IdentifierCache";
 import { HAPConnection } from "./util/eventedhttp";
 import { HapStatusError } from "./util/hapStatusError";
 import { toShortForm } from "./util/uuid";
+import { checkName } from "./util/checkName";
 
 const debug = createDebug("HAP-NodeJS:Service");
 
@@ -551,7 +552,7 @@ export class Service extends EventEmitter {
     // if you don't provide a display name, some HomeKit apps may choose to hide the device.
     if (displayName) {
       // create the characteristic if necessary
-      this.checkName("Name", displayName);
+      checkName(this.displayName, "Name", displayName);
       const nameCharacteristic =
         this.getCharacteristic(Characteristic.Name) ||
         this.addCharacteristic(Characteristic.Name);
@@ -559,26 +560,6 @@ export class Service extends EventEmitter {
       nameCharacteristic.updateValue(displayName);
     }
   }
-
-  /**
- * Checks that supplied field meets Apple HomeKit naming rules
- * https://developer.apple.com/design/human-interface-guidelines/homekit#Help-people-choose-useful-names
- * @private Private API
- */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private checkName(name: string, value?: any) {
-    const validHK = /^[a-zA-Z0-9\s'-.]+$/;   // Ensure only letter, numbers, apostrophe, or dash
-    const startWith = /^[a-zA-Z0-9]/;       // Ensure only letters or numbers are at the beginning of string
-    const endWith = /[a-zA-Z0-9]$/;         // Ensure only letters or numbers are at the end of string
-
-    if (!validHK.test(value) || !startWith.test(value) || !endWith.test(value)) {
-      console.warn("HAP-NodeJS WARNING: The service '" + this.displayName + "' is getting published with the characteristic '" +
-        name + "'" + " not following HomeKit naming rules ('" + value + "'). " +
-        "Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. " +
-        "This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
-    }
-  }
-
 
   /**
    * Returns an id which uniquely identifies a service on the associated accessory.

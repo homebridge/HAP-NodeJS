@@ -74,6 +74,7 @@ import { EventName, HAPConnection, HAPUsername } from "./util/eventedhttp";
 import { formatOutgoingCharacteristicValue } from "./util/request-util";
 import * as uuid from "./util/uuid";
 import { toShortForm } from "./util/uuid";
+import { checkName } from "./util/checkName";
 
 const debug = createDebug("HAP-NodeJS:Accessory");
 const MAX_ACCESSORIES = 149; // Maximum number of bridged accessories per bridge.
@@ -494,7 +495,7 @@ export class Accessory extends EventEmitter {
       "valid UUID from any arbitrary string, like a serial number.");
 
     // create our initial "Accessory Information" Service that all Accessories are expected to have
-    this.checkName("name", displayName);
+    checkName(this.displayName, "name", displayName);
     this.addService(Service.AccessoryInformation)
       .setCharacteristic(Characteristic.Name, displayName);
 
@@ -1021,25 +1022,6 @@ export class Accessory extends EventEmitter {
   }
 
   /**
-   * Checks that supplied field meets Apple HomeKit naming rules
-   * https://developer.apple.com/design/human-interface-guidelines/homekit#Help-people-choose-useful-names
-   * @private Private API
-   */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private checkName(name: string, value?: any) {
-    const validHK = /^[a-zA-Z0-9\s'-.]+$/;   // Ensure only letter, numbers, apostrophe, or dash
-    const startWith = /^[a-zA-Z0-9]/;       // Ensure only letters or numbers are at the beginning of string
-    const endWith = /[a-zA-Z0-9]$/;         // Ensure only letters or numbers are at the end of string
-
-    if (!validHK.test(value) || !startWith.test(value) || !endWith.test(value)) {
-      console.warn("HAP-NodeJS WARNING: The accessory '" + this.displayName + "' is getting published with the characteristic '" +
-        name + "'" + " not following HomeKit naming rules ('" + value + "'). " +
-        "Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. " +
-        "This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
-    }
-  }
-
-  /**
    * This method is called right before the accessory is published. It should be used to check for common
    * mistakes in Accessory structured, which may lead to HomeKit rejecting the accessory when pairing.
    * If it is called on a bridge it will call this method for all bridged accessories.
@@ -1069,8 +1051,8 @@ export class Accessory extends EventEmitter {
       checkValue("SerialNumber", serialNumber);
       checkValue("FirmwareRevision", firmwareRevision);
       checkValue("Name", name);
-      this.checkName("Name", name);
-      this.checkName("Manufacturer", manufacturer);
+      checkName(this.displayName, "Name", name);
+      checkName(this.displayName, "Manufacturer", manufacturer);
     }
 
     if (mainAccessory) {
