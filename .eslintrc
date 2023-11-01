@@ -31,6 +31,9 @@
     "@typescript-eslint/no-use-before-define": ["error", { "classes": false, "enums": false }],
 
     "@typescript-eslint/no-non-null-assertion": "off",
-    "@typescript-eslint/explicit-module-boundary-types": "error"
+    "@typescript-eslint/explicit-module-boundary-types": "error",
+
+    "@typescript-eslint/no-unsafe-declaration-merging": "off",
+    "@typescript-eslint/no-duplicate-enum-values": "off"
   }
 }
