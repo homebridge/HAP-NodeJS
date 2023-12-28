@@ -1,12 +1,12 @@
-name: PR Labeler
+name: Labeler
 
 on:
-  pull_request: # required for autolabeler
+  pull_request_target: # required for auto labeler
     types: [opened, reopened, synchronize]
   workflow_dispatch:
 
 jobs:
   stale:
-    uses: homebridge/.github/.github/workflows/pr-labeler.yml@latest
+    uses: homebridge/.github/.github/workflows/labeler.yml@latest
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
