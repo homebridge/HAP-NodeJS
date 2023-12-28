@@ -1,0 +1,13 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches: [ master, beta* ]
+  pull_request:
+    branches: [ master, beta* ]
+  schedule:
+    - cron: '44 16 * * 5'
+
+jobs:
+  analyze:
+    uses: homebridge/.github/.github/workflows/codeql-analysis.yml@latest
