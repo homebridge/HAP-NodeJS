@@ -10,6 +10,7 @@ import createDebug from "debug";
 import { EventEmitter } from "events";
 import { AccessoryInfo } from "./model/AccessoryInfo";
 import { PromiseTimeout } from "./util/promise-utils";
+import fs from "fs";
 
 const debug = createDebug("HAP-NodeJS:Advertiser");
 
@@ -197,6 +198,86 @@ export class CiaoAdvertiser extends EventEmitter implements Advertiser {
     let value = 0;
     flags.forEach(flag => value |= flag);
     return value;
+  }
+}
+
+/**
+ * Advertiser proxies information through Avahi to broadcast the presence of an Accessory to the local network.
+ */
+export class AvahiFileAdvertiser extends EventEmitter implements Advertiser {
+
+  static protocolVersion: string = "1.1";
+  static protocolVersionService: string = "1.1.0";
+
+  private filePath: string = '/homebridge/';
+  private port?: number;
+
+  private readonly accessoryInfo: AccessoryInfo;
+  private readonly setupHash: string;
+
+  constructor(accessoryInfo: AccessoryInfo) {
+    super();
+    this.accessoryInfo = accessoryInfo;
+    this.setupHash = CiaoAdvertiser.computeSetupHash(accessoryInfo);
+    this.filePath = '/homebridge/'
+
+    this.publish();
+
+    console.log(`Preparing Advertiser for '${this.accessoryInfo.displayName}' using avahi-file backend!`);
+  }
+
+  private publish(): Promise<void> {
+    if (!this.port) return Promise.resolve();
+    return this.writeXMLTo(this.filePath + this.accessoryInfo.displayName.replace(/ /g, '-') + '.service');
+  }
+
+  private writeXMLTo(path: string): Promise<void> {
+    return new Promise((accept, reject) => {
+      fs.writeFile(path, AvahiFileAdvertiser.serialize(
+        this.accessoryInfo.displayName,
+        "_hap._tcp",
+        this.port!,
+        CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash),
+      ), err => {
+        if (err)
+          reject(err);
+        else
+          accept();
+      });
+    });
+  }
+
+  private static serialize(name: string, type: string, port: number, txt: ServiceTxt): string {
+    return (
+`<service-group>
+  <name>${name}</name>
+  <service>
+    <type>${type}</type>
+    <port>${port}</port>
+` + Object.entries(txt)
+          .map(([k, v]) => `    <txt-record>${k}=${v}</txt-record>`)
+          .join('\n') + `
+  </service>
+</service-group>
+`);
+  }
+
+  public initPort(port: number): void {
+    this.port = port;
+    this.publish();
+  }
+
+  public startAdvertising(): Promise<void> {
+    return this.publish();
+  }
+
+  public updateAdvertisement(silent?: boolean): void {
+    this.publish();
+  }
+
+  public async destroy(): Promise<void> {
+    // TODO remove file
+    this.removeAllListeners();
   }
 }
 
