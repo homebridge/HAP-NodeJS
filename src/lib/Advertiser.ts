@@ -203,13 +203,10 @@ export class CiaoAdvertiser extends EventEmitter implements Advertiser {
 
 /**
  * Advertiser proxies information through Avahi to broadcast the presence of an Accessory to the local network.
+ * Useful in situations where network isolation of homebridge is wanted (eg. running in a docker container without host networking)
  */
 export class AvahiFileAdvertiser extends EventEmitter implements Advertiser {
-
-  static protocolVersion: string = "1.1";
-  static protocolVersionService: string = "1.1.0";
-
-  private filePath: string = '/homebridge/';
+  private dir = "/homebridge/";
   private port?: number;
 
   private readonly accessoryInfo: AccessoryInfo;
@@ -219,44 +216,40 @@ export class AvahiFileAdvertiser extends EventEmitter implements Advertiser {
     super();
     this.accessoryInfo = accessoryInfo;
     this.setupHash = CiaoAdvertiser.computeSetupHash(accessoryInfo);
-    this.filePath = '/homebridge/'
-
-    this.publish();
 
     console.log(`Preparing Advertiser for '${this.accessoryInfo.displayName}' using avahi-file backend!`);
   }
 
-  private publish(): Promise<void> {
-    if (!this.port) return Promise.resolve();
-    return this.writeXMLTo(this.filePath + this.accessoryInfo.displayName.replace(/ /g, '-') + '.service');
+  private get filePath(): string {
+    return this.dir + this.accessoryInfo.displayName.replace(/ /g, "-") + ".service";
   }
 
-  private writeXMLTo(path: string): Promise<void> {
-    return new Promise((accept, reject) => {
-      fs.writeFile(path, AvahiFileAdvertiser.serialize(
-        this.accessoryInfo.displayName,
-        "_hap._tcp",
-        this.port!,
-        CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash),
-      ), err => {
-        if (err)
-          reject(err);
-        else
-          accept();
-      });
-    });
+  private publish(): Promise<void> {
+    if (this.port == null) {
+      throw new Error("Tried starting avahi-file advertisement without initializing port!");
+    }
+    return this.writeXMLTo(this.filePath);
+  }
+
+  private async writeXMLTo(path: string): Promise<void> {
+    await fs.promises.writeFile(path, AvahiFileAdvertiser.serialize(
+      this.accessoryInfo.displayName,
+      "_hap._tcp",
+      this.port!,
+      CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash),
+    ));
   }
 
   private static serialize(name: string, type: string, port: number, txt: ServiceTxt): string {
     return (
-`<service-group>
+      `<service-group>
   <name>${name}</name>
   <service>
     <type>${type}</type>
     <port>${port}</port>
 ` + Object.entries(txt)
-          .map(([k, v]) => `    <txt-record>${k}=${v}</txt-record>`)
-          .join('\n') + `
+        .map(([k, v]) => `    <txt-record>${k}=${v}</txt-record>`)
+        .join("\n") + `
   </service>
 </service-group>
 `);
@@ -272,12 +265,20 @@ export class AvahiFileAdvertiser extends EventEmitter implements Advertiser {
   }
 
   public updateAdvertisement(silent?: boolean): void {
+    debug(`Updating avahi-file advertisement (silent: ${silent})`);
     this.publish();
   }
 
   public async destroy(): Promise<void> {
-    // TODO remove file
     this.removeAllListeners();
+    try {
+      await fs.promises.unlink(this.filePath);
+    } catch (err) {
+      if (err.code === "ENOENT") {
+        return;
+      }
+      throw err;
+    }
   }
 }
 
