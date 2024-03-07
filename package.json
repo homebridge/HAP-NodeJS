@@ -1,6 +1,6 @@
 {
-  "name": "hap-nodejs",
-  "version": "0.11.1",
+  "name": "@seydx/hap-nodejs",
+  "version": "0.11.2-beta.0",
   "description": "HAP-NodeJS is a Node.js implementation of HomeKit Accessory Server.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -54,6 +54,7 @@
   "dependencies": {
     "@homebridge/ciao": "^1.1.5",
     "@homebridge/dbus-native": "^0.5.1",
+    "@noble/ciphers": "^0.5.1",
     "bonjour-hap": "~3.6.4",
     "debug": "^4.3.4",
     "fast-srp-hap": "~2.0.4",
@@ -70,10 +71,11 @@
     "@types/node": "^10.17.60",
     "@typescript-eslint/eslint-plugin": "^5.21.0",
     "@typescript-eslint/parser": "^5.21.0",
+    "axios": "^0.27.2",
     "commander": "^6.2.1",
     "escape-html": "^1.0.3",
-    "http-parser-js": "^0.5.8",
     "eslint": "^8.14.0",
+    "http-parser-js": "^0.5.8",
     "jest": "^27.5.1",
     "rimraf": "^3.0.2",
     "semver": "^7.3.7",
@@ -81,7 +83,6 @@
     "ts-jest": "^27.1.4",
     "ts-node": "^10.7.0",
     "typedoc": "^0.23.21",
-    "typescript": "~4.9.3",
-    "axios": "^0.27.2"
+    "typescript": "~4.9.3"
   }
 }

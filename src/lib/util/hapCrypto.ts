@@ -1,13 +1,8 @@
 import assert from "assert";
-import crypto from "crypto";
 import hkdf from "futoin-hkdf";
 import tweetnacl, { BoxKeyPair } from "tweetnacl";
 import { HAPEncryption } from "./eventedhttp";
-
-if (!crypto.getCiphers().includes("chacha20-poly1305")) {
-  assert.fail("The cipher 'chacha20-poly1305' is not supported with your current running nodejs version v" + process.version + ". " +
-    "At least a nodejs version of v10.17.0 (excluding v11.0 and v11.1) is required!");
-}
+import { chacha20poly1305 } from "@noble/ciphers/chacha";
 
 /**
  * @group Cryptography
@@ -68,16 +63,19 @@ export function chacha20_poly1305_decryptAndVerify(key: Buffer, nonce: Buffer, a
     ]);
   }
 
-  // @ts-expect-error: types for this are really broken
-  const decipher = crypto.createDecipheriv("chacha20-poly1305", key, nonce, { authTagLength: 16 });
-  if (aad) {
-    decipher.setAAD(aad);
-  }
-  decipher.setAuthTag(authTag);
-  const plaintext = decipher.update(ciphertext);
-  decipher.final(); // final call verifies integrity using the auth tag. Throws error if something was manipulated!
+  const keyBytes = new Uint8Array(key);
+  const nonceBytes = new Uint8Array(nonce);
+  const ciphertextBytes = new Uint8Array(ciphertext);
+  const aadBytes = aad ? new Uint8Array(aad) : undefined;
 
-  return plaintext;
+  const ciphertextAndAuthTag = new Uint8Array(ciphertextBytes.length + authTag.length);
+  ciphertextAndAuthTag.set(ciphertextBytes);
+  ciphertextAndAuthTag.set(new Uint8Array(authTag), ciphertextBytes.length);
+
+  const chacha = chacha20poly1305(keyBytes, nonceBytes, aadBytes);
+  const plaintextBytes = chacha.decrypt(ciphertextAndAuthTag);
+
+  return Buffer.from(plaintextBytes);
 }
 
 /**
@@ -99,16 +97,16 @@ export function chacha20_poly1305_encryptAndSeal(key: Buffer, nonce: Buffer, aad
     ]);
   }
 
-  // @ts-expect-error: types for this are really broken
-  const cipher = crypto.createCipheriv("chacha20-poly1305", key, nonce, { authTagLength: 16 });
+  const keyBytes = new Uint8Array(key);
+  const nonceBytes = new Uint8Array(nonce);
+  const plaintextBytes = new Uint8Array(plaintext);
+  const aadBytes = aad ? new Uint8Array(aad) : undefined;
 
-  if (aad) {
-    cipher.setAAD(aad);
-  }
+  const chacha = chacha20poly1305(keyBytes, nonceBytes, aadBytes);
+  const encryptedWithAuthTag = chacha.encrypt(plaintextBytes);
 
-  const ciphertext = cipher.update(plaintext);
-  cipher.final(); // final call creates the auth tag
-  const authTag = cipher.getAuthTag();
+  const authTag = Buffer.from(encryptedWithAuthTag.slice(-16));
+  const ciphertext = Buffer.from(encryptedWithAuthTag.slice(0, -16));
 
   return { // return type is a bit weird, but we are going to change that on a later code cleanup
     ciphertext: ciphertext,
