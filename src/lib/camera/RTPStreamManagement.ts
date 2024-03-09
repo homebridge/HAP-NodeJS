@@ -392,6 +392,7 @@ export type SnapshotRequest = {
  */
 export type PrepareStreamRequest = {
   sessionID: StreamSessionIdentifier,
+  sourceAddress: string,
   targetAddress: string,
   addressVersion: "ipv4" | "ipv6",
   audio: Source,
@@ -1142,6 +1143,7 @@ export class RTPStreamManagement {
 
     const prepareRequest: PrepareStreamRequest = {
       sessionID: sessionIdentifier,
+      sourceAddress: connection.localAddress,
       targetAddress: controllerAddress,
       addressVersion: addressVersion === IPAddressVersion.IPV6? "ipv6": "ipv4",
 
