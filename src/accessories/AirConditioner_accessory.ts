@@ -45,7 +45,7 @@ ACTest
   .setCharacteristic(Characteristic.Manufacturer, "Sample Company");
 
 // listen for the "identify" event for this Accessory
-ACTest.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
+ACTest.on(AccessoryEventTypes.IDENTIFY, (_paired: boolean, callback: VoidCallback) => {
   console.log("Fan Identified!");
   callback(); // success
 });
@@ -60,7 +60,7 @@ FanService.getCharacteristic(Characteristic.On)!
     callback(); // Our fake Fan is synchronous - this value has been successfully set
   });
 
-// We want to intercept requests for our current power state so we can query the hardware itself instead of
+// We want to intercept requests for our current power state, so we can query the hardware itself instead of
 // allowing HAP-NodeJS to return the cached Characteristic.value.
 FanService.getCharacteristic(Characteristic.On)!
   .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {

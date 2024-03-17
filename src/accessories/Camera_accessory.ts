@@ -519,8 +519,8 @@ class MP4StreamingServer {
       console.error("ChildProcess is undefined directly after the init!");
     }
     if(this.debugMode) {
-      this.childProcess.stdout.on("data", data => console.log(data.toString()));
-      this.childProcess.stderr.on("data", data => console.log(data.toString()));
+      this.childProcess.stdout?.on("data", data => console.log(data.toString()));
+      this.childProcess.stderr?.on("data", data => console.log(data.toString()));
     }
   }
 
@@ -554,7 +554,7 @@ class MP4StreamingServer {
     while (true) {
       const header = await this.read(8);
       const length = header.readInt32BE(0) - 8;
-      const type = header.slice(4).toString();
+      const type = header.subarray(4).toString();
       const data = await this.read(length);
 
       yield {

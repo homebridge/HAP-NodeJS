@@ -16,7 +16,7 @@ export interface RTPProxyOptions {
  *
  * At early days of HomeKit camera support, HomeKit allowed for unencrypted RTP stream.
  * The proxy was created to deal with RTCP and SSRC related stuff from external streams back in that days.
- * Later HomeKit removed support for unencrypted stream so it’s mostly no longer useful anymore, only really for testing
+ * Later HomeKit removed support for unencrypted stream, so it’s mostly no longer useful anymore, only really for testing
  * with a custom HAP controller.
  * @group Camera
  */
@@ -52,17 +52,12 @@ export default class RTPProxy {
     this.outgoingPayloadType = null;
   }
 
-  setup(): Promise<void>  {
-    return this.createSocketPair(this.type)
-      .then((sockets) => {
-        this.incomingRTPSocket = sockets[0];
-        this.incomingRTCPSocket = sockets[1];
-
-        return this.createSocket(this.type);
-      }).then((socket) => {
-        this.outgoingSocket = socket;
-        this.onBound();
-      });
+  async setup(): Promise<void> {
+    const sockets = await this.createSocketPair(this.type);
+    this.incomingRTPSocket = sockets[0];
+    this.incomingRTCPSocket = sockets[1];
+    this.outgoingSocket = await this.createSocket(this.type);
+    this.onBound();
   }
 
   destroy(): void {
@@ -82,31 +77,19 @@ export default class RTPProxy {
   incomingRTPPort(): number {
     const address = this.incomingRTPSocket.address();
 
-    if (typeof address !== "string") {
-      return address.port;
-    }
-
-    throw new Error("Unsupported socket!");
+    return address.port;
   }
 
   incomingRTCPPort(): number {
     const address = this.incomingRTCPSocket.address();
 
-    if (typeof address !== "string") {
-      return address.port;
-    }
-
-    throw new Error("Unsupported socket!");
+    return address.port;
   }
 
   outgoingLocalPort(): number {
     const address = this.outgoingSocket.address();
 
-    if (typeof address !== "string") {
-      return address.port;
-    }
-
-    throw new Error("Unsupported socket!");
+    return address.port;
   }
 
   setServerAddress(address: string): void {
@@ -197,7 +180,7 @@ export default class RTPProxy {
       if((offset + 4 + len) > msg.length) {
         break;
       }
-      let packet = msg.slice(offset, offset + 4 + len);
+      let packet = msg.subarray(offset, offset + 4 + len);
 
       packet = transform(pt, packet);
 

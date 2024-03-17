@@ -177,7 +177,7 @@ describe("tlv", () => {
 
     test("reject lists which are not properly separated with zero tlv type", () => {
       expect(() => decodeWithLists(Buffer.from("01010a01010b", "hex")))
-        .toThrowError();
+        .toThrow();
     });
   });
 
@@ -225,7 +225,7 @@ describe("tlv", () => {
 
     test("reject ill-formatted tlv list", () => {
       expect(() => decodeList(Buffer.from("020101", "hex"), 0x01))
-        .toThrowError();
+        .toThrow();
     });
   });
 
@@ -233,12 +233,12 @@ describe("tlv", () => {
     test("writeVariableUIntLE", () => {
       // negative numbers are not allowed
       expect(() => writeVariableUIntLE(-1))
-        .toThrowError();
+        .toThrow();
 
       // offset must be zero
       // noinspection JSDeprecatedSymbols
       expect(() => writeVariableUIntLE(1, 1))
-        .toThrowError();
+        .toThrow();
 
       const input8 = 128;
       const buffer8 = writeVariableUIntLE(input8);

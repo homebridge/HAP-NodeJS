@@ -351,7 +351,7 @@ export class DataStreamReader {
 
   finished(): void {
     if (this.readerIndex < this.data.length) {
-      const remainingHex = this.data.slice(this.readerIndex, this.data.length).toString("hex");
+      const remainingHex = this.data.subarray(this.readerIndex, this.data.length).toString("hex");
       debug("WARNING Finished reading HDS stream, but there are still %d bytes remaining () %s", this.data.length - this.readerIndex, remainingHex);
     }
   }
@@ -523,7 +523,7 @@ export class DataStreamReader {
 
   readData(length: number): Buffer {
     this.ensureLength(length);
-    const value = this.data.slice(this.readerIndex, this.readerIndex + length);
+    const value = this.data.subarray(this.readerIndex, this.readerIndex + length);
     this.readerIndex += length;
 
     return this.trackData(value);
@@ -565,7 +565,7 @@ export class DataStreamReader {
       }
     }
 
-    const value = this.data.slice(this.readerIndex, offset);
+    const value = this.data.subarray(this.readerIndex, offset);
     this.readerIndex = offset + 1;
     return this.trackData(value);
   }
@@ -633,7 +633,7 @@ export class DataStreamWriter {
   }
 
   getData(): Buffer {
-    return this.data.slice(0, this.writerIndex);
+    return this.data.subarray(0, this.writerIndex);
   }
 
   private ensureLength(bytes: number) {
@@ -809,7 +809,7 @@ export class DataStreamWriter {
     const byteLength = Buffer.byteLength(utf8);
     this.ensureLength(byteLength);
 
-    this.data.write(utf8, this.writerIndex, undefined, "utf8");
+    this.data.write(utf8, this.writerIndex, byteLength, "utf8");
     this.writerIndex += byteLength;
   }
 

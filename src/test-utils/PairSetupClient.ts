@@ -178,8 +178,8 @@ export class PairSetupClient {
 
     // step 1 & 2
     const encryptedDataTagM6 = objectsM6[TLVValues.ENCRYPTED_DATA];
-    const encryptedDataM6 = encryptedDataTagM6.slice(0, -16);
-    const authTagM6 = encryptedDataTagM6.slice(-16);
+    const encryptedDataM6 = encryptedDataTagM6.subarray(0, -16);
+    const authTagM6 = encryptedDataTagM6.subarray(-16);
 
     let plaintextM6 = Buffer.alloc(0);
     expect(() => plaintextM6 = hapCrypto.chacha20_poly1305_decryptAndVerify(

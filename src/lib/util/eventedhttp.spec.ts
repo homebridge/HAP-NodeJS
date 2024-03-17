@@ -30,7 +30,7 @@ describe("eventedhttp", () => {
     await awaitEventOnce(server, EventedHTTPServerEvent.LISTENING);
 
     const address = server.address();
-    baseUrl = `http://${address.address}:${address.port}`;
+    baseUrl = `http://${address.family === "IPv6" ? (address.address === "::" ? "localhost" : `[${address.address}]`) : address.address}:${address.port}`;
   });
 
   afterEach(() => {
@@ -69,7 +69,7 @@ describe("eventedhttp", () => {
 
   test("ensure connection handling respects nature of unpair", async () => {
     // evented http server records the username of every authenticated HAPConnection.
-    // For the same Apple ID (username) there might be multiple connections (iDevices, hubs, etc).
+    // For the same Apple ID (username) there might be multiple connections (iDevices, hubs, etc.).
     // Once an unpair request happens, all other connections need to be torn down while the connection
     // that made the request must persist till the response is sent out!
 
@@ -103,7 +103,7 @@ describe("eventedhttp", () => {
     const pendingRequest = axios.get(baseUrl, { httpAgent }); // simulate a "unpair" request!
     const queuedResponse = (await queuedRequestPromise)[2];
 
-    // do the unpair!!
+    // do the unpairing!!
     const connectionClosed: Promise<HAPConnection> = awaitEventOnce(server, EventedHTTPServerEvent.CONNECTION_CLOSED);
     EventedHTTPServer.destroyExistingConnectionsAfterUnpair(connection0, username);
     await expect(connectionClosed).resolves.toBe(connection1);
@@ -130,7 +130,8 @@ describe("eventedhttp", () => {
     server.once(EventedHTTPServerEvent.REQUEST, defaultRequestHandler);
 
     const connectionOpened: Promise<HAPConnection> = awaitEventOnce(server, EventedHTTPServerEvent.CONNECTION_OPENED);
-    const result: AxiosResponse<string> = await axios.get(`http://${address.address}:${address.port}/test?query=true`, { httpAgent });
+
+    const result: AxiosResponse<string> = await axios.get(`http://${address.family === "IPv6" ? (address.address === "::" ? "localhost" : `[${address.address}]`) : address.address}:${address.port}/test?query=true`, { httpAgent });
     expect(result.data).toEqual("Hello World");
     const connection = await connectionOpened;
 

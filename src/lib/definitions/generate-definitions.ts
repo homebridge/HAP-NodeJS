@@ -188,7 +188,7 @@ try {
   const props: Record<string, PropertyDefinition> = checkDefined(plistData.PlistDictionary.HAP.Properties);
   // noinspection JSUnusedLocalSymbols
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  for (const [id, definition] of Object.entries(props).sort(([a, aDef], [b, bDef]) => aDef.Position - bDef.Position)) {
+  for (const [id, definition] of Object.entries(props).sort(([, aDef], [, bDef]) => aDef.Position - bDef.Position)) {
     const perm = characteristicPerm(id);
     if (perm) {
       const num = 1 << definition.Position;
@@ -209,7 +209,7 @@ try {
   throw error;
 }
 
-// first step is to check if we are up to date on categories
+// first step is to check if we are up-to-date on categories
 for (const definition of Object.values(categories)) {
   if (definition.Identifier > 36) {
     console.log(`Detected a new category '${definition.DefaultDescription}' with id ${definition.Identifier}`);
@@ -257,7 +257,7 @@ for (const [id, definition] of Object.entries(characteristics)) {
       }
     }
     for (const [value, name] of Object.entries(validValues)) {
-      let constName = name.toUpperCase().replace(/[^\w]+/g, "_");
+      let constName = name.toUpperCase().replace(/\W+/g, "_");
       if (/^[1-9]/.test(constName)) {
         constName = "_" + constName; // variables can't start with a number
       }
@@ -268,7 +268,7 @@ for (const [id, definition] of Object.entries(characteristics)) {
     if (validBits) {
       validBitMasks = {};
       for (const [value, name] of Object.entries(validBits)) {
-        let constName = name.toUpperCase().replace(/[^\w]+/g, "_");
+        let constName = name.toUpperCase().replace(/\W+/g, "_");
         if (/^[1-9]/.test(constName)) {
           constName = "_" + constName; // variables can't start with a number
         }
@@ -644,7 +644,7 @@ function generatePermsString(id: string, propertiesBitMap: number): string {
 
   for (const [bitMap, name] of properties) {
     if (name === "ADDITIONAL_AUTHORIZATION") {
-      // aa set by homed just signals that aa may be supported. Setting up aa will always require a custom made app though
+      // aa set by homed just signals that aa may be supported. Setting up aa will always require a custom-made app though
       continue;
     }
     if ((propertiesBitMap | bitMap) === propertiesBitMap) { // if it stays the same the bit is set

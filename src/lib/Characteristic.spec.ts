@@ -75,7 +75,7 @@ describe("Characteristic", () => {
 
       expect(characteristic.props.minValue).toEqual(0); // min for UINT8
       expect(characteristic.props.maxValue).toEqual(255); // max for UINT8
-      expect(mock).toBeCalledTimes(2);
+      expect(mock).toHaveBeenCalledTimes(2);
 
       mock.mockReset();
       characteristic.setProps({
@@ -85,7 +85,7 @@ describe("Characteristic", () => {
 
       expect(characteristic.props.minValue).toEqual(0); // min for UINT8
       expect(characteristic.props.maxValue).toEqual(255); // max for UINT8
-      expect(mock).toBeCalledTimes(2);
+      expect(mock).toHaveBeenCalledTimes(2);
 
       mock.mockReset();
       characteristic.setProps({
@@ -95,7 +95,7 @@ describe("Characteristic", () => {
 
       expect(characteristic.props.minValue).toEqual(10);
       expect(characteristic.props.maxValue).toEqual(255); // max for UINT8
-      expect(mock).toBeCalledTimes(1);
+      expect(mock).toHaveBeenCalledTimes(1);
     });
 
     it("should reject update to minValue and maxValue when minValue is greater than maxValue", () => {
@@ -109,7 +109,7 @@ describe("Characteristic", () => {
           minValue: 1000,
           maxValue: 500,
         });
-      }).toThrowError();
+      }).toThrow();
 
       expect(characteristic.props.minValue).toBeUndefined();
       expect(characteristic.props.maxValue).toBeUndefined();
@@ -134,7 +134,7 @@ describe("Characteristic", () => {
 
       expect(characteristic.props.minValue).toEqual(10);
       expect(characteristic.props.maxValue).toEqual(240);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
 
       mock.mockReset();
       characteristic.setProps({
@@ -144,7 +144,7 @@ describe("Characteristic", () => {
 
       expect(characteristic.props.minValue).toEqual(-2147483648);
       expect(characteristic.props.maxValue).toEqual(2147483647);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
     });
 
     it("should reject non-finite numbers for minValue and maxValue for numeric characteristics", () => {
@@ -162,8 +162,8 @@ describe("Characteristic", () => {
       });
 
       expect(characteristic.props.minValue).toEqual(undefined);
-      expect(mock).toBeCalledTimes(1);
-      expect(mock).toBeCalledWith(expect.stringContaining("Property 'minValue' must be a finite number"), expect.anything());
+      expect(mock).toHaveBeenCalledTimes(1);
+      expect(mock).toHaveBeenCalledWith(expect.stringContaining("Property 'minValue' must be a finite number"), expect.anything());
 
       mock.mockReset();
       characteristic.setProps({
@@ -171,8 +171,8 @@ describe("Characteristic", () => {
       });
 
       expect(characteristic.props.maxValue).toEqual(undefined);
-      expect(mock).toBeCalledTimes(1);
-      expect(mock).toBeCalledWith(expect.stringContaining("Property 'maxValue' must be a finite number"), expect.anything());
+      expect(mock).toHaveBeenCalledTimes(1);
+      expect(mock).toHaveBeenCalledWith(expect.stringContaining("Property 'maxValue' must be a finite number"), expect.anything());
     });
 
     it("should reject NaN numbers for minValue and maxValue for numeric characteristics", () => {
@@ -190,8 +190,8 @@ describe("Characteristic", () => {
       });
 
       expect(characteristic.props.minValue).toEqual(undefined);
-      expect(mock).toBeCalledTimes(1);
-      expect(mock).toBeCalledWith(expect.stringContaining("Property 'minValue' must be a finite number"), expect.anything());
+      expect(mock).toHaveBeenCalledTimes(1);
+      expect(mock).toHaveBeenCalledWith(expect.stringContaining("Property 'minValue' must be a finite number"), expect.anything());
 
       mock.mockReset();
       characteristic.setProps({
@@ -199,8 +199,8 @@ describe("Characteristic", () => {
       });
 
       expect(characteristic.props.maxValue).toEqual(undefined);
-      expect(mock).toBeCalledTimes(1);
-      expect(mock).toBeCalledWith(expect.stringContaining("Property 'maxValue' must be a finite number"), expect.anything());
+      expect(mock).toHaveBeenCalledTimes(1);
+      expect(mock).toHaveBeenCalledWith(expect.stringContaining("Property 'maxValue' must be a finite number"), expect.anything());
     });
 
     test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
@@ -216,14 +216,14 @@ describe("Characteristic", () => {
         const warningMock = jest.spyOn(characteristic, "characteristicWarning");
 
         const expectNoChange = () => {
-          expect(changedMock).toBeCalledTimes(0);
-          expect(warningMock).toBeCalledTimes(0);
+          expect(changedMock).toHaveBeenCalledTimes(0);
+          expect(warningMock).toHaveBeenCalledTimes(0);
         };
 
         const expectChange = () => {
-          expect(changedMock).toBeCalledTimes(1);
-          expect(warningMock).toBeCalledTimes(1);
-          expect(warningMock).toBeCalledWith(expect.anything(), CharacteristicWarningType.DEBUG_MESSAGE);
+          expect(changedMock).toHaveBeenCalledTimes(1);
+          expect(warningMock).toHaveBeenCalledTimes(1);
+          expect(warningMock).toHaveBeenCalledWith(expect.anything(), CharacteristicWarningType.DEBUG_MESSAGE);
         };
 
         const reset = () => {
@@ -301,14 +301,14 @@ describe("Characteristic", () => {
       const warningMock = jest.spyOn(characteristic, "characteristicWarning");
 
       const expectNoChange = () => {
-        expect(changedMock).toBeCalledTimes(0);
-        expect(warningMock).toBeCalledTimes(0);
+        expect(changedMock).toHaveBeenCalledTimes(0);
+        expect(warningMock).toHaveBeenCalledTimes(0);
       };
 
       const expectChange = () => {
-        expect(changedMock).toBeCalledTimes(1);
-        expect(warningMock).toBeCalledTimes(1);
-        expect(warningMock).toBeCalledWith(expect.anything(), CharacteristicWarningType.DEBUG_MESSAGE);
+        expect(changedMock).toHaveBeenCalledTimes(1);
+        expect(warningMock).toHaveBeenCalledTimes(1);
+        expect(warningMock).toHaveBeenCalledWith(expect.anything(), CharacteristicWarningType.DEBUG_MESSAGE);
       };
 
       const reset = () => {
@@ -363,8 +363,8 @@ describe("Characteristic", () => {
         maxLen: 5,
       });
 
-      expect(changedMock).toBeCalledTimes(0);
-      expect(warningMock).toBeCalledTimes(0);
+      expect(changedMock).toHaveBeenCalledTimes(0);
+      expect(warningMock).toHaveBeenCalledTimes(0);
       expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
     });
 
@@ -388,8 +388,8 @@ describe("Characteristic", () => {
         format: Formats.INT,
       });
 
-      expect(changedMock).toBeCalledTimes(0);
-      expect(warningMock).toBeCalledTimes(0);
+      expect(changedMock).toHaveBeenCalledTimes(0);
+      expect(warningMock).toHaveBeenCalledTimes(0);
       expect(characteristic.value).toEqual("Hello World");
       // when changing the format, users must change the value after changing setProps!
     });
@@ -410,8 +410,8 @@ describe("Characteristic", () => {
         validValues: [0, 2],
       });
 
-      expect(changedMock).toBeCalledTimes(0);
-      expect(warningMock).toBeCalledTimes(0);
+      expect(changedMock).toHaveBeenCalledTimes(0);
+      expect(warningMock).toHaveBeenCalledTimes(0);
       expect(switchEvent.value).toEqual(1);
     });
 
@@ -431,8 +431,8 @@ describe("Characteristic", () => {
       buttonEvent.setProps({
       });
 
-      expect(changedMock).toBeCalledTimes(0);
-      expect(warningMock).toBeCalledTimes(0);
+      expect(changedMock).toHaveBeenCalledTimes(0);
+      expect(warningMock).toHaveBeenCalledTimes(0);
       expect(buttonEvent.value).toEqual("0000");
     });
   });
@@ -493,7 +493,7 @@ describe("Characteristic", () => {
       expect(result).toEqual(Array.from(new Uint8Array(256).map((value, i) => i)));
     });
 
-    // we could do the same for UINT16, UINT32 and UINT64 but i think thats kind of pointless and takes to long
+    // we could do the same for UINT16, UINT32 and UINT64, but I think that's kind of pointless and takes to long
   });
 
   describe("#subscribe()", () => {
@@ -604,7 +604,7 @@ describe("Characteristic", () => {
       expect(characteristic.value).toEqual(1);
 
       // ensure validator was actually called
-      expect(validateClientSuppliedValueMock).toBeCalled();
+      expect(validateClientSuppliedValueMock).toHaveBeenCalled();
     });
 
     it("rejects invalid values for the boolean format type", async () => {
@@ -644,7 +644,7 @@ describe("Characteristic", () => {
       expect(characteristic.value).toEqual(true);
 
       // ensure validator was actually called
-      expect(validateClientSuppliedValueMock).toBeCalledTimes(4);
+      expect(validateClientSuppliedValueMock).toHaveBeenCalledTimes(4);
     });
 
     test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
@@ -664,7 +664,7 @@ describe("Characteristic", () => {
         expect(characteristic.value).toEqual(0);
 
         // ensure validator was actually called
-        expect(validateClientSuppliedValueMock).toBeCalled();
+        expect(validateClientSuppliedValueMock).toHaveBeenCalled();
       });
 
 
@@ -685,7 +685,7 @@ describe("Characteristic", () => {
         expect(characteristic.value).toEqual(1);
 
         // ensure validator was actually called
-        expect(validateClientSuppliedValueMock).toBeCalled();
+        expect(validateClientSuppliedValueMock).toHaveBeenCalled();
       });
 
     test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
@@ -712,7 +712,7 @@ describe("Characteristic", () => {
         expect(characteristic.value).toEqual(1);
 
         // ensure validator was actually called
-        expect(validateClientSuppliedValueMock).toBeCalled();
+        expect(validateClientSuppliedValueMock).toHaveBeenCalled();
       });
 
     test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
@@ -750,7 +750,7 @@ describe("Characteristic", () => {
         expect(characteristic.value).toEqual(0);
 
         // ensure validator was actually called
-        expect(validateClientSuppliedValueMock).toBeCalledTimes(3);
+        expect(validateClientSuppliedValueMock).toHaveBeenCalledTimes(3);
       });
 
     test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
@@ -777,7 +777,7 @@ describe("Characteristic", () => {
         expect(characteristic.value).toEqual(1);
 
         // ensure validator was actually called
-        expect(validateClientSuppliedValueMock).toBeCalledTimes(1);
+        expect(validateClientSuppliedValueMock).toHaveBeenCalledTimes(1);
       });
 
     test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
@@ -801,7 +801,7 @@ describe("Characteristic", () => {
         expect(characteristic.value).toEqual(1);
 
         // ensure validator was actually called
-        expect(validateClientSuppliedValueMock).toBeCalledTimes(1);
+        expect(validateClientSuppliedValueMock).toHaveBeenCalledTimes(1);
       });
 
     test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
@@ -836,7 +836,7 @@ describe("Characteristic", () => {
         expect(characteristic.value).toEqual(3);
 
         // ensure validator was actually called
-        expect(validateClientSuppliedValueMock).toBeCalledTimes(2);
+        expect(validateClientSuppliedValueMock).toHaveBeenCalledTimes(2);
       });
 
     test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
@@ -875,7 +875,7 @@ describe("Characteristic", () => {
         expect(characteristic.value).toEqual(52);
 
         // ensure validator was actually called
-        expect(validateClientSuppliedValueMock).toBeCalledTimes(3);
+        expect(validateClientSuppliedValueMock).toHaveBeenCalledTimes(3);
       });
 
     test.each([Formats.STRING, Formats.TLV8, Formats.DATA])(
@@ -910,7 +910,7 @@ describe("Characteristic", () => {
         expect(characteristic.value).toEqual("some other test string");
 
         // ensure validator was actually called
-        expect(validateClientSuppliedValueMock).toBeCalledTimes(3);
+        expect(validateClientSuppliedValueMock).toHaveBeenCalledTimes(3);
       });
 
     it("should accept Formats.FLOAT with precision provided by client", async () => {
@@ -936,7 +936,7 @@ describe("Characteristic", () => {
       expect(characteristic.value).toEqual(0.0001005);
 
       // ensure validator was actually called
-      expect(validateClientSuppliedValueMock).toBeCalledTimes(1);
+      expect(validateClientSuppliedValueMock).toHaveBeenCalledTimes(1);
     });
 
     it("should accept negative floats in range for Formats.FLOAT provided by the client", async () => {
@@ -958,7 +958,7 @@ describe("Characteristic", () => {
       expect(characteristic.value).toEqual(-0.013);
 
       // ensure validator was actually called
-      expect(validateClientSuppliedValueMock).toBeCalledTimes(1);
+      expect(validateClientSuppliedValueMock).toHaveBeenCalledTimes(1);
     });
 
     it("rejects string values exceeding the max length from the client", async () => {
@@ -974,7 +974,7 @@ describe("Characteristic", () => {
       // set initial known good value
       characteristic.setValue("abcde");
 
-      // should reject strings that are to long
+      // should reject strings that are too long
       await expect(characteristic.handleSetRequest("this is to long", null as unknown as undefined))
         .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST);
 
@@ -989,7 +989,7 @@ describe("Characteristic", () => {
       expect(characteristic.value).toEqual("abc");
 
       // ensure validator was actually called
-      expect(validateClientSuppliedValueMock).toBeCalledTimes(2);
+      expect(validateClientSuppliedValueMock).toHaveBeenCalledTimes(2);
     });
 
     it("rejects data values exceeding the max length from the client", async () => {
@@ -1005,7 +1005,7 @@ describe("Characteristic", () => {
       // set initial known good value
       characteristic.setValue("abcde");
 
-      // should reject strings that are to long
+      // should reject strings that are too long
       await expect(characteristic.handleSetRequest("this is to long", null as unknown as undefined))
         .rejects.toEqual(HAPStatus.INVALID_VALUE_IN_REQUEST);
 
@@ -1020,7 +1020,7 @@ describe("Characteristic", () => {
       expect(characteristic.value).toEqual("abc");
 
       // ensure validator was actually called
-      expect(validateClientSuppliedValueMock).toBeCalledTimes(2);
+      expect(validateClientSuppliedValueMock).toHaveBeenCalledTimes(2);
     });
 
   });
@@ -1151,7 +1151,7 @@ describe("Characteristic", () => {
 
       characteristic.setValue({ some: "object" });
       expect(characteristic.value).toEqual(false);
-      expect(mock).toBeCalledTimes(1);
+      expect(mock).toHaveBeenCalledTimes(1);
     });
 
     it("should validate boolean inputs when value is undefined", () => {
@@ -1165,7 +1165,7 @@ describe("Characteristic", () => {
 
       characteristic.setValue(undefined as unknown as boolean);
       expect(characteristic.value).toEqual(false);
-      expect(mock).toBeCalledTimes(1);
+      expect(mock).toHaveBeenCalledTimes(1);
     });
 
     test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
@@ -1187,54 +1187,54 @@ describe("Characteristic", () => {
         mock.mockReset();
         characteristic.setValue(-100);
         expect(characteristic.value).toEqual(0);
-        expect(mock).toBeCalledTimes(1);
+        expect(mock).toHaveBeenCalledTimes(1);
 
         // round to nearest valid value, trigger warning
         mock.mockReset();
         characteristic.setValue(200);
         expect(characteristic.value).toEqual(100);
-        expect(mock).toBeCalledTimes(1);
+        expect(mock).toHaveBeenCalledTimes(1);
 
         // parse string
         mock.mockReset();
         characteristic.setValue("50");
         expect(characteristic.value).toEqual(50);
-        expect(mock).toBeCalledTimes(0);
+        expect(mock).toHaveBeenCalledTimes(0);
 
         // handle NaN from non-numeric string, restore last known value, trigger warning
         mock.mockReset();
         characteristic.setValue(50);
         characteristic.setValue("SOME STRING");
         expect(characteristic.value).toEqual(50);
-        expect(mock).toBeCalledTimes(1);
-        expect(mock).toBeCalledWith("characteristic value expected valid finite number and received \"NaN\" (number)", "warn-message");
+        expect(mock).toHaveBeenCalledTimes(1);
+        expect(mock).toHaveBeenCalledWith("characteristic value expected valid finite number and received \"NaN\" (number)", "warn-message");
 
         // handle NaN: number from number value
         mock.mockReset();
         characteristic.setValue(50);
         characteristic.setValue(NaN);
         expect(characteristic.value).toEqual(50);
-        expect(mock).toBeCalledTimes(1);
-        expect(mock).toBeCalledWith("characteristic value expected valid finite number and received \"NaN\" (number)", "warn-message");
+        expect(mock).toHaveBeenCalledTimes(1);
+        expect(mock).toHaveBeenCalledWith("characteristic value expected valid finite number and received \"NaN\" (number)", "warn-message");
 
         // handle object, restore last known value, trigger warning
         mock.mockReset();
         characteristic.setValue(50);
         characteristic.setValue({ some: "object" });
         expect(characteristic.value).toEqual(50);
-        expect(mock).toBeCalledTimes(1);
+        expect(mock).toHaveBeenCalledTimes(1);
 
         // handle boolean - true -> 1
         mock.mockReset();
         characteristic.setValue(true);
         expect(characteristic.value).toEqual(1);
-        expect(mock).toBeCalledTimes(0);
+        expect(mock).toHaveBeenCalledTimes(0);
 
         // handle boolean - false -> 0
         mock.mockReset();
         characteristic.setValue(false);
         expect(characteristic.value).toEqual(0);
-        expect(mock).toBeCalledTimes(0);
+        expect(mock).toHaveBeenCalledTimes(0);
       },
     );
 
@@ -1254,14 +1254,14 @@ describe("Characteristic", () => {
         mock.mockReset();
         characteristic.setValue(undefined as unknown as boolean);
         expect(characteristic.value).toEqual(0);
-        expect(mock).toBeCalledTimes(1);
+        expect(mock).toHaveBeenCalledTimes(1);
 
         // undefined values should be set to the existing value if set
         mock.mockReset();
         characteristic.setValue(50);
         characteristic.setValue(undefined as unknown as boolean);
         expect(characteristic.value).toEqual(50);
-        expect(mock).toBeCalledTimes(1);
+        expect(mock).toHaveBeenCalledTimes(1);
       },
     );
 
@@ -1310,7 +1310,7 @@ describe("Characteristic", () => {
       mock.mockReset();
       characteristic.updateValue(0.09);
       expect(characteristic.value).toEqual(0.09);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
     });
 
     it("should validate Formats.FLOAT with precision", () => {
@@ -1322,27 +1322,27 @@ describe("Characteristic", () => {
       mock.mockReset();
       characteristic.setValue(0);
       expect(characteristic.value).toEqual(0.0001);
-      expect(mock).toBeCalledTimes(1);
+      expect(mock).toHaveBeenCalledTimes(1);
 
       mock.mockReset();
       characteristic.setValue(0.0001);
       expect(characteristic.value).toEqual(0.0001);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
 
       mock.mockReset();
       characteristic.setValue("0.0001");
       expect(characteristic.value).toEqual(0.0001);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
 
       mock.mockReset();
       characteristic.setValue(100000.00000001);
       expect(characteristic.value).toEqual(100000);
-      expect(mock).toBeCalledTimes(1);
+      expect(mock).toHaveBeenCalledTimes(1);
 
       mock.mockReset();
       characteristic.setValue(100000);
       expect(characteristic.value).toEqual(100000);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
     });
 
     it("should validate Formats.FLOAT with precision with minimum steps", () => {
@@ -1400,7 +1400,7 @@ describe("Characteristic", () => {
       mock.mockReset();
       characteristic.setValue(-0.013);
       expect(characteristic.value).toEqual(-0.013);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
     });
 
     it("should not allow non-finite floats in range for Formats.FLOAT", () => {
@@ -1415,17 +1415,17 @@ describe("Characteristic", () => {
       mock.mockReset();
       characteristic.setValue(Infinity);
       expect(characteristic.value).toEqual(0);
-      expect(mock).toBeCalledTimes(1);
+      expect(mock).toHaveBeenCalledTimes(1);
 
       mock.mockReset();
       characteristic.setValue(Number.POSITIVE_INFINITY);
       expect(characteristic.value).toEqual(0);
-      expect(mock).toBeCalledTimes(1);
+      expect(mock).toHaveBeenCalledTimes(1);
 
       mock.mockReset();
       characteristic.setValue(Number.NEGATIVE_INFINITY);
       expect(characteristic.value).toEqual(0);
-      expect(mock).toBeCalledTimes(1);
+      expect(mock).toHaveBeenCalledTimes(1);
     });
 
     it("should validate string inputs", () => {
@@ -1442,26 +1442,26 @@ describe("Characteristic", () => {
       mock.mockReset();
       characteristic.setValue("ok string");
       expect(characteristic.value).toEqual("ok string");
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
 
       // number - convert to string - trigger warning
       mock.mockReset();
       characteristic.setValue(12345);
       expect(characteristic.value).toEqual("12345");
-      expect(mock).toBeCalledTimes(1);
+      expect(mock).toHaveBeenCalledTimes(1);
 
       // not a string or number, use last known good value and trigger warning
       mock.mockReset();
       characteristic.setValue("ok string");
       characteristic.setValue({ ok: "an object" });
       expect(characteristic.value).toEqual("ok string");
-      expect(mock).toBeCalledTimes(1);
+      expect(mock).toHaveBeenCalledTimes(1);
 
       // max length exceeded
       mock.mockReset();
       characteristic.setValue("this string exceeds the max length allowed");
       expect(characteristic.value).toEqual("this string exc");
-      expect(mock).toBeCalledTimes(1);
+      expect(mock).toHaveBeenCalledTimes(1);
     });
 
     it("should validate string inputs when undefined", () => {
@@ -1478,17 +1478,17 @@ describe("Characteristic", () => {
       mock.mockReset();
       characteristic.setValue(undefined as unknown as boolean);
       expect(characteristic.value).toEqual("undefined");
-      expect(mock).toBeCalledTimes(1);
+      expect(mock).toHaveBeenCalledTimes(1);
 
       // undefined values should revert back to last known good value if set
       mock.mockReset();
       characteristic.setValue("ok string");
       characteristic.setValue(undefined as unknown as boolean);
       expect(characteristic.value).toEqual("ok string");
-      expect(mock).toBeCalledTimes(1);
+      expect(mock).toHaveBeenCalledTimes(1);
     });
 
-    it("should validate data type intputs", () => {
+    it("should validate data type inputs", () => {
       const characteristic = createCharacteristicWithProps({
         format: Formats.DATA,
         perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
@@ -1502,17 +1502,17 @@ describe("Characteristic", () => {
       mock.mockReset();
       characteristic.setValue("some data");
       expect(characteristic.value).toEqual("some data");
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
 
       // not valid data
       mock.mockReset();
       characteristic.setValue({ some: "data" });
-      expect(mock).toBeCalledTimes(1);
+      expect(mock).toHaveBeenCalledTimes(1);
 
       // max length exceeded
       mock.mockReset();
       characteristic.setValue("this string exceeds the max length allowed");
-      expect(mock).toBeCalledTimes(1);
+      expect(mock).toHaveBeenCalledTimes(1);
     });
 
     it("should handle null inputs correctly for scalar Apple characteristics", () => {
@@ -1530,14 +1530,14 @@ describe("Characteristic", () => {
       mock.mockReset();
       characteristic.setValue(null as unknown as boolean);
       expect(characteristic.value).toEqual(0);
-      expect(mock).toBeCalledTimes(2);
+      expect(mock).toHaveBeenCalledTimes(2);
 
       // if the value has been previously set, and null is received, the previous value should be returned,
       mock.mockReset();
       characteristic.setValue(50);
       characteristic.setValue(null as unknown as boolean);
       expect(characteristic.value).toEqual(50);
-      expect(mock).toBeCalledTimes(1);
+      expect(mock).toHaveBeenCalledTimes(1);
     });
 
     it("should handle null inputs correctly for scalar non-scalar Apple characteristics", () => {
@@ -1558,7 +1558,7 @@ describe("Characteristic", () => {
       expect(characteristicTLV.value).toEqual(exampleString);
       characteristicTLV.setValue(null as unknown as string);
       expect(characteristicTLV.value).toEqual(null);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
 
       // null is a valid value for data format
       mock.mockReset();
@@ -1566,7 +1566,7 @@ describe("Characteristic", () => {
       expect(characteristicData.value).toEqual(exampleString);
       characteristicData.setValue(null as unknown as string);
       expect(characteristicData.value).toEqual(null);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
     });
 
     it("should handle null inputs correctly for non-Apple characteristics", () => {
@@ -1582,14 +1582,14 @@ describe("Characteristic", () => {
       mock.mockReset();
       characteristic.setValue(null as unknown as boolean);
       expect(characteristic.value).toEqual(null);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
 
       // if the value has been previously set, and null is received, still allow null for non-Apple characteristics
       mock.mockReset();
       characteristic.setValue(50);
       characteristic.setValue(null as unknown as boolean);
       expect(characteristic.value).toEqual(null);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
     });
   });
 
@@ -1735,7 +1735,7 @@ describe("Characteristic", () => {
       });
       await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.RESOURCE_BUSY);
       expect(characteristic.statusCode).toEqual(HAPStatus.RESOURCE_BUSY);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
 
       // throw number - should not trigger characteristic warning
       mock.mockReset();
@@ -1745,17 +1745,17 @@ describe("Characteristic", () => {
       });
       await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.RESOURCE_BUSY);
       expect(characteristic.statusCode).toEqual(HAPStatus.RESOURCE_BUSY);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
 
       // throw out of range number - should convert status code to SERVICE_COMMUNICATION_FAILURE
       mock.mockReset();
       characteristic.removeAllListeners("get");
       characteristic.on("get", (callback) => {
-        callback(234234234234);
+        callback(234234234234 as HAPStatus);
       });
       await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
 
       // throw other error - callback style getters should still not trigger warning when error is passed in
       mock.mockReset();
@@ -1765,7 +1765,7 @@ describe("Characteristic", () => {
       });
       await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
     });
   });
 
@@ -1803,7 +1803,7 @@ describe("Characteristic", () => {
       });
       await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
 
       // throw number - should not trigger characteristic warning
       mock.mockReset();
@@ -1812,7 +1812,7 @@ describe("Characteristic", () => {
       });
       await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
 
       // throw out of range number - should convert status code to SERVICE_COMMUNICATION_FAILURE
       mock.mockReset();
@@ -1821,7 +1821,7 @@ describe("Characteristic", () => {
       });
       await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
 
       // throw other error - should trigger characteristic warning
       mock.mockReset();
@@ -1830,7 +1830,7 @@ describe("Characteristic", () => {
       });
       await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-      expect(mock).toBeCalledTimes(1);
+      expect(mock).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -1862,7 +1862,7 @@ describe("Characteristic", () => {
       });
       await expect(characteristic.handleSetRequest("hello")).rejects.toEqual(HAPStatus.RESOURCE_BUSY);
       expect(characteristic.statusCode).toEqual(HAPStatus.RESOURCE_BUSY);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
 
       // throw number - should not trigger characteristic warning
       mock.mockReset();
@@ -1872,17 +1872,17 @@ describe("Characteristic", () => {
       });
       await expect(characteristic.handleSetRequest("hello")).rejects.toEqual(HAPStatus.RESOURCE_BUSY);
       expect(characteristic.statusCode).toEqual(HAPStatus.RESOURCE_BUSY);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
 
       // throw out of range number - should convert status code to SERVICE_COMMUNICATION_FAILURE
       mock.mockReset();
       characteristic.removeAllListeners("set");
       characteristic.on("set", (value, callback) => {
-        callback(234234234234);
+        callback(234234234234 as HAPStatus);
       });
       await expect(characteristic.handleSetRequest("hello")).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
 
       // throw other error - callback style setters should still not trigger warning when error is passed in
       mock.mockReset();
@@ -1892,7 +1892,7 @@ describe("Characteristic", () => {
       });
       await expect(characteristic.handleSetRequest("hello")).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
     });
   });
 
@@ -1928,7 +1928,7 @@ describe("Characteristic", () => {
       });
       await expect(characteristic.handleSetRequest("hello")).rejects.toEqual(HAPStatus.RESOURCE_BUSY);
       expect(characteristic.statusCode).toEqual(HAPStatus.RESOURCE_BUSY);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
 
       // throw number - should not trigger characteristic warning
       mock.mockReset();
@@ -1937,7 +1937,7 @@ describe("Characteristic", () => {
       });
       await expect(characteristic.handleSetRequest("hello")).rejects.toEqual(HAPStatus.RESOURCE_BUSY);
       expect(characteristic.statusCode).toEqual(HAPStatus.RESOURCE_BUSY);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
 
       // throw out of range number - should convert status code to SERVICE_COMMUNICATION_FAILURE
       mock.mockReset();
@@ -1946,7 +1946,7 @@ describe("Characteristic", () => {
       });
       await expect(characteristic.handleSetRequest("hello")).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-      expect(mock).toBeCalledTimes(0);
+      expect(mock).toHaveBeenCalledTimes(0);
 
       // throw other error - should trigger characteristic warning
       mock.mockReset();
@@ -1955,7 +1955,7 @@ describe("Characteristic", () => {
       });
       await expect(characteristic.handleSetRequest("hello")).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-      expect(mock).toBeCalledTimes(1);
+      expect(mock).toHaveBeenCalledTimes(1);
     });
   });
 

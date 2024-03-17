@@ -50,7 +50,7 @@ export interface ControllerConstructor {
 }
 
 /**
- * A Controller represents a somewhat more complex arrangement of multiple services which together form a accessory
+ * A Controller represents a somewhat more complex arrangement of multiple services which together form an accessory
  * like for example cameras, remotes, tvs or routers.
  * Controllers implementing this interface are capable of being serialized and thus stored on and recreated from disk.
  * Meaning services, characteristic configurations and optionally additional controller states can be persistently saved.
@@ -64,7 +64,7 @@ export interface ControllerConstructor {
  * The constructor of a Controller should only initialize controller specific configuration and states
  * and MUST NOT create any services or characteristics.
  * Additionally, it must implement all necessary methods as noted below. Those methods will get called
- * when the accessory gets added to an Accessory or a Accessory is restored from disk.
+ * when the accessory gets added to an Accessory or an Accessory is restored from disk.
  * @group Controller API
  */
 export interface Controller<M extends ControllerServiceMap = ControllerServiceMap> {
@@ -74,7 +74,7 @@ export interface Controller<M extends ControllerServiceMap = ControllerServiceMa
      * The returned identifier MUST NOT change over the lifetime of the Controller object.
      *
      * Note: The controller can choose to return the same identifier for all controllers of the same type.
-     * This will result in the user only being able to add ONE instance of an Controller to an accessory.
+     * This will result in the user only being able to add ONE instance of a Controller to an accessory.
      *
      * Some predefined identifiers can be found in {@link ControllerIdentifier}.
      */

@@ -627,9 +627,9 @@ describe(IsKnownHAPStatusError, () => {
   });
 
   it("should reject non defined error codes", () => {
-    expect(IsKnownHAPStatusError(23)).toBe(false);
-    expect(IsKnownHAPStatusError(-3)).toBe(false);
-    expect(IsKnownHAPStatusError(-72037)).toBe(false);
+    expect(IsKnownHAPStatusError(23 as HAPStatus)).toBe(false);
+    expect(IsKnownHAPStatusError(-3 as HAPStatus)).toBe(false);
+    expect(IsKnownHAPStatusError(-72037 as HAPStatus)).toBe(false);
     expect(IsKnownHAPStatusError(HAPStatus.SUCCESS)).toBe(false);
   });
 

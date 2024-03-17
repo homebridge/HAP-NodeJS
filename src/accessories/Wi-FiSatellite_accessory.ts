@@ -9,7 +9,7 @@ accessory.username = "FA:3C:ED:5A:1A:A2";
 accessory.pincode = "031-45-154";
 accessory.category = Categories.ROUTER;
 
-accessory.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
+accessory.on(AccessoryEventTypes.IDENTIFY, (_paired: boolean, callback: VoidCallback) => {
   console.log("Identify the '%s'", accessory.displayName);
   callback();
 });

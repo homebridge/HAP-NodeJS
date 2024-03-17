@@ -12,7 +12,7 @@ describe("HapStatusError", () => {
   });
 
   it("reverts to SERVICE_COMMUNICATION_FAILURE if an invalid code is passed in", async () => {
-    const error = new HapStatusError(234523323423423);
+    const error = new HapStatusError(234523323423423 as HAPStatus);
     expect(error.hapStatus).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
   });
 });
