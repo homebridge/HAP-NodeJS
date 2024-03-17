@@ -60,7 +60,7 @@ outlet
   .setCharacteristic(Characteristic.SerialNumber, "A1S2NASF88EW");
 
 // listen for the "identify" event for this Accessory
-outlet.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
+outlet.on(AccessoryEventTypes.IDENTIFY, (_paired: boolean, callback: VoidCallback) => {
   FAKE_OUTLET.identify();
   callback(); // success
 });
@@ -74,7 +74,7 @@ outlet
     callback(); // Our fake Outlet is synchronous - this value has been successfully set
   });
 
-// We want to intercept requests for our current power state so we can query the hardware itself instead of
+// We want to intercept requests for our current power state, so we can query the hardware itself instead of
 // allowing HAP-NodeJS to return the cached Characteristic.value.
 outlet
   .getService(Service.Outlet)!

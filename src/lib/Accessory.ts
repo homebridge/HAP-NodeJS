@@ -623,7 +623,7 @@ export class Accessory extends EventEmitter {
     for (const service of this.services) {
       if (typeof name === "string" && (service.displayName === name || service.name === name || service.subtype === name)) {
         return service;
-      } else if (typeof name === "function" && ((service instanceof name) || (name.UUID === service.UUID))) {
+      } else if (typeof name === "function" && ((service instanceof name) || (name.UUID === (service as Service).UUID))) {
         return service;
       }
     }
@@ -635,7 +635,7 @@ export class Accessory extends EventEmitter {
     for (const service of this.services) {
       if (typeof uuid === "string" && (service.displayName === uuid || service.name === uuid) && service.subtype === subType) {
         return service;
-      } else if (typeof uuid === "function" && ((service instanceof uuid) || (uuid.UUID === service.UUID)) && service.subtype === subType) {
+      } else if (typeof uuid === "function" && ((service instanceof uuid) || (uuid.UUID === (service as Service).UUID)) && service.subtype === subType) {
         return service;
       }
     }
@@ -1394,7 +1394,7 @@ export class Accessory extends EventEmitter {
     }
     if (this._advertiser) {
       // noinspection JSIgnoredPromiseFromCall
-      await this._advertiser.destroy();
+      this._advertiser.destroy();
       this._advertiser = undefined;
     }
   }
@@ -1912,7 +1912,7 @@ export class Accessory extends EventEmitter {
 
   private handleResource(data: ResourceRequest, callback: ResourceRequestCallback): void {
     if (data["resource-type"] === ResourceRequestType.IMAGE) {
-      const aid = data.aid; // aid is optionally supplied by HomeKit (for example when camera is bridged, multiple cams, etc)
+      const aid = data.aid; // aid is optionally supplied by HomeKit (for example when camera is bridged, multiple cams, etc.)
 
       let accessory: Accessory | undefined = undefined;
       let controller: CameraController | undefined = undefined;

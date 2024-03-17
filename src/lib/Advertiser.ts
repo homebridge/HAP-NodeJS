@@ -86,7 +86,7 @@ export interface ServiceNetworkOptions {
 /**
  * A generic Advertiser interface required for any MDNS Advertiser backend implementations.
  *
- * All implementations have to extend NodeJS' {@link EventEmitter} and emit the events defined in {@link AdvertiserEvent}.
+ * All implementations have to extend Node.js' {@link EventEmitter} and emit the events defined in {@link AdvertiserEvent}.
  *
  * @group Advertiser
  */
@@ -184,7 +184,7 @@ export class CiaoAdvertiser extends EventEmitter implements Advertiser {
   static computeSetupHash(accessoryInfo: AccessoryInfo): string {
     const hash = crypto.createHash("sha512");
     hash.update(accessoryInfo.setupID + accessoryInfo.username.toUpperCase());
-    return hash.digest().slice(0, 4).toString("base64");
+    return hash.digest().subarray(0, 4).toString("base64");
   }
 
   public static ff(...flags: PairingFeatureFlag[]): number {

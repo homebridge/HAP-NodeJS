@@ -26,18 +26,18 @@ const controller = siriSupport
 remote.configureController(controller);
 
 /*
-    This example plugin exposes an simple http api to interact with the remote and play around.
+    This example plugin exposes a simple http api to interact with the remote and play around.
     The supported routes are listed below. The http server runs on port 8080 as default.
     This example should not be used except for testing as the http server is unsecured.
 
     /listTargets  -  list all currently configured apple tvs and their respective configuration
     /getActiveTarget  -  return the current target id of the controlled device
-    /getActive  -  get the value of the active characteristic (active means the apple tv for the activeTarget is listening)
+    /getActive  -  get the value of the active characteristic (active means the Apple TV for the activeTarget is listening)
 
     /press?button=<buttonId>&time=<timeInMS>  - presses a given button for a given time. Time is optional and defaults to 200ms
     /button?button=<buttonId>&state=<stateId>  - send a single button event
-    /getTargetId?name=<name of apple TV>  -   get the target identifier for the given name of the apple tv
-    /setActiveTarget?identifier=<id>  - set currently controlled apple tv
+    /getTargetId?name=<name of Apple TV>  -   get the target identifier for the given name of the Apple TV
+    /setActiveTarget?identifier=<id>  - set currently controlled Apple TV
  */
 
 http.createServer((request, response) => {

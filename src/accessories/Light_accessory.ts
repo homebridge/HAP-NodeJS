@@ -116,7 +116,7 @@ lightAccessory
   .setCharacteristic(Characteristic.SerialNumber, LightController.serialNumber);
 
 // listen for the "identify" event for this Accessory
-lightAccessory.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
+lightAccessory.on(AccessoryEventTypes.IDENTIFY, (_paired: boolean, callback: VoidCallback) => {
   LightController.identify();
   callback();
 });

@@ -1016,7 +1016,7 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
         let offset = 0;
         let dataChunkSequenceNumber = 1;
         while (offset < fragment.length) {
-          const data = fragment.slice(offset, offset + maxChunk);
+          const data = fragment.subarray(offset, offset + maxChunk);
           offset += data.length;
 
           // see https://github.com/Supereg/secure-video-specification#42-binary-data

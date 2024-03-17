@@ -429,28 +429,28 @@ describe("Accessory", () => {
       // @ts-expect-error: private access
       accessory.handleInitialPairSetupFinished(clientUsername0, publicKey, callback);
 
-      expect(accessoryInfoUnpaired.addPairedClient).toBeCalledTimes(1);
-      expect(accessoryInfoUnpaired.addPairedClient).toBeCalledWith(clientUsername0, publicKey, PermissionTypes.ADMIN);
+      expect(accessoryInfoUnpaired.addPairedClient).toHaveBeenCalledTimes(1);
+      expect(accessoryInfoUnpaired.addPairedClient).toHaveBeenCalledWith(clientUsername0, publicKey, PermissionTypes.ADMIN);
 
-      expect(saveMock).toBeCalledTimes(1);
+      expect(saveMock).toHaveBeenCalledTimes(1);
 
-      expect(advertiser.updateAdvertisement).toBeCalledTimes(1);
+      expect(advertiser.updateAdvertisement).toHaveBeenCalledTimes(1);
 
-      await advertiser.destroy();
+      advertiser.destroy();
     });
 
     describe("handleAddPairing", () => {
       test("unavailable", () => {
         // @ts-expect-error: private access
         accessory.handleAddPairing(connection, clientUsername1, clientPublicKey1, PermissionTypes.USER, callback);
-        expect(callback).toBeCalledWith(TLVErrorCode.UNAVAILABLE);
+        expect(callback).toHaveBeenCalledWith(TLVErrorCode.UNAVAILABLE);
       });
 
       test("missing admin permissions", () => {
         accessory._accessoryInfo = accessoryInfoUnpaired;
         // @ts-expect-error: private access
         accessory.handleAddPairing(connection, clientUsername1, clientPublicKey1, PermissionTypes.USER, callback);
-        expect(callback).toBeCalledWith(TLVErrorCode.AUTHENTICATION);
+        expect(callback).toHaveBeenCalledWith(TLVErrorCode.AUTHENTICATION);
       });
 
       test.each([PermissionTypes.USER, PermissionTypes.ADMIN])(
@@ -459,7 +459,7 @@ describe("Accessory", () => {
 
           // @ts-expect-error: private access
           accessory.handleAddPairing(connection, clientUsername1, clientPublicKey1, type, callback);
-          expect(callback).toBeCalledWith(0);
+          expect(callback).toHaveBeenCalledWith(0);
 
           const expectedPairings: PairingInformation[] = [
             defaultPairingInfo,
@@ -470,7 +470,7 @@ describe("Accessory", () => {
           expect(accessoryInfoPaired.pairedAdminClients)
             .toEqual(type === PermissionTypes.ADMIN ? 2 : 1);
 
-          expect(saveMock).toBeCalledTimes(1);
+          expect(saveMock).toHaveBeenCalledTimes(1);
         });
 
       test.each([
@@ -487,7 +487,7 @@ describe("Accessory", () => {
 
           // @ts-expect-error: private access
           accessory.handleAddPairing(connection, clientUsername1, clientPublicKey1, type.update, callback);
-          expect(callback).toBeCalledWith(0);
+          expect(callback).toHaveBeenCalledWith(0);
 
           const expectedPairings: PairingInformation[] = [
             defaultPairingInfo,
@@ -498,7 +498,7 @@ describe("Accessory", () => {
           expect(accessoryInfoPaired.pairedAdminClients)
             .toEqual(type.update === PermissionTypes.ADMIN ? 2 : 1);
 
-          expect(saveMock).toBeCalledTimes(1);
+          expect(saveMock).toHaveBeenCalledTimes(1);
         });
 
       test("update permission with non-matching public key", () => {
@@ -507,7 +507,7 @@ describe("Accessory", () => {
 
         // @ts-expect-error: private access
         accessory.handleAddPairing(connection, clientUsername1, crypto.randomBytes(32), PermissionTypes.ADMIN, callback);
-        expect(callback).toBeCalledWith(TLVErrorCode.UNKNOWN);
+        expect(callback).toHaveBeenCalledWith(TLVErrorCode.UNKNOWN);
       });
     });
 
@@ -525,14 +525,14 @@ describe("Accessory", () => {
       test("unavailable", () => {
         // @ts-expect-error: private access
         accessory.handleRemovePairing(connection, clientUsername1, callback);
-        expect(callback).toBeCalledWith(TLVErrorCode.UNAVAILABLE);
+        expect(callback).toHaveBeenCalledWith(TLVErrorCode.UNAVAILABLE);
       });
 
       test("missing admin permissions", () => {
         accessory._accessoryInfo = accessoryInfoUnpaired;
         // @ts-expect-error: private access
         accessory.handleRemovePairing(connection, clientUsername1, callback);
-        expect(callback).toBeCalledWith(TLVErrorCode.AUTHENTICATION);
+        expect(callback).toHaveBeenCalledWith(TLVErrorCode.AUTHENTICATION);
       });
 
       test.each([PermissionTypes.ADMIN, PermissionTypes.USER])(
@@ -544,15 +544,15 @@ describe("Accessory", () => {
 
           // @ts-expect-error: private access
           accessory.handleRemovePairing(connection, clientUsername1, callback);
-          expect(callback).toBeCalledWith(0);
+          expect(callback).toHaveBeenCalledWith(0);
 
           expect(accessoryInfoPaired.listPairings())
             .toEqual([ defaultPairingInfo ]);
           expect(accessoryInfoPaired.pairedAdminClients).toEqual(1);
 
-          expect(EventedHTTPServer.destroyExistingConnectionsAfterUnpair).toBeCalledTimes(1);
+          expect(EventedHTTPServer.destroyExistingConnectionsAfterUnpair).toHaveBeenCalledTimes(1);
           expect(EventedHTTPServer.destroyExistingConnectionsAfterUnpair)
-            .toBeCalledWith(connection, clientUsername1);
+            .toHaveBeenCalledWith(connection, clientUsername1);
         });
 
       test("remove last ADMIN pairing", () => {
@@ -577,23 +577,23 @@ describe("Accessory", () => {
 
         // @ts-expect-error: private access
         accessory.handleRemovePairing(connection, clientUsername0, callback);
-        expect(callback).toBeCalledWith(0);
+        expect(callback).toHaveBeenCalledWith(0);
 
         expect(accessoryInfoPaired.listPairings()).toEqual([]);
         expect(accessoryInfoPaired.pairedAdminClients).toEqual(0);
 
         // verify calls to _removePairedClient0
-        expect(_removePairedClient0Mock).toBeCalledTimes(2);
+        expect(_removePairedClient0Mock).toHaveBeenCalledTimes(2);
         expect(_removePairedClient0Mock)
           .toHaveBeenNthCalledWith(1, connection, clientUsername0);
         expect(_removePairedClient0Mock)
           .toHaveBeenNthCalledWith(2, connection, clientUsername1); // it shall also remove the user pairing
 
-        expect(EventedHTTPServer.destroyExistingConnectionsAfterUnpair).toBeCalledTimes(2);
+        expect(EventedHTTPServer.destroyExistingConnectionsAfterUnpair).toHaveBeenCalledTimes(2);
 
         // verify that accessory is marked as unpaired again
-        expect(advertiser.updateAdvertisement).toBeCalledTimes(1);
-        expect(eventMock).toBeCalledTimes(1);
+        expect(advertiser.updateAdvertisement).toHaveBeenCalledTimes(1);
+        expect(eventMock).toHaveBeenCalledTimes(1);
       });
     });
 
@@ -601,28 +601,28 @@ describe("Accessory", () => {
       test("unavailable", () => {
         // @ts-expect-error: private access
         accessory.handleListPairings(connection, callback);
-        expect(callback).toBeCalledWith(TLVErrorCode.UNAVAILABLE);
+        expect(callback).toHaveBeenCalledWith(TLVErrorCode.UNAVAILABLE);
       });
 
       test("missing admin permissions", () => {
         accessory._accessoryInfo = accessoryInfoUnpaired;
         // @ts-expect-error: private access
         accessory.handleListPairings(connection, callback);
-        expect(callback).toBeCalledWith(TLVErrorCode.AUTHENTICATION);
+        expect(callback).toHaveBeenCalledWith(TLVErrorCode.AUTHENTICATION);
 
         accessory._accessoryInfo = accessoryInfoPaired;
         accessoryInfoPaired.addPairedClient(clientUsername1, clientPublicKey1, PermissionTypes.USER);
         connection.username = clientUsername1;
         // @ts-expect-error: private access
         accessory.handleListPairings(connection, callback);
-        expect(callback).toBeCalledWith(TLVErrorCode.AUTHENTICATION);
+        expect(callback).toHaveBeenCalledWith(TLVErrorCode.AUTHENTICATION);
       });
 
       test("list pairings", () => {
         accessory._accessoryInfo = accessoryInfoPaired;
         // @ts-expect-error: private access
         accessory.handleListPairings(connection, callback);
-        expect(callback).toBeCalledWith(0, [ defaultPairingInfo ]);
+        expect(callback).toHaveBeenCalledWith(0, [ defaultPairingInfo ]);
       });
     });
   });
@@ -791,8 +791,8 @@ describe("Accessory", () => {
             ],
           }],
         };
-        expect(callback).toBeCalledTimes(1);
-        expect(callback).toBeCalledWith(undefined, expected);
+        expect(callback).toHaveBeenCalledTimes(1);
+        expect(callback).toHaveBeenCalledWith(undefined, expected);
       });
     });
 
@@ -817,8 +817,8 @@ describe("Accessory", () => {
           characteristics: expectedReadData,
         };
 
-        expect(callback).toBeCalledTimes(1);
-        expect(callback).toBeCalledWith(undefined, expectedResponse);
+        expect(callback).toHaveBeenCalledTimes(1);
+        expect(callback).toHaveBeenCalledWith(undefined, expectedResponse);
 
         callback.mockReset();
       };
@@ -1021,8 +1021,8 @@ describe("Accessory", () => {
           characteristics: expectedReadData,
         };
 
-        expect(callback).toBeCalledTimes(1);
-        expect(callback).toBeCalledWith(undefined, expectedResponse);
+        expect(callback).toHaveBeenCalledTimes(1);
+        expect(callback).toHaveBeenCalledWith(undefined, expectedResponse);
 
         callback.mockReset();
       };
@@ -1169,8 +1169,8 @@ describe("Accessory", () => {
           iid: iids.on,
           status: HAPStatus.SUCCESS,
         });
-        expect(connection.enableEventNotifications).not.toBeCalled();
-        expect(connection.disableEventNotifications).not.toBeCalled();
+        expect(connection.enableEventNotifications).not.toHaveBeenCalled();
+        expect(connection.disableEventNotifications).not.toHaveBeenCalled();
         // @ts-expect-error: private access
         expect(onCharacteristic.subscriptions).toEqual(0);
 
@@ -1194,8 +1194,8 @@ describe("Accessory", () => {
           iid: iids.on,
           status: HAPStatus.SUCCESS,
         });
-        expect(connection.enableEventNotifications).toBeCalledTimes(1); // >stays< at 1 invocation
-        expect(connection.disableEventNotifications).not.toBeCalled();
+        expect(connection.enableEventNotifications).toHaveBeenCalledTimes(1); // >stays< at 1 invocation
+        expect(connection.disableEventNotifications).not.toHaveBeenCalled();
         // @ts-expect-error: private access
         expect(onCharacteristic.subscriptions).toEqual(1);
 
@@ -1245,7 +1245,7 @@ describe("Accessory", () => {
           iid: iids.on,
           status: HAPStatus.SUCCESS,
         });
-        expect(connection.enableEventNotifications).toBeCalled();
+        expect(connection.enableEventNotifications).toHaveBeenCalled();
         // @ts-expect-error: private access
         expect(onCharacteristic.subscriptions).toEqual(1);
 
@@ -1264,7 +1264,7 @@ describe("Accessory", () => {
         // @ts-expect-error: private access
         accessory.handleHAPConnectionClosed(connection);
 
-        expect(connection.clearRegisteredEvents).toBeCalled();
+        expect(connection.clearRegisteredEvents).toHaveBeenCalled();
         // @ts-expect-error: private access
         expect(accessory.findCharacteristic).toHaveBeenCalledWith(aid, iids.on);
         // @ts-expect-error: private access

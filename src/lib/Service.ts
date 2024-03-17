@@ -677,13 +677,13 @@ export class Service extends EventEmitter {
     for (const characteristic of this.characteristics) {
       if (typeof name === "string" && characteristic.displayName === name) {
         return characteristic;
-      } else if (typeof name === "function" && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
+      } else if (typeof name === "function" && ((characteristic instanceof name) || (name.UUID === (characteristic as Characteristic).UUID))) {
         return characteristic;
       }
     }
     if (typeof name === "function") {
       for (const characteristic of this.optionalCharacteristics) {
-        if ((characteristic instanceof name) || (name.UUID === characteristic.UUID)) {
+        if ((characteristic instanceof name) || (name.UUID === (characteristic as Characteristic).UUID)) {
           return this.addCharacteristic(name);
         }
       }
@@ -704,7 +704,7 @@ export class Service extends EventEmitter {
     for (const characteristic of this.characteristics) {
       if (typeof name === "string" && characteristic.displayName === name) {
         return true;
-      } else if (typeof name === "function" && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
+      } else if (typeof name === "function" && ((characteristic instanceof name) || (name.UUID === (characteristic as Characteristic).UUID))) {
         return true;
       }
     }

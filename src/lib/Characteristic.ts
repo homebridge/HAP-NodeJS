@@ -2377,7 +2377,7 @@ export class Characteristic extends EventEmitter {
    * Called when a HAP requests wants to know the current value of the characteristic.
    *
    * @param connection - The HAP connection from which the request originated from.
-   * @param context - Deprecated parameter. There for backwards compatibility.
+   * @param context - Deprecated parameter. Here for backwards compatibility.
    * @private Used by the Accessory to load the characteristic value
    */
   async handleGetRequest(connection?: HAPConnection, context?: CharacteristicContext): Promise<Nullable<CharacteristicValue>> {
@@ -2514,7 +2514,7 @@ export class Characteristic extends EventEmitter {
    *
    * @param value - The updated value
    * @param connection - The connection from which the request originated from
-   * @param context - Deprecated parameter. There for backwards compatibility.
+   * @param context - Deprecated parameter. Here for backwards compatibility.
    * @returns Promise resolve to void in normal operation. When characteristic supports write-response, HAP
    *  requests a write-response and the set handler returns a write-response value, the respective
    *  write response value is resolved.
@@ -2979,7 +2979,7 @@ export class Characteristic extends EventEmitter {
       }
 
       if (this.props.maxDataLen != null && value.length > this.props.maxDataLen) {
-        // can't cut it as we would basically set binary rubbish afterwards
+        // can't cut it as we would basically set binary rubbish afterward
         throw new Error("characteristic with DATA format exceeds specified maxDataLen");
       }
       return value;

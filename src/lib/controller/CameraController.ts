@@ -170,7 +170,7 @@ export interface CameraStreamingDelegate {
 /**
  * A `CameraRecordingDelegate` is responsible for handling recordings of a HomeKit Secure Video camera.
  *
- * It is responsible for maintaining the prebuffer (see {@link CameraRecordingOptions.prebufferLength},
+ * It is responsible for maintaining the prebuffer (see {@link CameraRecordingOptions.prebufferLength}),
  * once recording was activated (see {@link updateRecordingActive}).
  *
  * Before recording is considered enabled two things must happen:

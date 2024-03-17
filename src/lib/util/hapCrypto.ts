@@ -68,10 +68,9 @@ export function chacha20_poly1305_decryptAndVerify(key: Buffer, nonce: Buffer, a
     ]);
   }
 
-  // @ts-expect-error: types for this are really broken
   const decipher = crypto.createDecipheriv("chacha20-poly1305", key, nonce, { authTagLength: 16 });
   if (aad) {
-    decipher.setAAD(aad);
+    decipher.setAAD(aad,{ plaintextLength: ciphertext.length });
   }
   decipher.setAuthTag(authTag);
   const plaintext = decipher.update(ciphertext);
@@ -99,11 +98,10 @@ export function chacha20_poly1305_encryptAndSeal(key: Buffer, nonce: Buffer, aad
     ]);
   }
 
-  // @ts-expect-error: types for this are really broken
   const cipher = crypto.createCipheriv("chacha20-poly1305", key, nonce, { authTagLength: 16 });
 
   if (aad) {
-    cipher.setAAD(aad);
+    cipher.setAAD(aad, { plaintextLength: plaintext.length });
   }
 
   const ciphertext = cipher.update(plaintext);
@@ -130,7 +128,7 @@ export function layerEncrypt(data: Buffer, encryption: HAPEncryption): Buffer {
     const nonce = Buffer.alloc(8);
     writeUInt64LE(encryption.accessoryToControllerCount++, nonce, 0);
 
-    const encrypted = chacha20_poly1305_encryptAndSeal(encryption.accessoryToControllerKey, nonce, leLength, data.slice(offset, offset + length));
+    const encrypted = chacha20_poly1305_encryptAndSeal(encryption.accessoryToControllerKey, nonce, leLength, data.subarray(offset, offset + length));
     offset += length;
 
     result = Buffer.concat([result,leLength,encrypted.ciphertext,encrypted.authTag]);
@@ -151,11 +149,11 @@ export function layerDecrypt(packet: Buffer, encryption: HAPEncryption): Buffer 
   const total = packet.length;
 
   for (let offset = 0; offset < total;) {
-    const realDataLength = packet.slice(offset, offset + 2).readUInt16LE(0);
+    const realDataLength = packet.subarray(offset, offset + 2).readUInt16LE(0);
 
     const availableDataLength = total - offset - 2 - 16;
     if (realDataLength > availableDataLength) { // Fragmented packet
-      encryption.incompleteFrame = packet.slice(offset);
+      encryption.incompleteFrame = packet.subarray(offset);
       break;
     }
 
@@ -165,9 +163,9 @@ export function layerDecrypt(packet: Buffer, encryption: HAPEncryption): Buffer 
     const plaintext = chacha20_poly1305_decryptAndVerify(
       encryption.controllerToAccessoryKey,
       nonce,
-      packet.slice(offset,offset+2),
-      packet.slice(offset + 2, offset + 2 + realDataLength),
-      packet.slice(offset + 2 + realDataLength, offset + 2 + realDataLength + 16),
+      packet.subarray(offset,offset+2),
+      packet.subarray(offset + 2, offset + 2 + realDataLength),
+      packet.subarray(offset + 2 + realDataLength, offset + 2 + realDataLength + 16),
     );
     result = Buffer.concat([result, plaintext]);
     offset += (18 + realDataLength);
