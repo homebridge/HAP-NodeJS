@@ -692,7 +692,7 @@ export class HAPServer extends EventEmitter {
     const serverProof = tweetnacl.sign.detached(material, privateKey);
     const encSalt = Buffer.from("Pair-Verify-Encrypt-Salt");
     const encInfo = Buffer.from("Pair-Verify-Encrypt-Info");
-    const outputKey = hapCrypto.HKDF("sha512", encSalt, sharedSec, encInfo, 32).slice(0, 32);
+    const outputKey = hapCrypto.HKDF("sha512", encSalt, sharedSec, encInfo, 32).subarray(0, 32);
 
     connection.encryption = new HAPEncryption(clientPublicKey, secretKey, publicKey, sharedSec, outputKey);
 

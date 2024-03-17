@@ -50,7 +50,7 @@ fan
   .setCharacteristic(Characteristic.Manufacturer, "Sample Company");
 
 // listen for the "identify" event for this Accessory
-fan.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
+fan.on(AccessoryEventTypes.IDENTIFY, (_paired: boolean, callback: VoidCallback) => {
   FAKE_FAN.identify();
   callback(); // success
 });
@@ -63,7 +63,7 @@ fan
     FAKE_FAN.setPowerOn(value);
   });
 
-// We want to intercept requests for our current power state so we can query the hardware itself instead of
+// We want to intercept requests for our current power state, so we can query the hardware itself instead of
 // allowing HAP-NodeJS to return the cached Characteristic.value.
 fan
   .getService(Service.Fan)!

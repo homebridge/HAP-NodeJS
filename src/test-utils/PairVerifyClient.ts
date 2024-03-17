@@ -112,8 +112,8 @@ export class PairVerifyClient {
     );
 
     // step 3 & 4
-    const cipherTextM2 = encryptedDataM2.slice(0, -16);
-    const authTagM2 = encryptedDataM2.slice(-16);
+    const cipherTextM2 = encryptedDataM2.subarray(0, -16);
+    const authTagM2 = encryptedDataM2.subarray(-16);
 
     let plaintextM2 = Buffer.alloc(0);
     expect(() => plaintextM2 = hapCrypto.chacha20_poly1305_decryptAndVerify(

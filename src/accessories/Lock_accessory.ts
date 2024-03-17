@@ -47,7 +47,7 @@ lock
   .setCharacteristic(Characteristic.SerialNumber, "MY-Serial-Number");
 
 // listen for the "identify" event for this Accessory
-lock.on(AccessoryEventTypes.IDENTIFY, (paired, callback) => {
+lock.on(AccessoryEventTypes.IDENTIFY, (_paired, callback) => {
   FAKE_LOCK.identify();
   callback(); // success
 });
@@ -62,18 +62,18 @@ service.getCharacteristic(Characteristic.LockTargetState)
       FAKE_LOCK.unlock();
       callback(); // Our fake Lock is synchronous - this value has been successfully set
 
-      // now we want to set our lock's "actual state" to be unsecured so it shows as unlocked in iOS apps
+      // now we want to set our lock's "actual state" to be unsecured, so it shows as unlocked in iOS apps
       service.updateCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.UNSECURED);
     } else if (value === Characteristic.LockTargetState.SECURED) {
       FAKE_LOCK.lock();
       callback(); // Our fake Lock is synchronous - this value has been successfully set
 
-      // now we want to set our lock's "actual state" to be locked so it shows as open in iOS apps
+      // now we want to set our lock's "actual state" to be locked, so it shows as open in iOS apps
       service.updateCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.SECURED);
     }
   });
 
-// We want to intercept requests for our current state so we can query the hardware itself instead of
+// We want to intercept requests for our current state, so we can query the hardware itself instead of
 // allowing HAP-NodeJS to return the cached Characteristic.value.
 service.getCharacteristic(Characteristic.LockCurrentState)
   .on(CharacteristicEventTypes.GET, callback => {

@@ -134,22 +134,22 @@ describe("hapCrypto", () => {
       const C_encrypted0 = hapCrypto.layerEncrypt(message2, clientEncryption);
       const C_encrypted1 = hapCrypto.layerEncrypt(message3, clientEncryption);
 
-      expect(hapCrypto.layerDecrypt(C_encrypted0.slice(0, 5), serverEncryption)).toEqual(Buffer.alloc(0));
+      expect(hapCrypto.layerDecrypt(C_encrypted0.subarray(0, 5), serverEncryption)).toEqual(Buffer.alloc(0));
 
       const S_decrypted0 = hapCrypto.layerDecrypt(
-        Buffer.concat([S_encrypted0, S_encrypted1.slice(0, 5)]),
+        Buffer.concat([S_encrypted0, S_encrypted1.subarray(0, 5)]),
         clientEncryption,
       );
       expect(S_decrypted0).toEqual(message0);
 
       const C_decrypted = hapCrypto.layerDecrypt(
-        Buffer.concat([C_encrypted0.slice(5), C_encrypted1]),
+        Buffer.concat([C_encrypted0.subarray(5), C_encrypted1]),
         serverEncryption,
       );
       expect(C_decrypted).toEqual(Buffer.concat([message2, message3]));
 
       const S_decrypted1 = hapCrypto.layerDecrypt(
-        Buffer.concat([S_encrypted1.slice(5), S_encrypted2]),
+        Buffer.concat([S_encrypted1.subarray(5), S_encrypted2]),
         clientEncryption,
       );
       expect(S_decrypted1).toEqual(Buffer.concat([message1, message2]));

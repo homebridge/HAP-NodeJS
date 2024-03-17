@@ -49,11 +49,11 @@ export function encode(type: number, data: TLVEncodable | TLVEncodable[], ...arg
 
     for (; leftBytes > 0;) {
       if (leftBytes >= 255) {
-        encodedTLVBuffers.push(Buffer.concat([Buffer.from([type, 0xFF]), data.slice(currentIndex, currentIndex + 255)]));
+        encodedTLVBuffers.push(Buffer.concat([Buffer.from([type, 0xFF]), data.subarray(currentIndex, currentIndex + 255)]));
         leftBytes -= 255;
         currentIndex += 255;
       } else {
-        encodedTLVBuffers.push(Buffer.concat([Buffer.from([type,leftBytes]), data.slice(currentIndex)]));
+        encodedTLVBuffers.push(Buffer.concat([Buffer.from([type,leftBytes]), data.subarray(currentIndex)]));
         leftBytes -= leftBytes;
       }
     }
@@ -97,7 +97,7 @@ export function decode(buffer: Buffer): Record<number, Buffer> {
     currentIndex += 2;
     leftLength -= 2;
 
-    const data = buffer.slice(currentIndex, currentIndex + length);
+    const data = buffer.subarray(currentIndex, currentIndex + length);
 
     if (objects[type]) {
       objects[type] = Buffer.concat([objects[type],data]);
@@ -136,7 +136,7 @@ export function decodeWithLists(buffer: Buffer): Record<number, Buffer | Buffer[
     const length = buffer.readUInt8(readIndex++);
     leftBytes -= 2;
 
-    const data = buffer.slice(readIndex, readIndex + length);
+    const data = buffer.subarray(readIndex, readIndex + length);
     readIndex += length;
     leftBytes -= length;
 
@@ -202,7 +202,7 @@ export function decodeList(data: Buffer, entryStartId: number): Record<number, B
   for (; leftLength > 0;) {
     const type = data[currentIndex]; // T
     const length = data[currentIndex + 1]; // L
-    const value = data.slice(currentIndex + 2, currentIndex + 2 + length); // V
+    const value = data.subarray(currentIndex + 2, currentIndex + 2 + length); // V
 
     if (type === entryStartId) { // we got the start of a new entry
       if (objects !== undefined) { // save the previous entry

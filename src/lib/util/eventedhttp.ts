@@ -384,7 +384,7 @@ export class HAPConnection extends EventEmitter {
 
     this.server = server;
     this.sessionID = uuid.generate(clientSocket.remoteAddress + ":" + clientSocket.remotePort);
-    this.localAddress = clientSocket.localAddress;
+    this.localAddress = clientSocket.localAddress!;
     this.remoteAddress = clientSocket.remoteAddress!; // cache because it becomes undefined in 'onClientSocketClose'
     this.remotePort = clientSocket.remotePort!;
     this.networkInterface = HAPConnection.getLocalNetworkInterface(clientSocket);
@@ -806,10 +806,12 @@ export class HAPConnection extends EventEmitter {
     const infos = os.networkInterfaces()[this.networkInterface];
 
     if (ipVersion === "ipv4") {
-      for (const info of infos) {
-        // @ts-expect-error Nodejs 18+ uses the number 4 the string "IPv4"
-        if (info.family === "IPv4" || info.family === 4) {
-          return info.address;
+      if (infos) {
+        for (const info of infos) {
+          // @ts-expect-error Node.js 18+ uses the number 4 the string "IPv4"
+          if (info.family === "IPv4" || info.family === 4) {
+            return info.address;
+          }
         }
       }
 
@@ -817,13 +819,15 @@ export class HAPConnection extends EventEmitter {
     } else {
       let localUniqueAddress: string | undefined = undefined;
 
-      for (const info of infos) {
-        // @ts-expect-error Nodejs 18+ uses the number 6 instead of the string "IPv6"
-        if (info.family === "IPv6" || info.family === 6) {
-          if (!info.scopeid) {
-            return info.address;
-          } else if (!localUniqueAddress) {
-            localUniqueAddress = info.address;
+      if (infos) {
+        for (const info of infos) {
+          // @ts-expect-error Node.js 18+ uses the number 6 instead of the string "IPv6"
+          if (info.family === "IPv6" || info.family === 6) {
+            if (!info.scopeid) {
+              return info.address;
+            } else if (!localUniqueAddress) {
+              localUniqueAddress = info.address;
+            }
           }
         }
       }
@@ -838,38 +842,47 @@ export class HAPConnection extends EventEmitter {
   private static getLocalNetworkInterface(socket: Socket): string {
     let localAddress = socket.localAddress;
 
-    if (localAddress.startsWith("::ffff:")) { // IPv4-Mapped IPv6 Address https://tools.ietf.org/html/rfc4291#section-2.5.5.2
-      localAddress = localAddress.substring(7);
-    } else {
-      const index = localAddress.indexOf("%");
-      if (index !== -1) { // link-local ipv6
-        localAddress = localAddress.substring(0, index);
+    if (localAddress) {
+      if (localAddress.startsWith("::ffff:")) { // IPv4-Mapped IPv6 Address https://tools.ietf.org/html/rfc4291#section-2.5.5.2
+        localAddress = localAddress.substring(7);
+      } else {
+        const index = localAddress.indexOf("%");
+        if (index !== -1) { // link-local ipv6
+          localAddress = localAddress.substring(0, index);
+        }
       }
     }
 
     const interfaces = os.networkInterfaces();
     for (const [name, infos] of Object.entries(interfaces)) {
-      for (const info of infos) {
-        if (info.address === localAddress) {
-          return name;
+      if (infos) {
+        for (const info of infos) {
+          if (info.address === localAddress) {
+            return name;
+          }
         }
       }
     }
 
     // we couldn't map the address from above, we try now to match subnets (see https://github.com/homebridge/HAP-NodeJS/issues/847)
-    const family = net.isIPv4(localAddress)? "IPv4": "IPv6";
-    for (const [name, infos] of Object.entries(interfaces)) {
-      for (const info of infos) {
-        if (info.family !== family) {
-          continue;
-        }
+    if (localAddress) {
+      const family = net.isIPv4(localAddress) ? "IPv4" : "IPv6";
+      for (const [name, infos] of Object.entries(interfaces)) {
+        if (infos) {
+          for (const info of infos) {
+            if (info.family !== family) {
+              continue;
+            }
 
-        // check if the localAddress is in the same subnet
-        if (getNetAddress(localAddress, info.netmask) === getNetAddress(info.address, info.netmask)) {
-          return name;
+            // check if the localAddress is in the same subnet
+            if (getNetAddress(localAddress, info.netmask) === getNetAddress(info.address, info.netmask)) {
+              return name;
+            }
+          }
         }
       }
     }
+
 
     console.log(`WARNING couldn't map socket coming from remote address ${socket.remoteAddress}:${socket.remotePort} \
     at local address ${socket.localAddress} to a interface!`);

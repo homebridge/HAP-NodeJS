@@ -18,15 +18,15 @@ const enum AccessControlTypes {
 export const enum AccessLevel {
   // noinspection JSUnusedGlobalSymbols
   /**
-   * This access level is set when the users selects "Anyone" or "Anyone On The Same Network"
+   * This access level is set when the users select "Anyone" or "Anyone On The Same Network"
    * in the Access Control settings.
    */
   ANYONE = 0,
   /**
-   * This access level is set when the users selects "Only People Sharing this Home" in the
+   * This access level is set when the users select "Only People Sharing this Home" in the
    * Access Control settings.
    * On this level password setting is ignored.
-   * Requests to the HAPServer can only come from Home members anyways, so there is no real use to it.
+   * Requests to the HAPServer can only come from Home members anyway, so there is no real use to it.
    * This is pretty much only used for the AirPlay 2 protocol.
    */
   HOME_MEMBERS_ONLY = 1,
@@ -79,7 +79,7 @@ export class AccessControlManagement extends EventEmitter {
    * Instantiates a new AccessControlManagement.
    *
    * @param {boolean} password - if set to true the service will listen for password settings
-   * @param {AccessControl} service - supply your own instance to sideload the AccessControl service
+   * @param {AccessControl} service - supply your own instance to side load the AccessControl service
    */
   constructor(password?: boolean, service?: AccessControl);
   constructor(password?: boolean, service?: AccessControl) {

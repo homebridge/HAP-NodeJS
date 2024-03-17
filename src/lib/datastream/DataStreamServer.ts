@@ -797,7 +797,7 @@ export class DataStreamConnection extends EventEmitter {
       const firstFrame = frames[frameIndex++];
       this.emit(DataStreamConnectionEvent.IDENTIFICATION, firstFrame, (identifiedSession?: PreparedDataStreamSession) => {
         if (identifiedSession) {
-          // horray, we found our connection
+          // hooray, we found our connection
           this.connection = identifiedSession.connection;
           this.accessoryToControllerEncryptionKey = identifiedSession.accessoryToControllerEncryptionKey;
           this.controllerToAccessoryEncryptionKey = identifiedSession.controllerToAccessoryEncryptionKey;
@@ -916,7 +916,7 @@ export class DataStreamConnection extends EventEmitter {
     for (let frameBegin = 0; frameBegin < totalBufferLength;) {
       if (frameBegin + 4 > totalBufferLength) {
         // we don't have enough data in the buffer for the next header
-        this.frameBuffer = data.slice(frameBegin);
+        this.frameBuffer = data.subarray(frameBegin);
         break;
       }
 
@@ -933,17 +933,17 @@ export class DataStreamConnection extends EventEmitter {
       // check if the data from this frame is already there (payload + 16-byte authTag)
       if (payloadLength + 16 > remainingBufferLength) {
         // Frame is fragmented, so we wait until we receive more
-        this.frameBuffer = data.slice(frameBegin);
+        this.frameBuffer = data.subarray(frameBegin);
         break;
       }
 
       const payloadBegin = frameBegin + 4;
       const authTagBegin = payloadBegin + payloadLength;
 
-      const header = data.slice(frameBegin, payloadBegin); // header is also authenticated using authTag
-      const cipheredPayload = data.slice(payloadBegin, authTagBegin);
+      const header = data.subarray(frameBegin, payloadBegin); // header is also authenticated using authTag
+      const cipheredPayload = data.subarray(payloadBegin, authTagBegin);
       const plaintextPayload = Buffer.alloc(payloadLength);
-      const authTag = data.slice(authTagBegin, authTagBegin + 16);
+      const authTag = data.subarray(authTagBegin, authTagBegin + 16);
 
       frameBegin = authTagBegin + 16; // move to next frame
 
@@ -995,8 +995,8 @@ export class DataStreamConnection extends EventEmitter {
       const headerBegin = 1;
       const messageBegin = headerBegin + headerLength;
 
-      const headerPayload = new DataStreamReader(payload.slice(headerBegin, headerBegin + headerLength));
-      const messagePayload = new DataStreamReader(payload.slice(messageBegin, messageBegin + messageLength));
+      const headerPayload = new DataStreamReader(payload.subarray(headerBegin, headerBegin + headerLength));
+      const messagePayload = new DataStreamReader(payload.subarray(messageBegin, messageBegin + messageLength));
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let headerDictionary: Record<any, any>;
@@ -1082,7 +1082,7 @@ export class DataStreamConnection extends EventEmitter {
     frameTypeBuffer.writeUInt8(1, 0);
     let frameLengthBuffer = Buffer.alloc(4);
     frameLengthBuffer.writeUInt32BE(payloadBuffer.length, 0);
-    frameLengthBuffer = frameLengthBuffer.slice(1, 4); // a bit hacky but the only real way to write 24-bit int in node
+    frameLengthBuffer = frameLengthBuffer.subarray(1, 4); // a bit hacky but the only real way to write 24-bit int in node
 
     const frameHeader = Buffer.concat([frameTypeBuffer, frameLengthBuffer]);
 
