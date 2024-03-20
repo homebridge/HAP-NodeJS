@@ -1627,6 +1627,35 @@ export class Valve extends Service {
 Service.Valve = Valve;
 
 /**
+ * Service "Water Quality Sensor"
+ */
+export class WaterQualitySensor extends Service {
+
+  public static readonly UUID: string = "0000018D-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, WaterQualitySensor.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.WaterQuality);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.BatteryLevel);
+    this.addOptionalCharacteristic(Characteristic.ReceivedSignalStrengthIndication);
+    this.addOptionalCharacteristic(Characteristic.Conductivity);
+    this.addOptionalCharacteristic(Characteristic.FreeChlorine);
+    this.addOptionalCharacteristic(Characteristic.PH);
+    this.addOptionalCharacteristic(Characteristic.OxygenReductionPotential);
+    this.addOptionalCharacteristic(Characteristic.OzoneDensity);
+    this.addOptionalCharacteristic(Characteristic.TDS);
+    this.addOptionalCharacteristic(Characteristic.StatusFault);
+    this.addOptionalCharacteristic(Characteristic.StatusLowBattery);
+    this.addOptionalCharacteristic(Characteristic.StatusTampered);
+  }
+}
+Service.WaterQualitySensor = WaterQualitySensor;
+
+/**
  * Service "Wi-Fi Router"
  */
 export class WiFiRouter extends Service {

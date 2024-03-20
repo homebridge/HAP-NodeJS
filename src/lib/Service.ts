@@ -499,6 +499,10 @@ export class Service extends EventEmitter {
   /**
    * @group Service Definitions
    */
+  public static WaterQualitySensor: typeof WaterQualitySensor;
+  /**
+   * @group Service Definitions
+   */
   public static WiFiRouter: typeof WiFiRouter;
   /**
    * @group Service Definitions
@@ -1076,3 +1080,4 @@ export class Service extends EventEmitter {
 // type imports only (in order to define the static properties). Setting those properties is done outside
 // this file, within the definition files. Therefore, we import it at the end of this file. Seems weird, but is important.
 import "./definitions/ServiceDefinitions";
+import { WaterQualitySensor } from "./definitions";
