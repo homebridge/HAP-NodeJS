@@ -408,6 +408,229 @@ describe("Accessory", () => {
     });
   });
 
+  describe("Accessory and Service naming checks", () => {
+    let consoleLogSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      consoleLogSpy = jest.spyOn(console, "warn");
+    });
+  
+    afterEach(() => {
+      consoleLogSpy.mockRestore();
+    });
+
+    test("Accessory Name ending with !", async () => {
+      const accessoryBadName = new Accessory("Bad Name!",uuid.generate("Bad Name"));
+
+      const publishInfo: PublishInfo = {
+        username: serverUsername,
+        pincode: "000-00-000",
+        category: Categories.SWITCH,
+        advertiser: undefined,
+      };
+
+      await accessoryBadName.publish(publishInfo);
+      // eslint-disable-next-line max-len
+      expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'Bad Name! 7430' is getting published with the characteristic 'Name' not following HomeKit naming rules ('Bad Name! 7430'). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+
+      await awaitEventOnce(accessoryBadName, AccessoryEventTypes.ADVERTISED);
+      await accessoryBadName?.unpublish();
+      await accessoryBadName?.destroy();
+    });
+
+    test("Accessory Name containing !", async () => {
+      const accessoryBadName = new Accessory("Bad ! Name",uuid.generate("Bad Name"));
+
+      const publishInfo: PublishInfo = {
+        username: serverUsername,
+        pincode: "000-00-000",
+        category: Categories.SWITCH,
+        advertiser: undefined,
+      };
+
+      await accessoryBadName.publish(publishInfo);
+      // eslint-disable-next-line max-len
+      expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'Bad ! Name 7430' is getting published with the characteristic 'Name' not following HomeKit naming rules ('Bad ! Name 7430'). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+
+      await awaitEventOnce(accessoryBadName, AccessoryEventTypes.ADVERTISED);
+      await accessoryBadName?.unpublish();
+      await accessoryBadName?.destroy();
+    });
+
+    test("Accessory Name containing '", async () => {
+      const accessoryBadName = new Accessory("Bad ' Name",uuid.generate("Bad ' Name"));
+
+      const publishInfo: PublishInfo = {
+        username: serverUsername,
+        pincode: "000-00-000",
+        category: Categories.SWITCH,
+        advertiser: undefined,
+      };
+
+      await accessoryBadName.publish(publishInfo);
+      expect(consoleLogSpy).toBeCalledTimes(0);
+
+      await awaitEventOnce(accessoryBadName, AccessoryEventTypes.ADVERTISED);
+      await accessoryBadName?.unpublish();
+      await accessoryBadName?.destroy();
+    });
+
+    test("Accessory Name starting with '", async () => {
+      const accessoryBadName = new Accessory("'Bad Name",uuid.generate("Bad Name'"));
+
+      const publishInfo: PublishInfo = {
+        username: serverUsername,
+        pincode: "000-00-000",
+        category: Categories.SWITCH,
+        advertiser: undefined,
+      };
+
+      await accessoryBadName.publish(publishInfo);
+      expect(accessoryBadName.displayName.startsWith(TEST_DISPLAY_NAME));
+      expect(consoleLogSpy).toBeCalledTimes(2);
+      // eslint-disable-next-line max-len
+      expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory ''Bad Name 7430' is getting published with the characteristic 'Name' not following HomeKit naming rules (''Bad Name 7430'). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+
+      await awaitEventOnce(accessoryBadName, AccessoryEventTypes.ADVERTISED);
+      await accessoryBadName?.unpublish();
+      await accessoryBadName?.destroy();
+    });
+
+    test("Service Name containing !", async () => {
+      const switchService = new Service.Switch("My Bad ! Switch");
+      const accessoryBadName = new Accessory("Bad Name",uuid.generate("Bad Name"));
+      accessoryBadName.addService(switchService);
+
+      const publishInfo: PublishInfo = {
+        username: serverUsername,
+        pincode: "000-00-000",
+        category: Categories.SWITCH,
+        advertiser: undefined,
+      };
+
+      await accessoryBadName.publish(publishInfo);
+      // eslint-disable-next-line max-len
+      expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'My Bad ! Switch' is getting published with the characteristic 'Name' not following HomeKit naming rules ('My Bad ! Switch'). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+
+      await awaitEventOnce(accessoryBadName, AccessoryEventTypes.ADVERTISED);
+      await accessoryBadName?.unpublish();
+      await accessoryBadName?.destroy();
+    });
+
+    test("Service Name ending with !", async () => {
+      const switchService = new Service.Switch("My Bad Switch!");
+      const accessoryBadName = new Accessory("Bad Name",uuid.generate("Bad Name"));
+      accessoryBadName.addService(switchService);
+
+      const publishInfo: PublishInfo = {
+        username: serverUsername,
+        pincode: "000-00-000",
+        category: Categories.SWITCH,
+        advertiser: undefined,
+      };
+
+      await accessoryBadName.publish(publishInfo);
+      expect(consoleLogSpy).toBeCalledTimes(1);
+      // eslint-disable-next-line max-len
+      expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'My Bad Switch!' is getting published with the characteristic 'Name' not following HomeKit naming rules ('My Bad Switch!'). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+
+      await awaitEventOnce(accessoryBadName, AccessoryEventTypes.ADVERTISED);
+      await accessoryBadName?.unpublish();
+      await accessoryBadName?.destroy();
+    });
+
+    test("Service Name containing '", async () => {
+      const switchService = new Service.Switch("My Bad ' Switch");
+      const accessoryBadName = new Accessory("Bad Name",uuid.generate("Bad Name"));
+      accessoryBadName.addService(switchService);
+
+      const publishInfo: PublishInfo = {
+        username: serverUsername,
+        pincode: "000-00-000",
+        category: Categories.SWITCH,
+        advertiser: undefined,
+      };
+
+      await accessoryBadName.publish(publishInfo);
+      expect(consoleLogSpy).toBeCalledTimes(0);
+
+      await awaitEventOnce(accessoryBadName, AccessoryEventTypes.ADVERTISED);
+      await accessoryBadName?.unpublish();
+      await accessoryBadName?.destroy();
+    });
+
+    test("Service Name ending with '", async () => {
+      const switchService = new Service.Switch("My Bad Switch'");
+      const accessoryBadName = new Accessory("Bad Name",uuid.generate("Bad Name"));
+      accessoryBadName.addService(switchService);
+
+      const publishInfo: PublishInfo = {
+        username: serverUsername,
+        pincode: "000-00-000",
+        category: Categories.SWITCH,
+        advertiser: undefined,
+      };
+
+      await accessoryBadName.publish(publishInfo);
+      expect(consoleLogSpy).toBeCalledTimes(1);
+      // eslint-disable-next-line max-len
+      expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'My Bad Switch'' is getting published with the characteristic 'Name' not following HomeKit naming rules ('My Bad Switch''). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+
+      await awaitEventOnce(accessoryBadName, AccessoryEventTypes.ADVERTISED);
+      await accessoryBadName?.unpublish();
+      await accessoryBadName?.destroy();
+    });
+
+    test("Service Name beginning with '", async () => {
+      const switchService = new Service.Switch("'My Bad Switch");
+      const accessoryBadName = new Accessory("Bad Name",uuid.generate("Bad Name"));
+      accessoryBadName.addService(switchService);
+
+      const publishInfo: PublishInfo = {
+        username: serverUsername,
+        pincode: "000-00-000",
+        category: Categories.SWITCH,
+        advertiser: undefined,
+      };
+
+      await accessoryBadName.publish(publishInfo);
+      expect(consoleLogSpy).toBeCalledTimes(1);
+      // eslint-disable-next-line max-len
+      expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory ''My Bad Switch' is getting published with the characteristic 'Name' not following HomeKit naming rules (''My Bad Switch'). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+
+      await awaitEventOnce(accessoryBadName, AccessoryEventTypes.ADVERTISED);
+      await accessoryBadName?.unpublish();
+      await accessoryBadName?.destroy();
+    });
+
+    test("Service ConfiguredName beginning with '", async () => {
+      const switchService = new Service.Switch("My Bad Switch");
+      const accessoryBadName = new Accessory("Bad Name",uuid.generate("Bad Name"));
+      switchService.addCharacteristic(Characteristic.ConfiguredName);
+      accessoryBadName.addService(switchService);
+
+      const publishInfo: PublishInfo = {
+        username: serverUsername,
+        pincode: "000-00-000",
+        category: Categories.SWITCH,
+        advertiser: undefined,
+      };
+
+      await accessoryBadName.publish(publishInfo);
+
+      switchService.getCharacteristic(Characteristic.ConfiguredName).updateValue("'Bad Name");
+
+      expect(consoleLogSpy).toBeCalledTimes(1);
+      // eslint-disable-next-line max-len
+      expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'unknown' is getting published with the characteristic 'Configured Name' not following HomeKit naming rules (''Bad Name'). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+
+      await awaitEventOnce(accessoryBadName, AccessoryEventTypes.ADVERTISED);
+      await accessoryBadName?.unpublish();
+      await accessoryBadName?.destroy();
+    });
+
+  });
+
   describe("pairing", () => {
     let defaultPairingInfo: PairingInformation;
 
