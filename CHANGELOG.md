@@ -7,3 +7,4 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 ### Other Changes
 
 - Create `CHANGELOG.md` file
+- Fix typos + add logo to `README.md`
