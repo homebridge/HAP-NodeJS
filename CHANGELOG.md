@@ -8,3 +8,4 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 
 - Create `CHANGELOG.md` file
 - Fix typos + add logo to `README.md`
+- Refresh `package-lock.json` (no major changes to dep versions)
