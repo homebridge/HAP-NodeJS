@@ -54,10 +54,10 @@
   "dependencies": {
     "@homebridge/ciao": "^1.1.8",
     "@homebridge/dbus-native": "^0.5.1",
-    "bonjour-hap": "~3.6.5",
+    "bonjour-hap": "^3.7.2",
     "debug": "^4.3.4",
-    "fast-srp-hap": "~2.0.4",
-    "futoin-hkdf": "~1.4.3",
+    "fast-srp-hap": "^2.0.4",
+    "futoin-hkdf": "^1.5.3",
     "node-persist": "^0.0.11",
     "source-map-support": "^0.5.21",
     "tslib": "^2.6.2",
@@ -70,7 +70,7 @@
     "@types/node": "^10.17.60",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
-    "axios": "^0.27.2",
+    "axios": "^0.28.1",
     "commander": "^6.2.1",
     "escape-html": "^1.0.3",
     "eslint": "^8.57.0",
@@ -78,10 +78,10 @@
     "jest": "^27.5.1",
     "rimraf": "^3.0.2",
     "semver": "^7.6.0",
-    "simple-plist": "1.1.1",
+    "simple-plist": "~1.1.1",
     "ts-jest": "^27.1.5",
     "ts-node": "^10.9.2",
-    "typedoc": "^0.23.28",
-    "typescript": "~4.9.5"
+    "typedoc": "^0.25.12",
+    "typescript": "^4.9.5"
   }
 }
