@@ -1183,18 +1183,21 @@ export class Accessory extends EventEmitter {
   }
 
   /**
-   * Publishes this Accessory on the local network for iOS clients to communicate with.
-   *
-   * @param {Object} info - Required info for publishing.
-   * @param allowInsecureRequest - Will allow unencrypted and unauthenticated access to the http server
-   * @param {string} info.username - The "username" (formatted as a MAC address - like "CC:22:3D:E3:CE:F6") of
-   *                                this Accessory. Must be globally unique from all Accessories on your local network.
-   * @param {string} info.pincode - The 8-digit pincode for clients to use when pairing this Accessory. Must be formatted
-   *                               as a string like "031-45-154".
-   * @param {string} info.category - One of the values of the Accessory.Category enum, like Accessory.Category.SWITCH.
-   *                                This is a hint to iOS clients about what "type" of Accessory this represents, so
-   *                                that for instance an appropriate icon can be drawn for the user while adding a
-   *                                new Accessory.
+   * Publishes this accessory on the local network for iOS clients to communicate with.
+   * - `info.username` - formatted as a MAC address, like `CC:22:3D:E3:CE:F6`, of this accessory.
+   *   Must be globally unique from all Accessories on your local network.
+   * - `info.pincode` - the 8-digit pin code for clients to use when pairing this Accessory.
+   *   Must be formatted as a string like `031-45-154`.
+   * - `info.category` - one of the values of the `Accessory.Category` enum, like `Accessory.Category.SWITCH`.
+   *   This is a hint to iOS clients about what "type" of Accessory this represents, so
+   *   that for instance an appropriate icon can be drawn for the user while adding a
+   *   new Accessory.
+   * @param {{
+   *   username: string;
+   *   pincode: string;
+   *   category: Accessory.Categories;
+   * }} info - Required info for publishing.
+   * @param {boolean} allowInsecureRequest - Will allow unencrypted and unauthenticated access to the http server
    */
   public async publish(info: PublishInfo, allowInsecureRequest?: boolean): Promise<void> {
     if (this.bridged) {
