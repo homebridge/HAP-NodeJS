@@ -4,8 +4,18 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 
 ## BETA
 
-### Other Changes
+### Changed
 
 - Create `CHANGELOG.md` file
 - Fix typos + add logo to `README.md`
 - Refresh `package-lock.json` (no major changes to dep versions)
+- general repo updates
+- add alpha releases
+- dependency updates
+- fix typedoc generation
+- update homebridge dependencies
+
+### Homebridge Dependencies
+
+- `@homebridge/ciao` @ `v1.2.0`
+- `@homebridge/dbus-native` @ `v0.6.0`

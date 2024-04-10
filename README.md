@@ -59,7 +59,7 @@ Special thanks to [Alex Skalozub][link-alex-skalozub], who reverse-engineered th
 ~~You can find his research [here][link-homekit-research].~~
 (Sadly, on Nov 4 2014, Apple sent the [DMCA][link-apple-dmca] request to GitHub to remove the research.)
 
-[There](http://instagram.com/p/t4cPlcDksQ/) is a video demo running this project on Intel Edison.
+[There](https://www.instagram.com/p/t4cPlcDksQ/) is a video demo running this project on Intel Edison.
 
 If you are interested in HAP over BTLE, you might want to check [this][link-hap-over-btle].
 
