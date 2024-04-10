@@ -14,6 +14,7 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 - dependency updates
 - fix typedoc generation
 - update homebridge dependencies
+- regenerate docs
 
 ### Homebridge Dependencies
 
