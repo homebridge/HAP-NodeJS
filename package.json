@@ -37,13 +37,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/homebridge/HAP-NodeJS.git"
+    "url": "git+https://github.com/homebridge/HAP-NodeJS.git"
   },
   "bugs": {
     "url": "https://github.com/homebridge/HAP-NodeJS/issues"
   },
   "engines": {
-    "node": ">=10.17.0"
+    "node": "^18 || ^20"
   },
   "files": [
     "README.md",
@@ -52,9 +52,9 @@
     "@types"
   ],
   "dependencies": {
-    "@homebridge/ciao": "^1.1.8",
-    "@homebridge/dbus-native": "^0.5.1",
-    "bonjour-hap": "^3.6.5",
+    "@homebridge/ciao": "^1.2.0",
+    "@homebridge/dbus-native": "^0.6.0",
+    "bonjour-hap": "^3.7.2",
     "debug": "^4.3.4",
     "fast-srp-hap": "^2.0.4",
     "futoin-hkdf": "^1.5.3",
@@ -67,12 +67,12 @@
     "@types/debug": "^4.1.12",
     "@types/escape-html": "^1.0.4",
     "@types/jest": "^29.5.12",
-    "@types/node": "^20.11.28",
+    "@types/node": "^20.12.7",
     "@types/node-persist": "^3.1.8",
     "@types/plist": "^3.0.5",
     "@types/source-map-support": "^0.5.10",
-    "@typescript-eslint/eslint-plugin": "^7.2.0",
-    "@typescript-eslint/parser": "^7.2.0",
+    "@typescript-eslint/eslint-plugin": "^7.7.0",
+    "@typescript-eslint/parser": "^7.7.0",
     "axios": "^1.6.8",
     "commander": "^12.0.0",
     "escape-html": "^1.0.3",
@@ -83,7 +83,7 @@
     "simple-plist": "^2.0.0-rc.0",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
-    "typedoc": "^0.25.12",
-    "typescript": "^5.4.2"
+    "typedoc": "^0.25.13",
+    "typescript": "^5.4.5"
   }
 }
