@@ -804,7 +804,6 @@ export class DataStreamConnection extends EventEmitter {
           this.state = ConnectionState.EXPECTING_HELLO;
 
           // below listener is removed in .close()
-          this.connection.setMaxListeners(this.connection.getMaxListeners() + 1);
           this.connection.on(HAPConnectionEvent.CLOSED, this.hapConnectionClosedListener); // register close listener
 
           debug("[%s] Registering CLOSED handler to HAP connection. Connection currently has %d close handlers!",
@@ -1140,7 +1139,6 @@ export class DataStreamConnection extends EventEmitter {
     this.emit(DataStreamConnectionEvent.CLOSED);
 
     this.connection?.removeListener(HAPConnectionEvent.CLOSED, this.hapConnectionClosedListener);
-    this.connection?.setMaxListeners(this.connection.getMaxListeners() - 1);
     this.removeAllListeners();
   }
 
