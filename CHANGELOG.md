@@ -2,6 +2,16 @@
 
 All notable changes to `hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
+## BETA
+
+### Changed
+
+- Updated dependencies (`axios` and `commander`)
+
+### Fixed
+
+- Mitigate event emitter "memory leak" warnings when a significant number of HSV events occur simultaneously (#1029) (@hjdhjd)
+
 ## v0.12.0 (2024-04-19)
 
 ### Changed
