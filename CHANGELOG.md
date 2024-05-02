@@ -12,6 +12,10 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 
 - Mitigate event emitter "memory leak" warnings when a significant number of HSV events occur simultaneously (#1029) (@hjdhjd)
 
+### Other Changes
+
+- Update Discord Webhooks to trigger only after published to npm
+
 ## v0.12.0 (2024-04-19)
 
 ### Changed
