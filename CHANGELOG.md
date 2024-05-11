@@ -2,6 +2,12 @@
 
 All notable changes to `hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
+## BETA
+
+### Changed
+
+- Updated dependencies (`rimraf` and `@types/node`)
+
 ## v0.12.1 (2024-05-11)
 
 ### Changed
