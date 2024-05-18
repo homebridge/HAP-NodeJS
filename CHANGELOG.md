@@ -7,6 +7,7 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 ### Changed
 
 - Updated dependencies (`rimraf` and `@types/node`)
+- Updated dependencies (`simple-plist`)
 
 ## v0.12.1 (2024-05-11)
 
