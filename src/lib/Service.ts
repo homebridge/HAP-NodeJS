@@ -142,6 +142,7 @@ export const enum ServiceEventTypes {
 /**
  * @group Service
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export declare interface Service {
   on(event: "characteristic-change", listener: (change: ServiceCharacteristicChange) => void): this;
   on(event: "service-configurationChange", listener: () => void): this;
@@ -174,6 +175,7 @@ export declare interface Service {
  *
  * @group Service
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class Service extends EventEmitter {
   // Service MUST NOT have any other static variables
 
@@ -677,12 +679,16 @@ export class Service extends EventEmitter {
     for (const characteristic of this.characteristics) {
       if (typeof name === "string" && characteristic.displayName === name) {
         return characteristic;
-      } else if (typeof name === "function" && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
-        return characteristic;
+      } else {
+        // @ts-expect-error ('UUID' does not exist on type 'never')
+        if (typeof name === "function" && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
+          return characteristic;
+        }
       }
     }
     if (typeof name === "function") {
       for (const characteristic of this.optionalCharacteristics) {
+        // @ts-expect-error ('UUID' does not exist on type 'never')
         if ((characteristic instanceof name) || (name.UUID === characteristic.UUID)) {
           return this.addCharacteristic(name);
         }
@@ -704,8 +710,11 @@ export class Service extends EventEmitter {
     for (const characteristic of this.characteristics) {
       if (typeof name === "string" && characteristic.displayName === name) {
         return true;
-      } else if (typeof name === "function" && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
-        return true;
+      } else {
+        // @ts-expect-error ('UUID' does not exist on type 'never')
+        if (typeof name === "function" && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
+          return true;
+        }
       }
     }
     return false;

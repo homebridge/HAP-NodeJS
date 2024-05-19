@@ -925,6 +925,7 @@ const enum CameraRecordingStreamEvents {
 /**
  * @group Camera
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 declare interface CameraRecordingStream {
   on(event: "closed", listener: () => void): this;
 
@@ -937,6 +938,7 @@ declare interface CameraRecordingStream {
  *
  * @group Camera
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHandler {
   readonly connection: DataStreamConnection;
   readonly delegate: CameraRecordingDelegate;
