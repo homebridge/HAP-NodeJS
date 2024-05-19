@@ -97,6 +97,7 @@ export const enum Categories {
   THERMOSTAT = 9,
   SENSOR = 10,
   ALARM_SYSTEM = 11,
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   SECURITY_SYSTEM = 11, //Added to conform to HAP naming
   DOOR = 12,
   WINDOW = 13,
@@ -104,6 +105,7 @@ export const enum Categories {
   PROGRAMMABLE_SWITCH = 15,
   RANGE_EXTENDER = 16,
   CAMERA = 17,
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   IP_CAMERA = 17, //Added to conform to HAP naming
   VIDEO_DOORBELL = 18,
   AIR_PURIFIER = 19,
@@ -377,6 +379,7 @@ export const enum AccessoryEventTypes {
 /**
  * @group Accessory
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export declare interface Accessory {
   on(event: "identify", listener: (paired: boolean, callback: VoidCallback) => void): this;
   on(event: "listening", listener: (port: number, address: string) => void): this;
@@ -415,6 +418,7 @@ export declare interface Accessory {
  *
  * @group Accessory
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class Accessory extends EventEmitter {
   /**
    * @deprecated Please use the Categories const enum above.
@@ -623,8 +627,11 @@ export class Accessory extends EventEmitter {
     for (const service of this.services) {
       if (typeof name === "string" && (service.displayName === name || service.name === name || service.subtype === name)) {
         return service;
-      } else if (typeof name === "function" && ((service instanceof name) || (name.UUID === service.UUID))) {
-        return service;
+      } else {
+        // @ts-expect-error ('UUID' does not exist on type 'never')
+        if (typeof name === "function" && ((service instanceof name) || (name.UUID === service.UUID))) {
+          return service;
+        }
       }
     }
 
@@ -635,8 +642,11 @@ export class Accessory extends EventEmitter {
     for (const service of this.services) {
       if (typeof uuid === "string" && (service.displayName === uuid || service.name === uuid) && service.subtype === subType) {
         return service;
-      } else if (typeof uuid === "function" && ((service instanceof uuid) || (uuid.UUID === service.UUID)) && service.subtype === subType) {
-        return service;
+      } else {
+        // @ts-expect-error ('UUID' does not exist on type 'never')
+        if (typeof uuid === "function" && ((service instanceof uuid) || (uuid.UUID === service.UUID)) && service.subtype === subType) {
+          return service;
+        }
       }
     }
 

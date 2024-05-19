@@ -71,6 +71,7 @@ export const enum EventedHTTPServerEvent {
 /**
  * @group HAP Accessory Server
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export declare interface EventedHTTPServer {
 
   on(event: "listening", listener: (port: number, address: string) => void): this;
@@ -104,6 +105,7 @@ export declare interface EventedHTTPServer {
  *
  * @group HAP Accessory Server
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class EventedHTTPServer extends EventEmitter {
 
   private static readonly CONNECTION_TIMEOUT_LIMIT = 16; // if we have more (or equal) # connections we start the timeout
@@ -324,6 +326,7 @@ export const enum HAPConnectionEvent {
 /**
  * @group HAP Accessory Server
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export declare interface HAPConnection {
   on(event: "request", listener: (request: IncomingMessage, response: ServerResponse) => void): this;
   on(event: "authenticated", listener: (username: HAPUsername) => void): this;
@@ -338,6 +341,7 @@ export declare interface HAPConnection {
  * Manages a single iOS-initiated HTTP connection during its lifetime.
  * @group HAP Accessory Server
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class HAPConnection extends EventEmitter {
   /**
    * @private file-private API
