@@ -2,13 +2,18 @@
 
 All notable changes to `hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
-## BETA
+## v0.12.2 (2024-05-31)
 
 ### Changed
 
 - Updated dependencies (`rimraf` and `@types/node`)
 - Updated dependencies (`simple-plist`)
 - Updated dependencies (`typescript`)
+
+### Homebridge Dependencies
+
+- `@homebridge/ciao` @ `v1.2.0`
+- `@homebridge/dbus-native` @ `v0.6.0`
 
 ## v0.12.1 (2024-05-11)
 
