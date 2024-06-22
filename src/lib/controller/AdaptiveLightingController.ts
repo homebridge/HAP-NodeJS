@@ -292,6 +292,18 @@ export const enum AdaptiveLightingControllerEvents {
   DISABLED = "disable",
 }
 
+/**
+ * see {@link ActiveAdaptiveLightingTransition}.
+ */
+export interface AdaptiveLightingControllerUpdate {
+  transitionStartMillis: number;
+  timeMillisOffset: number;
+  transitionCurve: AdaptiveLightingTransitionCurveEntry[];
+  brightnessAdjustmentRange: BrightnessAdjustmentMultiplierRange;
+  updateInterval: number,
+  notifyIntervalThreshold: number;
+}
+
 export declare interface AdaptiveLightingController {
   /**
    * See {@link AdaptiveLightingControllerEvents.UPDATE}
@@ -299,7 +311,7 @@ export declare interface AdaptiveLightingController {
    * @param event
    * @param listener
    */
-  on(event: "update", listener: () => void): this;
+  on(event: "update", listener: (update: AdaptiveLightingControllerUpdate) => void): this;
   /**
    * See {@link AdaptiveLightingControllerEvents.DISABLED}
    *
@@ -308,7 +320,7 @@ export declare interface AdaptiveLightingController {
    */
   on(event: "disable", listener: () => void): this;
 
-  emit(event: "update"): boolean;
+  emit(event: "update", update: AdaptiveLightingControllerUpdate): boolean;
   emit(event: "disable"): boolean;
 }
 
@@ -606,7 +618,20 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     if (this.mode === AdaptiveLightingControllerMode.AUTOMATIC) {
       this.scheduleNextUpdate();
     } else if (this.mode === AdaptiveLightingControllerMode.MANUAL) {
-      this.emit(AdaptiveLightingControllerEvents.UPDATE);
+      if (!this.activeTransition) {
+        throw new Error("There is no active transition!");
+      }
+
+      const update: AdaptiveLightingControllerUpdate = {
+        transitionStartMillis: this.activeTransition.transitionStartMillis,
+        timeMillisOffset: this.activeTransition.timeMillisOffset,
+        transitionCurve: this.activeTransition.transitionCurve,
+        brightnessAdjustmentRange: this.activeTransition.brightnessAdjustmentRange,
+        updateInterval: this.activeTransition.updateInterval,
+        notifyIntervalThreshold: this.activeTransition.notifyIntervalThreshold,
+      }
+
+      this.emit(AdaptiveLightingControllerEvents.UPDATE, update);
     } else {
       throw new Error("Unsupported adaptive lighting controller mode: " + this.mode);
     }
