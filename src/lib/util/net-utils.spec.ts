@@ -33,12 +33,12 @@ describe("net-utils", () => {
         "lo": [
           {
             address: "fe80::1",
-            netmask: 'ffff:ffff:ffff:ffff::',
-            family: 'IPv6',
-            mac: '00:00:00:00:00:00',
+            netmask: "ffff:ffff:ffff:ffff::",
+            family: "IPv6",
+            mac: "00:00:00:00:00:00",
             internal: true,
-            cidr: 'fe80::1/64',
-            scopeid: 1
+            cidr: "fe80::1/64",
+            scopeid: 1,
           },
         ],
       }));
@@ -50,22 +50,22 @@ describe("net-utils", () => {
       mock.mockImplementationOnce(() => ({
         "lo": [
           {
-            address: '::1',
-            netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff',
-            family: 'IPv6',
-            mac: '00:00:00:00:00:00',
+            address: "::1",
+            netmask: "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+            family: "IPv6",
+            mac: "00:00:00:00:00:00",
             internal: true,
-            cidr: '::1/128',
-            scopeid: 0
+            cidr: "::1/128",
+            scopeid: 0,
           },
           {
             address: "fe80::1",
-            netmask: 'ffff:ffff:ffff:ffff::',
-            family: 'IPv6',
-            mac: '00:00:00:00:00:00',
+            netmask: "ffff:ffff:ffff:ffff::",
+            family: "IPv6",
+            mac: "00:00:00:00:00:00",
             internal: true,
-            cidr: 'fe80::1/64',
-            scopeid: 1
+            cidr: "fe80::1/64",
+            scopeid: 1,
           },
         ],
       }));
@@ -86,21 +86,21 @@ describe("net-utils", () => {
           },
           {
             address: "fe80::1",
-            netmask: 'ffff:ffff:ffff:ffff::',
-            family: 'IPv6',
-            mac: '00:00:00:00:00:00',
+            netmask: "ffff:ffff:ffff:ffff::",
+            family: "IPv6",
+            mac: "00:00:00:00:00:00",
             internal: true,
-            cidr: 'fe80::1/64',
-            scopeid: 1
+            cidr: "fe80::1/64",
+            scopeid: 1,
           },
           {
-            address: '::1',
-            netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff',
-            family: 'IPv6',
-            mac: '00:00:00:00:00:00',
+            address: "::1",
+            netmask: "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+            family: "IPv6",
+            mac: "00:00:00:00:00:00",
             internal: true,
-            cidr: '::1/128',
-            scopeid: 0
+            cidr: "::1/128",
+            scopeid: 0,
           },
         ],
       }));

@@ -1,8 +1,27 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=860
+// V=880
 
 import { Characteristic } from "../Characteristic";
 import { Service } from "../Service";
+
+/**
+ * Service "Access Code"
+ * @since iOS 15
+ */
+export class AccessCode extends Service {
+
+  public static readonly UUID: string = "00000260-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, AccessCode.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.AccessCodeControlPoint);
+    this.addCharacteristic(Characteristic.AccessCodeSupportedConfiguration);
+    this.addCharacteristic(Characteristic.ConfigurationState);
+  }
+}
+Service.AccessCode = AccessCode;
 
 /**
  * Service "Access Control"
@@ -47,12 +66,31 @@ export class AccessoryInformation extends Service {
     this.addOptionalCharacteristic(Characteristic.AccessoryFlags);
     this.addOptionalCharacteristic(Characteristic.AppMatchingIdentifier);
     this.addOptionalCharacteristic(Characteristic.ConfiguredName);
+    this.addOptionalCharacteristic(Characteristic.HardwareFinish);
     this.addOptionalCharacteristic(Characteristic.HardwareRevision);
-    this.addOptionalCharacteristic(Characteristic.SoftwareRevision);
     this.addOptionalCharacteristic(Characteristic.ProductData);
+    this.addOptionalCharacteristic(Characteristic.SoftwareRevision);
   }
 }
 Service.AccessoryInformation = AccessoryInformation;
+
+/**
+ * Service "Accessory Metrics"
+ */
+export class AccessoryMetrics extends Service {
+
+  public static readonly UUID: string = "00000270-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, AccessoryMetrics.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.Active);
+    this.addCharacteristic(Characteristic.MetricsBufferFullState);
+    this.addCharacteristic(Characteristic.SupportedMetrics);
+  }
+}
+Service.AccessoryMetrics = AccessoryMetrics;
 
 /**
  * Service "Accessory Runtime Information"
@@ -127,6 +165,43 @@ export class AirQualitySensor extends Service {
   }
 }
 Service.AirQualitySensor = AirQualitySensor;
+
+/**
+ * Service "Asset Update"
+ */
+export class AssetUpdate extends Service {
+
+  public static readonly UUID: string = "00000267-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, AssetUpdate.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.AssetUpdateReadiness);
+    this.addCharacteristic(Characteristic.SupportedAssetTypes);
+  }
+}
+Service.AssetUpdate = AssetUpdate;
+
+/**
+ * Service "Assistant"
+ */
+export class Assistant extends Service {
+
+  public static readonly UUID: string = "0000026A-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, Assistant.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.Active);
+    this.addCharacteristic(Characteristic.Identifier);
+    if (!this.testCharacteristic(Characteristic.Name)) { // workaround for Name characteristic collision in constructor
+      this.addCharacteristic(Characteristic.Name).updateValue("Unnamed Service");
+    }
+  }
+}
+Service.Assistant = Assistant;
 
 /**
  * Service "Audio Stream Management"
@@ -283,10 +358,10 @@ export class CameraRecordingManagement extends Service {
 
     // Required Characteristics
     this.addCharacteristic(Characteristic.Active);
+    this.addCharacteristic(Characteristic.SelectedCameraRecordingConfiguration);
+    this.addCharacteristic(Characteristic.SupportedAudioRecordingConfiguration);
     this.addCharacteristic(Characteristic.SupportedCameraRecordingConfiguration);
     this.addCharacteristic(Characteristic.SupportedVideoRecordingConfiguration);
-    this.addCharacteristic(Characteristic.SupportedAudioRecordingConfiguration);
-    this.addCharacteristic(Characteristic.SelectedCameraRecordingConfiguration);
 
     // Optional Characteristics
     this.addOptionalCharacteristic(Characteristic.RecordingAudioActive);
@@ -443,6 +518,10 @@ export class Diagnostics extends Service {
 
     // Required Characteristics
     this.addCharacteristic(Characteristic.SupportedDiagnosticsSnapshot);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.SelectedDiagnosticsModes);
+    this.addOptionalCharacteristic(Characteristic.SupportedDiagnosticsModes);
   }
 }
 Service.Diagnostics = Diagnostics;
@@ -579,6 +658,27 @@ export class FilterMaintenance extends Service {
   }
 }
 Service.FilterMaintenance = FilterMaintenance;
+
+/**
+ * Service "Firmware Update"
+ */
+export class FirmwareUpdate extends Service {
+
+  public static readonly UUID: string = "00000236-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, FirmwareUpdate.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.FirmwareUpdateReadiness);
+    this.addCharacteristic(Characteristic.FirmwareUpdateStatus);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.StagedFirmwareVersion);
+    this.addOptionalCharacteristic(Characteristic.SupportedFirmwareUpdateConfiguration);
+  }
+}
+Service.FirmwareUpdate = FirmwareUpdate;
 
 /**
  * Service "Garage Door Opener"
@@ -893,6 +993,25 @@ export class MotionSensor extends Service {
 Service.MotionSensor = MotionSensor;
 
 /**
+ * Service "NFC Access"
+ * @since iOS 15
+ */
+export class NFCAccess extends Service {
+
+  public static readonly UUID: string = "00000266-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, NFCAccess.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.ConfigurationState);
+    this.addCharacteristic(Characteristic.NFCAccessControlPoint);
+    this.addCharacteristic(Characteristic.NFCAccessSupportedConfiguration);
+  }
+}
+Service.NFCAccess = NFCAccess;
+
+/**
  * Service "Occupancy Sensor"
  */
 export class OccupancySensor extends Service {
@@ -967,6 +1086,10 @@ export class PowerManagement extends Service {
 
     // Required Characteristics
     this.addCharacteristic(Characteristic.WakeConfiguration);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.SelectedSleepConfiguration);
+    this.addOptionalCharacteristic(Characteristic.SupportedSleepConfiguration);
   }
 }
 Service.PowerManagement = PowerManagement;
@@ -1038,9 +1161,38 @@ export class Siri extends Service {
 
     // Required Characteristics
     this.addCharacteristic(Characteristic.SiriInputType);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.MultifunctionButton);
+    this.addOptionalCharacteristic(Characteristic.SiriEnable);
+    this.addOptionalCharacteristic(Characteristic.SiriEngineVersion);
+    this.addOptionalCharacteristic(Characteristic.SiriLightOnUse);
+    this.addOptionalCharacteristic(Characteristic.SiriListening);
+    this.addOptionalCharacteristic(Characteristic.SiriTouchToUse);
   }
 }
 Service.Siri = Siri;
+
+/**
+ * Service "Siri Endpoint"
+ */
+export class SiriEndpoint extends Service {
+
+  public static readonly UUID: string = "00000253-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, SiriEndpoint.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.SiriEndpointSessionStatus);
+    this.addCharacteristic(Characteristic.Version);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.ActiveIdentifier);
+    this.addOptionalCharacteristic(Characteristic.ManuallyDisabled);
+  }
+}
+Service.SiriEndpoint = SiriEndpoint;
 
 /**
  * Service "Slats"
@@ -1082,6 +1234,7 @@ export class SmartSpeaker extends Service {
     this.addCharacteristic(Characteristic.TargetMediaState);
 
     // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.AirPlayEnable);
     this.addOptionalCharacteristic(Characteristic.ConfiguredName);
     this.addOptionalCharacteristic(Characteristic.Mute);
     this.addOptionalCharacteristic(Characteristic.Name);
@@ -1192,6 +1345,25 @@ export class Switch extends Service {
   }
 }
 Service.Switch = Switch;
+
+/**
+ * Service "Tap Management"
+ */
+export class TapManagement extends Service {
+
+  public static readonly UUID: string = "0000022E-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, TapManagement.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.Active);
+    this.addCharacteristic(Characteristic.CryptoHash);
+    this.addCharacteristic(Characteristic.TapType);
+    this.addCharacteristic(Characteristic.Token);
+  }
+}
+Service.TapManagement = TapManagement;
 
 /**
  * Service "Target Control"

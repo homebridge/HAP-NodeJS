@@ -4,6 +4,18 @@ import "./";
 import { Characteristic } from "../Characteristic";
 
 describe("CharacteristicDefinitions", () => {
+  describe("AccessCodeControlPoint", () => {
+    it("should be able to construct", () => {
+      new Characteristic.AccessCodeControlPoint();
+    });
+  });
+
+  describe("AccessCodeSupportedConfiguration", () => {
+    it("should be able to construct", () => {
+      new Characteristic.AccessCodeSupportedConfiguration();
+    });
+  });
+
   describe("AccessControlLevel", () => {
     it("should be able to construct", () => {
       new Characteristic.AccessControlLevel();
@@ -58,6 +70,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("AirPlayEnable", () => {
+    it("should be able to construct", () => {
+      new Characteristic.AirPlayEnable();
+    });
+  });
+
   describe("AirQuality", () => {
     it("should be able to construct", () => {
       new Characteristic.AirQuality();
@@ -67,6 +85,12 @@ describe("CharacteristicDefinitions", () => {
   describe("AppMatchingIdentifier", () => {
     it("should be able to construct", () => {
       new Characteristic.AppMatchingIdentifier();
+    });
+  });
+
+  describe("AssetUpdateReadiness", () => {
+    it("should be able to construct", () => {
+      new Characteristic.AssetUpdateReadiness();
     });
   });
 
@@ -184,6 +208,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("ConfigurationState", () => {
+    it("should be able to construct", () => {
+      new Characteristic.ConfigurationState();
+    });
+  });
+
   describe("ConfigureBridgedAccessory", () => {
     it("should be able to construct", () => {
       new Characteristic.ConfigureBridgedAccessory();
@@ -211,6 +241,12 @@ describe("CharacteristicDefinitions", () => {
   describe("CoolingThresholdTemperature", () => {
     it("should be able to construct", () => {
       new Characteristic.CoolingThresholdTemperature();
+    });
+  });
+
+  describe("CryptoHash", () => {
+    it("should be able to construct", () => {
+      new Characteristic.CryptoHash();
     });
   });
 
@@ -418,6 +454,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("HardwareFinish", () => {
+    it("should be able to construct", () => {
+      new Characteristic.HardwareFinish();
+    });
+  });
+
   describe("HardwareRevision", () => {
     it("should be able to construct", () => {
       new Characteristic.HardwareRevision();
@@ -598,6 +640,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("MetricsBufferFullState", () => {
+    it("should be able to construct", () => {
+      new Characteristic.MetricsBufferFullState();
+    });
+  });
+
   describe("Model", () => {
     it("should be able to construct", () => {
       new Characteristic.Model();
@@ -607,6 +655,12 @@ describe("CharacteristicDefinitions", () => {
   describe("MotionDetected", () => {
     it("should be able to construct", () => {
       new Characteristic.MotionDetected();
+    });
+  });
+
+  describe("MultifunctionButton", () => {
+    it("should be able to construct", () => {
+      new Characteristic.MultifunctionButton();
     });
   });
 
@@ -637,6 +691,18 @@ describe("CharacteristicDefinitions", () => {
   describe("NetworkClientStatusControl", () => {
     it("should be able to construct", () => {
       new Characteristic.NetworkClientStatusControl();
+    });
+  });
+
+  describe("NFCAccessControlPoint", () => {
+    it("should be able to construct", () => {
+      new Characteristic.NFCAccessControlPoint();
+    });
+  });
+
+  describe("NFCAccessSupportedConfiguration", () => {
+    it("should be able to construct", () => {
+      new Characteristic.NFCAccessSupportedConfiguration();
     });
   });
 
@@ -910,9 +976,21 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("SelectedDiagnosticsModes", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SelectedDiagnosticsModes();
+    });
+  });
+
   describe("SelectedRTPStreamConfiguration", () => {
     it("should be able to construct", () => {
       new Characteristic.SelectedRTPStreamConfiguration();
+    });
+  });
+
+  describe("SelectedSleepConfiguration", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SelectedSleepConfiguration();
     });
   });
 
@@ -964,9 +1042,45 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("SiriEnable", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SiriEnable();
+    });
+  });
+
+  describe("SiriEndpointSessionStatus", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SiriEndpointSessionStatus();
+    });
+  });
+
+  describe("SiriEngineVersion", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SiriEngineVersion();
+    });
+  });
+
   describe("SiriInputType", () => {
     it("should be able to construct", () => {
       new Characteristic.SiriInputType();
+    });
+  });
+
+  describe("SiriLightOnUse", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SiriLightOnUse();
+    });
+  });
+
+  describe("SiriListening", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SiriListening();
+    });
+  });
+
+  describe("SiriTouchToUse", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SiriTouchToUse();
     });
   });
 
@@ -1048,6 +1162,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("SupportedAssetTypes", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SupportedAssetTypes();
+    });
+  });
+
   describe("SupportedAudioRecordingConfiguration", () => {
     it("should be able to construct", () => {
       new Characteristic.SupportedAudioRecordingConfiguration();
@@ -1078,6 +1198,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("SupportedDiagnosticsModes", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SupportedDiagnosticsModes();
+    });
+  });
+
   describe("SupportedDiagnosticsSnapshot", () => {
     it("should be able to construct", () => {
       new Characteristic.SupportedDiagnosticsSnapshot();
@@ -1090,6 +1216,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("SupportedMetrics", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SupportedMetrics();
+    });
+  });
+
   describe("SupportedRouterConfiguration", () => {
     it("should be able to construct", () => {
       new Characteristic.SupportedRouterConfiguration();
@@ -1099,6 +1231,12 @@ describe("CharacteristicDefinitions", () => {
   describe("SupportedRTPConfiguration", () => {
     it("should be able to construct", () => {
       new Characteristic.SupportedRTPConfiguration();
+    });
+  });
+
+  describe("SupportedSleepConfiguration", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SupportedSleepConfiguration();
     });
   });
 
@@ -1123,6 +1261,12 @@ describe("CharacteristicDefinitions", () => {
   describe("SwingMode", () => {
     it("should be able to construct", () => {
       new Characteristic.SwingMode();
+    });
+  });
+
+  describe("TapType", () => {
+    it("should be able to construct", () => {
+      new Characteristic.TapType();
     });
   });
 
@@ -1273,6 +1417,12 @@ describe("CharacteristicDefinitions", () => {
   describe("TimeUpdate", () => {
     it("should be able to construct", () => {
       new Characteristic.TimeUpdate();
+    });
+  });
+
+  describe("Token", () => {
+    it("should be able to construct", () => {
+      new Characteristic.Token();
     });
   });
 

@@ -18,12 +18,14 @@
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "preserveConstEnums": true // do not remove this option!
+    "preserveConstEnums": true, // do not remove this option!
+    "useUnknownInCatchVariables": false
   },
   "include": [
     "src/"
   ],
   "exclude": [
-    "**/*.spec.ts"
+    "**/*.spec.ts",
+    "src/test-utils"
   ]
 }

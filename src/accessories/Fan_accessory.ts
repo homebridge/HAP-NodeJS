@@ -7,9 +7,10 @@ import {
   CharacteristicValue,
   Service,
   uuid,
-  VoidCallback
-} from '..';
+  VoidCallback,
+} from "..";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const FAKE_FAN: Record<string, any> = {
   powerOn: false,
   rSpeed: 100,
@@ -30,24 +31,23 @@ const FAKE_FAN: Record<string, any> = {
   identify: () => {
     //put your code here to identify the fan
     console.log("Fan Identified!");
-  }
+  },
 };
 
 // This is the Accessory that we'll return to HAP-NodeJS that represents our fake fan.
-const fan = exports.accessory = new Accessory('Fan', uuid.generate('hap-nodejs:accessories:Fan'));
+const fan = exports.accessory = new Accessory("Fan", uuid.generate("hap-nodejs:accessories:Fan"));
 
 // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
-// @ts-ignore
+// @ts-expect-error: Core/BridgeCore API
 fan.username = "1A:2B:3C:4D:5E:FF";
-// @ts-ignore
+// @ts-expect-error: Core/BridgeCore API
 fan.pincode = "031-45-154";
-// @ts-ignore
 fan.category = Categories.FAN;
 
 // set some basic properties (these values are arbitrary and setting them is optional)
 fan
   .getService(Service.AccessoryInformation)!
-  .setCharacteristic(Characteristic.Manufacturer, "Sample Company")
+  .setCharacteristic(Characteristic.Manufacturer, "Sample Company");
 
 // listen for the "identify" event for this Accessory
 fan.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, callback: VoidCallback) => {
@@ -74,11 +74,7 @@ fan
     // the fan hardware itself to find this out, then call the callback. But if you take longer than a
     // few seconds to respond, Siri will give up.
 
-    if (FAKE_FAN.powerOn) {
-      return true;
-    } else {
-      return false;
-    }
+    return !!FAKE_FAN.powerOn;
   });
 
 // also add an "optional" Characteristic for speed
@@ -90,4 +86,4 @@ fan
   })
   .onSet(async (value) => {
     FAKE_FAN.setSpeed(value);
-  })
+  });

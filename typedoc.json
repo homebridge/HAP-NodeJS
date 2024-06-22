@@ -1,12 +1,27 @@
 {
   "out": "docs",
   "includes": "src",
-  "exclude": ["src/**/*.spec.ts"],
+  "exclude": [
+    "src/**/*.spec.ts",
+    "src/test-utils/*"
+  ],
+
+  "entryPoints": [
+    "src/index.ts"
+  ],
+
+  "intentionallyNotExported": [
+    "LocalStorage",
+    "MulticastOptions"
+  ],
 
   "excludePrivate": true,
   "excludeProtected": true,
   "excludeExternals": true,
   "hideGenerator": true,
   "includeVersion": false,
-  "listInvalidSymbolLinks": true
+  "validation": {
+    "invalidLink": true,
+    "notExported": false
+  }
 }

@@ -1,8 +1,8 @@
 import os from "os";
-import createDebug from "debug";
 
-const debug = createDebug("HAP-NodeJS:net-utils");
-
+/**
+ * @group Utils
+ */
 export function findLoopbackAddress(): string {
   let ipv6: string | undefined = undefined; // ::1/128
   let ipv6LinkLocal: string | undefined = undefined; // fe80::/10
@@ -10,23 +10,27 @@ export function findLoopbackAddress(): string {
 
   for (const [name, infos] of Object.entries(os.networkInterfaces())) {
     let internal = false;
-    for (const info of infos) {
-      if (!info.internal) {
-        continue;
-      }
-
-      internal = true;
-      if (info.family === "IPv4") {
-        if (!ipv4) {
-          ipv4 = info.address;
+    if (infos) {
+      for (const info of infos) {
+        if (!info.internal) {
+          continue;
         }
-      } else if (info.family === "IPv6") {
-        if (info.scopeid) {
-          if (!ipv6LinkLocal) {
-            ipv6LinkLocal = info.address + "%" + name; // ipv6 link local addresses are only valid with a scope
+
+        internal = true;
+        // @ts-expect-error Nodejs 18+ uses the number 4 the string "IPv4"
+        if (info.family === "IPv4" || info.family === 4) {
+          if (!ipv4) {
+            ipv4 = info.address;
           }
-        } else if (!ipv6) {
-          ipv6 = info.address;
+          // @ts-expect-error Nodejs 18+ uses the number 6 the string "IPv6"
+        } else if (info.family === "IPv6" || info.family === 6) {
+          if (info.scopeid) {
+            if (!ipv6LinkLocal) {
+              ipv6LinkLocal = info.address + "%" + name; // ipv6 link local addresses are only valid with a scope
+            }
+          } else if (!ipv6) {
+            ipv6 = info.address;
+          }
         }
       }
     }
@@ -49,6 +53,8 @@ let loopbackAddress: string | undefined = undefined; // loopback addressed used 
  * Uses IPV4 loopback address by default and falls back to global unique IPv6 loopback and then
  * link local IPv6 loopback address.
  * If no loopback interface could be found a error is thrown.
+ *
+ * @group Utils
  */
 export function getOSLoopbackAddress(): string {
   return loopbackAddress ?? (loopbackAddress = findLoopbackAddress());
@@ -57,6 +63,8 @@ export function getOSLoopbackAddress(): string {
 /**
  * Refer to {@link getOSLoopbackAddress}.
  * Instead of throwing an error, undefined is returned if loopback interface couldn't be detected.
+ *
+ * @group Utils
  */
 export function getOSLoopbackAddressIfAvailable(): string | undefined {
   try {

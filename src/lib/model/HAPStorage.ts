@@ -1,6 +1,10 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import storage, { LocalStorage } from "node-persist";
 
+/**
+ * @group Model
+ */
 export class HAPStorage {
 
   private static readonly INSTANCE = new HAPStorage();
@@ -23,7 +27,7 @@ export class HAPStorage {
       if (this.customStoragePath) {
         this.localStore.initSync({
           dir: this.customStoragePath,
-        })
+        });
       } else {
         this.localStore.initSync();
       }

@@ -1,8 +1,8 @@
-declare module 'bonjour-hap' {
+declare module "bonjour-hap" {
 
   export const enum Protocols {
-    TCP = 'tcp',
-    UDP = 'udp',
+    TCP = "tcp",
+    UDP = "udp",
   }
 
   export type Nullable<T> = T | null;
@@ -26,6 +26,7 @@ declare module 'bonjour-hap' {
   }
 
   export type PublishOptions = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     category?: any,
     host?: string;
     name?: string;
@@ -51,13 +52,13 @@ declare module 'bonjour-hap' {
 
 
   export type MulticastOptions = {
-    multicast: boolean;
-    interface: string;
-    port: number;
-    ip: string;
-    ttl: number;
-    loopback: boolean;
-    reuseAddr: boolean;
+    multicast?: boolean;
+    interface?: string;
+    port?: number;
+    ip?: string;
+    ttl?: number;
+    loopback?: boolean;
+    reuseAddr?: boolean;
   };
   function createWithOptions(options?: MulticastOptions): BonjourHAP;
 

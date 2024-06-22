@@ -1,7 +1,43 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=860
+// V=880
 
 import { Access, Characteristic, Formats, Perms, Units } from "../Characteristic";
+
+/**
+ * Characteristic "Access Code Control Point"
+ * @since iOS 15
+ */
+export class AccessCodeControlPoint extends Characteristic {
+
+  public static readonly UUID: string = "00000262-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Access Code Control Point", AccessCodeControlPoint.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.AccessCodeControlPoint = AccessCodeControlPoint;
+
+/**
+ * Characteristic "Access Code Supported Configuration"
+ * @since iOS 15
+ */
+export class AccessCodeSupportedConfiguration extends Characteristic {
+
+  public static readonly UUID: string = "00000261-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Access Code Supported Configuration", AccessCodeSupportedConfiguration.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.AccessCodeSupportedConfiguration = AccessCodeSupportedConfiguration;
 
 /**
  * Characteristic "Access Control Level"
@@ -181,6 +217,25 @@ export class AirParticulateSize extends Characteristic {
 Characteristic.AirParticulateSize = AirParticulateSize;
 
 /**
+ * Characteristic "AirPlay Enable"
+ */
+export class AirPlayEnable extends Characteristic {
+
+  public static readonly UUID: string = "0000025B-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("AirPlay Enable", AirPlayEnable.UUID, {
+      format: Formats.UINT8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      minValue: 0,
+      maxValue: 1,
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.AirPlayEnable = AirPlayEnable;
+
+/**
  * Characteristic "Air Quality"
  */
 export class AirQuality extends Characteristic {
@@ -224,6 +279,23 @@ export class AppMatchingIdentifier extends Characteristic {
   }
 }
 Characteristic.AppMatchingIdentifier = AppMatchingIdentifier;
+
+/**
+ * Characteristic "Asset Update Readiness"
+ */
+export class AssetUpdateReadiness extends Characteristic {
+
+  public static readonly UUID: string = "00000269-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Asset Update Readiness", AssetUpdateReadiness.UUID, {
+      format: Formats.UINT32,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.AssetUpdateReadiness = AssetUpdateReadiness;
 
 /**
  * Characteristic "Audio Feedback"
@@ -614,6 +686,24 @@ export class ColorTemperature extends Characteristic {
 Characteristic.ColorTemperature = ColorTemperature;
 
 /**
+ * Characteristic "Configuration State"
+ * @since iOS 15
+ */
+export class ConfigurationState extends Characteristic {
+
+  public static readonly UUID: string = "00000263-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Configuration State", ConfigurationState.UUID, {
+      format: Formats.UINT16,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.ConfigurationState = ConfigurationState;
+
+/**
  * Characteristic "Configure Bridged Accessory"
  * @deprecated Removed and not used anymore
  */
@@ -712,6 +802,23 @@ export class CoolingThresholdTemperature extends Characteristic {
   }
 }
 Characteristic.CoolingThresholdTemperature = CoolingThresholdTemperature;
+
+/**
+ * Characteristic "Crypto Hash"
+ */
+export class CryptoHash extends Characteristic {
+
+  public static readonly UUID: string = "00000250-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Crypto Hash", CryptoHash.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.CryptoHash = CryptoHash;
 
 /**
  * Characteristic "Current Air Purifier State"
@@ -1014,7 +1121,7 @@ export class CurrentTemperature extends Characteristic {
       format: Formats.FLOAT,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ],
       unit: Units.CELSIUS,
-      minValue: 0,
+      minValue: -270,
       maxValue: 100,
       minStep: 0.1,
     });
@@ -1430,6 +1537,24 @@ export class FirmwareUpdateStatus extends Characteristic {
   }
 }
 Characteristic.FirmwareUpdateStatus = FirmwareUpdateStatus;
+
+/**
+ * Characteristic "Hardware Finish"
+ * @since iOS 15
+ */
+export class HardwareFinish extends Characteristic {
+
+  public static readonly UUID: string = "0000026C-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Hardware Finish", HardwareFinish.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.HardwareFinish = HardwareFinish;
 
 /**
  * Characteristic "Hardware Revision"
@@ -2066,6 +2191,23 @@ export class MaximumTransmitPower extends Characteristic {
 Characteristic.MaximumTransmitPower = MaximumTransmitPower;
 
 /**
+ * Characteristic "Metrics Buffer Full State"
+ */
+export class MetricsBufferFullState extends Characteristic {
+
+  public static readonly UUID: string = "00000272-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Metrics Buffer Full State", MetricsBufferFullState.UUID, {
+      format: Formats.BOOL,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.MetricsBufferFullState = MetricsBufferFullState;
+
+/**
  * Characteristic "Model"
  */
 export class Model extends Characteristic {
@@ -2099,6 +2241,25 @@ export class MotionDetected extends Characteristic {
   }
 }
 Characteristic.MotionDetected = MotionDetected;
+
+/**
+ * Characteristic "Multifunction Button"
+ */
+export class MultifunctionButton extends Characteristic {
+
+  public static readonly UUID: string = "0000026B-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Multifunction Button", MultifunctionButton.UUID, {
+      format: Formats.UINT8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      minValue: 0,
+      maxValue: 1,
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.MultifunctionButton = MultifunctionButton;
 
 /**
  * Characteristic "Mute"
@@ -2185,6 +2346,42 @@ export class NetworkClientStatusControl extends Characteristic {
   }
 }
 Characteristic.NetworkClientStatusControl = NetworkClientStatusControl;
+
+/**
+ * Characteristic "NFC Access Control Point"
+ * @since iOS 15
+ */
+export class NFCAccessControlPoint extends Characteristic {
+
+  public static readonly UUID: string = "00000264-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("NFC Access Control Point", NFCAccessControlPoint.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.NFCAccessControlPoint = NFCAccessControlPoint;
+
+/**
+ * Characteristic "NFC Access Supported Configuration"
+ * @since iOS 15
+ */
+export class NFCAccessSupportedConfiguration extends Characteristic {
+
+  public static readonly UUID: string = "00000265-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("NFC Access Supported Configuration", NFCAccessSupportedConfiguration.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.NFCAccessSupportedConfiguration = NFCAccessSupportedConfiguration;
 
 /**
  * Characteristic "Night Vision"
@@ -3112,6 +3309,23 @@ export class SelectedCameraRecordingConfiguration extends Characteristic {
 Characteristic.SelectedCameraRecordingConfiguration = SelectedCameraRecordingConfiguration;
 
 /**
+ * Characteristic "Selected Diagnostics Modes"
+ */
+export class SelectedDiagnosticsModes extends Characteristic {
+
+  public static readonly UUID: string = "0000024D-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Selected Diagnostics Modes", SelectedDiagnosticsModes.UUID, {
+      format: Formats.UINT32,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SelectedDiagnosticsModes = SelectedDiagnosticsModes;
+
+/**
  * Characteristic "Selected RTP Stream Configuration"
  */
 export class SelectedRTPStreamConfiguration extends Characteristic {
@@ -3127,6 +3341,23 @@ export class SelectedRTPStreamConfiguration extends Characteristic {
   }
 }
 Characteristic.SelectedRTPStreamConfiguration = SelectedRTPStreamConfiguration;
+
+/**
+ * Characteristic "Selected Sleep Configuration"
+ */
+export class SelectedSleepConfiguration extends Characteristic {
+
+  public static readonly UUID: string = "00000252-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Selected Sleep Configuration", SelectedSleepConfiguration.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SelectedSleepConfiguration = SelectedSleepConfiguration;
 
 /**
  * Characteristic "Serial Number"
@@ -3282,6 +3513,59 @@ export class SignalToNoiseRatio extends Characteristic {
 Characteristic.SignalToNoiseRatio = SignalToNoiseRatio;
 
 /**
+ * Characteristic "Siri Enable"
+ */
+export class SiriEnable extends Characteristic {
+
+  public static readonly UUID: string = "00000255-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Siri Enable", SiriEnable.UUID, {
+      format: Formats.UINT8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      minValue: 0,
+      maxValue: 1,
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SiriEnable = SiriEnable;
+
+/**
+ * Characteristic "Siri Endpoint Session Status"
+ */
+export class SiriEndpointSessionStatus extends Characteristic {
+
+  public static readonly UUID: string = "00000254-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Siri Endpoint Session Status", SiriEndpointSessionStatus.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SiriEndpointSessionStatus = SiriEndpointSessionStatus;
+
+/**
+ * Characteristic "Siri Engine Version"
+ */
+export class SiriEngineVersion extends Characteristic {
+
+  public static readonly UUID: string = "0000025A-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Siri Engine Version", SiriEngineVersion.UUID, {
+      format: Formats.STRING,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SiriEngineVersion = SiriEngineVersion;
+
+/**
  * Characteristic "Siri Input Type"
  */
 export class SiriInputType extends Characteristic {
@@ -3302,6 +3586,63 @@ export class SiriInputType extends Characteristic {
   }
 }
 Characteristic.SiriInputType = SiriInputType;
+
+/**
+ * Characteristic "Siri Light On Use"
+ */
+export class SiriLightOnUse extends Characteristic {
+
+  public static readonly UUID: string = "00000258-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Siri Light On Use", SiriLightOnUse.UUID, {
+      format: Formats.UINT8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      minValue: 0,
+      maxValue: 1,
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SiriLightOnUse = SiriLightOnUse;
+
+/**
+ * Characteristic "Siri Listening"
+ */
+export class SiriListening extends Characteristic {
+
+  public static readonly UUID: string = "00000256-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Siri Listening", SiriListening.UUID, {
+      format: Formats.UINT8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      minValue: 0,
+      maxValue: 1,
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SiriListening = SiriListening;
+
+/**
+ * Characteristic "Siri Touch To Use"
+ */
+export class SiriTouchToUse extends Characteristic {
+
+  public static readonly UUID: string = "00000257-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Siri Touch To Use", SiriTouchToUse.UUID, {
+      format: Formats.UINT8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      minValue: 0,
+      maxValue: 1,
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SiriTouchToUse = SiriTouchToUse;
 
 /**
  * Characteristic "Slat Type"
@@ -3580,6 +3921,23 @@ export class SulphurDioxideDensity extends Characteristic {
 Characteristic.SulphurDioxideDensity = SulphurDioxideDensity;
 
 /**
+ * Characteristic "Supported Asset Types"
+ */
+export class SupportedAssetTypes extends Characteristic {
+
+  public static readonly UUID: string = "00000268-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Supported Asset Types", SupportedAssetTypes.UUID, {
+      format: Formats.UINT32,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SupportedAssetTypes = SupportedAssetTypes;
+
+/**
  * Characteristic "Supported Audio Recording Configuration"
  */
 export class SupportedAudioRecordingConfiguration extends Characteristic {
@@ -3666,6 +4024,23 @@ export class SupportedDataStreamTransportConfiguration extends Characteristic {
 Characteristic.SupportedDataStreamTransportConfiguration = SupportedDataStreamTransportConfiguration;
 
 /**
+ * Characteristic "Supported Diagnostics Modes"
+ */
+export class SupportedDiagnosticsModes extends Characteristic {
+
+  public static readonly UUID: string = "0000024C-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Supported Diagnostics Modes", SupportedDiagnosticsModes.UUID, {
+      format: Formats.UINT32,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SupportedDiagnosticsModes = SupportedDiagnosticsModes;
+
+/**
  * Characteristic "Supported Diagnostics Snapshot"
  * @since iOS 14
  */
@@ -3701,6 +4076,23 @@ export class SupportedFirmwareUpdateConfiguration extends Characteristic {
 Characteristic.SupportedFirmwareUpdateConfiguration = SupportedFirmwareUpdateConfiguration;
 
 /**
+ * Characteristic "Supported Metrics"
+ */
+export class SupportedMetrics extends Characteristic {
+
+  public static readonly UUID: string = "00000271-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Supported Metrics", SupportedMetrics.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SupportedMetrics = SupportedMetrics;
+
+/**
  * Characteristic "Supported Router Configuration"
  */
 export class SupportedRouterConfiguration extends Characteristic {
@@ -3733,6 +4125,23 @@ export class SupportedRTPConfiguration extends Characteristic {
   }
 }
 Characteristic.SupportedRTPConfiguration = SupportedRTPConfiguration;
+
+/**
+ * Characteristic "Supported Sleep Configuration"
+ */
+export class SupportedSleepConfiguration extends Characteristic {
+
+  public static readonly UUID: string = "00000251-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Supported Sleep Configuration", SupportedSleepConfiguration.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SupportedSleepConfiguration = SupportedSleepConfiguration;
 
 /**
  * Characteristic "Supported Transfer Transport Configuration"
@@ -3809,6 +4218,23 @@ export class SwingMode extends Characteristic {
   }
 }
 Characteristic.SwingMode = SwingMode;
+
+/**
+ * Characteristic "Tap Type"
+ */
+export class TapType extends Characteristic {
+
+  public static readonly UUID: string = "0000022F-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Tap Type", TapType.UUID, {
+      format: Formats.UINT16,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.TapType = TapType;
 
 /**
  * Characteristic "Target Air Purifier State"
@@ -4361,6 +4787,23 @@ export class TimeUpdate extends Characteristic {
 }
 // noinspection JSDeprecatedSymbols
 Characteristic.TimeUpdate = TimeUpdate;
+
+/**
+ * Characteristic "Token"
+ */
+export class Token extends Characteristic {
+
+  public static readonly UUID: string = "00000231-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Token", Token.UUID, {
+      format: Formats.DATA,
+      perms: [Perms.PAIRED_WRITE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.Token = Token;
 
 /**
  * Characteristic "Transmit Power"

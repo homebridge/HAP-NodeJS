@@ -10,6 +10,7 @@ import { CharacteristicProps, Formats } from "../Characteristic";
  * @param value - The value which should be formatted
  * @param props - The characteristic properties used to format the value.
  * @private
+ * @group Utils
  */
 export function formatOutgoingCharacteristicValue(value: Nullable<CharacteristicValue>, props: CharacteristicProps): Nullable<CharacteristicValue>;
 export function formatOutgoingCharacteristicValue(value: CharacteristicValue, props: CharacteristicProps): CharacteristicValue
@@ -30,72 +31,92 @@ export function formatOutgoingCharacteristicValue(value: Nullable<Characteristic
   return value;
 }
 
+/**
+ * @group Utils
+ */
 export function isNumericFormat(format: Formats | string): boolean {
   switch (format) {
-    case Formats.INT:
-    case Formats.FLOAT:
-    case Formats.UINT8:
-    case Formats.UINT16:
-    case Formats.UINT32:
-    case Formats.UINT64:
-      return true;
-    default:
-      return false;
+  case Formats.INT:
+  case Formats.FLOAT:
+  case Formats.UINT8:
+  case Formats.UINT16:
+  case Formats.UINT32:
+  case Formats.UINT64:
+    return true;
+  default:
+    return false;
   }
 }
 
+/**
+ * @group Utils
+ */
 export function isUnsignedNumericFormat(format: Formats | string): boolean {
   switch (format) {
-    case Formats.UINT8:
-    case Formats.UINT16:
-    case Formats.UINT32:
-    case Formats.UINT64:
-      return true;
-    default:
-      return false;
+  case Formats.UINT8:
+  case Formats.UINT16:
+  case Formats.UINT32:
+  case Formats.UINT64:
+    return true;
+  default:
+    return false;
   }
 }
 
+/**
+ * @group Utils
+ */
 export function isIntegerNumericFormat(format: Formats | string): boolean {
   switch (format) {
-    case Formats.INT:
-    case Formats.UINT8:
-    case Formats.UINT16:
-    case Formats.UINT32:
-    case Formats.UINT64:
-      return true;
-    default:
-      return false;
+  case Formats.INT:
+  case Formats.UINT8:
+  case Formats.UINT16:
+  case Formats.UINT32:
+  case Formats.UINT64:
+    return true;
+  default:
+    return false;
   }
 }
 
+/**
+ * @group Utils
+ */
 export function numericLowerBound(format: Formats | string): number {
   switch (format) {
-    case Formats.INT:
-      return -2147483648;
-    case Formats.UINT8:
-    case Formats.UINT16:
-    case Formats.UINT32:
-    case Formats.UINT64:
-      return 0;
-    default:
-      throw new Error("Unable to determine numeric lower bound for " + format);
+  case Formats.INT:
+    return -2147483648;
+  case Formats.FLOAT:
+    return -Number.MAX_VALUE;
+  case Formats.UINT8:
+  case Formats.UINT16:
+  case Formats.UINT32:
+  case Formats.UINT64:
+    return 0;
+  default:
+    throw new Error("Unable to determine numeric lower bound for " + format);
   }
 }
 
+/**
+ * @group Utils
+ */
 export function numericUpperBound(format: Formats | string): number {
   switch (format) {
-    case Formats.INT:
-      return 2147483647;
-    case Formats.UINT8:
-      return 255;
-    case Formats.UINT16:
-      return 65535;
-    case Formats.UINT32:
-      return 4294967295;
-    case Formats.UINT64:
-      return 18446744073709551615; // don't get fooled, javascript uses 18446744073709552000 here
-    default:
-      throw new Error("Unable to determine numeric lower bound for " + format);
+  case Formats.INT:
+    return 2147483647;
+  case Formats.FLOAT:
+    return Number.MAX_VALUE;
+  case Formats.UINT8:
+    return 255;
+  case Formats.UINT16:
+    return 65535;
+  case Formats.UINT32:
+    return 4294967295;
+  case Formats.UINT64:
+    // eslint-disable-next-line @typescript-eslint/no-loss-of-precision
+    return 18446744073709551615; // don't get fooled, javascript uses 18446744073709552000 here
+  default:
+    throw new Error("Unable to determine numeric lower bound for " + format);
   }
 }

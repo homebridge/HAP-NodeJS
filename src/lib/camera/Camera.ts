@@ -1,4 +1,4 @@
-import { Service } from '../Service';
+import { Service } from "../Service";
 // noinspection JSDeprecatedSymbols
 import {
   CameraStreamingDelegate,
@@ -10,26 +10,32 @@ import {
   StreamController,
   StreamingRequest,
   StreamRequest,
-  StreamRequestCallback
+  StreamRequestCallback,
 } from "../..";
-import { NodeCallback, SessionIdentifier } from '../../types';
+import { NodeCallback, SessionIdentifier } from "../../types";
 
 // noinspection JSDeprecatedSymbols
 /**
+ * @group Camera
  * @deprecated
  */
 export type PreparedStreamRequestCallback = (response: PreparedStreamResponse) => void;
 /**
+ * @group Camera
  * @deprecated
  */
 export type PreparedStreamResponse = PrepareStreamResponse;
 
+/**
+ * @group Camera
+ */
 // noinspection JSDeprecatedSymbols,JSUnusedGlobalSymbols
 export type Camera = LegacyCameraSource; // provide backwards compatibility
 // noinspection JSDeprecatedSymbols
 /**
- * Interface of and old style CameraSource. See {@see configureCameraSource} for more Information.
+ * Interface of and old style CameraSource. See {@link Accessory.configureCameraSource} for more Information.
  *
+ * @group Camera
  * @deprecated was replaced by {@link CameraStreamingDelegate} utilized by the {@link CameraController}
  */
 export interface LegacyCameraSource {
@@ -46,6 +52,9 @@ export interface LegacyCameraSource {
 
 }
 
+/**
+ * @group Camera
+ */
 // noinspection JSDeprecatedSymbols
 export class LegacyCameraSourceAdapter implements CameraStreamingDelegate {
 
@@ -68,15 +77,15 @@ export class LegacyCameraSourceAdapter implements CameraStreamingDelegate {
   }
 
   handleStreamRequest(request: StreamingRequest, callback: StreamRequestCallback): void {
-    // @ts-ignore
+    // @ts-expect-error: compatible types
     this.cameraSource.handleStreamRequest(request);
     callback();
   }
 
-  forwardCloseConnection(sessionID: SessionIdentifier) {
-    // In the legacy type CameraSource API it was need that the plugin dev would forward this call to the
+  forwardCloseConnection(sessionID: SessionIdentifier): void {
+    // In the legacy type CameraSource API it was required that the plugin dev would forward this call to the
     // handleCloseConnection of the "StreamController". This is not needed anymore and is automatically handled
-    // by HAP-NodeJS. However devs could possibly define other stuff in there so we still forward this call.
+    // by HAP-NodeJS. However, devs could possibly define other stuff in there so we still forward this call.
     this.cameraSource.handleCloseConnection(sessionID);
   }
 
