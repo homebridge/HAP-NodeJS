@@ -504,15 +504,10 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
     }
 
     if (this.activeTransition) {
-      this.colorTemperatureCharacteristic!.removeListener(CharacteristicEventTypes.CHANGE, this.characteristicManualWrittenChangeListener);
-      this.brightnessCharacteristic!.removeListener(CharacteristicEventTypes.CHANGE, this.adjustmentFactorChangedListener);
-
-      if (this.hueCharacteristic) {
-        this.hueCharacteristic.removeListener(CharacteristicEventTypes.CHANGE, this.characteristicManualWrittenChangeListener);
-      }
-      if (this.saturationCharacteristic) {
-        this.saturationCharacteristic.removeListener(CharacteristicEventTypes.CHANGE, this.characteristicManualWrittenChangeListener);
-      }
+      this.colorTemperatureCharacteristic?.removeListener(CharacteristicEventTypes.CHANGE, this.characteristicManualWrittenChangeListener);
+      this.brightnessCharacteristic?.removeListener(CharacteristicEventTypes.CHANGE, this.adjustmentFactorChangedListener);
+      this.hueCharacteristic?.removeListener(CharacteristicEventTypes.CHANGE, this.characteristicManualWrittenChangeListener);
+      this.saturationCharacteristic?.removeListener(CharacteristicEventTypes.CHANGE, this.characteristicManualWrittenChangeListener);
 
       this.activeTransition = undefined;
 
@@ -532,7 +527,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
 
     this.didRunFirstInitializationStep = false;
 
-    this.activeTransitionCount!.sendEventNotification(0);
+    this.activeTransitionCount?.sendEventNotification(0);
 
     debug("[%s] Disabling adaptive lighting", this.lightbulb.displayName);
   }
@@ -609,10 +604,12 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
   // ----------- PUBLIC API END -----------
 
   private handleActiveTransitionUpdated(calledFromDeserializer: boolean = false): void {
-    if (!calledFromDeserializer) {
-      this.activeTransitionCount!.sendEventNotification(1);
-    } else {
-      this.activeTransitionCount!.value = 1;
+    if (this.activeTransitionCount) {
+      if (!calledFromDeserializer) {
+        this.activeTransitionCount.sendEventNotification(1);
+      } else {
+        this.activeTransitionCount.value = 1;
+      }
     }
 
     if (this.mode === AdaptiveLightingControllerMode.AUTOMATIC) {
@@ -823,7 +820,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
       this.activeTransition.brightnessAdjustmentRange.minBrightnessValue,
       Math.min(
         this.activeTransition.brightnessAdjustmentRange.maxBrightnessValue,
-        this.brightnessCharacteristic!.value as number // get handler is not called for optimal performance
+        this.brightnessCharacteristic?.value as number // get handler is not called for optimal performance
       )
     );
 
@@ -867,7 +864,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
       this.hueCharacteristic.value = color.hue;
     }
 
-    this.colorTemperatureCharacteristic!.handleSetRequest(temperature, undefined, context).catch(reason => { // reason is HAPStatus code
+    this.colorTemperatureCharacteristic?.handleSetRequest(temperature, undefined, context).catch(reason => { // reason is HAPStatus code
       debug("[%s] Failed to next adaptive lighting transition point: %d", this.lightbulb.displayName, reason);
     });
 
@@ -887,7 +884,7 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
       };
 
       if (this.lastNotifiedTemperatureValue !== temperature) {
-        this.colorTemperatureCharacteristic!.sendEventNotification(temperature, eventContext);
+        this.colorTemperatureCharacteristic?.sendEventNotification(temperature, eventContext);
         this.lastNotifiedTemperatureValue = temperature;
       }
       if (this.saturationCharacteristic && this.lastNotifiedSaturationValue !== color.saturation) {
@@ -1011,8 +1008,8 @@ export class AdaptiveLightingController extends EventEmitter implements Serializ
   }
 
   private handleSupportedTransitionConfigurationRead(): string {
-    const brightnessIID = this.lightbulb!.getCharacteristic(Characteristic.Brightness).iid;
-    const temperatureIID = this.lightbulb!.getCharacteristic(Characteristic.ColorTemperature).iid;
+    const brightnessIID = this.lightbulb?.getCharacteristic(Characteristic.Brightness).iid;
+    const temperatureIID = this.lightbulb?.getCharacteristic(Characteristic.ColorTemperature).iid;
     assert(brightnessIID, "iid for brightness characteristic is undefined");
     assert(temperatureIID, "iid for temperature characteristic is undefined");
 
