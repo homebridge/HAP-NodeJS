@@ -2,6 +2,14 @@
 
 All notable changes to `hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
+## v0.12.3 (2024-06-22)
+
+### Other Changes
+
+- Implement warning messages for invalid characters in names (#1009) (@NorthernMan54)
+- Mitigate event emitter "memory leak" warnings when a significant number of camera streaming events occur simultaneously (#1037) (@hjdhjd)
+- Updated dependencies
+
 ## v0.12.2 (2024-05-31)
 
 ### Changed
