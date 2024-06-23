@@ -618,7 +618,6 @@ describe(IsKnownHAPStatusError, () => {
       .filter(error => error !== 0); // filter out HAPStatus.SUCCESS
 
     for (const error of errorValues) {
-      // @ts-expect-error: type mismatch
       const result = IsKnownHAPStatusError(error);
       if (!result) {
         fail("IsKnownHAPStatusError does not return true for error code " + error);

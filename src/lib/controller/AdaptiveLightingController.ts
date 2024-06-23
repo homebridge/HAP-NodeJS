@@ -660,7 +660,7 @@ export class AdaptiveLightingController
         brightnessAdjustmentRange: this.activeTransition.brightnessAdjustmentRange,
         updateInterval: this.activeTransition.updateInterval,
         notifyIntervalThreshold: this.activeTransition.notifyIntervalThreshold,
-      }
+      };
 
       this.emit(AdaptiveLightingControllerEvents.UPDATE, update);
     } else {
