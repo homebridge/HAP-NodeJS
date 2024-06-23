@@ -302,7 +302,7 @@ export const enum AdaptiveLightingControllerMode {
 export const enum AdaptiveLightingControllerEvents {
   /**
    * This event is called once a HomeKit controller enables Adaptive Lighting
-   * or a HomeHub sends a updated transition schedule for the next 24 hours.
+   * or a HomeHub sends an updated transition schedule for the next 24 hours.
    * This is also called on startup when AdaptiveLighting was previously enabled.
    */
   UPDATE = "update",
@@ -315,6 +315,7 @@ export const enum AdaptiveLightingControllerEvents {
 }
 
 /**
+ * @group Adaptive Lighting
  * see {@link ActiveAdaptiveLightingTransition}.
  */
 export interface AdaptiveLightingControllerUpdate {
