@@ -809,7 +809,7 @@ export class DataStreamWriter {
     const byteLength = Buffer.byteLength(utf8);
     this.ensureLength(byteLength);
 
-    this.data.write(utf8, this.writerIndex, undefined, "utf8");
+    this.data.write(utf8, this.writerIndex, byteLength, "utf8");
     this.writerIndex += byteLength;
   }
 

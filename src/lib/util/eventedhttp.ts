@@ -71,6 +71,7 @@ export const enum EventedHTTPServerEvent {
 /**
  * @group HAP Accessory Server
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export declare interface EventedHTTPServer {
 
   on(event: "listening", listener: (port: number, address: string) => void): this;
@@ -104,6 +105,7 @@ export declare interface EventedHTTPServer {
  *
  * @group HAP Accessory Server
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class EventedHTTPServer extends EventEmitter {
 
   private static readonly CONNECTION_TIMEOUT_LIMIT = 16; // if we have more (or equal) # connections we start the timeout
@@ -324,6 +326,7 @@ export const enum HAPConnectionEvent {
 /**
  * @group HAP Accessory Server
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export declare interface HAPConnection {
   on(event: "request", listener: (request: IncomingMessage, response: ServerResponse) => void): this;
   on(event: "authenticated", listener: (username: HAPUsername) => void): this;
@@ -338,6 +341,7 @@ export declare interface HAPConnection {
  * Manages a single iOS-initiated HTTP connection during its lifetime.
  * @group HAP Accessory Server
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class HAPConnection extends EventEmitter {
   /**
    * @private file-private API
@@ -384,7 +388,7 @@ export class HAPConnection extends EventEmitter {
 
     this.server = server;
     this.sessionID = uuid.generate(clientSocket.remoteAddress + ":" + clientSocket.remotePort);
-    this.localAddress = clientSocket.localAddress;
+    this.localAddress = clientSocket.localAddress as string;
     this.remoteAddress = clientSocket.remoteAddress!; // cache because it becomes undefined in 'onClientSocketClose'
     this.remotePort = clientSocket.remotePort!;
     this.networkInterface = HAPConnection.getLocalNetworkInterface(clientSocket);
@@ -806,10 +810,12 @@ export class HAPConnection extends EventEmitter {
     const infos = os.networkInterfaces()[this.networkInterface];
 
     if (ipVersion === "ipv4") {
-      for (const info of infos) {
-        // @ts-expect-error Nodejs 18+ uses the number 4 the string "IPv4"
-        if (info.family === "IPv4" || info.family === 4) {
-          return info.address;
+      if (infos) {
+        for (const info of infos) {
+          // @ts-expect-error Nodejs 18+ uses the number 4 the string "IPv4"
+          if (info.family === "IPv4" || info.family === 4) {
+            return info.address;
+          }
         }
       }
 
@@ -817,13 +823,15 @@ export class HAPConnection extends EventEmitter {
     } else {
       let localUniqueAddress: string | undefined = undefined;
 
-      for (const info of infos) {
-        // @ts-expect-error Nodejs 18+ uses the number 6 instead of the string "IPv6"
-        if (info.family === "IPv6" || info.family === 6) {
-          if (!info.scopeid) {
-            return info.address;
-          } else if (!localUniqueAddress) {
-            localUniqueAddress = info.address;
+      if (infos) {
+        for (const info of infos) {
+          // @ts-expect-error Nodejs 18+ uses the number 6 instead of the string "IPv6"
+          if (info.family === "IPv6" || info.family === 6) {
+            if (!info.scopeid) {
+              return info.address;
+            } else if (!localUniqueAddress) {
+              localUniqueAddress = info.address;
+            }
           }
         }
       }
@@ -836,7 +844,7 @@ export class HAPConnection extends EventEmitter {
   }
 
   private static getLocalNetworkInterface(socket: Socket): string {
-    let localAddress = socket.localAddress;
+    let localAddress = socket.localAddress as string;
 
     if (localAddress.startsWith("::ffff:")) { // IPv4-Mapped IPv6 Address https://tools.ietf.org/html/rfc4291#section-2.5.5.2
       localAddress = localAddress.substring(7);
@@ -849,9 +857,11 @@ export class HAPConnection extends EventEmitter {
 
     const interfaces = os.networkInterfaces();
     for (const [name, infos] of Object.entries(interfaces)) {
-      for (const info of infos) {
-        if (info.address === localAddress) {
-          return name;
+      if (infos) {
+        for (const info of infos) {
+          if (info.address === localAddress) {
+            return name;
+          }
         }
       }
     }
@@ -859,14 +869,16 @@ export class HAPConnection extends EventEmitter {
     // we couldn't map the address from above, we try now to match subnets (see https://github.com/homebridge/HAP-NodeJS/issues/847)
     const family = net.isIPv4(localAddress)? "IPv4": "IPv6";
     for (const [name, infos] of Object.entries(interfaces)) {
-      for (const info of infos) {
-        if (info.family !== family) {
-          continue;
-        }
+      if (infos) {
+        for (const info of infos) {
+          if (info.family !== family) {
+            continue;
+          }
 
-        // check if the localAddress is in the same subnet
-        if (getNetAddress(localAddress, info.netmask) === getNetAddress(info.address, info.netmask)) {
-          return name;
+          // check if the localAddress is in the same subnet
+          if (getNetAddress(localAddress, info.netmask) === getNetAddress(info.address, info.netmask)) {
+            return name;
+          }
         }
       }
     }
