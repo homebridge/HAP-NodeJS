@@ -1,6 +1,5 @@
 {
   "out": "docs",
-  "includes": "src",
   "exclude": [
     "src/**/*.spec.ts",
     "src/test-utils/*"
