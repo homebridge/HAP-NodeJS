@@ -356,6 +356,7 @@ export const enum CameraControllerEvents {
 /**
  * @group Camera
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export declare interface CameraController {
   on(event: "microphone-change", listener: (muted: boolean, volume: number) => void): this;
   on(event: "speaker-change", listener: (muted: boolean, volume: number) => void): this;
@@ -369,6 +370,7 @@ export declare interface CameraController {
  *
  * @group Camera
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class CameraController extends EventEmitter implements SerializableController<CameraControllerServiceMap, CameraControllerState> {
   private static readonly STREAM_MANAGEMENT = "streamManagement"; // key to index all RTPStreamManagement services
 

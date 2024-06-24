@@ -362,6 +362,7 @@ export const enum RemoteControllerEvents {
 /**
  * @group Apple TV Remote
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export declare interface RemoteController {
   on(event: "active-change", listener: (active: boolean) => void): this;
   on(event: "active-identifier-change", listener: (activeIdentifier: number) => void): this;
@@ -405,6 +406,7 @@ export interface SerializedControllerState {
  *
  * @group Apple TV Remote
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class RemoteController extends EventEmitter
   implements SerializableController<RemoteControllerServiceMap, SerializedControllerState>, DataStreamProtocolHandler {
   private stateChangeDelegate?: StateChangeDelegate;
@@ -1409,6 +1411,7 @@ export const enum SiriAudioSessionEvents {
 /**
  * @group Apple TV Remote
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export declare interface SiriAudioSession {
   on(event: "close", listener: () => void): this;
 
@@ -1419,6 +1422,7 @@ export declare interface SiriAudioSession {
  * Represents an ongoing audio transmission
  * @group Apple TV Remote
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class SiriAudioSession extends EventEmitter {
   readonly connection: DataStreamConnection;
   private readonly selectedAudioConfiguration: AudioCodecConfiguration;

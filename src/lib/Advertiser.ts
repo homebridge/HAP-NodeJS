@@ -2,7 +2,7 @@
 /// <reference path="../../@types/bonjour-hap.d.ts" />
 import ciao, { CiaoService, MDNSServerOptions, Responder, ServiceEvent, ServiceTxt, ServiceType } from "@homebridge/ciao";
 import { InterfaceName, IPAddress } from "@homebridge/ciao/lib/NetworkManager";
-import dbus, { DBusInterface, InvokeError, MessageBus } from "@homebridge/dbus-native";
+import dbus, { DBusInterface, MessageBus } from "@homebridge/dbus-native";
 import assert from "assert";
 import bonjour, { BonjourHAP, BonjourHAPService, MulticastOptions } from "bonjour-hap";
 import crypto from "crypto";
@@ -303,7 +303,8 @@ function messageBusConnectionResult(bus: MessageBus): Promise<void> {
 export class DBusInvokeError extends Error {
   readonly errorName: string;
 
-  constructor(errorObject: InvokeError) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  constructor(errorObject: { name: string, message: any }) {
     super();
 
     Object.setPrototypeOf(this, DBusInvokeError.prototype);
@@ -412,11 +413,6 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
 
     debug(`Starting to advertise '${this.accessoryInfo.displayName}' using Avahi backend!`);
 
-    if (!this.avahiServerInterface) {
-      this.avahiServerInterface = await AvahiAdvertiser.avahiInterface(this.bus, "Server");
-      this.avahiServerInterface.on("StateChanged", this.stateChangeHandler);
-    }
-
     this.path = await AvahiAdvertiser.avahiInvoke(this.bus, "/", "Server", "EntryGroupNew") as string;
     await AvahiAdvertiser.avahiInvoke(this.bus, this.path, "EntryGroup", "AddService", {
       body: [
@@ -433,6 +429,20 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
       signature: "iiussssqaay",
     });
     await AvahiAdvertiser.avahiInvoke(this.bus, this.path, "EntryGroup", "Commit");
+
+    try {
+      if (!this.avahiServerInterface) {
+        this.avahiServerInterface = await AvahiAdvertiser.avahiInterface(this.bus, "Server");
+        this.avahiServerInterface.on("StateChanged", this.stateChangeHandler);
+      }
+    } catch (error) {
+      // We have some problem on Synology https://github.com/homebridge/HAP-NodeJS/issues/993
+      console.warn("Failed to create listener for avahi-daemon server state. The system will not be notified about restarts of avahi-daemon " +
+        "and will therefore stay undiscoverable in those instances. Error message: " + error);
+      if (error.stack) {
+        debug("Detailed error: " + error.stack);
+      }
+    }
   }
 
   /**

@@ -30,7 +30,7 @@ describe("eventedhttp", () => {
     await awaitEventOnce(server, EventedHTTPServerEvent.LISTENING);
 
     const address = server.address();
-    baseUrl = `http://${"localhost"}:${address.port}`;
+    baseUrl = `http://0.0.0.0:${address.port}`;
   });
 
   afterEach(() => {

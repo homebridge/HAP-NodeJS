@@ -519,8 +519,8 @@ class MP4StreamingServer {
       throw new Error("ChildProcess or its streams is undefined directly after the init!");
     }
     if(this.debugMode) {
-      this.childProcess.stdout.on("data", data => console.log(data.toString()));
-      this.childProcess.stderr.on("data", data => console.log(data.toString()));
+      this.childProcess.stdout?.on("data", data => console.log(data.toString()));
+      this.childProcess.stderr?.on("data", data => console.log(data.toString()));
     }
   }
 
