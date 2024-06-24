@@ -618,8 +618,10 @@ describe(IsKnownHAPStatusError, () => {
       .filter(error => error !== 0); // filter out HAPStatus.SUCCESS
 
     for (const error of errorValues) {
-      // @ts-ignore:next-line - This was @ts-expect-error: type mismatch, but it triggered build errors Summary of all failing tests  src/lib/HAPServer.spec.ts:621:7 - error TS2578: Unused '@ts-expect-error' directive.
-      
+      // eslint-disable-next-line no-use-before-define
+      // @ts-ignore:next-line - This was @ts-expect-error: type mismatch, but it triggered build errors 
+      // Summary of all failing tests  src/lib/HAPServer.spec.ts:621:7 - error TS2578: Unused '@ts-expect-error' directive.
+
       const result = IsKnownHAPStatusError(error);
       if (!result) {
         fail("IsKnownHAPStatusError does not return true for error code " + error);
