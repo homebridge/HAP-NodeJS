@@ -116,12 +116,12 @@ const adaptiveLightingController = new AdaptiveLightingController(lightbulbServi
 });
 
 // Requires AdaptiveLightingControllerMode.MANUAL to be set as a controllerMode
-adaptiveLightingController.on('update', () => {
+adaptiveLightingController.on("update", () => {
   console.log("Adaptive Lighting updated");
-}).on('update', (update) => {
+}).on("update", (update) => {
   console.log("Adaptive Lighting schedule updated to " + util.inspect(update));
-}).on('disable', () => {
+}).on("disable", () => {
   console.log("Adaptive Lighting disabled");
-})
+});
 
 accessory.configureController(adaptiveLightingController);
