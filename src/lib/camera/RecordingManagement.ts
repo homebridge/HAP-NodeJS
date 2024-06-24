@@ -588,7 +588,7 @@ export class RecordingManagement {
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     this.recordingStream = new CameraRecordingStream(connection, this.delegate, id, streamId);
     this.recordingStream.on(CameraRecordingStreamEvents.CLOSED, () => {
-      debug("[HDS %s] Removing active recoding session from recording management!");
+      debug("[HDS %s] Removing active recoding session from recording management!", connection.remoteAddress);
       this.recordingStream = undefined;
     });
 
@@ -1056,8 +1056,8 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
 
       if (!lastFragmentWasMarkedLast && !this.closed) {
         // Delegate violates the contract. Exited normally on a non-closed stream without properly setting `isLast`.
-        console.warn(`[HDS ${this.connection.remoteAddress}] Delegate finished streaming for ${this.streamId} without setting RecordingPacket.isLast. \
-        Can't notify Controller about endOfStream!`);
+        console.warn(`[HDS ${this.connection.remoteAddress}] Delegate finished streaming for ${this.streamId} without setting RecordingPacket.isLast. ` +
+        "Can't notify Controller about endOfStream!");
       }
     } catch (error) {
       if (this.closed) {
@@ -1093,11 +1093,6 @@ class CameraRecordingStream extends EventEmitter implements DataStreamProtocolHa
         // ensure that if something fails the recording stream is freed nonetheless.
         this.kickOffCloseTimeout();
       }
-    }
-
-    if (initialization) { // we never actually sent anything out there!
-      console.warn(`[HDS ${this.connection.remoteAddress}] Delegate finished recording stream ${this.streamId} without sending anything out. \
-      Controller will CANCEL.`);
     }
 
     debug("[HDS %s] Finished DATA_SEND transmission for stream %d!", this.connection.remoteAddress, this.streamId);
