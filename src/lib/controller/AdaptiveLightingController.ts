@@ -334,6 +334,7 @@ export interface AdaptiveLightingControllerUpdate {
 export declare interface AdaptiveLightingController {
   /**
    * See {@link AdaptiveLightingControllerEvents.UPDATE}
+   * Also see {@link AdaptiveLightingControllerUpdate}
    *
    * @param event
    * @param listener
@@ -347,6 +348,9 @@ export declare interface AdaptiveLightingController {
    */
   on(event: "disable", listener: () => void): this;
 
+  /**
+   * See {@link AdaptiveLightingControllerUpdate}
+   */
   emit(event: "update", update: AdaptiveLightingControllerUpdate): boolean;
   emit(event: "disable"): boolean;
 }
