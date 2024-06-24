@@ -784,6 +784,7 @@ export class RTPStreamManagement {
 
     if (this.activeConnection) {
       this.activeConnection.removeListener(HAPConnectionEvent.CLOSED, this.activeConnectionClosedListener);
+      this.activeConnection.setMaxListeners(this.activeConnection.getMaxListeners() - 1);
       this.activeConnection = undefined;
     }
 
@@ -1098,6 +1099,7 @@ export class RTPStreamManagement {
       "Found non-nil `activeConnection` when trying to setup streaming endpoints, even though streamStatus is reported to be AVAILABLE!");
 
     this.activeConnection = connection;
+    this.activeConnection.setMaxListeners(this.activeConnection.getMaxListeners() + 1);
     this.activeConnection.on(HAPConnectionEvent.CLOSED, this.activeConnectionClosedListener);
 
     // noinspection JSDeprecatedSymbols

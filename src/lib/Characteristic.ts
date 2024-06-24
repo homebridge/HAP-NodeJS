@@ -276,6 +276,7 @@ import {
   numericUpperBound,
 } from "./util/request-util";
 import { BASE_UUID, toShortForm } from "./util/uuid";
+import { checkName } from "./util/checkName";
 
 const debug = createDebug("HAP-NodeJS:Characteristic");
 
@@ -2974,6 +2975,10 @@ export class Characteristic extends EventEmitter {
       if (value.length > maxLength) {
         this.characteristicWarning(`characteristic was supplied illegal value: string '${value}' exceeded max length of ${maxLength}`, warningType);
         value = value.substring(0, maxLength);
+      }
+
+      if (this.UUID === "000000E3-0000-1000-8000-0026BB765291") {
+        checkName("unknown", this.displayName, value);
       }
 
       return value;

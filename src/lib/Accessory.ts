@@ -74,6 +74,7 @@ import { EventName, HAPConnection, HAPUsername } from "./util/eventedhttp";
 import { formatOutgoingCharacteristicValue } from "./util/request-util";
 import * as uuid from "./util/uuid";
 import { toShortForm } from "./util/uuid";
+import { checkName } from "./util/checkName";
 
 const debug = createDebug("HAP-NodeJS:Accessory");
 const MAX_ACCESSORIES = 149; // Maximum number of bridged accessories per bridge.
@@ -498,6 +499,7 @@ export class Accessory extends EventEmitter {
       "valid UUID from any arbitrary string, like a serial number.");
 
     // create our initial "Accessory Information" Service that all Accessories are expected to have
+    checkName(this.displayName, "name", displayName);
     this.addService(Service.AccessoryInformation)
       .setCharacteristic(Characteristic.Name, displayName);
 
@@ -1053,11 +1055,14 @@ export class Accessory extends EventEmitter {
       const serialNumber = service.getCharacteristic(Characteristic.SerialNumber).value;
       const firmwareRevision = service.getCharacteristic(Characteristic.FirmwareRevision).value;
       const name = service.getCharacteristic(Characteristic.Name).value;
+      const manufacturer = service.getCharacteristic(Characteristic.Manufacturer).value;
 
       checkValue("Model", model);
       checkValue("SerialNumber", serialNumber);
       checkValue("FirmwareRevision", firmwareRevision);
       checkValue("Name", name);
+      checkName(this.displayName, "Name", name);
+      checkName(this.displayName, "Manufacturer", manufacturer);
     }
 
     if (mainAccessory) {

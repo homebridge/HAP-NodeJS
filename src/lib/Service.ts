@@ -87,6 +87,7 @@ import { IdentifierCache } from "./model/IdentifierCache";
 import { HAPConnection } from "./util/eventedhttp";
 import { HapStatusError } from "./util/hapStatusError";
 import { toShortForm } from "./util/uuid";
+import { checkName } from "./util/checkName";
 
 const debug = createDebug("HAP-NodeJS:Service");
 
@@ -553,6 +554,7 @@ export class Service extends EventEmitter {
     // if you don't provide a display name, some HomeKit apps may choose to hide the device.
     if (displayName) {
       // create the characteristic if necessary
+      checkName(this.displayName, "Name", displayName);
       const nameCharacteristic =
         this.getCharacteristic(Characteristic.Name) ||
         this.addCharacteristic(Characteristic.Name);
