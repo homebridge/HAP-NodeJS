@@ -10,6 +10,7 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 - Mitigate event emitter "memory leak" warnings when a significant number of camera streaming events occur simultaneously (#1037) (@hjdhjd)
 - Updated dependencies
 - Updated and fixed `typedoc` config file
+- Updated dependencies (`bonjour-hap`)
 
 ## v0.12.2 (2024-05-31)
 
