@@ -22,5 +22,6 @@
   "validation": {
     "invalidLink": true,
     "notExported": false
-  }
+  },
+  "blockTags": ["@deprecated", "@example", "@group", "@param", "@returns", "@since"]
 }
