@@ -60,17 +60,17 @@
     "futoin-hkdf": "^1.5.3",
     "node-persist": "^0.0.12",
     "source-map-support": "^0.5.21",
-    "tslib": "^2.6.2",
+    "tslib": "^2.6.3",
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
     "@types/debug": "^4.1.12",
     "@types/escape-html": "^1.0.4",
     "@types/jest": "^29.5.12",
-    "@types/node": "^20.13.0",
+    "@types/node": "^20.14.8",
     "@types/plist": "^3.0.5",
-    "@typescript-eslint/eslint-plugin": "^7.11.0",
-    "@typescript-eslint/parser": "^7.11.0",
+    "@typescript-eslint/eslint-plugin": "^7.13.1",
+    "@typescript-eslint/parser": "^7.13.1",
     "axios": "^1.7.2",
     "commander": "^12.1.0",
     "escape-html": "^1.0.3",
@@ -80,9 +80,9 @@
     "rimraf": "^5.0.7",
     "semver": "^7.6.2",
     "simple-plist": "^1.4.0-0",
-    "ts-jest": "^29.1.4",
+    "ts-jest": "^29.1.5",
     "ts-node": "^10.9.2",
-    "typedoc": "^0.25.13",
-    "typescript": "^5.4.5"
+    "typedoc": "^0.26.1",
+    "typescript": "^5.5.2"
   }
 }
