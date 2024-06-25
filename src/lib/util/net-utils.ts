@@ -10,25 +10,27 @@ export function findLoopbackAddress(): string {
 
   for (const [name, infos] of Object.entries(os.networkInterfaces())) {
     let internal = false;
-    for (const info of infos) {
-      if (!info.internal) {
-        continue;
-      }
-
-      internal = true;
-      // @ts-expect-error Nodejs 18+ uses the number 4 the string "IPv4"
-      if (info.family === "IPv4" || info.family === 4) {
-        if (!ipv4) {
-          ipv4 = info.address;
+    if (infos) {
+      for (const info of infos) {
+        if (!info.internal) {
+          continue;
         }
-      // @ts-expect-error Nodejs 18+ uses the number 6 the string "IPv6"
-      } else if (info.family === "IPv6" || info.family === 6) {
-        if (info.scopeid) {
-          if (!ipv6LinkLocal) {
-            ipv6LinkLocal = info.address + "%" + name; // ipv6 link local addresses are only valid with a scope
+
+        internal = true;
+        // @ts-expect-error Nodejs 18+ uses the number 4 the string "IPv4"
+        if (info.family === "IPv4" || info.family === 4) {
+          if (!ipv4) {
+            ipv4 = info.address;
           }
-        } else if (!ipv6) {
-          ipv6 = info.address;
+          // @ts-expect-error Nodejs 18+ uses the number 6 the string "IPv6"
+        } else if (info.family === "IPv6" || info.family === 6) {
+          if (info.scopeid) {
+            if (!ipv6LinkLocal) {
+              ipv6LinkLocal = info.address + "%" + name; // ipv6 link local addresses are only valid with a scope
+            }
+          } else if (!ipv6) {
+            ipv6 = info.address;
+          }
         }
       }
     }

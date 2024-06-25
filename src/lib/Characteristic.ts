@@ -276,6 +276,7 @@ import {
   numericUpperBound,
 } from "./util/request-util";
 import { BASE_UUID, toShortForm } from "./util/uuid";
+import { checkName } from "./util/checkName";
 
 const debug = createDebug("HAP-NodeJS:Characteristic");
 
@@ -359,9 +360,12 @@ export const enum Perms {
    * @deprecated replaced by {@link PAIRED_WRITE}. Kept for backwards compatibility.
    */
   WRITE = "pw",
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   PAIRED_READ = "pr",
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   PAIRED_WRITE = "pw",
   NOTIFY = "ev",
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   EVENTS = "ev",
   ADDITIONAL_AUTHORIZATION = "aa",
   TIMED_WRITE = "tw",
@@ -553,6 +557,7 @@ export type AdditionalAuthorizationHandler = (additionalAuthorizationData: strin
 /**
  * @group Characteristic
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export declare interface Characteristic {
 
   on(event: "get", listener: (callback: CharacteristicGetCallback, context: CharacteristicContext, connection?: HAPConnection) => void): this;
@@ -693,6 +698,7 @@ function minWithUndefined(a?: number, b?: number): number | undefined {
  *
  * @group Characteristic
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class Characteristic extends EventEmitter {
 
   /**
@@ -2969,6 +2975,10 @@ export class Characteristic extends EventEmitter {
       if (value.length > maxLength) {
         this.characteristicWarning(`characteristic was supplied illegal value: string '${value}' exceeded max length of ${maxLength}`, warningType);
         value = value.substring(0, maxLength);
+      }
+
+      if (this.UUID === "000000E3-0000-1000-8000-0026BB765291") {
+        checkName("unknown", this.displayName, value);
       }
 
       return value;
