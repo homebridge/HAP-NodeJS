@@ -6,8 +6,8 @@ import { AccessoryLoader, HAPLibraryVersion } from "./";
 
 console.log(`HAP-NodeJS v${HAPLibraryVersion()} starting...`);
 
-console.warn("DEPRECATION NOTICE: The use of Core and BridgeCore are deprecated and are scheduled to be remove in October 2020. " +
-  "For more information and some guidance on how to migrate, have a look at https://github.com/homebridge/HAP-NodeJS/wiki/Deprecation-of-Core-and-BridgeCore");
+console.warn("DEPRECATION NOTICE: The use of Core and BridgeCore is deprecated and is scheduled to be removed in 2024.");
+console.warn("For more information and some guidance on how to migrate, have a look at https://github.com/homebridge/HAP-NodeJS/wiki/Deprecation-of-Core-and-BridgeCore");
 
 // Initialize our storage system
 storage.initSync();
@@ -50,12 +50,7 @@ const signals = { "SIGINT": 2, "SIGTERM": 15 } as Record<string, number>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 Object.keys(signals).forEach((signal: any) => {
   process.on(signal, () => {
-    for (let i = 0; i < accessories.length; i++) {
-      accessories[i].unpublish();
-    }
-
-    setTimeout(() => {
-      process.exit(128 + signals[signal]);
-    }, 1000);
+    Promise.all(accessories.map(a => a.unpublish()))
+      .then(() => setTimeout(() => process.exit(128 + signals[signal]), 1000));
   });
 });
