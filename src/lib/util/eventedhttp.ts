@@ -844,21 +844,42 @@ export class HAPConnection extends EventEmitter {
   }
 
   private static getLocalNetworkInterface(socket: Socket): string {
+    function formatIPv4MappedIPv6Address(address: string): string {
+      // Check if the address is an IPv4-mapped IPv6 address without the 'ffff:' part
+      if (address.startsWith("::") && !address.startsWith("::ffff:")) {
+        // Attempt to correct the format by adding 'ffff:' after '::'
+        return address.replace("::", "::ffff:");
+      }
+      return address;
+    }
+    
     let localAddress = socket.localAddress as string;
 
-    if (localAddress.startsWith("::ffff:")) { // IPv4-Mapped IPv6 Address https://tools.ietf.org/html/rfc4291#section-2.5.5.2
+    localAddress = formatIPv4MappedIPv6Address(localAddress);
+
+    // Check if the address is an IPv4-Mapped IPv6 Address (e.g., ::ffff:192.0.2.128)
+    // These addresses are IPv6 addresses that represent an IPv4 address
+    // See: https://tools.ietf.org/html/rfc4291#section-2.5.5.2 for more details
+    if (localAddress.startsWith("::ffff:")) {
+      // Extract the IPv4 part from the IPv4-Mapped IPv6 address
+      // This converts the address from ::ffff:192.0.2.128 to 192.0.2.128
       localAddress = localAddress.substring(7);
     } else {
+      // For other types of addresses, such as link-local IPv6 addresses,
+      // remove the interface part (if present) to get the pure address
       const index = localAddress.indexOf("%");
-      if (index !== -1) { // link-local ipv6
+      if (index !== -1) { // If it's a link-local ipv6 address
         localAddress = localAddress.substring(0, index);
       }
     }
 
+    // Retrieve the network interfaces available on this system
     const interfaces = os.networkInterfaces();
+    // Iterate over each interface to find a match with the localAddress
     for (const [name, infos] of Object.entries(interfaces)) {
       if (infos) {
         for (const info of infos) {
+        // If the address matches, return the name of the network interface
           if (info.address === localAddress) {
             return name;
           }
@@ -883,8 +904,8 @@ export class HAPConnection extends EventEmitter {
       }
     }
 
-    console.log(`WARNING couldn't map socket coming from remote address ${socket.remoteAddress}:${socket.remotePort} \
-    at local address ${socket.localAddress} to a interface!`);
+    console.log(`WARNING couldn't map socket coming from remote address ${socket.remoteAddress}:${socket.remotePort} `
+      + `at local address ${socket.localAddress} to a interface!`);
 
     return Object.keys(interfaces)[1]; // just use the first interface after the loopback interface as fallback
   }

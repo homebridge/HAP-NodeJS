@@ -6,13 +6,16 @@
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
 export function checkName(displayName: string, name: string, value: any): void {
-  const validHK = /^[a-zA-Z0-9\s'-.]+$/;   // Ensure only letter, numbers, apostrophe, or dash
+  const validHK = /^[a-zA-Z0-9\s'-.]+$/;  // Ensure only letter, numbers, apostrophe, or dash
   const startWith = /^[a-zA-Z0-9]/;       // Ensure only letters or numbers are at the beginning of string
   const endWith = /[a-zA-Z0-9]$/;         // Ensure only letters or numbers are at the end of string
+  const pattern = !validHK.test(value) ? "doesn't have only letter, numbers, apostrophe, or dash"
+    : !startWith.test(value) ? "doesn't start with letter or number,"
+      : !endWith.test(value) ? "doesn't end with letter or number," : "-";
 
   if (!validHK.test(value) || !startWith.test(value) || !endWith.test(value)) {
     console.warn("HAP-NodeJS WARNING: The accessory '" + displayName + "' is getting published with the characteristic '" +
-      name + "'" + " not following HomeKit naming rules ('" + value + "'). " +
+      name + "'" + " not following HomeKit naming rules ('" + value + "')," + " with a pattern that ('" + pattern + "'). " +
       "Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. " +
       "This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
   }

@@ -2881,8 +2881,8 @@ export class Characteristic extends EventEmitter {
 
       // mirrors the case value = null at the beginning
       if (value.length <= 1 && (this.UUID === Characteristic.Model.UUID || this.UUID === Characteristic.SerialNumber.UUID)) {
-        this.characteristicWarning(`[${this.displayName}] characteristic must have a length of more than 1 character otherwise \
-        HomeKit will reject this accessory, ignoring new value`, warningType);
+        this.characteristicWarning(`[${this.displayName}] characteristic must have a length of more than 1 character otherwise`
+          + ` HomeKit will reject this accessory, ignoring new value ${warningType}`);
         return this.value; // just return the current value
       }
 
@@ -2892,8 +2892,8 @@ export class Characteristic extends EventEmitter {
         value = value.substring(0, maxLength);
       }
 
-      if (this.UUID === "000000E3-0000-1000-8000-0026BB765291") {
-        checkName("unknown", this.displayName, value);
+      if (value.length > 0 && this.UUID === Characteristic.ConfiguredName.UUID) {
+        checkName(this.displayName, "ConfiguredName", value);
       }
 
       return value;
