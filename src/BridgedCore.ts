@@ -6,7 +6,7 @@ import { Accessory, AccessoryEventTypes, AccessoryLoader, Bridge, Categories, HA
 
 console.log(`HAP-NodeJS v${HAPLibraryVersion()} starting...`);
 
-console.warn("DEPRECATION NOTICE: The use of Core and BridgeCore is deprecated and is scheduled to be removed in 2024.");
+console.warn("DEPRECATION NOTICE: The use of Core and BridgeCore is deprecated and is scheduled to be removed in a future version.");
 console.warn("For more information and some guidance on how to migrate, have a look at https://github.com/homebridge/HAP-NodeJS/wiki/Deprecation-of-Core-and-BridgeCore");
 
 // Initialize our storage system
