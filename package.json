@@ -54,7 +54,7 @@
   "dependencies": {
     "@homebridge/ciao": "^1.2.0",
     "@homebridge/dbus-native": "^0.6.0",
-    "bonjour-hap": "^3.7.2",
+    "bonjour-hap": "^3.7.3",
     "debug": "^4.3.5",
     "fast-srp-hap": "^2.0.4",
     "futoin-hkdf": "^1.5.3",
@@ -82,7 +82,7 @@
     "simple-plist": "^1.4.0-0",
     "ts-jest": "^29.1.5",
     "ts-node": "^10.9.2",
-    "typedoc": "^0.26.1",
+    "typedoc": "^0.26.2",
     "typescript": "^5.5.2"
   }
 }
