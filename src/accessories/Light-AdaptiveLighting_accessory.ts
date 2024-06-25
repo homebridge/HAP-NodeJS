@@ -8,6 +8,7 @@ import {
   Service,
   uuid,
 } from "..";
+import util from "util";
 
 /**
  * This example light gives an example how a light with AdaptiveLighting (in AUTOMATIC mode) support
@@ -113,4 +114,14 @@ const adaptiveLightingController = new AdaptiveLightingController(lightbulbServi
   // look into the docs for more information
   controllerMode: AdaptiveLightingControllerMode.AUTOMATIC,
 });
+
+// Requires AdaptiveLightingControllerMode.MANUAL to be set as a controllerMode
+adaptiveLightingController.on("update", () => {
+  console.log("Adaptive Lighting updated");
+}).on("update", (update) => {
+  console.log("Adaptive Lighting schedule updated to " + util.inspect(update));
+}).on("disable", () => {
+  console.log("Adaptive Lighting disabled");
+});
+
 accessory.configureController(adaptiveLightingController);
