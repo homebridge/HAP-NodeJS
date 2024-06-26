@@ -2,7 +2,7 @@
 
 All notable changes to `hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
-## v0.12.3 (2024-06-24)
+## BETA
 
 ### Other Changes
 
@@ -11,6 +11,7 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 - AdaptiveLightingController fix & improvement (#1038) (@Shaquu)
 - Minor fixes to recording logging and one change in logging. (#1040) (@hjdhjd)
 - Fix Build Issues (#1041) (@NorthernMan54)
+- Correct log spacing
 - Updated and fixed `typedoc` config file
 - Updated dependencies 
 
