@@ -883,8 +883,8 @@ export class HAPConnection extends EventEmitter {
       }
     }
 
-    console.log(`WARNING couldn't map socket coming from remote address ${socket.remoteAddress}:${socket.remotePort} \
-    at local address ${socket.localAddress} to a interface!`);
+    console.log(`WARNING couldn't map socket coming from remote address ${socket.remoteAddress}:${socket.remotePort} `
+      + `at local address ${socket.localAddress} to a interface!`);
 
     return Object.keys(interfaces)[1]; // just use the first interface after the loopback interface as fallback
   }
