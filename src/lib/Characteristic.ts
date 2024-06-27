@@ -2978,7 +2978,7 @@ export class Characteristic extends EventEmitter {
       }
 
       if (this.UUID === "000000E3-0000-1000-8000-0026BB765291") {
-        checkName("unknown", this.displayName, value);
+        checkName(this.displayName, "ConfiguredName", value);
       }
 
       return value;

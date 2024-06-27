@@ -6,6 +6,11 @@
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
 export function checkName(displayName: string, name: string, value: any): void {
+  if (!value) {
+    console.warn(`HAP-NodeJS WARNING: The accessory '${displayName}' is getting published with an empty '${name}'. This is not allowed.`);
+    return;
+  }
+  
   const validHK = /^[a-zA-Z0-9\s'-.]+$/;   // Ensure only letter, numbers, apostrophe, or dash
   const startWith = /^[a-zA-Z0-9]/;       // Ensure only letters or numbers are at the beginning of string
   const endWith = /[a-zA-Z0-9]$/;         // Ensure only letters or numbers are at the end of string
