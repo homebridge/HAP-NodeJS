@@ -34,7 +34,7 @@ const SPRINKLER = {
 const sprinklerUUID = uuid.generate("hap-nodejs:accessories:sprinkler");
 
 // This is the Accessory that we'll return to HAP-NodeJS that represents our fake motionSensor.
-const sprinkler = exports.accessory = new Accessory("💦 Sprinkler", sprinklerUUID);
+const sprinkler = exports.accessory = new Accessory("Sprinkler", sprinklerUUID);
 
 // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
 // @ts-expect-error: Core/BridgeCore API
@@ -44,7 +44,7 @@ sprinkler.pincode = "123-44-567";
 sprinkler.category = Categories.SPRINKLER;
 
 // Add the actual Valve Service and listen for change events from iOS.
-const sprinklerService = sprinkler.addService(Service.Valve, "💦 Sprinkler");
+const sprinklerService = sprinkler.addService(Service.Valve, "Sprinkler");
 
 // Sprinkler Controll
 function openVentile() {
