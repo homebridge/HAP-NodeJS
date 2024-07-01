@@ -52,7 +52,7 @@
     "@types"
   ],
   "dependencies": {
-    "@homebridge/ciao": "^2.0.0-alpha.4",
+    "@homebridge/ciao": "^2.0.0-alpha.6",
     "@homebridge/dbus-native": "^0.6.0",
     "bonjour-hap": "^3.7.3",
     "debug": "^4.3.5",
