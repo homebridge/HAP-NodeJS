@@ -2,13 +2,23 @@
 
 All notable changes to `hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
-## v0.12.3 (2024-06-22)
+## BETA
 
 ### Other Changes
 
 - Implement warning messages for invalid characters in names (#1009) (@NorthernMan54)
 - Mitigate event emitter "memory leak" warnings when a significant number of camera streaming events occur simultaneously (#1037) (@hjdhjd)
-- Updated dependencies
+- AdaptiveLightingController fix & improvement (#1038) (@Shaquu)
+- Minor fixes to recording logging and one change in logging. (#1040) (@hjdhjd)
+- Fix Build Issues (#1041) (@NorthernMan54)
+- Bridged core and core cleanup (#1048) (@Shaquu)
+- Correct log spacing
+- Updated and fixed `typedoc` config file
+- Updated dependencies 
+
+### Homebridge Dependencies
+
+- `bonjour-hap` @ `v3.8.0`
 
 ## v0.12.2 (2024-05-31)
 
