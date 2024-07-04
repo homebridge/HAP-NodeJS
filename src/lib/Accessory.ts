@@ -1062,7 +1062,7 @@ export class Accessory extends EventEmitter {
       checkValue("FirmwareRevision", firmwareRevision);
       checkValue("Name", name);
       checkName(this.displayName, "Name", name);
-      checkName(this.displayName, "Manufacturer", manufacturer);
+      checkValue("Manufacturer", manufacturer);
     }
 
     if (mainAccessory) {
