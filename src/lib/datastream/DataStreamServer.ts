@@ -715,7 +715,9 @@ export class DataStreamConnection extends EventEmitter {
     header.protocol = protocol;
     header.event = event;
 
-    this.sendHDSFrame(header, message);
+    if (this.state === ConnectionState.READY) {
+      this.sendHDSFrame(header, message);
+    }
   }
 
   /**

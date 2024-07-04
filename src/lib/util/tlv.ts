@@ -162,8 +162,8 @@ export function decodeWithLists(buffer: Buffer): Record<number, Buffer | Buffer[
           result[type] = Buffer.concat([existing, data]);
         }
       } else {
-        throw new Error(`Found duplicated tlv entry with type ${type} and length ${length} \
-        (lastItemWasDelimiter: ${lastItemWasDelimiter}, lastType: ${lastType}, lastLength: ${lastLength})`);
+        throw new Error(`Found duplicated tlv entry with type ${type} and length ${length} `
+          + `(lastItemWasDelimiter: ${lastItemWasDelimiter}, lastType: ${lastType}, lastLength: ${lastLength})`);
       }
     } else {
       result[type] = data;
