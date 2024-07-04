@@ -2941,12 +2941,12 @@ export class Characteristic extends EventEmitter {
 
       if (this.props.validValueRanges && this.props.validValueRanges.length === 2) {
         if (value < this.props.validValueRanges[0]) {
-          this.characteristicWarning(`characteristic was supplied illegal value: number ${value} not contained in valid value range of \
-          ${this.props.validValueRanges}, supplying illegal values will throw errors in the future`, warningType);
+          this.characteristicWarning(`characteristic was supplied illegal value: number ${value} not contained in valid value range of `
+            + `${this.props.validValueRanges}, supplying illegal values will throw errors in the future`, warningType);
           value = this.props.validValueRanges[0];
         } else if (value > this.props.validValueRanges[1]) {
-          this.characteristicWarning(`characteristic was supplied illegal value: number ${value} not contained in valid value range of \
-          ${this.props.validValueRanges}, supplying illegal values will throw errors in the future`, warningType);
+          this.characteristicWarning(`characteristic was supplied illegal value: number ${value} not contained in valid value range of `
+            + `${this.props.validValueRanges}, supplying illegal values will throw errors in the future`, warningType);
           value = this.props.validValueRanges[1];
         }
       }
@@ -2966,8 +2966,8 @@ export class Characteristic extends EventEmitter {
 
       // mirrors the case value = null at the beginning
       if (value.length <= 1 && (this.UUID === Characteristic.Model.UUID || this.UUID === Characteristic.SerialNumber.UUID)) {
-        this.characteristicWarning(`[${this.displayName}] characteristic must have a length of more than 1 character otherwise \
-        HomeKit will reject this accessory, ignoring new value`, warningType);
+        this.characteristicWarning(`[${this.displayName}] characteristic must have a length of more than 1 character otherwise`
+          + ` HomeKit will reject this accessory, ignoring new value ${warningType}`);
         return this.value; // just return the current value
       }
 
