@@ -499,7 +499,7 @@ export class Accessory extends EventEmitter {
       "valid UUID from any arbitrary string, like a serial number.");
 
     // create our initial "Accessory Information" Service that all Accessories are expected to have
-    checkName(this.displayName, "name", displayName);
+    checkName(this.displayName, "Name", displayName);
     this.addService(Service.AccessoryInformation)
       .setCharacteristic(Characteristic.Name, displayName);
 
