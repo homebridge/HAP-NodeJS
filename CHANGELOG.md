@@ -15,6 +15,7 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 - Fix: Ensure data is only transmitted on open and ready connections. (#1051) (@hjdhjd)
 - Fix: Ensure we check names using the full UTF-8 character set. (#1052) (@hjdhjd)
 - Fix: ConfiguredName (#1049) (@donavanbecker)
+- Fix: Manufacturer looking at checkName but should look at checkValue. (#1053) (@donavanbecker)
 - Correct log spacing
 - Updated and fixed `typedoc` config file
 - Updated dependencies 
