@@ -10,8 +10,12 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 - Mitigate event emitter "memory leak" warnings when a significant number of camera streaming events occur simultaneously (#1037) (@hjdhjd)
 - AdaptiveLightingController fix & improvement (#1038) (@Shaquu)
 - Minor fixes to recording logging and one change in logging. (#1040) (@hjdhjd)
-- Fix Build Issues (#1041) (@NorthernMan54)
+- Fix: Build Issues (#1041) (@NorthernMan54)
 - Bridged core and core cleanup (#1048) (@Shaquu)
+- Fix: Ensure data is only transmitted on open and ready connections. (#1051) (@hjdhjd)
+- Fix: Ensure we check names using the full UTF-8 character set. (#1052) (@hjdhjd)
+- Fix: ConfiguredName (#1049) (@donavanbecker)
+- Fix: Manufacturer looking at checkName but should look at checkValue. (#1053) (@donavanbecker)
 - Correct log spacing
 - Updated and fixed `typedoc` config file
 - Updated dependencies 
@@ -57,12 +61,12 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 ### Changed
 
 - Create `CHANGELOG.md` file
-- Fix typos + add logo to `README.md`
+- Fix: typos + add logo to `README.md`
 - Refresh `package-lock.json` (no major changes to dep versions)
 - general repo updates
 - add alpha releases
 - dependency updates
-- fix typedoc generation
+- Fix: typedoc generation
 - update homebridge dependencies
 - regenerate docs
 
