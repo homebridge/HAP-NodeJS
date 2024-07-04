@@ -6,7 +6,6 @@ import { CharacteristicValue, Nullable } from "../../types";
  * @private Private API
  */
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function checkName(displayName: string, name: string, value: Nullable<CharacteristicValue>): void {
 
   // Ensure the string starts and ends with a Unicode letter or number and allow any combination of letters, numbers, spaces, and apostrophes in the middle.
