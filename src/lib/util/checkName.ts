@@ -1,3 +1,5 @@
+import { CharacteristicValue, Nullable } from "../../types";
+
 /**
  * Checks that supplied field meets Apple HomeKit naming rules
  * https://developer.apple.com/design/human-interface-guidelines/homekit#Help-people-choose-useful-names
@@ -5,15 +7,10 @@
  */
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
-export function checkName(displayName: string, name: string, value: any): void {
-  const validHK = /^[a-zA-Z0-9\s'-.]+$/;  // Ensure only letter, numbers, apostrophe, or dash
-  const startWith = /^[a-zA-Z0-9]/;       // Ensure only letters or numbers are at the beginning of string
-  const endWith = /[a-zA-Z0-9]$/;         // Ensure only letters or numbers are at the end of string
-  const pattern = !validHK.test(value) ? "doesn't have only letter, numbers, apostrophe, or dash"
-    : !startWith.test(value) ? "doesn't start with letter or number,"
-      : !endWith.test(value) ? "doesn't end with letter or number," : "-";
+export function checkName(displayName: string, name: string, value: Nullable<CharacteristicValue>): void {
 
-  if (!validHK.test(value) || !startWith.test(value) || !endWith.test(value)) {
+  // Ensure the string starts and ends with a Unicode letter or number and allow any combination of letters, numbers, spaces, and apostrophes in the middle.
+  if (typeof value === "string" && !(new RegExp(/^[\p{L}\p{N}][\p{L}\p{N} ']*[\p{L}\p{N}]$/u)).test(value)) {
     console.warn("HAP-NodeJS WARNING: The accessory '" + displayName + "' is getting published with the characteristic '" +
       name + "'" + " not following HomeKit naming rules ('" + value + "')," + " with a pattern that ('" + pattern + "'). " +
       "Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. " +
