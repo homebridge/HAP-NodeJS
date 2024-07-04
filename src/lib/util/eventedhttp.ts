@@ -846,9 +846,9 @@ export class HAPConnection extends EventEmitter {
   private static getLocalNetworkInterface(socket: Socket): string {
     function formatIPv4MappedIPv6Address(address: string): string {
       // Check if the address is an IPv4-mapped IPv6 address without the 'ffff:' part
-      if (address.startsWith("::") && !address.startsWith("::ffff:")) {
-        // Attempt to correct the format by adding 'ffff:' after '::'
-        return address.replace("::", "::ffff:");
+      if (/^::(?!ffff:)/i.test(address)) {
+        // Check if the address is an IPv4-mapped IPv6 address without the 'ffff:' part and correct the format
+        return address.replace(/^::(?!ffff:)/i, "::ffff:");
       }
       return address;
     }
@@ -860,7 +860,7 @@ export class HAPConnection extends EventEmitter {
     // Check if the address is an IPv4-Mapped IPv6 Address (e.g., ::ffff:192.0.2.128)
     // These addresses are IPv6 addresses that represent an IPv4 address
     // See: https://tools.ietf.org/html/rfc4291#section-2.5.5.2 for more details
-    if (localAddress.startsWith("::ffff:")) {
+    if (/^::ffff:/i.test(localAddress)) {
       // Extract the IPv4 part from the IPv4-Mapped IPv6 address
       // This converts the address from ::ffff:192.0.2.128 to 192.0.2.128
       localAddress = localAddress.substring(7);
