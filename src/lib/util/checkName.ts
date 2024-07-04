@@ -10,7 +10,7 @@ import { CharacteristicValue, Nullable } from "../../types";
 export function checkName(displayName: string, name: string, value: Nullable<CharacteristicValue>): void {
 
   // Ensure the string starts and ends with a Unicode letter or number and allow any combination of letters, numbers, spaces, and apostrophes in the middle.
-  if (typeof value === "string" && value.length && !(new RegExp(/^[\p{L}\p{N}][\p{L}\p{N} ']*[\p{L}\p{N}]$/u)).test(value)) {
+  if (typeof value === "string" && !(new RegExp(/^[\p{L}\p{N}][\p{L}\p{N} ']*[\p{L}\p{N}]$/u)).test(value)) {
     console.warn("HAP-NodeJS WARNING: The accessory '" + displayName + "' is getting published with the characteristic '" +
       name + "'" + " not following HomeKit naming rules ('" + value + "'). " +
       "Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. " +
