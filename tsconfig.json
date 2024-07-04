@@ -1,24 +1,20 @@
 {
   "compilerOptions": {
-    "target": "ES5",
-    "module": "commonjs",
-    "downlevelIteration": true,
-    "importHelpers": true,
-    "lib": [
-      "es2015",
-      "es2016",
-      "es2017",
-      "es2018"
-    ],
+    "allowSyntheticDefaultImports": true,
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "importHelpers": true,
+    "lib": ["ES2022"],
+    "module": "CommonJS",
+    "moduleResolution": "node",
     "preserveConstEnums": true, // do not remove this option!
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "sourceMap": true,
+    "strict": true,
+    "target": "ES2022",
     "useUnknownInCatchVariables": false
   },
   "include": [
