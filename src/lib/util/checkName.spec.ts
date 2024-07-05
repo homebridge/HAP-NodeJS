@@ -1,54 +1,51 @@
 import { checkName } from "./checkName";
 
 describe("#checkName()", () => {
-  let consoleLogSpy: jest.SpyInstance;
+  let consoleWarnSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    consoleLogSpy = jest.spyOn(console, "warn");
+    consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    consoleLogSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
   });
 
   test("Accessory Name ending with !", async () => {
     checkName("displayName", "Name", "bad name!");
 
-    expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+    expect(consoleWarnSpy).toBeCalledTimes(1);
     // eslint-disable-next-line max-len
-    expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'displayName' is getting published with the characteristic 'Name' not following HomeKit naming rules ('bad name!'). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+    expect(consoleWarnSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'displayName' has an invalid 'Name' characteristic ('bad name!'). Please use only alphanumeric, space, and apostrophe characters. Ensure it starts and ends with an alphabetic or numeric character, and avoid emojis. This may prevent the accessory from being added in the Home App or cause unresponsiveness.");
   });
 
-  test("Accessory Name begining with !", async () => {
+  test("Accessory Name beginning with !", async () => {
     checkName("displayName", "Name", "!bad name");
 
-    expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+    expect(consoleWarnSpy).toBeCalledTimes(1);
     // eslint-disable-next-line max-len
-    expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'displayName' is getting published with the characteristic 'Name' not following HomeKit naming rules ('!bad name'). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+    expect(consoleWarnSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'displayName' has an invalid 'Name' characteristic ('!bad name'). Please use only alphanumeric, space, and apostrophe characters. Ensure it starts and ends with an alphabetic or numeric character, and avoid emojis. This may prevent the accessory from being added in the Home App or cause unresponsiveness.");
   });
 
   test("Accessory Name containing !", async () => {
     checkName("displayName", "Name", "bad ! name");
 
-    expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+    expect(consoleWarnSpy).toBeCalledTimes(1);
     // eslint-disable-next-line max-len
-    expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'displayName' is getting published with the characteristic 'Name' not following HomeKit naming rules ('bad ! name'). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+    expect(consoleWarnSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'displayName' has an invalid 'Name' characteristic ('bad ! name'). Please use only alphanumeric, space, and apostrophe characters. Ensure it starts and ends with an alphabetic or numeric character, and avoid emojis. This may prevent the accessory from being added in the Home App or cause unresponsiveness.");
   });
 
-  test("Accessory Name begining with '", async () => {
-    checkName("displayName", "Name", "'bad name");
+  test("Accessory Name beginning with '", async () => {
+    checkName("displayName", "Name", " 'bad name");
 
-    expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+    expect(consoleWarnSpy).toBeCalledTimes(1);
     // eslint-disable-next-line max-len
-    expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'displayName' is getting published with the characteristic 'Name' not following HomeKit naming rules (''bad name'). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+    expect(consoleWarnSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'displayName' has an invalid 'Name' characteristic (' 'bad name'). Please use only alphanumeric, space, and apostrophe characters. Ensure it starts and ends with an alphabetic or numeric character, and avoid emojis. This may prevent the accessory from being added in the Home App or cause unresponsiveness.");
   });
 
-  test("Accessory Name ends with !", async () => {
-    checkName("displayName", "Name", "bad name!");
+  test("Accessory Name containing '", async () => {
+    checkName("displayName", "Name", "good ' name");
 
-    expect(consoleLogSpy).toHaveBeenCalledTimes(1);
-    // eslint-disable-next-line max-len
-    expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'displayName' is getting published with the characteristic 'Name' not following HomeKit naming rules ('bad name!'). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+    expect(consoleWarnSpy).toBeCalledTimes(0);
   });
-
 });

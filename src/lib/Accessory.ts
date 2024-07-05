@@ -1051,18 +1051,12 @@ export class Accessory extends EventEmitter {
         }
       };
 
-      const model = service.getCharacteristic(Characteristic.Model).value;
-      const serialNumber = service.getCharacteristic(Characteristic.SerialNumber).value;
-      const firmwareRevision = service.getCharacteristic(Characteristic.FirmwareRevision).value;
-      const name = service.getCharacteristic(Characteristic.Name).value;
-      const manufacturer = service.getCharacteristic(Characteristic.Manufacturer).value;
-
-      checkValue("Model", model);
-      checkValue("SerialNumber", serialNumber);
-      checkValue("FirmwareRevision", firmwareRevision);
-      checkValue("Name", name);
-      checkName(this.displayName, "Name", name);
-      checkValue("Manufacturer", manufacturer);
+      checkName(this.displayName, "Name", service.getCharacteristic(Characteristic.Name).value);
+      checkValue("FirmwareRevision", service.getCharacteristic(Characteristic.FirmwareRevision).value);
+      checkValue("Manufacturer", service.getCharacteristic(Characteristic.Manufacturer).value);
+      checkValue("Model", service.getCharacteristic(Characteristic.Model).value);
+      checkValue("Name", service.getCharacteristic(Characteristic.Name).value);
+      checkValue("SerialNumber", service.getCharacteristic(Characteristic.SerialNumber).value);
     }
 
     if (mainAccessory) {
