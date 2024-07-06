@@ -11,24 +11,29 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 
 ## BETA
 
+### Fixed
+
+- Fix: Build Issues (#1041) (@NorthernMan54)
+- Fix: Ensure data is only transmitted on open and ready connections. (#1051) (@hjdhjd)
+- Fix: Ensure we check names using the full UTF-8 character set. (#1052) (@hjdhjd)
+- Fix: ConfiguredName (#1049) (@donavanbecker)
+- Fix: Manufacturer looking at checkName but should look at checkValue. (#1053) (@donavanbecker)
+
 ### Other Changes
 
 - Implement warning messages for invalid characters in names (#1009) (@NorthernMan54)
 - Mitigate event emitter "memory leak" warnings when a significant number of camera streaming events occur simultaneously (#1037) (@hjdhjd)
 - AdaptiveLightingController fix & improvement (#1038) (@Shaquu)
 - Minor fixes to recording logging and one change in logging. (#1040) (@hjdhjd)
-- Fix: Build Issues (#1041) (@NorthernMan54)
 - Bridged core and core cleanup (#1048) (@Shaquu)
-- Fix: Ensure data is only transmitted on open and ready connections. (#1051) (@hjdhjd)
-- Fix: Ensure we check names using the full UTF-8 character set. (#1052) (@hjdhjd)
-- Fix: ConfiguredName (#1049) (@donavanbecker)
-- Fix: Manufacturer looking at checkName but should look at checkValue. (#1053) (@donavanbecker)
+- Increase snapshot handler warning timeout to 8000ms. (#1055) (@hjdhjd)
 - Correct log spacing
 - Updated and fixed `typedoc` config file
-- Updated dependencies 
+- Updated dependencies
 
 ### Homebridge Dependencies
 
+- `@homebridge/ciao` @ `v1.3.0`
 - `bonjour-hap` @ `v3.8.0`
 
 ## v0.12.2 (2024-05-31)
