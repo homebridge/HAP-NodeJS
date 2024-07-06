@@ -1025,7 +1025,7 @@ export class CameraController extends EventEmitter implements SerializableContro
           reject(HAPStatus.OPERATION_TIMED_OUT);
         }, 17000);
         timeout.unref();
-      }, 5000);
+      }, 8000);
       timeout.unref();
 
       try {
