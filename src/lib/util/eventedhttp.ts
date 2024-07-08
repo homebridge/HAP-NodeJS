@@ -807,40 +807,37 @@ export class HAPConnection extends EventEmitter {
   }
 
   public getLocalAddress(ipVersion: "ipv4" | "ipv6"): string {
-    const infos = os.networkInterfaces()[this.networkInterface];
-
-    if (ipVersion === "ipv4") {
-      if (infos) {
-        for (const info of infos) {
-          // @ts-expect-error Nodejs 18+ uses the number 4 the string "IPv4"
-          if (info.family === "IPv4" || info.family === 4) {
-            return info.address;
-          }
-        }
-      }
-
+    const interfaceDetails = os.networkInterfaces()[this.networkInterface];
+    if (!interfaceDetails) {
       throw new Error("Could not find " + ipVersion + " address for interface " + this.networkInterface);
-    } else {
-      let localUniqueAddress: string | undefined = undefined;
+    }
 
-      if (infos) {
-        for (const info of infos) {
-          // @ts-expect-error Nodejs 18+ uses the number 6 instead of the string "IPv6"
-          if (info.family === "IPv6" || info.family === 6) {
-            if (!info.scopeid) {
-              return info.address;
-            } else if (!localUniqueAddress) {
-              localUniqueAddress = info.address;
-            }
-          }
-        }
+    // Find our first local IPv4 address.
+    if (ipVersion === "ipv4") {
+      const ipv4Info = interfaceDetails.find(info => info.family === "IPv4");
+
+      if (ipv4Info) {
+        return ipv4Info.address;
       }
 
-      if (!localUniqueAddress) {
-        throw new Error("Could not find " + ipVersion + " address for interface " + this.networkInterface);
+      throw new Error("Could not find " + ipVersion + " address for interface " + this.networkInterface + ".");
+    }
+
+    let localUniqueAddress;
+
+    for (const v6entry of interfaceDetails.filter(entry => entry.family === "IPv6")) {
+      if (!v6entry.scopeid) {
+        return v6entry.address;
       }
+
+      localUniqueAddress ??= v6entry.address;
+    }
+
+    if(localUniqueAddress) {
       return localUniqueAddress;
     }
+
+    throw new Error("Could not find " + ipVersion + " address for interface " + this.networkInterface);
   }
 
   private static getLocalNetworkInterface(socket: Socket): string {
