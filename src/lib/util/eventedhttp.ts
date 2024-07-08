@@ -844,49 +844,51 @@ export class HAPConnection extends EventEmitter {
   }
 
   private static getLocalNetworkInterface(socket: Socket): string {
-    let localAddress = socket.localAddress as string;
 
-    if (localAddress.startsWith("::ffff:")) { // IPv4-Mapped IPv6 Address https://tools.ietf.org/html/rfc4291#section-2.5.5.2
-      localAddress = localAddress.substring(7);
-    } else {
-      const index = localAddress.indexOf("%");
-      if (index !== -1) { // link-local ipv6
-        localAddress = localAddress.substring(0, index);
-      }
-    }
+    let localAddress = socket.localAddress;
 
+    // Grab the list of network interfaces.
     const interfaces = os.networkInterfaces();
-    for (const [name, infos] of Object.entries(interfaces)) {
-      if (infos) {
-        for (const info of infos) {
-          if (info.address === localAddress) {
-            return name;
-          }
-        }
+
+    // Default to the first non-loopback interface we see.
+    const defaultInterface = () => Object.entries(interfaces).find(([name, addresses]) => addresses?.some(address => !address.internal))?.[0] ?? "unknown";
+
+    // No local address return our default.
+    if(!localAddress) {
+      return defaultInterface();
+    }
+
+    // Handle IPv4-mapped IPv6 addresses.
+    localAddress = localAddress.replace(/^::ffff:/i, "");
+
+    // Handle edge cases where we have an IPv4-mapped IPv6 address without the requisite prefix.
+    if(/^::(?:\d{1,3}\.){3}\d{1,3}$/.test(localAddress)) {
+      localAddress = localAddress.replace(/^::/, "");
+    }
+
+    // Handle link-local IPv6 addresses.
+    localAddress = localAddress.split("%")[0];
+
+    // Let's find an exact match using the IP.
+    for (const [name, addresses] of Object.entries(interfaces)) {
+      if (addresses?.some(({ address }) => address === localAddress)) {
+        return name;
       }
     }
 
-    // we couldn't map the address from above, we try now to match subnets (see https://github.com/homebridge/HAP-NodeJS/issues/847)
+    // We couldn't find an interface to match the address from above, so we attempt to match subnets (see https://github.com/homebridge/HAP-NodeJS/issues/847).
     const family = net.isIPv4(localAddress)? "IPv4": "IPv6";
-    for (const [name, infos] of Object.entries(interfaces)) {
-      if (infos) {
-        for (const info of infos) {
-          if (info.family !== family) {
-            continue;
-          }
 
-          // check if the localAddress is in the same subnet
-          if (getNetAddress(localAddress, info.netmask) === getNetAddress(info.address, info.netmask)) {
-            return name;
-          }
-        }
+    // Let's find a match based on the subnet.
+    for (const [name, addresses] of Object.entries(interfaces)) {
+      if (addresses?.some(entry => entry.family === family && getNetAddress(localAddress, entry.netmask) === getNetAddress(entry.address, entry.netmask))) {
+        return name;
       }
     }
 
-    console.log(`WARNING couldn't map socket coming from remote address ${socket.remoteAddress}:${socket.remotePort} \
-    at local address ${socket.localAddress} to a interface!`);
+    console.log("WARNING: unable to determine which interface to use for socket coming from " + socket.remoteAddress + ":" + socket.remotePort + " to " +
+      socket.localAddress + ".");
 
-    return Object.keys(interfaces)[1]; // just use the first interface after the loopback interface as fallback
+    return defaultInterface();
   }
-
 }
