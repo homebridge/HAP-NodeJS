@@ -20,6 +20,7 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 - Minor fixes to recording logging and one change in logging. (#1040) (@hjdhjd)
 - Bridged core and core cleanup (#1048) (@Shaquu)
 - Increase snapshot handler warning timeout to 8000ms. (#1055) (@hjdhjd)
+- Cleanup and refactor getLocalNetworkInterface and address a potential edge case. (#1056) (@hjdhjd)
 - Correct log spacing
 - Updated and fixed `typedoc` config file
 - Updated dependencies
