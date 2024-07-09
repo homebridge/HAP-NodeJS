@@ -1,6 +1,6 @@
 {
   "name": "hap-nodejs",
-  "version": "1.0.0",
+  "version": "0.12.2",
   "description": "HAP-NodeJS is a Node.js implementation of HomeKit Accessory Server.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -67,22 +67,22 @@
     "@types/debug": "^4.1.12",
     "@types/escape-html": "^1.0.4",
     "@types/jest": "^29.5.12",
-    "@types/node": "^20.14.8",
+    "@types/node": "^20.14.10",
     "@types/plist": "^3.0.5",
-    "@typescript-eslint/eslint-plugin": "^7.13.1",
-    "@typescript-eslint/parser": "^7.13.1",
+    "@typescript-eslint/eslint-plugin": "^7.16.0",
+    "@typescript-eslint/parser": "^7.16.0",
     "axios": "^1.7.2",
     "commander": "^12.1.0",
     "escape-html": "^1.0.3",
     "eslint": "^8.57.0",
     "http-parser-js": "^0.5.8",
     "jest": "^29.7.0",
-    "rimraf": "^5.0.7",
+    "rimraf": "^5.0.9",
     "semver": "^7.6.2",
     "simple-plist": "^1.4.0-0",
-    "ts-jest": "^29.1.5",
+    "ts-jest": "^29.2.0",
     "ts-node": "^10.9.2",
-    "typedoc": "^0.26.2",
-    "typescript": "^5.5.2"
+    "typedoc": "^0.26.3",
+    "typescript": "^5.5.3"
   }
 }
