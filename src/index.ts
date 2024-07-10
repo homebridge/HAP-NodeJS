@@ -1,7 +1,6 @@
 import "source-map-support/register"; // registering node-source-map-support for typescript stack traces
 import "./lib/definitions"; // must be loaded before Characteristic and Service class
 import createDebug from "debug";
-import { HAPStorage } from "./lib/model/HAPStorage";
 
 /**
  * @group Utils
