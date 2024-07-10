@@ -31,15 +31,6 @@ export function isValid(UUID: string): boolean {
 
 
 /**
- * Returns the identity of the passed argument.
- *
- * @param buf - The string argument which is returned
- * @deprecated Most certainly the API you are using this function with changed from returning a Buffer to returning
- *  the actual uuid string. You can safely remove the call to unparse. Most certainly this call to unparse
- *  is located in you CameraSource which you converted from the old style CameraSource API to the new CameraControllers.
- */
-export function unparse(buf: string): string
-/**
  * Parses the uuid as a string from the given Buffer.
  * The parser will use the first 8 bytes.
  *
@@ -53,21 +44,6 @@ export function unparse(buf: Buffer): string
  */
 export function unparse(buf: Buffer, offset: number): string
 export function unparse(buf: Buffer | string, offset = 0): string {
-  if (typeof buf === "string" && isValid(buf)) {
-    /*
-      This check was added to fix backwards compatibility with the old style CameraSource API.
-      The old StreamController implementation would not unparse the HAP provided sessionId for the current streaming session.
-      This was changed when the new Controller API was introduced, which now turns the sessionId Buffer into a string
-      and passes it to the implementor of the Camera.
-      Old style CameraSource implementations would use this unparse function to turn the Buffer into a string.
-      As the sessionId is already a string we just return it here.
-
-      The buf attribute being a also type of "string" as actually an error. Also I don't know who decided to
-      not unparse the sessionId. I'm only here to fix things.
-     */
-    return buf;
-  }
-
   let i = offset;
 
   return buf.toString("hex", i, (i += 4)) + "-" +

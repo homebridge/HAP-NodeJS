@@ -16,9 +16,6 @@ import type {
   Assistant,
   AudioStreamManagement,
   Battery,
-  BridgeConfiguration,
-  BridgingState,
-  CameraControl,
   CameraOperatingMode,
   CameraRecordingManagement,
   CameraRTPStreamManagement,
@@ -73,7 +70,6 @@ import type {
   TemperatureSensor,
   Thermostat,
   ThreadTransport,
-  TimeInformation,
   TransferTransportManagement,
   Tunnel,
   Valve,
@@ -123,13 +119,6 @@ export type ServiceId = string;
  * @group Service
  */
 export type ServiceCharacteristicChange = CharacteristicChange & { characteristic: Characteristic };
-
-// noinspection JSUnusedGlobalSymbols
-/**
- * @deprecated Use ServiceEventTypes instead
- * @group Service
- */
-export type EventService = ServiceEventTypes.CHARACTERISTIC_CHANGE | ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE;
 
 /**
  * @group Service
@@ -226,31 +215,6 @@ export class Service extends EventEmitter {
    * @group Service Definitions
    */
   public static Battery: typeof Battery;
-  /**
-   * @group Service Definitions
-   * @deprecated Please use {@link Service.Battery}.
-   */
-  public static BatteryService: typeof Battery;
-  /**
-   * @group Service Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static BridgeConfiguration: typeof BridgeConfiguration;
-  /**
-   * @group Service Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static BridgingState: typeof BridgingState;
-  /**
-   * @group Service Definitions
-   * @deprecated This service has no usage anymore and will be ignored by iOS
-   */
-  public static CameraControl: typeof CameraControl;
-  /**
-   * @group Service Definitions
-   * @deprecated Please use {@link Service.CameraRecordingManagement}.
-   */
-  public static CameraEventRecordingManagement: typeof CameraRecordingManagement;
   /**
    * @group Service Definitions
    */
@@ -393,11 +357,6 @@ export class Service extends EventEmitter {
   public static ProtocolInformation: typeof ProtocolInformation;
   /**
    * @group Service Definitions
-   * @deprecated Please use {@link Service.CloudRelay}.
-   */
-  public static Relay: typeof CloudRelay;
-  /**
-   * @group Service Definitions
    */
   public static SecuritySystem: typeof SecuritySystem;
   /**
@@ -412,11 +371,6 @@ export class Service extends EventEmitter {
    * @group Service Definitions
    */
   public static SiriEndpoint: typeof SiriEndpoint;
-  /**
-   * @group Service Definitions
-   * @deprecated Please use {@link Service.Slats}.
-   */
-  public static Slat: typeof Slats;
   /**
    * @group Service Definitions
    */
@@ -479,22 +433,12 @@ export class Service extends EventEmitter {
   public static ThreadTransport: typeof ThreadTransport;
   /**
    * @group Service Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static TimeInformation: typeof TimeInformation;
-  /**
-   * @group Service Definitions
    */
   public static TransferTransportManagement: typeof TransferTransportManagement;
   /**
    * @group Service Definitions
    */
   public static Tunnel: typeof Tunnel;
-  /**
-   * @group Service Definitions
-   * @deprecated Please use {@link Service.Tunnel}.
-   */
-  public static TunneledBTLEAccessoryService: typeof Tunnel;
   /**
    * @group Service Definitions
    */
