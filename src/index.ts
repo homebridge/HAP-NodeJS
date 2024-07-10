@@ -5,17 +5,12 @@ import createDebug from "debug";
 /**
  * @group Utils
  */
-export * as AccessoryLoader from "./lib/AccessoryLoader";
-/**
- * @group Utils
- */
 export * as uuid from "./lib/util/uuid";
 export * from "./lib/model/HAPStorage";
 export * from "./lib/Accessory";
 export * from "./lib/Bridge";
 export * from "./lib/Service";
 export * from "./lib/Characteristic";
-export * from "./lib/AccessoryLoader";
 export * from "./lib/camera";
 export * from "./lib/tv/AccessControlManagement";
 export * from "./lib/HAPServer";

@@ -239,87 +239,7 @@ export class Battery extends Service {
     this.addOptionalCharacteristic(Characteristic.Name);
   }
 }
-// noinspection JSDeprecatedSymbols
-Service.BatteryService = Battery;
 Service.Battery = Battery;
-
-/**
- * Service "Bridge Configuration"
- * @deprecated Removed and not used anymore
- */
-export class BridgeConfiguration extends Service {
-
-  public static readonly UUID: string = "000000A1-0000-1000-8000-0026BB765291";
-
-  constructor(displayName?: string, subtype?: string) {
-    super(displayName, BridgeConfiguration.UUID, subtype);
-
-    // Required Characteristics
-    this.addCharacteristic(Characteristic.ConfigureBridgedAccessoryStatus);
-    this.addCharacteristic(Characteristic.DiscoverBridgedAccessories);
-    this.addCharacteristic(Characteristic.DiscoveredBridgedAccessories);
-    this.addCharacteristic(Characteristic.ConfigureBridgedAccessory);
-
-    // Optional Characteristics
-    this.addOptionalCharacteristic(Characteristic.Name);
-  }
-}
-// noinspection JSDeprecatedSymbols
-Service.BridgeConfiguration = BridgeConfiguration;
-
-/**
- * Service "Bridging State"
- * @deprecated Removed and not used anymore
- */
-export class BridgingState extends Service {
-
-  public static readonly UUID: string = "00000062-0000-1000-8000-0026BB765291";
-
-  constructor(displayName?: string, subtype?: string) {
-    super(displayName, BridgingState.UUID, subtype);
-
-    // Required Characteristics
-    this.addCharacteristic(Characteristic.Reachable);
-    this.addCharacteristic(Characteristic.LinkQuality);
-    this.addCharacteristic(Characteristic.AccessoryIdentifier);
-    this.addCharacteristic(Characteristic.Category);
-
-    // Optional Characteristics
-    this.addOptionalCharacteristic(Characteristic.Name);
-  }
-}
-// noinspection JSDeprecatedSymbols
-Service.BridgingState = BridgingState;
-
-/**
- * Service "Camera Control"
- * @deprecated This service has no usage anymore and will be ignored by iOS
- */
-export class CameraControl extends Service {
-
-  public static readonly UUID: string = "00000111-0000-1000-8000-0026BB765291";
-
-  constructor(displayName?: string, subtype?: string) {
-    super(displayName, CameraControl.UUID, subtype);
-
-    // Required Characteristics
-    this.addCharacteristic(Characteristic.On);
-
-    // Optional Characteristics
-    this.addOptionalCharacteristic(Characteristic.CurrentHorizontalTiltAngle);
-    this.addOptionalCharacteristic(Characteristic.CurrentVerticalTiltAngle);
-    this.addOptionalCharacteristic(Characteristic.TargetHorizontalTiltAngle);
-    this.addOptionalCharacteristic(Characteristic.TargetVerticalTiltAngle);
-    this.addOptionalCharacteristic(Characteristic.NightVision);
-    this.addOptionalCharacteristic(Characteristic.OpticalZoom);
-    this.addOptionalCharacteristic(Characteristic.DigitalZoom);
-    this.addOptionalCharacteristic(Characteristic.ImageRotation);
-    this.addOptionalCharacteristic(Characteristic.ImageMirroring);
-    this.addOptionalCharacteristic(Characteristic.Name);
-  }
-}
-// noinspection JSDeprecatedSymbols
-Service.CameraControl = CameraControl;
 
 /**
  * Service "Camera Operating Mode"
@@ -367,8 +287,6 @@ export class CameraRecordingManagement extends Service {
     this.addOptionalCharacteristic(Characteristic.RecordingAudioActive);
   }
 }
-// noinspection JSDeprecatedSymbols
-Service.CameraEventRecordingManagement = CameraRecordingManagement;
 Service.CameraRecordingManagement = CameraRecordingManagement;
 
 /**
@@ -461,8 +379,6 @@ export class CloudRelay extends Service {
     this.addCharacteristic(Characteristic.RelayEnabled);
   }
 }
-// noinspection JSDeprecatedSymbols
-Service.Relay = CloudRelay;
 Service.CloudRelay = CloudRelay;
 
 /**
@@ -1215,8 +1131,6 @@ export class Slats extends Service {
     this.addOptionalCharacteristic(Characteristic.TargetTiltAngle);
   }
 }
-// noinspection JSDeprecatedSymbols
-Service.Slat = Slats;
 Service.Slats = Slats;
 
 /**
@@ -1539,29 +1453,6 @@ export class ThreadTransport extends Service {
 Service.ThreadTransport = ThreadTransport;
 
 /**
- * Service "Time Information"
- * @deprecated Removed and not used anymore
- */
-export class TimeInformation extends Service {
-
-  public static readonly UUID: string = "00000099-0000-1000-8000-0026BB765291";
-
-  constructor(displayName?: string, subtype?: string) {
-    super(displayName, TimeInformation.UUID, subtype);
-
-    // Required Characteristics
-    this.addCharacteristic(Characteristic.CurrentTime);
-    this.addCharacteristic(Characteristic.DayoftheWeek);
-    this.addCharacteristic(Characteristic.TimeUpdate);
-
-    // Optional Characteristics
-    this.addOptionalCharacteristic(Characteristic.Name);
-  }
-}
-// noinspection JSDeprecatedSymbols
-Service.TimeInformation = TimeInformation;
-
-/**
  * Service "Transfer Transport Management"
  */
 export class TransferTransportManagement extends Service {
@@ -1596,8 +1487,6 @@ export class Tunnel extends Service {
     this.addCharacteristic(Characteristic.TunneledAccessoryStateNumber);
   }
 }
-// noinspection JSDeprecatedSymbols
-Service.TunneledBTLEAccessoryService = Tunnel;
 Service.Tunnel = Tunnel;
 
 /**

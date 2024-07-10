@@ -110,11 +110,6 @@ export enum HDSStatus {
 
 /**
  * @group HomeKit Data Streams (HDS)
- * @deprecated Renamed to {@link HDSProtocolSpecificErrorReason}.
- */
-export type DataSendCloseReason = HDSProtocolSpecificErrorReason;
-/**
- * @group HomeKit Data Streams (HDS)
  */
 export const enum HDSProtocolSpecificErrorReason { // close reason used in the dataSend protocol
   // noinspection JSUnusedGlobalSymbols

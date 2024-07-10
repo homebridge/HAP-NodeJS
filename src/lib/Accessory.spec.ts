@@ -28,7 +28,7 @@ import {
   Units,
 } from "./Characteristic";
 import { CameraController, Controller, ControllerIdentifier, ControllerServiceMap } from "./controller";
-import { createCameraControllerOptions, MOCK_IMAGE, MockLegacyCameraSource } from "./controller/CameraController.spec";
+import { createCameraControllerOptions, MOCK_IMAGE } from "./controller/CameraController.spec";
 import { HAPHTTPCode, HAPStatus, IdentifyCallback, TLVErrorCode } from "./HAPServer";
 import { AccessoryInfo, PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
 import { IdentifierCache } from "./model/IdentifierCache";
@@ -201,8 +201,7 @@ describe("Accessory", () => {
       expect(accessory.primaryService).toBe(instance);
 
       const outlet = new Service.Outlet("Outlet");
-      // noinspection JSDeprecatedSymbols
-      accessory.setPrimaryService(outlet);
+      outlet.setPrimaryService();
       accessory.addService(outlet);
 
       // @ts-expect-error: private access
@@ -306,41 +305,6 @@ describe("Accessory", () => {
       expect(restoredAccessory.getService(Service.LightSensor)).toBeDefined();
       expect(restoredAccessory.getService(Service.Outlet)).toBeDefined();
       expect(restoredAccessory.getService(Service.Switch)).toBeUndefined();
-    });
-
-    test("legacy configure camera source", async () => {
-      const microphone = new Service.Microphone();
-      const source = new MockLegacyCameraSource(2);
-      source.services.push(microphone);
-
-      const expectedOptions = source.streamControllers[0].options;
-
-      // noinspection JSDeprecatedSymbols
-      accessory.configureCameraSource(source);
-
-      expect(accessory.getServiceById(Service.CameraRTPStreamManagement, "0")).toBeDefined();
-      expect(accessory.getServiceById(Service.CameraRTPStreamManagement, "1")).toBeDefined();
-      expect(accessory.getService(Service.Microphone)).toBe(microphone);
-
-      // @ts-expect-error: private access
-      const cameraController = accessory.activeCameraController!;
-      expect(cameraController).toBeDefined();
-
-      // @ts-expect-error: private access
-      expect(cameraController.streamCount).toEqual(2);
-      // @ts-expect-error: private access
-      expect(cameraController.streamingOptions).toEqual(expectedOptions);
-
-      // @ts-expect-error: private access
-      accessory.handleResource({
-        "resource-type": ResourceRequestType.IMAGE,
-        "image-width": 200,
-        "image-height": 200,
-      }, callback);
-
-      await callbackPromise;
-
-      expect(callback).toHaveBeenCalledWith(undefined, MOCK_IMAGE);
     });
   });
 

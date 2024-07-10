@@ -30,7 +30,6 @@ import type {
   CarbonMonoxideDetected,
   CarbonMonoxideLevel,
   CarbonMonoxidePeakLevel,
-  Category,
   CCAEnergyDetectThreshold,
   CCASignalDetectThreshold,
   CharacteristicValueActiveTransitionCount,
@@ -39,8 +38,6 @@ import type {
   ClosedCaptions,
   ColorTemperature,
   ConfigurationState,
-  ConfigureBridgedAccessory,
-  ConfigureBridgedAccessoryStatus,
   ConfiguredName,
   ContactSensorState,
   CoolingThresholdTemperature,
@@ -59,17 +56,13 @@ import type {
   CurrentSlatState,
   CurrentTemperature,
   CurrentTiltAngle,
-  CurrentTime,
   CurrentTransport,
   CurrentVerticalTiltAngle,
   CurrentVisibilityState,
   DataStreamHAPTransport,
   DataStreamHAPTransportInterrupt,
-  DayoftheWeek,
   DiagonalFieldOfView,
   DigitalZoom,
-  DiscoverBridgedAccessories,
-  DiscoveredBridgedAccessories,
   DisplayOrder,
   EventRetransmissionMaximum,
   EventSnapshotsActive,
@@ -95,7 +88,6 @@ import type {
   InUse,
   IsConfigured,
   LeakDetected,
-  LinkQuality,
   ListPairings,
   LockControlPoint,
   LockCurrentState,
@@ -145,7 +137,6 @@ import type {
   ProgrammableSwitchEvent,
   ProgrammableSwitchOutputState,
   ProgramMode,
-  Reachable,
   ReceivedSignalStrengthIndication,
   ReceiverSensitivity,
   RecordingAudioActive,
@@ -216,7 +207,6 @@ import type {
   SwingMode,
   TapType,
   TargetAirPurifierState,
-  TargetAirQuality,
   TargetControlList,
   TargetControlSupportedConfiguration,
   TargetDoorState,
@@ -228,7 +218,6 @@ import type {
   TargetMediaState,
   TargetPosition,
   TargetRelativeHumidity,
-  TargetSlatState,
   TargetTemperature,
   TargetTiltAngle,
   TargetVerticalTiltAngle,
@@ -239,7 +228,6 @@ import type {
   ThreadNodeCapabilities,
   ThreadOpenThreadVersion,
   ThreadStatus,
-  TimeUpdate,
   Token,
   TransmitPower,
   TunnelConnectionTimeout,
@@ -320,15 +308,7 @@ export const enum Formats {
   /**
    * Base64 encoded tlv8 string.
    */
-  TLV8 = "tlv8",
-  /**
-   * @deprecated Not contained in the HAP spec
-   */
-  ARRAY = "array",
-  /**
-   * @deprecated Not contained in the HAP spec
-   */
-  DICTIONARY = "dict",
+  TLV8 = "tlv8"
 }
 
 /**
@@ -351,15 +331,6 @@ export const enum Units {
  * @group Characteristic
  */
 export const enum Perms {
-  // noinspection JSUnusedGlobalSymbols
-  /**
-   * @deprecated replaced by {@link PAIRED_READ}. Kept for backwards compatibility.
-   */
-  READ = "pr",
-  /**
-   * @deprecated replaced by {@link PAIRED_WRITE}. Kept for backwards compatibility.
-   */
-  WRITE = "pw",
   // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   PAIRED_READ = "pr",
   // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
@@ -701,22 +672,6 @@ function minWithUndefined(a?: number, b?: number): number | undefined {
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class Characteristic extends EventEmitter {
 
-  /**
-   * @deprecated Please use the Formats const enum above.
-   */
-  // @ts-expect-error: forceConsistentCasingInFileNames compiler option
-  static Formats = Formats;
-  /**
-   * @deprecated Please use the Units const enum above.
-   */
-  // @ts-expect-error: forceConsistentCasingInFileNames compiler option
-  static Units = Units;
-  /**
-   * @deprecated Please use the Perms const enum above.
-   */
-  // @ts-expect-error: forceConsistentCasingInFileNames compiler option
-  static Perms = Perms;
-
   // Pattern below is for automatic detection of the section of defined characteristics. Used by the generator
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   /**
@@ -825,11 +780,6 @@ export class Characteristic extends EventEmitter {
   public static CarbonMonoxidePeakLevel: typeof CarbonMonoxidePeakLevel;
   /**
    * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static Category: typeof Category;
-  /**
-   * @group Characteristic Definitions
    */
   public static CCAEnergyDetectThreshold: typeof CCAEnergyDetectThreshold;
   /**
@@ -860,16 +810,6 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static ConfigurationState: typeof ConfigurationState;
-  /**
-   * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static ConfigureBridgedAccessory: typeof ConfigureBridgedAccessory;
-  /**
-   * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static ConfigureBridgedAccessoryStatus: typeof ConfigureBridgedAccessoryStatus;
   /**
    * @group Characteristic Definitions
    */
@@ -944,11 +884,6 @@ export class Characteristic extends EventEmitter {
   public static CurrentTiltAngle: typeof CurrentTiltAngle;
   /**
    * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static CurrentTime: typeof CurrentTime;
-  /**
-   * @group Characteristic Definitions
    */
   public static CurrentTransport: typeof CurrentTransport;
   /**
@@ -969,27 +904,12 @@ export class Characteristic extends EventEmitter {
   public static DataStreamHAPTransportInterrupt: typeof DataStreamHAPTransportInterrupt;
   /**
    * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static DayoftheWeek: typeof DayoftheWeek;
-  /**
-   * @group Characteristic Definitions
    */
   public static DiagonalFieldOfView: typeof DiagonalFieldOfView;
   /**
    * @group Characteristic Definitions
    */
   public static DigitalZoom: typeof DigitalZoom;
-  /**
-   * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static DiscoverBridgedAccessories: typeof DiscoverBridgedAccessories;
-  /**
-   * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static DiscoveredBridgedAccessories: typeof DiscoveredBridgedAccessories;
   /**
    * @group Characteristic Definitions
    */
@@ -1090,11 +1010,6 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static LeakDetected: typeof LeakDetected;
-  /**
-   * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static LinkQuality: typeof LinkQuality;
   /**
    * @group Characteristic Definitions
    */
@@ -1291,11 +1206,6 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static ProgramMode: typeof ProgramMode;
-  /**
-   * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static Reachable: typeof Reachable;
   /**
    * @group Characteristic Definitions
    */
@@ -1578,11 +1488,6 @@ export class Characteristic extends EventEmitter {
   public static TargetAirPurifierState: typeof TargetAirPurifierState;
   /**
    * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static TargetAirQuality: typeof TargetAirQuality;
-  /**
-   * @group Characteristic Definitions
    */
   public static TargetControlList: typeof TargetControlList;
   /**
@@ -1627,11 +1532,6 @@ export class Characteristic extends EventEmitter {
   public static TargetRelativeHumidity: typeof TargetRelativeHumidity;
   /**
    * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static TargetSlatState: typeof TargetSlatState;
-  /**
-   * @group Characteristic Definitions
    */
   public static TargetTemperature: typeof TargetTemperature;
   /**
@@ -1670,11 +1570,6 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static ThreadStatus: typeof ThreadStatus;
-  /**
-   * @group Characteristic Definitions
-   * @deprecated Removed and not used anymore
-   */
-  public static TimeUpdate: typeof TimeUpdate;
   /**
    * @group Characteristic Definitions
    */
@@ -1762,11 +1657,6 @@ export class Characteristic extends EventEmitter {
   public UUID: string;
   iid: Nullable<number> = null;
   value: Nullable<CharacteristicValue> = null;
-  /**
-   * @deprecated replaced by {@link statusCode}
-   * @private
-   */
-  status: Nullable<Error> = null;
   /**
    * @private
    */
@@ -2125,27 +2015,6 @@ export class Characteristic extends EventEmitter {
   }
 
   /**
-   * Updates the current value of the characteristic.
-   *
-   * @param callback
-   * @param context
-   * @private use to return the current value on HAP requests
-   *
-   * @deprecated
-   */
-  getValue(callback?: CharacteristicGetCallback, context?: CharacteristicContext): void {
-    this.handleGetRequest(undefined, context).then(value => {
-      if (callback) {
-        callback(null, value);
-      }
-    }, reason => {
-      if (callback) {
-        callback(reason);
-      }
-    });
-  }
-
-  /**
    * This updates the value by calling the {@link CharacteristicEventTypes.SET} event handler associated with the characteristic.
    * This acts the same way as when a HomeKit controller sends a `/characteristics` request to update the characteristic.
    * An event notification will be sent to all connected HomeKit controllers which are registered
@@ -2192,23 +2061,6 @@ export class Characteristic extends EventEmitter {
    * event handler is called.
    *
    * @param value - The new value.
-   * @param callback - Deprecated parameter there to provide backwards compatibility. Called once the
-   *   {@link CharacteristicEventTypes.SET} event handler returns.
-   * @param context - Passed to the {@link CharacteristicEventTypes.SET} and {@link CharacteristicEventTypes.CHANGE} event handler.
-   *
-   * @deprecated Parameter `callback` is deprecated.
-   */
-  setValue(value: CharacteristicValue, callback?: CharacteristicSetCallback, context?: CharacteristicContext): Characteristic
-  /**
-   * This updates the value by calling the {@link CharacteristicEventTypes.SET} event handler associated with the characteristic.
-   * This acts the same way as when a HomeKit controller sends a `/characteristics` request to update the characteristic.
-   * An event notification will be sent to all connected HomeKit controllers which are registered
-   * to receive event notifications for this characteristic.
-   *
-   * This method behaves like a {@link updateValue} call with the addition that the own {@link CharacteristicEventTypes.SET}
-   * event handler is called.
-   *
-   * @param value - The new value.
    * @param context - Passed to the {@link CharacteristicEventTypes.SET} and {@link CharacteristicEventTypes.CHANGE} event handler.
    *
    * Note: If you don't want the {@link CharacteristicEventTypes.SET} to be called, refer to {@link updateValue}.
@@ -2217,8 +2069,6 @@ export class Characteristic extends EventEmitter {
   setValue(value: CharacteristicValue | Error, callback?: CharacteristicSetCallback, context?: CharacteristicContext): Characteristic {
     if (value instanceof Error) {
       this.statusCode = value instanceof HapStatusError? value.hapStatus: extractHAPStatusFromError(value);
-      // noinspection JSDeprecatedSymbols
-      this.status = value;
 
       if (callback) {
         callback();
@@ -2299,25 +2149,12 @@ export class Characteristic extends EventEmitter {
    * HomeKit controllers which are registered to receive event notifications for this characteristic.
    *
    * @param value - The new value.
-   * @param callback - Deprecated parameter there to provide backwards compatibility. Callback is called instantly.
-   * @param context - Passed to the {@link CharacteristicEventTypes.CHANGE} event handler.
-   *
-   * @deprecated Parameter `callback` is deprecated.
-   */
-  updateValue(value: Nullable<CharacteristicValue>, callback?: () => void, context?: CharacteristicContext): Characteristic;
-  /**
-   * This updates the value of the characteristic. If the value changed, an event notification will be sent to all connected
-   * HomeKit controllers which are registered to receive event notifications for this characteristic.
-   *
-   * @param value - The new value.
    * @param context - Passed to the {@link CharacteristicEventTypes.CHANGE} event handler.
    */
   updateValue(value: Nullable<CharacteristicValue>, context?: CharacteristicContext): Characteristic;
   updateValue(value: Nullable<CharacteristicValue> | Error | HapStatusError, callback?: () => void, context?: CharacteristicContext): Characteristic {
     if (value instanceof Error) {
       this.statusCode = value instanceof HapStatusError? value.hapStatus: extractHAPStatusFromError(value);
-      // noinspection JSDeprecatedSymbols
-      this.status = value;
 
       if (callback) {
         callback();
@@ -2341,8 +2178,6 @@ export class Characteristic extends EventEmitter {
     }
 
     this.statusCode = HAPStatus.SUCCESS;
-    // noinspection JSDeprecatedSymbols
-    this.status = null;
 
     const oldValue = this.value;
     this.value = value;
@@ -2367,8 +2202,6 @@ export class Characteristic extends EventEmitter {
    */
   public sendEventNotification(value: CharacteristicValue, context?: CharacteristicContext): Characteristic {
     this.statusCode = HAPStatus.SUCCESS;
-    // noinspection JSDeprecatedSymbols
-    this.status = null;
 
     value = this.validateUserInput(value)!;
     const oldValue = this.value;
@@ -2404,8 +2237,6 @@ export class Characteristic extends EventEmitter {
       try {
         let value = await this.getHandler(context, connection);
         this.statusCode = HAPStatus.SUCCESS;
-        // noinspection JSDeprecatedSymbols
-        this.status = null;
 
         try {
           value = this.validateUserInput(value);
@@ -2413,8 +2244,6 @@ export class Characteristic extends EventEmitter {
           this.characteristicWarning(`An illegal value was supplied by the read handler for characteristic: ${error?.message}`,
             CharacteristicWarningType.WARN_MESSAGE, error?.stack);
           this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
-          // noinspection JSDeprecatedSymbols
-          this.status = error;
           return Promise.reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
         }
 
@@ -2433,18 +2262,12 @@ export class Characteristic extends EventEmitter {
         if (typeof error === "number") {
           const hapStatusError = new HapStatusError(error);
           this.statusCode = hapStatusError.hapStatus;
-          // noinspection JSDeprecatedSymbols
-          this.status = hapStatusError;
         } else if (error instanceof HapStatusError) {
           this.statusCode = error.hapStatus;
-          // noinspection JSDeprecatedSymbols
-          this.status = error;
         } else {
           this.characteristicWarning(`Unhandled error thrown inside read handler for characteristic: ${error?.message}`,
             CharacteristicWarningType.ERROR_MESSAGE, error?.stack);
           this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
-          // noinspection JSDeprecatedSymbols
-          this.status = error;
         }
         throw this.statusCode;
       }
@@ -2471,25 +2294,17 @@ export class Characteristic extends EventEmitter {
             if (typeof status === "number") {
               const hapStatusError = new HapStatusError(status);
               this.statusCode = hapStatusError.hapStatus;
-              // noinspection JSDeprecatedSymbols
-              this.status = hapStatusError;
             } else if (status instanceof HapStatusError) {
               this.statusCode = status.hapStatus;
-              // noinspection JSDeprecatedSymbols
-              this.status = status;
             } else {
               debug("[%s] Received error from get handler %s", this.displayName, status.stack);
               this.statusCode = extractHAPStatusFromError(status);
-              // noinspection JSDeprecatedSymbols
-              this.status = status;
             }
             reject(this.statusCode);
             return;
           }
 
           this.statusCode = HAPStatus.SUCCESS;
-          // noinspection JSDeprecatedSymbols
-          this.status = null;
 
           value = this.validateUserInput(value);
           const oldValue = this.value;
@@ -2508,8 +2323,6 @@ export class Characteristic extends EventEmitter {
         this.characteristicWarning(`Unhandled error thrown inside read handler for characteristic: ${error?.message}`,
           CharacteristicWarningType.ERROR_MESSAGE, error?.stack);
         this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
-        // noinspection JSDeprecatedSymbols
-        this.status = error;
         reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       }
     });
@@ -2528,8 +2341,6 @@ export class Characteristic extends EventEmitter {
    */
   async handleSetRequest(value: CharacteristicValue, connection?: HAPConnection, context?: CharacteristicContext): Promise<CharacteristicValue | void> {
     this.statusCode = HAPStatus.SUCCESS;
-    // noinspection JSDeprecatedSymbols
-    this.status = null;
 
     if (connection !== undefined) {
       // if connection is undefined, the set "request" comes from the setValue method.
@@ -2552,8 +2363,6 @@ export class Characteristic extends EventEmitter {
       try {
         const writeResponse = await this.setHandler(value, context, connection);
         this.statusCode = HAPStatus.SUCCESS;
-        // noinspection JSDeprecatedSymbols
-        this.status = null;
 
         if (writeResponse != null && this.props.perms.includes(Perms.WRITE_RESPONSE)) {
           this.value = this.validateUserInput(writeResponse);
@@ -2575,18 +2384,12 @@ export class Characteristic extends EventEmitter {
         if (typeof error === "number") {
           const hapStatusError = new HapStatusError(error);
           this.statusCode = hapStatusError.hapStatus;
-          // noinspection JSDeprecatedSymbols
-          this.status = hapStatusError;
         } else if (error instanceof HapStatusError) {
           this.statusCode = error.hapStatus;
-          // noinspection JSDeprecatedSymbols
-          this.status = error;
         } else {
           this.characteristicWarning(`Unhandled error thrown inside write handler for characteristic: ${error?.message}`,
             CharacteristicWarningType.ERROR_MESSAGE, error?.stack);
           this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
-          // noinspection JSDeprecatedSymbols
-          this.status = error;
         }
         throw this.statusCode;
       }
@@ -2604,25 +2407,17 @@ export class Characteristic extends EventEmitter {
               if (typeof status === "number") {
                 const hapStatusError = new HapStatusError(status);
                 this.statusCode = hapStatusError.hapStatus;
-                // noinspection JSDeprecatedSymbols
-                this.status = hapStatusError;
               } else if (status instanceof HapStatusError) {
                 this.statusCode = status.hapStatus;
-                // noinspection JSDeprecatedSymbols
-                this.status = status;
               } else {
                 debug("[%s] Received error from set handler %s", this.displayName, status.stack);
                 this.statusCode = extractHAPStatusFromError(status);
-                // noinspection JSDeprecatedSymbols
-                this.status = status;
               }
               reject(this.statusCode);
               return;
             }
 
             this.statusCode = HAPStatus.SUCCESS;
-            // noinspection JSDeprecatedSymbols
-            this.status = null;
 
             if (writeResponse != null && this.props.perms.includes(Perms.WRITE_RESPONSE)) {
               // support write response simply by letting the implementor pass the response as second argument to the callback
@@ -2646,8 +2441,6 @@ export class Characteristic extends EventEmitter {
           this.characteristicWarning(`Unhandled error thrown inside write handler for characteristic: ${error?.message}`,
             CharacteristicWarningType.ERROR_MESSAGE, error?.stack);
           this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
-          // noinspection JSDeprecatedSymbols
-          this.status = error;
           reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
         }
       });
@@ -2701,10 +2494,6 @@ export class Characteristic extends EventEmitter {
       return ""; // who knows!
     case Formats.TLV8:
       return ""; // who knows!
-    case Formats.DICTIONARY:
-      return {};
-    case Formats.ARRAY:
-      return [];
     case Formats.INT:
     case Formats.FLOAT:
     case Formats.UINT8:

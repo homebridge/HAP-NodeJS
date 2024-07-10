@@ -4,7 +4,7 @@ import ciao, { CiaoService, MDNSServerOptions, Responder, ServiceEvent, ServiceT
 import { InterfaceName, IPAddress } from "@homebridge/ciao/lib/NetworkManager";
 import dbus, { DBusInterface, MessageBus } from "@homebridge/dbus-native";
 import assert from "assert";
-import bonjour, { BonjourHAP, BonjourHAPService, MulticastOptions } from "bonjour-hap";
+import bonjour, { BonjourHAP, BonjourHAPService } from "bonjour-hap";
 import crypto from "crypto";
 import createDebug from "debug";
 import { EventEmitter } from "events";
@@ -216,13 +216,13 @@ export class BonjourHAPAdvertiser extends EventEmitter implements Advertiser {
   private port?: number;
   private destroyed = false;
 
-  constructor(accessoryInfo: AccessoryInfo, responderOptions?: MulticastOptions, serviceOptions?: ServiceNetworkOptions) {
+  constructor(accessoryInfo: AccessoryInfo, serviceOptions?: ServiceNetworkOptions) {
     super();
     this.accessoryInfo = accessoryInfo;
     this.setupHash = CiaoAdvertiser.computeSetupHash(accessoryInfo);
     this.serviceOptions = serviceOptions;
 
-    this.bonjour = bonjour(responderOptions);
+    this.bonjour = bonjour();
     debug(`Preparing Advertiser for '${this.accessoryInfo.displayName}' using bonjour-hap backend!`);
   }
 

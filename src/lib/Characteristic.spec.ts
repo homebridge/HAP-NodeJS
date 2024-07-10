@@ -1102,20 +1102,6 @@ describe("Characteristic", () => {
       expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
     });
 
-    it("should validate a dictionary property", () => {
-      const VALUE = {};
-      const characteristic = createCharacteristic(Formats.DICTIONARY);
-      // @ts-expect-error: private access
-      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
-    });
-
-    it("should validate an array property", () => {
-      const VALUE = ["asd"];
-      const characteristic = createCharacteristic(Formats.ARRAY);
-      // @ts-expect-error: private access
-      expect(characteristic.validateUserInput(VALUE)).toEqual(VALUE);
-    });
-
     it("should validate boolean inputs", () => {
       const characteristic = createCharacteristicWithProps({
         format: Formats.BOOL,
@@ -1617,18 +1603,6 @@ describe("Characteristic", () => {
       const characteristic = createCharacteristic(Formats.TLV8);
       // @ts-expect-error: private access
       expect(characteristic.getDefaultValue()).toEqual("");
-    });
-
-    it("should get the correct default value for a dictionary property", () => {
-      const characteristic = createCharacteristic(Formats.DICTIONARY);
-      // @ts-expect-error: private access
-      expect(characteristic.getDefaultValue()).toEqual({});
-    });
-
-    it("should get the correct default value for an array property", () => {
-      const characteristic = createCharacteristic(Formats.ARRAY);
-      // @ts-expect-error: private access
-      expect(characteristic.getDefaultValue()).toEqual([]);
     });
 
     it("should get the correct default value a UINT8 property without minValue", () => {
