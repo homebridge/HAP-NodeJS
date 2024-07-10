@@ -33,19 +33,23 @@ export function consideredTrue(input: string | null): boolean {
 export const enum TLVValues {
   // noinspection JSUnusedGlobalSymbols
   REQUEST_TYPE = 0x00,
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   METHOD = 0x00, // (match the terminology of the spec sheet but keep backwards compatibility with entry above)
   USERNAME = 0x01,
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   IDENTIFIER = 0x01,
   SALT = 0x02,
   PUBLIC_KEY = 0x03,
   PASSWORD_PROOF = 0x04,
   ENCRYPTED_DATA = 0x05,
   SEQUENCE_NUM = 0x06,
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   STATE = 0x06,
   ERROR_CODE = 0x07,
   RETRY_DELAY = 0x08,
   CERTIFICATE = 0x09, // x.509 certificate
   PROOF = 0x0A,
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   SIGNATURE = 0x0A,  // apple authentication coprocessor
   PERMISSIONS = 0x0B, // None (0x00): regular user, 0x01: Admin (able to add/remove/list pairings)
   FRAGMENT_DATA = 0x0C,

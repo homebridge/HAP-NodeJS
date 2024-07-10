@@ -218,6 +218,7 @@ export const enum DataStreamServerEvent {
 /**
  * @group HomeKit Data Streams (HDS)
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export declare interface DataStreamServer {
   on(event: "connection-opened", listener: (connection: DataStreamConnection) => void): this;
   on(event: "connection-closed", listener: (connection: DataStreamConnection) => void): this;
@@ -230,6 +231,7 @@ export declare interface DataStreamServer {
  * DataStreamServer which listens for incoming tcp connections and handles identification of new connections
  * @group HomeKit Data Streams (HDS)
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class DataStreamServer extends EventEmitter {
 
   static readonly version = "1.0";
@@ -546,6 +548,7 @@ export const enum DataStreamConnectionEvent {
 /**
  * @group HomeKit Data Streams (HDS)
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export declare interface DataStreamConnection {
   on(event: "identification", listener: (frame: HDSFrame, callback: IdentificationCallback) => void): this;
   on(event: "handle-message-globally", listener: (message: DataStreamMessage) => void): this;
@@ -583,6 +586,7 @@ export class HDSConnectionError extends Error {
  *
  * @group HomeKit Data Streams (HDS)
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class DataStreamConnection extends EventEmitter {
 
   private static readonly MAX_PAYLOAD_LENGTH = 0b11111111111111111111;
@@ -804,6 +808,7 @@ export class DataStreamConnection extends EventEmitter {
           this.state = ConnectionState.EXPECTING_HELLO;
 
           // below listener is removed in .close()
+          this.connection.setMaxListeners(this.connection.getMaxListeners() + 1);
           this.connection.on(HAPConnectionEvent.CLOSED, this.hapConnectionClosedListener); // register close listener
 
           debug("[%s] Registering CLOSED handler to HAP connection. Connection currently has %d close handlers!",
@@ -1139,6 +1144,7 @@ export class DataStreamConnection extends EventEmitter {
     this.emit(DataStreamConnectionEvent.CLOSED);
 
     this.connection?.removeListener(HAPConnectionEvent.CLOSED, this.hapConnectionClosedListener);
+    this.connection?.setMaxListeners(this.connection.getMaxListeners() - 1);
     this.removeAllListeners();
   }
 
