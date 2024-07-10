@@ -36,7 +36,6 @@ export const enum TLVErrorCode {
   // noinspection JSUnusedGlobalSymbols
   UNKNOWN = 0x01,
   INVALID_REQUEST = 0x02,
-  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   AUTHENTICATION = 0x02, // setup code or signature verification failed
   BACKOFF = 0x03, // // client must look at retry delay tlv item
   MAX_PEERS = 0x04, // server cannot accept any more pairings
@@ -279,7 +278,6 @@ export const enum HAPServerEventTypes {
 /**
  * @group HAP Accessory Server
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export declare interface HAPServer {
   on(event: "listening", listener: (port: number, address: string) => void): this;
   on(event: "identify", listener: (callback: IdentifyCallback) => void): this;
@@ -350,7 +348,6 @@ export declare interface HAPServer {
  *
  * @group HAP Accessory Server
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class HAPServer extends EventEmitter {
 
   private accessoryInfo: AccessoryInfo;

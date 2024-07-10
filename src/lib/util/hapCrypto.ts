@@ -68,9 +68,10 @@ export function chacha20_poly1305_decryptAndVerify(key: Buffer, nonce: Buffer, a
     ]);
   }
 
+  // @ts-expect-error: types for this are really broken
   const decipher = crypto.createDecipheriv("chacha20-poly1305", key, nonce, { authTagLength: 16 });
   if (aad) {
-    decipher.setAAD(aad, { plaintextLength: ciphertext.length });
+    decipher.setAAD(aad);
   }
   decipher.setAuthTag(authTag);
   const plaintext = decipher.update(ciphertext);
@@ -98,10 +99,11 @@ export function chacha20_poly1305_encryptAndSeal(key: Buffer, nonce: Buffer, aad
     ]);
   }
 
+  // @ts-expect-error: types for this are really broken
   const cipher = crypto.createCipheriv("chacha20-poly1305", key, nonce, { authTagLength: 16 });
 
   if (aad) {
-    cipher.setAAD(aad, { plaintextLength: plaintext.length });
+    cipher.setAAD(aad);
   }
 
   const ciphertext = cipher.update(plaintext);

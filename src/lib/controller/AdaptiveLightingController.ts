@@ -317,7 +317,6 @@ export const enum AdaptiveLightingControllerEvents {
 /**
  * @group Adaptive Lighting
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export declare interface AdaptiveLightingController {
   /**
    * See {@link AdaptiveLightingControllerEvents.UPDATE}
@@ -443,7 +442,6 @@ export interface SerializedAdaptiveLightingControllerState {
  *
  *  @group Adaptive Lighting
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class AdaptiveLightingController
   extends EventEmitter
   implements SerializableController<ControllerServiceMap, SerializedAdaptiveLightingControllerState> {

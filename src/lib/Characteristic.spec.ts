@@ -1751,7 +1751,7 @@ describe("Characteristic", () => {
       mock.mockReset();
       characteristic.removeAllListeners("get");
       characteristic.on("get", (callback) => {
-        callback(234234234234 as HAPStatus);
+        callback(234234234234);
       });
       await expect(characteristic.handleGetRequest()).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
@@ -1878,7 +1878,7 @@ describe("Characteristic", () => {
       mock.mockReset();
       characteristic.removeAllListeners("set");
       characteristic.on("set", (value, callback) => {
-        callback(234234234234 as HAPStatus);
+        callback(234234234234);
       });
       await expect(characteristic.handleSetRequest("hello")).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);

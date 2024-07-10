@@ -71,7 +71,6 @@ export const enum EventedHTTPServerEvent {
 /**
  * @group HAP Accessory Server
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export declare interface EventedHTTPServer {
 
   on(event: "listening", listener: (port: number, address: string) => void): this;
@@ -105,7 +104,6 @@ export declare interface EventedHTTPServer {
  *
  * @group HAP Accessory Server
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class EventedHTTPServer extends EventEmitter {
 
   private static readonly CONNECTION_TIMEOUT_LIMIT = 16; // if we have more (or equal) # connections we start the timeout
@@ -326,7 +324,6 @@ export const enum HAPConnectionEvent {
 /**
  * @group HAP Accessory Server
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export declare interface HAPConnection {
   on(event: "request", listener: (request: IncomingMessage, response: ServerResponse) => void): this;
   on(event: "authenticated", listener: (username: HAPUsername) => void): this;
@@ -341,7 +338,6 @@ export declare interface HAPConnection {
  * Manages a single iOS-initiated HTTP connection during its lifetime.
  * @group HAP Accessory Server
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class HAPConnection extends EventEmitter {
   /**
    * @private file-private API
@@ -388,7 +384,7 @@ export class HAPConnection extends EventEmitter {
 
     this.server = server;
     this.sessionID = uuid.generate(clientSocket.remoteAddress + ":" + clientSocket.remotePort);
-    this.localAddress = clientSocket.localAddress as string;
+    this.localAddress = clientSocket.localAddress;
     this.remoteAddress = clientSocket.remoteAddress!; // cache because it becomes undefined in 'onClientSocketClose'
     this.remotePort = clientSocket.remotePort!;
     this.networkInterface = HAPConnection.getLocalNetworkInterface(clientSocket);
@@ -807,85 +803,78 @@ export class HAPConnection extends EventEmitter {
   }
 
   public getLocalAddress(ipVersion: "ipv4" | "ipv6"): string {
-    const interfaceDetails = os.networkInterfaces()[this.networkInterface];
-    if (!interfaceDetails) {
-      throw new Error("Could not find " + ipVersion + " address for interface " + this.networkInterface);
-    }
+    const infos = os.networkInterfaces()[this.networkInterface];
 
-    // Find our first local IPv4 address.
     if (ipVersion === "ipv4") {
-      const ipv4Info = interfaceDetails.find(info => info.family === "IPv4");
-
-      if (ipv4Info) {
-        return ipv4Info.address;
+      for (const info of infos) {
+        // @ts-expect-error Nodejs 18+ uses the number 4 the string "IPv4"
+        if (info.family === "IPv4" || info.family === 4) {
+          return info.address;
+        }
       }
 
-      throw new Error("Could not find " + ipVersion + " address for interface " + this.networkInterface + ".");
-    }
+      throw new Error("Could not find " + ipVersion + " address for interface " + this.networkInterface);
+    } else {
+      let localUniqueAddress: string | undefined = undefined;
 
-    let localUniqueAddress;
-
-    for (const v6entry of interfaceDetails.filter(entry => entry.family === "IPv6")) {
-      if (!v6entry.scopeid) {
-        return v6entry.address;
+      for (const info of infos) {
+        // @ts-expect-error Nodejs 18+ uses the number 6 instead of the string "IPv6"
+        if (info.family === "IPv6" || info.family === 6) {
+          if (!info.scopeid) {
+            return info.address;
+          } else if (!localUniqueAddress) {
+            localUniqueAddress = info.address;
+          }
+        }
       }
 
-      localUniqueAddress ??= v6entry.address;
-    }
-
-    if(localUniqueAddress) {
+      if (!localUniqueAddress) {
+        throw new Error("Could not find " + ipVersion + " address for interface " + this.networkInterface);
+      }
       return localUniqueAddress;
     }
-
-    throw new Error("Could not find " + ipVersion + " address for interface " + this.networkInterface);
   }
 
   private static getLocalNetworkInterface(socket: Socket): string {
-
     let localAddress = socket.localAddress;
 
-    // Grab the list of network interfaces.
+    if (localAddress.startsWith("::ffff:")) { // IPv4-Mapped IPv6 Address https://tools.ietf.org/html/rfc4291#section-2.5.5.2
+      localAddress = localAddress.substring(7);
+    } else {
+      const index = localAddress.indexOf("%");
+      if (index !== -1) { // link-local ipv6
+        localAddress = localAddress.substring(0, index);
+      }
+    }
+
     const interfaces = os.networkInterfaces();
-
-    // Default to the first non-loopback interface we see.
-    const defaultInterface = () => Object.entries(interfaces).find(([name, addresses]) => addresses?.some(address => !address.internal))?.[0] ?? "unknown";
-
-    // No local address return our default.
-    if(!localAddress) {
-      return defaultInterface();
-    }
-
-    // Handle IPv4-mapped IPv6 addresses.
-    localAddress = localAddress.replace(/^::ffff:/i, "");
-
-    // Handle edge cases where we have an IPv4-mapped IPv6 address without the requisite prefix.
-    if(/^::(?:\d{1,3}\.){3}\d{1,3}$/.test(localAddress)) {
-      localAddress = localAddress.replace(/^::/, "");
-    }
-
-    // Handle link-local IPv6 addresses.
-    localAddress = localAddress.split("%")[0];
-
-    // Let's find an exact match using the IP.
-    for (const [name, addresses] of Object.entries(interfaces)) {
-      if (addresses?.some(({ address }) => address === localAddress)) {
-        return name;
+    for (const [name, infos] of Object.entries(interfaces)) {
+      for (const info of infos) {
+        if (info.address === localAddress) {
+          return name;
+        }
       }
     }
 
-    // We couldn't find an interface to match the address from above, so we attempt to match subnets (see https://github.com/homebridge/HAP-NodeJS/issues/847).
+    // we couldn't map the address from above, we try now to match subnets (see https://github.com/homebridge/HAP-NodeJS/issues/847)
     const family = net.isIPv4(localAddress)? "IPv4": "IPv6";
+    for (const [name, infos] of Object.entries(interfaces)) {
+      for (const info of infos) {
+        if (info.family !== family) {
+          continue;
+        }
 
-    // Let's find a match based on the subnet.
-    for (const [name, addresses] of Object.entries(interfaces)) {
-      if (addresses?.some(entry => entry.family === family && getNetAddress(localAddress, entry.netmask) === getNetAddress(entry.address, entry.netmask))) {
-        return name;
+        // check if the localAddress is in the same subnet
+        if (getNetAddress(localAddress, info.netmask) === getNetAddress(info.address, info.netmask)) {
+          return name;
+        }
       }
     }
 
-    console.log("WARNING: unable to determine which interface to use for socket coming from " + socket.remoteAddress + ":" + socket.remotePort + " to " +
-      socket.localAddress + ".");
+    console.log(`WARNING couldn't map socket coming from remote address ${socket.remoteAddress}:${socket.remotePort} \
+    at local address ${socket.localAddress} to a interface!`);
 
-    return defaultInterface();
+    return Object.keys(interfaces)[1]; // just use the first interface after the loopback interface as fallback
   }
+
 }

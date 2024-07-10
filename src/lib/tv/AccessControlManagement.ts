@@ -46,7 +46,6 @@ export const enum AccessControlEvent {
 /**
  * @group Television
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export declare interface AccessControlManagement {
   on(event: "update-control-level", listener: (accessLevel: AccessLevel) => void): this;
   on(event: "update-password", listener: (password: string | undefined, passwordRequired: boolean) => void): this;
@@ -58,7 +57,6 @@ export declare interface AccessControlManagement {
 /**
  * @group Television
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class AccessControlManagement extends EventEmitter {
 
   private readonly accessControlService: AccessControl;

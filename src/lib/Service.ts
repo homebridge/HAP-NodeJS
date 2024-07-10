@@ -87,7 +87,6 @@ import { IdentifierCache } from "./model/IdentifierCache";
 import { HAPConnection } from "./util/eventedhttp";
 import { HapStatusError } from "./util/hapStatusError";
 import { toShortForm } from "./util/uuid";
-import { checkName } from "./util/checkName";
 
 const debug = createDebug("HAP-NodeJS:Service");
 
@@ -143,7 +142,6 @@ export const enum ServiceEventTypes {
 /**
  * @group Service
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export declare interface Service {
   on(event: "characteristic-change", listener: (change: ServiceCharacteristicChange) => void): this;
   on(event: "service-configurationChange", listener: () => void): this;
@@ -176,7 +174,6 @@ export declare interface Service {
  *
  * @group Service
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class Service extends EventEmitter {
   // Service MUST NOT have any other static variables
 
@@ -554,7 +551,6 @@ export class Service extends EventEmitter {
     // if you don't provide a display name, some HomeKit apps may choose to hide the device.
     if (displayName) {
       // create the characteristic if necessary
-      checkName(this.displayName, "Name", displayName);
       const nameCharacteristic =
         this.getCharacteristic(Characteristic.Name) ||
         this.addCharacteristic(Characteristic.Name);
@@ -681,16 +677,12 @@ export class Service extends EventEmitter {
     for (const characteristic of this.characteristics) {
       if (typeof name === "string" && characteristic.displayName === name) {
         return characteristic;
-      } else {
-        // @ts-expect-error ('UUID' does not exist on type 'never')
-        if (typeof name === "function" && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
-          return characteristic;
-        }
+      } else if (typeof name === "function" && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
+        return characteristic;
       }
     }
     if (typeof name === "function") {
       for (const characteristic of this.optionalCharacteristics) {
-        // @ts-expect-error ('UUID' does not exist on type 'never')
         if ((characteristic instanceof name) || (name.UUID === characteristic.UUID)) {
           return this.addCharacteristic(name);
         }
@@ -712,11 +704,8 @@ export class Service extends EventEmitter {
     for (const characteristic of this.characteristics) {
       if (typeof name === "string" && characteristic.displayName === name) {
         return true;
-      } else {
-        // @ts-expect-error ('UUID' does not exist on type 'never')
-        if (typeof name === "function" && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
-          return true;
-        }
+      } else if (typeof name === "function" && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
+        return true;
       }
     }
     return false;

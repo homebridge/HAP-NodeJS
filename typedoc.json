@@ -22,6 +22,6 @@
   "includeVersion": false,
   "validation": {
     "invalidLink": true,
-    "notExported": false
+    "notExported": true
   }
 }

@@ -74,7 +74,6 @@ import { EventName, HAPConnection, HAPUsername } from "./util/eventedhttp";
 import { formatOutgoingCharacteristicValue } from "./util/request-util";
 import * as uuid from "./util/uuid";
 import { toShortForm } from "./util/uuid";
-import { checkName } from "./util/checkName";
 
 const debug = createDebug("HAP-NodeJS:Accessory");
 const MAX_ACCESSORIES = 149; // Maximum number of bridged accessories per bridge.
@@ -98,7 +97,6 @@ export const enum Categories {
   THERMOSTAT = 9,
   SENSOR = 10,
   ALARM_SYSTEM = 11,
-  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   SECURITY_SYSTEM = 11, //Added to conform to HAP naming
   DOOR = 12,
   WINDOW = 13,
@@ -106,7 +104,6 @@ export const enum Categories {
   PROGRAMMABLE_SWITCH = 15,
   RANGE_EXTENDER = 16,
   CAMERA = 17,
-  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   IP_CAMERA = 17, //Added to conform to HAP naming
   VIDEO_DOORBELL = 18,
   AIR_PURIFIER = 19,
@@ -380,7 +377,6 @@ export const enum AccessoryEventTypes {
 /**
  * @group Accessory
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export declare interface Accessory {
   on(event: "identify", listener: (paired: boolean, callback: VoidCallback) => void): this;
   on(event: "listening", listener: (port: number, address: string) => void): this;
@@ -419,7 +415,6 @@ export declare interface Accessory {
  *
  * @group Accessory
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class Accessory extends EventEmitter {
   /**
    * @deprecated Please use the Categories const enum above.
@@ -499,7 +494,6 @@ export class Accessory extends EventEmitter {
       "valid UUID from any arbitrary string, like a serial number.");
 
     // create our initial "Accessory Information" Service that all Accessories are expected to have
-    checkName(this.displayName, "name", displayName);
     this.addService(Service.AccessoryInformation)
       .setCharacteristic(Characteristic.Name, displayName);
 
@@ -629,11 +623,8 @@ export class Accessory extends EventEmitter {
     for (const service of this.services) {
       if (typeof name === "string" && (service.displayName === name || service.name === name || service.subtype === name)) {
         return service;
-      } else {
-        // @ts-expect-error ('UUID' does not exist on type 'never')
-        if (typeof name === "function" && ((service instanceof name) || (name.UUID === service.UUID))) {
-          return service;
-        }
+      } else if (typeof name === "function" && ((service instanceof name) || (name.UUID === service.UUID))) {
+        return service;
       }
     }
 
@@ -644,11 +635,8 @@ export class Accessory extends EventEmitter {
     for (const service of this.services) {
       if (typeof uuid === "string" && (service.displayName === uuid || service.name === uuid) && service.subtype === subType) {
         return service;
-      } else {
-        // @ts-expect-error ('UUID' does not exist on type 'never')
-        if (typeof uuid === "function" && ((service instanceof uuid) || (uuid.UUID === service.UUID)) && service.subtype === subType) {
-          return service;
-        }
+      } else if (typeof uuid === "function" && ((service instanceof uuid) || (uuid.UUID === service.UUID)) && service.subtype === subType) {
+        return service;
       }
     }
 
@@ -1055,14 +1043,11 @@ export class Accessory extends EventEmitter {
       const serialNumber = service.getCharacteristic(Characteristic.SerialNumber).value;
       const firmwareRevision = service.getCharacteristic(Characteristic.FirmwareRevision).value;
       const name = service.getCharacteristic(Characteristic.Name).value;
-      const manufacturer = service.getCharacteristic(Characteristic.Manufacturer).value;
 
       checkValue("Model", model);
       checkValue("SerialNumber", serialNumber);
       checkValue("FirmwareRevision", firmwareRevision);
       checkValue("Name", name);
-      checkName(this.displayName, "Name", name);
-      checkName(this.displayName, "Manufacturer", manufacturer);
     }
 
     if (mainAccessory) {
@@ -1198,21 +1183,18 @@ export class Accessory extends EventEmitter {
   }
 
   /**
-   * Publishes this accessory on the local network for iOS clients to communicate with.
-   * - `info.username` - formatted as a MAC address, like `CC:22:3D:E3:CE:F6`, of this accessory.
-   *   Must be globally unique from all Accessories on your local network.
-   * - `info.pincode` - the 8-digit pin code for clients to use when pairing this Accessory.
-   *   Must be formatted as a string like `031-45-154`.
-   * - `info.category` - one of the values of the `Accessory.Category` enum, like `Accessory.Category.SWITCH`.
-   *   This is a hint to iOS clients about what "type" of Accessory this represents, so
-   *   that for instance an appropriate icon can be drawn for the user while adding a
-   *   new Accessory.
-   * @param {{
-   *   username: string;
-   *   pincode: string;
-   *   category: Accessory.Categories;
-   * }} info - Required info for publishing.
-   * @param {boolean} allowInsecureRequest - Will allow unencrypted and unauthenticated access to the http server
+   * Publishes this Accessory on the local network for iOS clients to communicate with.
+   *
+   * @param {Object} info - Required info for publishing.
+   * @param allowInsecureRequest - Will allow unencrypted and unauthenticated access to the http server
+   * @param {string} info.username - The "username" (formatted as a MAC address - like "CC:22:3D:E3:CE:F6") of
+   *                                this Accessory. Must be globally unique from all Accessories on your local network.
+   * @param {string} info.pincode - The 8-digit pincode for clients to use when pairing this Accessory. Must be formatted
+   *                               as a string like "031-45-154".
+   * @param {string} info.category - One of the values of the Accessory.Category enum, like Accessory.Category.SWITCH.
+   *                                This is a hint to iOS clients about what "type" of Accessory this represents, so
+   *                                that for instance an appropriate icon can be drawn for the user while adding a
+   *                                new Accessory.
    */
   public async publish(info: PublishInfo, allowInsecureRequest?: boolean): Promise<void> {
     if (this.bridged) {
