@@ -2,10 +2,10 @@ import assert from "assert";
 import crypto from "crypto";
 import createDebug from "debug";
 import net from "net";
-import { CharacteristicValue, SessionIdentifier } from "../../types";
 import { Access, Characteristic, CharacteristicEventTypes, CharacteristicSetCallback } from "../Characteristic";
 import { CameraController, CameraStreamingDelegate, ResourceRequestReason, StateChangeDelegate } from "../controller";
 import type { CameraRTPStreamManagement } from "../definitions";
+import { CharacteristicValue } from "../../types";
 import { HAPStatus } from "../HAPServer";
 import { Service } from "../Service";
 import { HAPConnection, HAPConnectionEvent } from "../util/eventedhttp";
@@ -13,8 +13,6 @@ import { HapStatusError } from "../util/hapStatusError";
 import { once } from "../util/once";
 import * as tlv from "../util/tlv";
 import * as uuid from "../util/uuid";
-// noinspection JSDeprecatedSymbols
-import { LegacyCameraSource, LegacyCameraSourceAdapter } from "./Camera";
 import RTPProxy from "./RTPProxy";
 
 const debug = createDebug("HAP-NodeJS:Camera:RTPStreamManagement");
@@ -261,11 +259,6 @@ const enum AudioRTPParametersTypes {
 
 /**
  * @group Camera
- * @deprecated renamed to {@link CameraStreamingOptions}
- */
-export type StreamControllerOptions = CameraStreamingOptions;
-/**
- * @group Camera
  */
 export type CameraStreamingOptions = CameraStreamingOptionsBase & (CameraStreamingOptionsLegacySRTP | CameraStreamingOptionsSupportedCryptoSuites)
 /**
@@ -418,11 +411,6 @@ export type Source = {
  */
 export type PrepareStreamResponse = {
   /**
-   * @deprecated The local ip address will be automatically determined by HAP-NodeJS.
-   *   Any value set will be ignored. You may only still set a value to support version prior to 0.7.9
-   */
-  address?: string | Address;
-  /**
    * Any value set to this optional property will overwrite the automatically determined local address,
    * which is sent as RTP endpoint to the iOS device.
    */
@@ -431,15 +419,6 @@ export type PrepareStreamResponse = {
   video: SourceResponse | ProxiedSourceResponse;
   // needs to be only supplied if audio is required; audio should be instanceOf ProxiedSourceResponse if proxy is required and audio proxy is not disabled
   audio?: SourceResponse | ProxiedSourceResponse;
-}
-
-/**
- * @group Camera
- * @deprecated just supply the address directly in {@link PrepareStreamRequest}
- */
-export type Address = {
-  address: string;
-  type?: "v4" | "v6";
 }
 
 /**
@@ -476,16 +455,6 @@ export const enum StreamRequestTypes {
  * @group Camera
  */
 export type StreamingRequest = StartStreamRequest | ReconfigureStreamRequest | StopStreamRequest;
-/**
- * @group Camera
- * @deprecated replaced by {@link StreamingRequest}
- */
-export type StreamRequest = {
-  sessionID: SessionIdentifier;
-  type: StreamRequestTypes;
-  video?: VideoInfo;
-  audio?: AudioInfo;
-}
 
 /**
  * @group Camera
@@ -579,21 +548,6 @@ export interface RTPStreamManagementState {
  * @group Camera
  */
 export class RTPStreamManagement {
-  /**
-   * @deprecated Please use the SRTPCryptoSuites const enum above.
-   */
-  // @ts-expect-error: forceConsistentCasingInFileNames compiler option
-  static SRTPCryptoSuites = SRTPCryptoSuites;
-  /**
-   * @deprecated Please use the H264Profile const enum above.
-   */
-  // @ts-expect-error: forceConsistentCasingInFileNames compiler option
-  static VideoCodecParamProfileIDTypes = H264Profile;
-  /**
-   * @deprecated won't be updated anymore. Please use the H264Level const enum above.
-   */
-  static VideoCodecParamLevelTypes = Object.freeze({ TYPE3_1: 0, TYPE3_2: 1, TYPE4_0: 2 });
-
   private readonly id: number;
   private readonly delegate: CameraStreamingDelegate;
   readonly service: CameraRTPStreamManagement;
@@ -609,10 +563,6 @@ export class RTPStreamManagement {
   readonly supportedVideoStreamConfiguration: string;
   readonly supportedAudioStreamConfiguration: string;
 
-  /**
-   * @deprecated
-   */
-  connectionID?: SessionIdentifier;
   private activeConnection?: HAPConnection;
   private readonly activeConnectionClosedListener: (callback?: CharacteristicSetCallback) => void;
   sessionIdentifier?: StreamSessionIdentifier = undefined;
@@ -688,17 +638,6 @@ export class RTPStreamManagement {
 
   getService(): CameraRTPStreamManagement {
     return this.service;
-  }
-
-  // noinspection JSUnusedGlobalSymbols,JSUnusedLocalSymbols
-  /**
-   * @deprecated
-   */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  handleCloseConnection(connectionID: SessionIdentifier): void {
-    // This method is only here for legacy compatibility. It used to be called by legacy style CameraSource
-    // implementations to signal that the associated HAP connection was closed.
-    // This is now handled automatically. Thus, we don't need to do anything anymore.
   }
 
   handleFactoryReset(): void {
@@ -790,8 +729,6 @@ export class RTPStreamManagement {
 
     this._updateStreamStatus(StreamingStatus.AVAILABLE);
     this.sessionIdentifier = undefined;
-    // noinspection JSDeprecatedSymbols
-    this.connectionID = undefined;
     this.ipVersion = undefined;
 
     if (this.videoProxy) {
@@ -1102,8 +1039,6 @@ export class RTPStreamManagement {
     this.activeConnection.setMaxListeners(this.activeConnection.getMaxListeners() + 1);
     this.activeConnection.on(HAPConnectionEvent.CLOSED, this.activeConnectionClosedListener);
 
-    // noinspection JSDeprecatedSymbols
-    this.connectionID = connection.sessionID;
     this.sessionIdentifier = sessionIdentifier;
     this._updateStreamStatus(StreamingStatus.IN_USE);
 
@@ -1589,21 +1524,3 @@ export class RTPStreamManagement {
   }
 }
 
-/**
- * @group Camera
- * @deprecated - only there for backwards compatibility, please use {@link RTPStreamManagement} directly
- */
-export class StreamController extends RTPStreamManagement {
-
-  /**
-   *  options get saved so we can still support {@link Accessory.configureCameraSource}
-   */
-  options: CameraStreamingOptions;
-
-  // noinspection JSDeprecatedSymbols
-  constructor(id: number, options: CameraStreamingOptions, delegate: LegacyCameraSource, service?: CameraRTPStreamManagement) {
-    super(id, options, new LegacyCameraSourceAdapter(delegate), service);
-    this.options = options;
-  }
-
-}

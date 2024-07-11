@@ -7,7 +7,6 @@ import {
   CameraRecordingOptions,
   CameraStreamingOptions,
   EventTriggerOption,
-  LegacyCameraSourceAdapter,
   PrepareStreamRequest,
   PrepareStreamResponse,
   RecordingManagement,
@@ -1071,14 +1070,4 @@ export class CameraController extends EventEmitter implements SerializableContro
       }
     });
   }
-
-  /**
-   * @private
-   */
-  handleCloseConnection(sessionID: SessionIdentifier): void {
-    if (this.delegate instanceof LegacyCameraSourceAdapter) {
-      this.delegate.forwardCloseConnection(sessionID);
-    }
-  }
-
 }

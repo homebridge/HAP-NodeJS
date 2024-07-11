@@ -302,7 +302,7 @@ export const enum AdaptiveLightingControllerMode {
 export const enum AdaptiveLightingControllerEvents {
   /**
    * This event is called once a HomeKit controller enables Adaptive Lighting
-   * or a HomeHub sends a updated transition schedule for the next 24 hours.
+   * or a HomeHub sends an updated transition schedule for the next 24 hours.
    * This is also called on startup when AdaptiveLighting was previously enabled.
    */
   UPDATE = "update",
@@ -316,16 +316,30 @@ export const enum AdaptiveLightingControllerEvents {
 
 /**
  * @group Adaptive Lighting
+ * see {@link ActiveAdaptiveLightingTransition}.
+ */
+export interface AdaptiveLightingControllerUpdate {
+  transitionStartMillis: number;
+  timeMillisOffset: number;
+  transitionCurve: AdaptiveLightingTransitionCurveEntry[];
+  brightnessAdjustmentRange: BrightnessAdjustmentMultiplierRange;
+  updateInterval: number,
+  notifyIntervalThreshold: number;
+}
+
+/**
+ * @group Adaptive Lighting
  */
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export declare interface AdaptiveLightingController {
   /**
    * See {@link AdaptiveLightingControllerEvents.UPDATE}
+   * Also see {@link AdaptiveLightingControllerUpdate}
    *
    * @param event
    * @param listener
    */
-  on(event: "update", listener: () => void): this;
+  on(event: "update", listener: (update: AdaptiveLightingControllerUpdate) => void): this;
   /**
    * See {@link AdaptiveLightingControllerEvents.DISABLED}
    *
@@ -334,7 +348,10 @@ export declare interface AdaptiveLightingController {
    */
   on(event: "disable", listener: () => void): this;
 
-  emit(event: "update"): boolean;
+  /**
+   * See {@link AdaptiveLightingControllerUpdate}
+   */
+  emit(event: "update", update: AdaptiveLightingControllerUpdate): boolean;
   emit(event: "disable"): boolean;
 }
 
@@ -526,15 +543,10 @@ export class AdaptiveLightingController
     }
 
     if (this.activeTransition) {
-      this.colorTemperatureCharacteristic!.removeListener(CharacteristicEventTypes.CHANGE, this.characteristicManualWrittenChangeListener);
-      this.brightnessCharacteristic!.removeListener(CharacteristicEventTypes.CHANGE, this.adjustmentFactorChangedListener);
-
-      if (this.hueCharacteristic) {
-        this.hueCharacteristic.removeListener(CharacteristicEventTypes.CHANGE, this.characteristicManualWrittenChangeListener);
-      }
-      if (this.saturationCharacteristic) {
-        this.saturationCharacteristic.removeListener(CharacteristicEventTypes.CHANGE, this.characteristicManualWrittenChangeListener);
-      }
+      this.colorTemperatureCharacteristic?.removeListener(CharacteristicEventTypes.CHANGE, this.characteristicManualWrittenChangeListener);
+      this.brightnessCharacteristic?.removeListener(CharacteristicEventTypes.CHANGE, this.adjustmentFactorChangedListener);
+      this.hueCharacteristic?.removeListener(CharacteristicEventTypes.CHANGE, this.characteristicManualWrittenChangeListener);
+      this.saturationCharacteristic?.removeListener(CharacteristicEventTypes.CHANGE, this.characteristicManualWrittenChangeListener);
 
       this.activeTransition = undefined;
 
@@ -554,7 +566,7 @@ export class AdaptiveLightingController
 
     this.didRunFirstInitializationStep = false;
 
-    this.activeTransitionCount!.sendEventNotification(0);
+    this.activeTransitionCount?.sendEventNotification(0);
 
     debug("[%s] Disabling adaptive lighting", this.lightbulb.displayName);
   }
@@ -631,16 +643,31 @@ export class AdaptiveLightingController
   // ----------- PUBLIC API END -----------
 
   private handleActiveTransitionUpdated(calledFromDeserializer = false): void {
-    if (!calledFromDeserializer) {
-      this.activeTransitionCount!.sendEventNotification(1);
-    } else {
-      this.activeTransitionCount!.value = 1;
+    if (this.activeTransitionCount) {
+      if (!calledFromDeserializer) {
+        this.activeTransitionCount.sendEventNotification(1);
+      } else {
+        this.activeTransitionCount.value = 1;
+      }
     }
 
     if (this.mode === AdaptiveLightingControllerMode.AUTOMATIC) {
       this.scheduleNextUpdate();
     } else if (this.mode === AdaptiveLightingControllerMode.MANUAL) {
-      this.emit(AdaptiveLightingControllerEvents.UPDATE);
+      if (!this.activeTransition) {
+        throw new Error("There is no active transition!");
+      }
+
+      const update: AdaptiveLightingControllerUpdate = {
+        transitionStartMillis: this.activeTransition.transitionStartMillis,
+        timeMillisOffset: this.activeTransition.timeMillisOffset,
+        transitionCurve: this.activeTransition.transitionCurve,
+        brightnessAdjustmentRange: this.activeTransition.brightnessAdjustmentRange,
+        updateInterval: this.activeTransition.updateInterval,
+        notifyIntervalThreshold: this.activeTransition.notifyIntervalThreshold,
+      };
+
+      this.emit(AdaptiveLightingControllerEvents.UPDATE, update);
     } else {
       throw new Error("Unsupported adaptive lighting controller mode: " + this.mode);
     }
@@ -833,7 +860,7 @@ export class AdaptiveLightingController
       this.activeTransition.brightnessAdjustmentRange.minBrightnessValue,
       Math.min(
         this.activeTransition.brightnessAdjustmentRange.maxBrightnessValue,
-        this.brightnessCharacteristic!.value as number, // get handler is not called for optimal performance
+        this.brightnessCharacteristic?.value as number, // get handler is not called for optimal performance
       ),
     );
 
@@ -877,7 +904,7 @@ export class AdaptiveLightingController
       this.hueCharacteristic.value = color.hue;
     }
 
-    this.colorTemperatureCharacteristic!.handleSetRequest(temperature, undefined, context).catch(reason => { // reason is HAPStatus code
+    this.colorTemperatureCharacteristic?.handleSetRequest(temperature, undefined, context).catch(reason => { // reason is HAPStatus code
       debug("[%s] Failed to next adaptive lighting transition point: %d", this.lightbulb.displayName, reason);
     });
 
@@ -898,7 +925,7 @@ export class AdaptiveLightingController
       };
 
       if (this.lastNotifiedTemperatureValue !== temperature) {
-        this.colorTemperatureCharacteristic!.sendEventNotification(temperature, eventContext);
+        this.colorTemperatureCharacteristic?.sendEventNotification(temperature, eventContext);
         this.lastNotifiedTemperatureValue = temperature;
       }
       if (this.saturationCharacteristic && this.lastNotifiedSaturationValue !== color.saturation) {
@@ -1023,8 +1050,8 @@ export class AdaptiveLightingController
   }
 
   private handleSupportedTransitionConfigurationRead(): string {
-    const brightnessIID = this.lightbulb!.getCharacteristic(Characteristic.Brightness).iid;
-    const temperatureIID = this.lightbulb!.getCharacteristic(Characteristic.ColorTemperature).iid;
+    const brightnessIID = this.lightbulb?.getCharacteristic(Characteristic.Brightness).iid;
+    const temperatureIID = this.lightbulb?.getCharacteristic(Characteristic.ColorTemperature).iid;
     assert(brightnessIID, "iid for brightness characteristic is undefined");
     assert(temperatureIID, "iid for temperature characteristic is undefined");
 

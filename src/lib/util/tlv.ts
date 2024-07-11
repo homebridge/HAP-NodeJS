@@ -162,8 +162,8 @@ export function decodeWithLists(buffer: Buffer): Record<number, Buffer | Buffer[
           result[type] = Buffer.concat([existing, data]);
         }
       } else {
-        throw new Error(`Found duplicated tlv entry with type ${type} and length ${length} \
-        (lastItemWasDelimiter: ${lastItemWasDelimiter}, lastType: ${lastType}, lastLength: ${lastLength})`);
+        throw new Error(`Found duplicated tlv entry with type ${type} and length ${length} `
+          + `(lastItemWasDelimiter: ${lastItemWasDelimiter}, lastType: ${lastType}, lastLength: ${lastLength})`);
       }
     } else {
       result[type] = data;
@@ -234,50 +234,12 @@ export function decodeList(data: Buffer, entryStartId: number): Record<number, B
 }
 
 /**
- * @deprecated This implementation is considered broken. Don't use it.
- *
- * @group TLV8
- */
-export function writeUInt64(value: number): Buffer {
-  const float64 = new Float64Array(1);
-  float64[0] = value;
-
-  const buffer = Buffer.alloc(float64.buffer.byteLength);
-  const view = new Uint8Array(float64.buffer);
-  for (let i = 0; i < buffer.length; i++) {
-    buffer[i] = view[i];
-  }
-
-  return buffer;
-}
-
-// noinspection JSUnusedGlobalSymbols
-/**
- * @deprecated This implementation is considered broken. Don't use it.
- *
- * @group TLV8
- */
-export function readUInt64(buffer: Buffer): number {
-  const float64 = new Float64Array(buffer);
-  return float64[0];
-}
-
-/**
  * @group TLV8
  */
 export function readUInt64LE(buffer: Buffer, offset = 0): number {
   const low = buffer.readUInt32LE(offset);
   // javascript doesn't allow to shift by 32(?), therefore we multiply here
   return buffer.readUInt32LE(offset + 4) * 0x100000000 + low;
-}
-
-// noinspection JSUnusedGlobalSymbols
-/**
- * @deprecated The method was named wrongfully and actually reads an UInt64 in **little endian** format.
- * @group TLV8
- */
-export function readUInt64BE(buffer: Buffer, offset = 0): number {
-  return readUInt64LE(buffer, offset);
 }
 
 /**
@@ -335,24 +297,17 @@ export function readUInt16(buffer: Buffer): number {
  * @param buffer - The buffer to read from. It must have exactly the size of the given integer.
  * @group TLV8
  */
-export function readVariableUIntLE(buffer: Buffer): number;
-/**
- * @deprecated Can't define an offset. The original implementation messed up here!
- * @group TLV8
- */
-export function readVariableUIntLE(buffer: Buffer, offset: number): number;
-export function readVariableUIntLE(buffer: Buffer, offset = 0): number {
-  assert(offset === 0, "Can't define a offset different than 0!");
+export function readVariableUIntLE(buffer: Buffer): number {
 
   switch (buffer.length) {
   case 1:
-    return buffer.readUInt8(offset);
+    return buffer.readUInt8(0);
   case 2:
-    return buffer.readUInt16LE(offset);
+    return buffer.readUInt16LE(0);
   case 4:
-    return buffer.readUInt32LE(offset);
+    return buffer.readUInt32LE(0);
   case 8:
-    return readUInt64LE(buffer, offset);
+    return readUInt64LE(buffer, 0);
   default:
     throw new Error("Can't read uint LE with length " + buffer.length);
   }
@@ -367,19 +322,12 @@ export function readVariableUIntLE(buffer: Buffer, offset = 0): number {
  * @param number
  * @group TLV8
  */
-export function writeVariableUIntLE(number: number, ): Buffer;
-/**
- * @deprecated Can't define an offset. The original implementation messed up here!
- * @group TLV8
- */
-export function writeVariableUIntLE(number: number, offset: number): Buffer;
-export function writeVariableUIntLE(number: number, offset = 0): Buffer {
+export function writeVariableUIntLE(number: number): Buffer {
   assert(number >= 0, "Can't encode a negative integer as unsigned integer");
-  assert(offset === 0, "Can't define a offset different than 0!");
 
   if (number <= 255) {
     const buffer = Buffer.alloc(1);
-    buffer.writeUInt8(number, offset);
+    buffer.writeUInt8(number, 0);
     return buffer;
   } else if (number <= 65535) {
     return writeUInt16(number);
@@ -387,7 +335,7 @@ export function writeVariableUIntLE(number: number, offset = 0): Buffer {
     return writeUInt32(number);
   } else {
     const buffer = Buffer.alloc(8);
-    hapCrypto.writeUInt64LE(number, buffer, offset);
+    hapCrypto.writeUInt64LE(number, buffer, 0);
     return buffer;
   }
 }

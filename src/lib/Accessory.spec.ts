@@ -28,7 +28,7 @@ import {
   Units,
 } from "./Characteristic";
 import { CameraController, Controller, ControllerIdentifier, ControllerServiceMap } from "./controller";
-import { createCameraControllerOptions, MOCK_IMAGE, MockLegacyCameraSource } from "./controller/CameraController.spec";
+import { createCameraControllerOptions, MOCK_IMAGE } from "./controller/CameraController.spec";
 import { HAPHTTPCode, HAPStatus, IdentifyCallback, TLVErrorCode } from "./HAPServer";
 import { AccessoryInfo, PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
 import { IdentifierCache } from "./model/IdentifierCache";
@@ -201,8 +201,7 @@ describe("Accessory", () => {
       expect(accessory.primaryService).toBe(instance);
 
       const outlet = new Service.Outlet("Outlet");
-      // noinspection JSDeprecatedSymbols
-      accessory.setPrimaryService(outlet);
+      outlet.setPrimaryService();
       accessory.addService(outlet);
 
       // @ts-expect-error: private access
@@ -307,41 +306,6 @@ describe("Accessory", () => {
       expect(restoredAccessory.getService(Service.Outlet)).toBeDefined();
       expect(restoredAccessory.getService(Service.Switch)).toBeUndefined();
     });
-
-    test("legacy configure camera source", async () => {
-      const microphone = new Service.Microphone();
-      const source = new MockLegacyCameraSource(2);
-      source.services.push(microphone);
-
-      const expectedOptions = source.streamControllers[0].options;
-
-      // noinspection JSDeprecatedSymbols
-      accessory.configureCameraSource(source);
-
-      expect(accessory.getServiceById(Service.CameraRTPStreamManagement, "0")).toBeDefined();
-      expect(accessory.getServiceById(Service.CameraRTPStreamManagement, "1")).toBeDefined();
-      expect(accessory.getService(Service.Microphone)).toBe(microphone);
-
-      // @ts-expect-error: private access
-      const cameraController = accessory.activeCameraController!;
-      expect(cameraController).toBeDefined();
-
-      // @ts-expect-error: private access
-      expect(cameraController.streamCount).toEqual(2);
-      // @ts-expect-error: private access
-      expect(cameraController.streamingOptions).toEqual(expectedOptions);
-
-      // @ts-expect-error: private access
-      accessory.handleResource({
-        "resource-type": ResourceRequestType.IMAGE,
-        "image-width": 200,
-        "image-height": 200,
-      }, callback);
-
-      await callbackPromise;
-
-      expect(callback).toHaveBeenCalledWith(undefined, MOCK_IMAGE);
-    });
   });
 
   describe("publish", () => {
@@ -409,14 +373,14 @@ describe("Accessory", () => {
   });
 
   describe("Accessory and Service naming checks", () => {
-    let consoleLogSpy: jest.SpyInstance;
+    let consoleWarnSpy: jest.SpyInstance;
 
     beforeEach(() => {
-      consoleLogSpy = jest.spyOn(console, "warn");
+      consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
     });
   
     afterEach(() => {
-      consoleLogSpy.mockRestore();
+      consoleWarnSpy.mockRestore();
     });
 
     test("Accessory Name ending with !", async () => {
@@ -431,7 +395,7 @@ describe("Accessory", () => {
 
       await accessoryBadName.publish(publishInfo);
       // eslint-disable-next-line max-len
-      expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'Bad Name! 7430' is getting published with the characteristic 'Name' not following HomeKit naming rules ('Bad Name! 7430'). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+      expect(consoleWarnSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'Bad Name!' has an invalid 'Name' characteristic ('Bad Name!'). Please use only alphanumeric, space, and apostrophe characters. Ensure it starts and ends with an alphabetic or numeric character, and avoid emojis. This may prevent the accessory from being added in the Home App or cause unresponsiveness.");
 
       await awaitEventOnce(accessoryBadName, AccessoryEventTypes.ADVERTISED);
       await accessoryBadName?.unpublish();
@@ -450,7 +414,7 @@ describe("Accessory", () => {
 
       await accessoryBadName.publish(publishInfo);
       // eslint-disable-next-line max-len
-      expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'Bad ! Name 7430' is getting published with the characteristic 'Name' not following HomeKit naming rules ('Bad ! Name 7430'). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+      expect(consoleWarnSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'Bad ! Name' has an invalid 'Name' characteristic ('Bad ! Name'). Please use only alphanumeric, space, and apostrophe characters. Ensure it starts and ends with an alphabetic or numeric character, and avoid emojis. This may prevent the accessory from being added in the Home App or cause unresponsiveness.");
 
       await awaitEventOnce(accessoryBadName, AccessoryEventTypes.ADVERTISED);
       await accessoryBadName?.unpublish();
@@ -468,7 +432,7 @@ describe("Accessory", () => {
       };
 
       await accessoryBadName.publish(publishInfo);
-      expect(consoleLogSpy).toBeCalledTimes(0);
+      expect(consoleWarnSpy).toBeCalledTimes(0);
 
       await awaitEventOnce(accessoryBadName, AccessoryEventTypes.ADVERTISED);
       await accessoryBadName?.unpublish();
@@ -487,9 +451,9 @@ describe("Accessory", () => {
 
       await accessoryBadName.publish(publishInfo);
       expect(accessoryBadName.displayName.startsWith(TEST_DISPLAY_NAME));
-      expect(consoleLogSpy).toBeCalledTimes(2);
+      expect(consoleWarnSpy).toBeCalledTimes(2);
       // eslint-disable-next-line max-len
-      expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory ''Bad Name 7430' is getting published with the characteristic 'Name' not following HomeKit naming rules (''Bad Name 7430'). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+      expect(consoleWarnSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory ''Bad Name' has an invalid 'Name' characteristic (''Bad Name'). Please use only alphanumeric, space, and apostrophe characters. Ensure it starts and ends with an alphabetic or numeric character, and avoid emojis. This may prevent the accessory from being added in the Home App or cause unresponsiveness.");
 
       await awaitEventOnce(accessoryBadName, AccessoryEventTypes.ADVERTISED);
       await accessoryBadName?.unpublish();
@@ -510,7 +474,7 @@ describe("Accessory", () => {
 
       await accessoryBadName.publish(publishInfo);
       // eslint-disable-next-line max-len
-      expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'My Bad ! Switch' is getting published with the characteristic 'Name' not following HomeKit naming rules ('My Bad ! Switch'). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+      expect(consoleWarnSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'My Bad ! Switch' has an invalid 'Name' characteristic ('My Bad ! Switch'). Please use only alphanumeric, space, and apostrophe characters. Ensure it starts and ends with an alphabetic or numeric character, and avoid emojis. This may prevent the accessory from being added in the Home App or cause unresponsiveness.");
 
       await awaitEventOnce(accessoryBadName, AccessoryEventTypes.ADVERTISED);
       await accessoryBadName?.unpublish();
@@ -530,9 +494,9 @@ describe("Accessory", () => {
       };
 
       await accessoryBadName.publish(publishInfo);
-      expect(consoleLogSpy).toBeCalledTimes(1);
+      expect(consoleWarnSpy).toBeCalledTimes(1);
       // eslint-disable-next-line max-len
-      expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'My Bad Switch!' is getting published with the characteristic 'Name' not following HomeKit naming rules ('My Bad Switch!'). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+      expect(consoleWarnSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'My Bad Switch!' has an invalid 'Name' characteristic ('My Bad Switch!'). Please use only alphanumeric, space, and apostrophe characters. Ensure it starts and ends with an alphabetic or numeric character, and avoid emojis. This may prevent the accessory from being added in the Home App or cause unresponsiveness.");
 
       await awaitEventOnce(accessoryBadName, AccessoryEventTypes.ADVERTISED);
       await accessoryBadName?.unpublish();
@@ -552,7 +516,7 @@ describe("Accessory", () => {
       };
 
       await accessoryBadName.publish(publishInfo);
-      expect(consoleLogSpy).toBeCalledTimes(0);
+      expect(consoleWarnSpy).toBeCalledTimes(0);
 
       await awaitEventOnce(accessoryBadName, AccessoryEventTypes.ADVERTISED);
       await accessoryBadName?.unpublish();
@@ -572,9 +536,9 @@ describe("Accessory", () => {
       };
 
       await accessoryBadName.publish(publishInfo);
-      expect(consoleLogSpy).toBeCalledTimes(1);
+      expect(consoleWarnSpy).toBeCalledTimes(1);
       // eslint-disable-next-line max-len
-      expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'My Bad Switch'' is getting published with the characteristic 'Name' not following HomeKit naming rules ('My Bad Switch''). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+      expect(consoleWarnSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'My Bad Switch'' has an invalid 'Name' characteristic ('My Bad Switch''). Please use only alphanumeric, space, and apostrophe characters. Ensure it starts and ends with an alphabetic or numeric character, and avoid emojis. This may prevent the accessory from being added in the Home App or cause unresponsiveness.");
 
       await awaitEventOnce(accessoryBadName, AccessoryEventTypes.ADVERTISED);
       await accessoryBadName?.unpublish();
@@ -594,9 +558,9 @@ describe("Accessory", () => {
       };
 
       await accessoryBadName.publish(publishInfo);
-      expect(consoleLogSpy).toBeCalledTimes(1);
+      expect(consoleWarnSpy).toBeCalledTimes(1);
       // eslint-disable-next-line max-len
-      expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory ''My Bad Switch' is getting published with the characteristic 'Name' not following HomeKit naming rules (''My Bad Switch'). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+      expect(consoleWarnSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory ''My Bad Switch' has an invalid 'Name' characteristic (''My Bad Switch'). Please use only alphanumeric, space, and apostrophe characters. Ensure it starts and ends with an alphabetic or numeric character, and avoid emojis. This may prevent the accessory from being added in the Home App or cause unresponsiveness.");
 
       await awaitEventOnce(accessoryBadName, AccessoryEventTypes.ADVERTISED);
       await accessoryBadName?.unpublish();
@@ -620,9 +584,9 @@ describe("Accessory", () => {
 
       switchService.getCharacteristic(Characteristic.ConfiguredName).updateValue("'Bad Name");
 
-      expect(consoleLogSpy).toBeCalledTimes(1);
+      expect(consoleWarnSpy).toBeCalledTimes(1);
       // eslint-disable-next-line max-len
-      expect(consoleLogSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'unknown' is getting published with the characteristic 'Configured Name' not following HomeKit naming rules (''Bad Name'). Use only alphanumeric, space, and apostrophe characters, start and end with an alphabetic or numeric character, and don't include emojis. This might prevent the accessory from being added to the Home App or leading to the accessory being unresponsive!");
+      expect(consoleWarnSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'Configured Name' has an invalid 'ConfiguredName' characteristic (''Bad Name'). Please use only alphanumeric, space, and apostrophe characters. Ensure it starts and ends with an alphabetic or numeric character, and avoid emojis. This may prevent the accessory from being added in the Home App or cause unresponsiveness.");
 
       await awaitEventOnce(accessoryBadName, AccessoryEventTypes.ADVERTISED);
       await accessoryBadName?.unpublish();
@@ -1228,6 +1192,18 @@ describe("Accessory", () => {
     });
 
     describe("handleSetCharacteristic", () => {
+      let consoleWarnSpy: jest.SpyInstance;
+
+      beforeEach(() => {
+        // Mock console.warn before each test that needs it
+        consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+      });
+
+      afterEach(() => {
+        // Restore console.warn after each test
+        consoleWarnSpy.mockRestore();
+      });
+
       const testRequestResponse = async (
         request: Partial<CharacteristicsWriteRequest>,
         ...expectedReadData: CharacteristicWriteData[]
@@ -1948,6 +1924,18 @@ describe("Accessory", () => {
   });
 
   describe("characteristicWarning", () => {
+    let consoleWarnSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      // Mock console.warn before each test that needs it
+      consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      // Restore console.warn after each test
+      consoleWarnSpy.mockRestore();
+    });
+
     test("emit characteristic warning", () => {
       accessory.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, callback);
 
@@ -2006,6 +1994,18 @@ describe("Accessory", () => {
   });
 
   describe("deserialize", () => {
+    let consoleWarnSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      // Mock console.warn before each test that needs it
+      consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      // Restore console.warn after each test
+      consoleWarnSpy.mockRestore();
+    });
+
     test("deserialize legacy json from homebridge", () => {
       const json = JSON.parse("{\"plugin\":\"homebridge-samplePlatform\",\"platform\":\"SamplePlatform\"," +
           "\"displayName\":\"2020-01-17T18:45:41.049Z\",\"UUID\":\"dc3951d8-662e-46f7-b6fe-d1b5b5e1a995\",\"category\":1," +

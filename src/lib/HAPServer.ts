@@ -121,21 +121,6 @@ export function IsKnownHAPStatusError(status: HAPStatus): boolean {
   );
 }
 
-// noinspection JSUnusedGlobalSymbols
-/**
- * @group HAP Accessory Server
- * @deprecated please use {@link TLVErrorCode} as naming is more precise
- */
-// @ts-expect-error (as we use const enums with --preserveConstEnums)
-export const Codes = TLVErrorCode;
-// noinspection JSUnusedGlobalSymbols
-/**
- * @group HAP Accessory Server
- * @deprecated please use {@link HAPStatus} as naming is more precise
- */
-// @ts-expect-error (as we use const enums with --preserveConstEnums)
-export const Status = HAPStatus;
-
 /**
  * Those status codes are the one listed as appropriate for the HAP spec!
  *

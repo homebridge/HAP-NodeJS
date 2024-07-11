@@ -848,7 +848,7 @@ export class HAPConnection extends EventEmitter {
     const interfaces = os.networkInterfaces();
 
     // Default to the first non-loopback interface we see.
-    const defaultInterface = () => Object.entries(interfaces).find(([name, addresses]) => addresses?.some(address => !address.internal))?.[0] ?? "unknown";
+    const defaultInterface = () => Object.entries(interfaces).find(([, addresses]) => addresses?.some(address => !address.internal))?.[0] ?? "unknown";
 
     // No local address return our default.
     if(!localAddress) {

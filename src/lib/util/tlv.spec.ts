@@ -235,11 +235,6 @@ describe("tlv", () => {
       expect(() => writeVariableUIntLE(-1))
         .toThrowError();
 
-      // offset must be zero
-      // noinspection JSDeprecatedSymbols
-      expect(() => writeVariableUIntLE(1, 1))
-        .toThrowError();
-
       const input8 = 128;
       const buffer8 = writeVariableUIntLE(input8);
       expect(buffer8.length).toBe(1);
