@@ -2,7 +2,19 @@
 
 All notable changes to `hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
-## BETA
+## v1.0.0 (2025-07-11)
+
+### Breaking Changes
+
+- **The minimum Node.js version required is now `v18`.**
+- **Important notice:** Because of the cleanup of the Deprecated code, you will need to migrate you code base.
+    - Remove the long-deprecated init().
+    - Deprecate Core, BridgedCore, legacy Camera characteristics. (#1058) (@hjdhjd)
+        - For deprecated `Core` and `BridgedCore` see: https://github.com/homebridge/HAP-NodeJS/wiki/Deprecation-of-Core-and-BridgeCore
+    - Legacy code deprecation cleanup. (#1059) (@hjdhjd)
+        - For deprecated `storagePath` switch to `HAPStorage.setCustomStoragePath`, `AudioCodec` switch to `AudioStreamingCodec`, `VideoCodec` switch to `H264CodecParameters`,`StreamAudioParams` switch to `AudioStreamingOptions`, `StreamVideoParams` switch to `VideoStreamingOptions`,`cameraSource` switch to `CameraController`.
+    - Others deprecated code to highlight removed: `useLegacyAdvertiser`, `AccessoryLoader`.
+- Fix: Naming for Characteristic.ProgramMode has been corrected from `PROGRAM_SCHEDULED_MANUAL_MODE_` to `PROGRAM_SCHEDULED_MANUAL_MODE`
 
 ### Fixed
 
