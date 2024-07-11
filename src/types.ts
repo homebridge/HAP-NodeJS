@@ -82,40 +82,6 @@ export type PrimitiveTypes = string | number | boolean;
  */
 export type CharacteristicValue = PrimitiveTypes | PrimitiveTypes[] | { [key: string]: PrimitiveTypes };
 
-/**
- * @group Camera
- * @deprecated replaced by {@link AudioStreamingCodec}
- */
-export type AudioCodec = {
-  samplerate: number;
-  type: string;
-}
-/**
- * @group Camera
- * @deprecated replaced by {@link H264CodecParameters}
- */
-export type VideoCodec = {
-  levels: number[];
-  profiles: number[];
-}
-/**
- * @group Camera
- * @deprecated replaced by {@link AudioStreamingOptions}
- */
-export type StreamAudioParams = {
-  comfort_noise: boolean;
-  // noinspection JSDeprecatedSymbols
-  codecs: AudioCodec[];
-};
-/**
- * @group Camera
- * @deprecated replaced by {@link VideoStreamingOptions}
- */
-export type StreamVideoParams = {
-  // noinspection JSDeprecatedSymbols
-  codec?: VideoCodec;
-  resolutions: [number, number, number][]; // width, height, framerate
-};
 
 /**
  * @group HAP Accessory Server
@@ -262,9 +228,6 @@ export interface CharacteristicWrite {
   ev?: boolean, // enable/disable event notifications for the accessory
 
   authData?: string, // base64 encoded string used for custom authorisation
-  /**
-   * @deprecated This indicated if access was done via the old iCloud relay
-   */
   remote?: boolean, // remote access used
   r?: boolean, // write response
 }

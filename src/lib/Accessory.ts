@@ -1,5 +1,4 @@
 import assert from "assert";
-import { MulticastOptions } from "bonjour-hap";
 import crypto from "crypto";
 import createDebug from "debug";
 import { EventEmitter } from "events";
@@ -30,7 +29,6 @@ import {
 } from "../types";
 import { Advertiser, AdvertiserEvent, AvahiAdvertiser, BonjourHAPAdvertiser, CiaoAdvertiser, ResolvedAdvertiser } from "./Advertiser";
 // noinspection JSDeprecatedSymbols
-import { LegacyCameraSource, LegacyCameraSourceAdapter, StreamController } from "./camera";
 import {
   Access,
   ChangeReason,
@@ -42,7 +40,6 @@ import {
 } from "./Characteristic";
 import {
   CameraController,
-  CameraControllerOptions,
   Controller,
   ControllerConstructor,
   ControllerIdentifier,
@@ -189,13 +186,6 @@ export interface CharacteristicWarning {
 }
 
 /**
- * @group Characteristic
- * @deprecated
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type CharacteristicEvents = Record<string, any>;
-
-/**
  * @group Accessory
  */
 export interface PublishInfo {
@@ -269,11 +259,6 @@ export interface PublishInfo {
    */
   port?: number;
   /**
-   * Used to define custom MDNS options. Is not used anymore.
-   * @deprecated
-   */
-  mdns?: MulticastOptions;
-  /**
    * If this option is set to true, HAP-NodeJS will add identifying material (based on {@link username})
    * to the end of the accessory display name (and bonjour instance name).
    * Default: true
@@ -283,11 +268,6 @@ export interface PublishInfo {
    * Defines the advertiser used with the published Accessory.
    */
   advertiser?: MDNSAdvertiser;
-  /**
-   * Use the legacy bonjour-hap as advertiser.
-   * @deprecated
-   */
-  useLegacyAdvertiser?: boolean;
 }
 
 /**
@@ -335,13 +315,6 @@ const enum WriteRequestState {
   TIMED_WRITE_AUTHENTICATED,
   TIMED_WRITE_REJECTED
 }
-
-// noinspection JSUnusedGlobalSymbols
-/**
- * @deprecated Use AccessoryEventTypes instead
- * @group Accessory
- */
-export type EventAccessory = "identify" | "listening" | "service-configurationChange" | "service-characteristic-change";
 
 /**
  * @group Accessory
@@ -421,15 +394,9 @@ export declare interface Accessory {
  */
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class Accessory extends EventEmitter {
-  /**
-   * @deprecated Please use the Categories const enum above.
-   */
-  // @ts-expect-error: forceConsistentCasingInFileNames compiler option
-  static Categories = Categories;
-
-  /// Timeout in milliseconds until a characteristic warning is issue
+  // Timeout in milliseconds until a characteristic warning is issue
   private static readonly TIMEOUT_WARNING = 3000;
-  /// Timeout in milliseconds after `TIMEOUT_WARNING` until the operation on the characteristic is considered timed out.
+  // Timeout in milliseconds after `TIMEOUT_WARNING` until the operation on the characteristic is considered timed out.
   private static readonly TIMEOUT_AFTER_WARNING = 6000;
 
   // NOTICE: when adding/changing properties, remember to possibly adjust the serialize/deserialize functions
@@ -591,13 +558,6 @@ export class Accessory extends EventEmitter {
     return service;
   }
 
-  /**
-   * @deprecated use {@link Service.setPrimaryService} directly
-   */
-  public setPrimaryService(service: Service): void {
-    service.setPrimaryService();
-  }
-
   public removeService(service: Service): void {
     const index = this.services.indexOf(service);
 
@@ -664,18 +624,6 @@ export class Accessory extends EventEmitter {
   public getPrimaryAccessory = (): Accessory => {
     return this.bridged? this.bridge!: this;
   };
-
-  /**
-   * @deprecated Not supported anymore
-   */
-  public updateReachability(reachable: boolean): void {
-    if (!this.bridged) {
-      throw new Error("Cannot update reachability on non-bridged accessory!");
-    }
-    this.reachable = reachable;
-
-    debug("Reachability update is no longer being supported.");
-  }
 
   public addBridgedAccessory(accessory: Accessory, deferUpdate = false): Accessory {
     if (accessory._isBridge || accessory === this) {
@@ -776,63 +724,6 @@ export class Accessory extends EventEmitter {
   protected findCharacteristic(aid: number, iid: number): Characteristic | undefined {
     const accessory = this.getAccessoryByAID(aid);
     return accessory && accessory.getCharacteristicByIID(iid);
-  }
-
-  // noinspection JSDeprecatedSymbols
-  /**
-   * Method is used to configure an old style CameraSource.
-   * The CameraSource API was fully replaced by the new Controller API used by {@link CameraController}.
-   * The {@link CameraStreamingDelegate} used by the CameraController is the equivalent to the old CameraSource.
-   *
-   * The new Controller API is much more refined and robust way of "grouping" services together.
-   * It especially is intended to fully support serialization/deserialization to/from persistent storage.
-   * This feature is also gained when using the old style CameraSource API.
-   * The {@link CameraStreamingDelegate} improves on the overall camera API though and provides some reworked
-   * type definitions and a refined callback interface to better signal errors to the requesting HomeKit device.
-   * It is advised to update to it.
-   *
-   * Full backwards compatibility is currently maintained. A legacy CameraSource will be wrapped into an Adapter.
-   * All legacy StreamControllers in the "streamControllers" property will be replaced by CameraRTPManagement instances.
-   * Any services in the "services" property which are one of the following are ignored:
-   *     - CameraRTPStreamManagement
-   *     - CameraOperatingMode
-   *     - CameraEventRecordingManagement
-   *
-   * @param cameraSource - The instance of the legacy camera source
-   * @deprecated please refer to the new {@link CameraController} API and {@link configureController}
-   */
-  public configureCameraSource(cameraSource: LegacyCameraSource): CameraController {
-    if (cameraSource.streamControllers.length === 0) {
-      throw new Error("Malformed legacy CameraSource. Did not expose any StreamControllers!");
-    }
-
-    const options = cameraSource.streamControllers[0].options; // grab options from one of the StreamControllers
-    const cameraControllerOptions: CameraControllerOptions = { // build new options set
-      cameraStreamCount: cameraSource.streamControllers.length,
-      streamingOptions: options,
-      delegate: new LegacyCameraSourceAdapter(cameraSource),
-    };
-
-    const cameraController = new CameraController(cameraControllerOptions, true); // create CameraController in legacy mode
-    this.configureController(cameraController);
-
-    // we try here to be as good as possibly of keeping current behaviour
-    cameraSource.services.forEach(service => {
-      if (service.UUID === Service.CameraRTPStreamManagement.UUID || service.UUID === Service.CameraOperatingMode.UUID
-          || service.UUID === Service.CameraRecordingManagement.UUID) {
-        return; // ignore those services, as they get replaced by the RTPStreamManagement
-      }
-
-      // all other services get added. We can't really control possibly linking to any of those ignored services
-      // so this is really only half-baked stuff.
-      this.addService(service);
-    });
-
-    // replace stream controllers; basically only to still support the "forceStop" call
-    // noinspection JSDeprecatedSymbols
-    cameraSource.streamControllers = cameraController.streamManagements as StreamController[];
-
-    return cameraController; // return the reference for the controller (maybe this could be useful?)
   }
 
   /**
@@ -1213,21 +1104,6 @@ export class Accessory extends EventEmitter {
       throw new Error("Can't publish in accessory which is bridged by another accessory. Bridged by " + this.bridge?.displayName);
     }
 
-    // noinspection JSDeprecatedSymbols
-    if (!info.advertiser && info.useLegacyAdvertiser != null) {
-      // noinspection JSDeprecatedSymbols
-      info.advertiser = info.useLegacyAdvertiser? MDNSAdvertiser.BONJOUR: MDNSAdvertiser.CIAO;
-      console.warn("DEPRECATED The PublishInfo.useLegacyAdvertiser option has been removed. " +
-        "Please use the PublishInfo.advertiser property to enable \"ciao\" (useLegacyAdvertiser=false) " +
-        "or \"bonjour-hap\" (useLegacyAdvertiser=true) mdns advertiser libraries!");
-    }
-
-    // noinspection JSDeprecatedSymbols
-    if (info.mdns && info.advertiser !== MDNSAdvertiser.BONJOUR) {
-      console.log("DEPRECATED user supplied a custom 'mdns' option. This option is deprecated and ignored. " +
-        "Please move to the new 'bind' option.");
-    }
-
     let service = this.getService(Service.ProtocolInformation);
     if (!service) {
       service = this.addService(Service.ProtocolInformation); // add the protocol information service to the primary accessory
@@ -1332,8 +1208,7 @@ export class Accessory extends EventEmitter {
       });
       break;
     case MDNSAdvertiser.BONJOUR:
-      // noinspection JSDeprecatedSymbols
-      this._advertiser = new BonjourHAPAdvertiser(this._accessoryInfo, info.mdns, {
+      this._advertiser = new BonjourHAPAdvertiser(this._accessoryInfo, {
         restrictedAddresses: parsed.serviceRestrictedAddress,
         disabledIpv6: parsed.serviceDisableIpv6,
       });
@@ -1960,10 +1835,6 @@ export class Accessory extends EventEmitter {
   }
 
   private handleHAPConnectionClosed(connection: HAPConnection): void {
-    if (this.activeCameraController) {
-      this.activeCameraController.handleCloseConnection(connection.sessionID);
-    }
-
     for (const event of connection.getRegisteredEvents()) {
       const ids = event.split(".");
       const aid = parseInt(ids[0], 10);

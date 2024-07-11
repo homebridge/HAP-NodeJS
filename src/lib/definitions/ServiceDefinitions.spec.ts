@@ -244,31 +244,6 @@ describe("ServiceDefinitions", () => {
       expect(service2.testCharacteristic(Characteristic.Name)).toBe(true);
       expect(service2.getCharacteristic(Characteristic.Name).value).toBe("test name");
       expect(service2.subtype).toBe("test sub type");
-      // noinspection JSDeprecatedSymbols
-
-      new Service.BatteryService();
-    });
-  });
-
-  describe("CameraControl", () => {
-    it("should be able to construct", () => {
-      const service0 = new Service.CameraControl();
-      const service1 = new Service.CameraControl("test name");
-      const service2 = new Service.CameraControl("test name", "test sub type");
-
-      expect(service0.displayName).toBe("");
-      expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);
-      expect(service0.subtype).toBeUndefined();
-
-      expect(service1.displayName).toBe("test name");
-      expect(service1.testCharacteristic(Characteristic.Name)).toBe(true);
-      expect(service1.getCharacteristic(Characteristic.Name).value).toBe("test name");
-      expect(service1.subtype).toBeUndefined();
-
-      expect(service2.displayName).toBe("test name");
-      expect(service2.testCharacteristic(Characteristic.Name)).toBe(true);
-      expect(service2.getCharacteristic(Characteristic.Name).value).toBe("test name");
-      expect(service2.subtype).toBe("test sub type");
     });
   });
 
@@ -313,9 +288,6 @@ describe("ServiceDefinitions", () => {
       expect(service2.testCharacteristic(Characteristic.Name)).toBe(true);
       expect(service2.getCharacteristic(Characteristic.Name).value).toBe("test name");
       expect(service2.subtype).toBe("test sub type");
-      // noinspection JSDeprecatedSymbols
-
-      new Service.CameraEventRecordingManagement();
     });
   });
 
@@ -368,6 +340,28 @@ describe("ServiceDefinitions", () => {
       const service0 = new Service.CarbonMonoxideSensor();
       const service1 = new Service.CarbonMonoxideSensor("test name");
       const service2 = new Service.CarbonMonoxideSensor("test name", "test sub type");
+
+      expect(service0.displayName).toBe("");
+      expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);
+      expect(service0.subtype).toBeUndefined();
+
+      expect(service1.displayName).toBe("test name");
+      expect(service1.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service1.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service1.subtype).toBeUndefined();
+
+      expect(service2.displayName).toBe("test name");
+      expect(service2.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service2.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service2.subtype).toBe("test sub type");
+    });
+  });
+
+  describe("CloudRelay", () => {
+    it("should be able to construct", () => {
+      const service0 = new Service.CloudRelay();
+      const service1 = new Service.CloudRelay("test name");
+      const service2 = new Service.CloudRelay("test name", "test sub type");
 
       expect(service0.displayName).toBe("");
       expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);
@@ -1130,9 +1124,6 @@ describe("ServiceDefinitions", () => {
       expect(service2.testCharacteristic(Characteristic.Name)).toBe(true);
       expect(service2.getCharacteristic(Characteristic.Name).value).toBe("test name");
       expect(service2.subtype).toBe("test sub type");
-      // noinspection JSDeprecatedSymbols
-
-      new Service.Slat();
     });
   });
 
@@ -1449,6 +1440,28 @@ describe("ServiceDefinitions", () => {
       const service0 = new Service.TransferTransportManagement();
       const service1 = new Service.TransferTransportManagement("test name");
       const service2 = new Service.TransferTransportManagement("test name", "test sub type");
+
+      expect(service0.displayName).toBe("");
+      expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);
+      expect(service0.subtype).toBeUndefined();
+
+      expect(service1.displayName).toBe("test name");
+      expect(service1.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service1.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service1.subtype).toBeUndefined();
+
+      expect(service2.displayName).toBe("test name");
+      expect(service2.testCharacteristic(Characteristic.Name)).toBe(true);
+      expect(service2.getCharacteristic(Characteristic.Name).value).toBe("test name");
+      expect(service2.subtype).toBe("test sub type");
+    });
+  });
+
+  describe("Tunnel", () => {
+    it("should be able to construct", () => {
+      const service0 = new Service.Tunnel();
+      const service1 = new Service.Tunnel("test name");
+      const service2 = new Service.Tunnel("test name", "test sub type");
 
       expect(service0.displayName).toBe("");
       expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);

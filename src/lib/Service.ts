@@ -16,12 +16,12 @@ import type {
   Assistant,
   AudioStreamManagement,
   Battery,
-  CameraControl,
   CameraOperatingMode,
   CameraRecordingManagement,
   CameraRTPStreamManagement,
   CarbonDioxideSensor,
   CarbonMonoxideSensor,
+  CloudRelay,
   ContactSensor,
   DataStreamTransportManagement,
   Diagnostics,
@@ -71,6 +71,7 @@ import type {
   Thermostat,
   ThreadTransport,
   TransferTransportManagement,
+  Tunnel,
   Valve,
   WiFiRouter,
   WiFiSatellite,
@@ -118,13 +119,6 @@ export type ServiceId = string;
  * @group Service
  */
 export type ServiceCharacteristicChange = CharacteristicChange & { characteristic: Characteristic };
-
-// noinspection JSUnusedGlobalSymbols
-/**
- * @deprecated Use ServiceEventTypes instead
- * @group Service
- */
-export type EventService = ServiceEventTypes.CHARACTERISTIC_CHANGE | ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE;
 
 /**
  * @group Service
@@ -223,21 +217,6 @@ export class Service extends EventEmitter {
   public static Battery: typeof Battery;
   /**
    * @group Service Definitions
-   * @deprecated Please use {@link Service.Battery}.
-   */
-  public static BatteryService: typeof Battery;
-  /**
-   * @group Service Definitions
-   * @deprecated This service has no usage anymore and will be ignored by iOS
-   */
-  public static CameraControl: typeof CameraControl;
-  /**
-   * @group Service Definitions
-   * @deprecated Please use {@link Service.CameraRecordingManagement}.
-   */
-  public static CameraEventRecordingManagement: typeof CameraRecordingManagement;
-  /**
-   * @group Service Definitions
    */
   public static CameraOperatingMode: typeof CameraOperatingMode;
   /**
@@ -256,6 +235,10 @@ export class Service extends EventEmitter {
    * @group Service Definitions
    */
   public static CarbonMonoxideSensor: typeof CarbonMonoxideSensor;
+  /**
+   * @group Service Definitions
+   */
+  public static CloudRelay: typeof CloudRelay;
   /**
    * @group Service Definitions
    */
@@ -390,11 +373,6 @@ export class Service extends EventEmitter {
   public static SiriEndpoint: typeof SiriEndpoint;
   /**
    * @group Service Definitions
-   * @deprecated Please use {@link Service.Slats}.
-   */
-  public static Slat: typeof Slats;
-  /**
-   * @group Service Definitions
    */
   public static Slats: typeof Slats;
   /**
@@ -457,6 +435,10 @@ export class Service extends EventEmitter {
    * @group Service Definitions
    */
   public static TransferTransportManagement: typeof TransferTransportManagement;
+  /**
+   * @group Service Definitions
+   */
+  public static Tunnel: typeof Tunnel;
   /**
    * @group Service Definitions
    */

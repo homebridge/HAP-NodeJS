@@ -1,12 +1,7 @@
 import "source-map-support/register"; // registering node-source-map-support for typescript stack traces
 import "./lib/definitions"; // must be loaded before Characteristic and Service class
 import createDebug from "debug";
-import { HAPStorage } from "./lib/model/HAPStorage";
 
-/**
- * @group Utils
- */
-export * as AccessoryLoader from "./lib/AccessoryLoader";
 /**
  * @group Utils
  */
@@ -16,7 +11,6 @@ export * from "./lib/Accessory";
 export * from "./lib/Bridge";
 export * from "./lib/Service";
 export * from "./lib/Characteristic";
-export * from "./lib/AccessoryLoader";
 export * from "./lib/camera";
 export * from "./lib/tv/AccessControlManagement";
 export * from "./lib/HAPServer";
@@ -56,23 +50,6 @@ function printInit() {
   debug("Initializing HAP-NodeJS v%s ...", HAPLibraryVersion());
 }
 printInit();
-
-/**
- *
- * @param {string} storagePath
- * @deprecated the need to manually initialize the internal storage was removed. If you want to set a custom
- *  storage path location, please use {@link HAPStorage.setCustomStoragePath} directly.
- *
- *  @group Utils
- */
-export function init(storagePath?: string): void {
-  console.log("DEPRECATED: The need to manually initialize HAP (by calling the init method) was removed. " +
-    "If you want to set a custom storage path location, please ust HAPStorage.setCustomStoragePath directly. " +
-    "This method will be removed in the next major update!");
-  if (storagePath) {
-    HAPStorage.setCustomStoragePath(storagePath);
-  }
-}
 
 import * as Services from "./lib/definitions/ServiceDefinitions";
 import * as Characteristics from "./lib/definitions/CharacteristicDefinitions";

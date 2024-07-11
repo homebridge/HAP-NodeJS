@@ -2,7 +2,6 @@ import assert from "assert";
 import createDebug from "debug";
 import { EventEmitter } from "events";
 import { CharacteristicValue } from "../../types";
-import { Accessory } from "../Accessory";
 import { AudioBitrate, AudioSamplerate } from "../camera";
 import {
   Characteristic,
@@ -581,16 +580,6 @@ export class RemoteController extends EventEmitter
   public pushAndReleaseButton(button: ButtonType, time = 200): void {
     this.pushButton(button);
     setTimeout(() => this.releaseButton(button), time);
-  }
-
-  /**
-   * This method adds and configures the remote services for a give accessory.
-   *
-   * @param accessory - the give accessory this remote should be added to
-   * @deprecated - use {@link Accessory.configureController} instead
-   */
-  addServicesToAccessory(accessory: Accessory): void {
-    accessory.configureController(this);
   }
 
   // ---------------------------------- CONFIGURATION ----------------------------------
@@ -1394,12 +1383,6 @@ export class RemoteController extends EventEmitter
   }
 
 }
-// noinspection JSUnusedGlobalSymbols
-/**
- * @deprecated - only there for backwards compatibility, please use {@link RemoteController} directly
- * @group Apple TV Remote
- */
-export class HomeKitRemoteController extends RemoteController {} // backwards compatibility
 
 /**
  * @group Apple TV Remote

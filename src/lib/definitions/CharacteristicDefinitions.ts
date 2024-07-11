@@ -2724,7 +2724,7 @@ export class ProgramMode extends Characteristic {
 
   public static readonly NO_PROGRAM_SCHEDULED = 0;
   public static readonly PROGRAM_SCHEDULED = 1;
-  public static readonly PROGRAM_SCHEDULED_MANUAL_MODE_ = 2;
+  public static readonly PROGRAM_SCHEDULED_MANUAL_MODE = 2;
 
   constructor() {
     super("Program Mode", ProgramMode.UUID, {
@@ -4064,32 +4064,6 @@ export class TargetAirPurifierState extends Characteristic {
 Characteristic.TargetAirPurifierState = TargetAirPurifierState;
 
 /**
- * Characteristic "Target Air Quality"
- * @deprecated Removed and not used anymore
- */
-export class TargetAirQuality extends Characteristic {
-
-  public static readonly UUID: string = "000000AE-0000-1000-8000-0026BB765291";
-
-  public static readonly EXCELLENT = 0;
-  public static readonly GOOD = 1;
-  public static readonly FAIR = 2;
-
-  constructor() {
-    super("Target Air Quality", TargetAirQuality.UUID, {
-      format: Formats.UINT8,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-      minValue: 0,
-      maxValue: 2,
-      validValues: [0, 1, 2],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-// noinspection JSDeprecatedSymbols
-Characteristic.TargetAirQuality = TargetAirQuality;
-
-/**
  * Characteristic "Target Control List"
  */
 export class TargetControlList extends Characteristic {
@@ -4251,11 +4225,6 @@ export class TargetHumidifierDehumidifierState extends Characteristic {
 
   public static readonly UUID: string = "000000B4-0000-1000-8000-0026BB765291";
 
-  /**
-   * @deprecated Removed in iOS 11. Use {@link HUMIDIFIER_OR_DEHUMIDIFIER} instead.
-   */
-  public static readonly AUTO = 0;
-
   public static readonly HUMIDIFIER_OR_DEHUMIDIFIER = 0;
   public static readonly HUMIDIFIER = 1;
   public static readonly DEHUMIDIFIER = 2;
@@ -4340,31 +4309,6 @@ export class TargetRelativeHumidity extends Characteristic {
   }
 }
 Characteristic.TargetRelativeHumidity = TargetRelativeHumidity;
-
-/**
- * Characteristic "Target Slat State"
- * @deprecated Removed and not used anymore
- */
-export class TargetSlatState extends Characteristic {
-
-  public static readonly UUID: string = "000000BE-0000-1000-8000-0026BB765291";
-
-  public static readonly MANUAL = 0;
-  public static readonly AUTO = 1;
-
-  constructor() {
-    super("Target Slat State", TargetSlatState.UUID, {
-      format: Formats.UINT8,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-      minValue: 0,
-      maxValue: 1,
-      validValues: [0, 1],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-// noinspection JSDeprecatedSymbols
-Characteristic.TargetSlatState = TargetSlatState;
 
 /**
  * Characteristic "Target Temperature"

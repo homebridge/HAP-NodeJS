@@ -1216,12 +1216,6 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
-  describe("TargetAirQuality", () => {
-    it("should be able to construct", () => {
-      new Characteristic.TargetAirQuality();
-    });
-  });
-
   describe("TargetControlList", () => {
     it("should be able to construct", () => {
       new Characteristic.TargetControlList();
@@ -1285,12 +1279,6 @@ describe("CharacteristicDefinitions", () => {
   describe("TargetRelativeHumidity", () => {
     it("should be able to construct", () => {
       new Characteristic.TargetRelativeHumidity();
-    });
-  });
-
-  describe("TargetSlatState", () => {
-    it("should be able to construct", () => {
-      new Characteristic.TargetSlatState();
     });
   });
 
