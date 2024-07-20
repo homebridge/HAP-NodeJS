@@ -1186,19 +1186,19 @@ export class Accessory extends EventEmitter {
     // create our Advertiser which broadcasts our presence over mdns
     const parsed = Accessory.parseBindOption(info);
 
-    let selectedAdvertiser = info.advertiser ?? MDNSAdvertiser.BONJOUR;
+    info.advertiser ??= MDNSAdvertiser.CIAO;
     if (
       (info.advertiser === MDNSAdvertiser.AVAHI && !await AvahiAdvertiser.isAvailable()) ||
       (info.advertiser === MDNSAdvertiser.RESOLVED && !await ResolvedAdvertiser.isAvailable())
     ) {
       console.error(
         `[${this.displayName}] The selected advertiser, "${info.advertiser}", isn't available on this platform. ` +
-        `Reverting to "${MDNSAdvertiser.BONJOUR}"`,
+        `Reverting to "${MDNSAdvertiser.CIAO}"`,
       );
-      selectedAdvertiser = MDNSAdvertiser.BONJOUR;
+      info.advertiser = MDNSAdvertiser.CIAO;
     }
 
-    switch (selectedAdvertiser) {
+    switch (info.advertiser) {
     case MDNSAdvertiser.CIAO:
       this._advertiser = new CiaoAdvertiser(this._accessoryInfo, {
         interface: parsed.advertiserAddress,
