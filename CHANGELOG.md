@@ -2,11 +2,15 @@
 
 All notable changes to `hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
-## Next Release
+## v1.1.0 (2024-07-21)
 
 ### Changes
 
 - Set `Ciao` as the default Advertiser
+
+### Other Changes
+
+- Updated dependencies
 
 ## v1.0.0 (2024-07-10)
 
