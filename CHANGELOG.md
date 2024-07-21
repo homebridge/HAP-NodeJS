@@ -10,6 +10,7 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 
 ### Other Changes
 
+- Update docs
 - Updated dependencies
 
 ## v1.0.0 (2024-07-10)
