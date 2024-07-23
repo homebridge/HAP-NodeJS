@@ -10,6 +10,7 @@ import createDebug from "debug";
 import { EventEmitter } from "events";
 import { AccessoryInfo } from "./model/AccessoryInfo";
 import { PromiseTimeout } from "./util/promise-utils";
+import fs from "fs";
 
 const debug = createDebug("HAP-NodeJS:Advertiser");
 
@@ -197,6 +198,87 @@ export class CiaoAdvertiser extends EventEmitter implements Advertiser {
     let value = 0;
     flags.forEach(flag => value |= flag);
     return value;
+  }
+}
+
+/**
+ * Advertiser proxies information through Avahi to broadcast the presence of an Accessory to the local network.
+ * Useful in situations where network isolation of homebridge is wanted (eg. running in a docker container without host networking)
+ */
+export class AvahiFileAdvertiser extends EventEmitter implements Advertiser {
+  private dir = "/homebridge/";
+  private port?: number;
+
+  private readonly accessoryInfo: AccessoryInfo;
+  private readonly setupHash: string;
+
+  constructor(accessoryInfo: AccessoryInfo) {
+    super();
+    this.accessoryInfo = accessoryInfo;
+    this.setupHash = CiaoAdvertiser.computeSetupHash(accessoryInfo);
+
+    console.log(`Preparing Advertiser for '${this.accessoryInfo.displayName}' using avahi-file backend!`);
+  }
+
+  private get filePath(): string {
+    return this.dir + this.accessoryInfo.displayName.replace(/ /g, "-") + ".service";
+  }
+
+  private publish(): Promise<void> {
+    if (this.port == null) {
+      throw new Error("Tried starting avahi-file advertisement without initializing port!");
+    }
+    return this.writeXMLTo(this.filePath);
+  }
+
+  private async writeXMLTo(path: string): Promise<void> {
+    await fs.promises.writeFile(path, AvahiFileAdvertiser.serialize(
+      this.accessoryInfo.displayName,
+      "_hap._tcp",
+      this.port!,
+      CiaoAdvertiser.createTxt(this.accessoryInfo, this.setupHash),
+    ));
+  }
+
+  private static serialize(name: string, type: string, port: number, txt: ServiceTxt): string {
+    return (
+      `<service-group>
+  <name>${name}</name>
+  <service>
+    <type>${type}</type>
+    <port>${port}</port>
+` + Object.entries(txt)
+        .map(([k, v]) => `    <txt-record>${k}=${v}</txt-record>`)
+        .join("\n") + `
+  </service>
+</service-group>
+`);
+  }
+
+  public initPort(port: number): void {
+    this.port = port;
+    this.publish();
+  }
+
+  public startAdvertising(): Promise<void> {
+    return this.publish();
+  }
+
+  public updateAdvertisement(silent?: boolean): void {
+    debug(`Updating avahi-file advertisement (silent: ${silent})`);
+    this.publish();
+  }
+
+  public async destroy(): Promise<void> {
+    this.removeAllListeners();
+    try {
+      await fs.promises.unlink(this.filePath);
+    } catch (err) {
+      if (err.code === "ENOENT") {
+        return;
+      }
+      throw err;
+    }
   }
 }
 

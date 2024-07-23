@@ -27,7 +27,7 @@ import {
   VoidCallback,
   WithUUID,
 } from "../types";
-import { Advertiser, AdvertiserEvent, AvahiAdvertiser, BonjourHAPAdvertiser, CiaoAdvertiser, ResolvedAdvertiser } from "./Advertiser";
+import { Advertiser, AdvertiserEvent, AvahiAdvertiser, BonjourHAPAdvertiser, CiaoAdvertiser, ResolvedAdvertiser, AvahiFileAdvertiser } from "./Advertiser";
 // noinspection JSDeprecatedSymbols
 import {
   Access,
@@ -273,7 +273,7 @@ export interface PublishInfo {
 /**
  * @group Accessory
  */
-export const enum MDNSAdvertiser {
+export enum MDNSAdvertiser {
   /**
    * Use the `@homebridge/ciao` module as advertiser.
    */
@@ -294,6 +294,10 @@ export const enum MDNSAdvertiser {
    * Consequentially, treat this feature as an experimental feature.
    */
   RESOLVED = "resolved",
+  /**
+   * Use the `avahi-file` module as advertiser.
+   */
+  AVAHI_FILE = "avahi-file",
 }
 
 /**
@@ -1218,6 +1222,9 @@ export class Accessory extends EventEmitter {
       break;
     case MDNSAdvertiser.RESOLVED:
       this._advertiser = new ResolvedAdvertiser(this._accessoryInfo);
+      break;
+    case MDNSAdvertiser.AVAHI_FILE:
+      this._advertiser = new AvahiFileAdvertiser(this._accessoryInfo);
       break;
     default:
       throw new Error("Unsupported advertiser setting: '" + info.advertiser + "'");
