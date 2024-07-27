@@ -43,7 +43,7 @@
     "url": "https://github.com/homebridge/HAP-NodeJS/issues"
   },
   "engines": {
-    "node": "^18 || ^20"
+    "node": "^18.4.0 || ^20.0.0"
   },
   "files": [
     "README.md",
