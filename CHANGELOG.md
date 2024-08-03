@@ -2,6 +2,17 @@
 
 All notable changes to `hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
+## BETA
+
+### Changed
+
+- Update HK definition files
+
+### Homebridge Dependencies
+
+- `@homebridge/ciao` @ `v1.3.1-beta.1`
+- `bonjour-hap` @ `v3.8.0`
+
 ## v1.1.0 (2024-07-21)
 
 ### Changes
@@ -12,6 +23,11 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 
 - Update docs
 - Updated dependencies
+
+### Homebridge Dependencies
+
+- `@homebridge/ciao` @ `v1.3.0`
+- `bonjour-hap` @ `v3.8.0`
 
 ## v1.0.0 (2024-07-10)
 

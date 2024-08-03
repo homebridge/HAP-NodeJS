@@ -1,5 +1,5 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=884
+// V=886
 
 import { Access, Characteristic, Formats, Perms, Units } from "../Characteristic";
 
@@ -381,14 +381,10 @@ export class CameraOperatingModeIndicator extends Characteristic {
 
   public static readonly UUID: string = "0000021D-0000-1000-8000-0026BB765291";
 
-  public static readonly DISABLE = 0;
-  public static readonly ENABLE = 1;
-
   constructor() {
     super("Camera Operating Mode Indicator", CameraOperatingModeIndicator.UUID, {
       format: Formats.BOOL,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.TIMED_WRITE],
-      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -1272,16 +1268,12 @@ export class EventSnapshotsActive extends Characteristic {
 
   public static readonly UUID: string = "00000223-0000-1000-8000-0026BB765291";
 
-  public static readonly DISABLE = 0;
-  public static readonly ENABLE = 1;
-
   constructor() {
     super("Event Snapshots Active", EventSnapshotsActive.UUID, {
       format: Formats.UINT8,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
       minValue: 0,
       maxValue: 1,
-      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -1499,16 +1491,12 @@ export class HomeKitCameraActive extends Characteristic {
 
   public static readonly UUID: string = "0000021B-0000-1000-8000-0026BB765291";
 
-  public static readonly OFF = 0;
-  public static readonly ON = 1;
-
   constructor() {
     super("HomeKit Camera Active", HomeKitCameraActive.UUID, {
       format: Formats.UINT8,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
       minValue: 0,
       maxValue: 1,
-      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -2502,14 +2490,10 @@ export class PeriodicSnapshotsActive extends Characteristic {
 
   public static readonly UUID: string = "00000225-0000-1000-8000-0026BB765291";
 
-  public static readonly DISABLE = 0;
-  public static readonly ENABLE = 1;
-
   constructor() {
     super("Periodic Snapshots Active", PeriodicSnapshotsActive.UUID, {
       format: Formats.UINT8,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }
@@ -2724,7 +2708,7 @@ export class ProgramMode extends Characteristic {
 
   public static readonly NO_PROGRAM_SCHEDULED = 0;
   public static readonly PROGRAM_SCHEDULED = 1;
-  public static readonly PROGRAM_SCHEDULED_MANUAL_MODE = 2;
+  public static readonly PROGRAM_SCHEDULED_MANUAL_MODE = 2; // manually edited to remove final _
 
   constructor() {
     super("Program Mode", ProgramMode.UUID, {
@@ -4428,14 +4412,10 @@ export class ThirdPartyCameraActive extends Characteristic {
 
   public static readonly UUID: string = "0000021C-0000-1000-8000-0026BB765291";
 
-  public static readonly OFF = 0;
-  public static readonly ON = 1;
-
   constructor() {
     super("Third Party Camera Active", ThirdPartyCameraActive.UUID, {
       format: Formats.UINT8,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ],
-      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }

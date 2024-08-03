@@ -159,7 +159,7 @@ describe("CameraController", () => {
 
   test("init", () => {
     expect(controller.recordingManagement?.operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive).value)
-      .toBe(Characteristic.HomeKitCameraActive.ON);
+      .toBe(1);
     expect(controller.recordingManagement?.operatingModeService.getCharacteristic(Characteristic.PeriodicSnapshotsActive).value)
       .toBe(1);
     expect(controller.recordingManagement?.operatingModeService.getCharacteristic(Characteristic.EventSnapshotsActive).value)
@@ -343,7 +343,7 @@ describe("CameraController", () => {
         .toBe(1);
 
       expect(controller.recordingManagement?.operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive).value)
-        .toBe(Characteristic.HomeKitCameraActive.OFF);
+        .toBe(0);
       expect(controller.recordingManagement?.operatingModeService.getCharacteristic(Characteristic.PeriodicSnapshotsActive).value)
         .toBe(0);
       expect(controller.recordingManagement?.operatingModeService.getCharacteristic(Characteristic.EventSnapshotsActive).value)

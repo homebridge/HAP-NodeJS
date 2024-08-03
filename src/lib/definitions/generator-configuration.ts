@@ -67,11 +67,7 @@ export const CharacteristicValidValuesOverride: Map<string, Record<string, strin
   ["wifi-satellite-status", { "0": "Unknown", "1": "Connected", "2": "Not Connected" }],
 ] as [string, Record<string, string>][]);
 
-export const CharacteristicClassAdditions: Map<string, string[]> = new Map([
-  ["humidifier-dehumidifier.state.target", [
-    "/**\n   * @deprecated Removed in iOS 11. Use {@link HUMIDIFIER_OR_DEHUMIDIFIER} instead.\n   */\n  public static readonly AUTO = 0;",
-  ]],
-]);
+export const CharacteristicClassAdditions: Map<string, string[]> = new Map([]);
 
 export const CharacteristicOverriding: Map<string, (generated: GeneratedCharacteristic) => void> = new Map([
   ["rotation.speed", generated => {
@@ -219,39 +215,6 @@ export const CharacteristicManualAdditions: Map<string, GeneratedCharacteristic>
     properties: 2, // paired read
     maxLength: 64,
   }],
-  ["target-air-quality", { // some legacy characteristic, don't know where it comes from or where it was used
-    id: "target-air-quality",
-    UUID: "000000AE-0000-1000-8000-0026BB765291",
-    name: "Target Air Quality",
-    className: "TargetAirQuality",
-    deprecatedNotice: "Removed and not used anymore",
-
-    format: "uint8",
-    properties: 7, // read, write, notify
-    minValue: 0,
-    maxValue: 2,
-    validValues: {
-      "0": "EXCELLENT",
-      "1": "GOOD",
-      "2": "FAIR",
-    } as Record<string, string>,
-  }],
-  ["target-slat-state", { // some legacy characteristic, don't know where it comes from or where it was used
-    id: "target-slat-state",
-    UUID: "000000BE-0000-1000-8000-0026BB765291",
-    name: "Target Slat State",
-    className: "TargetSlatState",
-    deprecatedNotice: "Removed and not used anymore",
-
-    format: "uint8",
-    properties: 7, // read, write, notify
-    minValue: 0,
-    maxValue: 1,
-    validValues: {
-      "0": "MANUAL",
-      "1": "AUTO",
-    } as Record<string, string>,
-  }],
 ]);
 
 export const ServiceNameOverrides: Map<string, string> = new Map([
@@ -264,13 +227,7 @@ export const ServiceNameOverrides: Map<string, string> = new Map([
   ["nfc-access", "NFC Access"],
 ]);
 
-export const ServiceDeprecatedNames: Map<string, string> = new Map([
-  ["battery", "Battery Service"],
-  ["camera-recording-management", "Camera Event Recording Management"],
-  ["cloud-relay", "Relay"],
-  ["slats", "Slat"],
-  ["tunnel", "Tunneled BTLE Accessory Service"],
-]);
+export const ServiceDeprecatedNames: Map<string, string> = new Map([]);
 
 interface CharacteristicConfigurationOverride {
   addedRequired?: string[],
@@ -294,27 +251,6 @@ export const ServiceManualAdditions: Map<string, GeneratedService> = new Map([
 
     requiredCharacteristics: ["mute"],
     optionalCharacteristics: ["active", "volume"],
-  }],
-  ["camera-control", {
-    id: "camera-control",
-    UUID: "00000111-0000-1000-8000-0026BB765291",
-    name: "Camera Control",
-    className: "CameraControl",
-    deprecatedNotice: "This service has no usage anymore and will be ignored by iOS",
-
-    requiredCharacteristics: ["on"],
-    optionalCharacteristics: [
-      "horizontal-tilt.current",
-      "vertical-tilt.current",
-      "horizontal-tilt.target",
-      "vertical-tilt.target",
-      "night-vision",
-      "optical-zoom",
-      "digital-zoom",
-      "image-rotation",
-      "image-mirroring",
-      "name",
-    ],
   }],
 ]);
 
