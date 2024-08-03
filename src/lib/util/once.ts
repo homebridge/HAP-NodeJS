@@ -3,7 +3,7 @@
  *
  * @group Utils
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 export function once<T extends Function>(func: T): T {
   let called = false;
 

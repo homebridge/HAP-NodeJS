@@ -743,12 +743,16 @@ export class RTPStreamManagement {
 
   private streamingIsDisabled(callback?: CharacteristicSetCallback): boolean {
     if (!this.service.getCharacteristic(Characteristic.Active).value) {
-      callback && callback(new HapStatusError(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE));
+      if (typeof callback === "function") {
+        callback(new HapStatusError(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE));
+      }
       return true;
     }
 
     if (this.disabledThroughOperatingMode?.()) {
-      callback && callback(new HapStatusError(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE));
+      if (typeof callback === "function") {
+        callback(new HapStatusError(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE));
+      }
       return true;
     }
 

@@ -9,7 +9,7 @@ import { HAPStorage } from "./HAPStorage";
 
 
 function getVersion(): string {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const packageJson = require("../../../package.json");
   return packageJson.version;
 }

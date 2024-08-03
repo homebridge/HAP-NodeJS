@@ -1330,11 +1330,11 @@ export class Accessory extends EventEmitter {
   private handleInitialPairSetupFinished(username: string, publicKey: Buffer, callback: PairCallback): void {
     debug("[%s] Paired with client %s", this.displayName, username);
 
-    this._accessoryInfo && this._accessoryInfo.addPairedClient(username, publicKey, PermissionTypes.ADMIN);
-    this._accessoryInfo && this._accessoryInfo.save();
+    this._accessoryInfo?.addPairedClient(username, publicKey, PermissionTypes.ADMIN);
+    this._accessoryInfo?.save();
 
     // update our advertisement, so it can pick up on the paired status of AccessoryInfo
-    this._advertiser && this._advertiser.updateAdvertisement();
+    this._advertiser?.updateAdvertisement();
 
     callback();
 
@@ -1386,7 +1386,7 @@ export class Accessory extends EventEmitter {
     callback(0); // first of all ensure the pairing is removed before we advertise availability again
 
     if (!this._accessoryInfo.paired()) {
-      this._advertiser && this._advertiser.updateAdvertisement();
+      this._advertiser?.updateAdvertisement();
       this.emit(AccessoryEventTypes.UNPAIRED);
 
       this.handleAccessoryUnpairedForControllers();
@@ -2012,7 +2012,7 @@ export class Accessory extends EventEmitter {
     });
 
     // also save controller which didn't get initialized (could lead to service duplication if we throw that data away)
-    accessory.serializedControllers && Object.entries(accessory.serializedControllers).forEach(([id, serviceMap]) => {
+    Object.entries(accessory.serializedControllers || {}).forEach(([id, serviceMap]) => {
       controllers.push({
         type: id,
         services: Accessory.serializeServiceMap(serviceMap),

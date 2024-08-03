@@ -184,7 +184,7 @@ export class ControllerStorage {
     this.initialized = true;
 
     // storing data into our local controllerData Record
-    data && data.forEach(saved => this.controllerData[saved.type] = saved.controllerData);
+    data?.forEach(saved => this.controllerData[saved.type] = saved.controllerData);
 
     const restoredControllers: ControllerIdentifier[] = [];
     this.trackedControllers.forEach(controller => {

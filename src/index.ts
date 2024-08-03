@@ -41,7 +41,7 @@ const debug = createDebug("HAP-NodeJS:Advertiser");
  * @group Utils
  */
 export function HAPLibraryVersion(): string {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const packageJson = require("../package.json");
   return packageJson.version;
 }

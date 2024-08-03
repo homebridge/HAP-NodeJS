@@ -7,6 +7,7 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 ### Changed
 
 - Update HK definition files
+- Updated dependencies + lint
 
 ### Homebridge Dependencies
 

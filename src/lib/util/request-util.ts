@@ -114,7 +114,7 @@ export function numericUpperBound(format: Formats | string): number {
   case Formats.UINT32:
     return 4294967295;
   case Formats.UINT64:
-    // eslint-disable-next-line @typescript-eslint/no-loss-of-precision
+    // eslint-disable-next-line no-loss-of-precision
     return 18446744073709551615; // don't get fooled, javascript uses 18446744073709552000 here
   default:
     throw new Error("Unable to determine numeric lower bound for " + format);
