@@ -1,5 +1,3 @@
-// eslint-disable-next-line ts/ban-ts-comment
-// @ts-nocheck
 import { EventEmitter } from 'node:events'
 
 import createDebug from 'debug'
@@ -10,380 +8,264 @@ import stdDbusIfaces from './stdifaces.js'
 
 const debug = createDebug('HAP-NodeJS:DBus')
 
-export default function MessageBus(conn, opts) {
-  if (!(this instanceof MessageBus)) {
-    return new MessageBus(conn);
-  }
-  if (!opts) opts = {};
+interface MethodReturnReply {
+  type: number
+  serial: number
+  destination: string
+  replySerial: number
+  signature?: string
+  body?: any[]
+}
 
-  const self = this;
-  this.connection = conn;
-  this.serial = 1;
-  this.cookies = {}; // TODO: rename to methodReturnHandlers
-  this.methodCallHandlers = {};
-  this.signals = new EventEmitter();
-  this.exportedObjects = {};
+export class MessageBus {
+  connection: any
+  serial: number
+  cookies: Record<string, any>
+  methodCallHandlers: Record<string, any>
+  signals: EventEmitter
+  exportedObjects: Record<string, any>
+  name: string | null | undefined
 
-  this.invoke = function (msg, callback) {
-    if (!msg.type) msg.type = constants.messageType.methodCall;
-    msg.serial = self.serial++;
-    this.cookies[msg.serial] = callback;
-    self.connection.message(msg);
-  };
+  constructor(conn: any, opts: any = {}) {
+    this.connection = conn
+    this.serial = 1
+    this.cookies = {}
+    this.methodCallHandlers = {}
+    this.signals = new EventEmitter()
+    this.exportedObjects = {}
 
-  this.invokeDbus = function (msg, callback) {
-    if (!msg.path) msg.path = '/org/freedesktop/DBus';
-    if (!msg.destination) msg.destination = 'org.freedesktop.DBus';
-    if (!msg['interface']) msg['interface'] = 'org.freedesktop.DBus';
-    self.invoke(msg, callback);
-  };
-
-  this.mangle = function (path, iface, member) {
-    const obj = {};
-    if (typeof path === 'object') {
-      // handle one argument case mangle(msg)
-      obj.path = path.path;
-      obj['interface'] = path['interface'];
-      obj.member = path.member;
+    if (opts.direct !== true) {
+      this.invokeDbus({ member: 'Hello' }, (err: string | undefined, name: string | null | undefined) => {
+        if (err) {
+          throw new Error(err)
+        }
+        this.name = name
+      })
     } else {
-      obj.path = path;
-      obj['interface'] = iface;
-      obj.member = member;
+      this.name = null
     }
-    return JSON.stringify(obj);
-  };
 
-  this.sendSignal = function (path, iface, name, signature, args) {
-    const signalMsg = {
-      type: constants.messageType.signal,
-      serial: self.serial++,
-      interface: iface,
-      path: path,
-      member: name
-    };
-    if (signature) {
-      signalMsg.signature = signature;
-      signalMsg.body = args;
+    this.connection.on('message', (msg: any) => this.handleMessage(msg))
+  }
+
+  invoke(msg: any, callback: any) {
+    if (!msg.type) {
+      msg.type = constants.messageType.methodCall
     }
-    self.connection.message(signalMsg);
-  };
+    msg.serial = this.serial++
+    this.cookies[msg.serial] = callback
+    this.connection.message(msg)
+  }
 
-  // Warning: errorName must respect the same rules as interface names (must contain a dot)
-  this.sendError = function (msg, errorName, errorText) {
+  invokeDbus(msg: any, callback: any) {
+    if (!msg.path) {
+      msg.path = '/org/freedesktop/DBus'
+    }
+    if (!msg.destination) {
+      msg.destination = 'org.freedesktop.DBus'
+    }
+    if (!msg.interface) {
+      msg.interface = 'org.freedesktop.DBus'
+    }
+    this.invoke(msg, callback)
+  }
+
+  mangle(path: any, iface?: any, member?: any) {
+    const obj: any = {}
+    if (typeof path === 'object') {
+      obj.path = path.path
+      obj.interface = path.interface
+      obj.member = path.member
+    } else {
+      obj.path = path
+      obj.interface = iface
+      obj.member = member
+    }
+    return JSON.stringify(obj)
+  }
+
+  sendError(msg: any, errorName: string, errorText: string) {
     const reply = {
       type: constants.messageType.error,
-      serial: self.serial++,
+      serial: this.serial++,
       replySerial: msg.serial,
       destination: msg.sender,
-      errorName: errorName,
+      errorName,
       signature: 's',
-      body: [errorText]
-    };
-    this.connection.message(reply);
-  };
+      body: [errorText],
+    }
+    this.connection.message(reply)
+  }
 
-  this.sendReply = function (msg, signature, body) {
-    const reply = {
-      type: constants.messageType.methodReturn,
-      serial: self.serial++,
-      replySerial: msg.serial,
-      destination: msg.sender,
-      signature: signature,
-      body: body
-    };
-    this.connection.message(reply);
-  };
-
-  // route reply/error
-  this.connection.on('message', function (msg) {
-    function invoke(impl, func, resultSignature) {
+  handleMessage(msg: any) {
+    const invoke = (impl: any, func: any, resultSignature: any) => {
       Promise.resolve()
-        .then(function () {
-          return func.apply(impl, (msg.body || []).concat(msg));
-        })
+        .then(() => func.apply(impl, (msg.body || []).concat(msg)))
         .then(
-          function (methodReturnResult) {
-            const methodReturnReply = {
+          (methodReturnResult) => {
+            const methodReturnReply: MethodReturnReply = {
               type: constants.messageType.methodReturn,
-              serial: self.serial++,
+              serial: this.serial++,
               destination: msg.sender,
-              replySerial: msg.serial
-            };
-            if (methodReturnResult !== null) {
-              methodReturnReply.signature = resultSignature;
-              methodReturnReply.body = [methodReturnResult];
+              replySerial: msg.serial,
             }
-            self.connection.message(methodReturnReply);
+            if (methodReturnResult !== null) {
+              methodReturnReply.signature = resultSignature
+              methodReturnReply.body = [methodReturnResult]
+            }
+            this.connection.message(methodReturnReply)
           },
-          function (e) {
-            self.sendError(
+          (e) => {
+            this.sendError(
               msg,
               e.dbusName || 'org.freedesktop.DBus.Error.Failed',
-              e.message || ''
-            );
-          }
-        );
+              e.message || '',
+            )
+          },
+        )
     }
 
-    let handler;
-    if (
-      msg.type === constants.messageType.methodReturn ||
-      msg.type === constants.messageType.error
-    ) {
-      handler = self.cookies[msg.replySerial];
+    let handler
+    if (msg.type === constants.messageType.methodReturn || msg.type === constants.messageType.error) {
+      handler = this.cookies[msg.replySerial]
       if (handler) {
-        delete self.cookies[msg.replySerial];
+        delete this.cookies[msg.replySerial]
         const props = {
-          connection: self.connection,
-          bus: self,
+          connection: this.connection,
+          bus: this,
           message: msg,
-          signature: msg.signature
-        };
-        let args = msg.body || [];
+          signature: msg.signature,
+        }
+        let args = msg.body || []
         if (msg.type === constants.messageType.methodReturn) {
-          args = [null].concat(args); // first argument - no errors, null
-          handler.apply(props, args); // body as array of arguments
+          args = [null].concat(args)
+          handler.apply(props, args)
         } else {
-          handler.call(props, { name: msg.errorName, message: args }); // body as first argument
+          handler.call(props, { name: msg.errorName, message: args })
         }
       }
     } else if (msg.type === constants.messageType.signal) {
-      self.signals.emit(self.mangle(msg), msg.body, msg.signature);
+      this.signals.emit(this.mangle(msg), msg.body, msg.signature)
     } else {
-      // methodCall
+      if (stdDbusIfaces(msg, this)) {
+        return
+      }
 
-      if (stdDbusIfaces(msg, self)) return;
-
-      // exported interfaces handlers
-      let obj, iface, impl;
-      if ((obj = self.exportedObjects[msg.path])) {
-        if ((iface = obj[msg['interface']])) {
-          // now we are ready to serve msg.member
-          impl = iface[1];
-          const func = impl[msg.member];
+      const obj = this.exportedObjects[msg.path]
+      let iface
+      if (obj) {
+        iface = obj[msg.interface]
+        if (iface) {
+          const impl = iface[1]
+          const func = impl[msg.member]
           if (!func) {
-            self.sendError(
+            this.sendError(
               msg,
               'org.freedesktop.DBus.Error.UnknownMethod',
-              `Method "${msg.member}" on interface "${msg.interface}" doesn't exist`
-            );
-            return;
+              `Method "${msg.member}" on interface "${msg.interface}" doesn't exist`,
+            )
+            return
           }
-          // TODO safety check here
-          const resultSignature = iface[0].methods[msg.member][1];
-          invoke(impl, func, resultSignature);
-          return;
+          const resultSignature = iface[0].methods[msg.member][1]
+          invoke(impl, func, resultSignature)
+          return
         } else {
           debug(`Interface ${msg.interface} is not supported`)
-          // TODO: respond with standard dbus error
         }
       }
-      // setMethodCall handlers
-      handler = self.methodCallHandlers[self.mangle(msg)];
+
+      handler = this.methodCallHandlers[this.mangle(msg)]
       if (handler) {
-        invoke(null, handler[0], handler[1]);
+        invoke(null, handler[0], handler[1])
       } else {
-        self.sendError(
+        this.sendError(
           msg,
           'org.freedesktop.DBus.Error.UnknownService',
-          'Uh oh oh'
-        );
+          'Uh oh oh',
+        )
       }
     }
-  });
-
-  this.setMethodCallHandler = function (objectPath, iface, member, handler) {
-    const key = self.mangle(objectPath, iface, member);
-    self.methodCallHandlers[key] = handler;
-  };
-
-  this.exportInterface = function (obj, path, iface) {
-    let entry;
-    if (!self.exportedObjects[path]) {
-      entry = self.exportedObjects[path] = {};
-    } else {
-      entry = self.exportedObjects[path];
-    }
-    entry[iface.name] = [iface, obj];
-    // monkey-patch obj.emit()
-    if (typeof obj.emit === 'function') {
-      const oldEmit = obj.emit;
-      obj.emit = function () {
-        const args = Array.prototype.slice.apply(arguments);
-        const signalName = args[0];
-        if (!signalName) throw new Error('Trying to emit undefined signal');
-
-        //send signal to bus
-        let signal;
-        if (iface.signals && iface.signals[signalName]) {
-          signal = iface.signals[signalName];
-          const signalMsg = {
-            type: constants.messageType.signal,
-            serial: self.serial++,
-            interface: iface.name,
-            path: path,
-            member: signalName
-          };
-          if (signal[0]) {
-            signalMsg.signature = signal[0];
-            signalMsg.body = args.slice(1);
-          }
-          self.connection.message(signalMsg);
-          self.serial++;
-        }
-        // note that local emit is likely to be called before signal arrives
-        // to remote subscriber
-        oldEmit.apply(obj, args);
-      };
-    }
-    // TODO: emit ObjectManager's InterfaceAdded
-  };
-
-  // register name
-  if (opts.direct !== true) {
-    this.invokeDbus({ member: 'Hello' }, function (err, name) {
-      if (err) throw new Error(err);
-      self.name = name;
-    });
-  } else {
-    self.name = null;
   }
 
-  function DBusObject(name, service) {
-    this.name = name;
-    this.service = service;
-    this.as = function (name) {
-      return this.proxy[name];
-    };
+  getService(name: string) {
+    return new DBusService(name, this)
   }
 
-  function DBusService(name, bus) {
-    this.name = name;
-    this.bus = bus;
-    this.getObject = function (name, callback) {
-      if (name === undefined)
-        return callback(new Error('Object name is null or undefined'));
-      const obj = new DBusObject(name, this);
-      introspectBus(obj, function (err, ifaces, nodes) {
-        if (err) return callback(err);
-        obj.proxy = ifaces;
-        obj.nodes = nodes;
-        callback(null, obj);
-      });
-    };
-
-    this.getInterface = function (objName, ifaceName, callback) {
-      this.getObject(objName, function (err, obj) {
-        if (err) return callback(err);
-        callback(null, obj.as(ifaceName));
-      });
-    };
+  getObject(path: string, name: string, callback: any) {
+    const service = this.getService(path)
+    return service.getObject(name, callback)
   }
 
-  this.getService = function (name) {
-    return new DBusService(name, this);
-  };
+  getInterface(path: string, objname: string, name: string, callback: any) {
+    return this.getObject(path, objname, (err: any, obj: any) => {
+      if (err) {
+        return callback(err)
+      }
+      callback(null, obj.as(name))
+    })
+  }
 
-  this.getObject = function (path, name, callback) {
-    const service = this.getService(path);
-    return service.getObject(name, callback);
-  };
-
-  this.getInterface = function (path, objname, name, callback) {
-    return this.getObject(path, objname, function (err, obj) {
-      if (err) return callback(err);
-      callback(null, obj.as(name));
-    });
-  };
-
-  // TODO: refactor
-
-  // bus meta functions
-  this.addMatch = function (match, callback) {
+  addMatch(match: string, callback: any) {
     this.invokeDbus(
       { member: 'AddMatch', signature: 's', body: [match] },
-      callback
-    );
-  };
+      callback,
+    )
+  }
 
-  this.removeMatch = function (match, callback) {
+  removeMatch(match: string, callback: any) {
     this.invokeDbus(
       { member: 'RemoveMatch', signature: 's', body: [match] },
-      callback
-    );
-  };
+      callback,
+    )
+  }
+}
 
-  this.getId = function (callback) {
-    this.invokeDbus({ member: 'GetId' }, callback);
-  };
+export class DBusObject {
+  name: string
+  service: any
+  proxy: Record<string, any> | undefined
+  nodes: string[] | undefined
 
-  this.requestName = function (name, flags, callback) {
-    this.invokeDbus(
-      { member: 'RequestName', signature: 'su', body: [name, flags] },
-      function (err, name) {
-        if (callback) callback(err, name);
+  constructor(name: string, service: any) {
+    this.name = name
+    this.service = service
+  }
+
+  as(name: string): string | undefined {
+    return this.proxy?.[name]
+  }
+}
+
+class DBusService {
+  name: string
+  bus: any
+
+  constructor(name: string, bus: any) {
+    this.name = name
+    this.bus = bus
+  }
+
+  getObject(name: string, callback: any) {
+    if (name === undefined) {
+      return callback(new Error('Object name is null or undefined'))
+    }
+    const obj = new DBusObject(name, this)
+    introspectBus(obj, (err: any, ifaces: any, nodes: any) => {
+      if (err) {
+        return callback(err)
       }
-    );
-  };
+      obj.proxy = ifaces
+      obj.nodes = nodes
+      callback(null, obj)
+    })
+  }
 
-  this.releaseName = function (name, callback) {
-    this.invokeDbus(
-      { member: 'ReleaseName', signature: 's', body: [name] },
-      callback
-    );
-  };
-
-  this.listNames = function (callback) {
-    this.invokeDbus({ member: 'ListNames' }, callback);
-  };
-
-  this.listActivatableNames = function (callback) {
-    this.invokeDbus({ member: 'ListActivatableNames' }, callback);
-  };
-
-  this.updateActivationEnvironment = function (env, callback) {
-    this.invokeDbus(
-      {
-        member: 'UpdateActivationEnvironment',
-        signature: 'a{ss}',
-        body: [env]
-      },
-      callback
-    );
-  };
-
-  this.startServiceByName = function (name, flags, callback) {
-    this.invokeDbus(
-      { member: 'StartServiceByName', signature: 'su', body: [name, flags] },
-      callback
-    );
-  };
-
-  this.getConnectionUnixUser = function (name, callback) {
-    this.invokeDbus(
-      { member: 'GetConnectionUnixUser', signature: 's', body: [name] },
-      callback
-    );
-  };
-
-  this.getConnectionUnixProcessId = function (name, callback) {
-    this.invokeDbus(
-      { member: 'GetConnectionUnixProcessID', signature: 's', body: [name] },
-      callback
-    );
-  };
-
-  this.getNameOwner = function (name, callback) {
-    this.invokeDbus(
-      { member: 'GetNameOwner', signature: 's', body: [name] },
-      callback
-    );
-  };
-
-  this.nameHasOwner = function (name, callback) {
-    this.invokeDbus(
-      { member: 'NameHasOwner', signature: 's', body: [name] },
-      callback
-    );
-  };
-};
+  getInterface(objName: string, ifaceName: string, callback: any) {
+    this.getObject(objName, (err: any, obj: any) => {
+      if (err) {
+        return callback(err)
+      }
+      callback(null, obj.as(ifaceName))
+    })
+  }
+}

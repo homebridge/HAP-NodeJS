@@ -2,7 +2,7 @@ import antfu from '@antfu/eslint-config'
 
 export default antfu(
   {
-    ignores: ['dist', 'docs', 'src/lib/dbus/**/*.ts'],
+    ignores: ['dist', 'docs'],
     jsx: false,
     typescript: true,
     formatters: {

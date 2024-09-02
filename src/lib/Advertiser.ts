@@ -3,7 +3,8 @@ import type { CiaoService, MDNSServerOptions, Responder, ServiceTxt } from '@hom
 import type { InterfaceName, IPAddress } from '@homebridge/ciao/dist/NetworkManager.js'
 import type { BonjourHAP, BonjourHAPService } from 'bonjour-hap'
 
-import type { DBusInterface, MessageBus } from '../types/dbus'
+import type { MessageBus } from './dbus/bus'
+import type { DBusInterface } from './dbus/introspect'
 import type { AccessoryInfo } from './model/AccessoryInfo'
 
 import assert from 'node:assert'
@@ -343,7 +344,7 @@ function dbusInvoke(bus: MessageBus, destination: string, path: string, dbusInte
       ...(others || {}),
     }
 
-    bus.invoke(command, (err, result) => {
+    bus.invoke(command, (err: { name: string, message: any }, result: any) => {
       if (err) {
         reject(new DBusInvokeError(err))
       } else {
@@ -552,7 +553,7 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
     return new Promise((resolve, reject) => {
       bus
         .getService('org.freedesktop.Avahi')
-        .getInterface('/', `org.freedesktop.Avahi.${dbusInterface}`, (error, iface) => {
+        .getInterface('/', `org.freedesktop.Avahi.${dbusInterface}`, (error: any, iface: DBusInterface | PromiseLike<DBusInterface>) => {
           if (error || !iface) {
             reject(error ?? new Error('Interface not present!'))
           } else {
