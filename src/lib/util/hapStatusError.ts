@@ -1,4 +1,4 @@
-import { HAPStatus, IsKnownHAPStatusError } from "../HAPServer";
+import { HAPStatus, isKnownHAPStatusError } from '../HAPServer.js'
 
 /**
  * Throws a HAP status error that is sent back to HomeKit.
@@ -11,17 +11,17 @@ import { HAPStatus, IsKnownHAPStatusError } from "../HAPServer";
  * @group Utils
  */
 export class HapStatusError extends Error {
-  public hapStatus: HAPStatus;
+  public hapStatus: HAPStatus
 
   constructor(status: HAPStatus) {
-    super("HAP Status Error: " + status);
+    super(`HAP Status Error: ${status}`)
 
-    Object.setPrototypeOf(this, HapStatusError.prototype);
+    Object.setPrototypeOf(this, HapStatusError.prototype)
 
-    if (IsKnownHAPStatusError(status)) {
-      this.hapStatus = status;
+    if (isKnownHAPStatusError(status)) {
+      this.hapStatus = status
     } else {
-      this.hapStatus = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+      this.hapStatus = HAPStatus.SERVICE_COMMUNICATION_FAILURE
     }
   }
 }

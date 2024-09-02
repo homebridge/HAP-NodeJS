@@ -1,38 +1,44 @@
-import "source-map-support/register"; // registering node-source-map-support for typescript stack traces
-import "./lib/definitions"; // must be loaded before Characteristic and Service class
-import createDebug from "debug";
+import 'source-map-support/register.js' // registering node-source-map-support for typescript stack traces
+import './lib/definitions/index.js' // must be loaded before Characteristic and Service class
+import { createRequire } from 'node:module'
+
+import createDebug from 'debug'
+
+import * as Characteristics from './lib/definitions/CharacteristicDefinitions.js'
+import * as Services from './lib/definitions/ServiceDefinitions.js'
 
 /**
  * @group Utils
  */
-export * as uuid from "./lib/util/uuid";
-export * from "./lib/model/HAPStorage";
-export * from "./lib/Accessory";
-export * from "./lib/Bridge";
-export * from "./lib/Service";
-export * from "./lib/Characteristic";
-export * from "./lib/camera";
-export * from "./lib/tv/AccessControlManagement";
-export * from "./lib/HAPServer";
-export * from "./lib/datastream";
-export * from "./lib/controller";
-export * from "./lib/model/AccessoryInfo";
+export * as LegacyTypes from './accessories/types.js'
+export * from './lib/Accessory.js'
+export * from './lib/Bridge.js'
+export * from './lib/camera/index.js'
+export * from './lib/Characteristic.js'
+export * from './lib/controller/index.js'
+export * from './lib/datastream/index.js'
+export * from './lib/HAPServer.js'
+export * from './lib/model/AccessoryInfo.js'
+export * from './lib/model/HAPStorage.js'
+export * from './lib/Service.js'
+export * from './lib/tv/AccessControlManagement.js'
 
-export * from "./lib/util/clone";
-export * from "./lib/util/once";
-export * from "./lib/util/tlv";
-export * from "./lib/util/hapStatusError";
-export * from "./lib/util/color-utils";
-export * from "./lib/util/time";
-export * from "./lib/util/eventedhttp";
+export * from './lib/util/clone.js'
+export * from './lib/util/color-utils.js'
+export * from './lib/util/eventedhttp.js'
+export * from './lib/util/hapStatusError.js'
+export * from './lib/util/once.js'
+export * from './lib/util/time.js'
+export * from './lib/util/tlv.js'
 
-export * from "./types";
 /**
  * @group Utils
  */
-export * as LegacyTypes from "./accessories/types";
+export * as uuid from './lib/util/uuid.js'
+export * from './types.js'
 
-const debug = createDebug("HAP-NodeJS:Advertiser");
+const require = createRequire(import.meta.url)
+const debug = createDebug('HAP-NodeJS:Advertiser')
 
 /**
  * This method can be used to retrieve the current running library version of the HAP-NodeJS framework.
@@ -41,18 +47,14 @@ const debug = createDebug("HAP-NodeJS:Advertiser");
  * @group Utils
  */
 export function HAPLibraryVersion(): string {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const packageJson = require("../package.json");
-  return packageJson.version;
+  const packageJson = require('../package.json')
+  return packageJson.version
 }
 
 function printInit() {
-  debug("Initializing HAP-NodeJS v%s ...", HAPLibraryVersion());
+  debug('Initializing HAP-NodeJS v%s ...', HAPLibraryVersion())
 }
-printInit();
-
-import * as Services from "./lib/definitions/ServiceDefinitions";
-import * as Characteristics from "./lib/definitions/CharacteristicDefinitions";
+printInit()
 
 /**
  * This namespace doesn't actually exist and is only used to generate documentation for all Service and Characteristic Definitions.
@@ -61,9 +63,4 @@ import * as Characteristics from "./lib/definitions/CharacteristicDefinitions";
  *
  * @group Utils
  */
-export declare namespace _definitions { // eslint-disable-line @typescript-eslint/no-namespace
-  export {
-    Services,
-    Characteristics,
-  };
-}
+export { Characteristics, Services }

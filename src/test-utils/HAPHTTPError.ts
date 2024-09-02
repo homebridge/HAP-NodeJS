@@ -1,4 +1,4 @@
-import { HAPHTTPCode, HAPStatus } from "../lib/HAPServer";
+import type { HAPHTTPCode, HAPStatus } from '../lib/HAPServer'
 
 /**
  * Encapsulates a {@link HAPHTTPCode} and a {@link HAPStatus}
@@ -10,15 +10,15 @@ import { HAPHTTPCode, HAPStatus } from "../lib/HAPServer";
  * ```
  */
 export class HAPHTTPError extends Error {
-  public httpStatusCode: HAPHTTPCode;
-  public hapStatusCode: HAPStatus;
+  public httpStatusCode: HAPHTTPCode
+  public hapStatusCode: HAPStatus
 
   constructor(http: HAPHTTPCode, hap: HAPStatus) {
-    super("HAP HTTP Error: code: " + http + " status: " + hap);
+    super(`HAP HTTP Error: code: ${http} status: ${hap}`)
 
-    Object.setPrototypeOf(this, HAPHTTPError.prototype);
+    Object.setPrototypeOf(this, HAPHTTPError.prototype)
 
-    this.httpStatusCode = http;
-    this.hapStatusCode = hap;
+    this.httpStatusCode = http
+    this.hapStatusCode = hap
   }
 }

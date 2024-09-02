@@ -1,4 +1,4 @@
-import assert from "assert";
+import assert from 'node:assert'
 
 const lookupTable: Map<number, [number, number]> = new Map([ // <MIRED, [SATURATION, HUE]>
   [100, [19, 222.1]],
@@ -402,40 +402,38 @@ const lookupTable: Map<number, [number, number]> = new Map([ // <MIRED, [SATURAT
   [498, [63.8, 28.3]],
   [499, [63.9, 28.3]],
   [500, [64.1, 28.3]],
-]);
+])
 
 /**
  * @group Utils
  */
 export class ColorUtils {
-
   /**
    * Returns the Hue and Saturation representation of the given color temperature in mired.
    *
    * @param colorTemperature - The color temperature in mired.
    * @param roundResults - The lookup table has a precision of .1 decimal places. The given characteristics only have a step value of 1.
-   *  Thus, the method will round the results by default to an integer value. This can be turned off using this option.
+   * Thus, the method will round the results by default to an integer value. This can be turned off using this option.
    * @returns An number array of length 2 with the first element being the saturation and the second argument being the hue.
    */
   public static colorTemperatureToHueAndSaturation(colorTemperature: number, roundResults = true): { saturation: number, hue: number } {
     if (colorTemperature > 500) {
-      colorTemperature = 500;
+      colorTemperature = 500
     } else if (colorTemperature < 100) {
-      colorTemperature = 100;
+      colorTemperature = 100
     }
 
-    colorTemperature = Math.round(colorTemperature); // ensure integer
-    const hueAndTemperature = lookupTable.get(colorTemperature);
-    assert(colorTemperature != null, "lookup for temperature " + colorTemperature + " did not yield any results");
+    colorTemperature = Math.round(colorTemperature) // ensure integer
+    const hueAndTemperature = lookupTable.get(colorTemperature)
+    assert(colorTemperature != null, `lookup for temperature ${colorTemperature} did not yield any results`)
     if (roundResults) {
-      hueAndTemperature![0] = Math.round(hueAndTemperature![0]);
-      hueAndTemperature![1] = Math.round(hueAndTemperature![1]);
+      hueAndTemperature![0] = Math.round(hueAndTemperature![0])
+      hueAndTemperature![1] = Math.round(hueAndTemperature![1])
     }
 
     return {
       saturation: hueAndTemperature![0],
       hue: hueAndTemperature![1],
-    };
+    }
   }
-
 }

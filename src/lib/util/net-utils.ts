@@ -1,63 +1,63 @@
-import os from "os";
+import { networkInterfaces } from 'node:os'
 
 /**
  * @group Utils
  */
 export function findLoopbackAddress(): string {
-  let ipv6: string | undefined = undefined; // ::1/128
-  let ipv6LinkLocal: string | undefined = undefined; // fe80::/10
-  let ipv4: string | undefined = undefined; // 127.0.0.1/8
+  let ipv6: string | undefined // ::1/128
+  let ipv6LinkLocal: string | undefined // fe80::/10
+  let ipv4: string | undefined // 127.0.0.1/8
 
-  for (const [name, infos] of Object.entries(os.networkInterfaces())) {
-    let internal = false;
+  for (const [name, infos] of Object.entries(networkInterfaces())) {
+    let internal = false
     if (infos) {
       for (const info of infos) {
         if (!info.internal) {
-          continue;
+          continue
         }
 
-        internal = true;
-        // @ts-expect-error Nodejs 18+ uses the number 4 the string "IPv4"
-        if (info.family === "IPv4" || info.family === 4) {
+        internal = true
+        // @ts-expect-error Node.js 18+ uses the number 4 the string "IPv4"
+        if (info.family === 'IPv4' || info.family === 4) {
           if (!ipv4) {
-            ipv4 = info.address;
+            ipv4 = info.address
           }
-          // @ts-expect-error Nodejs 18+ uses the number 6 the string "IPv6"
-        } else if (info.family === "IPv6" || info.family === 6) {
+          // @ts-expect-error Node.js 18+ uses the number 6 the string "IPv6"
+        } else if (info.family === 'IPv6' || info.family === 6) {
           if (info.scopeid) {
             if (!ipv6LinkLocal) {
-              ipv6LinkLocal = info.address + "%" + name; // ipv6 link local addresses are only valid with a scope
+              ipv6LinkLocal = `${info.address}%${name}` // ipv6 link local addresses are only valid with a scope
             }
           } else if (!ipv6) {
-            ipv6 = info.address;
+            ipv6 = info.address
           }
         }
       }
     }
 
     if (internal) {
-      break;
+      break
     }
   }
 
-  const address = ipv4 || ipv6 || ipv6LinkLocal;
+  const address = ipv4 || ipv6 || ipv6LinkLocal
   if (!address) {
-    throw new Error("Could not find a valid loopback address on the platform!");
+    throw new Error('Could not find a valid loopback address on the platform!')
   }
-  return address;
+  return address
 }
-let loopbackAddress: string | undefined = undefined; // loopback addressed used for the internal http server (::1 or 127.0.0.1)
+let loopbackAddress: string | undefined // loopback addressed used for the internal http server (::1 or 127.0.0.1)
 
 /**
  * Returns the loopback address for the machine.
  * Uses IPV4 loopback address by default and falls back to global unique IPv6 loopback and then
  * link local IPv6 loopback address.
- * If no loopback interface could be found a error is thrown.
+ * If no loopback interface could be found an error is thrown.
  *
  * @group Utils
  */
 export function getOSLoopbackAddress(): string {
-  return loopbackAddress ?? (loopbackAddress = findLoopbackAddress());
+  return loopbackAddress ?? (loopbackAddress = findLoopbackAddress())
 }
 
 /**
@@ -68,9 +68,9 @@ export function getOSLoopbackAddress(): string {
  */
 export function getOSLoopbackAddressIfAvailable(): string | undefined {
   try {
-    return loopbackAddress ?? (loopbackAddress = findLoopbackAddress());
+    return loopbackAddress ?? (loopbackAddress = findLoopbackAddress())
   } catch (error) {
-    console.log(error.stack);
-    return undefined;
+    console.log(error.stack) // eslint-disable-line no-console
+    return undefined
   }
 }

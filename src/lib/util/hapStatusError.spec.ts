@@ -1,18 +1,20 @@
-import { HAPStatus } from "../HAPServer";
-import { HapStatusError } from "./hapStatusError";
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-describe("HapStatusError", () => {
+import { HAPStatus } from '../HAPServer.js'
+import { HapStatusError } from './hapStatusError.js'
+
+describe('hapStatusError', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
-  });
+    vi.resetAllMocks()
+  })
 
-  it("sets the hap status code correctly", async () => {
-    const error = new HapStatusError(HAPStatus.RESOURCE_BUSY);
-    expect(error.hapStatus).toEqual(HAPStatus.RESOURCE_BUSY);
-  });
+  it('sets the hap status code correctly', async () => {
+    const error = new HapStatusError(HAPStatus.RESOURCE_BUSY)
+    expect(error.hapStatus).toEqual(HAPStatus.RESOURCE_BUSY)
+  })
 
-  it("reverts to SERVICE_COMMUNICATION_FAILURE if an invalid code is passed in", async () => {
-    const error = new HapStatusError(234523323423423 as HAPStatus);
-    expect(error.hapStatus).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-  });
-});
+  it('reverts to SERVICE_COMMUNICATION_FAILURE if an invalid code is passed in', async () => {
+    const error = new HapStatusError(234523323423423 as HAPStatus)
+    expect(error.hapStatus).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE)
+  })
+})

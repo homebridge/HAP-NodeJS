@@ -1,16 +1,16 @@
-import { Formats, Perms, Units } from "./lib/Characteristic";
-import { ResourceRequestReason } from "./lib/controller";
-import { HAPStatus } from "./lib/HAPServer";
+import type { Formats, Perms, Units } from './lib/Characteristic'
+import type { ResourceRequestReason } from './lib/controller'
+import type { HAPStatus } from './lib/HAPServer'
 
 /**
  * @group Utils
  */
-export type Nullable<T> = T | null;
+export type Nullable<T> = T | null
 
 /**
  * @group Utils
  */
-export type WithUUID<T> = T & { UUID: string };
+export type WithUUID<T> = T & { UUID: string }
 
 /**
  * Like TypeScripts `Partial` but allowing null as a value.
@@ -26,217 +26,216 @@ export type PartialAllowingNull<T> = {
  *
  * @group Utils
  */
-export type ConstructorArgs<C> = C extends new (...args: infer A) => any ? A : never; // eslint-disable-line @typescript-eslint/no-explicit-any
+export type ConstructorArgs<C> = C extends new (...args: infer A) => any ? A : never
 
 /**
  * UUID string uniquely identifying every HAP connection.
  *
  * @group HAP Accessory Server
  */
-export type SessionIdentifier = string;
+export type SessionIdentifier = string
 /**
  * Defines a mac address.
  * Must have a format like 'XX:XX:XX:XX:XX:XX' with XX being a valid hexadecimal string
  *
  * @group Utils
  */
-export type MacAddress = string;
+export type MacAddress = string
 /**
  * Defines a pincode for the HAP accessory.
  * Must have a format like "XXX-XX-XXX".
  *
  * @group Accessory
  */
-export type HAPPincode = string;
+export type HAPPincode = string
 /**
  * @group Utils
  */
-export type InterfaceName = string;
+export type InterfaceName = string
 /**
  * @group Utils
  */
-export type IPv4Address = string;
+export type IPv4Address = string
 /**
  * @group Utils
  */
-export type IPv6Address = string;
+export type IPv6Address = string
 /**
  * @group Utils
  */
-export type IPAddress = IPv4Address | IPv6Address;
+export type IPAddress = IPv4Address | IPv6Address
 
 /**
  * @group Utils
  */
-export type NodeCallback<T> = (err: Nullable<Error> | undefined, data?: T) => void;
+export type NodeCallback<T> = (err: Nullable<Error> | undefined, data?: T) => void
 /**
  * @group Utils
  */
-export type VoidCallback = (err?: Nullable<Error>) => void;
+export type VoidCallback = (err?: Nullable<Error>) => void
 /**
  * @group Utils
  */
-export type PrimitiveTypes = string | number | boolean;
+export type PrimitiveTypes = string | number | boolean
 /**
  * @group Characteristic
  */
-export type CharacteristicValue = PrimitiveTypes | PrimitiveTypes[] | { [key: string]: PrimitiveTypes };
-
+export type CharacteristicValue = PrimitiveTypes | PrimitiveTypes[] | { [key: string]: PrimitiveTypes }
 
 /**
  * @group HAP Accessory Server
  */
 export interface CharacteristicJsonObject {
-  type: string, // uuid or short uuid
-  iid: number,
-  value?: Nullable<CharacteristicValue>, // undefined for non-readable characteristics
+  'type': string // uuid or short uuid
+  'iid': number
+  'value'?: Nullable<CharacteristicValue> // undefined for non-readable characteristics
 
-  perms: Perms[],
-  format: Formats | string,
+  'perms': Perms[]
+  'format': Formats | string
 
-  description?: string,
+  'description'?: string
 
-  unit?: Units | string,
-  minValue?: number,
-  maxValue?: number,
-  minStep?: number,
-  maxLen?: number,
-  maxDataLen?: number,
-  "valid-values"?: number[],
-  "valid-values-range"?: [min: number, max: number],
+  'unit'?: Units | string
+  'minValue'?: number
+  'maxValue'?: number
+  'minStep'?: number
+  'maxLen'?: number
+  'maxDataLen'?: number
+  'valid-values'?: number[]
+  'valid-values-range'?: [min: number, max: number]
 }
 
 /**
  * @group HAP Accessory Server
  */
 export interface ServiceJsonObject {
-  type: string,
-  iid: number,
-  characteristics: CharacteristicJsonObject[], // must not be empty, max 100 characteristics
-  hidden?: boolean,
-  primary?: boolean,
-  linked?: number[], // iid array
+  type: string
+  iid: number
+  characteristics: CharacteristicJsonObject[] // must not be empty, max 100 characteristics
+  hidden?: boolean
+  primary?: boolean
+  linked?: number[] // iid array
 }
 
 /**
  * @group HAP Accessory Server
  */
 export interface AccessoryJsonObject {
-  aid: number,
-  services: ServiceJsonObject[], // must not be empty, max 100 services
+  aid: number
+  services: ServiceJsonObject[] // must not be empty, max 100 services
 }
 
 /**
  * @group HAP Accessory Server
  */
 export interface AccessoriesResponse {
-  accessories: AccessoryJsonObject[],
+  accessories: AccessoryJsonObject[]
 }
 
 /**
  * @group HAP Accessory Server
  */
 export interface CharacteristicId {
-  aid: number,
-  iid: number,
+  aid: number
+  iid: number
 }
 
 /**
  * @group HAP Accessory Server
  */
 export interface CharacteristicsReadRequest {
-  ids: CharacteristicId[],
-  includeMeta: boolean;
-  includePerms: boolean,
-  includeType: boolean,
-  includeEvent: boolean,
+  ids: CharacteristicId[]
+  includeMeta: boolean
+  includePerms: boolean
+  includeType: boolean
+  includeEvent: boolean
 }
 
 /**
  * @group HAP Accessory Server
  */
 export interface PartialCharacteristicReadDataValue {
-  value: CharacteristicValue | null,
+  value: CharacteristicValue | null
 
-  status?: HAPStatus.SUCCESS,
+  status?: HAPStatus.SUCCESS
 
   // type
-  type?: string, // characteristics uuid
+  type?: string // characteristics uuid
 
   // metadata
-  format?: string,
-  unit?: string,
-  minValue?: number,
-  maxValue?: number,
-  minStep?: number,
-  maxLen?: number,
+  format?: string
+  unit?: string
+  minValue?: number
+  maxValue?: number
+  minStep?: number
+  maxLen?: number
 
   // perms
-  perms?: Perms[],
+  perms?: Perms[]
 
   // event
-  ev?: boolean,
+  ev?: boolean
 }
 
 /**
  * @group HAP Accessory Server
  */
 export interface PartialCharacteristicReadError {
-  status: HAPStatus,
+  status: HAPStatus
 }
 
 /**
  * @group HAP Accessory Server
  */
 export interface CharacteristicReadDataValue extends PartialCharacteristicReadDataValue {
-  aid: number,
-  iid: number,
+  aid: number
+  iid: number
 }
 
 /**
  * @group HAP Accessory Server
  */
 export interface CharacteristicReadError extends PartialCharacteristicReadError {
-  aid: number,
-  iid: number,
+  aid: number
+  iid: number
 }
 
 /**
  * @group HAP Accessory Server
  */
-export type PartialCharacteristicReadData = PartialCharacteristicReadDataValue | PartialCharacteristicReadError;
+export type PartialCharacteristicReadData = PartialCharacteristicReadDataValue | PartialCharacteristicReadError
 /**
  * @group HAP Accessory Server
  */
-export type CharacteristicReadData = CharacteristicReadDataValue | CharacteristicReadError;
+export type CharacteristicReadData = CharacteristicReadDataValue | CharacteristicReadError
 
 /**
  * @group HAP Accessory Server
  */
 export interface CharacteristicsReadResponse {
-  characteristics: CharacteristicReadData[],
+  characteristics: CharacteristicReadData[]
 }
 
 /**
  * @group HAP Accessory Server
  */
 export interface CharacteristicWrite {
-  aid: number,
-  iid: number,
+  aid: number
+  iid: number
 
-  value?: CharacteristicValue,
-  ev?: boolean, // enable/disable event notifications for the accessory
+  value?: CharacteristicValue
+  ev?: boolean // enable/disable event notifications for the accessory
 
-  authData?: string, // base64 encoded string used for custom authorisation
-  remote?: boolean, // remote access used
-  r?: boolean, // write response
+  authData?: string // base64 encoded string used for custom authorisation
+  remote?: boolean // remote access used
+  r?: boolean // write response
 }
 
 /**
  * @group HAP Accessory Server
  */
 export interface CharacteristicsWriteRequest {
-  characteristics: CharacteristicWrite[],
+  characteristics: CharacteristicWrite[]
   pid?: number
 }
 
@@ -244,74 +243,75 @@ export interface CharacteristicsWriteRequest {
  * @group HAP Accessory Server
  */
 export interface PartialCharacteristicWriteDataValue {
-  value?: CharacteristicValue | null,
+  value?: CharacteristicValue | null
 
-  status: HAPStatus.SUCCESS,
+  status: HAPStatus.SUCCESS
 }
 
 /**
  * @group HAP Accessory Server
  */
 export interface PartialCharacteristicWriteError {
-  status: HAPStatus,
+  status: HAPStatus
 
-  value?: undefined, // defined to make things easier
+  value?: undefined // defined to make things easier
 }
 
 /**
  * @group HAP Accessory Server
  */
 export interface CharacteristicWriteDataValue extends PartialCharacteristicWriteDataValue {
-  aid: number,
-  iid: number,
+  aid: number
+  iid: number
 }
 
 /**
  * @group HAP Accessory Server
  */
 export interface CharacteristicWriteError extends PartialCharacteristicWriteError {
-  aid: number,
-  iid: number,
+  aid: number
+  iid: number
 }
 
 /**
  * @group HAP Accessory Server
  */
-export type PartialCharacteristicWriteData = PartialCharacteristicWriteDataValue | PartialCharacteristicWriteError;
+export type PartialCharacteristicWriteData = PartialCharacteristicWriteDataValue | PartialCharacteristicWriteError
 /**
  * @group HAP Accessory Server
  */
-export type CharacteristicWriteData = CharacteristicWriteDataValue | CharacteristicWriteError;
+export type CharacteristicWriteData = CharacteristicWriteDataValue | CharacteristicWriteError
 
 /**
  * @group HAP Accessory Server
  */
 export interface CharacteristicsWriteResponse {
-  characteristics: CharacteristicWriteData[],
+  characteristics: CharacteristicWriteData[]
 }
 
 /**
  * @group HAP Accessory Server
  */
-export type PrepareWriteRequest = {
-  ttl: number,
+export interface PrepareWriteRequest {
+  ttl: number
   pid: number
 }
 
 /**
  * @group HAP Accessory Server
  */
+// eslint-disable-next-line no-restricted-syntax
 export const enum ResourceRequestType {
-  IMAGE = "image",
+  IMAGE = 'image',
 }
 
 /**
  * @group HAP Accessory Server
  */
 export interface ResourceRequest {
-  aid?: number;
-  "image-height": number;
-  "image-width": number;
-  "reason"?: ResourceRequestReason;
-  "resource-type": ResourceRequestType;
+  'aid'?: number
+  'image-height': number
+  'image-width': number
+  'reason'?: ResourceRequestReason
+  'resource-type': ResourceRequestType
 }

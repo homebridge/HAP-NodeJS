@@ -1,2 +1,2 @@
-export * from "./CharacteristicDefinitions";
-export * from "./ServiceDefinitions";
+export * from './CharacteristicDefinitions.js'
+export * from './ServiceDefinitions.js'

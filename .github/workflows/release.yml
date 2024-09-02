@@ -19,18 +19,18 @@ jobs:
 
     if: ${{ github.repository == 'homebridge/HAP-NodeJS' }}
 
-    uses: homebridge/.github/.github/workflows/npm-publish.yml@latest
+    uses: homebridge/.github/.github/workflows/npm-publish-esm.yml@latest
     secrets:
       npm_auth_token: ${{ secrets.npm_token }}
 
   github-releases-to-discord:
     name: Discord Webhooks
-    needs: [build_and_test,publish]
+    needs: [build_and_test, publish]
     uses: homebridge/.github/.github/workflows/discord-webhooks.yml@latest
     with:
-      title: "HAP-NodeJS Release"
+      title: HAP-NodeJS Release
       description: |
         Version `v${{ needs.publish.outputs.NPM_VERSION }}`
-      url: "https://github.com/homebridge/homebridge-config-ui-x/releases/tag/v${{ needs.publish.outputs.NPM_VERSION }}"
+      url: 'https://github.com/homebridge/homebridge-config-ui-x/releases/tag/v${{ needs.publish.outputs.NPM_VERSION }}'
     secrets:
       DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL_LATEST }}

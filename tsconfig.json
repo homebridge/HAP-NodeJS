@@ -1,21 +1,23 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
+    "target": "ESNext",
+    "lib": [
+      "ESNext"
+    ],
+    "rootDir": "./src",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "strict": true,
+    "useUnknownInCatchVariables": false,
     "declaration": true,
     "declarationMap": true,
+    "importHelpers": true,
+    "outDir": "./dist",
+    "preserveConstEnums": true,
+    "sourceMap": true, // do not remove this option!
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "importHelpers": true,
-    "lib": ["ES2022"],
-    "module": "CommonJS",
-    "moduleResolution": "node",
-    "preserveConstEnums": true, // do not remove this option!
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "sourceMap": true,
-    "strict": true,
-    "target": "ES2022",
-    "useUnknownInCatchVariables": false
+    "skipLibCheck": true
   },
   "include": [
     "src/"

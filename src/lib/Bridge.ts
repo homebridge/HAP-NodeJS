@@ -1,4 +1,4 @@
-import { Accessory } from "./Accessory";
+import { Accessory } from './Accessory.js'
 
 /**
  * Bridge is a special type of HomeKit Accessory that hosts other Accessories "behind" it. This way you
@@ -9,7 +9,7 @@ import { Accessory } from "./Accessory";
  */
 export class Bridge extends Accessory {
   constructor(displayName: string, UUID: string) {
-    super(displayName, UUID);
-    this._isBridge = true;
+    super(displayName, UUID)
+    this._isBridge = true
   }
 }

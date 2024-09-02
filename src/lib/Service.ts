@@ -1,9 +1,7 @@
-import assert from "assert";
-import createDebug from "debug";
-import { EventEmitter } from "events";
-import { CharacteristicValue, Nullable, ServiceJsonObject, WithUUID } from "../types";
-import { CharacteristicWarning, CharacteristicWarningType } from "./Accessory";
-import { Characteristic, CharacteristicChange, CharacteristicEventTypes, SerializedCharacteristic } from "./Characteristic";
+/* global NodeJS */
+import type { CharacteristicValue, Nullable, ServiceJsonObject, WithUUID } from '../types'
+import type { CharacteristicWarning } from './Accessory'
+import type { CharacteristicChange, SerializedCharacteristic } from './Characteristic'
 import type {
   AccessCode,
   AccessControl,
@@ -76,34 +74,42 @@ import type {
   WiFiTransport,
   Window,
   WindowCovering,
-} from "./definitions";
-import { IdentifierCache } from "./model/IdentifierCache";
-import { HAPConnection } from "./util/eventedhttp";
-import { HapStatusError } from "./util/hapStatusError";
-import { toShortForm } from "./util/uuid";
-import { checkName } from "./util/checkName";
+} from './definitions'
+import type { IdentifierCache } from './model/IdentifierCache'
+import type { HAPConnection } from './util/eventedhttp'
+import type { HapStatusError } from './util/hapStatusError'
 
-const debug = createDebug("HAP-NodeJS:Service");
+import assert from 'node:assert'
+import { EventEmitter } from 'node:events'
+
+import createDebug from 'debug'
+
+import { CharacteristicWarningType } from './Accessory.js'
+import { Characteristic, CharacteristicEventTypes } from './Characteristic.js'
+import { checkName } from './util/checkName.js'
+import { toShortForm } from './util/uuid.js'
+
+const debug = createDebug('HAP-NodeJS:Service')
 
 /**
  * HAP spec allows a maximum of 100 characteristics per service!
  */
-const MAX_CHARACTERISTICS = 100;
+const MAX_CHARACTERISTICS = 100
 
 /**
  * @group Service
  */
 export interface SerializedService {
-  displayName: string,
-  UUID: string,
-  subtype?: string,
-  constructorName?: string,
+  displayName: string
+  UUID: string
+  subtype?: string
+  constructorName?: string
 
-  hiddenService?: boolean,
-  primaryService?: boolean,
+  hiddenService?: boolean
+  primaryService?: boolean
 
-  characteristics: SerializedCharacteristic[],
-  optionalCharacteristics?: SerializedCharacteristic[],
+  characteristics: SerializedCharacteristic[]
+  optionalCharacteristics?: SerializedCharacteristic[]
 }
 
 /**
@@ -111,34 +117,36 @@ export interface SerializedService {
  *
  * @group Service
  */
-export type ServiceId = string;
+export type ServiceId = string
 
 /**
  * @group Service
  */
-export type ServiceCharacteristicChange = CharacteristicChange & { characteristic: Characteristic };
+export type ServiceCharacteristicChange = CharacteristicChange & { characteristic: Characteristic }
 
 /**
  * @group Service
  */
+// eslint-disable-next-line no-restricted-syntax
 export const enum ServiceEventTypes {
-  CHARACTERISTIC_CHANGE = "characteristic-change",
-  SERVICE_CONFIGURATION_CHANGE = "service-configurationChange",
-  CHARACTERISTIC_WARNING = "characteristic-warning",
+  CHARACTERISTIC_CHANGE = 'characteristic-change',
+  SERVICE_CONFIGURATION_CHANGE = 'service-configurationChange',
+  CHARACTERISTIC_WARNING = 'characteristic-warning',
 }
 
 /**
  * @group Service
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
+// eslint-disable-next-line ts/no-unsafe-declaration-merging
 export declare interface Service {
-  on(event: "characteristic-change", listener: (change: ServiceCharacteristicChange) => void): this;
-  on(event: "service-configurationChange", listener: () => void): this;
-  on(event: "characteristic-warning", listener: (warning: CharacteristicWarning) => void): this;
-
-  emit(event: "characteristic-change", change: ServiceCharacteristicChange): boolean;
-  emit(event: "service-configurationChange"): boolean;
-  emit(event: "characteristic-warning", warning: CharacteristicWarning): boolean;
+  /* eslint-disable ts/method-signature-style */
+  on(event: 'characteristic-change', listener: (change: ServiceCharacteristicChange) => void): this
+  on(event: 'service-configurationChange', listener: () => void): this
+  on(event: 'characteristic-warning', listener: (warning: CharacteristicWarning) => void): this
+  emit(event: 'characteristic-change', change: ServiceCharacteristicChange): boolean
+  emit(event: 'service-configurationChange'): boolean
+  emit(event: 'characteristic-warning', warning: CharacteristicWarning): boolean
+  /* eslint-enable ts/method-signature-style */
 }
 
 /**
@@ -163,7 +171,7 @@ export declare interface Service {
  *
  * @group Service
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
+// eslint-disable-next-line ts/no-unsafe-declaration-merging
 export class Service extends EventEmitter {
   // Service MUST NOT have any other static variables
 
@@ -172,328 +180,328 @@ export class Service extends EventEmitter {
   /**
    * @group Service Definitions
    */
-  public static AccessCode: typeof AccessCode;
+  public static AccessCode: typeof AccessCode
   /**
    * @group Service Definitions
    */
-  public static AccessControl: typeof AccessControl;
+  public static AccessControl: typeof AccessControl
   /**
    * @group Service Definitions
    */
-  public static AccessoryInformation: typeof AccessoryInformation;
+  public static AccessoryInformation: typeof AccessoryInformation
   /**
    * @group Service Definitions
    */
-  public static AccessoryMetrics: typeof AccessoryMetrics;
+  public static AccessoryMetrics: typeof AccessoryMetrics
   /**
    * @group Service Definitions
    */
-  public static AccessoryRuntimeInformation: typeof AccessoryRuntimeInformation;
+  public static AccessoryRuntimeInformation: typeof AccessoryRuntimeInformation
   /**
    * @group Service Definitions
    */
-  public static AirPurifier: typeof AirPurifier;
+  public static AirPurifier: typeof AirPurifier
   /**
    * @group Service Definitions
    */
-  public static AirQualitySensor: typeof AirQualitySensor;
+  public static AirQualitySensor: typeof AirQualitySensor
   /**
    * @group Service Definitions
    */
-  public static AssetUpdate: typeof AssetUpdate;
+  public static AssetUpdate: typeof AssetUpdate
   /**
    * @group Service Definitions
    */
-  public static Assistant: typeof Assistant;
+  public static Assistant: typeof Assistant
   /**
    * @group Service Definitions
    */
-  public static AudioStreamManagement: typeof AudioStreamManagement;
+  public static AudioStreamManagement: typeof AudioStreamManagement
   /**
    * @group Service Definitions
    */
-  public static Battery: typeof Battery;
+  public static Battery: typeof Battery
   /**
    * @group Service Definitions
    */
-  public static CameraOperatingMode: typeof CameraOperatingMode;
+  public static CameraOperatingMode: typeof CameraOperatingMode
   /**
    * @group Service Definitions
    */
-  public static CameraRecordingManagement: typeof CameraRecordingManagement;
+  public static CameraRecordingManagement: typeof CameraRecordingManagement
   /**
    * @group Service Definitions
    */
-  public static CameraRTPStreamManagement: typeof CameraRTPStreamManagement;
+  public static CameraRTPStreamManagement: typeof CameraRTPStreamManagement
   /**
    * @group Service Definitions
    */
-  public static CarbonDioxideSensor: typeof CarbonDioxideSensor;
+  public static CarbonDioxideSensor: typeof CarbonDioxideSensor
   /**
    * @group Service Definitions
    */
-  public static CarbonMonoxideSensor: typeof CarbonMonoxideSensor;
+  public static CarbonMonoxideSensor: typeof CarbonMonoxideSensor
   /**
    * @group Service Definitions
    */
-  public static ContactSensor: typeof ContactSensor;
+  public static ContactSensor: typeof ContactSensor
   /**
    * @group Service Definitions
    */
-  public static DataStreamTransportManagement: typeof DataStreamTransportManagement;
+  public static DataStreamTransportManagement: typeof DataStreamTransportManagement
   /**
    * @group Service Definitions
    */
-  public static Diagnostics: typeof Diagnostics;
+  public static Diagnostics: typeof Diagnostics
   /**
    * @group Service Definitions
    */
-  public static Door: typeof Door;
+  public static Door: typeof Door
   /**
    * @group Service Definitions
    */
-  public static Doorbell: typeof Doorbell;
+  public static Doorbell: typeof Doorbell
   /**
    * @group Service Definitions
    */
-  public static Fan: typeof Fan;
+  public static Fan: typeof Fan
   /**
    * @group Service Definitions
    */
-  public static Fanv2: typeof Fanv2;
+  public static Fanv2: typeof Fanv2
   /**
    * @group Service Definitions
    */
-  public static Faucet: typeof Faucet;
+  public static Faucet: typeof Faucet
   /**
    * @group Service Definitions
    */
-  public static FilterMaintenance: typeof FilterMaintenance;
+  public static FilterMaintenance: typeof FilterMaintenance
   /**
    * @group Service Definitions
    */
-  public static FirmwareUpdate: typeof FirmwareUpdate;
+  public static FirmwareUpdate: typeof FirmwareUpdate
   /**
    * @group Service Definitions
    */
-  public static GarageDoorOpener: typeof GarageDoorOpener;
+  public static GarageDoorOpener: typeof GarageDoorOpener
   /**
    * @group Service Definitions
    */
-  public static HeaterCooler: typeof HeaterCooler;
+  public static HeaterCooler: typeof HeaterCooler
   /**
    * @group Service Definitions
    */
-  public static HumidifierDehumidifier: typeof HumidifierDehumidifier;
+  public static HumidifierDehumidifier: typeof HumidifierDehumidifier
   /**
    * @group Service Definitions
    */
-  public static HumiditySensor: typeof HumiditySensor;
+  public static HumiditySensor: typeof HumiditySensor
   /**
    * @group Service Definitions
    */
-  public static InputSource: typeof InputSource;
+  public static InputSource: typeof InputSource
   /**
    * @group Service Definitions
    */
-  public static IrrigationSystem: typeof IrrigationSystem;
+  public static IrrigationSystem: typeof IrrigationSystem
   /**
    * @group Service Definitions
    */
-  public static LeakSensor: typeof LeakSensor;
+  public static LeakSensor: typeof LeakSensor
   /**
    * @group Service Definitions
    */
-  public static Lightbulb: typeof Lightbulb;
+  public static Lightbulb: typeof Lightbulb
   /**
    * @group Service Definitions
    */
-  public static LightSensor: typeof LightSensor;
+  public static LightSensor: typeof LightSensor
   /**
    * @group Service Definitions
    */
-  public static LockManagement: typeof LockManagement;
+  public static LockManagement: typeof LockManagement
   /**
    * @group Service Definitions
    */
-  public static LockMechanism: typeof LockMechanism;
+  public static LockMechanism: typeof LockMechanism
   /**
    * @group Service Definitions
    */
-  public static Microphone: typeof Microphone;
+  public static Microphone: typeof Microphone
   /**
    * @group Service Definitions
    */
-  public static MotionSensor: typeof MotionSensor;
+  public static MotionSensor: typeof MotionSensor
   /**
    * @group Service Definitions
    */
-  public static NFCAccess: typeof NFCAccess;
+  public static NFCAccess: typeof NFCAccess
   /**
    * @group Service Definitions
    */
-  public static OccupancySensor: typeof OccupancySensor;
+  public static OccupancySensor: typeof OccupancySensor
   /**
    * @group Service Definitions
    */
-  public static Outlet: typeof Outlet;
+  public static Outlet: typeof Outlet
   /**
    * @group Service Definitions
    */
-  public static Pairing: typeof Pairing;
+  public static Pairing: typeof Pairing
   /**
    * @group Service Definitions
    */
-  public static PowerManagement: typeof PowerManagement;
+  public static PowerManagement: typeof PowerManagement
   /**
    * @group Service Definitions
    */
-  public static ProtocolInformation: typeof ProtocolInformation;
+  public static ProtocolInformation: typeof ProtocolInformation
   /**
    * @group Service Definitions
    */
-  public static SecuritySystem: typeof SecuritySystem;
+  public static SecuritySystem: typeof SecuritySystem
   /**
    * @group Service Definitions
    */
-  public static ServiceLabel: typeof ServiceLabel;
+  public static ServiceLabel: typeof ServiceLabel
   /**
    * @group Service Definitions
    */
-  public static Siri: typeof Siri;
+  public static Siri: typeof Siri
   /**
    * @group Service Definitions
    */
-  public static SiriEndpoint: typeof SiriEndpoint;
+  public static SiriEndpoint: typeof SiriEndpoint
   /**
    * @group Service Definitions
    */
-  public static Slats: typeof Slats;
+  public static Slats: typeof Slats
   /**
    * @group Service Definitions
    */
-  public static SmartSpeaker: typeof SmartSpeaker;
+  public static SmartSpeaker: typeof SmartSpeaker
   /**
    * @group Service Definitions
    */
-  public static SmokeSensor: typeof SmokeSensor;
+  public static SmokeSensor: typeof SmokeSensor
   /**
    * @group Service Definitions
    */
-  public static Speaker: typeof Speaker;
+  public static Speaker: typeof Speaker
   /**
    * @group Service Definitions
    */
-  public static StatefulProgrammableSwitch: typeof StatefulProgrammableSwitch;
+  public static StatefulProgrammableSwitch: typeof StatefulProgrammableSwitch
   /**
    * @group Service Definitions
    */
-  public static StatelessProgrammableSwitch: typeof StatelessProgrammableSwitch;
+  public static StatelessProgrammableSwitch: typeof StatelessProgrammableSwitch
   /**
    * @group Service Definitions
    */
-  public static Switch: typeof Switch;
+  public static Switch: typeof Switch
   /**
    * @group Service Definitions
    */
-  public static TapManagement: typeof TapManagement;
+  public static TapManagement: typeof TapManagement
   /**
    * @group Service Definitions
    */
-  public static TargetControl: typeof TargetControl;
+  public static TargetControl: typeof TargetControl
   /**
    * @group Service Definitions
    */
-  public static TargetControlManagement: typeof TargetControlManagement;
+  public static TargetControlManagement: typeof TargetControlManagement
   /**
    * @group Service Definitions
    */
-  public static Television: typeof Television;
+  public static Television: typeof Television
   /**
    * @group Service Definitions
    */
-  public static TelevisionSpeaker: typeof TelevisionSpeaker;
+  public static TelevisionSpeaker: typeof TelevisionSpeaker
   /**
    * @group Service Definitions
    */
-  public static TemperatureSensor: typeof TemperatureSensor;
+  public static TemperatureSensor: typeof TemperatureSensor
   /**
    * @group Service Definitions
    */
-  public static Thermostat: typeof Thermostat;
+  public static Thermostat: typeof Thermostat
   /**
    * @group Service Definitions
    */
-  public static ThreadTransport: typeof ThreadTransport;
+  public static ThreadTransport: typeof ThreadTransport
   /**
    * @group Service Definitions
    */
-  public static TransferTransportManagement: typeof TransferTransportManagement;
+  public static TransferTransportManagement: typeof TransferTransportManagement
   /**
    * @group Service Definitions
    */
-  public static Valve: typeof Valve;
+  public static Valve: typeof Valve
   /**
    * @group Service Definitions
    */
-  public static WiFiRouter: typeof WiFiRouter;
+  public static WiFiRouter: typeof WiFiRouter
   /**
    * @group Service Definitions
    */
-  public static WiFiSatellite: typeof WiFiSatellite;
+  public static WiFiSatellite: typeof WiFiSatellite
   /**
    * @group Service Definitions
    */
-  public static WiFiTransport: typeof WiFiTransport;
+  public static WiFiTransport: typeof WiFiTransport
   /**
    * @group Service Definitions
    */
-  public static Window: typeof Window;
+  public static Window: typeof Window
   /**
    * @group Service Definitions
    */
-  public static WindowCovering: typeof WindowCovering;
+  public static WindowCovering: typeof WindowCovering
   // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
   // NOTICE: when adding/changing properties, remember to possibly adjust the serialize/deserialize functions
-  public displayName: string;
-  public UUID: string;
-  subtype?: string;
-  iid: Nullable<number> = null; // assigned later by our containing Accessory
-  name: Nullable<string> = null;
-  characteristics: Characteristic[] = [];
-  optionalCharacteristics: Characteristic[] = [];
+  public displayName: string
+  public UUID: string
+  subtype?: string
+  iid: Nullable<number> = null // assigned later by our containing Accessory
+  name: Nullable<string> = null
+  characteristics: Characteristic[] = []
+  optionalCharacteristics: Characteristic[] = []
   /**
    * @private
    */
-  isHiddenService = false;
+  isHiddenService = false
   /**
    * @private
    */
-  isPrimaryService = false; // do not write to this directly
+  isPrimaryService = false // do not write to this directly
   /**
    * @private
    */
-  linkedServices: Service[] = [];
+  linkedServices: Service[] = []
 
-  public constructor(displayName = "", UUID: string, subtype?: string) {
-    super();
-    assert(UUID, "Services must be created with a valid UUID.");
-    this.displayName = displayName;
-    this.UUID = UUID;
-    this.subtype = subtype;
+  public constructor(displayName = '', UUID: string, subtype?: string) {
+    super()
+    assert(UUID, 'Services must be created with a valid UUID.')
+    this.displayName = displayName
+    this.UUID = UUID
+    this.subtype = subtype
 
     // every service has an optional Characteristic.Name property - we'll set it to our displayName
     // if one was given
     // if you don't provide a display name, some HomeKit apps may choose to hide the device.
     if (displayName) {
       // create the characteristic if necessary
-      checkName(this.displayName, "Name", displayName);
-      const nameCharacteristic =
-        this.getCharacteristic(Characteristic.Name) ||
-        this.addCharacteristic(Characteristic.Name);
+      checkName(this.displayName, 'Name', displayName)
+      const nameCharacteristic
+        = this.getCharacteristic(Characteristic.Name)
+        || this.addCharacteristic(Characteristic.Name)
 
-      nameCharacteristic.updateValue(displayName);
+      nameCharacteristic.updateValue(displayName)
     }
   }
 
@@ -505,40 +513,39 @@ export class Service extends EventEmitter {
    * @returns the serviceId
    */
   public getServiceId(): ServiceId {
-    return this.UUID + (this.subtype || "");
+    return this.UUID + (this.subtype || '')
   }
 
   public addCharacteristic(input: Characteristic): Characteristic
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public addCharacteristic(input: { new (...args: any[]): Characteristic }, ...constructorArgs: any[]): Characteristic
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public addCharacteristic(input: Characteristic | {new (...args: any[]): Characteristic}, ...constructorArgs: any[]): Characteristic {
+  public addCharacteristic(input: Characteristic | { new (...args: any[]): Characteristic }, ...constructorArgs: any[]): Characteristic {
     // characteristic might be a constructor like `Characteristic.Brightness` instead of an instance of Characteristic. Coerce if necessary.
 
-    const characteristic = typeof input === "function"? new input(...constructorArgs): input;
+    // eslint-disable-next-line new-cap
+    const characteristic = typeof input === 'function' ? new input(...constructorArgs) : input
 
     // check for UUID conflict
     for (const existing of this.characteristics) {
       if (existing.UUID === characteristic.UUID) {
-        if (characteristic.UUID === "00000052-0000-1000-8000-0026BB765291") {
-          //This is a special workaround for the Firmware Revision characteristic.
-          return existing;
+        if (characteristic.UUID === '00000052-0000-1000-8000-0026BB765291') {
+          // This is a special workaround for the Firmware Revision characteristic.
+          return existing
         }
-        throw new Error("Cannot add a Characteristic with the same UUID as another Characteristic in this Service: " + existing.UUID);
+        throw new Error(`Cannot add a Characteristic with the same UUID as another Characteristic in this Service: ${existing.UUID}`)
       }
     }
 
     if (this.characteristics.length >= MAX_CHARACTERISTICS) {
-      throw new Error("Cannot add more than " + MAX_CHARACTERISTICS + " characteristics to a single service!");
+      throw new Error(`Cannot add more than ${MAX_CHARACTERISTICS} characteristics to a single service!`)
     }
 
-    this.setupCharacteristicEventHandlers(characteristic);
+    this.setupCharacteristicEventHandlers(characteristic)
 
-    this.characteristics.push(characteristic);
+    this.characteristics.push(characteristic)
 
-    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
+    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE)
 
-    return characteristic;
+    return characteristic
   }
 
   /**
@@ -550,8 +557,8 @@ export class Service extends EventEmitter {
    * @param isPrimary - optional boolean (default true) if the service should be the primary service
    */
   public setPrimaryService(isPrimary = true): void {
-    this.isPrimaryService = isPrimary;
-    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
+    this.isPrimaryService = isPrimary
+    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE)
   }
 
   /**
@@ -560,8 +567,8 @@ export class Service extends EventEmitter {
    * @param isHidden - optional boolean (default true) if the service should be marked hidden
    */
   public setHiddenService(isHidden = true): void {
-    this.isHiddenService = isHidden;
-    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
+    this.isHiddenService = isHidden
+    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE)
   }
 
   /**
@@ -571,11 +578,11 @@ export class Service extends EventEmitter {
    * @param service - The service this service should link to
    */
   public addLinkedService(service: Service): void {
-    //TODO: Add a check if the service is on the same accessory.
+    // TODO: Add a check if the service is on the same accessory.
     if (!this.linkedServices.includes(service)) {
-      this.linkedServices.push(service);
+      this.linkedServices.push(service)
     }
-    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
+    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE)
   }
 
   /**
@@ -584,76 +591,75 @@ export class Service extends EventEmitter {
    * @param service - Previously linked service
    */
   public removeLinkedService(service: Service): void {
-    //TODO: Add a check if the service is on the same accessory.
-    const index = this.linkedServices.indexOf(service);
+    // TODO: Add a check if the service is on the same accessory.
+    const index = this.linkedServices.indexOf(service)
     if (index !== -1) {
-      this.linkedServices.splice(index, 1);
+      this.linkedServices.splice(index, 1)
     }
-    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
+    this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE)
   }
 
   public removeCharacteristic(characteristic: Characteristic): void {
-    const index = this.characteristics.indexOf(characteristic);
+    const index = this.characteristics.indexOf(characteristic)
     if (index !== -1) {
-      this.characteristics.splice(index, 1);
-      characteristic.removeAllListeners();
+      this.characteristics.splice(index, 1)
+      characteristic.removeAllListeners()
 
-      this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE);
+      this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE)
     }
   }
 
   // If a Characteristic constructor is passed a Characteristic object will always be returned
-  public getCharacteristic(constructor: WithUUID<{new (): Characteristic}>): Characteristic
+  public getCharacteristic(constructor: WithUUID<{ new (): Characteristic }>): Characteristic
   // Still support using a Characteristic constructor or a name so "passing though" a value still works
   // https://www.typescriptlang.org/docs/handbook/declaration-files/do-s-and-don-ts.html#use-union-types
-  public getCharacteristic(name: string | WithUUID<{new (): Characteristic}>): Characteristic | undefined
-  public getCharacteristic(name: string | WithUUID<{new (): Characteristic}>): Characteristic | undefined {
+  public getCharacteristic(name: string | WithUUID<{ new (): Characteristic }>): Characteristic | undefined
+  public getCharacteristic(name: string | WithUUID<{ new (): Characteristic }>): Characteristic | undefined {
     // returns a characteristic object from the service
     // If  Service.prototype.getCharacteristic(Characteristic.Type)  does not find the characteristic,
     // but the type is in optionalCharacteristics, it adds the characteristic.type to the service and returns it.
 
     for (const characteristic of this.characteristics) {
-      if (typeof name === "string" && characteristic.displayName === name) {
-        return characteristic;
+      if (typeof name === 'string' && characteristic.displayName === name) {
+        return characteristic
       } else {
         // @ts-expect-error ('UUID' does not exist on type 'never')
-        if (typeof name === "function" && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
-          return characteristic;
+        if (typeof name === 'function' && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
+          return characteristic
         }
       }
     }
-    if (typeof name === "function") {
+    if (typeof name === 'function') {
       for (const characteristic of this.optionalCharacteristics) {
         // @ts-expect-error ('UUID' does not exist on type 'never')
         if ((characteristic instanceof name) || (name.UUID === characteristic.UUID)) {
-          return this.addCharacteristic(name);
+          return this.addCharacteristic(name)
         }
       }
 
-      const instance = this.addCharacteristic(name);
+      const instance = this.addCharacteristic(name)
       // Not found in optional Characteristics. Adding anyway, but warning about it if it isn't the Name.
       if (name.UUID !== Characteristic.Name.UUID) {
-        this.emitCharacteristicWarningEvent(instance, CharacteristicWarningType.WARN_MESSAGE,
-          "Characteristic not in required or optional characteristic section for service " + this.constructor.name + ". Adding anyway.");
+        this.emitCharacteristicWarningEvent(instance, CharacteristicWarningType.WARN_MESSAGE, `Characteristic not in required or optional characteristic section for service ${this.constructor.name}. Adding anyway.`)
       }
 
-      return instance;
+      return instance
     }
   }
 
   public testCharacteristic<T extends WithUUID<typeof Characteristic>>(name: string | T): boolean {
     // checks for the existence of a characteristic object in the service
     for (const characteristic of this.characteristics) {
-      if (typeof name === "string" && characteristic.displayName === name) {
-        return true;
+      if (typeof name === 'string' && characteristic.displayName === name) {
+        return true
       } else {
         // @ts-expect-error ('UUID' does not exist on type 'never')
-        if (typeof name === "function" && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
-          return true;
+        if (typeof name === 'function' && ((characteristic instanceof name) || (name.UUID === characteristic.UUID))) {
+          return true
         }
       }
     }
-    return false;
+    return false
   }
 
   /**
@@ -670,7 +676,7 @@ export class Service extends EventEmitter {
    *
    * Note: If you don't want the {@link CharacteristicEventTypes.SET} to be called, refer to {@link updateCharacteristic}.
    */
-  public setCharacteristic<T extends WithUUID<{new (): Characteristic}>>(name: string | T, value: CharacteristicValue): Service;
+  public setCharacteristic<T extends WithUUID<{ new (): Characteristic }>>(name: string | T, value: CharacteristicValue): Service
   /**
    * Sets the state of the characteristic to an errored state.
    *
@@ -691,17 +697,17 @@ export class Service extends EventEmitter {
    * @param error - The error object
    *
    * Note: Erroneous state is never **pushed** to the client side. Only, if the HomeKit client requests the current
-   *  state of the Characteristic, the corresponding {@link HapStatusError} is returned. As described above,
-   *  any {@link Characteristic.onGet} or {@link CharacteristicEventTypes.GET} handlers have preference.
+   * state of the Characteristic, the corresponding {@link HapStatusError} is returned. As described above,
+   * any {@link Characteristic.onGet} or {@link CharacteristicEventTypes.GET} handlers have preference.
    */
-  public setCharacteristic<T extends WithUUID<{new (): Characteristic}>>(name: string | T, error: HapStatusError | Error): Service
-  public setCharacteristic<T extends WithUUID<{new (): Characteristic}>>(
+  public setCharacteristic<T extends WithUUID<{ new (): Characteristic }>>(name: string | T, error: HapStatusError | Error): Service
+  public setCharacteristic<T extends WithUUID<{ new (): Characteristic }>>(
     name: string | T,
     value: CharacteristicValue | HapStatusError | Error,
   ): Service {
     // @ts-expect-error: We know that both overloads exists individually. There is just no publicly exposed type for that!
-    this.getCharacteristic(name)!.setValue(value);
-    return this; // for chaining
+    this.getCharacteristic(name)!.setValue(value)
+    return this // for chaining
   }
 
   /**
@@ -711,7 +717,7 @@ export class Service extends EventEmitter {
    * @param name - The name or the constructor of the desired {@link Characteristic}.
    * @param value - The new value.
    */
-  public updateCharacteristic<T extends WithUUID<{new (): Characteristic}>>(name: string | T, value: Nullable<CharacteristicValue>): Service;
+  public updateCharacteristic<T extends WithUUID<{ new (): Characteristic }>>(name: string | T, value: Nullable<CharacteristicValue>): Service
   /**
    * Sets the state of the characteristic to an errored state.
    * If a {@link Characteristic.onGet} or {@link CharacteristicEventTypes.GET} handler is set up,
@@ -729,29 +735,28 @@ export class Service extends EventEmitter {
    * guide for more information on how to present erroneous state to the user.
    *
    * Note: Erroneous state is never **pushed** to the client side. Only, if the HomeKit client requests the current
-   *  state of the Characteristic, the corresponding {@link HapStatusError} is returned. As described above,
-   *  any {@link Characteristic.onGet} or {@link CharacteristicEventTypes.GET} handlers have precedence.
+   * state of the Characteristic, the corresponding {@link HapStatusError} is returned. As described above,
+   * any {@link Characteristic.onGet} or {@link CharacteristicEventTypes.GET} handlers have precedence.
    */
-  public updateCharacteristic<T extends WithUUID<{new (): Characteristic}>>(name: string | T, error: HapStatusError | Error): Service
-  public updateCharacteristic<T extends WithUUID<{new (): Characteristic}>>(
+  public updateCharacteristic<T extends WithUUID<{ new (): Characteristic }>>(name: string | T, error: HapStatusError | Error): Service
+  public updateCharacteristic<T extends WithUUID<{ new (): Characteristic }>>(
     name: string | T,
     value: Nullable<CharacteristicValue> | HapStatusError | Error,
   ): Service {
-    this.getCharacteristic(name)!.updateValue(value);
-    return this;
+    this.getCharacteristic(name)!.updateValue(value)
+    return this
   }
 
-  public addOptionalCharacteristic(characteristic: Characteristic | {new (): Characteristic}): void {
+  public addOptionalCharacteristic(characteristic: Characteristic | { new (): Characteristic }): void {
     // characteristic might be a constructor like `Characteristic.Brightness` instead of an instance
     // of Characteristic. Coerce if necessary.
-    if (typeof characteristic === "function") {
-      characteristic = new characteristic() as Characteristic;
+    if (typeof characteristic === 'function') {
+      characteristic = new characteristic() as Characteristic // eslint-disable-line new-cap
     }
 
-    this.optionalCharacteristics.push(characteristic);
+    this.optionalCharacteristics.push(characteristic)
   }
 
-  // noinspection JSUnusedGlobalSymbols
   /**
    * This method was created to copy all characteristics from another service to this.
    * It's only adopting is currently in homebridge to merge the AccessoryInformation service. So some things
@@ -760,31 +765,31 @@ export class Service extends EventEmitter {
    * It will not remove characteristics which are present currently but not added on the other characteristic.
    * It will not replace the characteristic if the value is falsy (except of '0' or 'false')
    * @param service
-   * @private used by homebridge
+   * @private
    */
   replaceCharacteristicsFromService(service: Service): void {
     if (this.UUID !== service.UUID) {
-      throw new Error(`Incompatible services. Tried replacing characteristics of ${this.UUID} with characteristics from ${service.UUID}`);
+      throw new Error(`Incompatible services. Tried replacing characteristics of ${this.UUID} with characteristics from ${service.UUID}`)
     }
 
-    const foreignCharacteristics: Record<string, Characteristic> = {}; // index foreign characteristics by UUID
-    service.characteristics.forEach(characteristic => foreignCharacteristics[characteristic.UUID] = characteristic);
+    const foreignCharacteristics: Record<string, Characteristic> = {} // index foreign characteristics by UUID
+    service.characteristics.forEach(characteristic => foreignCharacteristics[characteristic.UUID] = characteristic)
 
-    this.characteristics.forEach(characteristic => {
-      const foreignCharacteristic = foreignCharacteristics[characteristic.UUID];
+    this.characteristics.forEach((characteristic) => {
+      const foreignCharacteristic = foreignCharacteristics[characteristic.UUID]
       if (foreignCharacteristic) {
-        delete foreignCharacteristics[characteristic.UUID];
+        delete foreignCharacteristics[characteristic.UUID]
 
         if (!foreignCharacteristic.value && foreignCharacteristic.value !== 0 && foreignCharacteristic.value !== false) {
-          return; // ignore falsy values except if it's the number zero or literally false
+          return // ignore falsy values except if it's the number zero or literally false
         }
 
-        characteristic.replaceBy(foreignCharacteristic);
+        characteristic.replaceBy(foreignCharacteristic)
       }
-    });
+    })
 
     // add all additional characteristics which where not present already
-    Object.values(foreignCharacteristics).forEach(characteristic => this.addCharacteristic(characteristic));
+    Object.values(foreignCharacteristics).forEach(characteristic => this.addCharacteristic(characteristic))
   }
 
   /**
@@ -793,7 +798,7 @@ export class Service extends EventEmitter {
   getCharacteristicByIID(iid: number): Characteristic | undefined {
     for (const characteristic of this.characteristics) {
       if (characteristic.iid === iid) {
-        return characteristic;
+        return characteristic
       }
     }
   }
@@ -803,38 +808,38 @@ export class Service extends EventEmitter {
    */
   _assignIDs(identifierCache: IdentifierCache, accessoryName: string, baseIID = 0): void {
     // the Accessory Information service must have a (reserved by IdentifierCache) ID of 1
-    if (this.UUID === "0000003E-0000-1000-8000-0026BB765291") {
-      this.iid = 1;
+    if (this.UUID === '0000003E-0000-1000-8000-0026BB765291') {
+      this.iid = 1
     } else {
       // assign our own ID based on our UUID
-      this.iid = baseIID + identifierCache.getIID(accessoryName, this.UUID, this.subtype);
+      this.iid = baseIID + identifierCache.getIID(accessoryName, this.UUID, this.subtype)
     }
 
     // assign IIDs to our Characteristics
     for (const characteristic of this.characteristics) {
-      characteristic._assignID(identifierCache, accessoryName, this.UUID, this.subtype);
+      characteristic._assignID(identifierCache, accessoryName, this.UUID, this.subtype)
     }
   }
 
   /**
    * Returns a JSON representation of this service suitable for delivering to HAP clients.
-   * @private used to generate response to /accessories query
+   * @private
    */
   toHAP(connection: HAPConnection, contactGetHandlers = true): Promise<ServiceJsonObject> {
-    return new Promise(resolve => {
-      assert(this.iid, "iid cannot be undefined for service '" + this.displayName + "'");
-      assert(this.characteristics.length, "service '" + this.displayName + "' does not have any characteristics!");
+    return new Promise((resolve) => {
+      assert(this.iid, `iid cannot be undefined for service '${this.displayName}'`)
+      assert(this.characteristics.length, `service '${this.displayName}' does not have any characteristics!`)
 
       const service: ServiceJsonObject = {
         type: toShortForm(this.UUID),
         iid: this.iid!,
         characteristics: [],
-        hidden: this.isHiddenService? true: undefined,
-        primary: this.isPrimaryService? true: undefined,
-      };
+        hidden: this.isHiddenService ? true : undefined,
+        primary: this.isPrimaryService ? true : undefined,
+      }
 
       if (this.linkedServices.length) {
-        service.linked = [];
+        service.linked = []
         for (const linked of this.linkedServices) {
           if (!linked.iid) {
             // we got a linked service which is not added to the accessory
@@ -842,75 +847,73 @@ export class Service extends EventEmitter {
             // we have some (at least one) plugins on homebridge which link to the AccessoryInformation service.
             // homebridge always creates its own AccessoryInformation service and ignores the user supplied one
             // thus the link is automatically broken.
-            debug(`iid of linked service '${linked.displayName}' ${linked.UUID} is undefined on service '${this.displayName}'`);
-            continue;
+            debug(`iid of linked service '${linked.displayName}' ${linked.UUID} is undefined on service '${this.displayName}'`)
+            continue
           }
-          service.linked.push(linked.iid!);
+          service.linked.push(linked.iid!)
         }
       }
 
-      const missingCharacteristics: Set<Characteristic> = new Set();
+      const missingCharacteristics: Set<Characteristic> = new Set()
       let timeout: NodeJS.Timeout | undefined = setTimeout(() => {
         for (const characteristic of missingCharacteristics) {
-          this.emitCharacteristicWarningEvent(characteristic, CharacteristicWarningType.SLOW_READ,
-            `The read handler for the characteristic '${characteristic.displayName}' was slow to respond!`);
+          this.emitCharacteristicWarningEvent(characteristic, CharacteristicWarningType.SLOW_READ, `The read handler for the characteristic '${characteristic.displayName}' was slow to respond!`)
         }
 
         timeout = setTimeout(() => {
-          timeout = undefined;
+          timeout = undefined
 
           for (const characteristic of missingCharacteristics) {
-            this.emitCharacteristicWarningEvent(characteristic, CharacteristicWarningType.TIMEOUT_READ,
-              "The read handler for the characteristic '" + characteristic?.displayName +
-              "' didn't respond at all!. Please check that you properly call the callback!");
-            service.characteristics.push(characteristic.internalHAPRepresentation()); // value is set to null
+            this.emitCharacteristicWarningEvent(characteristic, CharacteristicWarningType.TIMEOUT_READ, `The read handler for the characteristic '${characteristic?.displayName
+            }' didn't respond at all!. Please check that you properly call the callback!`)
+            service.characteristics.push(characteristic.internalHAPRepresentation()) // value is set to null
           }
 
-          missingCharacteristics.clear();
-          resolve(service);
-        }, 6000);
-      }, 3000);
+          missingCharacteristics.clear()
+          resolve(service)
+        }, 6000)
+      }, 3000)
 
       for (const characteristic of this.characteristics) {
-        missingCharacteristics.add(characteristic);
-        characteristic.toHAP(connection, contactGetHandlers).then(value => {
+        missingCharacteristics.add(characteristic)
+        characteristic.toHAP(connection, contactGetHandlers).then((value) => {
           if (!timeout) {
-            return; // if timeout is undefined, response was already sent out
+            return // if timeout is undefined, response was already sent out
           }
 
-          missingCharacteristics.delete(characteristic);
-          service.characteristics.push(value);
+          missingCharacteristics.delete(characteristic)
+          service.characteristics.push(value)
 
           if (missingCharacteristics.size === 0) {
             if (timeout) {
-              clearTimeout(timeout);
-              timeout = undefined;
+              clearTimeout(timeout)
+              timeout = undefined
             }
-            resolve(service);
+            resolve(service)
           }
-        });
+        })
       }
-    });
+    })
   }
 
   /**
    * Returns a JSON representation of this service without characteristic values.
-   * @private used to generate the config hash
+   * @private
    */
   internalHAPRepresentation(): ServiceJsonObject {
-    assert(this.iid, "iid cannot be undefined for service '" + this.displayName + "'");
-    assert(this.characteristics.length, "service '" + this.displayName + "' does not have any characteristics!");
+    assert(this.iid, `iid cannot be undefined for service '${this.displayName}'`)
+    assert(this.characteristics.length, `service '${this.displayName}' does not have any characteristics!`)
 
     const service: ServiceJsonObject = {
       type: toShortForm(this.UUID),
       iid: this.iid!,
       characteristics: this.characteristics.map(characteristic => characteristic.internalHAPRepresentation()),
-      hidden: this.isHiddenService? true: undefined,
-      primary: this.isPrimaryService? true: undefined,
-    };
+      hidden: this.isHiddenService ? true : undefined,
+      primary: this.isPrimaryService ? true : undefined,
+    }
 
     if (this.linkedServices.length) {
-      service.linked = [];
+      service.linked = []
       for (const linked of this.linkedServices) {
         if (!linked.iid) {
           // we got a linked service which is not added to the accessory
@@ -918,14 +921,14 @@ export class Service extends EventEmitter {
           // we have some (at least one) plugins on homebridge which link to the AccessoryInformation service.
           // homebridge always creates its own AccessoryInformation service and ignores the user supplied one
           // thus the link is automatically broken.
-          debug(`iid of linked service '${linked.displayName}' ${linked.UUID} is undefined on service '${this.displayName}'`);
-          continue;
+          debug(`iid of linked service '${linked.displayName}' ${linked.UUID} is undefined on service '${this.displayName}'`)
+          continue
         }
-        service.linked.push(linked.iid!);
+        service.linked.push(linked.iid!)
       }
     }
 
-    return service;
+    return service
   }
 
   /**
@@ -934,10 +937,10 @@ export class Service extends EventEmitter {
   private setupCharacteristicEventHandlers(characteristic: Characteristic): void {
     // listen for changes in characteristics and bubble them up
     characteristic.on(CharacteristicEventTypes.CHANGE, (change: CharacteristicChange) => {
-      this.emit(ServiceEventTypes.CHARACTERISTIC_CHANGE, { ...change, characteristic: characteristic });
-    });
+      this.emit(ServiceEventTypes.CHARACTERISTIC_CHANGE, { ...change, characteristic })
+    })
 
-    characteristic.on(CharacteristicEventTypes.CHARACTERISTIC_WARNING, this.emitCharacteristicWarningEvent.bind(this, characteristic));
+    characteristic.on(CharacteristicEventTypes.CHARACTERISTIC_WARNING, this.emitCharacteristicWarningEvent.bind(this, characteristic))
   }
 
   /**
@@ -945,12 +948,12 @@ export class Service extends EventEmitter {
    */
   private emitCharacteristicWarningEvent(characteristic: Characteristic, type: CharacteristicWarningType, message: string, stack?: string): void {
     this.emit(ServiceEventTypes.CHARACTERISTIC_WARNING, {
-      characteristic: characteristic,
-      type: type,
-      message: message,
+      characteristic,
+      type,
+      message,
       originatorChain: [this.displayName, characteristic.displayName],
-      stack: stack,
-    });
+      stack,
+    })
   }
 
   /**
@@ -958,19 +961,19 @@ export class Service extends EventEmitter {
    */
   private _sideloadCharacteristics(targetCharacteristics: Characteristic[]): void {
     for (const target of targetCharacteristics) {
-      this.setupCharacteristicEventHandlers(target);
+      this.setupCharacteristicEventHandlers(target)
     }
 
-    this.characteristics = targetCharacteristics.slice();
+    this.characteristics = targetCharacteristics.slice()
   }
 
   /**
    * @private
    */
   static serialize(service: Service): SerializedService {
-    let constructorName: string | undefined;
-    if (service.constructor.name !== "Service") {
-      constructorName = service.constructor.name;
+    let constructorName: string | undefined
+    if (service.constructor.name !== 'Service') {
+      constructorName = service.constructor.name
     }
 
     return {
@@ -978,46 +981,47 @@ export class Service extends EventEmitter {
       UUID: service.UUID,
       subtype: service.subtype,
 
-      constructorName: constructorName,
+      constructorName,
 
       hiddenService: service.isHiddenService,
       primaryService: service.isPrimaryService,
 
       characteristics: service.characteristics.map(characteristic => Characteristic.serialize(characteristic)),
       optionalCharacteristics: service.optionalCharacteristics.map(characteristic => Characteristic.serialize(characteristic)),
-    };
+    }
   }
 
   /**
    * @private
    */
   static deserialize(json: SerializedService): Service {
-    let service: Service;
+    let service: Service
 
     if (json.constructorName && json.constructorName.charAt(0).toUpperCase() === json.constructorName.charAt(0)
       && Service[json.constructorName as keyof (typeof Service)]) { // MUST start with uppercase character and must exist on Service object
-      const constructor = Service[json.constructorName as keyof (typeof Service)] as { new(displayName?: string, subtype?: string): Service };
-      service = new constructor(json.displayName, json.subtype);
+      const constructor = Service[json.constructorName as keyof (typeof Service)] as { new(displayName?: string, subtype?: string): Service }
+      service = new constructor(json.displayName, json.subtype)
     } else {
-      service = new Service(json.displayName, json.UUID, json.subtype);
+      service = new Service(json.displayName, json.UUID, json.subtype)
     }
 
-    service.isHiddenService = !!json.hiddenService;
-    service.isPrimaryService = !!json.primaryService;
+    service.isHiddenService = !!json.hiddenService
+    service.isPrimaryService = !!json.primaryService
 
-    const characteristics = json.characteristics.map(serialized => Characteristic.deserialize(serialized));
-    service._sideloadCharacteristics(characteristics);
+    const characteristics = json.characteristics.map(serialized => Characteristic.deserialize(serialized))
+    service._sideloadCharacteristics(characteristics)
 
     if (json.optionalCharacteristics) {
-      service.optionalCharacteristics = json.optionalCharacteristics.map(serialized => Characteristic.deserialize(serialized));
+      service.optionalCharacteristics = json.optionalCharacteristics.map(serialized => Characteristic.deserialize(serialized))
     }
 
-    return service;
+    return service
   }
-
 }
 
 // We have a cyclic dependency problem. Within this file we have the definitions of "./definitions" as
 // type imports only (in order to define the static properties). Setting those properties is done outside
 // this file, within the definition files. Therefore, we import it at the end of this file. Seems weird, but is important.
-import "./definitions/ServiceDefinitions";
+(async () => {
+  await import('./definitions/ServiceDefinitions.js')
+})()

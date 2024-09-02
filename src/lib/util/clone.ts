@@ -4,18 +4,17 @@
  * @group Utils
  */
 export function clone<T extends object, U>(object: T, extend?: U): T & U {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cloned = {} as Record<any, any>;
+  const cloned = {} as Record<any, any>
 
-  for (const [ key, value ] of Object.entries(object)) {
-    cloned[key] = value;
+  for (const [key, value] of Object.entries(object)) {
+    cloned[key] = value
   }
 
   if (extend) {
-    for (const [ key, value ] of Object.entries(extend)) {
-      cloned[key] = value;
+    for (const [key, value] of Object.entries(extend)) {
+      cloned[key] = value
     }
   }
 
-  return cloned;
+  return cloned
 }

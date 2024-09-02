@@ -1,4 +1,4 @@
-import { TLVErrorCode } from "../lib/HAPServer";
+import type { TLVErrorCode } from '../lib/HAPServer'
 
 /**
  * Encapsulates a {@link TLVErrorCode} in an error object.
@@ -9,13 +9,13 @@ import { TLVErrorCode } from "../lib/HAPServer";
  * ```
  */
 export class TLVError extends Error {
-  public errorCode: TLVErrorCode;
+  public errorCode: TLVErrorCode
 
   constructor(errorCode: TLVErrorCode) {
-    super("TLV Error Code: " + errorCode);
+    super(`TLV Error Code: ${errorCode}`)
 
-    Object.setPrototypeOf(this, TLVError.prototype);
+    Object.setPrototypeOf(this, TLVError.prototype)
 
-    this.errorCode = errorCode;
+    this.errorCode = errorCode
   }
 }

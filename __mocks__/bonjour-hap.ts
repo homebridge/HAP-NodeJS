@@ -1,16 +1,20 @@
+import { vi } from 'vitest'
+
 class Advertisement {
-  updateTxt = jest.fn();
-  stop = jest.fn();
-  destroy = jest.fn();
+  updateTxt = vi.fn()
+  stop = vi.fn()
+  destroy = vi.fn()
+}
+
+function publishFn() {
+  return new Advertisement()
 }
 
 class BonjourService {
-  publish = jest.fn(() => {
-    return new Advertisement();
-  });
-  destroy = jest.fn();
+  publish = vi.fn(publishFn)
+  destroy = vi.fn()
 }
 
-export default (opts: any) => {
-  return new BonjourService();
+export default () => {
+  return new BonjourService()
 }

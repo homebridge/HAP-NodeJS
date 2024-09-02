@@ -1,10 +1,14 @@
+import { vi } from 'vitest'
+
+const createFn = vi.fn().mockImplementation(() => new Storage())
+
 class Storage {
-  getItem = jest.fn();
-  setItemSync = jest.fn();
-  persistSync = jest.fn();
-  removeItemSync = jest.fn();
-  initSync = jest.fn();
-  create = jest.fn().mockImplementation(() => new Storage());
+  getItem = vi.fn()
+  setItemSync = vi.fn()
+  persistSync = vi.fn()
+  removeItemSync = vi.fn()
+  initSync = vi.fn()
+  create = createFn
 }
 
-export default new Storage();
+export default new Storage()

@@ -1,9 +1,11 @@
-import { EventTriggerOption } from "../camera";
-import { Characteristic } from "../Characteristic";
-import type { Doorbell } from "../definitions";
-import { Service } from "../Service";
-import { CameraController, CameraControllerOptions, CameraControllerServiceMap } from "./CameraController";
-import { ControllerServiceMap } from "./Controller";
+import type { Doorbell } from '../definitions'
+import type { CameraControllerOptions, CameraControllerServiceMap } from './CameraController'
+import type { ControllerServiceMap } from './Controller'
+
+import { EventTriggerOption } from '../camera/index.js'
+import { Characteristic } from '../Characteristic.js'
+import { Service } from '../Service.js'
+import { CameraController } from './CameraController.js'
 
 /**
  * Options which are additionally supplied for a {@link DoorbellController}.
@@ -14,7 +16,7 @@ export interface DoorbellOptions {
   /**
    * Name used to for the {@link Service.Doorbell} service.
    */
-  name?: string;
+  name?: string
 
   /**
    * This property may be used to supply an external {@link Service.Doorbell}.
@@ -39,100 +41,100 @@ export interface DoorbellOptions {
  * @group Doorbell
  */
 export class DoorbellController extends CameraController {
-  private doorbellService?: Doorbell;
-  private doorbellServiceExternallySupplied = false;
+  private doorbellService?: Doorbell
+  private doorbellServiceExternallySupplied = false
   /**
    * Temporary storage. Erased after init.
    */
-  private doorbellOptions?: DoorbellOptions;
+  private doorbellOptions?: DoorbellOptions
 
   /**
    * Initializes a new `DoorbellController`.
    * @param options - The {@link CameraControllerOptions} and optional {@link DoorbellOptions}.
    */
   constructor(options: CameraControllerOptions & DoorbellOptions) {
-    super(options);
+    super(options)
     this.doorbellOptions = {
       name: options.name,
       externalDoorbellService: options.externalDoorbellService,
-    };
+    }
   }
 
   /**
    * Call this method to signal a doorbell button press.
    */
   public ringDoorbell(): void {
-    this.doorbellService!.updateCharacteristic(Characteristic.ProgrammableSwitchEvent, Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS);
+    this.doorbellService!.updateCharacteristic(Characteristic.ProgrammableSwitchEvent, Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS)
   }
 
   constructServices(): CameraControllerServiceMap {
     if (this.doorbellOptions?.externalDoorbellService) {
-      this.doorbellService = this.doorbellOptions.externalDoorbellService;
-      this.doorbellServiceExternallySupplied = true;
+      this.doorbellService = this.doorbellOptions.externalDoorbellService
+      this.doorbellServiceExternallySupplied = true
     } else {
-      this.doorbellService = new Service.Doorbell(this.doorbellOptions?.name ?? "", "");
+      this.doorbellService = new Service.Doorbell(this.doorbellOptions?.name ?? '', '')
     }
-    this.doorbellService.setPrimaryService();
+    this.doorbellService.setPrimaryService()
 
-    const serviceMap = super.constructServices();
+    const serviceMap = super.constructServices()
     if (!this.doorbellServiceExternallySupplied) {
-      serviceMap.doorbell = this.doorbellService;
+      serviceMap.doorbell = this.doorbellService
     }
-    return serviceMap;
+    return serviceMap
   }
 
   initWithServices(serviceMap: CameraControllerServiceMap): void | CameraControllerServiceMap {
-    const result = super._initWithServices(serviceMap);
+    const result = super._initWithServices(serviceMap)
 
     if (this.doorbellOptions?.externalDoorbellService) {
-      this.doorbellService = this.doorbellOptions.externalDoorbellService;
-      this.doorbellServiceExternallySupplied = true;
+      this.doorbellService = this.doorbellOptions.externalDoorbellService
+      this.doorbellServiceExternallySupplied = true
 
       if (result.serviceMap.doorbell) {
-        delete result.serviceMap.doorbell;
-        result.updated = true;
+        delete result.serviceMap.doorbell
+        result.updated = true
       }
     } else {
-      this.doorbellService = result.serviceMap.doorbell;
+      this.doorbellService = result.serviceMap.doorbell
 
       if (!this.doorbellService) { // see NOTICE above
-        this.doorbellService = new Service.Doorbell(this.doorbellOptions?.name ?? "", "");
+        this.doorbellService = new Service.Doorbell(this.doorbellOptions?.name ?? '', '')
 
-        result.serviceMap.doorbell = this.doorbellService;
-        result.updated = true;
+        result.serviceMap.doorbell = this.doorbellService
+        result.updated = true
       }
     }
 
-    this.doorbellService.setPrimaryService();
+    this.doorbellService.setPrimaryService()
 
     if (result.updated) {
-      return result.serviceMap;
+      return result.serviceMap
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line unused-imports/no-unused-vars
   protected migrateFromDoorbell(serviceMap: ControllerServiceMap): boolean {
-    return false;
+    return false
   }
 
   protected retrieveEventTriggerOptions(): Set<EventTriggerOption> {
-    const result = super.retrieveEventTriggerOptions();
-    result.add(EventTriggerOption.DOORBELL);
-    return result;
+    const result = super.retrieveEventTriggerOptions()
+    result.add(EventTriggerOption.DOORBELL)
+    return result
   }
 
   handleControllerRemoved(): void {
-    super.handleControllerRemoved();
+    super.handleControllerRemoved()
 
-    this.doorbellService = undefined;
+    this.doorbellService = undefined
   }
 
   configureServices(): void {
-    super.configureServices();
+    super.configureServices()
 
     this.doorbellService!.getCharacteristic(Characteristic.ProgrammableSwitchEvent)
-      .onGet(() => null); // a value of null represent nothing is pressed
+      .onGet(() => null) // a value of null represent nothing is pressed
 
-    this.doorbellOptions = undefined;
+    this.doorbellOptions = undefined
   }
 }
