@@ -21,7 +21,6 @@ import type {
   CameraRTPStreamManagement,
   CarbonDioxideSensor,
   CarbonMonoxideSensor,
-  CloudRelay,
   ContactSensor,
   DataStreamTransportManagement,
   Diagnostics,
@@ -71,7 +70,6 @@ import type {
   Thermostat,
   ThreadTransport,
   TransferTransportManagement,
-  Tunnel,
   Valve,
   WiFiRouter,
   WiFiSatellite,
@@ -235,10 +233,6 @@ export class Service extends EventEmitter {
    * @group Service Definitions
    */
   public static CarbonMonoxideSensor: typeof CarbonMonoxideSensor;
-  /**
-   * @group Service Definitions
-   */
-  public static CloudRelay: typeof CloudRelay;
   /**
    * @group Service Definitions
    */
@@ -435,10 +429,6 @@ export class Service extends EventEmitter {
    * @group Service Definitions
    */
   public static TransferTransportManagement: typeof TransferTransportManagement;
-  /**
-   * @group Service Definitions
-   */
-  public static Tunnel: typeof Tunnel;
   /**
    * @group Service Definitions
    */

@@ -1,5 +1,5 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=880
+// V=886
 
 import { Characteristic } from "../Characteristic";
 import { Service } from "../Service";
@@ -66,6 +66,7 @@ export class AccessoryInformation extends Service {
     this.addOptionalCharacteristic(Characteristic.AccessoryFlags);
     this.addOptionalCharacteristic(Characteristic.AppMatchingIdentifier);
     this.addOptionalCharacteristic(Characteristic.ConfiguredName);
+    this.addOptionalCharacteristic(Characteristic.MatterFirmwareRevisionNumber);
     this.addOptionalCharacteristic(Characteristic.HardwareFinish);
     this.addOptionalCharacteristic(Characteristic.HardwareRevision);
     this.addOptionalCharacteristic(Characteristic.ProductData);
@@ -364,24 +365,6 @@ export class CarbonMonoxideSensor extends Service {
 Service.CarbonMonoxideSensor = CarbonMonoxideSensor;
 
 /**
- * Service "Cloud Relay"
- */
-export class CloudRelay extends Service {
-
-  public static readonly UUID: string = "0000005A-0000-1000-8000-0026BB765291";
-
-  constructor(displayName?: string, subtype?: string) {
-    super(displayName, CloudRelay.UUID, subtype);
-
-    // Required Characteristics
-    this.addCharacteristic(Characteristic.RelayControlPoint);
-    this.addCharacteristic(Characteristic.RelayState);
-    this.addCharacteristic(Characteristic.RelayEnabled);
-  }
-}
-Service.CloudRelay = CloudRelay;
-
-/**
  * Service "Contact Sensor"
  */
 export class ContactSensor extends Service {
@@ -590,6 +573,7 @@ export class FirmwareUpdate extends Service {
     this.addCharacteristic(Characteristic.FirmwareUpdateStatus);
 
     // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.MatterFirmwareUpdateStatus);
     this.addOptionalCharacteristic(Characteristic.StagedFirmwareVersion);
     this.addOptionalCharacteristic(Characteristic.SupportedFirmwareUpdateConfiguration);
   }
@@ -1468,26 +1452,6 @@ export class TransferTransportManagement extends Service {
   }
 }
 Service.TransferTransportManagement = TransferTransportManagement;
-
-/**
- * Service "Tunnel"
- */
-export class Tunnel extends Service {
-
-  public static readonly UUID: string = "00000056-0000-1000-8000-0026BB765291";
-
-  constructor(displayName?: string, subtype?: string) {
-    super(displayName, Tunnel.UUID, subtype);
-
-    // Required Characteristics
-    this.addCharacteristic(Characteristic.AccessoryIdentifier);
-    this.addCharacteristic(Characteristic.TunnelConnectionTimeout);
-    this.addCharacteristic(Characteristic.TunneledAccessoryAdvertising);
-    this.addCharacteristic(Characteristic.TunneledAccessoryConnected);
-    this.addCharacteristic(Characteristic.TunneledAccessoryStateNumber);
-  }
-}
-Service.Tunnel = Tunnel;
 
 /**
  * Service "Valve"

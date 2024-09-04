@@ -357,28 +357,6 @@ describe("ServiceDefinitions", () => {
     });
   });
 
-  describe("CloudRelay", () => {
-    it("should be able to construct", () => {
-      const service0 = new Service.CloudRelay();
-      const service1 = new Service.CloudRelay("test name");
-      const service2 = new Service.CloudRelay("test name", "test sub type");
-
-      expect(service0.displayName).toBe("");
-      expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);
-      expect(service0.subtype).toBeUndefined();
-
-      expect(service1.displayName).toBe("test name");
-      expect(service1.testCharacteristic(Characteristic.Name)).toBe(true);
-      expect(service1.getCharacteristic(Characteristic.Name).value).toBe("test name");
-      expect(service1.subtype).toBeUndefined();
-
-      expect(service2.displayName).toBe("test name");
-      expect(service2.testCharacteristic(Characteristic.Name)).toBe(true);
-      expect(service2.getCharacteristic(Characteristic.Name).value).toBe("test name");
-      expect(service2.subtype).toBe("test sub type");
-    });
-  });
-
   describe("ContactSensor", () => {
     it("should be able to construct", () => {
       const service0 = new Service.ContactSensor();
@@ -1440,28 +1418,6 @@ describe("ServiceDefinitions", () => {
       const service0 = new Service.TransferTransportManagement();
       const service1 = new Service.TransferTransportManagement("test name");
       const service2 = new Service.TransferTransportManagement("test name", "test sub type");
-
-      expect(service0.displayName).toBe("");
-      expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);
-      expect(service0.subtype).toBeUndefined();
-
-      expect(service1.displayName).toBe("test name");
-      expect(service1.testCharacteristic(Characteristic.Name)).toBe(true);
-      expect(service1.getCharacteristic(Characteristic.Name).value).toBe("test name");
-      expect(service1.subtype).toBeUndefined();
-
-      expect(service2.displayName).toBe("test name");
-      expect(service2.testCharacteristic(Characteristic.Name)).toBe(true);
-      expect(service2.getCharacteristic(Characteristic.Name).value).toBe("test name");
-      expect(service2.subtype).toBe("test sub type");
-    });
-  });
-
-  describe("Tunnel", () => {
-    it("should be able to construct", () => {
-      const service0 = new Service.Tunnel();
-      const service1 = new Service.Tunnel("test name");
-      const service2 = new Service.Tunnel("test name", "test sub type");
 
       expect(service0.displayName).toBe("");
       expect(service0.testCharacteristic(Characteristic.Name)).toBe(false);

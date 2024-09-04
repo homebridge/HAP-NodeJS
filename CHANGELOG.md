@@ -7,6 +7,10 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 ### Changed
 
 - Set `Avahi` as the default advertiser when available, otherwise fallback to `Ciao`
+- Update HK definition files
+  - Services removed: `CloudRelay` and `Tunnel`
+  - Characteristics added: `MatterFirmwareRevisionNumber` and `MatterFirmwareUpdateStatus`
+  - Characteristics removed: `RelayControlPoint`, `RelayEnabled`, `RelayState`, `TunnelConnectionTimeout`, `TunneledAccessoryAdvertising`, `TunneledAccessoryConnected`, and `TunneledAccessoryStateNumber`
 - Updated dependencies
 
 ### Homebridge Dependencies

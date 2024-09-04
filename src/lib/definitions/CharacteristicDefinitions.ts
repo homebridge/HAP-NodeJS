@@ -1,5 +1,5 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=884
+// V=886
 
 import { Access, Characteristic, Formats, Perms, Units } from "../Characteristic";
 
