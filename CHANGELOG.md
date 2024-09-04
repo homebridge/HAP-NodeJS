@@ -6,6 +6,7 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 
 ### Changed
 
+- Set `Avahi` as the default advertiser when available, otherwise fallback to `Ciao`
 - Updated dependencies
 
 ### Homebridge Dependencies

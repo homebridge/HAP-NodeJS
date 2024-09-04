@@ -378,7 +378,7 @@ describe("Accessory", () => {
     beforeEach(() => {
       consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
     });
-  
+
     afterEach(() => {
       consoleWarnSpy.mockRestore();
     });
@@ -847,6 +847,7 @@ describe("Accessory", () => {
         username: serverUsername,
         pincode: "123-45-678",
         category: Categories.SWITCH,
+        advertiser: MDNSAdvertiser.BONJOUR,
       };
 
       switchService = new Service.Switch("Switch");
