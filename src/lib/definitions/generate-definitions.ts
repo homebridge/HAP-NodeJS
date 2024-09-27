@@ -5,7 +5,7 @@ import assert from "assert";
 import { Command } from "commander";
 import fs from "fs";
 import path from "path";
-import plist from "simple-plist";
+import { readFileSync } from "simple-plist";
 import { Access, Characteristic, Formats, Units } from "../Characteristic";
 import { toLongForm } from "../util/uuid";
 import {
@@ -148,9 +148,11 @@ export interface GeneratedService {
   optionalCharacteristics?: string[];
 }
 
-const plistData = plist.readFileSync(metadataFile);
-const simulatorPlistData = plist.readFileSync(defaultPlist);
-const simulatorMfiPlistData = fs.existsSync(defaultMfiPlist)? plist.readFileSync(defaultMfiPlist): undefined;
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const plistData = readFileSync(metadataFile) as any;
+const simulatorPlistData = readFileSync(defaultPlist)as any;
+const simulatorMfiPlistData = fs.existsSync(defaultMfiPlist)? readFileSync(defaultMfiPlist): undefined as any;
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 if (plistData.SchemaVersion !== 1) {
   console.warn(`Detected unsupported schema version ${plistData.SchemaVersion}!`);
@@ -348,7 +350,12 @@ for (const generated of Object.values(generatedCharacteristics)
         if (!name) {
           continue;
         }
-        characteristicOutput.write(`  public static readonly ${name} = ${value};\n`);
+        // fix a weird edge case, still present in V=886
+        let printName = name;
+        if (name === "PROGRAM_SCHEDULED_MANUAL_MODE_") {
+          printName = "PROGRAM_SCHEDULED_MANUAL_MODE";
+        }
+        characteristicOutput.write(`  public static readonly ${printName} = ${value};\n`);
       }
       characteristicOutput.write("\n");
     }

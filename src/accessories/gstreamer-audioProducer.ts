@@ -134,15 +134,15 @@ export class GStreamerAudioProducer implements SiriAudioStreamProducer {
       }
 
       /*
-                This listener seems to get called with only one opus frame most of the time.
-                Though it happens regularly that another or many more frames get appended.
-                This causes some problems as opus frames don't contain their data length in the "header".
-                Opus relies on the container format to specify the length of the frame.
-                Although sometimes multiple opus frames are squashed together the decoder seems to be able
-                to handle that as it just creates a not very noticeable distortion.
-                If we would want to make this perfect we would need to write a nodejs c++ submodule or something
-                to interface directly with gstreamer api.
-             */
+      This listener seems to get called with only one opus frame most of the time.
+      Though it happens regularly that another or many more frames get appended.
+      This causes some problems as opus frames don't contain their data length in the "header".
+      Opus relies on the container format to specify the length of the frame.
+      Although sometimes multiple opus frames are squashed together the decoder seems to be able
+      to handle that as it just creates a not very noticeable distortion.
+      If we wanted to make this perfect we would need to write a nodejs c++ submodule or something
+      to interface directly with gstreamer api.
+      */
 
       this.frameHandler({
         data: data,

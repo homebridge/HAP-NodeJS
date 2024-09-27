@@ -515,8 +515,8 @@ class MP4StreamingServer {
     console.log(this.ffmpegPath + " " + this.args.join(" "));
 
     this.childProcess = spawn(this.ffmpegPath, this.args, { env: process.env, stdio: this.debugMode? "pipe": "ignore" });
-    if (!this.childProcess) {
-      console.error("ChildProcess is undefined directly after the init!");
+    if (!this.childProcess ||!this.childProcess.stdout || !this.childProcess.stderr) {
+      throw new Error("ChildProcess or its streams is undefined directly after the init!");
     }
     if(this.debugMode) {
       this.childProcess.stdout?.on("data", data => console.log(data.toString()));

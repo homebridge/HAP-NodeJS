@@ -2,6 +2,31 @@
 
 All notable changes to `hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
+## BETA
+
+### Changed
+
+- Set `Avahi` as the default advertiser when available, otherwise fallback to `Ciao`
+- Update HK definition files
+  - Services removed: `CloudRelay` and `Tunnel`
+  - Characteristics added:
+    - `MatterFirmwareRevisionNumber`
+    - `MatterFirmwareUpdateStatus`
+  - Characteristics removed:
+    - `RelayControlPoint`
+    - `RelayEnabled`, `RelayState`
+    - `TunnelConnectionTimeout`
+    - `TunneledAccessoryAdvertising`
+    - `TunneledAccessoryConnected`
+    - `TunneledAccessoryStateNumber`
+- Updated dependencies
+- Allow for node 22 in package engines
+
+### Homebridge Dependencies
+
+- `@homebridge/ciao` @ `v1.3.1`
+- `bonjour-hap` @ `v3.8.0`
+
 ## v1.1.0 (2024-07-21)
 
 ### Changes

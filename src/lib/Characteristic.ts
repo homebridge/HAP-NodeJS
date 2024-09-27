@@ -101,6 +101,8 @@ import type {
   ManagedNetworkEnable,
   ManuallyDisabled,
   Manufacturer,
+  MatterFirmwareRevisionNumber,
+  MatterFirmwareUpdateStatus,
   MaximumTransmitPower,
   MetricsBufferFullState,
   Model,
@@ -142,9 +144,6 @@ import type {
   RecordingAudioActive,
   RelativeHumidityDehumidifierThreshold,
   RelativeHumidityHumidifierThreshold,
-  RelayControlPoint,
-  RelayEnabled,
-  RelayState,
   RemainingDuration,
   RemoteKey,
   ResetFilterIndication,
@@ -230,10 +229,6 @@ import type {
   ThreadStatus,
   Token,
   TransmitPower,
-  TunnelConnectionTimeout,
-  TunneledAccessoryAdvertising,
-  TunneledAccessoryConnected,
-  TunneledAccessoryStateNumber,
   ValveType,
   Version,
   VideoAnalysisActive,
@@ -1065,6 +1060,14 @@ export class Characteristic extends EventEmitter {
   /**
    * @group Characteristic Definitions
    */
+  public static MatterFirmwareRevisionNumber: typeof MatterFirmwareRevisionNumber;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static MatterFirmwareUpdateStatus: typeof MatterFirmwareUpdateStatus;
+  /**
+   * @group Characteristic Definitions
+   */
   public static MaximumTransmitPower: typeof MaximumTransmitPower;
   /**
    * @group Characteristic Definitions
@@ -1226,18 +1229,6 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static RelativeHumidityHumidifierThreshold: typeof RelativeHumidityHumidifierThreshold;
-  /**
-   * @group Characteristic Definitions
-   */
-  public static RelayControlPoint: typeof RelayControlPoint;
-  /**
-   * @group Characteristic Definitions
-   */
-  public static RelayEnabled: typeof RelayEnabled;
-  /**
-   * @group Characteristic Definitions
-   */
-  public static RelayState: typeof RelayState;
   /**
    * @group Characteristic Definitions
    */
@@ -1578,22 +1569,6 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static TransmitPower: typeof TransmitPower;
-  /**
-   * @group Characteristic Definitions
-   */
-  public static TunnelConnectionTimeout: typeof TunnelConnectionTimeout;
-  /**
-   * @group Characteristic Definitions
-   */
-  public static TunneledAccessoryAdvertising: typeof TunneledAccessoryAdvertising;
-  /**
-   * @group Characteristic Definitions
-   */
-  public static TunneledAccessoryConnected: typeof TunneledAccessoryConnected;
-  /**
-   * @group Characteristic Definitions
-   */
-  public static TunneledAccessoryStateNumber: typeof TunneledAccessoryStateNumber;
   /**
    * @group Characteristic Definitions
    */

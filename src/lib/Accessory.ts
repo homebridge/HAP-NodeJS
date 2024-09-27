@@ -1095,7 +1095,7 @@ export class Accessory extends EventEmitter {
    * @param {{
    *   username: string;
    *   pincode: string;
-   *   category: Accessory.Categories;
+   *   category: Categories;
    * }} info - Required info for publishing.
    * @param {boolean} allowInsecureRequest - Will allow unencrypted and unauthenticated access to the http server
    */
@@ -1186,16 +1186,45 @@ export class Accessory extends EventEmitter {
     // create our Advertiser which broadcasts our presence over mdns
     const parsed = Accessory.parseBindOption(info);
 
-    info.advertiser ??= MDNSAdvertiser.CIAO;
-    if (
-      (info.advertiser === MDNSAdvertiser.AVAHI && !await AvahiAdvertiser.isAvailable()) ||
-      (info.advertiser === MDNSAdvertiser.RESOLVED && !await ResolvedAdvertiser.isAvailable())
-    ) {
-      console.error(
-        `[${this.displayName}] The selected advertiser, "${info.advertiser}", isn't available on this platform. ` +
-        `Reverting to "${MDNSAdvertiser.CIAO}"`,
-      );
-      info.advertiser = MDNSAdvertiser.CIAO;
+    // Select the advertiser to use based on the user's choice and availability
+    // 1. Check if info.advertiser is set by the user.
+    // 2. If info.advertiser is set, check if it is available.
+    //   > If available, use it.
+    //   > If not available, check if avahi is available.
+    //     > If avahi is available, use it.
+    //     > If not, use ciao.
+    // 3. If info.advertiser is not set, check if avahi is available.
+    //   > If avahi is available, use it.
+    //   > If not, use ciao.
+
+    if (info.advertiser) {
+      const originalAdvertiser = info.advertiser;
+      debug("[%s] Advertiser set to %s", this.displayName, info.advertiser);
+      if (
+        (info.advertiser === MDNSAdvertiser.AVAHI && await AvahiAdvertiser.isAvailable())
+        || (info.advertiser === MDNSAdvertiser.RESOLVED && await ResolvedAdvertiser.isAvailable())
+        || (info.advertiser === MDNSAdvertiser.BONJOUR)
+        || (info.advertiser === MDNSAdvertiser.CIAO)
+      ) {
+        // User chosen advertiser is available, use it
+        debug("[%s] Using advertiser %s", this.displayName, info.advertiser);
+      } else {
+        if (await AvahiAdvertiser.isAvailable()) {
+          info.advertiser = MDNSAdvertiser.AVAHI;
+        } else {
+          info.advertiser = MDNSAdvertiser.CIAO;
+        }
+        console.error(
+          `[${this.displayName}] The selected advertiser [${originalAdvertiser}] isn't available on this platform. `
+          + `Reverting to [${info.advertiser}].`,
+        );
+      }
+    } else {
+      if (await AvahiAdvertiser.isAvailable()) {
+        info.advertiser = MDNSAdvertiser.AVAHI;
+      } else {
+        info.advertiser = MDNSAdvertiser.CIAO;
+      }
     }
 
     switch (info.advertiser) {
@@ -2139,7 +2168,7 @@ export class Accessory extends EventEmitter {
 
         const entry = entries.values().next().value; // grab the first one
 
-        const version = net.isIP(entry); // check if ip address was specified or an interface name
+        const version = net.isIP(entry as string); // check if ip address was specified or an interface name
         if (version) {
           serverAddress = version === 4? "0.0.0.0": "::"; // we currently bind to unspecified addresses so config-ui always has a connection via loopback
         } else {

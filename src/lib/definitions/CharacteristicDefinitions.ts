@@ -1,5 +1,5 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=880
+// V=886
 
 import { Access, Characteristic, Formats, Perms, Units } from "../Characteristic";
 
@@ -2015,6 +2015,40 @@ export class Manufacturer extends Characteristic {
 Characteristic.Manufacturer = Manufacturer;
 
 /**
+ * Characteristic "Matter Firmware Revision Number"
+ */
+export class MatterFirmwareRevisionNumber extends Characteristic {
+
+  public static readonly UUID: string = "0000026D-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Matter Firmware Revision Number", MatterFirmwareRevisionNumber.UUID, {
+      format: Formats.UINT32,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.MatterFirmwareRevisionNumber = MatterFirmwareRevisionNumber;
+
+/**
+ * Characteristic "Matter Firmware Update Status"
+ */
+export class MatterFirmwareUpdateStatus extends Characteristic {
+
+  public static readonly UUID: string = "0000026E-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Matter Firmware Update Status", MatterFirmwareUpdateStatus.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.MatterFirmwareUpdateStatus = MatterFirmwareUpdateStatus;
+
+/**
  * Characteristic "Maximum Transmit Power"
  * @since iOS 14
  */
@@ -2804,60 +2838,6 @@ export class RelativeHumidityHumidifierThreshold extends Characteristic {
   }
 }
 Characteristic.RelativeHumidityHumidifierThreshold = RelativeHumidityHumidifierThreshold;
-
-/**
- * Characteristic "Relay Control Point"
- */
-export class RelayControlPoint extends Characteristic {
-
-  public static readonly UUID: string = "0000005E-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Relay Control Point", RelayControlPoint.UUID, {
-      format: Formats.TLV8,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-Characteristic.RelayControlPoint = RelayControlPoint;
-
-/**
- * Characteristic "Relay Enabled"
- */
-export class RelayEnabled extends Characteristic {
-
-  public static readonly UUID: string = "0000005B-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Relay Enabled", RelayEnabled.UUID, {
-      format: Formats.BOOL,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-Characteristic.RelayEnabled = RelayEnabled;
-
-/**
- * Characteristic "Relay State"
- */
-export class RelayState extends Characteristic {
-
-  public static readonly UUID: string = "0000005C-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Relay State", RelayState.UUID, {
-      format: Formats.UINT8,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
-      minValue: 0,
-      maxValue: 5,
-      minStep: 1,
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-Characteristic.RelayState = RelayState;
 
 /**
  * Characteristic "Remaining Duration"
@@ -4570,74 +4550,6 @@ export class TransmitPower extends Characteristic {
   }
 }
 Characteristic.TransmitPower = TransmitPower;
-
-/**
- * Characteristic "Tunnel Connection Timeout"
- */
-export class TunnelConnectionTimeout extends Characteristic {
-
-  public static readonly UUID: string = "00000061-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Tunnel Connection Timeout", TunnelConnectionTimeout.UUID, {
-      format: Formats.INT,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-Characteristic.TunnelConnectionTimeout = TunnelConnectionTimeout;
-
-/**
- * Characteristic "Tunneled Accessory Advertising"
- */
-export class TunneledAccessoryAdvertising extends Characteristic {
-
-  public static readonly UUID: string = "00000060-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Tunneled Accessory Advertising", TunneledAccessoryAdvertising.UUID, {
-      format: Formats.BOOL,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-Characteristic.TunneledAccessoryAdvertising = TunneledAccessoryAdvertising;
-
-/**
- * Characteristic "Tunneled Accessory Connected"
- */
-export class TunneledAccessoryConnected extends Characteristic {
-
-  public static readonly UUID: string = "00000059-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Tunneled Accessory Connected", TunneledAccessoryConnected.UUID, {
-      format: Formats.BOOL,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-Characteristic.TunneledAccessoryConnected = TunneledAccessoryConnected;
-
-/**
- * Characteristic "Tunneled Accessory State Number"
- */
-export class TunneledAccessoryStateNumber extends Characteristic {
-
-  public static readonly UUID: string = "00000058-0000-1000-8000-0026BB765291";
-
-  constructor() {
-    super("Tunneled Accessory State Number", TunneledAccessoryStateNumber.UUID, {
-      format: Formats.INT,
-      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
-Characteristic.TunneledAccessoryStateNumber = TunneledAccessoryStateNumber;
 
 /**
  * Characteristic "Valve Type"

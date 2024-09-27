@@ -586,6 +586,18 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("MatterFirmwareRevisionNumber", () => {
+    it("should be able to construct", () => {
+      new Characteristic.MatterFirmwareRevisionNumber();
+    });
+  });
+
+  describe("MatterFirmwareUpdateStatus", () => {
+    it("should be able to construct", () => {
+      new Characteristic.MatterFirmwareUpdateStatus();
+    });
+  });
+
   describe("MaximumTransmitPower", () => {
     it("should be able to construct", () => {
       new Characteristic.MaximumTransmitPower();
@@ -829,24 +841,6 @@ describe("CharacteristicDefinitions", () => {
   describe("RelativeHumidityHumidifierThreshold", () => {
     it("should be able to construct", () => {
       new Characteristic.RelativeHumidityHumidifierThreshold();
-    });
-  });
-
-  describe("RelayControlPoint", () => {
-    it("should be able to construct", () => {
-      new Characteristic.RelayControlPoint();
-    });
-  });
-
-  describe("RelayEnabled", () => {
-    it("should be able to construct", () => {
-      new Characteristic.RelayEnabled();
-    });
-  });
-
-  describe("RelayState", () => {
-    it("should be able to construct", () => {
-      new Characteristic.RelayState();
     });
   });
 
@@ -1357,30 +1351,6 @@ describe("CharacteristicDefinitions", () => {
   describe("TransmitPower", () => {
     it("should be able to construct", () => {
       new Characteristic.TransmitPower();
-    });
-  });
-
-  describe("TunnelConnectionTimeout", () => {
-    it("should be able to construct", () => {
-      new Characteristic.TunnelConnectionTimeout();
-    });
-  });
-
-  describe("TunneledAccessoryAdvertising", () => {
-    it("should be able to construct", () => {
-      new Characteristic.TunneledAccessoryAdvertising();
-    });
-  });
-
-  describe("TunneledAccessoryConnected", () => {
-    it("should be able to construct", () => {
-      new Characteristic.TunneledAccessoryConnected();
-    });
-  });
-
-  describe("TunneledAccessoryStateNumber", () => {
-    it("should be able to construct", () => {
-      new Characteristic.TunneledAccessoryStateNumber();
     });
   });
 
