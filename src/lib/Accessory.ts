@@ -2269,7 +2269,7 @@ export class Accessory extends EventEmitter {
 
         const entry = entries.values().next().value; // grab the first one
 
-        const version = net.isIP(entry); // check if ip address was specified or an interface name
+        const version = net.isIP(entry!); // check if ip address was specified or an interface name
         if (version) {
           serverAddress = version === 4? "0.0.0.0": "::"; // we currently bind to unspecified addresses so config-ui always has a connection via loopback
         } else {

@@ -1,6 +1,5 @@
 {
   "out": "docs",
-  "includes": "src",
   "exclude": [
     "src/**/*.spec.ts",
     "src/test-utils/*"
@@ -23,5 +22,6 @@
   "validation": {
     "invalidLink": true,
     "notExported": false
-  }
+  },
+  "blockTags": ["@deprecated", "@example", "@group", "@param", "@returns", "@since"]
 }

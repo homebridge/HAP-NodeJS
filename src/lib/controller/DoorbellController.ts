@@ -34,7 +34,7 @@ export interface DoorbellOptions {
  * and would collide otherwise.
  * As the possibility exists, both the CameraController and DoorbellController are written to support migration
  * from one to another. Meaning a serialized CameraController can be initialized as a DoorbellController
- * (on startup in {@link initWithServices}) and vice versa.
+ * (on startup in {@link Controller.initWithServices}) and vice versa.
  *
  * @group Doorbell
  */
