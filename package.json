@@ -68,7 +68,7 @@
     "@types/debug": "^4.1.12",
     "@types/escape-html": "^1.0.4",
     "@types/jest": "^29.5.14",
-    "@types/node": "^22.8.0",
+    "@types/node": "^22.8.1",
     "@types/plist": "^3.0.5",
     "@typescript-eslint/eslint-plugin": "^7.16.1",
     "@typescript-eslint/parser": "^7.16.1",
