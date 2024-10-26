@@ -53,6 +53,19 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 - `@homebridge/ciao` @ `v1.3.0`
 - `bonjour-hap` @ `v3.8.0`
 
+## v0.12.3 (2024-10-25)
+
+### Changed
+
+- minor dependency update
+- mark compatible with node v22
+- fix `initWithServices` reference in typedoc
+
+### Homebridge Dependencies
+
+- `@homebridge/ciao` @ `v1.3.0`
+- `bonjour-hap` @ `v3.8.0`
+
 ## v0.12.2 (2024-05-31)
 
 ### Changed
