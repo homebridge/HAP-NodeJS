@@ -1330,10 +1330,13 @@ export class Accessory extends EventEmitter {
   private handleInitialPairSetupFinished(username: string, publicKey: Buffer, callback: PairCallback): void {
     debug("[%s] Paired with client %s", this.displayName, username);
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     this._accessoryInfo && this._accessoryInfo.addPairedClient(username, publicKey, PermissionTypes.ADMIN);
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     this._accessoryInfo && this._accessoryInfo.save();
 
     // update our advertisement, so it can pick up on the paired status of AccessoryInfo
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     this._advertiser && this._advertiser.updateAdvertisement();
 
     callback();
@@ -1386,6 +1389,7 @@ export class Accessory extends EventEmitter {
     callback(0); // first of all ensure the pairing is removed before we advertise availability again
 
     if (!this._accessoryInfo.paired()) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       this._advertiser && this._advertiser.updateAdvertisement();
       this.emit(AccessoryEventTypes.UNPAIRED);
 
@@ -2012,6 +2016,7 @@ export class Accessory extends EventEmitter {
     });
 
     // also save controller which didn't get initialized (could lead to service duplication if we throw that data away)
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     accessory.serializedControllers && Object.entries(accessory.serializedControllers).forEach(([id, serviceMap]) => {
       controllers.push({
         type: id,

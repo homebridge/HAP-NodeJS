@@ -743,11 +743,13 @@ export class RTPStreamManagement {
 
   private streamingIsDisabled(callback?: CharacteristicSetCallback): boolean {
     if (!this.service.getCharacteristic(Characteristic.Active).value) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       callback && callback(new HapStatusError(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE));
       return true;
     }
 
     if (this.disabledThroughOperatingMode?.()) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       callback && callback(new HapStatusError(HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE));
       return true;
     }

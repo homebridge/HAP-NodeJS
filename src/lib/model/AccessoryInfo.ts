@@ -6,12 +6,12 @@ import { AccessoryJsonObject, MacAddress } from "../../types";
 import { Categories } from "../Accessory";
 import { EventedHTTPServer, HAPConnection, HAPUsername } from "../util/eventedhttp";
 import { HAPStorage } from "./HAPStorage";
-
+import { readFileSync } from "node:fs";
 
 function getVersion(): string {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const packageJson = require("../../../package.json");
-  return packageJson.version;
+  const packageJson = JSON.parse(readFileSync(require.resolve("../../../package.json"), "utf-8"));
+  const { version } = packageJson;
+  return version;
 }
 
 /**
