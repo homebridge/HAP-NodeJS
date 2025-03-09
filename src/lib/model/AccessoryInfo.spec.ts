@@ -25,6 +25,7 @@ describe("AccessoryInfo", () => {
 
     it("should fail to verify undefined device id", () => {
       const VALUE = undefined;
+      // @ts-expect-error: deliberately test illegal value
       expect(() => AccessoryInfo.assertValidUsername(VALUE)).toThrow(AssertionError);
     });
   });
