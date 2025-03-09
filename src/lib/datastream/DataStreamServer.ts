@@ -976,7 +976,6 @@ export class DataStreamConnection extends EventEmitter {
         frame.header, frame.cipheredPayload, frame.authTag);
       this.controllerToAccessoryNonce++; // we had a successful encryption, increment the nonce
       return true;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // frame decryption or authentication failed. Could happen when our guess for a PreparedDataStreamSession is wrong
       return false;

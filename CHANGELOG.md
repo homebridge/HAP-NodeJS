@@ -2,7 +2,13 @@
 
 All notable changes to `hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
-## v1.1.0 (2025-02-11)
+## BETA
+
+### Changed
+
+- Updated dependencies
+
+## v1.1.1 (2025-02-11)
 
 ### Changes
 

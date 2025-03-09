@@ -68,12 +68,12 @@
     "@types/debug": "^4.1.12",
     "@types/escape-html": "^1.0.4",
     "@types/jest": "^29.5.14",
-    "@types/node": "^22.13.1",
+    "@types/node": "^22.13.10",
     "@types/plist": "^3.0.5",
-    "@typescript-eslint/eslint-plugin": "^8.24.0",
-    "@typescript-eslint/parser": "^8.24.0",
-    "axios": "^1.7.9",
-    "commander": "^12.1.0",
+    "@typescript-eslint/eslint-plugin": "^8.26.0",
+    "@typescript-eslint/parser": "^8.26.0",
+    "axios": "^1.8.2",
+    "commander": "^13.1.0",
     "escape-html": "^1.0.3",
     "eslint": "^8.57.0",
     "http-parser-js": "^0.5.9",
@@ -81,9 +81,9 @@
     "rimraf": "^6.0.1",
     "semver": "^7.7.1",
     "simple-plist": "^1.4.0-0",
-    "ts-jest": "^29.2.5",
+    "ts-jest": "^29.2.6",
     "ts-node": "^10.9.2",
-    "typedoc": "^0.27.7",
-    "typescript": "^5.7.3"
+    "typedoc": "^0.27.9",
+    "typescript": "^5.8.2"
   }
 }

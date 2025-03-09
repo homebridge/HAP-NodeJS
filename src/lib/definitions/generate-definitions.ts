@@ -187,8 +187,7 @@ try {
 
   const props: Record<string, PropertyDefinition> = checkDefined(plistData.PlistDictionary.HAP.Properties);
   // noinspection JSUnusedLocalSymbols
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  for (const [id, definition] of Object.entries(props).sort(([a, aDef], [b, bDef]) => aDef.Position - bDef.Position)) {
+  for (const [id, definition] of Object.entries(props).sort(([, aDef], [, bDef]) => aDef.Position - bDef.Position)) {
     const perm = characteristicPerm(id);
     if (perm) {
       const num = 1 << definition.Position;

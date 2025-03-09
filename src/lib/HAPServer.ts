@@ -570,7 +570,6 @@ export class HAPServer extends EventEmitter {
     let plaintext;
     try {
       plaintext = hapCrypto.chacha20_poly1305_decryptAndVerify(outputKey, Buffer.from("PS-Msg05"), null, messageData, authTagData);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       debug("[%s] Error while decrypting and verifying M5 subTlv: %s", this.accessoryInfo.username);
       response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
@@ -713,7 +712,6 @@ export class HAPServer extends EventEmitter {
     let plaintext;
     try {
       plaintext = hapCrypto.chacha20_poly1305_decryptAndVerify(enc.hkdfPairEncryptionKey, Buffer.from("PV-Msg03"), null, messageData, authTagData);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       debug("[%s] M3: Failed to decrypt and/or verify", this.accessoryInfo.username);
       response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
