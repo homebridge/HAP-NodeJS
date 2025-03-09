@@ -8,7 +8,12 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 
 - Updated dependencies
 
-## v1.1.1 (2025-02-11)
+### Homebridge Dependencies
+
+- `@homebridge/ciao` @ `v1.3.0`
+- `bonjour-hap` @ `v3.8.0`
+
+## v1.1.1 (2025-03-11)
 
 ### Changes
 
@@ -18,6 +23,11 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 
 - Update docs
 - support node 22 + dependency updates (#1075)
+
+### Homebridge Dependencies
+
+- `@homebridge/ciao` @ `v1.3.0`
+- `bonjour-hap` @ `v3.8.0`
 
 ## v1.1.0 (2024-07-21)
 
@@ -29,6 +39,11 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 
 - Update docs
 - Updated dependencies
+
+### Homebridge Dependencies
+
+- `@homebridge/ciao` @ `v1.3.0`
+- `bonjour-hap` @ `v3.8.0`
 
 ## v1.0.0 (2024-07-10)
 
