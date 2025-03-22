@@ -5,7 +5,7 @@ import assert from "assert";
 import { Command } from "commander";
 import fs from "fs";
 import path from "path";
-import plist from "simple-plist";
+import * as plist from "simple-plist";
 import { Access, Characteristic, Formats, Units } from "../Characteristic";
 import { toLongForm } from "../util/uuid";
 import {
@@ -348,7 +348,8 @@ for (const generated of Object.values(generatedCharacteristics)
         if (!name) {
           continue;
         }
-        characteristicOutput.write(`  public static readonly ${name} = ${value};\n`);
+        const cleanName = name.replace(/_+$/, ""); // remove any underscores at the end of the name
+        characteristicOutput.write(`  public static readonly ${cleanName} = ${value};\n`);
       }
       characteristicOutput.write("\n");
     }
