@@ -68,11 +68,11 @@
     "@types/debug": "^4.1.12",
     "@types/escape-html": "^1.0.4",
     "@types/jest": "^29.5.14",
-    "@types/node": "^22.13.10",
+    "@types/node": "^22.13.11",
     "@types/plist": "^3.0.5",
-    "@typescript-eslint/eslint-plugin": "^8.26.0",
-    "@typescript-eslint/parser": "^8.26.0",
-    "axios": "^1.8.2",
+    "@typescript-eslint/eslint-plugin": "^8.27.0",
+    "@typescript-eslint/parser": "^8.27.0",
+    "axios": "^1.8.4",
     "commander": "^13.1.0",
     "escape-html": "^1.0.3",
     "eslint": "^8.57.0",
@@ -83,7 +83,7 @@
     "simple-plist": "^1.4.0-0",
     "ts-jest": "^29.2.6",
     "ts-node": "^10.9.2",
-    "typedoc": "^0.27.9",
+    "typedoc": "^0.28.1",
     "typescript": "^5.8.2"
   }
 }
