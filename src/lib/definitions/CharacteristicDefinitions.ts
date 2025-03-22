@@ -3031,6 +3031,9 @@ export class SecuritySystemAlarmType extends Characteristic {
 
   public static readonly UUID: string = "0000008E-0000-1000-8000-0026BB765291";
 
+  public static readonly NO_ALARM = 0;
+  public static readonly UNKNOWN = 1;
+
   constructor() {
     super("Security System Alarm Type", SecuritySystemAlarmType.UUID, {
       format: Formats.UINT8,
@@ -3038,6 +3041,7 @@ export class SecuritySystemAlarmType extends Characteristic {
       minValue: 0,
       maxValue: 1,
       minStep: 1,
+      validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
   }

@@ -58,6 +58,7 @@ export const CharacteristicValidValuesOverride: Map<string, Record<string, strin
   ["remote-key", { "0": "Rewind", "1": "Fast Forward", "2": "Next Track", "3": "Previous Track", "4": "Arrow Up", "5": "Arrow Down",
     "6": "Arrow Left", "7": "Arrow Right", "8": "Select", "9": "Back", "10": "Exit", "11": "Play Pause", "15": "Information" }],
   ["router-status", { "0": "Ready", "1": "Not Ready" }],
+  ["security-system.alarm-type", { "0": "No Alarm", "1": "Unknown" }],
   ["siri-input-type", { "0": "Push Button Triggered Apple TV" }],
   ["sleep-discovery-mode", { "0": "Not Discoverable", "1": "Always Discoverable" }],
   ["visibility-state.current", { "0": "Shown", "1": "Hidden" }],
