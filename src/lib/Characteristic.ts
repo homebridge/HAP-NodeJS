@@ -2700,7 +2700,7 @@ export class Characteristic extends EventEmitter {
       }
 
       const numericMin = maxWithUndefined(this.props.minValue, numericLowerBound(this.props.format));
-      const numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(this.props.format));
+      let numericMax = minWithUndefined(this.props.maxValue, numericUpperBound(this.props.format));
 
       let stepValue: number | undefined = undefined;
       if (this.props.format === Formats.FLOAT) {
@@ -2711,6 +2711,9 @@ export class Characteristic extends EventEmitter {
 
       if (stepValue != null && stepValue > 0) {
         const minValue = this.props.minValue != null ? this.props.minValue : 0;
+        if (numericMax != null) {
+          numericMax = stepValue * Math.floor((numericMax - minValue) / stepValue) + minValue;
+        }
         value = stepValue * Math.round((value - minValue) / stepValue) + minValue;
       }
 

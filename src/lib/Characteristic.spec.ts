@@ -1268,6 +1268,62 @@ describe("Characteristic", () => {
       },
     );
 
+    it("should adjust maxValue based on minStep", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.INT,
+        minValue: 0,
+        maxValue: 25,
+        minStep: 2,
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      });
+
+      // @ts-expect-error: private access
+      const adjustedMaxValue = characteristic.validateUserInput(25);
+      expect(adjustedMaxValue).toEqual(24); // maxValue should be adjusted to 24
+    });
+
+    it("should quantize values based on minStep", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.INT,
+        minValue: 0,
+        maxValue: 25,
+        minStep: 2,
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      });
+
+      // @ts-expect-error: private access
+      const quantizedValue = characteristic.validateUserInput(23);
+      expect(quantizedValue).toEqual(24); // value should be quantized to 24
+    });
+
+    it("should truncate values to minValue", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.INT,
+        minValue: 10,
+        maxValue: 25,
+        minStep: 2,
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      });
+
+      // @ts-expect-error: private access
+      const truncatedValue = characteristic.validateUserInput(5);
+      expect(truncatedValue).toEqual(10); // value should be truncated to minValue 10
+    });
+
+    it("should truncate values to maxValue", () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.INT,
+        minValue: 0,
+        maxValue: 25,
+        minStep: 2,
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      });
+
+      // @ts-expect-error: private access
+      const truncatedValue = characteristic.validateUserInput(30);
+      expect(truncatedValue).toEqual(24); // value should be truncated to adjusted maxValue 24
+    });
+
     it("should not round floats for Formats.FLOAT", () => {
       const characteristic = createCharacteristicWithProps({
         format: Formats.FLOAT,
@@ -1474,7 +1530,7 @@ describe("Characteristic", () => {
       expect(mock).toBeCalledTimes(1);
     });
 
-    it("should validate data type intputs", () => {
+    it("should validate data type inputs", () => {
       const characteristic = createCharacteristicWithProps({
         format: Formats.DATA,
         perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
