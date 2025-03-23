@@ -237,6 +237,7 @@ export class Service extends EventEmitter {
   public static CarbonMonoxideSensor: typeof CarbonMonoxideSensor;
   /**
    * @group Service Definitions
+   * @deprecated Removed
    */
   public static CloudRelay: typeof CloudRelay;
   /**
@@ -437,6 +438,7 @@ export class Service extends EventEmitter {
   public static TransferTransportManagement: typeof TransferTransportManagement;
   /**
    * @group Service Definitions
+   * @deprecated Removed
    */
   public static Tunnel: typeof Tunnel;
   /**
