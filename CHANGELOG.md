@@ -4,9 +4,11 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 
 ## BETA
 
-### Changed
+### Changes
 
-- Updated dependencies
+- add constants for `SecuritySystemAlarmType` (#1086)
+- update hk plist file from V=880 to V=886 (#1087)
+- updated dependencies (#1085)
 
 ### Homebridge Dependencies
 

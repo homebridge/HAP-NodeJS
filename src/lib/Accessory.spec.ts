@@ -1369,8 +1369,8 @@ describe("Accessory", () => {
           iid: iids.on,
           status: HAPStatus.SUCCESS,
         });
-        expect(connection.enableEventNotifications).not.toBeCalled();
-        expect(connection.disableEventNotifications).not.toBeCalled();
+        expect(connection.enableEventNotifications).not.toHaveBeenCalled();
+        expect(connection.disableEventNotifications).not.toHaveBeenCalled();
         // @ts-expect-error: private access
         expect(onCharacteristic.subscriptions).toEqual(0);
 
@@ -1395,7 +1395,7 @@ describe("Accessory", () => {
           status: HAPStatus.SUCCESS,
         });
         expect(connection.enableEventNotifications).toHaveBeenCalledTimes(1); // >stays< at 1 invocation
-        expect(connection.disableEventNotifications).not.toBeCalled();
+        expect(connection.disableEventNotifications).not.toHaveBeenCalled();
         // @ts-expect-error: private access
         expect(onCharacteristic.subscriptions).toEqual(1);
 
@@ -1445,7 +1445,7 @@ describe("Accessory", () => {
           iid: iids.on,
           status: HAPStatus.SUCCESS,
         });
-        expect(connection.enableEventNotifications).toBeCalled();
+        expect(connection.enableEventNotifications).toHaveBeenCalledTimes(1);
         // @ts-expect-error: private access
         expect(onCharacteristic.subscriptions).toEqual(1);
 
@@ -1464,7 +1464,7 @@ describe("Accessory", () => {
         // @ts-expect-error: private access
         accessory.handleHAPConnectionClosed(connection);
 
-        expect(connection.clearRegisteredEvents).toBeCalled();
+        expect(connection.clearRegisteredEvents).toHaveBeenCalledTimes(1);
         // @ts-expect-error: private access
         expect(accessory.findCharacteristic).toHaveBeenCalledWith(aid, iids.on);
         // @ts-expect-error: private access

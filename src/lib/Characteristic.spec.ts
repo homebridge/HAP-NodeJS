@@ -604,7 +604,7 @@ describe("Characteristic", () => {
       expect(characteristic.value).toEqual(1);
 
       // ensure validator was actually called
-      expect(validateClientSuppliedValueMock).toBeCalled();
+      expect(validateClientSuppliedValueMock).toHaveBeenCalledTimes(1);
     });
 
     it("rejects invalid values for the boolean format type", async () => {
@@ -664,7 +664,7 @@ describe("Characteristic", () => {
         expect(characteristic.value).toEqual(0);
 
         // ensure validator was actually called
-        expect(validateClientSuppliedValueMock).toBeCalled();
+        expect(validateClientSuppliedValueMock).toHaveBeenCalledTimes(1);
       });
 
 
@@ -685,7 +685,7 @@ describe("Characteristic", () => {
         expect(characteristic.value).toEqual(1);
 
         // ensure validator was actually called
-        expect(validateClientSuppliedValueMock).toBeCalled();
+        expect(validateClientSuppliedValueMock).toHaveBeenCalledTimes(1);
       });
 
     test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
@@ -712,7 +712,7 @@ describe("Characteristic", () => {
         expect(characteristic.value).toEqual(1);
 
         // ensure validator was actually called
-        expect(validateClientSuppliedValueMock).toBeCalled();
+        expect(validateClientSuppliedValueMock).toHaveBeenCalledTimes(1);
       });
 
     test.each([Formats.INT, Formats.FLOAT, Formats.UINT8, Formats.UINT16, Formats.UINT32, Formats.UINT64])(
