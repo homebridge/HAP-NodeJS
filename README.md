@@ -39,8 +39,6 @@ The documentation (WIP) can be found [here](https://developers.homebridge.io/HAP
 
 See the FAQ on how to enable [debug output][faq-debug] for HAP-NodeJS.
 
-If you wish to do a contribution please read through our [CONTRIBUTING][contributing] guide.
-
 ## Projects based on HAP-NodeJS
 
 - [Homebridge][project-homebridge] - HomeKit support for the impatient - Pluggable HomeKit Bridge.  
@@ -70,10 +68,9 @@ If you are interested in HAP over BTLE, you might want to check [this][link-hap-
 [hk-terminology]: https://github.com/homebridge/HAP-NodeJS/wiki/HomeKit-Terminology
 [dev-guide]: https://github.com/homebridge/HAP-NodeJS/wiki/Using-HAP-NodeJS-as-a-library
 [faq-debug]: https://github.com/homebridge/HAP-NodeJS/wiki/FAQ#debug-mode
-[contributing]: https://github.com/homebridge/HAP-NodeJS/blob/master/CONTRIBUTING.md
 
 [examples-repo]: https://github.com/homebridge/HAP-NodeJS-examples
-[example-accessories]: https://github.com/homebridge/HAP-NodeJS/tree/master/src/accessories
+[example-accessories]: https://github.com/homebridge/HAP-NodeJS/tree/latest/src/accessories
 
 [project-homebridge]: https://github.com/homebridge/homebridge
 [project-openhab-homekit-bridge]: https://github.com/htreu/OpenHAB-HomeKit-Bridge

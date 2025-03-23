@@ -505,7 +505,6 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
     try {
       try {
         await messageBusConnectionResult(bus);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         debug("Avahi/DBus classified unavailable due to missing dbus interface!");
         return false;
@@ -514,7 +513,6 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
       try {
         const version = await this.avahiInvoke(bus, "/", "Server", "GetVersionString");
         debug("Detected Avahi over DBus interface running version '%s'.", version);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         debug("Avahi/DBus classified unavailable due to missing avahi interface!");
         return false;
@@ -678,7 +676,6 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
     try {
       try {
         await messageBusConnectionResult(bus);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         debug("systemd-resolved/DBus classified unavailable due to missing dbus interface!");
         return false;
@@ -691,7 +688,6 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
           signature: "isit",
         });
         debug("Detected systemd-resolved over DBus interface running version.");
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         debug("systemd-resolved/DBus classified unavailable due to missing systemd-resolved interface!");
         return false;

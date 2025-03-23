@@ -5,7 +5,7 @@ import assert from "assert";
 import { Command } from "commander";
 import fs from "fs";
 import path from "path";
-import plist from "simple-plist";
+import * as plist from "simple-plist";
 import { Access, Characteristic, Formats, Units } from "../Characteristic";
 import { toLongForm } from "../util/uuid";
 import {
@@ -187,8 +187,7 @@ try {
 
   const props: Record<string, PropertyDefinition> = checkDefined(plistData.PlistDictionary.HAP.Properties);
   // noinspection JSUnusedLocalSymbols
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  for (const [id, definition] of Object.entries(props).sort(([a, aDef], [b, bDef]) => aDef.Position - bDef.Position)) {
+  for (const [id, definition] of Object.entries(props).sort(([, aDef], [, bDef]) => aDef.Position - bDef.Position)) {
     const perm = characteristicPerm(id);
     if (perm) {
       const num = 1 << definition.Position;
@@ -348,7 +347,8 @@ for (const generated of Object.values(generatedCharacteristics)
         if (!name) {
           continue;
         }
-        characteristicOutput.write(`  public static readonly ${name} = ${value};\n`);
+        const cleanName = name.replace(/_+$/, ""); // remove any underscores at the end of the name
+        characteristicOutput.write(`  public static readonly ${cleanName} = ${value};\n`);
       }
       characteristicOutput.write("\n");
     }
