@@ -4289,9 +4289,22 @@ export class TargetHumidifierDehumidifierState extends Characteristic {
 
   public static readonly UUID: string = "000000B4-0000-1000-8000-0026BB765291";
 
+  /**
+   * @deprecated Use `AUTOMATIC` instead
+   */
   public static readonly HUMIDIFIER_OR_DEHUMIDIFIER = 0;
+  /**
+   * @deprecated Use `HUMIDIFY` instead
+   */
   public static readonly HUMIDIFIER = 1;
+  /**
+   * @deprecated Use `DEHUMIDIFY` instead
+   */
   public static readonly DEHUMIDIFIER = 2;
+
+  public static readonly AUTOMATIC = 0;
+  public static readonly HUMIDIFY = 1;
+  public static readonly DEHUMIDIFY = 2;
 
   constructor() {
     super("Target Humidifier-Dehumidifier State", TargetHumidifierDehumidifierState.UUID, {
