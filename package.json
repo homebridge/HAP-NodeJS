@@ -73,7 +73,7 @@
     "@typescript-eslint/eslint-plugin": "^8.33.1",
     "@typescript-eslint/parser": "^8.33.1",
     "axios": "^1.9.0",
-    "commander": "^13.1.0",
+    "commander": "^14.0.0",
     "escape-html": "^1.0.3",
     "eslint": "^8.57.1",
     "http-parser-js": "^0.5.10",
