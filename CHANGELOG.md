@@ -2,6 +2,13 @@
 
 All notable changes to `hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
+## v2.0.0 (Unreleased)
+
+### Changes
+
+- ⚠️ drop support for node v18
+  - the minimum node version required is now `v20`
+
 ## v1.2.0 (2025-06-08)
 
 ### Changes
