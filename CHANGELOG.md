@@ -12,10 +12,12 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 - fix OOC errors from `validateUserInput` on steps
 - merge branch 'release-0.x' into latest
 - fix some bad merge conflicts from previous commit
+- updated dependencies, use included types from `dbus-native` (#1092)
 
 ### Homebridge Dependencies
 
-- `@homebridge/ciao` @ `v1.3.0`
+- `@homebridge/ciao` @ `v1.3.2`
+- `@homebridge/dbus-native` @ `v0.7.1`
 - `bonjour-hap` @ `v3.8.0`
 
 ## v1.1.2 (2025-06-04)
