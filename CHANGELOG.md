@@ -9,6 +9,7 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 - ⚠️ drop support for node v18
   - the minimum node version required is now `v20`
 - update `commander` from `v13` to `v14`
+- Added support for NodeJS 24
 
 ## v1.2.0 (2025-06-08)
 
