@@ -65,6 +65,8 @@
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.29.0",
     "@types/debug": "^4.1.12",
     "@types/escape-html": "^1.0.4",
     "@types/jest": "^30.0.0",
@@ -75,7 +77,7 @@
     "axios": "^1.10.0",
     "commander": "^14.0.0",
     "escape-html": "^1.0.3",
-    "eslint": "^8.57.1",
+    "eslint": "^9.29.0",
     "http-parser-js": "^0.5.10",
     "jest": "^30.0.0",
     "rimraf": "^6.0.1",

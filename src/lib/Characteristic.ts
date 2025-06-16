@@ -333,9 +333,7 @@ export const enum Units {
  * @group Characteristic
  */
 export const enum Perms {
-  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   PAIRED_READ = "pr",
-  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   PAIRED_WRITE = "pw",
   NOTIFY = "ev",
   // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values

@@ -12,6 +12,7 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 - Added support for NodeJS 24
 - Update @homebridge/ciao to 1.3.3
 - update `jest` to `v30` and required migration steps
+- update `eslint` to `v9` and required migration steps
 
 ### Homebridge Dependencies
 

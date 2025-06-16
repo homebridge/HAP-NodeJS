@@ -611,7 +611,6 @@ describe("Accessory", () => {
       accessory._accessoryInfo = accessoryInfoUnpaired;
 
       const publicKey = crypto.randomBytes(32);
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       const callback = jest.fn();
       // @ts-expect-error: private access
       accessory.handleInitialPairSetupFinished(clientUsername0, publicKey, callback);
