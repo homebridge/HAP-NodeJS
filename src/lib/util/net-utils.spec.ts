@@ -120,7 +120,7 @@ describe("net-utils", () => {
         }],
       }));
 
-      expect(() => findLoopbackAddress()).toThrowError();
+      expect(() => findLoopbackAddress()).toThrow();
     });
   });
 });

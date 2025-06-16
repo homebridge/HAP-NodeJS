@@ -109,7 +109,7 @@ describe("Characteristic", () => {
           minValue: 1000,
           maxValue: 500,
         });
-      }).toThrowError();
+      }).toThrow();
 
       expect(characteristic.props.minValue).toBeUndefined();
       expect(characteristic.props.maxValue).toBeUndefined();
