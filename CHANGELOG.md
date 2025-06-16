@@ -13,6 +13,7 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 - Update @homebridge/ciao to 1.3.3
 - update `jest` to `v30` and required migration steps
 - update `eslint` to `v9` and required migration steps
+- ⚠️ republish as `@homebridge/hap-nodejs` for consistency
 
 ### Homebridge Dependencies
 

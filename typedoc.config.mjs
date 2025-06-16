@@ -1,19 +1,17 @@
-{
+/** @type {Partial<import("typedoc").TypeDocOptions>} */
+const config = {
   "out": "docs",
   "exclude": [
     "src/**/*.spec.ts",
-    "src/test-utils/*"
+    "src/test-utils/*",
   ],
-
   "entryPoints": [
-    "src/index.ts"
+    "src/index.ts",
   ],
-
   "intentionallyNotExported": [
     "LocalStorage",
-    "MulticastOptions"
+    "MulticastOptions",
   ],
-
   "excludePrivate": true,
   "excludeProtected": true,
   "excludeExternals": true,
@@ -21,7 +19,9 @@
   "includeVersion": false,
   "validation": {
     "invalidLink": true,
-    "notExported": false
+    "notExported": false,
   },
-  "blockTags": ["@deprecated", "@example", "@group", "@param", "@returns", "@since"]
-}
+  "blockTags": ["@deprecated", "@example", "@group", "@param", "@returns", "@since"],
+};
+
+export default config;

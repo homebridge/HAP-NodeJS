@@ -6,9 +6,9 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "importHelpers": true,
-    "lib": ["ES2022"],
-    "module": "CommonJS",
-    "moduleResolution": "node",
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "node16",
     "preserveConstEnums": true, // do not remove this option!
     "outDir": "./dist",
     "rootDir": "./src",
