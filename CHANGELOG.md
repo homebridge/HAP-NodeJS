@@ -10,6 +10,7 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 - code style - use `subarray` instead of `slice` for buffers
 - fix types around buffers in test files
 - update hap characteristics and services
+- regenerate documentation (`typedoc`) files
 
 ## v2.0.1 (2025-07-23)
 
