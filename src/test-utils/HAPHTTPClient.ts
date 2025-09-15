@@ -176,7 +176,7 @@ export class HAPHTTPClient {
     );
 
     const responseBody = await this.sendPairingsRequest(requestTLV);
-    const tlvDataList = tlv.decodeList(responseBody.slice(3), TLVValues.IDENTIFIER);
+    const tlvDataList = tlv.decodeList(responseBody.subarray(3), TLVValues.IDENTIFIER);
 
     const result: PairingInformation[] = [];
 
@@ -324,7 +324,7 @@ export class HAPHTTPClient {
     };
 
     parser[HTTPParser.kOnBody] = (chunk, offset, length) => {
-      bodyChunks.push(chunk.slice(offset, offset + length));
+      bodyChunks.push(chunk.subarray(offset, offset + length));
     };
 
     // that's the event for trailers!

@@ -7,6 +7,7 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 ### Changes
 
 - dependency updates
+- code style - use `subarray` instead of `slice` for buffers
 
 ## v2.0.1 (2025-07-23)
 
