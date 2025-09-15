@@ -593,6 +593,7 @@ export class FirmwareUpdate extends Service {
     this.addCharacteristic(Characteristic.FirmwareUpdateStatus);
 
     // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.FirmwareUpdateProtocolList);
     this.addOptionalCharacteristic(Characteristic.MatterFirmwareUpdateStatus);
     this.addOptionalCharacteristic(Characteristic.StagedFirmwareVersion);
     this.addOptionalCharacteristic(Characteristic.SupportedFirmwareUpdateConfiguration);

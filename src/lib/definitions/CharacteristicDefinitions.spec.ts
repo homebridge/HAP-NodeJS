@@ -400,6 +400,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("FirmwareUpdateProtocolList", () => {
+    it("should be able to construct", () => {
+      new Characteristic.FirmwareUpdateProtocolList();
+    });
+  });
+
   describe("FirmwareUpdateReadiness", () => {
     it("should be able to construct", () => {
       new Characteristic.FirmwareUpdateReadiness();

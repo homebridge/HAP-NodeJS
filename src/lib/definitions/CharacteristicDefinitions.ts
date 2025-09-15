@@ -1368,6 +1368,23 @@ export class FirmwareRevision extends Characteristic {
 Characteristic.FirmwareRevision = FirmwareRevision;
 
 /**
+ * Characteristic "Firmware Update Protocol List"
+ */
+export class FirmwareUpdateProtocolList extends Characteristic {
+
+  public static readonly UUID: string = "0000026F-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Firmware Update Protocol List", FirmwareUpdateProtocolList.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.FirmwareUpdateProtocolList = FirmwareUpdateProtocolList;
+
+/**
  * Characteristic "Firmware Update Readiness"
  */
 export class FirmwareUpdateReadiness extends Characteristic {

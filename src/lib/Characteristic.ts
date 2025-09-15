@@ -70,6 +70,7 @@ import type {
   FilterChangeIndication,
   FilterLifeLevel,
   FirmwareRevision,
+  FirmwareUpdateProtocolList,
   FirmwareUpdateReadiness,
   FirmwareUpdateStatus,
   HardwareFinish,
@@ -938,6 +939,10 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static FirmwareRevision: typeof FirmwareRevision;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static FirmwareUpdateProtocolList: typeof FirmwareUpdateProtocolList;
   /**
    * @group Characteristic Definitions
    */
