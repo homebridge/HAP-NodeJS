@@ -72,7 +72,7 @@ describe("HAPServer", () => {
     accessoryInfoUnpaired.displayName = "Outlet";
     accessoryInfoUnpaired.category = 7;
     accessoryInfoUnpaired.pincode = " 031-45-154";
-    serverInfoUnpaired.publicKey = accessoryInfoUnpaired.signPk;
+    serverInfoUnpaired.publicKey = Buffer.from(accessoryInfoUnpaired.signPk);
 
     accessoryInfoPaired = AccessoryInfo.create(serverUsername);
     // @ts-expect-error: private access
@@ -80,7 +80,7 @@ describe("HAPServer", () => {
     accessoryInfoPaired.displayName = "Outlet";
     accessoryInfoPaired.category = 7;
     accessoryInfoPaired.pincode = " 031-45-154";
-    serverInfoPaired.publicKey = accessoryInfoPaired.signPk;
+    serverInfoPaired.publicKey = Buffer.from(accessoryInfoPaired.signPk);
 
     const clientKeyPair = tweetnacl.sign.keyPair();
     clientInfo.privateKey = Buffer.from(clientKeyPair.secretKey);

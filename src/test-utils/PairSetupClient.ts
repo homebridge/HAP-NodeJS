@@ -178,19 +178,22 @@ export class PairSetupClient {
 
     // step 1 & 2
     const encryptedDataTagM6 = objectsM6[TLVValues.ENCRYPTED_DATA];
-    const encryptedDataM6 = encryptedDataTagM6.slice(0, -16);
-    const authTagM6 = encryptedDataTagM6.slice(-16);
+    const encryptedDataM6 = encryptedDataTagM6.subarray(0, -16);
+    const authTagM6 = encryptedDataTagM6.subarray(-16);
 
-    let plaintextM6 = Buffer.alloc(0);
-    expect(() => plaintextM6 = hapCrypto.chacha20_poly1305_decryptAndVerify(
-      m5.sessionKey,
-      Buffer.from("PS-Msg06"),
-      null,
-      encryptedDataM6,
-      authTagM6,
-    )).not.toThrow();
+    let plaintextM6: Buffer;
+    expect(() => {
+      const result = hapCrypto.chacha20_poly1305_decryptAndVerify(
+        m5.sessionKey,
+        Buffer.from("PS-Msg06"),
+        null,
+        encryptedDataM6,
+        authTagM6,
+      );
+      plaintextM6 = Buffer.from(result);
+    }).not.toThrow();
 
-    const subTLV_M6 = tlv.decode(plaintextM6);
+    const subTLV_M6 = tlv.decode(plaintextM6!);
     const accessoryIdentifier = subTLV_M6[TLVValues.IDENTIFIER];
     const accessoryLTPK = subTLV_M6[TLVValues.PUBLIC_KEY];
     const accessorySignature = subTLV_M6[TLVValues.SIGNATURE];
