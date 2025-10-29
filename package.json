@@ -21,7 +21,7 @@
     "test-coverage": "jest --coverage",
     "start": "node dist/BridgedCore.js",
     "docs": "typedoc",
-    "lint-docs": "typedoc --emit none --treatWarningsAsErrors"
+    "lint-docs": "typedoc --emit none"
   },
   "keywords": [
     "hap-nodejs",

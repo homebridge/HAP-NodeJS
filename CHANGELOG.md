@@ -2,6 +2,17 @@
 
 All notable changes to `hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
+## v0.13.2 (Unreleased)
+
+### Changed
+
+- remove `treatWarningsAsErrors` flag from doc gen
+
+### Homebridge Dependencies
+
+- `@homebridge/ciao` @ `v1.3.1`
+- `bonjour-hap` @ `v3.9.0`
+
 ## v0.13.1 (2025-06-04)
 
 *No changes since v0.13.0, just a version bump to trigger a new release.*
