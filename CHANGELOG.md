@@ -8,6 +8,7 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 
 - remove `treatWarningsAsErrors` flag from doc gen
 - updated dependencies, fix `Buffer` types
+- add node 24 to node engines in `package.json`
 
 ### Homebridge Dependencies
 
