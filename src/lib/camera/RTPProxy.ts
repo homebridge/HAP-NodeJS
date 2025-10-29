@@ -197,7 +197,7 @@ export default class RTPProxy {
       if((offset + 4 + len) > msg.length) {
         break;
       }
-      let packet = msg.slice(offset, offset + 4 + len);
+      let packet: Buffer = msg.slice(offset, offset + 4 + len);
 
       packet = transform(pt, packet);
 

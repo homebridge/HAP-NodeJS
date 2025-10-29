@@ -188,7 +188,7 @@ export class PairSetupClient {
       null,
       encryptedDataM6,
       authTagM6,
-    )).not.toThrow();
+    ) as Buffer<ArrayBuffer>).not.toThrow();
 
     const subTLV_M6 = tlv.decode(plaintextM6);
     const accessoryIdentifier = subTLV_M6[TLVValues.IDENTIFIER];

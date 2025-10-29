@@ -122,7 +122,7 @@ export class PairVerifyClient {
       null,
       cipherTextM2,
       authTagM2,
-    )).not.toThrow();
+    ) as Buffer<ArrayBuffer>).not.toThrow();
 
     // step 5
     const dataM2 = tlv.decode(plaintextM2);

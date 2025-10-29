@@ -7,11 +7,12 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 ### Changed
 
 - remove `treatWarningsAsErrors` flag from doc gen
+- updated dependencies, fix `Buffer` types
 
 ### Homebridge Dependencies
 
-- `@homebridge/ciao` @ `v1.3.1`
-- `bonjour-hap` @ `v3.9.0`
+- `@homebridge/ciao` @ `v1.3.4`
+- `bonjour-hap` @ `v3.9.1`
 
 ## v0.13.1 (2025-06-04)
 
