@@ -212,6 +212,15 @@ export const CharacteristicManualAdditions: Map<string, GeneratedCharacteristic>
     properties: 2, // paired read
     maxLength: 64,
   }],
+  ["crypto-hash", {
+    id: "crypto-hash",
+    UUID: "00000250-0000-1000-8000-0026BB765291",
+    name: "Crypto Hash",
+    className: "CryptoHash",
+    since: "14.0",
+    format: "tlv8",
+    properties: 132, // write (4) + write_response (128)
+  }],
   ["relay-control-point", {
     id: "relay-control-point",
     UUID: "0000005E-0000-1000-8000-0026BB765291",
@@ -241,6 +250,24 @@ export const CharacteristicManualAdditions: Map<string, GeneratedCharacteristic>
     stepValue: 1,
     minValue: 0,
     maxValue: 5,
+  }],
+  ["tap-type", {
+    id: "tap-type",
+    UUID: "0000022F-0000-1000-8000-0026BB765291",
+    name: "Tap Type",
+    className: "TapType",
+    deprecatedNotice: "Removed",
+    format: "uint16",
+    properties: 2, // read
+  }],
+  ["token", {
+    id: "token",
+    UUID: "00000231-0000-1000-8000-0026BB765291",
+    name: "Token",
+    className: "Token",
+    deprecatedNotice: "Removed",
+    format: "data",
+    properties: 4, // write
   }],
   ["tunnel-connection-timeout", {
     id: "tunnel-connection-timeout",
@@ -324,6 +351,19 @@ export const ServiceManualAdditions: Map<string, GeneratedService> = new Map([
       "relay-control-point",
       "relay-state",
       "relay-enabled",
+    ],
+  }],
+  ["tap-management", {
+    id: "tap-management",
+    UUID: "0000022E-0000-1000-8000-0026BB765291",
+    name: "Tap Management",
+    className: "TapManagement",
+    deprecatedNotice: "Removed",
+    requiredCharacteristics: [
+      "active",
+      "crypto-hash",
+      "tap-type",
+      "token",
     ],
   }],
   ["tunnel", {

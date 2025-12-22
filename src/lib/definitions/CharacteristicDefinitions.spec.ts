@@ -214,6 +214,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("ConnectionHealthMonitor", () => {
+    it("should be able to construct", () => {
+      new Characteristic.ConnectionHealthMonitor();
+    });
+  });
+
   describe("ContactSensorState", () => {
     it("should be able to construct", () => {
       new Characteristic.ContactSensorState();
@@ -607,6 +613,12 @@ describe("CharacteristicDefinitions", () => {
   describe("MaximumTransmitPower", () => {
     it("should be able to construct", () => {
       new Characteristic.MaximumTransmitPower();
+    });
+  });
+
+  describe("MediaAccessControlLevel", () => {
+    it("should be able to construct", () => {
+      new Characteristic.MediaAccessControlLevel();
     });
   });
 

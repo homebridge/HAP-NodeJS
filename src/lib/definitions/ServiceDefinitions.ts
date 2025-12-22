@@ -1,5 +1,5 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=886
+// V=887
 
 import { Characteristic } from "../Characteristic";
 import { Service } from "../Service";
@@ -37,6 +37,7 @@ export class AccessControl extends Service {
     this.addCharacteristic(Characteristic.AccessControlLevel);
 
     // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.MediaAccessControlLevel);
     this.addOptionalCharacteristic(Characteristic.PasswordSetting);
   }
 }
@@ -108,6 +109,7 @@ export class AccessoryRuntimeInformation extends Service {
 
     // Optional Characteristics
     this.addOptionalCharacteristic(Characteristic.ActivityInterval);
+    this.addOptionalCharacteristic(Characteristic.ConnectionHealthMonitor);
     this.addOptionalCharacteristic(Characteristic.HeartBeat);
     this.addOptionalCharacteristic(Characteristic.SleepInterval);
   }
@@ -1267,6 +1269,7 @@ Service.Switch = Switch;
 
 /**
  * Service "Tap Management"
+ * @deprecated Removed
  */
 export class TapManagement extends Service {
 
@@ -1282,6 +1285,7 @@ export class TapManagement extends Service {
     this.addCharacteristic(Characteristic.Token);
   }
 }
+// noinspection JSDeprecatedSymbols
 Service.TapManagement = TapManagement;
 
 /**

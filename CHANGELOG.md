@@ -9,6 +9,7 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 - update readme badges (use `shields.io`) (#1104)
 - update publish workflows for npm oidc auth (#1105)
 - dependency updates
+- update hap characteristics and services
 
 ## v2.0.2 (2025-09-17)
 

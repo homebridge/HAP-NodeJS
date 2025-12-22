@@ -1,5 +1,5 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=886
+// V=887
 
 import { Access, Characteristic, Formats, Perms, Units } from "../Characteristic";
 
@@ -700,6 +700,23 @@ export class ConfiguredName extends Characteristic {
 Characteristic.ConfiguredName = ConfiguredName;
 
 /**
+ * Characteristic "Connection Health Monitor"
+ */
+export class ConnectionHealthMonitor extends Characteristic {
+
+  public static readonly UUID: string = "00000273-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Connection Health Monitor", ConnectionHealthMonitor.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.ConnectionHealthMonitor = ConnectionHealthMonitor;
+
+/**
  * Characteristic "Contact Sensor State"
  */
 export class ContactSensorState extends Characteristic {
@@ -746,6 +763,7 @@ Characteristic.CoolingThresholdTemperature = CoolingThresholdTemperature;
 
 /**
  * Characteristic "Crypto Hash"
+ * @since iOS 14.0
  */
 export class CryptoHash extends Characteristic {
 
@@ -2082,6 +2100,26 @@ export class MaximumTransmitPower extends Characteristic {
   }
 }
 Characteristic.MaximumTransmitPower = MaximumTransmitPower;
+
+/**
+ * Characteristic "Media Access Control Level"
+ */
+export class MediaAccessControlLevel extends Characteristic {
+
+  public static readonly UUID: string = "000000EE-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Media Access Control Level", MediaAccessControlLevel.UUID, {
+      format: Formats.UINT8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+      minValue: 0,
+      maxValue: 2,
+      minStep: 1,
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.MediaAccessControlLevel = MediaAccessControlLevel;
 
 /**
  * Characteristic "Metrics Buffer Full State"
@@ -4105,6 +4143,7 @@ Characteristic.SwingMode = SwingMode;
 
 /**
  * Characteristic "Tap Type"
+ * @deprecated Removed
  */
 export class TapType extends Characteristic {
 
@@ -4118,6 +4157,7 @@ export class TapType extends Characteristic {
     this.value = this.getDefaultValue();
   }
 }
+// noinspection JSDeprecatedSymbols
 Characteristic.TapType = TapType;
 
 /**
@@ -4599,6 +4639,7 @@ Characteristic.ThreadStatus = ThreadStatus;
 
 /**
  * Characteristic "Token"
+ * @deprecated Removed
  */
 export class Token extends Characteristic {
 
@@ -4612,6 +4653,7 @@ export class Token extends Characteristic {
     this.value = this.getDefaultValue();
   }
 }
+// noinspection JSDeprecatedSymbols
 Characteristic.Token = Token;
 
 /**

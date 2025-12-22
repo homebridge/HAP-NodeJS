@@ -399,6 +399,7 @@ export class Service extends EventEmitter {
   public static Switch: typeof Switch;
   /**
    * @group Service Definitions
+   * @deprecated Removed
    */
   public static TapManagement: typeof TapManagement;
   /**

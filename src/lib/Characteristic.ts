@@ -39,6 +39,7 @@ import type {
   ColorTemperature,
   ConfigurationState,
   ConfiguredName,
+  ConnectionHealthMonitor,
   ContactSensorState,
   CoolingThresholdTemperature,
   CryptoHash,
@@ -105,6 +106,7 @@ import type {
   MatterFirmwareRevisionNumber,
   MatterFirmwareUpdateStatus,
   MaximumTransmitPower,
+  MediaAccessControlLevel,
   MetricsBufferFullState,
   Model,
   MotionDetected,
@@ -815,6 +817,10 @@ export class Characteristic extends EventEmitter {
   /**
    * @group Characteristic Definitions
    */
+  public static ConnectionHealthMonitor: typeof ConnectionHealthMonitor;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ContactSensorState: typeof ContactSensorState;
   /**
    * @group Characteristic Definitions
@@ -1076,6 +1082,10 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static MaximumTransmitPower: typeof MaximumTransmitPower;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static MediaAccessControlLevel: typeof MediaAccessControlLevel;
   /**
    * @group Characteristic Definitions
    */
@@ -1493,6 +1503,7 @@ export class Characteristic extends EventEmitter {
   public static SwingMode: typeof SwingMode;
   /**
    * @group Characteristic Definitions
+   * @deprecated Removed
    */
   public static TapType: typeof TapType;
   /**
@@ -1585,6 +1596,7 @@ export class Characteristic extends EventEmitter {
   public static ThreadStatus: typeof ThreadStatus;
   /**
    * @group Characteristic Definitions
+   * @deprecated Removed
    */
   public static Token: typeof Token;
   /**
