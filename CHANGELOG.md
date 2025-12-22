@@ -2,6 +2,14 @@
 
 All notable changes to `hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
+## v2.0.3 (Unreleased)
+
+### Changes
+
+- update readme badges (use `shields.io`) (#1104)
+- update publish workflows for npm oidc auth (#1105)
+- dependency updates
+
 ## v2.0.2 (2025-09-17)
 
 ### Changes

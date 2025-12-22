@@ -2855,7 +2855,6 @@ export class Characteristic extends EventEmitter {
     if (getListeners.length) {
       // the callback can only be called once, so we remove all old listeners
       this.removeAllListeners(CharacteristicEventTypes.GET);
-      // @ts-expect-error: force type
       getListeners.forEach(listener => this.addListener(CharacteristicEventTypes.GET, listener));
     }
 
@@ -2868,7 +2867,6 @@ export class Characteristic extends EventEmitter {
     if (setListeners.length) {
       // the callback can only be called once, so we remove all old listeners
       this.removeAllListeners(CharacteristicEventTypes.SET);
-      // @ts-expect-error: force type
       setListeners.forEach(listener => this.addListener(CharacteristicEventTypes.SET, listener));
     }
 
