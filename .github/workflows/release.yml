@@ -1,36 +1,167 @@
-name: Node Release
+name: Release
+
+# This workflow handles latest, beta, and alpha releases:
+# - Latest: Triggered by GitHub releases (tag vX.Y.Z)
+# - Beta: Triggered by pushes to beta-X.Y.Z branches
+# - Alpha: Triggered by pushes to alpha-X.Y.Z branches
 
 on:
+  release:
+    types: [released]
   push:
-    tags:
-      - 'v*.*.*'
+    branches:
+      - beta-*.*.*
+      - alpha-*.*.*
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build_and_test:
+  determine-release-type:
+    name: Determine Release Type
+    runs-on: ubuntu-latest
+    if: ${{ github.repository == 'homebridge/HAP-NodeJS' }}
+    outputs:
+      release_type: ${{ steps.release-type.outputs.type }}
+      npm_tag: ${{ steps.release-type.outputs.tag }}
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Determine release type
+        id: release-type
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "type=latest" >> $GITHUB_OUTPUT
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/heads/beta-* ]]; then
+            echo "type=beta" >> $GITHUB_OUTPUT
+            echo "tag=beta" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/heads/alpha-* ]]; then
+            echo "type=alpha" >> $GITHUB_OUTPUT
+            echo "tag=alpha" >> $GITHUB_OUTPUT
+          else
+            echo "type=none" >> $GITHUB_OUTPUT
+            echo "tag=none" >> $GITHUB_OUTPUT
+            echo "No valid release type detected - skipping publish"
+          fi
+
+      - name: Get Release Tag (Latest Only)
+        if: steps.release-type.outputs.type == 'latest'
+        id: get_version
+        uses: jannemattila/get-version-from-tag@v3
+
+      - name: Tag Info (Latest Only)
+        if: steps.release-type.outputs.type == 'latest'
+        run: |
+          echo "Release Tag: ${{github.ref}}"
+          echo "Latest Tag: ${{ steps.get_version.outputs.version }}"
+
+      - name: Tag Info Matches (Latest Only)
+        if: steps.release-type.outputs.type == 'latest' && endsWith(github.ref, steps.get_version.outputs.version)
+        run: |
+          echo Latest Tag matches Release tag
+
+      - name: Tag Info Doesn't Match (Latest Only)
+        if: steps.release-type.outputs.type == 'latest' && !endsWith(github.ref, steps.get_version.outputs.version)
+        run: |
+          echo Latest Tag does not matches Release tag
+          exit 1
+
+  build_and_test_latest:
+    needs: determine-release-type
+    name: Build and Test ${{ needs.determine-release-type.outputs.version }}
+    if: needs.determine-release-type.outputs.release_type == 'latest'
     uses: homebridge/.github/.github/workflows/nodejs-build-and-test.yml@latest
     with:
       enable_coverage: true
+      install_cmd: npm ci
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
+
+  build_and_test_beta:
+    needs: determine-release-type
+    name: Build and Test (Beta)
+    if: needs.determine-release-type.outputs.release_type == 'beta'
+    uses: homebridge/.github/.github/workflows/nodejs-build-and-test.yml@latest
+    with:
+      enable_coverage: false
+      install_cmd: npm ci
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
 
   publish:
-    needs: build_and_test
+    needs: [determine-release-type, build_and_test_latest, build_and_test_beta]
+    if: |
+      always() &&
+      needs.determine-release-type.outputs.release_type != 'none' &&
+      (needs.determine-release-type.outputs.release_type == 'alpha' ||
+       needs.build_and_test_latest.result == 'success' ||
+       needs.build_and_test_latest.result == 'skipped') &&
+      (needs.build_and_test_beta.result == 'success' ||
+       needs.build_and_test_beta.result == 'skipped')
+    name: Publish to npm (${{ needs.determine-release-type.outputs.npm_tag }})
+    runs-on: ubuntu-latest
+    outputs:
+      npm_version: ${{ steps.get-published-version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
 
-    if: ${{ github.repository == 'homebridge/HAP-NodeJS' }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
 
-    uses: homebridge/.github/.github/workflows/npm-publish.yml@latest
-    secrets:
-      npm_auth_token: ${{ secrets.npm_token }}
+      - name: Upgrade npm for OIDC support
+        run: npm install -g npm@latest
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Handle prerelease versioning
+        if: needs.determine-release-type.outputs.release_type == 'beta' || needs.determine-release-type.outputs.release_type == 'alpha'
+        run: |
+          # Download versioning script from homebridge/.github
+          mkdir -p .github
+          wget -q https://raw.githubusercontent.com/homebridge/.github/latest/.github/npm-version-script-esm.js -O .github/npm-version-script-esm.js
+
+          # Run the script to set base version
+          node .github/npm-version-script-esm.js ${{ github.ref }} ${{ needs.determine-release-type.outputs.release_type }}
+
+          # Add prerelease suffix
+          npm version pre --preid=${{ needs.determine-release-type.outputs.release_type }} --no-git-tag-version
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish to npm with OIDC
+        run: npm publish --tag ${{ needs.determine-release-type.outputs.npm_tag }} --provenance --access public
+
+      - name: Get published version
+        id: get-published-version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Published version: $VERSION"
 
   github-releases-to-discord:
     name: Discord Webhooks
-    needs: [build_and_test,publish]
+    needs: [determine-release-type, publish]
+    if: |
+      always() &&
+      needs.publish.result == 'success' &&
+      needs.attach-artifact.result == 'success'
     uses: homebridge/.github/.github/workflows/discord-webhooks.yml@latest
     with:
       title: "HAP-NodeJS Release"
       description: |
         Version `v${{ needs.publish.outputs.NPM_VERSION }}`
-      url: "https://github.com/homebridge/homebridge-config-ui-x/releases/tag/v${{ needs.publish.outputs.NPM_VERSION }}"
+      url: "https://github.com/homebridge/HAP-NodeJS/releases/tag/v${{ needs.publish.outputs.NPM_VERSION }}"
     secrets:
-      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL_LATEST }}
+      DISCORD_WEBHOOK: ${{ needs.determine-release-type.outputs.release_type == 'latest' && secrets.DISCORD_WEBHOOK_URL_LATEST || secrets.DISCORD_WEBHOOK_URL_BETA }}
