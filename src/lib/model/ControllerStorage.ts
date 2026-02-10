@@ -213,14 +213,14 @@ export class ControllerStorage {
     }
   }
 
-  public load(username: MacAddress): void { // will be called once accessory gets published
+  public async load(username: MacAddress): Promise<void> { // will be called once accessory gets published
     if (this.username) {
       throw new Error("ControllerStorage was already loaded!");
     }
     this.username = username;
 
     const key = ControllerStorage.persistKey(username);
-    const saved: StorageLayout | undefined = HAPStorage.storage().getItem(key);
+    const saved: StorageLayout | undefined = await HAPStorage.storage().getItem(key);
 
     let ownData;
     if (saved) {
@@ -292,10 +292,16 @@ export class ControllerStorage {
       };
 
       this.fileCreated = true;
-      HAPStorage.storage().setItemSync(key, saved);
+      // Fire and forget - async storage operation
+      HAPStorage.storage().setItem(key, saved).catch(err => {
+        console.error(`Error saving ControllerStorage for ${this.username}:`, err);
+      });
     } else if (this.fileCreated) {
       this.fileCreated = false;
-      HAPStorage.storage().removeItemSync(key);
+      // Fire and forget - async storage operation
+      HAPStorage.storage().removeItem(key).catch(err => {
+        console.error(`Error removing ControllerStorage for ${this.username}:`, err);
+      });
     }
   }
 
@@ -303,9 +309,9 @@ export class ControllerStorage {
     return util.format("ControllerStorage.%s.json", username.replace(/:/g, "").toUpperCase());
   }
 
-  static remove(username: MacAddress): void {
+  static async remove(username: MacAddress): Promise<void> {
     const key = ControllerStorage.persistKey(username);
-    HAPStorage.storage().removeItemSync(key);
+    await HAPStorage.storage().removeItem(key);
   }
 
 }
