@@ -7,14 +7,10 @@ declare module "node-persist" {
     stringify?: typeof JSON.stringify, // default JSON.stringify
     parse?: typeof JSON.parse, // default JSON.parse
     encoding?: string, // default 'utf8'
-    logging?: boolean | ((message: string) => void),
-    ttl?: false | number, // can be a number in MILLISECONDS
-    expiredInterval?: number, // default 2 * 60 * 1000 (2 minutes)
-    forgiveParseErrors?: boolean, // default false
-    writeQueue?: boolean, // default true
-    writeQueueIntervalMs?: number, // default 1000
-    writeQueueWriteOnlyLast?: boolean, // default true
-    maxFileDescriptors?: number, // default Infinity
+    logging?: boolean,
+    continuous?: boolean, // default true (instantly persists to disk)
+    interval?: false | number, // milliseconds
+    ttl?: false | true | number, // can be true for 24h default or a number in MILLISECONDS
   }
 
   export class LocalStorage {
@@ -22,19 +18,19 @@ declare module "node-persist" {
     constructor(options?: InitOptions);
 
     initSync(options?: InitOptions): void;
-    init(options?: InitOptions): Promise<void>;
-    getItem(key: string): Promise<any>;
+    getItem(key: string): any;
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-    setItem(key: string, value: any): Promise<void>;
-    removeItem(key: string): Promise<void>;
+    setItemSync(key: string, value: any): void;
+    removeItemSync(key: string): void
+    persistSync(): void;
 
   }
 
   export function initSync(options?: InitOptions): void;
-  export function init(options?: InitOptions): Promise<void>;
   export function create(options?: InitOptions): LocalStorage;
-  export function getItem(key: string): Promise<any>;
-  export function setItem(key: string, data: any): Promise<void>;
-  export function removeItem(key: string): Promise<void>;
+  export function getItem(key: string): any;
+  export function setItemSync(key: string, data: any): void;
+  export function persistSync(): void;
+  export function removeItemSync(key: string): void;
 
 }

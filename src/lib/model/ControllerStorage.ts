@@ -213,14 +213,14 @@ export class ControllerStorage {
     }
   }
 
-  public async load(username: MacAddress): Promise<void> { // will be called once accessory gets published
+  public load(username: MacAddress): void { // will be called once accessory gets published
     if (this.username) {
       throw new Error("ControllerStorage was already loaded!");
     }
     this.username = username;
 
     const key = ControllerStorage.persistKey(username);
-    const saved: StorageLayout | undefined = await HAPStorage.storage().getItem(key);
+    const saved: StorageLayout | undefined = HAPStorage.storage().getItem(key);
 
     let ownData;
     if (saved) {
@@ -292,18 +292,10 @@ export class ControllerStorage {
       };
 
       this.fileCreated = true;
-      // Fire and forget - async storage operation
-      HAPStorage.storage().setItem(key, saved).catch(err => {
-        console.error(`Error saving ControllerStorage for ${this.username} to ${key}:`, err);
-        console.error("This may result in controller data being lost. Check file system permissions and available disk space.");
-      });
+      HAPStorage.storage().setItemSync(key, saved);
     } else if (this.fileCreated) {
       this.fileCreated = false;
-      // Fire and forget - async storage operation
-      HAPStorage.storage().removeItem(key).catch(err => {
-        console.error(`Error removing ControllerStorage for ${this.username} from ${key}:`, err);
-        console.error("This may result in stale controller data persisting. Check file system permissions.");
-      });
+      HAPStorage.storage().removeItemSync(key);
     }
   }
 
@@ -311,9 +303,9 @@ export class ControllerStorage {
     return util.format("ControllerStorage.%s.json", username.replace(/:/g, "").toUpperCase());
   }
 
-  static async remove(username: MacAddress): Promise<void> {
+  static remove(username: MacAddress): void {
     const key = ControllerStorage.persistKey(username);
-    await HAPStorage.storage().removeItem(key);
+    HAPStorage.storage().removeItemSync(key);
   }
 
 }

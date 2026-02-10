@@ -248,11 +248,7 @@ export class AccessoryInfo {
 
     const key = AccessoryInfo.persistKey(this.username);
 
-    // Fire and forget - async storage operation
-    HAPStorage.storage().setItem(key, saved).catch(err => {
-      console.error(`Error saving AccessoryInfo for ${this.username} to ${key}:`, err);
-      console.error("This may result in pairing information being lost. Check file system permissions and available disk space.");
-    });
+    HAPStorage.storage().setItemSync(key, saved);
   }
 
   // Gets a key for storing this AccessoryInfo in the filesystem, like "AccessoryInfo.CC223DE3CEF3.json"
@@ -275,11 +271,11 @@ export class AccessoryInfo {
     return accessoryInfo;
   }
 
-  static async load(username: MacAddress): Promise<AccessoryInfo | null> {
+  static load(username: MacAddress): AccessoryInfo | null {
     AccessoryInfo.assertValidUsername(username);
 
     const key = AccessoryInfo.persistKey(username);
-    const saved = await HAPStorage.storage().getItem(key);
+    const saved = HAPStorage.storage().getItem(key);
 
     if (saved) {
       const info = new AccessoryInfo(username);
@@ -322,9 +318,9 @@ export class AccessoryInfo {
     }
   }
 
-  static async remove(username: MacAddress): Promise<void> {
+  static remove(username: MacAddress): void {
     const key = AccessoryInfo.persistKey(username);
-    await HAPStorage.storage().removeItem(key);
+    HAPStorage.storage().removeItemSync(key);
   }
 
   static assertValidUsername(username: MacAddress): void {

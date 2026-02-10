@@ -1108,7 +1108,7 @@ export class Accessory extends EventEmitter {
     service.setCharacteristic(Characteristic.Version, CiaoAdvertiser.protocolVersionService);
 
     if (this.lastKnownUsername && this.lastKnownUsername !== info.username) { // username changed since last publish
-      await Accessory.cleanupAccessoryData(this.lastKnownUsername); // delete old Accessory data
+      Accessory.cleanupAccessoryData(this.lastKnownUsername); // delete old Accessory data
     }
 
     if (!this.initialized && (info.addIdentifyingMaterial ?? true)) {
@@ -1120,7 +1120,7 @@ export class Accessory extends EventEmitter {
     }
 
     // attempt to load existing AccessoryInfo from disk
-    this._accessoryInfo = await AccessoryInfo.load(info.username);
+    this._accessoryInfo = AccessoryInfo.load(info.username);
 
     // if we don't have one, create a new one.
     if (!this._accessoryInfo) {
@@ -1146,7 +1146,7 @@ export class Accessory extends EventEmitter {
     this._accessoryInfo.save();
 
     // create our IdentifierCache, so we can provide clients with stable aid/iid's
-    this._identifierCache = await IdentifierCache.load(info.username);
+    this._identifierCache = IdentifierCache.load(info.username);
 
     // if we don't have one, create a new one.
     if (!this._identifierCache) {
@@ -1164,7 +1164,7 @@ export class Accessory extends EventEmitter {
     }
 
     if (!this.initialized) { // controller storage is only loaded from disk the first time we publish!
-      await this.controllerStorage.load(info.username); // initializing controller data
+      this.controllerStorage.load(info.username); // initializing controller data
     }
 
     // assign aid/iid
@@ -1256,17 +1256,19 @@ export class Accessory extends EventEmitter {
    * Accessory object will no longer valid after invoking this method
    * Trying to invoke publish() on the object will result undefined behavior
    */
-  public async destroy(): Promise<void> {
-    await this.unpublish();
+  public destroy(): Promise<void> {
+    const promise = this.unpublish();
 
     if (this._accessoryInfo) {
-      await Accessory.cleanupAccessoryData(this._accessoryInfo.username);
+      Accessory.cleanupAccessoryData(this._accessoryInfo.username);
 
       this._accessoryInfo = undefined;
       this._identifierCache = undefined;
       this.controllerStorage = new ControllerStorage(this);
     }
     this.removeAllListeners();
+
+    return promise;
   }
 
   public async unpublish(): Promise<void> {
@@ -2076,12 +2078,10 @@ export class Accessory extends EventEmitter {
     return accessory;
   }
 
-  public static async cleanupAccessoryData(username: MacAddress): Promise<void> {
-    await Promise.all([
-      IdentifierCache.remove(username),
-      AccessoryInfo.remove(username),
-      ControllerStorage.remove(username),
-    ]);
+  public static cleanupAccessoryData(username: MacAddress): void {
+    IdentifierCache.remove(username);
+    AccessoryInfo.remove(username);
+    ControllerStorage.remove(username);
   }
 
   private static serializeServiceMap(serviceMap: ControllerServiceMap): SerializedServiceMap {

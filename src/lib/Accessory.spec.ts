@@ -835,9 +835,9 @@ describe("Accessory", () => {
       version: 12,
     };
 
-    beforeEach(async () => {
+    beforeEach(() => {
       const loadBackup = AccessoryInfo.load;
-      AccessoryInfo.load = jest.fn(async () => {
+      AccessoryInfo.load = jest.fn(() => {
         // inject our mocked accessoryInfo object
         return accessoryInfoPaired;
       });
@@ -854,7 +854,7 @@ describe("Accessory", () => {
 
       onCharacteristic = switchService.getCharacteristic(Characteristic.On);
 
-      await accessory.publish(publishInfo);
+      accessory.publish(publishInfo);
 
       AccessoryInfo.load = loadBackup;
 

@@ -86,11 +86,7 @@ export class IdentifierCache {
         cache: this._cache,
       };
       const key = IdentifierCache.persistKey(this.username);
-      // Fire and forget - async storage operation
-      HAPStorage.storage().setItem(key, saved).catch(err => {
-        console.error(`Error saving IdentifierCache for ${this.username} to ${key}:`, err);
-        console.error("This may result in identifier cache being lost. Check file system permissions and available disk space.");
-      });
+      HAPStorage.storage().setItemSync(key, saved);
       this._savedCacheHash = newCacheHash; //update hash of saved cache for future use
     }
   }
@@ -103,9 +99,9 @@ export class IdentifierCache {
     return util.format("IdentifierCache.%s.json", username.replace(/:/g, "").toUpperCase());
   }
 
-  static async load(username: MacAddress): Promise<IdentifierCache | null> {
+  static load(username: MacAddress): IdentifierCache | null {
     const key = IdentifierCache.persistKey(username);
-    const saved = await HAPStorage.storage().getItem(key);
+    const saved = HAPStorage.storage().getItem(key);
     if (saved) {
       const info = new IdentifierCache(username);
       info._cache = saved.cache;
@@ -117,9 +113,9 @@ export class IdentifierCache {
     }
   }
 
-  static async remove(username: MacAddress): Promise<void> {
+  static remove(username: MacAddress): void {
     const key = this.persistKey(username);
-    await HAPStorage.storage().removeItem(key);
+    HAPStorage.storage().removeItemSync(key);
   }
 }
 
