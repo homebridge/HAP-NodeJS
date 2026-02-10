@@ -1,9 +1,9 @@
 class Storage {
-  getItem = jest.fn();
-  setItemSync = jest.fn();
-  persistSync = jest.fn();
-  removeItemSync = jest.fn();
+  getItem = jest.fn().mockResolvedValue(undefined);
+  setItem = jest.fn().mockResolvedValue(undefined);
+  removeItem = jest.fn().mockResolvedValue(undefined);
   initSync = jest.fn();
+  init = jest.fn().mockResolvedValue(undefined);
   create = jest.fn().mockImplementation(() => new Storage());
 }
 

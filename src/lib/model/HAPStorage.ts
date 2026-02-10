@@ -1,6 +1,8 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import storage, { LocalStorage } from "node-persist";
+import { StorageMigration } from "./StorageMigration";
+import path from "path";
 
 /**
  * @group Model
@@ -8,6 +10,7 @@ import storage, { LocalStorage } from "node-persist";
 export class HAPStorage {
 
   private static readonly INSTANCE = new HAPStorage();
+  private static migrationComplete = false;
 
   private localStore?: LocalStorage;
   private customStoragePath?: string;
@@ -30,6 +33,15 @@ export class HAPStorage {
         });
       } else {
         this.localStore.initSync();
+      }
+
+      // Run migration once after initialization
+      if (!HAPStorage.migrationComplete) {
+        HAPStorage.migrationComplete = true;
+        const storageDir = this.customStoragePath || path.join(process.cwd(), ".node-persist/storage");
+        StorageMigration.migrateStorageDirectory(storageDir).catch(err => {
+          console.error("Storage migration failed:", err);
+        });
       }
     }
 

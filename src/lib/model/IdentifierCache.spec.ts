@@ -104,16 +104,16 @@ describe("IdentifierCache", () => {
       const identifierCache = createIdentifierCache();
       identifierCache.save();
 
-      expect(pullOutLocalStore().setItemSync).toHaveBeenCalledTimes(1);
+      expect(pullOutLocalStore().setItem).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("#remove()", () => {
-    it("removes the cache from file storage", () => {
+    it("removes the cache from file storage", async () => {
       const identifierCache = createIdentifierCache();
-      IdentifierCache.remove(identifierCache.username);
+      await IdentifierCache.remove(identifierCache.username);
 
-      expect(pullOutLocalStore().removeItemSync).toHaveBeenCalledTimes(1);
+      expect(pullOutLocalStore().removeItem).toHaveBeenCalledTimes(1);
     });
   });
 
