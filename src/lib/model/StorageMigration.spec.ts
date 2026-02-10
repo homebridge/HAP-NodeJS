@@ -245,4 +245,113 @@ describe("StorageMigration", () => {
       fs.chmodSync(filePath, 0o644);
     });
   });
+
+  describe("Cleanup Functionality", () => {
+    it("should not cleanup old files by default", async () => {
+      const key = "AccessoryInfo.CC223DE3CEF3.json";
+      const data = { test: "data" };
+      
+      // Create v0 format file
+      fs.writeFileSync(path.join(tempDir, key), JSON.stringify(data));
+
+      // Migrate without cleanup
+      await StorageMigration.migrateStorageDirectory(tempDir, false);
+
+      // Old file should still exist
+      expect(fs.existsSync(path.join(tempDir, key))).toBe(true);
+      
+      // New file should also exist
+      const v4Filename = crypto.createHash("sha256").update(key).digest("hex");
+      expect(fs.existsSync(path.join(tempDir, v4Filename))).toBe(true);
+    });
+
+    it("should cleanup old files when flag is set", async () => {
+      const key = "AccessoryInfo.CC223DE3CEF3.json";
+      const data = { test: "data" };
+      
+      // Create v0 format file
+      fs.writeFileSync(path.join(tempDir, key), JSON.stringify(data));
+
+      // Migrate with cleanup
+      await StorageMigration.migrateStorageDirectory(tempDir, true);
+
+      // Old file should be deleted
+      expect(fs.existsSync(path.join(tempDir, key))).toBe(false);
+      
+      // New file should exist
+      const v4Filename = crypto.createHash("sha256").update(key).digest("hex");
+      expect(fs.existsSync(path.join(tempDir, v4Filename))).toBe(true);
+    });
+
+    it("should cleanup multiple old files when flag is set", async () => {
+      const files = [
+        { key: "AccessoryInfo.AA11BB22CC33.json", data: { displayName: "Accessory 1" } },
+        { key: "IdentifierCache.AA11BB22CC33.json", data: { cache: {} } },
+        { key: "ControllerStorage.AA11BB22CC33.json", data: { accessories: {} } },
+      ];
+
+      // Create v0 format files
+      files.forEach(file => {
+        fs.writeFileSync(path.join(tempDir, file.key), JSON.stringify(file.data));
+      });
+
+      // Migrate with cleanup
+      await StorageMigration.migrateStorageDirectory(tempDir, true);
+
+      // All old files should be deleted
+      files.forEach(file => {
+        expect(fs.existsSync(path.join(tempDir, file.key))).toBe(false);
+      });
+
+      // New files should exist
+      files.forEach(file => {
+        const v4Filename = crypto.createHash("sha256").update(file.key).digest("hex");
+        expect(fs.existsSync(path.join(tempDir, v4Filename))).toBe(true);
+      });
+    });
+
+    it("should not cleanup if no files were migrated", async () => {
+      const key = "AccessoryInfo.CC223DE3CEF3.json";
+      const data = { test: "data" };
+      const v4Filename = crypto.createHash("sha256").update(key).digest("hex");
+      
+      // Create v4 format file (already migrated)
+      const v4Data = { key, value: data };
+      fs.writeFileSync(path.join(tempDir, v4Filename), JSON.stringify(v4Data));
+
+      // Migrate with cleanup (should not cleanup anything since nothing was migrated)
+      await StorageMigration.migrateStorageDirectory(tempDir, true);
+
+      // V4 file should still exist
+      expect(fs.existsSync(path.join(tempDir, v4Filename))).toBe(true);
+    });
+
+    it("should preserve new format files during cleanup", async () => {
+      const oldKey = "OldFile.json";
+      const newKey = "NewFile.json";
+      const oldData = { test: "old" };
+      const newData = { test: "new" };
+      
+      // Create v0 format file
+      fs.writeFileSync(path.join(tempDir, oldKey), JSON.stringify(oldData));
+      
+      // Create v4 format file
+      const v4Filename = crypto.createHash("sha256").update(newKey).digest("hex");
+      const v4Data = { key: newKey, value: newData };
+      fs.writeFileSync(path.join(tempDir, v4Filename), JSON.stringify(v4Data));
+
+      // Migrate with cleanup
+      await StorageMigration.migrateStorageDirectory(tempDir, true);
+
+      // Old file should be deleted
+      expect(fs.existsSync(path.join(tempDir, oldKey))).toBe(false);
+      
+      // Pre-existing v4 file should still exist
+      expect(fs.existsSync(path.join(tempDir, v4Filename))).toBe(true);
+      
+      // New migrated file should exist
+      const oldV4Filename = crypto.createHash("sha256").update(oldKey).digest("hex");
+      expect(fs.existsSync(path.join(tempDir, oldV4Filename))).toBe(true);
+    });
+  });
 });

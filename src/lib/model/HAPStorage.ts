@@ -11,6 +11,7 @@ export class HAPStorage {
 
   private static readonly INSTANCE = new HAPStorage();
   private static migrationComplete = false;
+  private static cleanupOldFiles = false;
 
   private localStore?: LocalStorage;
   private customStoragePath?: string;
@@ -21,6 +22,17 @@ export class HAPStorage {
 
   public static setCustomStoragePath(path: string): void {
     this.INSTANCE.setCustomStoragePath(path);
+  }
+
+  /**
+   * Enable automatic cleanup of old format files after migration.
+   * WARNING: This is destructive. Old files will be permanently deleted after migration.
+   * Should only be enabled after verifying migration was successful.
+   * 
+   * @param cleanup - Set to true to enable automatic cleanup of old files
+   */
+  public static setCleanupOldFiles(cleanup: boolean): void {
+    this.cleanupOldFiles = cleanup;
   }
 
   public storage(): LocalStorage {
@@ -39,7 +51,7 @@ export class HAPStorage {
       if (!HAPStorage.migrationComplete) {
         HAPStorage.migrationComplete = true;
         const storageDir = this.customStoragePath || path.join(process.cwd(), ".node-persist/storage");
-        StorageMigration.migrateStorageDirectory(storageDir).catch(err => {
+        StorageMigration.migrateStorageDirectory(storageDir, HAPStorage.cleanupOldFiles).catch(err => {
           console.error("Storage migration failed:", err);
         });
       }

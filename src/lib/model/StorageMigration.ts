@@ -161,8 +161,11 @@ export class StorageMigration {
   /**
    * Migrates all storage files from v0/v2 format to v4 format
    * This should be called once during application startup
+   * 
+   * @param storageDir - The storage directory to migrate
+   * @param cleanupOldFiles - If true, deletes old format files after successful migration (default: false)
    */
-  public static async migrateStorageDirectory(storageDir: string): Promise<void> {
+  public static async migrateStorageDirectory(storageDir: string, cleanupOldFiles = false): Promise<void> {
     if (!fs.existsSync(storageDir)) {
       debug("Storage directory does not exist: %s", storageDir);
       return;
@@ -174,6 +177,9 @@ export class StorageMigration {
 
     debug("Starting migration of storage directory: %s", storageDir);
     debug("Found %d files", files.length);
+    if (cleanupOldFiles) {
+      debug("Cleanup mode enabled - old files will be deleted after migration");
+    }
 
     for (const file of files) {
       // Skip already migrated files (64-char hex strings are SHA256 hashes)
@@ -208,6 +214,12 @@ export class StorageMigration {
     }
 
     debug("Migration complete: %d files migrated, %d files skipped", migratedCount, skippedCount);
+
+    // Cleanup old files if requested
+    if (cleanupOldFiles && migratedCount > 0) {
+      debug("Cleaning up old format files...");
+      await this.cleanupOldFiles(storageDir);
+    }
   }
 
   /**

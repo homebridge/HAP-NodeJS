@@ -29,7 +29,7 @@ HAP-NodeJS is not an Apple certified HAP implementation, as this is only availab
 ## Getting started
 
 > **⚠️ Important: HAP-NodeJS v3.0.0 Migration**  
-> If you're upgrading from v2.x, please read the [MIGRATION.md](MIGRATION.md) guide. This version includes automatic storage migration from node-persist v0.0.12 to v4.0.4, which changes how files are stored on disk. Your data will be preserved, but you should backup your storage directory before upgrading.
+> If you're upgrading from v2.x, please read the [MIGRATION.md](MIGRATION.md) guide. This version includes automatic storage migration from node-persist v0.0.12 to v4.0.4, which changes how files are stored on disk. Your data will be preserved automatically, but you should backup your storage directory before upgrading. Old files are kept by default and can be cleaned up later using the `--cleanup` flag.
 
 You may start by having a look at our [Wiki][wiki], especially have a look at the 
 [Important HomeKit Terminology][hk-terminology] used in this project.

@@ -70,6 +70,27 @@ After verifying your setup works correctly with the new version:
 
 **⚠️ WARNING: This is destructive. Only do this after thorough testing!**
 
+**Option 1: Using Migration Tool (Recommended)**
+```bash
+# Use the migration tool with --cleanup flag
+node tools/migrate-storage.mjs --cleanup [path-to-storage-directory]
+
+# Or with default location:
+node tools/migrate-storage.mjs --cleanup
+```
+
+**Option 2: Using API (Programmatic)**
+```typescript
+import { HAPStorage } from "@homebridge/hap-nodejs";
+
+// Enable cleanup before initializing storage
+HAPStorage.setCleanupOldFiles(true);
+
+// Initialize storage (migration with cleanup will run automatically)
+HAPStorage.storage();
+```
+
+**Option 3: Manual Cleanup**
 ```bash
 # Remove old format files manually
 cd .node-persist/storage
@@ -77,6 +98,12 @@ rm *.json  # or be more selective
 
 # The application will continue using the new format files
 ```
+
+**Important Notes:**
+- By default, old files are **preserved** for safety
+- Cleanup is **disabled** unless explicitly enabled
+- Old files are only deleted if migration was successful
+- Backup your storage directory before enabling cleanup
 
 ## For Plugin Developers
 
