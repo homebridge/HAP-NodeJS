@@ -88,7 +88,8 @@ export class IdentifierCache {
       const key = IdentifierCache.persistKey(this.username);
       // Fire and forget - async storage operation
       HAPStorage.storage().setItem(key, saved).catch(err => {
-        console.error(`Error saving IdentifierCache for ${this.username}:`, err);
+        console.error(`Error saving IdentifierCache for ${this.username} to ${key}:`, err);
+        console.error("This may result in identifier cache being lost. Check file system permissions and available disk space.");
       });
       this._savedCacheHash = newCacheHash; //update hash of saved cache for future use
     }

@@ -294,13 +294,15 @@ export class ControllerStorage {
       this.fileCreated = true;
       // Fire and forget - async storage operation
       HAPStorage.storage().setItem(key, saved).catch(err => {
-        console.error(`Error saving ControllerStorage for ${this.username}:`, err);
+        console.error(`Error saving ControllerStorage for ${this.username} to ${key}:`, err);
+        console.error("This may result in controller data being lost. Check file system permissions and available disk space.");
       });
     } else if (this.fileCreated) {
       this.fileCreated = false;
       // Fire and forget - async storage operation
       HAPStorage.storage().removeItem(key).catch(err => {
-        console.error(`Error removing ControllerStorage for ${this.username}:`, err);
+        console.error(`Error removing ControllerStorage for ${this.username} from ${key}:`, err);
+        console.error("This may result in stale controller data persisting. Check file system permissions.");
       });
     }
   }

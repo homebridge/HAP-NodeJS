@@ -250,7 +250,8 @@ export class AccessoryInfo {
 
     // Fire and forget - async storage operation
     HAPStorage.storage().setItem(key, saved).catch(err => {
-      console.error(`Error saving AccessoryInfo for ${this.username}:`, err);
+      console.error(`Error saving AccessoryInfo for ${this.username} to ${key}:`, err);
+      console.error("This may result in pairing information being lost. Check file system permissions and available disk space.");
     });
   }
 
