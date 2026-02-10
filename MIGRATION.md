@@ -111,6 +111,57 @@ rm *.json  # or be more selective
 
 If your plugin uses HAP-NodeJS's storage system, no code changes are needed! The migration is transparent.
 
+### Custom Storage Implementation (New in v3.0.0)
+
+HAP-NodeJS v3.0.0 introduces support for custom storage implementations using dependency injection. This allows you to plug in your own storage backend instead of using node-persist.
+
+**Implementing Custom Storage:**
+
+```typescript
+import { StorageInterface, HAPStorage } from "@homebridge/hap-nodejs";
+
+class MyDatabaseStorage implements StorageInterface {
+  private db: MyDatabase;
+
+  constructor(database: MyDatabase) {
+    this.db = database;
+  }
+
+  async getItem(key: string): Promise<any> {
+    return await this.db.query('SELECT value FROM storage WHERE key = ?', [key]);
+  }
+
+  async setItem(key: string, value: any): Promise<void> {
+    await this.db.query('INSERT OR REPLACE INTO storage (key, value) VALUES (?, ?)', 
+      [key, JSON.stringify(value)]);
+  }
+
+  async removeItem(key: string): Promise<void> {
+    await this.db.query('DELETE FROM storage WHERE key = ?', [key]);
+  }
+}
+
+// Set your custom storage BEFORE any HAP-NodeJS initialization
+const myStorage = new MyDatabaseStorage(myDb);
+HAPStorage.setCustomStorage(myStorage);
+
+// Now HAP-NodeJS will use your storage for all persistence
+```
+
+**Important Notes:**
+- Custom storage must be set **before** the first call to `HAPStorage.storage()`
+- Custom storage implementations are responsible for their own data migration
+- The automatic node-persist migration only runs for the default storage
+- Custom storage must implement all three methods: `getItem`, `setItem`, `removeItem`
+- All methods must return Promises
+
+**Use Cases:**
+- Integration with existing database systems
+- Multi-branch configuration support
+- Custom backup/restore mechanisms
+- Centralized storage across multiple instances
+- Advanced caching strategies
+
 ### If Your Plugin Reads Files Directly
 
 If your plugin reads storage files directly (not recommended), you need to update:

@@ -8,6 +8,7 @@ import { readFileSync } from "node:fs";
  */
 export * as uuid from "./lib/util/uuid";
 export * from "./lib/model/HAPStorage";
+export * from "./lib/model/StorageInterface";
 export * from "./lib/model/StorageMigration";
 export * from "./lib/Accessory";
 export * from "./lib/Bridge";
