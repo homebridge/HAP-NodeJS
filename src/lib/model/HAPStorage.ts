@@ -7,12 +7,24 @@ import path from "path";
 
 /**
  * Adapter to wrap node-persist LocalStorage to match StorageInterface
+ * Provides backward compatibility by falling back to detectAndRead for legacy formats
  */
 class NodePersistStorageAdapter implements StorageInterface {
-  constructor(private localStore: LocalStorage) {}
+  constructor(
+    private localStore: LocalStorage,
+    private storageDir: string,
+  ) {}
 
   async getItem(key: string): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
-    return this.localStore.getItem(key);
+    // Try v4 format first via node-persist
+    const value = await this.localStore.getItem(key);
+    
+    // If not found, fall back to detectAndRead for backward compatibility with legacy formats
+    if (value === undefined) {
+      return StorageMigration.detectAndRead(this.storageDir, key);
+    }
+    
+    return value;
   }
 
   async setItem(key: string, value: any): Promise<void> { // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -31,6 +43,7 @@ export class HAPStorage {
 
   private static readonly INSTANCE = new HAPStorage();
   private static migrationComplete = false;
+  private static migrationPromise?: Promise<void>;
   private static cleanupOldFiles = false;
   private static customStorageInstance?: StorageInterface;
 
@@ -109,13 +122,21 @@ export class HAPStorage {
         this.localStore.initSync();
       }
 
-      // Wrap node-persist in adapter
-      this.storageAdapter = new NodePersistStorageAdapter(this.localStore);
+      // Wrap node-persist in adapter with storage directory for backward compatibility
+      this.storageAdapter = new NodePersistStorageAdapter(
+        this.localStore,
+        this.customStoragePath || path.join(process.cwd(), ".node-persist/storage"),
+      );
 
       // Run migration once after initialization (only for node-persist)
+      // Migration runs in background, but detectAndRead provides fallback for legacy formats
       if (!HAPStorage.migrationComplete) {
         HAPStorage.migrationComplete = true;
         const storageDir = this.customStoragePath || path.join(process.cwd(), ".node-persist/storage");
+        
+        // Start migration in background
+        // Note: detectAndRead in StorageMigration provides backward compatibility
+        // for reading legacy format files even before migration completes
         StorageMigration.migrateStorageDirectory(storageDir, HAPStorage.cleanupOldFiles).catch(err => {
           console.error("Storage migration failed:", err);
         });

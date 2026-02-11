@@ -67,6 +67,12 @@ export class StorageMigration {
     const newPath = path.join(storageDir, newFilename);
 
     try {
+      // Skip migration if v4 file already exists to avoid overwriting newer data
+      if (fs.existsSync(newPath)) {
+        debug("Skipping migration for %s - v4 file already exists", key);
+        return false;
+      }
+
       // Read old file
       const content = fs.readFileSync(oldPath, "utf8");
       const data = JSON.parse(content);
@@ -96,14 +102,21 @@ export class StorageMigration {
     const newPath = path.join(storageDir, newFilename);
 
     try {
+      // Skip migration if v4 file already exists to avoid overwriting newer data
+      if (fs.existsSync(newPath)) {
+        debug("Skipping v2 migration for %s - v4 file already exists", key);
+        return false;
+      }
+
       // Read old file
       const content = fs.readFileSync(oldPath, "utf8");
       const data = JSON.parse(content);
 
-      // v2 format already has the structure we need, just copy it
+      // v2 format already has the structure we need, extract the value properly
+      // Use nullish coalescing to handle falsy values correctly
       const v4Data = {
         key: key,
-        value: data.value || data,
+        value: (data !== null && typeof data === "object" && "value" in data) ? data.value : data,
       };
       fs.writeFileSync(newPath, JSON.stringify(v4Data), "utf8");
 
@@ -139,7 +152,11 @@ export class StorageMigration {
       this.migrateV2File(storageDir, key).catch(err => {
         debug("Background migration from v2 failed for %s: %s", key, err);
       });
-      return data.value || data;
+      // Use nullish coalescing to handle falsy values correctly
+      if (data !== null && typeof data === "object" && "value" in data) {
+        return data.value;
+      }
+      return data;
     }
 
     // Try v0 format (legacy)
@@ -235,8 +252,16 @@ export class StorageMigration {
     let deletedCount = 0;
 
     for (const file of files) {
-      // Only delete v0 format files (not hex strings)
-      if (!/^[a-f0-9]+$/.test(file)) {
+      // Skip v4 format files (64-char SHA256 hex strings)
+      if (/^[a-f0-9]{64}$/.test(file)) {
+        continue;
+      }
+
+      // Delete v2 format files (32-char MD5 hex strings) and v0 format files (literal keys ending in .json)
+      const isV2File = /^[a-f0-9]{32}$/.test(file);
+      const isV0File = file.endsWith(".json") && !/^[a-f0-9]+$/.test(file);
+
+      if (isV2File || isV0File) {
         const filePath = path.join(storageDir, file);
         try {
           fs.unlinkSync(filePath);

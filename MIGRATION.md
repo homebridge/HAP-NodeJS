@@ -48,7 +48,7 @@ npm run build
 node tools/migrate-storage.mjs [path-to-storage-directory]
 
 # Default location (if no path specified):
-# ./node-persist/storage
+# .node-persist/storage
 ```
 
 ### Verify Migration

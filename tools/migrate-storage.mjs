@@ -6,10 +6,12 @@
  * This tool migrates storage files from node-persist v0.0.12 format to v4.0.4 format.
  * 
  * Usage:
- *   node migrate-storage.js [storage-directory]
- *   node migrate-storage.js --cleanup [storage-directory]
+ *   node tools/migrate-storage.mjs [storage-directory]
+ *   node tools/migrate-storage.mjs --cleanup [storage-directory]
  * 
  * If no directory is specified, uses the default: .node-persist/storage
+ * 
+ * Note: Run 'npm run build' first to compile TypeScript sources to dist/
  * 
  * Options:
  *   --cleanup    Delete old format files after successful migration
@@ -17,10 +19,6 @@
 
 import { StorageMigration } from "../dist/lib/model/StorageMigration.js";
 import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 async function main() {
   const args = process.argv.slice(2);
@@ -66,7 +64,7 @@ async function main() {
     if (!cleanupMode) {
       console.log("IMPORTANT: Old format files have been preserved for safety.");
       console.log("After verifying your setup works correctly, you can clean them up with:");
-      console.log(`  node migrate-storage.js --cleanup "${storageDir}"`);
+      console.log(`  node tools/migrate-storage.mjs --cleanup "${storageDir}"`);
     } else {
       console.log("Old format files have been deleted.");
     }
