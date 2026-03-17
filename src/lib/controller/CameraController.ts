@@ -279,8 +279,10 @@ export interface CameraRecordingDelegate {
    * NOTE: Don't rely on the streamId for unique identification. Two {@link DataStreamConnection}s might share the same identifier space.
    *
    * @param streamId - The streamId of the currently ongoing stream.
+   * @param signal - An optional {@link AbortSignal} that is aborted when the recording stream is closed. Delegates can use this to interrupt pending async
+   *   operations (e.g. pacing delays) for immediate cleanup, rather than waiting for {@link closeRecordingStream} to be called.
    */
-  handleRecordingStreamRequest(streamId: number): AsyncGenerator<RecordingPacket>;
+  handleRecordingStreamRequest(streamId: number, signal?: AbortSignal): AsyncGenerator<RecordingPacket>;
 
   /**
    * This method is called once the HomeKit Controller acknowledges the `endOfStream`.
