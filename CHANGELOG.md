@@ -8,6 +8,7 @@ All notable changes to `hap-nodejs` will be documented in this file. This projec
 
 - Improvement: HKSV recording stream AbortSignal support and graceful generator termination. (#1111) (@hjdhjd)
 - dependency updates
+- regenerate documentation for new version
 
 ## v0.14.1 (2026-02-07)
 
