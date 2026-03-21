@@ -2,6 +2,13 @@
 
 All notable changes to `hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
+## v0.14.2 (Pending Release)
+
+### Changed
+
+- Improvement: HKSV recording stream AbortSignal support and graceful generator termination. (#1111) (@hjdhjd)
+- dependency updates
+
 ## v0.14.1 (2026-02-07)
 
 ### Changed
