@@ -1,5 +1,5 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=887
+// V=888
 
 import { Access, Characteristic, Formats, Perms, Units } from "../Characteristic";
 
@@ -2707,6 +2707,23 @@ export class PowerModeSelection extends Characteristic {
   }
 }
 Characteristic.PowerModeSelection = PowerModeSelection;
+
+/**
+ * Characteristic "Preferred Wi-Fi List"
+ */
+export class PreferredWiFiList extends Characteristic {
+
+  public static readonly UUID: string = "0000022E-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Preferred Wi-Fi List", PreferredWiFiList.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.PreferredWiFiList = PreferredWiFiList;
 
 /**
  * Characteristic "Product Data"

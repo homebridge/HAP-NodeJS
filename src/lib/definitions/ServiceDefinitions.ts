@@ -1,5 +1,5 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=887
+// V=888
 
 import { Characteristic } from "../Characteristic";
 import { Service } from "../Service";
@@ -1581,6 +1581,7 @@ export class WiFiTransport extends Service {
     this.addCharacteristic(Characteristic.WiFiCapabilities);
 
     // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.PreferredWiFiList);
     this.addOptionalCharacteristic(Characteristic.WiFiConfigurationControl);
   }
 }

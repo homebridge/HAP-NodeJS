@@ -138,6 +138,7 @@ import type {
   PM2_5Density,
   PositionState,
   PowerModeSelection,
+  PreferredWiFiList,
   ProductData,
   ProgrammableSwitchEvent,
   ProgrammableSwitchOutputState,
@@ -1210,6 +1211,10 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static PowerModeSelection: typeof PowerModeSelection;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static PreferredWiFiList: typeof PreferredWiFiList;
   /**
    * @group Characteristic Definitions
    */

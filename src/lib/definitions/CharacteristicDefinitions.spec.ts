@@ -808,6 +808,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("PreferredWiFiList", () => {
+    it("should be able to construct", () => {
+      new Characteristic.PreferredWiFiList();
+    });
+  });
+
   describe("ProductData", () => {
     it("should be able to construct", () => {
       new Characteristic.ProductData();
