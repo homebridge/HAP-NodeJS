@@ -17,6 +17,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix: TLV decoder missing length bounds validation
 - fix: unsafe non-null assertions in accessory lookups
 - fix: validate `aid.iid` format before parsing
+- fix: unguarded buffer reads in camera stream TLV parsing
 
 ## v2.1.2 (2026-03-29)
 

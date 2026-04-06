@@ -818,6 +818,19 @@ export class RTPStreamManagement {
     audioConfiguration: Record<number, Buffer>,
     callback: CharacteristicSetCallback,
   ): void {
+    try {
+      this._handleStartStreamInner(videoConfiguration, audioConfiguration, callback);
+    } catch (error) {
+      debug("Failed to parse stream start request: %s", (error as Error).message);
+      callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
+    }
+  }
+
+  private _handleStartStreamInner(
+    videoConfiguration: Record<number, Buffer>,
+    audioConfiguration: Record<number, Buffer>,
+    callback: CharacteristicSetCallback,
+  ): void {
     // selected video configuration
     // noinspection JSUnusedLocalSymbols
     const videoCodec = videoConfiguration[SelectedVideoParametersTypes.CODEC_TYPE]; // always 0x00 for h264
