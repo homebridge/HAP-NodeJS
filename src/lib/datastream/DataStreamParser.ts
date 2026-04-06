@@ -684,7 +684,7 @@ export class DataStreamWriter {
       this.writeInt8(new Int8(number));
     } else if (number >= -32768 && number <= 32767) {
       this.writeInt16LE(new Int16(number));
-    } else if (number >= -2147483648 && number <= -2147483648) {
+    } else if (number >= -2147483648 && number <= 2147483647) {
       this.writeInt32LE(new Int32(number));
     } else if (number >= Number.MIN_SAFE_INTEGER && number <= Number.MAX_SAFE_INTEGER) { // use correct uin64 restriction when we convert to bigint
       this.writeInt64LE(new Int64(number));
