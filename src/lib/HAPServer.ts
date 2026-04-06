@@ -487,7 +487,15 @@ export class HAPServer extends EventEmitter {
       return;
     }
 
-    const tlvData = tlv.decode(data);
+    let tlvData: Record<number, Buffer>;
+    try {
+      tlvData = tlv.decode(data);
+    } catch (error) {
+      debug("[%s] Pair-Setup: failed to decode TLV request: %s", this.accessoryInfo.username, error.message);
+      response.writeHead(HAPPairingHTTPCode.BAD_REQUEST, { "Content-Type": "application/pairing+tlv8" });
+      response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
+      return;
+    }
     if (!tlvData[TLVValues.SEQUENCE_NUM]) {
       response.writeHead(HAPPairingHTTPCode.BAD_REQUEST, { "Content-Type": "application/pairing+tlv8" });
       response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
@@ -587,7 +595,16 @@ export class HAPServer extends EventEmitter {
       return;
     }
     // decode the client payload and pass it on to the next step
-    const M5Packet = tlv.decode(plaintext);
+    let M5Packet: Record<number, Buffer>;
+    try {
+      M5Packet = tlv.decode(plaintext);
+    } catch (error) {
+      debug("[%s] M5: Failed to decode decrypted TLV payload: %s", this.accessoryInfo.username, error.message);
+      response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
+      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M4, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
+      connection._pairSetupState = undefined;
+      return;
+    }
     const clientUsername = M5Packet[TLVValues.USERNAME];
     const clientLTPK = M5Packet[TLVValues.PUBLIC_KEY];
     const clientProof = M5Packet[TLVValues.PROOF];
@@ -667,7 +684,15 @@ export class HAPServer extends EventEmitter {
   }
 
   private handlePairVerify(connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse): void {
-    const tlvData = tlv.decode(data);
+    let tlvData: Record<number, Buffer>;
+    try {
+      tlvData = tlv.decode(data);
+    } catch (error) {
+      debug("[%s] Pair-Verify: failed to decode TLV request: %s", this.accessoryInfo.username, error.message);
+      response.writeHead(HAPPairingHTTPCode.BAD_REQUEST, { "Content-Type": "application/pairing+tlv8" });
+      response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
+      return;
+    }
     if (!tlvData[TLVValues.SEQUENCE_NUM]) {
       response.writeHead(HAPPairingHTTPCode.BAD_REQUEST, { "Content-Type": "application/pairing+tlv8" });
       response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
@@ -748,7 +773,16 @@ export class HAPServer extends EventEmitter {
       return;
     }
 
-    const decoded = tlv.decode(plaintext);
+    let decoded: Record<number, Buffer>;
+    try {
+      decoded = tlv.decode(plaintext);
+    } catch (error) {
+      debug("[%s] M3: Failed to decode decrypted TLV payload: %s", this.accessoryInfo.username, error.message);
+      response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
+      response.end(tlv.encode(TLVValues.STATE, PairingStates.M4, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
+      connection._pairVerifyState = undefined;
+      return;
+    }
     const clientUsername = decoded[TLVValues.USERNAME];
     const proof = decoded[TLVValues.PROOF];
     if (!clientUsername || !proof) {
@@ -802,7 +836,15 @@ export class HAPServer extends EventEmitter {
       return;
     }
 
-    const objects = tlv.decode(data);
+    let objects: Record<number, Buffer>;
+    try {
+      objects = tlv.decode(data);
+    } catch (error) {
+      debug("[%s] Pairings: failed to decode TLV request: %s", this.accessoryInfo.username, error.message);
+      response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
+      response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
+      return;
+    }
     if (!objects[TLVValues.METHOD] || !objects[TLVValues.STATE]) {
       response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
       response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));

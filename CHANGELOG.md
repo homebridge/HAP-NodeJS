@@ -14,6 +14,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix: unhandled `Promise.all` rejection in RTP proxy setup
 - fix: missing `SEQUENCE_NUM` check in pair handlers
 - fix: prevent M1 resetting in-progress pair setup
+- fix: TLV decoder missing length bounds validation
 
 ## v2.1.2 (2026-03-29)
 

@@ -92,10 +92,17 @@ export function decode(buffer: Buffer): Record<number, Buffer> {
   let currentIndex = 0;
 
   for (; leftLength > 0;) {
+    if (leftLength < 2) {
+      throw new Error("TLV decode failure: incomplete type/length header");
+    }
     const type = buffer[currentIndex];
     const length = buffer[currentIndex + 1];
     currentIndex += 2;
     leftLength -= 2;
+
+    if (length > leftLength) {
+      throw new Error("TLV decode failure: declared length " + length + " exceeds remaining buffer " + leftLength);
+    }
 
     const data = buffer.subarray(currentIndex, currentIndex + length);
 
