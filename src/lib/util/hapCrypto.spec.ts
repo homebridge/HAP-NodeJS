@@ -126,6 +126,14 @@ describe("hapCrypto", () => {
       expect(C_decrypted).toEqual(Buffer.concat([message1, message3]));
     });
 
+    test("large message encryption and decryption (multi-chunk)", () => {
+      // Message larger than 0x400 (1024) bytes forces multiple chunks
+      const largeMessage = crypto.randomBytes(3000);
+      const encrypted = hapCrypto.layerEncrypt(largeMessage, serverEncryption);
+      const decrypted = hapCrypto.layerDecrypt(encrypted, clientEncryption);
+      expect(decrypted).toEqual(largeMessage);
+    });
+
     test("incomplete frames decryption; first", () => {
       const S_encrypted0 = hapCrypto.layerEncrypt(message0, serverEncryption);
       const S_encrypted1 = hapCrypto.layerEncrypt(message1, serverEncryption);

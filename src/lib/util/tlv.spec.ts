@@ -95,6 +95,21 @@ describe("tlv", () => {
         1: Buffer.from("010203", "hex"),
       });
     });
+
+    test("should throw on truncated buffer (incomplete header)", () => {
+      // Only 1 byte — not enough for type + length
+      expect(() => decode(Buffer.from("01", "hex"))).toThrow("incomplete type/length header");
+    });
+
+    test("should throw when declared length exceeds remaining buffer", () => {
+      // Type 0x01, length 0x05, but only 2 bytes of data follow
+      expect(() => decode(Buffer.from("01050102", "hex"))).toThrow("declared length");
+    });
+
+    test("should not throw on valid zero-length entry", () => {
+      // Type 0x01, length 0x00
+      expect(() => decode(Buffer.from("0100", "hex"))).not.toThrow();
+    });
   });
 
   describe("decodeWithLists", () => {
