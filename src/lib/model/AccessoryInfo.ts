@@ -280,7 +280,7 @@ export class AccessoryInfo {
     if (saved) {
       const info = new AccessoryInfo(username);
       info.displayName = saved.displayName || "";
-      info.category = saved.category || "";
+      info.category = saved.category || Categories.OTHER;
       info.pincode = saved.pincode || "";
       info.signSk = Buffer.from(saved.signSk || "", "hex");
       info.signPk = Buffer.from(saved.signPk || "", "hex");

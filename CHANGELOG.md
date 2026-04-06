@@ -18,6 +18,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix: unsafe non-null assertions in accessory lookups
 - fix: validate `aid.iid` format before parsing
 - fix: unguarded buffer reads in camera stream TLV parsing
+- fix: category defaulting to string instead of enum
 
 ## v2.1.2 (2026-03-29)
 
