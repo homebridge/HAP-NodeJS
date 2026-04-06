@@ -968,6 +968,11 @@ export class HAPServer extends EventEmitter {
       const ids: CharacteristicId[] = [];
       for (const entry of idParam.split(",")) { // ["1.9","2.14"]
         const split = entry.split("."); // ["1","9"]
+        if (split.length !== 2 || !/^\d+$/.test(split[0]) || !/^\d+$/.test(split[1])) {
+          response.writeHead(HAPHTTPCode.BAD_REQUEST, { "Content-Type": HAPMimeTypes.HAP_JSON });
+          response.end(JSON.stringify({ status: HAPStatus.INVALID_VALUE_IN_REQUEST }));
+          return;
+        }
         ids.push({
           aid: parseInt(split[0], 10), // accessory id
           iid: parseInt(split[1], 10), // (characteristic) instance id

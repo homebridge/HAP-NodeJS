@@ -1852,6 +1852,9 @@ export class Accessory extends EventEmitter {
   private handleHAPConnectionClosed(connection: HAPConnection): void {
     for (const event of connection.getRegisteredEvents()) {
       const ids = event.split(".");
+      if (ids.length < 2) {
+        continue;
+      }
       const aid = parseInt(ids[0], 10);
       const iid = parseInt(ids[1], 10);
 
