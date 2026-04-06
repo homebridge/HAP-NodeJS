@@ -494,7 +494,7 @@ export class HAPServer extends EventEmitter {
       return;
     }
     const sequence = tlvData[TLVValues.SEQUENCE_NUM][0]; // value is single byte with sequence number
-    if (sequence === PairingStates.M1) {
+    if (sequence === PairingStates.M1 && !connection._pairSetupState) {
       this.handlePairSetupM1(connection, request, response);
     } else if (sequence === PairingStates.M3 && connection._pairSetupState === PairingStates.M2) {
       this.handlePairSetupM3(connection, request, response, tlvData);
