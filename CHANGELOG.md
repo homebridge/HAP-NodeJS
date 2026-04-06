@@ -15,6 +15,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix: missing `SEQUENCE_NUM` check in pair handlers
 - fix: prevent M1 resetting in-progress pair setup
 - fix: TLV decoder missing length bounds validation
+- fix: unsafe non-null assertions in accessory lookups
 
 ## v2.1.2 (2026-03-29)
 

@@ -1447,8 +1447,11 @@ export class Accessory extends EventEmitter {
         const aid = parseInt(split[0], 10);
         const iid = parseInt(split[1], 10);
 
-        const accessory = this.getAccessoryByAID(aid)!;
-        const characteristic = accessory.getCharacteristicByIID(iid)!;
+        const accessory = this.getAccessoryByAID(aid);
+        const characteristic = accessory?.getCharacteristicByIID(iid);
+        if (!accessory || !characteristic) {
+          continue;
+        }
         this.sendCharacteristicWarning(characteristic, CharacteristicWarningType.SLOW_READ, "The read handler for the characteristic '" +
           characteristic.displayName + "' on the accessory '" + accessory.displayName + "' was slow to respond!");
       }
@@ -1462,8 +1465,11 @@ export class Accessory extends EventEmitter {
           const aid = parseInt(split[0], 10);
           const iid = parseInt(split[1], 10);
 
-          const accessory = this.getAccessoryByAID(aid)!;
-          const characteristic = accessory.getCharacteristicByIID(iid)!;
+          const accessory = this.getAccessoryByAID(aid);
+          const characteristic = accessory?.getCharacteristicByIID(iid);
+          if (!accessory || !characteristic) {
+            continue;
+          }
           this.sendCharacteristicWarning(characteristic, CharacteristicWarningType.TIMEOUT_READ, "The read handler for the characteristic '" +
             characteristic.displayName + "' on the accessory '" + accessory.displayName + "' didn't respond at all!. " +
             "Please check that you properly call the callback!");
@@ -1617,8 +1623,11 @@ export class Accessory extends EventEmitter {
         const aid = parseInt(split[0], 10);
         const iid = parseInt(split[1], 10);
 
-        const accessory = this.getAccessoryByAID(aid)!;
-        const characteristic = accessory.getCharacteristicByIID(iid)!;
+        const accessory = this.getAccessoryByAID(aid);
+        const characteristic = accessory?.getCharacteristicByIID(iid);
+        if (!accessory || !characteristic) {
+          continue;
+        }
         this.sendCharacteristicWarning(characteristic, CharacteristicWarningType.SLOW_WRITE, "The write handler for the characteristic '" +
           characteristic.displayName + "' on the accessory '" + accessory.displayName + "' was slow to respond!");
       }
@@ -1632,8 +1641,11 @@ export class Accessory extends EventEmitter {
           const aid = parseInt(split[0], 10);
           const iid = parseInt(split[1], 10);
 
-          const accessory = this.getAccessoryByAID(aid)!;
-          const characteristic = accessory.getCharacteristicByIID(iid)!;
+          const accessory = this.getAccessoryByAID(aid);
+          const characteristic = accessory?.getCharacteristicByIID(iid);
+          if (!accessory || !characteristic) {
+            continue;
+          }
           this.sendCharacteristicWarning(characteristic, CharacteristicWarningType.TIMEOUT_WRITE, "The write handler for the characteristic '" +
             characteristic.displayName + "' on the accessory '" + accessory.displayName + "' didn't respond at all!. " +
             "Please check that you properly call the callback!");
