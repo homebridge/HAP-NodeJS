@@ -118,7 +118,7 @@ export function chacha20_poly1305_encryptAndSeal(key: Buffer, nonce: Buffer, aad
  * @group Cryptography
  */
 export function layerEncrypt(data: Buffer, encryption: HAPEncryption): Buffer {
-  let result = Buffer.alloc(0);
+  const chunks: Buffer[] = [];
   const total = data.length;
   for (let offset = 0; offset < total; ) {
     const length = Math.min(total - offset, 0x400);
@@ -131,9 +131,9 @@ export function layerEncrypt(data: Buffer, encryption: HAPEncryption): Buffer {
     const encrypted = chacha20_poly1305_encryptAndSeal(encryption.accessoryToControllerKey, nonce, leLength, data.subarray(offset, offset + length));
     offset += length;
 
-    result = Buffer.concat([result,leLength,encrypted.ciphertext,encrypted.authTag]);
+    chunks.push(leLength, encrypted.ciphertext, encrypted.authTag);
   }
-  return result;
+  return Buffer.concat(chunks);
 }
 
 /**
@@ -145,7 +145,7 @@ export function layerDecrypt(packet: Buffer, encryption: HAPEncryption): Buffer 
     encryption.incompleteFrame = undefined;
   }
 
-  let result = Buffer.alloc(0);
+  const chunks: Buffer[] = [];
   const total = packet.length;
 
   for (let offset = 0; offset < total;) {
@@ -167,9 +167,9 @@ export function layerDecrypt(packet: Buffer, encryption: HAPEncryption): Buffer 
       packet.subarray(offset + 2, offset + 2 + realDataLength),
       packet.subarray(offset + 2 + realDataLength, offset + 2 + realDataLength + 16),
     );
-    result = Buffer.concat([result, plaintext]);
+    chunks.push(plaintext);
     offset += (18 + realDataLength);
   }
 
-  return result;
+  return Buffer.concat(chunks);
 }
