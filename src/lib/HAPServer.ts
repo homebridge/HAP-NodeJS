@@ -1023,7 +1023,12 @@ export class HAPServer extends EventEmitter {
       );
     } else if (request.method === "PUT") {
       if (!connection.isAuthenticated()) {
-        if (!request.headers || (request.headers && request.headers.authorization !== this.accessoryInfo.pincode)) {
+        const authorization = request.headers?.authorization;
+        const authorizationBuffer = authorization ? Buffer.from(authorization) : undefined;
+        const pincodeBuffer = Buffer.from(this.accessoryInfo.pincode);
+        if (!authorizationBuffer
+          || authorizationBuffer.length !== pincodeBuffer.length
+          || !crypto.timingSafeEqual(authorizationBuffer, pincodeBuffer)) {
           response.writeHead(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED, { "Content-Type": HAPMimeTypes.HAP_JSON });
           response.end(JSON.stringify({ status: HAPStatus.INSUFFICIENT_PRIVILEGES }));
           return;
@@ -1121,7 +1126,12 @@ export class HAPServer extends EventEmitter {
 
   private handleResource(connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse): void {
     if (!connection.isAuthenticated()) {
-      if (!(this.allowInsecureRequest && request.headers && request.headers.authorization === this.accessoryInfo.pincode)) {
+      const authorization = request.headers?.authorization;
+      const authorizationBuffer = authorization ? Buffer.from(authorization) : undefined;
+      const pincodeBuffer = Buffer.from(this.accessoryInfo.pincode);
+      if (!(this.allowInsecureRequest && authorizationBuffer
+        && authorizationBuffer.length === pincodeBuffer.length
+        && crypto.timingSafeEqual(authorizationBuffer, pincodeBuffer))) {
         response.writeHead(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED, { "Content-Type": HAPMimeTypes.HAP_JSON });
         response.end(JSON.stringify({ status: HAPStatus.INSUFFICIENT_PRIVILEGES }));
         return;

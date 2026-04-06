@@ -20,6 +20,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix: unguarded buffer reads in camera stream TLV parsing
 - fix: category defaulting to string instead of enum
 - fix: missing error argument in pairing debug logs
+- fix: use constant-time comparison for pincode checks
 
 ## v2.1.2 (2026-03-29)
 
