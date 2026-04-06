@@ -586,6 +586,13 @@ export class HAPServer extends EventEmitter {
     const clientUsername = M5Packet[TLVValues.USERNAME];
     const clientLTPK = M5Packet[TLVValues.PUBLIC_KEY];
     const clientProof = M5Packet[TLVValues.PROOF];
+    if (!clientUsername || !clientLTPK || !clientProof) {
+      debug("[%s] M5: Missing required TLV fields in decrypted payload", this.accessoryInfo.username);
+      response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
+      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M4, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
+      connection._pairSetupState = undefined;
+      return;
+    }
     this.handlePairSetupM5_2(connection, request, response, clientUsername, clientLTPK, clientProof, outputKey);
   }
 
@@ -734,6 +741,13 @@ export class HAPServer extends EventEmitter {
     const decoded = tlv.decode(plaintext);
     const clientUsername = decoded[TLVValues.USERNAME];
     const proof = decoded[TLVValues.PROOF];
+    if (!clientUsername || !proof) {
+      debug("[%s] M3: Missing required TLV fields in decrypted payload", this.accessoryInfo.username);
+      response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
+      response.end(tlv.encode(TLVValues.STATE, PairingStates.M4, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
+      connection._pairVerifyState = undefined;
+      return;
+    }
     const material = Buffer.concat([enc.clientPublicKey, clientUsername, enc.publicKey]);
     // since we're paired, we should have the public key stored for this client
     const clientPublicKey = this.accessoryInfo.getClientPublicKey(clientUsername.toString());
@@ -779,6 +793,11 @@ export class HAPServer extends EventEmitter {
     }
 
     const objects = tlv.decode(data);
+    if (!objects[TLVValues.METHOD] || !objects[TLVValues.STATE]) {
+      response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
+      response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
+      return;
+    }
     const method = objects[TLVValues.METHOD][0]; // value is single byte with request type
 
     const state = objects[TLVValues.STATE][0];
@@ -787,6 +806,11 @@ export class HAPServer extends EventEmitter {
     }
 
     if (method === PairMethods.ADD_PAIRING) {
+      if (!objects[TLVValues.IDENTIFIER] || !objects[TLVValues.PUBLIC_KEY] || !objects[TLVValues.PERMISSIONS]) {
+        response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
+        response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
+        return;
+      }
       const identifier = objects[TLVValues.IDENTIFIER].toString();
       const publicKey = objects[TLVValues.PUBLIC_KEY];
       const permissions = objects[TLVValues.PERMISSIONS][0] as PermissionTypes;
@@ -804,6 +828,11 @@ export class HAPServer extends EventEmitter {
         debug("[%s] Pairings: successfully executed ADD_PAIRING", this.accessoryInfo.username);
       }));
     } else if (method === PairMethods.REMOVE_PAIRING) {
+      if (!objects[TLVValues.IDENTIFIER]) {
+        response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
+        response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
+        return;
+      }
       const identifier = objects[TLVValues.IDENTIFIER].toString();
 
       this.emit(HAPServerEventTypes.REMOVE_PAIRING, connection, identifier, once((error: TLVErrorCode | 0) => {
