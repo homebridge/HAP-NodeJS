@@ -441,6 +441,7 @@ export class DataStreamReader {
   readFloat64LE(): number {
     this.ensureLength(8);
     const value = this.data.readDoubleLE(this.readerIndex);
+    this.readerIndex += 8;
     return this.trackData(value);
   }
 
