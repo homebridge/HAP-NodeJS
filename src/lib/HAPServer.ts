@@ -488,6 +488,11 @@ export class HAPServer extends EventEmitter {
     }
 
     const tlvData = tlv.decode(data);
+    if (!tlvData[TLVValues.SEQUENCE_NUM]) {
+      response.writeHead(HAPPairingHTTPCode.BAD_REQUEST, { "Content-Type": "application/pairing+tlv8" });
+      response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
+      return;
+    }
     const sequence = tlvData[TLVValues.SEQUENCE_NUM][0]; // value is single byte with sequence number
     if (sequence === PairingStates.M1) {
       this.handlePairSetupM1(connection, request, response);
@@ -663,6 +668,11 @@ export class HAPServer extends EventEmitter {
 
   private handlePairVerify(connection: HAPConnection, url: URL, request: IncomingMessage, data: Buffer, response: ServerResponse): void {
     const tlvData = tlv.decode(data);
+    if (!tlvData[TLVValues.SEQUENCE_NUM]) {
+      response.writeHead(HAPPairingHTTPCode.BAD_REQUEST, { "Content-Type": "application/pairing+tlv8" });
+      response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
+      return;
+    }
     const sequence = tlvData[TLVValues.SEQUENCE_NUM][0]; // value is single byte with sequence number
 
     if (sequence === PairingStates.M1) {

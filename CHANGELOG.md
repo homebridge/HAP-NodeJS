@@ -12,6 +12,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix: validate encrypted data length before crypto split
 - fix: validate required TLV fields in pairing handlers
 - fix: unhandled `Promise.all` rejection in RTP proxy setup
+- fix: missing `SEQUENCE_NUM` check in pair handlers
 
 ## v2.1.2 (2026-03-29)
 
