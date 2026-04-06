@@ -1151,6 +1151,15 @@ export class RTPStreamManagement {
           this.generateSetupEndpointResponse(connection, sessionIdentifier, prepareRequest, response, callback);
         }
       }));
+    }).catch((error: Error) => {
+      debug(`RTP proxy setup failed: ${error.message}`);
+      this.setupEndpointsResponse = tlv.encode(
+        SetupEndpointsResponseTypes.SESSION_ID, uuid.write(sessionIdentifier),
+        SetupEndpointsResponseTypes.STATUS, SetupEndpointsStatus.ERROR,
+      ).toString("base64");
+
+      this.handleSessionClosed();
+      callback(error);
     });
   }
 
