@@ -2118,7 +2118,7 @@ export class Characteristic extends EventEmitter {
     try {
       value = this.validateUserInput(value)!;
     } catch (error) {
-      this.characteristicWarning(error?.message + "", CharacteristicWarningType.ERROR_MESSAGE, error?.stack);
+      this.characteristicWarning(error?.message || "Unknown error", CharacteristicWarningType.ERROR_MESSAGE, error?.stack);
       if (callback) {
         callback(error);
       }
@@ -2204,7 +2204,7 @@ export class Characteristic extends EventEmitter {
     try {
       value = this.validateUserInput(value);
     } catch (error) {
-      this.characteristicWarning(error?.message + "", CharacteristicWarningType.ERROR_MESSAGE, error?.stack);
+      this.characteristicWarning(error?.message || "Unknown error", CharacteristicWarningType.ERROR_MESSAGE, error?.stack);
       if (callback) {
         callback();
       }
