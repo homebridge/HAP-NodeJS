@@ -588,7 +588,7 @@ export class HAPServer extends EventEmitter {
     try {
       plaintext = hapCrypto.chacha20_poly1305_decryptAndVerify(outputKey, Buffer.from("PS-Msg05"), null, messageData, authTagData);
     } catch (error) {
-      debug("[%s] Error while decrypting and verifying M5 subTlv: %s", this.accessoryInfo.username);
+      debug("[%s] Error while decrypting and verifying M5 subTlv: %s", this.accessoryInfo.username, error);
       response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
       response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M4, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
       connection._pairSetupState = undefined;
@@ -766,7 +766,7 @@ export class HAPServer extends EventEmitter {
     try {
       plaintext = hapCrypto.chacha20_poly1305_decryptAndVerify(enc.hkdfPairEncryptionKey, Buffer.from("PV-Msg03"), null, messageData, authTagData);
     } catch (error) {
-      debug("[%s] M3: Failed to decrypt and/or verify", this.accessoryInfo.username);
+      debug("[%s] M3: Failed to decrypt and/or verify: %s", this.accessoryInfo.username, error);
       response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
       response.end(tlv.encode(TLVValues.STATE, PairingStates.M4, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
       connection._pairVerifyState = undefined;
