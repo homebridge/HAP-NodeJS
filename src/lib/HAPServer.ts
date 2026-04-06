@@ -555,6 +555,13 @@ export class HAPServer extends EventEmitter {
     // pull the SRP server we created in stepOne out of the current session
     const srpServer = connection.srpServer!;
     const encryptedData = tlvData[TLVValues.ENCRYPTED_DATA];
+    if (!encryptedData || encryptedData.length < 16) {
+      debug("[%s] M5: Encrypted data missing or too short", this.accessoryInfo.username);
+      response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
+      response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M4, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
+      connection._pairSetupState = undefined;
+      return;
+    }
     const messageData = Buffer.alloc(encryptedData.length - 16);
     const authTagData = Buffer.alloc(16);
     encryptedData.copy(messageData, 0, 0, encryptedData.length - 16);
@@ -698,6 +705,13 @@ export class HAPServer extends EventEmitter {
   private handlePairVerifyM3(connection: HAPConnection, request: IncomingMessage, response: ServerResponse, objects: Record<number, Buffer>): void {
     debug("[%s] Pair verify step 2/2", this.accessoryInfo.username);
     const encryptedData = objects[TLVValues.ENCRYPTED_DATA];
+    if (!encryptedData || encryptedData.length < 16) {
+      debug("[%s] M3: Encrypted data missing or too short", this.accessoryInfo.username);
+      response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
+      response.end(tlv.encode(TLVValues.STATE, PairingStates.M4, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
+      connection._pairVerifyState = undefined;
+      return;
+    }
     const messageData = Buffer.alloc(encryptedData.length - 16);
     const authTagData = Buffer.alloc(16);
     encryptedData.copy(messageData, 0, 0, encryptedData.length - 16);
