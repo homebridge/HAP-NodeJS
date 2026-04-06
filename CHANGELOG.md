@@ -8,6 +8,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 
 - fix: int32 range check in `DataStreamParser`
 - fix: `readFloat64LE` missing reader index advance
+- fix: utf-8 tag using char count not byte length
 
 ## v2.1.2 (2026-03-29)
 

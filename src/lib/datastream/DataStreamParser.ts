@@ -791,7 +791,7 @@ export class DataStreamWriter {
     const length = Buffer.byteLength(utf8);
     if (length <= 32) {
       this.ensureLength(1 + length);
-      this.writeTag(DataFormatTags.UTF8_LENGTH_START + utf8.length);
+      this.writeTag(DataFormatTags.UTF8_LENGTH_START + length);
       this._writeUTF8(utf8);
     } else if (length <= 255) {
       this.writeUTF8_Length8(utf8);
