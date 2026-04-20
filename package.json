@@ -53,7 +53,7 @@
     "@types"
   ],
   "dependencies": {
-    "@homebridge/ciao": "^1.3.6",
+    "@homebridge/ciao": "^1.3.7",
     "@homebridge/dbus-native": "^0.7.4",
     "bonjour-hap": "^3.10.1",
     "debug": "^4.4.3",
@@ -70,22 +70,22 @@
     "@types/debug": "^4.1.13",
     "@types/escape-html": "^1.0.4",
     "@types/jest": "^30.0.0",
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.6.0",
     "@types/plist": "^3.0.5",
-    "@typescript-eslint/eslint-plugin": "^8.57.2",
-    "@typescript-eslint/parser": "^8.57.2",
-    "axios": "^1.14.0",
+    "@typescript-eslint/eslint-plugin": "^8.59.0",
+    "@typescript-eslint/parser": "^8.59.0",
+    "axios": "^1.15.2",
     "commander": "^14.0.3",
     "escape-html": "^1.0.3",
-    "eslint": "^10.1.0",
+    "eslint": "^10.2.1",
     "http-parser-js": "^0.5.10",
     "jest": "^30.3.0",
     "rimraf": "^6.1.3",
     "semver": "^7.7.4",
     "simple-plist": "^1.4.0",
-    "ts-jest": "^29.4.6",
+    "ts-jest": "^29.4.9",
     "ts-node": "^10.9.2",
-    "typedoc": "^0.28.18",
-    "typescript": "^5.9.3"
+    "typedoc": "^0.28.19",
+    "typescript": "^6.0.3"
   }
 }

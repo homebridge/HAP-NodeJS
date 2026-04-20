@@ -23,6 +23,13 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix: use constant-time comparison for pincode checks
 - fix: `"undefined"` string in characteristic error warnings
 - fix: O(n²) buffer concat in encrypt/decrypt hot path
+- chore: dependency updates, inc. `typescript`
+
+### Homebridge Dependencies
+
+- `@homebridge/ciao` @ `v1.3.7`
+- `@homebridge/dbus-native` @ `v0.7.4`
+- `bonjour-hap` @ `v3.10.1`
 
 ## v2.1.2 (2026-03-29)
 
