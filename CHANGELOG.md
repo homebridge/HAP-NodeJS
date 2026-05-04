@@ -7,6 +7,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 ### Changes
 
 - fix: drop `ConfiguredName` HIG warning
+- chore: dependency updates
 
 ### Homebridge Dependencies
 
