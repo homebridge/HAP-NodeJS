@@ -567,11 +567,14 @@ describe("Accessory", () => {
       await accessoryBadName?.destroy();
     });
 
-    test("Service ConfiguredName beginning with '", async () => {
-      const switchService = new Service.Switch("My Bad Switch");
-      const accessoryBadName = new Accessory("Bad Name",uuid.generate("Bad Name"));
+    test("Service ConfiguredName is not subject to Name character checks", async () => {
+      // ConfiguredName is the user-editable label on services like InputSource,
+      // Television and SmartSpeaker. Home accepts a wider character set there
+      // than the HIG suggests for Name, so HAP-NodeJS must not warn on it.
+      const switchService = new Service.Switch("Switch");
+      const accessoryConfiguredName = new Accessory("Configured Name", uuid.generate("Configured Name"));
       switchService.addCharacteristic(Characteristic.ConfiguredName);
-      accessoryBadName.addService(switchService);
+      accessoryConfiguredName.addService(switchService);
 
       const publishInfo: PublishInfo = {
         username: serverUsername,
@@ -580,17 +583,16 @@ describe("Accessory", () => {
         advertiser: undefined,
       };
 
-      await accessoryBadName.publish(publishInfo);
+      await accessoryConfiguredName.publish(publishInfo);
 
+      switchService.getCharacteristic(Characteristic.ConfiguredName).updateValue("Leave Home + 1");
       switchService.getCharacteristic(Characteristic.ConfiguredName).updateValue("'Bad Name");
 
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-      // eslint-disable-next-line max-len
-      expect(consoleWarnSpy).toHaveBeenCalledWith("HAP-NodeJS WARNING: The accessory 'Configured Name' has an invalid 'ConfiguredName' characteristic (''Bad Name'). Please use only alphanumeric, space, and apostrophe characters. Ensure it starts and ends with an alphabetic or numeric character, and avoid emojis. This may prevent the accessory from being added in the Home App or cause unresponsiveness.");
+      expect(consoleWarnSpy).not.toHaveBeenCalled();
 
-      await awaitEventOnce(accessoryBadName, AccessoryEventTypes.ADVERTISED);
-      await accessoryBadName?.unpublish();
-      await accessoryBadName?.destroy();
+      await awaitEventOnce(accessoryConfiguredName, AccessoryEventTypes.ADVERTISED);
+      await accessoryConfiguredName?.unpublish();
+      await accessoryConfiguredName?.destroy();
     });
 
   });
