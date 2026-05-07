@@ -126,6 +126,16 @@ describe("Accessory", () => {
       expect(() => new Accessory("Test", "test"))
         .toThrow("not a valid UUID");
     });
+
+    test("controllerStorage is constructed with the accessory UUID (homebridge#3928)", () => {
+      // Regression: prior to the fix, `controllerStorage` was a class-field
+      // initialiser that ran before `this.UUID` was assigned (under
+      // target: ES2022 / native class fields), so the storage object
+      // captured `undefined` as its accessory UUID. Constructing it in
+      // the constructor body, after UUID validation, prevents this.
+      // @ts-expect-error: private access
+      expect(accessory.controllerStorage.accessoryUUID).toBe(TEST_UUID);
+    });
   });
 
   describe("handling services", () => {

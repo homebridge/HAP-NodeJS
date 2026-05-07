@@ -434,7 +434,7 @@ export class Accessory extends EventEmitter {
   /**
    * @private Private API.
    */
-  controllerStorage: ControllerStorage = new ControllerStorage(this);
+  controllerStorage!: ControllerStorage;
   /**
    * @private Private API.
    */
@@ -461,6 +461,8 @@ export class Accessory extends EventEmitter {
     assert(UUID, "Accessories must be created with a valid UUID.");
     assert(uuid.isValid(UUID), "UUID '" + UUID + "' is not a valid UUID. Try using the provided 'generateUUID' function to create a " +
       "valid UUID from any arbitrary string, like a serial number.");
+
+    this.controllerStorage = new ControllerStorage(this);
 
     // create our initial "Accessory Information" Service that all Accessories are expected to have
     checkName(this.displayName, "Name", displayName);

@@ -2,6 +2,18 @@
 
 All notable changes to `@homebridge/hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
+## v2.1.6 (Pending Release)
+
+### Changes
+
+- fix: defer `ControllerStorage` construction until UUID is set
+
+### Homebridge Dependencies
+
+- `@homebridge/ciao` @ `v1.3.8`
+- `@homebridge/dbus-native` @ `v0.7.5`
+- `bonjour-hap` @ `v3.10.2`
+
 ## v2.1.5 (2026-05-05)
 
 ### Changes
