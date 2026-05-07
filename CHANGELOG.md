@@ -8,6 +8,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 
 - fix: defer `ControllerStorage` construction until UUID is set
 - chore: route HKSV diagnostics through `HAP-NodeJS:HKSV` namespace
+- chore: dependency updates
 
 ### Homebridge Dependencies
 
