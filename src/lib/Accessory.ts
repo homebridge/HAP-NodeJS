@@ -74,6 +74,7 @@ import { toShortForm } from "./util/uuid";
 import { checkName } from "./util/checkName";
 
 const debug = createDebug("HAP-NodeJS:Accessory");
+const hksvDebug = createDebug("HAP-NodeJS:HKSV");
 const MAX_ACCESSORIES = 149; // Maximum number of bridged accessories per bridge.
 const MAX_SERVICES = 100;
 
@@ -1109,7 +1110,11 @@ export class Accessory extends EventEmitter {
     }
     service.setCharacteristic(Characteristic.Version, CiaoAdvertiser.protocolVersionService);
 
+    hksvDebug("[%s] publish: UUID=%s lastKnownUsername=%s newUsername=%s",
+      this.displayName, this.UUID, this.lastKnownUsername, info.username);
+
     if (this.lastKnownUsername && this.lastKnownUsername !== info.username) { // username changed since last publish
+      hksvDebug("[%s] publish: wiping data for previous username %s", this.displayName, this.lastKnownUsername);
       Accessory.cleanupAccessoryData(this.lastKnownUsername); // delete old Accessory data
     }
 

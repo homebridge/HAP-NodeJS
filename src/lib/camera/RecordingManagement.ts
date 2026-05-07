@@ -27,6 +27,7 @@ import * as tlv from "../util/tlv";
 import { H264CodecParameters, H264Level, H264Profile, Resolution } from "./RTPStreamManagement";
 
 const debug = createDebug("HAP-NodeJS:Camera:RecordingManagement");
+const hksvDebug = createDebug("HAP-NodeJS:HKSV");
 
 /**
  * Describes options passed to the {@link RecordingManagement}.
@@ -461,6 +462,8 @@ export class RecordingManagement {
     this.supportedAudioRecordingConfiguration = this._supportedAudioStreamConfiguration(options.audio);
 
     this.setupServiceHandlers();
+
+    hksvDebug("RecordingManagement created (eventTriggers=0x%s)", this.eventTriggerOptions.toString(16));
   }
 
   private constructService(): RecordingManagementServices {
@@ -501,6 +504,7 @@ export class RecordingManagement {
         }
 
         this.recordingActive = !!value;
+        hksvDebug("Active onSet: recordingActive -> %s", this.recordingActive);
         this.delegate.updateRecordingActive(this.recordingActive);
       })
       .on(CharacteristicEventTypes.CHANGE, () => this.stateChangeDelegate?.())
@@ -553,6 +557,7 @@ export class RecordingManagement {
     }
 
     if (!this.recordingActive) {
+      hksvDebug("[HDS %s] rejecting DATA_SEND OPEN: recordingActive=false", connection.remoteAddress);
       connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, id, HDSStatus.PROTOCOL_SPECIFIC_ERROR, {
         status: HDSProtocolSpecificErrorReason.NOT_ALLOWED,
       });
@@ -560,6 +565,7 @@ export class RecordingManagement {
     }
 
     if (!this.operatingModeService.getCharacteristic(Characteristic.HomeKitCameraActive).value) {
+      hksvDebug("[HDS %s] rejecting DATA_SEND OPEN: HomeKitCameraActive=false", connection.remoteAddress);
       connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, id, HDSStatus.PROTOCOL_SPECIFIC_ERROR, {
         status: HDSProtocolSpecificErrorReason.NOT_ALLOWED,
       });
@@ -577,6 +583,7 @@ export class RecordingManagement {
     }
 
     if (!this.selectedConfiguration) {
+      hksvDebug("[HDS %s] rejecting DATA_SEND OPEN: no selectedConfiguration (homebridge#3928)", connection.remoteAddress);
       connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, id, HDSStatus.PROTOCOL_SPECIFIC_ERROR, {
         status: HDSProtocolSpecificErrorReason.INVALID_CONFIGURATION,
       });
@@ -608,6 +615,11 @@ export class RecordingManagement {
     const configuration = this.parseSelectedConfiguration(value);
 
     const changed = this.selectedConfiguration?.base64 !== value;
+
+    hksvDebug("SelectedRecordingConfiguration write: changed=%s hasStateChangeDelegate=%s base64Len=%d",
+      changed,
+      !!this.stateChangeDelegate,
+      typeof value === "string" ? value.length : -1);
 
     this.selectedConfiguration = {
       parsed: configuration,
@@ -836,6 +848,14 @@ export class RecordingManagement {
 
     // we only restore the `selectedConfiguration` if our supported configuration hasn't changed.
     const currentConfigurationHash = this.computeConfigurationHash(serialized.configurationHash.algorithm);
+
+    hksvDebug("deserialize: hasSavedSelectedConfig=%s savedHash=%s currentHash=%s hashMatch=%s recordingActive=%s",
+      !!serialized.selectedConfiguration,
+      serialized.configurationHash?.hash?.slice(0, 12),
+      currentConfigurationHash.slice(0, 12),
+      currentConfigurationHash === serialized.configurationHash?.hash,
+      serialized.recordingActive);
+
     if (serialized.selectedConfiguration) {
       if (currentConfigurationHash === serialized.configurationHash.hash) {
         this.selectedConfiguration = {
@@ -843,6 +863,7 @@ export class RecordingManagement {
           parsed: this.parseSelectedConfiguration(serialized.selectedConfiguration),
         };
       } else {
+        hksvDebug("deserialize: discarding saved selectedConfiguration — supportedConfiguration hash changed since last run");
         changedState = true;
       }
     }
@@ -861,7 +882,10 @@ export class RecordingManagement {
 
     try {
       if (this.selectedConfiguration) {
+        hksvDebug("deserialize: replaying updateRecordingConfiguration to delegate");
         this.delegate.updateRecordingConfiguration(this.selectedConfiguration.parsed);
+      } else {
+        hksvDebug("deserialize: no selectedConfiguration to restore");
       }
       if (serialized.recordingActive) {
         this.delegate.updateRecordingActive(serialized.recordingActive);
@@ -887,6 +911,7 @@ export class RecordingManagement {
   }
 
   handleFactoryReset(): void {
+    hksvDebug("handleFactoryReset: clearing selectedConfiguration and resetting recording state");
     this.selectedConfiguration = undefined;
     this.recordingManagementService.updateCharacteristic(Characteristic.Active, false);
     this.recordingManagementService.updateCharacteristic(Characteristic.RecordingAudioActive, false);

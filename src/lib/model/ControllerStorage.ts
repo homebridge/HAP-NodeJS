@@ -7,6 +7,7 @@ import { HAPStorage } from "./HAPStorage";
 
 
 const debug = createDebug("HAP-NodeJS:ControllerStorage");
+const hksvDebug = createDebug("HAP-NodeJS:HKSV");
 
 interface StorageLayout {
   accessories: Record<string, StoredControllerData[]>, // indexed by accessory UUID
@@ -102,6 +103,9 @@ export class ControllerStorage {
   public trackController(controller: SerializableController): void {
     controller.setupStateChangeDelegate(this.handleStateChange.bind(this, controller)); // setup delegate
 
+    hksvDebug("trackController acc=%s ctrl=%s initialized=%s",
+      this.accessoryUUID, controller.controllerId(), this.initialized);
+
     if (!this.initialized) { // track controller if data isn't loaded yet
       this.trackedControllers.push(controller);
     } else {
@@ -132,6 +136,9 @@ export class ControllerStorage {
     const id = controller.controllerId();
     const serialized = controller.serialize();
 
+    hksvDebug("handleStateChange acc=%s ctrl=%s hasSerialized=%s initialized=%s hasParent=%s",
+      this.accessoryUUID, id, !!serialized, this.initialized, !!this.parent);
+
     if (!serialized) { // can be undefined when controller wishes to delete data
       delete this.controllerData[id];
     } else {
@@ -150,6 +157,8 @@ export class ControllerStorage {
       // run save data "async", as handleStateChange call will probably always be caused by a http request
       // this should improve our response time
       this.enqueueSaveRequest(100);
+    } else {
+      hksvDebug("handleStateChange acc=%s: not enqueuing save — storage not yet initialized", this.accessoryUUID);
     }
   }
 
@@ -160,6 +169,10 @@ export class ControllerStorage {
     }
 
     const controllerData = this.controllerData[controller.controllerId()];
+
+    hksvDebug("restoreController acc=%s ctrl=%s hasStoredData=%s",
+      this.accessoryUUID, controller.controllerId(), !!controllerData);
+
     if (controllerData) {
       try {
         controller.deserialize(controllerData.data);
@@ -230,6 +243,14 @@ export class ControllerStorage {
       delete saved.accessories[this.accessoryUUID];
     }
 
+    hksvDebug("load username=%s key=%s fileExisted=%s thisAcc=%s ownEntries=%s otherAccsInFile=%j",
+      username,
+      key,
+      !!saved,
+      this.accessoryUUID,
+      ownData ? ownData.length : "none",
+      saved ? Object.keys(saved.accessories) : []);
+
     this.init(ownData);
 
     if (this.linkedAccessories) {
@@ -291,9 +312,19 @@ export class ControllerStorage {
         accessories: accessoryData,
       };
 
+      if (hksvDebug.enabled) {
+        // Only build the per-accessory controller-id map when the namespace is enabled,
+        // since save() runs on every debounced state change.
+        hksvDebug("save write %s accs=%j ctrlsPerAcc=%j",
+          key,
+          Object.keys(accessoryData),
+          Object.fromEntries(Object.entries(accessoryData).map(([acc, entries]) => [acc, entries.map(e => e.type)])));
+      }
+
       this.fileCreated = true;
       HAPStorage.storage().setItemSync(key, saved);
     } else if (this.fileCreated) {
+      hksvDebug("save remove %s (no controller data left)", key);
       this.fileCreated = false;
       HAPStorage.storage().removeItemSync(key);
     }
