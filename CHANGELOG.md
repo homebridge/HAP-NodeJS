@@ -2,6 +2,18 @@
 
 All notable changes to `@homebridge/hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
+## v2.1.7 (Pending Release)
+
+### Changes
+
+- chore: dependency updates
+
+### Homebridge Dependencies
+
+- `@homebridge/ciao` @ `v1.3.9`
+- `@homebridge/dbus-native` @ `v0.7.6`
+- `bonjour-hap` @ `v3.10.3`
+
 ## v2.1.6 (2026-05-08)
 
 ### Changes
