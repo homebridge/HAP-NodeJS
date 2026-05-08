@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
 import crypto from "crypto";
+import createDebug from "debug";
 import { Agent } from "http";
 import tweetnacl from "tweetnacl";
 import { PairingStates, PairMethods, TLVValues } from "../internal-types";
@@ -325,6 +326,103 @@ describe("HAPServer", () => {
       const objects = tlv.decode(response.data);
       expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M4);
       expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.AUTHENTICATION);
+    });
+  });
+
+  describe("error argument in pairing debug logs (fix f12ed233)", () => {
+    let originalEnable: string;
+    let originalLog: (...args: unknown[]) => void;
+    let captured: unknown[][];
+
+    beforeEach(() => {
+      captured = [];
+      // createDebug.disable() returns the namespaces it just disabled, so we
+      // can faithfully restore them via createDebug.enable() in afterEach.
+      originalEnable = createDebug.disable();
+      // route all enabled debug output through our capture function
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      originalLog = (createDebug as any).log;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (createDebug as any).log = function(this: { namespace: string }, ...args: unknown[]) {
+        captured.push([this.namespace, ...args]);
+      };
+      createDebug.enable("HAP-NodeJS:HAPServer");
+    });
+
+    afterEach(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (createDebug as any).log = originalLog;
+      createDebug.disable();
+      if (originalEnable) {
+        createDebug.enable(originalEnable);
+      }
+    });
+
+    test("M5 decrypt failure should pass the error to the debug logger", async () => {
+      server = new HAPServer(accessoryInfoUnpaired);
+      const [port] = await bindServer(server);
+
+      const pairSetup = new PairSetupClient(port, httpAgent);
+      const responseM1 = await pairSetup.sendM1();
+      const M2 = pairSetup.parseM2(responseM1.data);
+      const M3 = await pairSetup.prepareM3(M2, accessoryInfoUnpaired.pincode);
+      const responseM3 = await pairSetup.sendM3(M3);
+      pairSetup.parseM4(responseM3.data, M3);
+
+      // craft an M5 with bogus ciphertext+tag (passes the >=16 length check
+      // from 0719059b but fails MAC verification)
+      await axios.post(
+        `http://localhost:${port}/pair-setup`,
+        tlv.encode(
+          TLVValues.STATE, PairingStates.M5,
+          TLVValues.ENCRYPTED_DATA, Buffer.alloc(48), // 32-byte payload + 16-byte tag, all zeros
+        ),
+        { httpAgent, responseType: "arraybuffer" },
+      );
+
+      // captured rows: [namespace, formatString, ...formatArgs]
+      const m5Lines = captured.filter(line => typeof line[1] === "string"
+        && (line[1] as string).includes("Error while decrypting and verifying M5 subTlv"));
+      expect(m5Lines.length).toBeGreaterThan(0);
+
+      // the format string contains two %s — the first is the username, the
+      // second is the error. Without the fix only the username was passed.
+      const line = m5Lines[0];
+      expect(line[2]).toBe(accessoryInfoUnpaired.username);
+      // line[3] should be the error caught from decipher.final() — the
+      // exact constructor varies by Node version / openssl binding, so
+      // just assert it's a thrown error-like object with a message.
+      expect(line[3]).toBeDefined();
+      expect((line[3] as Error).message).toEqual(expect.any(String));
+    });
+
+    test("pair-verify M3 decrypt failure should pass the error to the debug logger", async () => {
+      server = new HAPServer(accessoryInfoPaired);
+      const [port] = await bindServer(server);
+
+      const pairVerify = new PairVerifyClient(port, httpAgent);
+      const responseM1 = await pairVerify.sendM1();
+      pairVerify.parseM2(responseM1.data, serverInfoPaired);
+
+      await axios.post(
+        `http://localhost:${port}/pair-verify`,
+        tlv.encode(
+          TLVValues.STATE, PairingStates.M3,
+          TLVValues.ENCRYPTED_DATA, Buffer.alloc(48),
+        ),
+        { httpAgent, responseType: "arraybuffer" },
+      );
+
+      const m3Lines = captured.filter(line => typeof line[1] === "string"
+        && (line[1] as string).includes("M3: Failed to decrypt and/or verify"));
+      expect(m3Lines.length).toBeGreaterThan(0);
+      const line = m3Lines[0];
+      expect(line[2]).toBe(accessoryInfoPaired.username);
+      // line[3] should be the error caught from decipher.final() — the
+      // exact constructor varies by Node version / openssl binding, so
+      // just assert it's a thrown error-like object with a message.
+      expect(line[3]).toBeDefined();
+      expect((line[3] as Error).message).toEqual(expect.any(String));
     });
   });
 
