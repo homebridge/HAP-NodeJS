@@ -49,8 +49,7 @@
   "files": [
     "README.md",
     "LICENSE",
-    "dist",
-    "@types"
+    "dist"
   ],
   "dependencies": {
     "@homebridge/ciao": "^1.3.9",
