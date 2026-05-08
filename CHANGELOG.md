@@ -7,6 +7,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 ### Changes
 
 - chore: dependency updates
+- chore: drop local @types shims, use upstream bonjour-hap types
 
 ### Homebridge Dependencies
 

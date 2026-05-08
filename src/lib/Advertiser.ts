@@ -1,10 +1,8 @@
-// eslint-disable-next-line @typescript-eslint/triple-slash-reference
-/// <reference path="../../@types/bonjour-hap.d.ts" />
 import ciao, { CiaoService, MDNSServerOptions, Responder, ServiceEvent, ServiceTxt, ServiceType } from "@homebridge/ciao";
 import { InterfaceName, IPAddress } from "@homebridge/ciao/lib/NetworkManager";
 import dbus, { DBusInterface, MessageBus } from "@homebridge/dbus-native";
 import assert from "assert";
-import bonjour, { BonjourHAP, BonjourHAPService } from "bonjour-hap";
+import bonjour, { Advertisement, Bonjour } from "bonjour-hap";
 import crypto from "crypto";
 import createDebug from "debug";
 import { EventEmitter } from "events";
@@ -205,8 +203,8 @@ export class BonjourHAPAdvertiser extends EventEmitter implements Advertiser {
   private readonly setupHash: string;
   private readonly serviceOptions?: ServiceNetworkOptions;
 
-  private bonjour: BonjourHAP;
-  private advertisement?: BonjourHAPService;
+  private bonjour: Bonjour;
+  private advertisement?: Advertisement;
 
   private port?: number;
   private destroyed = false;
