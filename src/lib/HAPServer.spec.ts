@@ -2,7 +2,7 @@ import axios, { AxiosError, AxiosResponse } from "axios";
 import crypto from "crypto";
 import { Agent } from "http";
 import tweetnacl from "tweetnacl";
-import { PairingStates, TLVValues } from "../internal-types";
+import { PairingStates, PairMethods, TLVValues } from "../internal-types";
 import { HAPHTTPClient } from "../test-utils/HAPHTTPClient";
 import { PairSetupClient } from "../test-utils/PairSetupClient";
 import { PairVerifyClient } from "../test-utils/PairVerifyClient";
@@ -30,6 +30,7 @@ import {
 import { AccessoryInfo, PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
 import { Service } from "./Service";
 import { HAPConnection, HAPEncryption } from "./util/eventedhttp";
+import * as hapCrypto from "./util/hapCrypto";
 import { awaitEventOnce, PromiseTimeout } from "./util/promise-utils";
 import * as tlv from "./util/tlv";
 
@@ -327,6 +328,82 @@ describe("HAPServer", () => {
     });
   });
 
+  describe("required TLV fields validation in pairing handlers (fix 58c24b92)", () => {
+    test("/pair-setup M5 should reject when decrypted payload is missing IDENTIFIER", async () => {
+      server = new HAPServer(accessoryInfoUnpaired);
+      const [port] = await bindServer(server);
+
+      const pairSetup = new PairSetupClient(port, httpAgent);
+
+      const responseM1 = await pairSetup.sendM1();
+      const M2 = pairSetup.parseM2(responseM1.data);
+      const M3 = await pairSetup.prepareM3(M2, accessoryInfoUnpaired.pincode);
+      const responseM3 = await pairSetup.sendM3(M3);
+      const M4 = pairSetup.parseM4(responseM3.data, M3);
+
+      // build a sub-TLV missing IDENTIFIER (only PUBLIC_KEY + SIGNATURE)
+      const malformedSubTLV = tlv.encode(
+        TLVValues.PUBLIC_KEY, clientInfo.publicKey,
+        TLVValues.SIGNATURE, Buffer.alloc(64),
+      );
+
+      const sessionKey = hapCrypto.HKDF(
+        "sha512",
+        Buffer.from("Pair-Setup-Encrypt-Salt"),
+        M4.sharedSecret,
+        Buffer.from("Pair-Setup-Encrypt-Info"),
+        32,
+      );
+      const encrypted = hapCrypto.chacha20_poly1305_encryptAndSeal(
+        sessionKey, Buffer.from("PS-Msg05"), null, malformedSubTLV,
+      );
+
+      const response = await axios.post(
+        `http://localhost:${port}/pair-setup`,
+        tlv.encode(
+          TLVValues.STATE, PairingStates.M5,
+          TLVValues.ENCRYPTED_DATA, Buffer.concat([encrypted.ciphertext, encrypted.authTag]),
+        ),
+        { httpAgent, responseType: "arraybuffer" },
+      );
+
+      const objects = tlv.decode(response.data);
+      expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M4);
+      expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
+    });
+
+    test("/pair-verify M3 should reject when decrypted payload is missing PROOF", async () => {
+      server = new HAPServer(accessoryInfoPaired);
+      const [port] = await bindServer(server);
+
+      const pairVerify = new PairVerifyClient(port, httpAgent);
+      const responseM1 = await pairVerify.sendM1();
+      const M2 = pairVerify.parseM2(responseM1.data, serverInfoPaired);
+
+      // build a sub-TLV missing PROOF/SIGNATURE (only IDENTIFIER)
+      const malformedSubTLV = tlv.encode(
+        TLVValues.IDENTIFIER, Buffer.from(clientInfo.username),
+      );
+
+      const encrypted = hapCrypto.chacha20_poly1305_encryptAndSeal(
+        M2.sessionKey, Buffer.from("PV-Msg03"), null, malformedSubTLV,
+      );
+
+      const response = await axios.post(
+        `http://localhost:${port}/pair-verify`,
+        tlv.encode(
+          TLVValues.STATE, PairingStates.M3,
+          TLVValues.ENCRYPTED_DATA, Buffer.concat([encrypted.ciphertext, encrypted.authTag]),
+        ),
+        { httpAgent, responseType: "arraybuffer" },
+      );
+
+      const objects = tlv.decode(response.data);
+      expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M4);
+      expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
+    });
+  });
+
   describe("tests with paired and pair-verified connection", () => {
     let port: number;
     let address: string;
@@ -397,6 +474,63 @@ describe("HAPServer", () => {
 
       const response = await client.sendListPairingsRequest();
       expect(response).toEqual(list);
+    });
+
+    describe("/pairings required TLV fields (fix 58c24b92)", () => {
+      test("should reject when METHOD is missing", async () => {
+        const malformed = tlv.encode(TLVValues.STATE, PairingStates.M1);
+        const httpResponse = await client.writeHTTPRequest("POST", "/pairings", malformed, "application/pairing+tlv8");
+        expect(httpResponse.statusCode).toEqual(HAPPairingHTTPCode.OK);
+        const objects = tlv.decode(httpResponse.body);
+        expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
+        expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
+      });
+
+      test("should reject when STATE is missing", async () => {
+        const malformed = tlv.encode(TLVValues.METHOD, PairMethods.LIST_PAIRINGS);
+        const httpResponse = await client.writeHTTPRequest("POST", "/pairings", malformed, "application/pairing+tlv8");
+        expect(httpResponse.statusCode).toEqual(HAPPairingHTTPCode.OK);
+        const objects = tlv.decode(httpResponse.body);
+        expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
+        expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
+      });
+
+      test("ADD_PAIRING should reject when IDENTIFIER is missing", async () => {
+        const malformed = tlv.encode(
+          TLVValues.METHOD, PairMethods.ADD_PAIRING,
+          TLVValues.STATE, PairingStates.M1,
+          TLVValues.PUBLIC_KEY, crypto.randomBytes(32),
+          TLVValues.PERMISSIONS, PermissionTypes.ADMIN,
+        );
+        const httpResponse = await client.writeHTTPRequest("POST", "/pairings", malformed, "application/pairing+tlv8");
+        const objects = tlv.decode(httpResponse.body);
+        expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
+        expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
+      });
+
+      test("ADD_PAIRING should reject when PUBLIC_KEY is missing", async () => {
+        const malformed = tlv.encode(
+          TLVValues.METHOD, PairMethods.ADD_PAIRING,
+          TLVValues.STATE, PairingStates.M1,
+          TLVValues.IDENTIFIER, thirdUsername,
+          TLVValues.PERMISSIONS, PermissionTypes.ADMIN,
+        );
+        const httpResponse = await client.writeHTTPRequest("POST", "/pairings", malformed, "application/pairing+tlv8");
+        const objects = tlv.decode(httpResponse.body);
+        expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
+        expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
+      });
+
+      test("REMOVE_PAIRING should reject when IDENTIFIER is missing", async () => {
+        const malformed = tlv.encode(
+          TLVValues.METHOD, PairMethods.REMOVE_PAIRING,
+          TLVValues.STATE, PairingStates.M1,
+        );
+        const httpResponse = await client.writeHTTPRequest("POST", "/pairings", malformed, "application/pairing+tlv8");
+        const objects = tlv.decode(httpResponse.body);
+        expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
+        expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
+      });
     });
 
     test("test /accessories", async () => {
