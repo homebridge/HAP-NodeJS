@@ -19,6 +19,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - test: cover camera stream start TLV parsing guards
 - test: cover error argument in pairing debug logs
 - test: cover constant-time pincode comparison
+- test: cover characteristic warning message for non-Error throws
 
 ### Homebridge Dependencies
 
