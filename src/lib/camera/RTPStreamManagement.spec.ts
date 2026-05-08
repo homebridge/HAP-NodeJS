@@ -26,6 +26,7 @@ import {
 } from "../camera";
 import { HDSProtocolSpecificErrorReason } from "../datastream";
 import "../definitions";
+import { HAPStatus } from "../HAPServer";
 import { HAPConnection } from "../util/eventedhttp";
 import * as tlv from "../util/tlv";
 import * as uuid from "../util/uuid";
@@ -166,6 +167,52 @@ function buildMockConnection(): HAPConnection {
 }
 
 describe("RTPStreamManagement", () => {
+  describe("_handleStartStream malformed TLV (fix 34056583)", () => {
+    let controller: CameraController;
+
+    beforeEach(() => {
+      controller = new CameraController(buildControllerOptions(baseStreamingOptions));
+      controller.constructServices();
+      controller.configureServices();
+    });
+
+    afterEach(() => {
+      controller.handleFactoryReset();
+    });
+
+    test("empty video configuration should call callback with INVALID_VALUE_IN_REQUEST", () => {
+      const rtp = controller.streamManagements[0] as RTPStreamManagement;
+      const callback = jest.fn();
+
+      // empty video/audio config — every indexed buffer access (e.g.
+      // `videoParameters[VideoCodecParametersTypes.PROFILE_ID][0]`) would
+      // throw without the try/catch from 34056583.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (rtp as any)._handleStartStream({}, {}, callback);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback.mock.calls[0][0]).toBe(HAPStatus.INVALID_VALUE_IN_REQUEST);
+    });
+
+    test("video configuration missing CODEC_PARAMETERS should not throw", () => {
+      const rtp = controller.streamManagements[0] as RTPStreamManagement;
+      const callback = jest.fn();
+
+      // SelectedVideoParametersTypes.CODEC_TYPE = 0x01 — provide that but
+      // omit CODEC_PARAMETERS / ATTRIBUTES / RTP_PARAMETERS so the inner
+      // `tlv.decode(undefined)` would have crashed without the guard.
+      const videoConfig = { 0x01: Buffer.from([0x00]) };
+
+      expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (rtp as any)._handleStartStream(videoConfig, {}, callback);
+      }).not.toThrow();
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback.mock.calls[0][0]).toBe(HAPStatus.INVALID_VALUE_IN_REQUEST);
+    });
+  });
+
   describe("handleSetupEndpoints proxy rejection (fix 0ce74c4e)", () => {
     let controller: CameraController;
     let setupSpy: jest.SpyInstance;
