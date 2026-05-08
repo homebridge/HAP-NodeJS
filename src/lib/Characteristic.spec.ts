@@ -2199,4 +2199,70 @@ describe("Characteristic", () => {
 
   });
 
+  describe("undefined string in characteristic error warnings (fix fe8c1b3a)", () => {
+    test("setValue should emit \"Unknown error\" when validateUserInput throws an object without a message", () => {
+      const characteristic = createCharacteristic(Formats.STRING);
+
+      // throw a non-Error (no `message` property) — without the fix this
+      // produced `error?.message + ""` === "undefined" in the warning text
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      jest.spyOn(characteristic as any, "validateUserInput").mockImplementation(() => {
+        throw {};
+      });
+
+      const warnings: { type: CharacteristicWarningType; message: string }[] = [];
+      characteristic.on(CharacteristicEventTypes.CHARACTERISTIC_WARNING, (type, message) => {
+        warnings.push({ type, message });
+      });
+
+      characteristic.setValue("anything");
+
+      const errorWarnings = warnings.filter(w => w.type === CharacteristicWarningType.ERROR_MESSAGE);
+      expect(errorWarnings.length).toBe(1);
+      expect(errorWarnings[0].message).toBe("Unknown error");
+      expect(errorWarnings[0].message).not.toBe("undefined");
+    });
+
+    test("setValue should preserve a real Error message when validateUserInput throws an Error", () => {
+      const characteristic = createCharacteristic(Formats.STRING);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      jest.spyOn(characteristic as any, "validateUserInput").mockImplementation(() => {
+        throw new Error("validation failed: bad value");
+      });
+
+      const warnings: { type: CharacteristicWarningType; message: string }[] = [];
+      characteristic.on(CharacteristicEventTypes.CHARACTERISTIC_WARNING, (type, message) => {
+        warnings.push({ type, message });
+      });
+
+      characteristic.setValue("anything");
+
+      const errorWarnings = warnings.filter(w => w.type === CharacteristicWarningType.ERROR_MESSAGE);
+      expect(errorWarnings.length).toBe(1);
+      expect(errorWarnings[0].message).toBe("validation failed: bad value");
+    });
+
+    test("updateValue should emit \"Unknown error\" when validateUserInput throws an object without a message", () => {
+      const characteristic = createCharacteristic(Formats.STRING);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      jest.spyOn(characteristic as any, "validateUserInput").mockImplementation(() => {
+        throw {};
+      });
+
+      const warnings: { type: CharacteristicWarningType; message: string }[] = [];
+      characteristic.on(CharacteristicEventTypes.CHARACTERISTIC_WARNING, (type, message) => {
+        warnings.push({ type, message });
+      });
+
+      characteristic.updateValue("anything");
+
+      const errorWarnings = warnings.filter(w => w.type === CharacteristicWarningType.ERROR_MESSAGE);
+      expect(errorWarnings.length).toBe(1);
+      expect(errorWarnings[0].message).toBe("Unknown error");
+      expect(errorWarnings[0].message).not.toBe("undefined");
+    });
+  });
+
 });
