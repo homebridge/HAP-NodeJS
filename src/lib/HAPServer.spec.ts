@@ -629,6 +629,31 @@ describe("HAPServer", () => {
       });
     });
 
+    describe("GET /characteristics aid.iid format validation (fix ec93c504)", () => {
+      test.each([
+        ["non-numeric aid", "abc.5"],
+        ["non-numeric iid", "1.xyz"],
+        ["missing dot", "1"],
+        ["too many dots", "1.2.3"],
+        ["empty parts", "."],
+        ["empty aid", ".5"],
+        ["empty iid", "1."],
+        ["whitespace", "1. 5"],
+      ])("should reject id=%s (%s) with INVALID_VALUE_IN_REQUEST", async (_label, idValue) => {
+        const httpResponse = await client.writeHTTPRequest("GET", `/characteristics?id=${encodeURIComponent(idValue)}`);
+        expect(httpResponse.statusCode).toBe(HAPHTTPCode.BAD_REQUEST);
+        const body = JSON.parse(httpResponse.body.toString());
+        expect(body.status).toBe(HAPStatus.INVALID_VALUE_IN_REQUEST);
+      });
+
+      test("should reject when one entry in a comma-separated list is malformed", async () => {
+        const httpResponse = await client.writeHTTPRequest("GET", "/characteristics?id=1.5,abc.def");
+        expect(httpResponse.statusCode).toBe(HAPHTTPCode.BAD_REQUEST);
+        const body = JSON.parse(httpResponse.body.toString());
+        expect(body.status).toBe(HAPStatus.INVALID_VALUE_IN_REQUEST);
+      });
+    });
+
     test("test /accessories", async () => {
       const accessoryResponse: AccessoriesResponse = {
         accessories: [{

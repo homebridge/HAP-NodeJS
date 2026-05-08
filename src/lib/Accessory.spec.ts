@@ -1203,6 +1203,33 @@ describe("Accessory", () => {
       });
     });
 
+    describe("aid.iid format validation in handleHAPConnectionClosed (fix ec93c504)", () => {
+      test("should skip registered events without a dot separator", () => {
+        const clearMock = jest.fn();
+        const mockConnection = {
+          getRegisteredEvents: jest.fn().mockReturnValue(new Set([
+            "malformed",         // no dot — without the fix this triggers parseInt(undefined)
+            `${aid}.${iids.on}`, // valid
+          ])),
+          clearRegisteredEvents: clearMock,
+        } as unknown as HAPConnection;
+
+        // @ts-expect-error: private access
+        expect(() => accessory.handleHAPConnectionClosed(mockConnection)).not.toThrow();
+        expect(clearMock).toHaveBeenCalled();
+      });
+
+      test("should skip empty registered event strings", () => {
+        const mockConnection = {
+          getRegisteredEvents: jest.fn().mockReturnValue(new Set(["", `${aid}.${iids.on}`])),
+          clearRegisteredEvents: jest.fn(),
+        } as unknown as HAPConnection;
+
+        // @ts-expect-error: private access
+        expect(() => accessory.handleHAPConnectionClosed(mockConnection)).not.toThrow();
+      });
+    });
+
     describe("non-null assertions in accessory lookups (fix 03b49f9f)", () => {
       test("slow read / timeout warning should not crash for unknown aid.iid in request", async () => {
         jest.useFakeTimers({ doNotFake: ["nextTick", "queueMicrotask"] });
