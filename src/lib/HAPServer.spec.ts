@@ -328,6 +328,50 @@ describe("HAPServer", () => {
     });
   });
 
+  describe("SEQUENCE_NUM check in pair handlers (fix ebe2ec67)", () => {
+    test("/pair-setup should reject when SEQUENCE_NUM TLV is missing", async () => {
+      server = new HAPServer(accessoryInfoUnpaired);
+      const [port] = await bindServer(server);
+
+      // a TLV containing only METHOD (no SEQUENCE_NUM/STATE) — without the
+      // guard this would crash on `tlvData[SEQUENCE_NUM][0]` of `undefined`.
+      try {
+        await axios.post(
+          `http://localhost:${port}/pair-setup`,
+          tlv.encode(TLVValues.METHOD, PairMethods.PAIR_SETUP),
+          { httpAgent, responseType: "arraybuffer" },
+        );
+        fail("Expected BAD_REQUEST response");
+      } catch (error) {
+        expect(error).toBeInstanceOf(AxiosError);
+        expect(error.response?.status).toBe(HAPHTTPCode.BAD_REQUEST);
+        const objects = tlv.decode(error.response?.data);
+        expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
+        expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
+      }
+    });
+
+    test("/pair-verify should reject when SEQUENCE_NUM TLV is missing", async () => {
+      server = new HAPServer(accessoryInfoPaired);
+      const [port] = await bindServer(server);
+
+      try {
+        await axios.post(
+          `http://localhost:${port}/pair-verify`,
+          tlv.encode(TLVValues.PUBLIC_KEY, Buffer.alloc(32)),
+          { httpAgent, responseType: "arraybuffer" },
+        );
+        fail("Expected BAD_REQUEST response");
+      } catch (error) {
+        expect(error).toBeInstanceOf(AxiosError);
+        expect(error.response?.status).toBe(HAPHTTPCode.BAD_REQUEST);
+        const objects = tlv.decode(error.response?.data);
+        expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
+        expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
+      }
+    });
+  });
+
   describe("required TLV fields validation in pairing handlers (fix 58c24b92)", () => {
     test("/pair-setup M5 should reject when decrypted payload is missing IDENTIFIER", async () => {
       server = new HAPServer(accessoryInfoUnpaired);
