@@ -329,6 +329,125 @@ describe("HAPServer", () => {
     });
   });
 
+  describe("constant-time pincode comparison (fix 12aea013)", () => {
+    test("PUT /characteristics with no authorization header should be rejected", async () => {
+      server = new HAPServer(accessoryInfoUnpaired);
+      server.allowInsecureRequest = true;
+      const [port] = await bindServer(server);
+
+      try {
+        await axios.put(
+          `http://localhost:${port}/characteristics`,
+          { characteristics: [{ aid: 1, iid: 9, value: true }] },
+          { httpAgent },
+        );
+        fail("Expected CONNECTION_AUTHORIZATION_REQUIRED response");
+      } catch (error) {
+        expect(error).toBeInstanceOf(AxiosError);
+        expect(error.response?.status).toBe(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED);
+        expect(error.response?.data).toEqual({ status: HAPStatus.INSUFFICIENT_PRIVILEGES });
+      }
+    });
+
+    test("PUT /characteristics with wrong-length authorization should not crash timingSafeEqual", async () => {
+      server = new HAPServer(accessoryInfoUnpaired);
+      server.allowInsecureRequest = true;
+      const [port] = await bindServer(server);
+
+      // 5 bytes — different length to the 11-byte pincode. Without the
+      // length guard added in 12aea013, crypto.timingSafeEqual throws
+      // RangeError and the connection would be killed.
+      try {
+        await axios.put(
+          `http://localhost:${port}/characteristics`,
+          { characteristics: [{ aid: 1, iid: 9, value: true }] },
+          { httpAgent, headers: { authorization: "short" } },
+        );
+        fail("Expected CONNECTION_AUTHORIZATION_REQUIRED response");
+      } catch (error) {
+        expect(error).toBeInstanceOf(AxiosError);
+        expect(error.response?.status).toBe(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED);
+      }
+    });
+
+    test("PUT /characteristics with same-length wrong pincode should be rejected", async () => {
+      // use a pincode without leading whitespace — node's HTTP parser trims
+      // header values, so the fixture's " 031-45-154" can't round-trip and
+      // any wrong value with the same leading space hits the wrong-length
+      // branch on the server, not the constant-time same-length comparison.
+      const info = AccessoryInfo.create(serverUsername);
+      // @ts-expect-error: private access
+      info.setupID = Accessory._generateSetupID();
+      info.displayName = "Outlet";
+      info.category = 7;
+      info.pincode = "031-45-154";
+
+      server = new HAPServer(info);
+      server.allowInsecureRequest = true;
+      const [port] = await bindServer(server);
+
+      const wrongPincode = "999-99-999"; // same length as "031-45-154", different content
+      try {
+        await axios.put(
+          `http://localhost:${port}/characteristics`,
+          { characteristics: [{ aid: 1, iid: 9, value: true }] },
+          { httpAgent, headers: { authorization: wrongPincode } },
+        );
+        fail("Expected CONNECTION_AUTHORIZATION_REQUIRED response");
+      } catch (error) {
+        expect(error).toBeInstanceOf(AxiosError);
+        expect(error.response?.status).toBe(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED);
+      }
+    });
+
+    test("PUT /characteristics with correct pincode should be authorized", async () => {
+      // use a pincode without leading whitespace — HTTP header values get trimmed
+      // by node's parser so the global test fixture's " 031-45-154" can't round-trip.
+      const info = AccessoryInfo.create(serverUsername);
+      // @ts-expect-error: private access
+      info.setupID = Accessory._generateSetupID();
+      info.displayName = "Outlet";
+      info.category = 7;
+      info.pincode = "031-45-154";
+
+      server = new HAPServer(info);
+      server.allowInsecureRequest = true;
+      const [port] = await bindServer(server);
+
+      server.on(HAPServerEventTypes.SET_CHARACTERISTICS, (connection, writeRequest, callback) => {
+        callback(undefined, { characteristics: writeRequest.characteristics.map(c => ({ aid: c.aid, iid: c.iid, status: HAPStatus.SUCCESS })) });
+      });
+
+      const response = await axios.put(
+        `http://localhost:${port}/characteristics`,
+        { characteristics: [{ aid: 1, iid: 9, value: true }] },
+        { httpAgent, headers: { authorization: info.pincode } },
+      );
+      // a successful insecure PUT returns 204 NO_CONTENT (or 200 if there's a response body)
+      expect(response.status).toBeGreaterThanOrEqual(200);
+      expect(response.status).toBeLessThan(300);
+    });
+
+    test("POST /resource with wrong-length authorization should not crash timingSafeEqual", async () => {
+      server = new HAPServer(accessoryInfoUnpaired);
+      server.allowInsecureRequest = true;
+      const [port] = await bindServer(server);
+
+      try {
+        await axios.post(
+          `http://localhost:${port}/resource`,
+          { "resource-type": "image", "image-width": 100, "image-height": 100 },
+          { httpAgent, headers: { authorization: "short" } },
+        );
+        fail("Expected CONNECTION_AUTHORIZATION_REQUIRED response");
+      } catch (error) {
+        expect(error).toBeInstanceOf(AxiosError);
+        expect(error.response?.status).toBe(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED);
+        expect(error.response?.data).toEqual({ status: HAPStatus.INSUFFICIENT_PRIVILEGES });
+      }
+    });
+  });
+
   describe("error argument in pairing debug logs (fix f12ed233)", () => {
     let originalEnable: string;
     let originalLog: (...args: unknown[]) => void;
