@@ -16,6 +16,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - test: cover M1 reset prevention in pair-setup
 - test: cover safe accessory lookups in slow/timeout warnings
 - test: cover aid.iid format validation
+- test: cover camera stream start TLV parsing guards
 
 ### Homebridge Dependencies
 
