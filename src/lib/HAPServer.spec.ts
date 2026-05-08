@@ -328,6 +328,58 @@ describe("HAPServer", () => {
     });
   });
 
+  describe("M1 reset prevention (fix d4c81be0)", () => {
+    test("/pair-setup should reject a second M1 on a connection with in-progress state", async () => {
+      server = new HAPServer(accessoryInfoUnpaired);
+      const [port] = await bindServer(server);
+
+      const pairSetup = new PairSetupClient(port, httpAgent);
+
+      // first M1 succeeds → connection state advances to M2
+      const firstResponse = await pairSetup.sendM1();
+      const firstObjects = tlv.decode(firstResponse.data);
+      expect(firstObjects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
+      expect(firstObjects[TLVValues.ERROR_CODE]).toBeUndefined();
+
+      // second M1 on the same connection — without the guard this would
+      // restart pair-setup and overwrite the in-progress SRP server
+      try {
+        await pairSetup.sendM1();
+        fail("Expected BAD_REQUEST response");
+      } catch (error) {
+        expect(error).toBeInstanceOf(AxiosError);
+        expect(error.response?.status).toBe(HAPHTTPCode.BAD_REQUEST);
+        const objects = tlv.decode(error.response?.data);
+        // sequence + 1 = M2; UNKNOWN error
+        expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
+        expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
+      }
+    });
+
+    test("/pair-setup should still accept M1 on a fresh connection after a previous setup completed", async () => {
+      server = new HAPServer(accessoryInfoUnpaired);
+      const [port] = await bindServer(server);
+
+      // first connection: do an M1 and abort
+      const firstAgent = new Agent({ keepAlive: true });
+      const firstClient = new PairSetupClient(port, firstAgent);
+      await firstClient.sendM1();
+      firstAgent.destroy();
+
+      // second connection: a fresh M1 should still succeed (no state pollution)
+      const secondAgent = new Agent({ keepAlive: true });
+      try {
+        const secondClient = new PairSetupClient(port, secondAgent);
+        const response = await secondClient.sendM1();
+        const objects = tlv.decode(response.data);
+        expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
+        expect(objects[TLVValues.ERROR_CODE]).toBeUndefined();
+      } finally {
+        secondAgent.destroy();
+      }
+    });
+  });
+
   describe("SEQUENCE_NUM check in pair handlers (fix ebe2ec67)", () => {
     test("/pair-setup should reject when SEQUENCE_NUM TLV is missing", async () => {
       server = new HAPServer(accessoryInfoUnpaired);
