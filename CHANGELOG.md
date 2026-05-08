@@ -14,6 +14,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - test: cover RTP proxy setup rejection handling
 - test: cover SEQUENCE_NUM presence check in pair handlers
 - test: cover M1 reset prevention in pair-setup
+- test: cover safe accessory lookups in slow/timeout warnings
 
 ### Homebridge Dependencies
 

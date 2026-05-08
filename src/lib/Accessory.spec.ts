@@ -1203,6 +1203,61 @@ describe("Accessory", () => {
       });
     });
 
+    describe("non-null assertions in accessory lookups (fix 03b49f9f)", () => {
+      test("slow read / timeout warning should not crash for unknown aid.iid in request", async () => {
+        jest.useFakeTimers({ doNotFake: ["nextTick", "queueMicrotask"] });
+
+        try {
+          // @ts-expect-error: private access
+          accessory.handleGetCharacteristics(connection, {
+            ids: [
+              { aid: 999, iid: 999 }, // unknown accessory — exercises `!accessory`
+              { aid: aid, iid: 9999 }, // known accessory, unknown iid — exercises `!characteristic`
+            ],
+            includeMeta: false,
+            includeEvent: false,
+            includeType: false,
+            includePerms: false,
+          }, callback);
+
+          // 3s slow read warning fires; without the fix this would throw on
+          // `accessory!.getCharacteristicByIID(...)` or `characteristic!.displayName`.
+          jest.advanceTimersByTime(3000);
+          // 6s later the timeout warning fires and the response is emitted.
+          jest.advanceTimersByTime(6000);
+
+          await callbackPromise;
+          expect(callback).toHaveBeenCalledTimes(1);
+          // unknown ids are skipped, so the response has no characteristics
+          expect(callback.mock.calls[0][1].characteristics).toEqual([]);
+        } finally {
+          jest.useRealTimers();
+        }
+      });
+
+      test("slow write / timeout warning should not crash for unknown aid.iid in request", async () => {
+        jest.useFakeTimers({ doNotFake: ["nextTick", "queueMicrotask"] });
+
+        try {
+          // @ts-expect-error: private access
+          accessory.handleSetCharacteristics(connection, {
+            characteristics: [
+              { aid: 999, iid: 999, value: true },
+              { aid: aid, iid: 9999, value: true },
+            ],
+          }, callback);
+
+          jest.advanceTimersByTime(3000);
+          jest.advanceTimersByTime(6000);
+
+          await callbackPromise;
+          expect(callback).toHaveBeenCalledTimes(1);
+        } finally {
+          jest.useRealTimers();
+        }
+      });
+    });
+
     describe("handleSetCharacteristic", () => {
       let consoleWarnSpy: jest.SpyInstance;
 
