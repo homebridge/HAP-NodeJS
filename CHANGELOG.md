@@ -18,6 +18,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - test: cover aid.iid format validation
 - test: cover camera stream start TLV parsing guards
 - test: cover error argument in pairing debug logs
+- test: cover constant-time pincode comparison
 
 ### Homebridge Dependencies
 
