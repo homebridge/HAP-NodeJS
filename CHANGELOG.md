@@ -13,6 +13,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - test: cover required TLV field validation in pairing handlers
 - test: cover RTP proxy setup rejection handling
 - test: cover SEQUENCE_NUM presence check in pair handlers
+- test: cover M1 reset prevention in pair-setup
 
 ### Homebridge Dependencies
 
