@@ -11,6 +11,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - chore(ci): bump release workflow action versions
 - test: cover encrypted data length validation in pair handlers
 - test: cover required TLV field validation in pairing handlers
+- test: cover RTP proxy setup rejection handling
 
 ### Homebridge Dependencies
 
