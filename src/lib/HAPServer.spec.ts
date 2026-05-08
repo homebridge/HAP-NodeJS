@@ -232,6 +232,101 @@ describe("HAPServer", () => {
     expect(objectsM4[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.AUTHENTICATION);
   });
 
+  describe("encrypted data length validation (fix 0719059b)", () => {
+    test("/pair-setup M5 should reject when ENCRYPTED_DATA is missing", async () => {
+      server = new HAPServer(accessoryInfoUnpaired);
+      const [port] = await bindServer(server);
+
+      const pairSetup = new PairSetupClient(port, httpAgent);
+
+      // advance the connection state to M4 via real SRP M1 + M3
+      const responseM1 = await pairSetup.sendM1();
+      const M2 = pairSetup.parseM2(responseM1.data);
+      const M3 = await pairSetup.prepareM3(M2, accessoryInfoUnpaired.pincode);
+      const responseM3 = await pairSetup.sendM3(M3);
+      pairSetup.parseM4(responseM3.data, M3);
+
+      // craft an M5 with no ENCRYPTED_DATA TLV
+      const response = await axios.post(
+        `http://localhost:${port}/pair-setup`,
+        tlv.encode(TLVValues.STATE, PairingStates.M5),
+        { httpAgent, responseType: "arraybuffer" },
+      );
+
+      const objects = tlv.decode(response.data);
+      expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M4);
+      expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.AUTHENTICATION);
+    });
+
+    test("/pair-setup M5 should reject when ENCRYPTED_DATA is shorter than the auth tag (16 bytes)", async () => {
+      server = new HAPServer(accessoryInfoUnpaired);
+      const [port] = await bindServer(server);
+
+      const pairSetup = new PairSetupClient(port, httpAgent);
+      const responseM1 = await pairSetup.sendM1();
+      const M2 = pairSetup.parseM2(responseM1.data);
+      const M3 = await pairSetup.prepareM3(M2, accessoryInfoUnpaired.pincode);
+      const responseM3 = await pairSetup.sendM3(M3);
+      pairSetup.parseM4(responseM3.data, M3);
+
+      // 8 bytes is below the 16-byte minimum; without the guard this would underflow Buffer.alloc()
+      const response = await axios.post(
+        `http://localhost:${port}/pair-setup`,
+        tlv.encode(
+          TLVValues.STATE, PairingStates.M5,
+          TLVValues.ENCRYPTED_DATA, Buffer.alloc(8),
+        ),
+        { httpAgent, responseType: "arraybuffer" },
+      );
+
+      const objects = tlv.decode(response.data);
+      expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M4);
+      expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.AUTHENTICATION);
+    });
+
+    test("/pair-verify M3 should reject when ENCRYPTED_DATA is missing", async () => {
+      server = new HAPServer(accessoryInfoPaired);
+      const [port] = await bindServer(server);
+
+      const pairVerify = new PairVerifyClient(port, httpAgent);
+      // advance connection state to M2 via M1
+      const responseM1 = await pairVerify.sendM1();
+      pairVerify.parseM2(responseM1.data, serverInfoPaired);
+
+      const response = await axios.post(
+        `http://localhost:${port}/pair-verify`,
+        tlv.encode(TLVValues.STATE, PairingStates.M3),
+        { httpAgent, responseType: "arraybuffer" },
+      );
+
+      const objects = tlv.decode(response.data);
+      expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M4);
+      expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.AUTHENTICATION);
+    });
+
+    test("/pair-verify M3 should reject when ENCRYPTED_DATA is shorter than the auth tag (16 bytes)", async () => {
+      server = new HAPServer(accessoryInfoPaired);
+      const [port] = await bindServer(server);
+
+      const pairVerify = new PairVerifyClient(port, httpAgent);
+      const responseM1 = await pairVerify.sendM1();
+      pairVerify.parseM2(responseM1.data, serverInfoPaired);
+
+      const response = await axios.post(
+        `http://localhost:${port}/pair-verify`,
+        tlv.encode(
+          TLVValues.STATE, PairingStates.M3,
+          TLVValues.ENCRYPTED_DATA, Buffer.alloc(15),
+        ),
+        { httpAgent, responseType: "arraybuffer" },
+      );
+
+      const objects = tlv.decode(response.data);
+      expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M4);
+      expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.AUTHENTICATION);
+    });
+  });
+
   describe("tests with paired and pair-verified connection", () => {
     let port: number;
     let address: string;

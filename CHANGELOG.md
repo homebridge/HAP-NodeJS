@@ -9,6 +9,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - chore: dependency updates
 - chore: drop local @types shims, use upstream bonjour-hap types
 - chore(ci): bump release workflow action versions
+- test: cover encrypted data length validation in pair handlers
 
 ### Homebridge Dependencies
 
