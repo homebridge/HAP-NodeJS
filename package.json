@@ -1,6 +1,6 @@
 {
   "name": "@homebridge/hap-nodejs",
-  "version": "2.1.6",
+  "version": "2.1.7",
   "description": "HAP-NodeJS is a Node.js implementation of HomeKit Accessory Server.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -71,8 +71,8 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^25.9.1",
     "@types/plist": "^3.0.5",
-    "@typescript-eslint/eslint-plugin": "^8.59.4",
-    "@typescript-eslint/parser": "^8.59.4",
+    "@typescript-eslint/eslint-plugin": "^8.60.0",
+    "@typescript-eslint/parser": "^8.60.0",
     "axios": "^1.16.1",
     "commander": "^14.0.3",
     "escape-html": "^1.0.3",
