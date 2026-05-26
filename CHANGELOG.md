@@ -20,6 +20,8 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - test: cover error argument in pairing debug logs
 - test: cover constant-time pincode comparison
 - test: cover characteristic warning message for non-Error throws
+- fix: improve HomeKit `Name` characteristic validation (#1119) (@n0rt0nthec4t)
+- docs: regenerate docs for `v2.1.7`
 
 ### Homebridge Dependencies
 
