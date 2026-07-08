@@ -7,12 +7,13 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 ### Changes
 
 - test: work around Node free-socket data guard in HAP HTTP client
+- chore: dependency updates
 
 ### Homebridge Dependencies
 
-- `@homebridge/ciao` @ `v1.3.9`
-- `@homebridge/dbus-native` @ `v0.7.6`
-- `bonjour-hap` @ `v3.10.3`
+- `@homebridge/ciao` @ `v1.3.10`
+- `@homebridge/dbus-native` @ `v0.7.7`
+- `bonjour-hap` @ `v3.10.4`
 
 ## v2.1.7 (2026-05-26)
 
