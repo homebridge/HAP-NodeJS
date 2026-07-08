@@ -970,6 +970,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("SelectedSessionKeepaliveConfigurationList", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SelectedSessionKeepaliveConfigurationList();
+    });
+  });
+
   describe("SelectedSleepConfiguration", () => {
     it("should be able to construct", () => {
       new Characteristic.SelectedSleepConfiguration();
@@ -1213,6 +1219,12 @@ describe("CharacteristicDefinitions", () => {
   describe("SupportedRTPConfiguration", () => {
     it("should be able to construct", () => {
       new Characteristic.SupportedRTPConfiguration();
+    });
+  });
+
+  describe("SupportedSessionKeepaliveConfigurationList", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SupportedSessionKeepaliveConfigurationList();
     });
   });
 

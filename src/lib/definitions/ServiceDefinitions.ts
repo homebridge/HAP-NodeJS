@@ -111,7 +111,9 @@ export class AccessoryRuntimeInformation extends Service {
     this.addOptionalCharacteristic(Characteristic.ActivityInterval);
     this.addOptionalCharacteristic(Characteristic.ConnectionHealthMonitor);
     this.addOptionalCharacteristic(Characteristic.HeartBeat);
+    this.addOptionalCharacteristic(Characteristic.SelectedSessionKeepaliveConfigurationList);
     this.addOptionalCharacteristic(Characteristic.SleepInterval);
+    this.addOptionalCharacteristic(Characteristic.SupportedSessionKeepaliveConfigurationList);
   }
 }
 Service.AccessoryRuntimeInformation = AccessoryRuntimeInformation;
@@ -281,13 +283,13 @@ export class CameraRecordingManagement extends Service {
 
     // Required Characteristics
     this.addCharacteristic(Characteristic.Active);
-    this.addCharacteristic(Characteristic.SelectedCameraRecordingConfiguration);
-    this.addCharacteristic(Characteristic.SupportedAudioRecordingConfiguration);
-    this.addCharacteristic(Characteristic.SupportedCameraRecordingConfiguration);
-    this.addCharacteristic(Characteristic.SupportedVideoRecordingConfiguration);
 
     // Optional Characteristics
     this.addOptionalCharacteristic(Characteristic.RecordingAudioActive);
+    this.addOptionalCharacteristic(Characteristic.SelectedCameraRecordingConfiguration);
+    this.addOptionalCharacteristic(Characteristic.SupportedAudioRecordingConfiguration);
+    this.addOptionalCharacteristic(Characteristic.SupportedCameraRecordingConfiguration);
+    this.addOptionalCharacteristic(Characteristic.SupportedVideoRecordingConfiguration);
   }
 }
 Service.CameraRecordingManagement = CameraRecordingManagement;

@@ -165,6 +165,7 @@ import type {
   SelectedCameraRecordingConfiguration,
   SelectedDiagnosticsModes,
   SelectedRTPStreamConfiguration,
+  SelectedSessionKeepaliveConfigurationList,
   SelectedSleepConfiguration,
   SerialNumber,
   ServiceLabelIndex,
@@ -206,6 +207,7 @@ import type {
   SupportedMetrics,
   SupportedRouterConfiguration,
   SupportedRTPConfiguration,
+  SupportedSessionKeepaliveConfigurationList,
   SupportedSleepConfiguration,
   SupportedTransferTransportConfiguration,
   SupportedVideoRecordingConfiguration,
@@ -1324,6 +1326,10 @@ export class Characteristic extends EventEmitter {
   /**
    * @group Characteristic Definitions
    */
+  public static SelectedSessionKeepaliveConfigurationList: typeof SelectedSessionKeepaliveConfigurationList;
+  /**
+   * @group Characteristic Definitions
+   */
   public static SelectedSleepConfiguration: typeof SelectedSleepConfiguration;
   /**
    * @group Characteristic Definitions
@@ -1485,6 +1491,10 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static SupportedRTPConfiguration: typeof SupportedRTPConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static SupportedSessionKeepaliveConfigurationList: typeof SupportedSessionKeepaliveConfigurationList;
   /**
    * @group Characteristic Definitions
    */
