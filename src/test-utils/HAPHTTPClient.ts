@@ -1,7 +1,7 @@
 import assert from "assert";
 import { Agent } from "http";
 import { HeaderObject, HTTPParser } from "http-parser-js";
-import { Socket } from "net";
+import net, { AddressInfo, Socket } from "net";
 import { HAPMimeTypes, PairingStates, PairMethods, TLVValues } from "../internal-types";
 import { HAPHTTPCode, HAPPairingHTTPCode } from "../lib/HAPServer";
 import { PairingInformation, PermissionTypes } from "../lib/model/AccessoryInfo";
@@ -33,6 +33,55 @@ export interface HTTPResponse<T = Buffer> {
   trailers: string[];
 }
 
+// Node >= 24.17 (also 22.23 / 26.3) added a "free socket data guard" as part of the fix for
+// CVE-2026-48931 (HTTP response queue poisoning). While a keep-alive socket sits idle in the
+// http.Agent's free pool, Node swaps its low-level `handle.onread` for a guard that destroys the
+// socket the instant any unsolicited data arrives on it.
+//
+// This test client deliberately reaches into the agent's free pool and reuses that idle socket to
+// receive server-pushed `EVENT/1.0` notifications — which the guard treats as poisoning and kills.
+// We cannot use a fresh socket instead, because the HAP encryption keys are bound to this exact
+// server-side connection. So we neutralise the guard by restoring the socket's default `onread`.
+//
+// The default read callback (`onStreamRead`) is an internal, un-importable function, but it is the
+// same instance on every socket handle. We harvest a reference once from a throwaway loopback pair.
+type HandleOnread = (...args: unknown[]) => void;
+interface SocketWithHandle {
+  _handle?: { onread: HandleOnread } | null;
+}
+
+// http.Agent doesn't expose its internal socket pool in its public types.
+interface AgentWithFreeSockets {
+  freeSockets: Record<string, Socket[]>;
+}
+
+let defaultOnread: HandleOnread | undefined;
+
+async function restoreFreeSocketDataGuard(socket: Socket): Promise<void> {
+  const handle = (socket as unknown as SocketWithHandle)._handle;
+  if (!handle) {
+    return;
+  }
+
+  if (!defaultOnread) {
+    defaultOnread = await new Promise<HandleOnread>((resolve, reject) => {
+      const server = net.createServer();
+      server.listen(0, "127.0.0.1", () => {
+        const port = (server.address() as AddressInfo).port;
+        const probe = net.connect(port, "127.0.0.1", () => {
+          const onread = (probe as unknown as SocketWithHandle)._handle!.onread;
+          probe.destroy();
+          server.close();
+          resolve(onread);
+        });
+        probe.on("error", reject);
+      });
+    });
+  }
+
+  handle.onread = defaultOnread;
+}
+
 /**
  * A http client that wraps around a http agent.
  */
@@ -53,15 +102,17 @@ export class HAPHTTPClient {
     this.port = port;
   }
 
-  attachSocket(): void {
+  async attachSocket(): Promise<void> {
     expect(this.currentSocket).toBeUndefined();
     expect(this.currentDataListener).toBeUndefined();
 
     // we extract the underlying TCP socket!
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const freeSockets = ((this.agent as any).freeSockets as Record<string, [Socket]>);
+    const freeSockets = (this.agent as unknown as AgentWithFreeSockets).freeSockets;
     expect(Object.values(freeSockets).length).toBe(1);
     this.currentSocket = Object.values(freeSockets)[0][0];
+
+    // undo Node's idle free-socket data guard so server-pushed events reach us (see note above).
+    await restoreFreeSocketDataGuard(this.currentSocket);
 
     this.currentDataListener = data => {
       // packets shall fit into a single TCP segment, no need to write a parser!

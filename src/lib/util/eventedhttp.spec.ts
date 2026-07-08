@@ -135,7 +135,7 @@ describe("eventedhttp", () => {
     const connection = await connectionOpened;
 
     const client = new HAPHTTPClient(httpAgent, address.address, address.port);
-    client.attachSocket(); // capture the free socket of the http agent!
+    await client.attachSocket(); // capture the free socket of the http agent!
 
     connection.enableEventNotifications(1, 1);
     // we implicitly test below that this event won't be delivered!
