@@ -9,6 +9,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - test: work around Node free-socket data guard in HAP HTTP client
 - chore: dependency updates
 - chore: update `actions/checkout` to `v7`
+- chore: added `deprecate-past-pre-releases` workflow
 
 ### Homebridge Dependencies
 
