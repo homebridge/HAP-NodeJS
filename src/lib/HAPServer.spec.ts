@@ -733,7 +733,7 @@ describe("HAPServer", () => {
       encryption = await pairVerify.sendPairVerify(serverInfoPaired, clientInfo);
 
       client = new HAPHTTPClient(httpAgent, address, port);
-      client.attachSocket();
+      await client.attachSocket();
 
       client.enableEncryption(encryption);
     });
