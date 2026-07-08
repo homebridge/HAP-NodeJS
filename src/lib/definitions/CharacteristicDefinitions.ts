@@ -3282,6 +3282,23 @@ export class SelectedRTPStreamConfiguration extends Characteristic {
 Characteristic.SelectedRTPStreamConfiguration = SelectedRTPStreamConfiguration;
 
 /**
+ * Characteristic "Selected Session Keep-alive Configuration List"
+ */
+export class SelectedSessionKeepaliveConfigurationList extends Characteristic {
+
+  public static readonly UUID: string = "00000275-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Selected Session Keep-alive Configuration List", SelectedSessionKeepaliveConfigurationList.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SelectedSessionKeepaliveConfigurationList = SelectedSessionKeepaliveConfigurationList;
+
+/**
  * Characteristic "Selected Sleep Configuration"
  */
 export class SelectedSleepConfiguration extends Characteristic {
@@ -4064,6 +4081,23 @@ export class SupportedRTPConfiguration extends Characteristic {
   }
 }
 Characteristic.SupportedRTPConfiguration = SupportedRTPConfiguration;
+
+/**
+ * Characteristic "Supported Session Keep-alive Configuration List"
+ */
+export class SupportedSessionKeepaliveConfigurationList extends Characteristic {
+
+  public static readonly UUID: string = "00000274-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Supported Session Keep-alive Configuration List", SupportedSessionKeepaliveConfigurationList.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SupportedSessionKeepaliveConfigurationList = SupportedSessionKeepaliveConfigurationList;
 
 /**
  * Characteristic "Supported Sleep Configuration"
