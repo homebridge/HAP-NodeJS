@@ -11,6 +11,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - chore: update `actions/checkout` to `v7`
 - chore: added `deprecate-past-pre-releases` workflow
 - chore: update hap characteristics and services
+- docs: regenerate docs for `v2.1.8`
 
 ### Homebridge Dependencies
 
