@@ -338,6 +338,13 @@ export declare interface HAPConnection {
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class HAPConnection extends EventEmitter {
   /**
+   * Delay in milliseconds before queued (non-immediate) characteristic event notifications are coalesced and flushed on
+   * the connection. HAP batches regular events so a burst of value changes produces a single notification rather than one
+   * per change; events flagged for immediate delivery bypass this window entirely.
+   */
+  static readonly EVENT_COALESCING_DELAY = 250;
+
+  /**
    * @private file-private API
    */
   readonly server: EventedHTTPServer;
@@ -536,7 +543,7 @@ export class HAPConnection extends EventEmitter {
 
     // if there is already a timer running we just add it in the queue.
     if (!this.eventsTimer) {
-      this.eventsTimer = setTimeout(this.handleEventsTimeout.bind(this), 250);
+      this.eventsTimer = setTimeout(this.handleEventsTimeout.bind(this), HAPConnection.EVENT_COALESCING_DELAY);
       this.eventsTimer.unref();
     }
   }

@@ -1,11 +1,11 @@
-import axios, { AxiosResponse } from "axios";
 import { SRP, SrpClient } from "fast-srp-hap";
-import { Agent } from "http";
 import tweetnacl from "tweetnacl";
-import { PairingStates, PairMethods, TLVValues } from "../internal-types";
+import { HAPMimeTypes, PairingStates, PairMethods, TLVValues } from "../internal-types";
+import { HAPPairingHTTPCode } from "../lib/HAPServer";
 import * as hapCrypto from "../lib/util/hapCrypto";
 import { EncryptedData } from "../lib/util/hapCrypto";
 import * as tlv from "../lib/util/tlv";
+import { HAPHTTPClient, HTTPResponse } from "./HAPHTTPClient";
 
 export interface PairSetupM2 {
   serverPublicKey: Buffer;
@@ -36,39 +36,48 @@ export interface PairSetupClientInfo {
   privateKey: Buffer
 }
 
+/**
+ * Drives the SRP pair-setup handshake over a {@link HAPHTTPClient}'s owned connection. The server tracks the M1-M6
+ * progression per HAPConnection, so every message of one handshake must ride the same TCP connection - riding the
+ * client's socket makes that continuity explicit and guaranteed.
+ */
 export class PairSetupClient {
-  private readonly port: number;
-  private readonly httpAgent: Agent;
+  private readonly client: HAPHTTPClient;
 
-  constructor(port: number, httpAgent: Agent) {
-    this.port = port;
-    this.httpAgent = httpAgent;
+  constructor(client: HAPHTTPClient) {
+    this.client = client;
   }
 
   async sendPairSetup(pincode: string, clientInfo: PairSetupClientInfo): Promise<PairSetupM6> {
+    // This is the success-path orchestrator, so every hop must come back 200 OK - the TLV payload assertions in the
+    // parse steps do not pin the HTTP status on their own.
     const responseM1 = await this.sendM1();
+    expect(responseM1.statusCode).toBe(HAPPairingHTTPCode.OK);
 
-    const M2 = this.parseM2(responseM1.data);
+    const M2 = this.parseM2(responseM1.body);
 
     const M3 = await this.prepareM3(M2, pincode);
     const responseM3 = await this.sendM3(M3);
+    expect(responseM3.statusCode).toBe(HAPPairingHTTPCode.OK);
 
-    const M4 = this.parseM4(responseM3.data, M3);
+    const M4 = this.parseM4(responseM3.body, M3);
 
     const M5 = this.prepareM5(M4, clientInfo);
     const responseM5 = await this.sendM5(M5);
+    expect(responseM5.statusCode).toBe(HAPPairingHTTPCode.OK);
 
-    return this.parseM6(responseM5.data, M4, M5);
+    return this.parseM6(responseM5.body, M4, M5);
   }
 
-  sendM1(): Promise<AxiosResponse<Buffer>> {
-    return axios.post(
-      `http://localhost:${this.port}/pair-setup`,
+  sendM1(): Promise<HTTPResponse> {
+    return this.client.writeHTTPRequest(
+      "POST",
+      "/pair-setup",
       tlv.encode(
         TLVValues.STATE, PairingStates.M1,
         TLVValues.METHOD, PairMethods.PAIR_SETUP,
       ),
-      { httpAgent: this.httpAgent, responseType: "arraybuffer" },
+      { contentType: HAPMimeTypes.PAIRING_TLV8 },
     );
   }
 
@@ -93,15 +102,16 @@ export class PairSetupClient {
     };
   }
 
-  sendM3(m3: PairSetupM3): Promise<AxiosResponse<Buffer>> {
-    return axios.post(
-      `http://localhost:${this.port}/pair-setup`,
+  sendM3(m3: PairSetupM3): Promise<HTTPResponse> {
+    return this.client.writeHTTPRequest(
+      "POST",
+      "/pair-setup",
       tlv.encode(
         TLVValues.STATE, PairingStates.M3,
         TLVValues.PUBLIC_KEY, m3.srpClient.computeA(),
         TLVValues.PASSWORD_PROOF, m3.srpClient.computeM1(),
       ),
-      { httpAgent: this.httpAgent, responseType: "arraybuffer" },
+      { contentType: HAPMimeTypes.PAIRING_TLV8 },
     );
   }
 
@@ -160,14 +170,15 @@ export class PairSetupClient {
     };
   }
 
-  sendM5(m5: PairSetupM5): Promise<AxiosResponse<Buffer>> {
-    return axios.post(
-      `http://localhost:${this.port}/pair-setup`,
+  sendM5(m5: PairSetupM5): Promise<HTTPResponse> {
+    return this.client.writeHTTPRequest(
+      "POST",
+      "/pair-setup",
       tlv.encode(
         TLVValues.STATE, PairingStates.M5,
         TLVValues.ENCRYPTED_DATA, Buffer.concat([m5.encryptedData.ciphertext, m5.encryptedData.authTag]),
       ),
-      { httpAgent: this.httpAgent, responseType: "arraybuffer" },
+      { contentType: HAPMimeTypes.PAIRING_TLV8 },
     );
   }
 

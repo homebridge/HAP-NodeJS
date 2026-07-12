@@ -1,9 +1,7 @@
-import axios, { AxiosError, AxiosResponse } from "axios";
 import crypto from "crypto";
 import createDebug from "debug";
-import { Agent } from "http";
 import tweetnacl from "tweetnacl";
-import { PairingStates, PairMethods, TLVValues } from "../internal-types";
+import { HAPMimeTypes, PairingStates, PairMethods, TLVValues } from "../internal-types";
 import { HAPHTTPClient } from "../test-utils/HAPHTTPClient";
 import { PairSetupClient } from "../test-utils/PairSetupClient";
 import { PairVerifyClient } from "../test-utils/PairVerifyClient";
@@ -58,13 +56,22 @@ describe("HAPServer", () => {
     publicKey: Buffer.alloc(0),
   };
 
-  let httpAgent: Agent;
+  let clients: HAPHTTPClient[];
   let server: HAPServer;
 
-  async function bindServer(server: HAPServer, port = 0, host = "localhost"): Promise<[port: number, string: string]> {
+  async function bindServer(server: HAPServer, port = 0, host = "localhost"): Promise<[port: number, address: string]> {
     const listenPromise: Promise<[number, string]> = awaitEventOnce(server, HAPServerEventTypes.LISTENING);
     server.listen(port, host);
     return await listenPromise;
+  }
+
+  // Creates a connected client and registers it for teardown. One client instance owns one TCP connection for its
+  // entire lifetime, which is what binds the server's per-connection pairing state to the requests a test sends.
+  async function connectClient(port: number, address = "localhost"): Promise<HAPHTTPClient> {
+    const client = new HAPHTTPClient(address, port);
+    await client.connect();
+    clients.push(client);
+    return client;
   }
 
   beforeEach(() => {
@@ -89,13 +96,13 @@ describe("HAPServer", () => {
     clientInfo.publicKey = Buffer.from(clientKeyPair.publicKey);
     accessoryInfoPaired.addPairedClient(clientUsername, clientInfo.publicKey, PermissionTypes.ADMIN);
 
-    // used to do long living http connections without own tcp interface
-    httpAgent = new Agent({
-      keepAlive: true,
-    });
+    clients = [];
   });
 
   afterEach(() => {
+    for (const client of clients) {
+      client.destroy();
+    }
     server?.stop();
     server?.destroy();
   });
@@ -106,27 +113,28 @@ describe("HAPServer", () => {
 
     const promise: Promise<IdentifyCallback> = awaitEventOnce(server, HAPServerEventTypes.IDENTIFY);
 
-    const request: Promise<AxiosResponse<string>> = axios.post(`http://localhost:${port}/identify`, { httpAgent });
+    // The identify response is only sent once the event callback fires, so the request bytes go out first, the event is
+    // handled, and only then is the response read off the connection.
+    const client = await connectClient(port);
+    client.write(client.formatHTTPRequest("POST", "/identify"));
 
     const callback = await promise;
     callback(); // signal successful identify!
 
-    const response = await request;
-    expect(response.data).toBeFalsy();
+    const response = await client.readHTTPResponse();
+    expect(response.statusCode).toBe(HAPHTTPCode.NO_CONTENT);
+    expect(response.body.length).toBe(0);
   });
 
   test("reject unpaired identify on paired server", async () => {
     server = new HAPServer(accessoryInfoPaired);
     const [port] = await bindServer(server);
 
-    try {
-      const response = await axios.post(`http://localhost:${port}/identify`, { httpAgent });
-      fail(`Expected erroneous response, got ${response}`);
-    } catch (error) {
-      expect(error).toBeInstanceOf(AxiosError);
-      expect(error.response?.status).toBe(HAPPairingHTTPCode.BAD_REQUEST);
-      expect(error.response?.data).toEqual({ status: HAPStatus.INSUFFICIENT_PRIVILEGES });
-    }
+    const client = await connectClient(port);
+
+    const response = await client.writeHTTPRequest("POST", "/identify");
+    expect(response.statusCode).toBe(HAPPairingHTTPCode.BAD_REQUEST);
+    expect(JSON.parse(response.body.toString())).toEqual({ status: HAPStatus.INSUFFICIENT_PRIVILEGES });
   });
 
   test("test-utils successful /pair-setup", async () => {
@@ -139,7 +147,7 @@ describe("HAPServer", () => {
       callback();
     });
 
-    const pairSetup = new PairSetupClient(port, httpAgent);
+    const pairSetup = new PairSetupClient(await connectClient(port));
 
     const M6 = await pairSetup.sendPairSetup(accessoryInfoPaired.pincode, clientInfo);
 
@@ -151,10 +159,11 @@ describe("HAPServer", () => {
     server = new HAPServer(accessoryInfoPaired);
     const [port] = await bindServer(server);
 
-    const pairSetup = new PairSetupClient(port, httpAgent);
+    const pairSetup = new PairSetupClient(await connectClient(port));
 
     const response = await pairSetup.sendM1();
-    const objectsM2 = tlv.decode(response.data);
+    expect(response.statusCode).toBe(HAPPairingHTTPCode.OK);
+    const objectsM2 = tlv.decode(response.body);
     expect(objectsM2[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
     expect(objectsM2[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNAVAILABLE);
   });
@@ -163,52 +172,42 @@ describe("HAPServer", () => {
     server = new HAPServer(accessoryInfoUnpaired);
     const [port] = await bindServer(server);
 
-    const pairSetup = new PairSetupClient(port, httpAgent);
+    const pairSetup = new PairSetupClient(await connectClient(port));
 
     const M3 = await pairSetup.prepareM3({
       salt: crypto.randomBytes(16),
       serverPublicKey: crypto.randomBytes(384),
     }, accessoryInfoUnpaired.pincode);
 
-    try {
-      const response = await pairSetup.sendM3(M3);
-      fail(`Expected erroneous response, got ${response}`);
-    } catch (error) {
-      expect(error).toBeInstanceOf(AxiosError);
-      expect(error.response?.status).toBe(HAPHTTPCode.BAD_REQUEST);
+    const response = await pairSetup.sendM3(M3);
+    expect(response.statusCode).toBe(HAPHTTPCode.BAD_REQUEST);
 
-      const objectsM4 = tlv.decode(error.response?.data);
-      expect(objectsM4[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M4);
-      expect(objectsM4[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
-    }
+    const objectsM4 = tlv.decode(response.body);
+    expect(objectsM4[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M4);
+    expect(objectsM4[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
   });
 
   test("reject pair-setup with state M5", async () => {
     server = new HAPServer(accessoryInfoUnpaired);
     const [port] = await bindServer(server);
 
-    const pairSetup = new PairSetupClient(port, httpAgent);
+    const pairSetup = new PairSetupClient(await connectClient(port));
 
     const M5 = await pairSetup.prepareM5({ sharedSecret: crypto.randomBytes(256) }, clientInfo);
 
-    try {
-      const response = await pairSetup.sendM5(M5);
-      fail(`Expected erroneous response, got ${response}`);
-    } catch (error) {
-      expect(error).toBeInstanceOf(AxiosError);
-      expect(error.response?.status).toBe(HAPHTTPCode.BAD_REQUEST);
+    const response = await pairSetup.sendM5(M5);
+    expect(response.statusCode).toBe(HAPHTTPCode.BAD_REQUEST);
 
-      const objectsM4 = tlv.decode(error.response?.data);
-      expect(objectsM4[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M6);
-      expect(objectsM4[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
-    }
+    const objectsM4 = tlv.decode(response.body);
+    expect(objectsM4[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M6);
+    expect(objectsM4[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
   });
 
   test("test successful /pair-verify", async () => {
     server = new HAPServer(accessoryInfoPaired);
     const [port] = await bindServer(server);
 
-    const pairVerify = new PairVerifyClient(port, httpAgent);
+    const pairVerify = new PairVerifyClient(await connectClient(port));
     await pairVerify.sendPairVerify(serverInfoPaired, clientInfo);
   });
 
@@ -216,19 +215,20 @@ describe("HAPServer", () => {
     server = new HAPServer(accessoryInfoUnpaired);
     const [port] = await bindServer(server);
 
-    const pairVerify = new PairVerifyClient(port, httpAgent);
+    const pairVerify = new PairVerifyClient(await connectClient(port));
 
     // M1
     const responseM1 = await pairVerify.sendM1();
 
     // M2
-    const M2 = pairVerify.parseM2(responseM1.data, serverInfoUnpaired);
+    const M2 = pairVerify.parseM2(responseM1.body, serverInfoUnpaired);
 
     // M3
     const M3 = pairVerify.prepareM3(M2, clientInfo);
 
     const responseM3 = await pairVerify.sendM3(M3);
-    const objectsM4 = tlv.decode(responseM3.data);
+    expect(responseM3.statusCode).toBe(HAPPairingHTTPCode.OK);
+    const objectsM4 = tlv.decode(responseM3.body);
 
     expect(objectsM4[TLVValues.STATE].readUInt8(0)).toBe(PairingStates.M4);
     expect(objectsM4[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.AUTHENTICATION);
@@ -239,23 +239,26 @@ describe("HAPServer", () => {
       server = new HAPServer(accessoryInfoUnpaired);
       const [port] = await bindServer(server);
 
-      const pairSetup = new PairSetupClient(port, httpAgent);
+      const client = await connectClient(port);
+      const pairSetup = new PairSetupClient(client);
 
       // advance the connection state to M4 via real SRP M1 + M3
       const responseM1 = await pairSetup.sendM1();
-      const M2 = pairSetup.parseM2(responseM1.data);
+      const M2 = pairSetup.parseM2(responseM1.body);
       const M3 = await pairSetup.prepareM3(M2, accessoryInfoUnpaired.pincode);
       const responseM3 = await pairSetup.sendM3(M3);
-      pairSetup.parseM4(responseM3.data, M3);
+      pairSetup.parseM4(responseM3.body, M3);
 
-      // craft an M5 with no ENCRYPTED_DATA TLV
-      const response = await axios.post(
-        `http://localhost:${port}/pair-setup`,
+      // craft an M5 with no ENCRYPTED_DATA TLV, riding the same connection whose state the handshake advanced
+      const response = await client.writeHTTPRequest(
+        "POST",
+        "/pair-setup",
         tlv.encode(TLVValues.STATE, PairingStates.M5),
-        { httpAgent, responseType: "arraybuffer" },
+        { contentType: HAPMimeTypes.PAIRING_TLV8 },
       );
+      expect(response.statusCode).toBe(HAPPairingHTTPCode.OK);
 
-      const objects = tlv.decode(response.data);
+      const objects = tlv.decode(response.body);
       expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M4);
       expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.AUTHENTICATION);
     });
@@ -264,24 +267,27 @@ describe("HAPServer", () => {
       server = new HAPServer(accessoryInfoUnpaired);
       const [port] = await bindServer(server);
 
-      const pairSetup = new PairSetupClient(port, httpAgent);
+      const client = await connectClient(port);
+      const pairSetup = new PairSetupClient(client);
       const responseM1 = await pairSetup.sendM1();
-      const M2 = pairSetup.parseM2(responseM1.data);
+      const M2 = pairSetup.parseM2(responseM1.body);
       const M3 = await pairSetup.prepareM3(M2, accessoryInfoUnpaired.pincode);
       const responseM3 = await pairSetup.sendM3(M3);
-      pairSetup.parseM4(responseM3.data, M3);
+      pairSetup.parseM4(responseM3.body, M3);
 
       // 8 bytes is below the 16-byte minimum; without the guard this would underflow Buffer.alloc()
-      const response = await axios.post(
-        `http://localhost:${port}/pair-setup`,
+      const response = await client.writeHTTPRequest(
+        "POST",
+        "/pair-setup",
         tlv.encode(
           TLVValues.STATE, PairingStates.M5,
           TLVValues.ENCRYPTED_DATA, Buffer.alloc(8),
         ),
-        { httpAgent, responseType: "arraybuffer" },
+        { contentType: HAPMimeTypes.PAIRING_TLV8 },
       );
+      expect(response.statusCode).toBe(HAPPairingHTTPCode.OK);
 
-      const objects = tlv.decode(response.data);
+      const objects = tlv.decode(response.body);
       expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M4);
       expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.AUTHENTICATION);
     });
@@ -290,18 +296,21 @@ describe("HAPServer", () => {
       server = new HAPServer(accessoryInfoPaired);
       const [port] = await bindServer(server);
 
-      const pairVerify = new PairVerifyClient(port, httpAgent);
+      const client = await connectClient(port);
+      const pairVerify = new PairVerifyClient(client);
       // advance connection state to M2 via M1
       const responseM1 = await pairVerify.sendM1();
-      pairVerify.parseM2(responseM1.data, serverInfoPaired);
+      pairVerify.parseM2(responseM1.body, serverInfoPaired);
 
-      const response = await axios.post(
-        `http://localhost:${port}/pair-verify`,
+      const response = await client.writeHTTPRequest(
+        "POST",
+        "/pair-verify",
         tlv.encode(TLVValues.STATE, PairingStates.M3),
-        { httpAgent, responseType: "arraybuffer" },
+        { contentType: HAPMimeTypes.PAIRING_TLV8 },
       );
+      expect(response.statusCode).toBe(HAPPairingHTTPCode.OK);
 
-      const objects = tlv.decode(response.data);
+      const objects = tlv.decode(response.body);
       expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M4);
       expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.AUTHENTICATION);
     });
@@ -310,20 +319,23 @@ describe("HAPServer", () => {
       server = new HAPServer(accessoryInfoPaired);
       const [port] = await bindServer(server);
 
-      const pairVerify = new PairVerifyClient(port, httpAgent);
+      const client = await connectClient(port);
+      const pairVerify = new PairVerifyClient(client);
       const responseM1 = await pairVerify.sendM1();
-      pairVerify.parseM2(responseM1.data, serverInfoPaired);
+      pairVerify.parseM2(responseM1.body, serverInfoPaired);
 
-      const response = await axios.post(
-        `http://localhost:${port}/pair-verify`,
+      const response = await client.writeHTTPRequest(
+        "POST",
+        "/pair-verify",
         tlv.encode(
           TLVValues.STATE, PairingStates.M3,
           TLVValues.ENCRYPTED_DATA, Buffer.alloc(15),
         ),
-        { httpAgent, responseType: "arraybuffer" },
+        { contentType: HAPMimeTypes.PAIRING_TLV8 },
       );
+      expect(response.statusCode).toBe(HAPPairingHTTPCode.OK);
 
-      const objects = tlv.decode(response.data);
+      const objects = tlv.decode(response.body);
       expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M4);
       expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.AUTHENTICATION);
     });
@@ -335,18 +347,15 @@ describe("HAPServer", () => {
       server.allowInsecureRequest = true;
       const [port] = await bindServer(server);
 
-      try {
-        await axios.put(
-          `http://localhost:${port}/characteristics`,
-          { characteristics: [{ aid: 1, iid: 9, value: true }] },
-          { httpAgent },
-        );
-        fail("Expected CONNECTION_AUTHORIZATION_REQUIRED response");
-      } catch (error) {
-        expect(error).toBeInstanceOf(AxiosError);
-        expect(error.response?.status).toBe(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED);
-        expect(error.response?.data).toEqual({ status: HAPStatus.INSUFFICIENT_PRIVILEGES });
-      }
+      const client = await connectClient(port);
+
+      const response = await client.writeHTTPRequest(
+        "PUT",
+        "/characteristics",
+        Buffer.from(JSON.stringify({ characteristics: [{ aid: 1, iid: 9, value: true }] })),
+      );
+      expect(response.statusCode).toBe(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED);
+      expect(JSON.parse(response.body.toString())).toEqual({ status: HAPStatus.INSUFFICIENT_PRIVILEGES });
     });
 
     test("PUT /characteristics with wrong-length authorization should not crash timingSafeEqual", async () => {
@@ -354,20 +363,18 @@ describe("HAPServer", () => {
       server.allowInsecureRequest = true;
       const [port] = await bindServer(server);
 
+      const client = await connectClient(port);
+
       // 5 bytes — different length to the 11-byte pincode. Without the
       // length guard added in 12aea013, crypto.timingSafeEqual throws
       // RangeError and the connection would be killed.
-      try {
-        await axios.put(
-          `http://localhost:${port}/characteristics`,
-          { characteristics: [{ aid: 1, iid: 9, value: true }] },
-          { httpAgent, headers: { authorization: "short" } },
-        );
-        fail("Expected CONNECTION_AUTHORIZATION_REQUIRED response");
-      } catch (error) {
-        expect(error).toBeInstanceOf(AxiosError);
-        expect(error.response?.status).toBe(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED);
-      }
+      const response = await client.writeHTTPRequest(
+        "PUT",
+        "/characteristics",
+        Buffer.from(JSON.stringify({ characteristics: [{ aid: 1, iid: 9, value: true }] })),
+        { headers: { authorization: "short" } },
+      );
+      expect(response.statusCode).toBe(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED);
     });
 
     test("PUT /characteristics with same-length wrong pincode should be rejected", async () => {
@@ -387,17 +394,15 @@ describe("HAPServer", () => {
       const [port] = await bindServer(server);
 
       const wrongPincode = "999-99-999"; // same length as "031-45-154", different content
-      try {
-        await axios.put(
-          `http://localhost:${port}/characteristics`,
-          { characteristics: [{ aid: 1, iid: 9, value: true }] },
-          { httpAgent, headers: { authorization: wrongPincode } },
-        );
-        fail("Expected CONNECTION_AUTHORIZATION_REQUIRED response");
-      } catch (error) {
-        expect(error).toBeInstanceOf(AxiosError);
-        expect(error.response?.status).toBe(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED);
-      }
+      const client = await connectClient(port);
+
+      const response = await client.writeHTTPRequest(
+        "PUT",
+        "/characteristics",
+        Buffer.from(JSON.stringify({ characteristics: [{ aid: 1, iid: 9, value: true }] })),
+        { headers: { authorization: wrongPincode } },
+      );
+      expect(response.statusCode).toBe(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED);
     });
 
     test("PUT /characteristics with correct pincode should be authorized", async () => {
@@ -418,14 +423,17 @@ describe("HAPServer", () => {
         callback(undefined, { characteristics: writeRequest.characteristics.map(c => ({ aid: c.aid, iid: c.iid, status: HAPStatus.SUCCESS })) });
       });
 
-      const response = await axios.put(
-        `http://localhost:${port}/characteristics`,
-        { characteristics: [{ aid: 1, iid: 9, value: true }] },
-        { httpAgent, headers: { authorization: info.pincode } },
+      const client = await connectClient(port);
+
+      const response = await client.writeHTTPRequest(
+        "PUT",
+        "/characteristics",
+        Buffer.from(JSON.stringify({ characteristics: [{ aid: 1, iid: 9, value: true }] })),
+        { headers: { authorization: info.pincode } },
       );
       // a successful insecure PUT returns 204 NO_CONTENT (or 200 if there's a response body)
-      expect(response.status).toBeGreaterThanOrEqual(200);
-      expect(response.status).toBeLessThan(300);
+      expect(response.statusCode).toBeGreaterThanOrEqual(200);
+      expect(response.statusCode).toBeLessThan(300);
     });
 
     test("POST /resource with wrong-length authorization should not crash timingSafeEqual", async () => {
@@ -433,18 +441,16 @@ describe("HAPServer", () => {
       server.allowInsecureRequest = true;
       const [port] = await bindServer(server);
 
-      try {
-        await axios.post(
-          `http://localhost:${port}/resource`,
-          { "resource-type": "image", "image-width": 100, "image-height": 100 },
-          { httpAgent, headers: { authorization: "short" } },
-        );
-        fail("Expected CONNECTION_AUTHORIZATION_REQUIRED response");
-      } catch (error) {
-        expect(error).toBeInstanceOf(AxiosError);
-        expect(error.response?.status).toBe(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED);
-        expect(error.response?.data).toEqual({ status: HAPStatus.INSUFFICIENT_PRIVILEGES });
-      }
+      const client = await connectClient(port);
+
+      const response = await client.writeHTTPRequest(
+        "POST",
+        "/resource",
+        Buffer.from(JSON.stringify({ "resource-type": "image", "image-width": 100, "image-height": 100 })),
+        { headers: { authorization: "short" } },
+      );
+      expect(response.statusCode).toBe(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED);
+      expect(JSON.parse(response.body.toString())).toEqual({ status: HAPStatus.INSUFFICIENT_PRIVILEGES });
     });
   });
 
@@ -481,23 +487,27 @@ describe("HAPServer", () => {
       server = new HAPServer(accessoryInfoUnpaired);
       const [port] = await bindServer(server);
 
-      const pairSetup = new PairSetupClient(port, httpAgent);
+      const client = await connectClient(port);
+      const pairSetup = new PairSetupClient(client);
       const responseM1 = await pairSetup.sendM1();
-      const M2 = pairSetup.parseM2(responseM1.data);
+      const M2 = pairSetup.parseM2(responseM1.body);
       const M3 = await pairSetup.prepareM3(M2, accessoryInfoUnpaired.pincode);
       const responseM3 = await pairSetup.sendM3(M3);
-      pairSetup.parseM4(responseM3.data, M3);
+      pairSetup.parseM4(responseM3.body, M3);
 
       // craft an M5 with bogus ciphertext+tag (passes the >=16 length check
-      // from 0719059b but fails MAC verification)
-      await axios.post(
-        `http://localhost:${port}/pair-setup`,
+      // from 0719059b but fails MAC verification). Awaiting the response
+      // sequences the server handler before the captured-log assertions below.
+      const response = await client.writeHTTPRequest(
+        "POST",
+        "/pair-setup",
         tlv.encode(
           TLVValues.STATE, PairingStates.M5,
           TLVValues.ENCRYPTED_DATA, Buffer.alloc(48), // 32-byte payload + 16-byte tag, all zeros
         ),
-        { httpAgent, responseType: "arraybuffer" },
+        { contentType: HAPMimeTypes.PAIRING_TLV8 },
       );
+      expect(response.statusCode).toBe(HAPPairingHTTPCode.OK);
 
       // captured rows: [namespace, formatString, ...formatArgs]
       const m5Lines = captured.filter(line => typeof line[1] === "string"
@@ -519,18 +529,23 @@ describe("HAPServer", () => {
       server = new HAPServer(accessoryInfoPaired);
       const [port] = await bindServer(server);
 
-      const pairVerify = new PairVerifyClient(port, httpAgent);
+      const client = await connectClient(port);
+      const pairVerify = new PairVerifyClient(client);
       const responseM1 = await pairVerify.sendM1();
-      pairVerify.parseM2(responseM1.data, serverInfoPaired);
+      pairVerify.parseM2(responseM1.body, serverInfoPaired);
 
-      await axios.post(
-        `http://localhost:${port}/pair-verify`,
+      // Awaiting the response sequences the server handler before the
+      // captured-log assertions below.
+      const response = await client.writeHTTPRequest(
+        "POST",
+        "/pair-verify",
         tlv.encode(
           TLVValues.STATE, PairingStates.M3,
           TLVValues.ENCRYPTED_DATA, Buffer.alloc(48),
         ),
-        { httpAgent, responseType: "arraybuffer" },
+        { contentType: HAPMimeTypes.PAIRING_TLV8 },
       );
+      expect(response.statusCode).toBe(HAPPairingHTTPCode.OK);
 
       const m3Lines = captured.filter(line => typeof line[1] === "string"
         && (line[1] as string).includes("M3: Failed to decrypt and/or verify"));
@@ -550,50 +565,40 @@ describe("HAPServer", () => {
       server = new HAPServer(accessoryInfoUnpaired);
       const [port] = await bindServer(server);
 
-      const pairSetup = new PairSetupClient(port, httpAgent);
+      const pairSetup = new PairSetupClient(await connectClient(port));
 
       // first M1 succeeds → connection state advances to M2
       const firstResponse = await pairSetup.sendM1();
-      const firstObjects = tlv.decode(firstResponse.data);
+      const firstObjects = tlv.decode(firstResponse.body);
       expect(firstObjects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
       expect(firstObjects[TLVValues.ERROR_CODE]).toBeUndefined();
 
       // second M1 on the same connection — without the guard this would
       // restart pair-setup and overwrite the in-progress SRP server
-      try {
-        await pairSetup.sendM1();
-        fail("Expected BAD_REQUEST response");
-      } catch (error) {
-        expect(error).toBeInstanceOf(AxiosError);
-        expect(error.response?.status).toBe(HAPHTTPCode.BAD_REQUEST);
-        const objects = tlv.decode(error.response?.data);
-        // sequence + 1 = M2; UNKNOWN error
-        expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
-        expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
-      }
+      const secondResponse = await pairSetup.sendM1();
+      expect(secondResponse.statusCode).toBe(HAPHTTPCode.BAD_REQUEST);
+      const objects = tlv.decode(secondResponse.body);
+      // sequence + 1 = M2; UNKNOWN error
+      expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
+      expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
     });
 
     test("/pair-setup should still accept M1 on a fresh connection after a previous setup completed", async () => {
       server = new HAPServer(accessoryInfoUnpaired);
       const [port] = await bindServer(server);
 
-      // first connection: do an M1 and abort
-      const firstAgent = new Agent({ keepAlive: true });
-      const firstClient = new PairSetupClient(port, firstAgent);
+      // first connection: do an M1 and abort by tearing the connection down
+      const firstConnection = await connectClient(port);
+      const firstClient = new PairSetupClient(firstConnection);
       await firstClient.sendM1();
-      firstAgent.destroy();
+      firstConnection.destroy();
 
       // second connection: a fresh M1 should still succeed (no state pollution)
-      const secondAgent = new Agent({ keepAlive: true });
-      try {
-        const secondClient = new PairSetupClient(port, secondAgent);
-        const response = await secondClient.sendM1();
-        const objects = tlv.decode(response.data);
-        expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
-        expect(objects[TLVValues.ERROR_CODE]).toBeUndefined();
-      } finally {
-        secondAgent.destroy();
-      }
+      const secondClient = new PairSetupClient(await connectClient(port));
+      const response = await secondClient.sendM1();
+      const objects = tlv.decode(response.body);
+      expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
+      expect(objects[TLVValues.ERROR_CODE]).toBeUndefined();
     });
   });
 
@@ -602,42 +607,38 @@ describe("HAPServer", () => {
       server = new HAPServer(accessoryInfoUnpaired);
       const [port] = await bindServer(server);
 
+      const client = await connectClient(port);
+
       // a TLV containing only METHOD (no SEQUENCE_NUM/STATE) — without the
       // guard this would crash on `tlvData[SEQUENCE_NUM][0]` of `undefined`.
-      try {
-        await axios.post(
-          `http://localhost:${port}/pair-setup`,
-          tlv.encode(TLVValues.METHOD, PairMethods.PAIR_SETUP),
-          { httpAgent, responseType: "arraybuffer" },
-        );
-        fail("Expected BAD_REQUEST response");
-      } catch (error) {
-        expect(error).toBeInstanceOf(AxiosError);
-        expect(error.response?.status).toBe(HAPHTTPCode.BAD_REQUEST);
-        const objects = tlv.decode(error.response?.data);
-        expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
-        expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
-      }
+      const response = await client.writeHTTPRequest(
+        "POST",
+        "/pair-setup",
+        tlv.encode(TLVValues.METHOD, PairMethods.PAIR_SETUP),
+        { contentType: HAPMimeTypes.PAIRING_TLV8 },
+      );
+      expect(response.statusCode).toBe(HAPHTTPCode.BAD_REQUEST);
+      const objects = tlv.decode(response.body);
+      expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
+      expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
     });
 
     test("/pair-verify should reject when SEQUENCE_NUM TLV is missing", async () => {
       server = new HAPServer(accessoryInfoPaired);
       const [port] = await bindServer(server);
 
-      try {
-        await axios.post(
-          `http://localhost:${port}/pair-verify`,
-          tlv.encode(TLVValues.PUBLIC_KEY, Buffer.alloc(32)),
-          { httpAgent, responseType: "arraybuffer" },
-        );
-        fail("Expected BAD_REQUEST response");
-      } catch (error) {
-        expect(error).toBeInstanceOf(AxiosError);
-        expect(error.response?.status).toBe(HAPHTTPCode.BAD_REQUEST);
-        const objects = tlv.decode(error.response?.data);
-        expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
-        expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
-      }
+      const client = await connectClient(port);
+
+      const response = await client.writeHTTPRequest(
+        "POST",
+        "/pair-verify",
+        tlv.encode(TLVValues.PUBLIC_KEY, Buffer.alloc(32)),
+        { contentType: HAPMimeTypes.PAIRING_TLV8 },
+      );
+      expect(response.statusCode).toBe(HAPHTTPCode.BAD_REQUEST);
+      const objects = tlv.decode(response.body);
+      expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
+      expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
     });
   });
 
@@ -646,13 +647,14 @@ describe("HAPServer", () => {
       server = new HAPServer(accessoryInfoUnpaired);
       const [port] = await bindServer(server);
 
-      const pairSetup = new PairSetupClient(port, httpAgent);
+      const client = await connectClient(port);
+      const pairSetup = new PairSetupClient(client);
 
       const responseM1 = await pairSetup.sendM1();
-      const M2 = pairSetup.parseM2(responseM1.data);
+      const M2 = pairSetup.parseM2(responseM1.body);
       const M3 = await pairSetup.prepareM3(M2, accessoryInfoUnpaired.pincode);
       const responseM3 = await pairSetup.sendM3(M3);
-      const M4 = pairSetup.parseM4(responseM3.data, M3);
+      const M4 = pairSetup.parseM4(responseM3.body, M3);
 
       // build a sub-TLV missing IDENTIFIER (only PUBLIC_KEY + SIGNATURE)
       const malformedSubTLV = tlv.encode(
@@ -671,16 +673,18 @@ describe("HAPServer", () => {
         sessionKey, Buffer.from("PS-Msg05"), null, malformedSubTLV,
       );
 
-      const response = await axios.post(
-        `http://localhost:${port}/pair-setup`,
+      const response = await client.writeHTTPRequest(
+        "POST",
+        "/pair-setup",
         tlv.encode(
           TLVValues.STATE, PairingStates.M5,
           TLVValues.ENCRYPTED_DATA, Buffer.concat([encrypted.ciphertext, encrypted.authTag]),
         ),
-        { httpAgent, responseType: "arraybuffer" },
+        { contentType: HAPMimeTypes.PAIRING_TLV8 },
       );
+      expect(response.statusCode).toBe(HAPPairingHTTPCode.OK);
 
-      const objects = tlv.decode(response.data);
+      const objects = tlv.decode(response.body);
       expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M4);
       expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
     });
@@ -689,9 +693,10 @@ describe("HAPServer", () => {
       server = new HAPServer(accessoryInfoPaired);
       const [port] = await bindServer(server);
 
-      const pairVerify = new PairVerifyClient(port, httpAgent);
+      const client = await connectClient(port);
+      const pairVerify = new PairVerifyClient(client);
       const responseM1 = await pairVerify.sendM1();
-      const M2 = pairVerify.parseM2(responseM1.data, serverInfoPaired);
+      const M2 = pairVerify.parseM2(responseM1.body, serverInfoPaired);
 
       // build a sub-TLV missing PROOF/SIGNATURE (only IDENTIFIER)
       const malformedSubTLV = tlv.encode(
@@ -702,16 +707,18 @@ describe("HAPServer", () => {
         M2.sessionKey, Buffer.from("PV-Msg03"), null, malformedSubTLV,
       );
 
-      const response = await axios.post(
-        `http://localhost:${port}/pair-verify`,
+      const response = await client.writeHTTPRequest(
+        "POST",
+        "/pair-verify",
         tlv.encode(
           TLVValues.STATE, PairingStates.M3,
           TLVValues.ENCRYPTED_DATA, Buffer.concat([encrypted.ciphertext, encrypted.authTag]),
         ),
-        { httpAgent, responseType: "arraybuffer" },
+        { contentType: HAPMimeTypes.PAIRING_TLV8 },
       );
+      expect(response.statusCode).toBe(HAPPairingHTTPCode.OK);
 
-      const objects = tlv.decode(response.data);
+      const objects = tlv.decode(response.body);
       expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M4);
       expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
     });
@@ -729,17 +736,14 @@ describe("HAPServer", () => {
       port = addressInformation[0];
       address = addressInformation[1];
 
-      const pairVerify = new PairVerifyClient(port, httpAgent);
+      // The client owns the connection end-to-end: pair-verify rides it, and the session keys the handshake derives are
+      // bound server-side to exactly this connection - which is why the encrypted session must continue on it.
+      client = await connectClient(port, address);
+
+      const pairVerify = new PairVerifyClient(client);
       encryption = await pairVerify.sendPairVerify(serverInfoPaired, clientInfo);
 
-      client = new HAPHTTPClient(httpAgent, address, port);
-      await client.attachSocket();
-
       client.enableEncryption(encryption);
-    });
-
-    afterEach(() => {
-      client.releaseSocket();
     });
 
     test("test /pairings ADD_PAIRING", async () => {
@@ -792,7 +796,7 @@ describe("HAPServer", () => {
     describe("/pairings required TLV fields (fix 58c24b92)", () => {
       test("should reject when METHOD is missing", async () => {
         const malformed = tlv.encode(TLVValues.STATE, PairingStates.M1);
-        const httpResponse = await client.writeHTTPRequest("POST", "/pairings", malformed, "application/pairing+tlv8");
+        const httpResponse = await client.writeHTTPRequest("POST", "/pairings", malformed, { contentType: HAPMimeTypes.PAIRING_TLV8 });
         expect(httpResponse.statusCode).toEqual(HAPPairingHTTPCode.OK);
         const objects = tlv.decode(httpResponse.body);
         expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
@@ -801,7 +805,7 @@ describe("HAPServer", () => {
 
       test("should reject when STATE is missing", async () => {
         const malformed = tlv.encode(TLVValues.METHOD, PairMethods.LIST_PAIRINGS);
-        const httpResponse = await client.writeHTTPRequest("POST", "/pairings", malformed, "application/pairing+tlv8");
+        const httpResponse = await client.writeHTTPRequest("POST", "/pairings", malformed, { contentType: HAPMimeTypes.PAIRING_TLV8 });
         expect(httpResponse.statusCode).toEqual(HAPPairingHTTPCode.OK);
         const objects = tlv.decode(httpResponse.body);
         expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
@@ -815,7 +819,7 @@ describe("HAPServer", () => {
           TLVValues.PUBLIC_KEY, crypto.randomBytes(32),
           TLVValues.PERMISSIONS, PermissionTypes.ADMIN,
         );
-        const httpResponse = await client.writeHTTPRequest("POST", "/pairings", malformed, "application/pairing+tlv8");
+        const httpResponse = await client.writeHTTPRequest("POST", "/pairings", malformed, { contentType: HAPMimeTypes.PAIRING_TLV8 });
         const objects = tlv.decode(httpResponse.body);
         expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
         expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
@@ -828,7 +832,7 @@ describe("HAPServer", () => {
           TLVValues.IDENTIFIER, thirdUsername,
           TLVValues.PERMISSIONS, PermissionTypes.ADMIN,
         );
-        const httpResponse = await client.writeHTTPRequest("POST", "/pairings", malformed, "application/pairing+tlv8");
+        const httpResponse = await client.writeHTTPRequest("POST", "/pairings", malformed, { contentType: HAPMimeTypes.PAIRING_TLV8 });
         const objects = tlv.decode(httpResponse.body);
         expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
         expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
@@ -839,7 +843,7 @@ describe("HAPServer", () => {
           TLVValues.METHOD, PairMethods.REMOVE_PAIRING,
           TLVValues.STATE, PairingStates.M1,
         );
-        const httpResponse = await client.writeHTTPRequest("POST", "/pairings", malformed, "application/pairing+tlv8");
+        const httpResponse = await client.writeHTTPRequest("POST", "/pairings", malformed, { contentType: HAPMimeTypes.PAIRING_TLV8 });
         const objects = tlv.decode(httpResponse.body);
         expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
         expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
@@ -1133,14 +1137,11 @@ describe("HAPServer", () => {
       server = new HAPServer(accessoryInfoUnpaired);
       const [port] = await bindServer(server);
 
-      try {
-        const response = await axios.post(`http://localhost:${port}/${route}`, { httpAgent });
-        fail(`Expected erroneous response, got ${response}`);
-      } catch (error) {
-        expect(error).toBeInstanceOf(AxiosError);
-        expect(error.response?.status).toBe(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED);
-        expect(error.response?.data).toEqual({ status: HAPStatus.INSUFFICIENT_PRIVILEGES });
-      }
+      const client = await connectClient(port);
+
+      const response = await client.writeHTTPRequest("POST", `/${route}`);
+      expect(response.statusCode).toBe(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED);
+      expect(JSON.parse(response.body.toString())).toEqual({ status: HAPStatus.INSUFFICIENT_PRIVILEGES });
     },
   );
 
@@ -1150,14 +1151,11 @@ describe("HAPServer", () => {
       server = new HAPServer(accessoryInfoPaired);
       const [port] = await bindServer(server);
 
-      try {
-        const response = await axios.post(`http://localhost:${port}/${route}`, { httpAgent });
-        fail(`Expected erroneous response, got ${response}`);
-      } catch (error) {
-        expect(error).toBeInstanceOf(AxiosError);
-        expect(error.response?.status).toBe(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED);
-        expect(error.response?.data).toEqual({ status: HAPStatus.INSUFFICIENT_PRIVILEGES });
-      }
+      const client = await connectClient(port);
+
+      const response = await client.writeHTTPRequest("POST", `/${route}`);
+      expect(response.statusCode).toBe(HAPPairingHTTPCode.CONNECTION_AUTHORIZATION_REQUIRED);
+      expect(JSON.parse(response.body.toString())).toEqual({ status: HAPStatus.INSUFFICIENT_PRIVILEGES });
     },
   );
 
@@ -1165,14 +1163,11 @@ describe("HAPServer", () => {
     server = new HAPServer(accessoryInfoUnpaired);
     const [port] = await bindServer(server);
 
-    try {
-      const response = await axios.post(`http://localhost:${port}/non-existent`, { httpAgent });
-      fail(`Expected erroneous response, got ${response}`);
-    } catch (error) {
-      expect(error).toBeInstanceOf(AxiosError);
-      expect(error.response?.status).toBe(HAPHTTPCode.NOT_FOUND);
-      expect(error.response?.data).toEqual({ status: HAPStatus.RESOURCE_DOES_NOT_EXIST });
-    }
+    const client = await connectClient(port);
+
+    const response = await client.writeHTTPRequest("POST", "/non-existent");
+    expect(response.statusCode).toBe(HAPHTTPCode.NOT_FOUND);
+    expect(JSON.parse(response.body.toString())).toEqual({ status: HAPStatus.RESOURCE_DOES_NOT_EXIST });
   });
 
 });
