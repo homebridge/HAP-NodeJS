@@ -7,7 +7,6 @@ import { HAPHTTPCode, HAPPairingHTTPCode } from "../lib/HAPServer";
 import { PairingInformation, PermissionTypes } from "../lib/model/AccessoryInfo";
 import { HAPEncryption, HAPUsername } from "../lib/util/eventedhttp";
 import * as hapCrypto from "../lib/util/hapCrypto";
-import { awaitEventOnce } from "../lib/util/promise-utils";
 import * as tlv from "../lib/util/tlv";
 import {
   AccessoriesResponse,
@@ -65,6 +64,9 @@ export class HAPHTTPClient {
   private currentSocket?: Socket;
   private encryption?: HAPEncryption;
   private socketClosed = false;
+  // Settles when the underlying socket has fully closed. Captured at connect() so close observation stays valid for the
+  // client's entire lifetime, even after destroy() has dropped the socket reference.
+  private socketClosePromise?: Promise<void>;
   private everConnected = false;
 
   private currentDataListener?: (data: Buffer) => void;
@@ -95,8 +97,11 @@ export class HAPHTTPClient {
     // A permanent error listener must exist for the socket's lifetime: without one, a late ECONNRESET (e.g. the server
     // tearing down first in afterEach) would crash the process. Failures surface loudly through receive timeouts instead.
     socket.on("error", () => {});
-    socket.on("close", () => {
-      this.socketClosed = true;
+    this.socketClosePromise = new Promise(resolve => {
+      socket.once("close", () => {
+        this.socketClosed = true;
+        resolve();
+      });
     });
 
     this.currentDataListener = data => {
@@ -133,15 +138,24 @@ export class HAPHTTPClient {
   }
 
   /**
-   * Resolves once the underlying socket has fully closed, rejecting after {@link timeoutMs} if it never does. The direct
-   * observation primitive for tests asserting that the server tears a connection down.
+   * Resolves once the underlying socket has fully closed, rejecting after {@link timeoutMs} if it never does. Close
+   * observation is anchored to the promise captured at {@link connect}, so it is valid at any point in the client's
+   * lifetime - including immediately after {@link destroy} - regardless of which side initiates the teardown.
    */
   async waitForClose(timeoutMs = HAPHTTPClient.RECEIVE_TIMEOUT): Promise<void> {
-    if (this.socketClosed) {
-      return;
+    expect(this.socketClosePromise).toBeDefined();
+
+    let timeoutId: NodeJS.Timeout | undefined = undefined;
+
+    const timeout = new Promise<void>((_resolve, reject) => {
+      timeoutId = setTimeout(() => reject(new Error("Timed out awaiting the connection to close.")), timeoutMs);
+    });
+
+    try {
+      await Promise.race([this.socketClosePromise, timeout]);
+    } finally {
+      clearTimeout(timeoutId);
     }
-    expect(this.currentSocket).toBeDefined();
-    await awaitEventOnce(this.currentSocket!, "close", timeoutMs);
   }
 
   get receiveBufferCount(): number {
@@ -178,6 +192,12 @@ export class HAPHTTPClient {
    */
   private awaitIncomingData(deadline: number): Promise<void> {
     expect(this.currentSocket).toBeDefined();
+
+    // A connection that has already closed can never deliver the awaited bytes - reject immediately rather than riding
+    // out the deadline only to fail with the less specific timeout error.
+    if (this.socketClosed) {
+      return Promise.reject(new Error("Connection closed while awaiting incoming data."));
+    }
 
     const socket = this.currentSocket!;
 

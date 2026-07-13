@@ -15,10 +15,12 @@ describe("eventedhttp", () => {
   };
 
   // Creates a connected client and registers it for teardown. One client instance owns one TCP connection, which is
-  // exactly one server-side HAPConnection.
+  // exactly one server-side HAPConnection. The server binds the unspecified address, which is not a portable connect
+  // destination, so we dial the loopback address of the bound family instead.
   const connectClient = async (): Promise<HAPHTTPClient> => {
     const address = server.address();
-    const client = new HAPHTTPClient(address.address, address.port);
+    const host = ["0.0.0.0", "::"].includes(address.address) ? ((address.family === "IPv6") ? "::1" : "127.0.0.1") : address.address;
+    const client = new HAPHTTPClient(host, address.port);
     await client.connect();
     clients.push(client);
     return client;
