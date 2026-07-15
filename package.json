@@ -73,7 +73,6 @@
     "@types/plist": "^3.0.5",
     "@typescript-eslint/eslint-plugin": "^8.63.0",
     "@typescript-eslint/parser": "^8.63.0",
-    "axios": "^1.18.1",
     "commander": "^15.0.0",
     "escape-html": "^1.0.3",
     "eslint": "^10.7.0",

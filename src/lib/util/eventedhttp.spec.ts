@@ -1,14 +1,12 @@
-import axios, { AxiosResponse } from "axios";
-import { Agent, IncomingMessage, ServerResponse } from "http";
+import { IncomingMessage, ServerResponse } from "http";
 import { HAPHTTPClient } from "../../test-utils/HAPHTTPClient";
 import { HAPHTTPCode } from "../HAPServer";
 import { EventedHTTPServer, EventedHTTPServerEvent, HAPConnection, HAPConnectionEvent } from "./eventedhttp";
 import { awaitEventOnce, PromiseTimeout } from "./promise-utils";
 
 describe("eventedhttp", () => {
-  let httpAgent: Agent;
+  let clients: HAPHTTPClient[];
   let server: EventedHTTPServer;
-  let baseUrl: string;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const defaultRequestHandler = (connection: any, request: any, response: ServerResponse) => {
@@ -16,11 +14,20 @@ describe("eventedhttp", () => {
     response.end("Hello World", "ascii");
   };
 
+  // Creates a connected client and registers it for teardown. One client instance owns one TCP connection, which is
+  // exactly one server-side HAPConnection. The server binds the unspecified address, which is not a portable connect
+  // destination, so we dial the loopback address of the bound family instead.
+  const connectClient = async (): Promise<HAPHTTPClient> => {
+    const address = server.address();
+    const host = ["0.0.0.0", "::"].includes(address.address) ? ((address.family === "IPv6") ? "::1" : "127.0.0.1") : address.address;
+    const client = new HAPHTTPClient(host, address.port);
+    await client.connect();
+    clients.push(client);
+    return client;
+  };
+
   beforeEach(async () => {
-    // used to do long living http connections without own tcp interface
-    httpAgent = new Agent({
-      keepAlive: true,
-    });
+    clients = [];
 
     server = new EventedHTTPServer();
     // @ts-expect-error: private access
@@ -28,12 +35,12 @@ describe("eventedhttp", () => {
 
     server.listen(0);
     await awaitEventOnce(server, EventedHTTPServerEvent.LISTENING);
-
-    const address = server.address();
-    baseUrl = `http://0.0.0.0:${address.port}`;
   });
 
   afterEach(() => {
+    for (const client of clients) {
+      client.destroy();
+    }
     server.stop();
     server.destroy();
   });
@@ -49,8 +56,10 @@ describe("eventedhttp", () => {
       response.end("Hello World", "ascii");
     });
 
-    const result: AxiosResponse<string> = await axios.get(`${baseUrl}/test?query=true`, { httpAgent });
-    expect(result.data).toEqual("Hello World");
+    const client = await connectClient();
+    const result = await client.writeHTTPRequest("GET", "/test?query=true");
+    expect(result.statusCode).toBe(HAPHTTPCode.OK);
+    expect(result.body.toString()).toEqual("Hello World");
     const connection = await connectionOpened;
 
     // we simulate the connection getting authenticated (e.g. through pair-verify)
@@ -62,7 +71,7 @@ describe("eventedhttp", () => {
     expect(connection.getLocalAddress("ipv4")).toBe("127.0.0.1");
     expect(connection.getLocalAddress("ipv6")).toBe("::1");
 
-    httpAgent.destroy(); // disconnect HAPConnection
+    client.destroy(); // disconnect HAPConnection
 
     await connectionClosed;
   });
@@ -74,20 +83,23 @@ describe("eventedhttp", () => {
     // that made the request must persist till the response is sent out!
 
     const username = "XX:XX:XX:XX:XX:XX";
-    const secondAgent = new Agent({ keepAlive: true });
 
     // OPEN CONNECTIONS
     server.once(EventedHTTPServerEvent.REQUEST, defaultRequestHandler);
     const connectionOpened0: Promise<HAPConnection> = awaitEventOnce(server, EventedHTTPServerEvent.CONNECTION_OPENED);
-    const result0: AxiosResponse<string> = await axios.get(baseUrl, { httpAgent });
-    expect(result0.data).toEqual("Hello World");
+    const client0 = await connectClient();
     const connection0 = await connectionOpened0;
+    const result0 = await client0.writeHTTPRequest("GET", "/");
+    expect(result0.statusCode).toBe(HAPHTTPCode.OK);
+    expect(result0.body.toString()).toEqual("Hello World");
 
     server.once(EventedHTTPServerEvent.REQUEST, defaultRequestHandler);
     const connectionOpened1: Promise<HAPConnection> = awaitEventOnce(server, EventedHTTPServerEvent.CONNECTION_OPENED);
-    const result1: AxiosResponse<string> = await axios.get(baseUrl, { httpAgent: secondAgent });
-    expect(result1.data).toEqual("Hello World");
+    const client1 = await connectClient();
     const connection1 = await connectionOpened1;
+    const result1 = await client1.writeHTTPRequest("GET", "/");
+    expect(result1.statusCode).toBe(HAPHTTPCode.OK);
+    expect(result1.body.toString()).toEqual("Hello World");
 
     // AUTHENTICATE CONNECTIONS
     const authenticatedEvent0: Promise<string> = awaitEventOnce(connection0, HAPConnectionEvent.AUTHENTICATED);
@@ -100,7 +112,7 @@ describe("eventedhttp", () => {
 
     // we make a request that we don't answer yet!
     const queuedRequestPromise: Promise<[HAPConnection, IncomingMessage, ServerResponse]> = awaitEventOnce(server, EventedHTTPServerEvent.REQUEST);
-    const pendingRequest = axios.get(baseUrl, { httpAgent }); // simulate a "unpair" request!
+    client0.write(client0.formatHTTPRequest("GET", "/")); // simulate a "unpair" request!
     const queuedResponse = (await queuedRequestPromise)[2];
 
     // do the unpair!!
@@ -108,34 +120,31 @@ describe("eventedhttp", () => {
     EventedHTTPServer.destroyExistingConnectionsAfterUnpair(connection0, username);
     await expect(connectionClosed).resolves.toBe(connection1);
 
-    await PromiseTimeout(200);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect((secondAgent as any).totalSocketCount <= 0).toBeTruthy(); // assert that the client side was closed!
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect((httpAgent as any).totalSocketCount).toBe(1); // the other socket shouldn't be closed yet
+    // the other connection's client side must observe the teardown, while the requesting connection stays open until
+    // its response has been sent out
+    await client1.waitForClose();
+    expect(client0.isClosed).toBe(false);
 
     // now finish the http request from above!
     defaultRequestHandler(undefined, undefined, queuedResponse!); // just reuse the request handler from above!
-    const pendingRequestResult = await pendingRequest;
-    expect(pendingRequestResult.data).toBe("Hello World");
+    const pendingResponse = await client0.readHTTPResponse();
+    expect(pendingResponse.statusCode).toBe(HAPHTTPCode.OK);
+    expect(pendingResponse.body.toString()).toBe("Hello World");
 
-    await PromiseTimeout(200);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect((httpAgent as any).totalSocketCount <= 0).toBeTruthy(); // the other socket shall now be closed!
+    // once the response is out the server tears the requesting connection down as well
+    await client0.waitForClose();
   });
 
   test("event notifications", async () => {
-    const address = server.address();
-
     server.once(EventedHTTPServerEvent.REQUEST, defaultRequestHandler);
 
     const connectionOpened: Promise<HAPConnection> = awaitEventOnce(server, EventedHTTPServerEvent.CONNECTION_OPENED);
-    const result: AxiosResponse<string> = await axios.get(`${baseUrl}/test?query=true`, { httpAgent });
-    expect(result.data).toEqual("Hello World");
+    const client = await connectClient();
     const connection = await connectionOpened;
 
-    const client = new HAPHTTPClient(httpAgent, address.address, address.port);
-    await client.attachSocket(); // capture the free socket of the http agent!
+    const result = await client.writeHTTPRequest("GET", "/test?query=true");
+    expect(result.statusCode).toBe(HAPHTTPCode.OK);
+    expect(result.body.toString()).toEqual("Hello World");
 
     connection.enableEventNotifications(1, 1);
     // we implicitly test below that this event won't be delivered!
@@ -151,11 +160,14 @@ describe("eventedhttp", () => {
     connection.sendEvent(1, 1, "Hello Mars!");
     connection.sendEvent(1, 1, "Hello World!"); // should send
 
-    // no immediate delivery!
-    await PromiseTimeout(50);
+    // Regular events are coalesced: nothing may be delivered before the coalescing window elapses. We wait a fraction of
+    // that window - comfortably less than it, since a timer never fires early - and assert nothing has arrived yet.
+    await PromiseTimeout(HAPConnection.EVENT_COALESCING_DELAY / 5);
     expect(client.receiveBufferCount).toBe(0);
 
-    await PromiseTimeout(300);
+    // Once the coalescing timer fires the batched events flush as a single notification. We await the actual arrival
+    // rather than a fixed delay so the assertion holds regardless of how the runtime schedules the round-trip.
+    await client.waitForData(1);
     expect(client.receiveBufferCount).toBe(1);
     expect(client.popReceiveBuffer().toString()).toBe("EVENT/1.0 200 OK\r\n" +
       "Content-Type: application/hap+json\r\n" +
@@ -169,9 +181,11 @@ describe("eventedhttp", () => {
 
 
     server.broadcastEvent(1, 1, "Hello Sun!", undefined, false);
-    // event with immediate delivery shall send currently queued events. Nothing gets out of order!
+    // An event flagged for immediate delivery flushes the currently queued events along with it. The wait is bounded well
+    // below the coalescing window, so a regression to timer-based delivery fails loudly instead of passing late with the
+    // same bytes.
     connection.sendEvent(1, 1, "Hello Mars!", true);
-    await PromiseTimeout(10);
+    await client.waitForData(1, HAPConnection.EVENT_COALESCING_DELAY / 2);
     expect(client.receiveBufferCount).toBe(1);
     expect(client.popReceiveBuffer().toString()).toBe("EVENT/1.0 200 OK\r\n" +
       "Content-Type: application/hap+json\r\n" +
@@ -180,15 +194,16 @@ describe("eventedhttp", () => {
       "{\"characteristics\":[{\"aid\":1,\"iid\":1,\"value\":\"Hello Mars!\"},{\"aid\":1,\"iid\":1,\"value\":\"Hello Sun!\"}]}");
 
 
+    // The originating connection is excluded from its own broadcast, so it must receive nothing. Exclusion is decided
+    // synchronously when the broadcast is dispatched, so a brief settle is enough to confirm non-delivery.
     server.broadcastEvent(1, 1, "Hello Sun!", connection, true);
-    await PromiseTimeout(10);
+    await PromiseTimeout(HAPConnection.EVENT_COALESCING_DELAY / 5);
     expect(client.receiveBufferCount).toBe(0);
 
     // NOW we test event delivery when there is ongoing request
     const testEventDelivery = async (sendEvents: () => Promise<void>, assertResult: () => Promise<void>) => {
       const queuedRequestPromise: Promise<[HAPConnection, IncomingMessage, ServerResponse]> = awaitEventOnce(server, EventedHTTPServerEvent.REQUEST);
-      // we can't use axios here, as our special EVENT http message is involved!
-
+      // the request is deliberately left unanswered for now, so we write the raw bytes and defer reading the response
       client.write(client.formatHTTPRequest("GET", "/"));
       const queuedResponse: ServerResponse = (await queuedRequestPromise)[2];
 
@@ -196,7 +211,7 @@ describe("eventedhttp", () => {
 
       defaultRequestHandler(undefined, undefined, queuedResponse!); // just reuse the request handler from above!
 
-      await PromiseTimeout(20);
+      // Each assertion awaits exactly the delivery it expects, so no fixed settle delay is needed here.
       await assertResult();
     };
 
@@ -207,17 +222,11 @@ describe("eventedhttp", () => {
         connection.sendEvent(1, 1, "Hello Mars!");
       },
       async () => {
-        expect(client.receiveBufferCount > 0).toBeTruthy();
-
-        let eventMessage = "";
-        // sometimes the HTTP response message and the EVENT message are combined
-        // into a single TCP segment, sometimes they get sent separately.
-        while (client.receiveBufferCount > 0) {
-          eventMessage = client.popReceiveBuffer().toString();
-        }
-
-        expect(eventMessage.includes("EVENT/1.0")).toBeTruthy();
-        const event = eventMessage.substring(eventMessage.indexOf("EVENT")); // splicing away the http response!
+        // The immediate event forces the HTTP response and the EVENT message out together; they may share one TCP segment
+        // or arrive as two, so we read until the EVENT marker is present rather than assuming a segment count. The read is
+        // bounded well below the coalescing window so an event that wrongly arrives on the coalescing timer fails loudly.
+        const received = await client.readUntil("EVENT/1.0", HAPConnection.EVENT_COALESCING_DELAY / 2);
+        const event = received.substring(received.indexOf("EVENT")); // splicing away the http response!
         expect(event).toBe("EVENT/1.0 200 OK\r\n" +
           "Content-Type: application/hap+json\r\n" +
           "Content-Length: 102\r\n" +
@@ -232,11 +241,17 @@ describe("eventedhttp", () => {
         connection.sendEvent(1, 1, "Hello Sun!");
       },
       async () => {
-        expect(client.receiveBufferCount).toBe(1);
+        // These events are coalesced, so only the HTTP response returns with the request and it must not contain an EVENT.
+        await client.waitForData(1);
         expect(client.popReceiveBuffer().toString().includes("EVENT")).toBeFalsy();
 
-        await PromiseTimeout(300);
-        expect(client.receiveBufferCount).toBe(1);
+        // Nothing further may arrive before the coalescing window elapses - a flush-with-response regression lands here
+        // regardless of whether the runtime coalesced it into the response segment or sent it as its own.
+        await PromiseTimeout(HAPConnection.EVENT_COALESCING_DELAY / 5);
+        expect(client.receiveBufferCount).toBe(0);
+
+        // After the coalescing window the batched event is flushed as its own notification.
+        await client.waitForData(1);
         expect(client.popReceiveBuffer().toString()).toBe("EVENT/1.0 200 OK\r\n" +
           "Content-Type: application/hap+json\r\n" +
           "Content-Length: 100\r\n" +
@@ -248,20 +263,14 @@ describe("eventedhttp", () => {
     await testEventDelivery(
       async () => {
         connection.sendEvent(1, 1, "Hello Mars!");
-        await PromiseTimeout(300); // the timeout runs out while the request is still processed
+        // Let the coalescing timer fire while the request is still open, exercising the path where queued events are
+        // flushed together with the response instead of on their own timer.
+        await PromiseTimeout(HAPConnection.EVENT_COALESCING_DELAY + 50);
       },
       async () => {
-        expect(client.receiveBufferCount > 0).toBeTruthy();
-
-        let eventMessage = "";
-        // sometimes the HTTP response message and the EVENT message are combined
-        // into a single TCP segment, sometimes they get sent separately.
-        while (client.receiveBufferCount > 0) {
-          eventMessage = client.popReceiveBuffer().toString();
-        }
-
-        expect(eventMessage.includes("EVENT/1.0")).toBeTruthy();
-        const event = eventMessage.substring(eventMessage.indexOf("EVENT")); // splicing away the http response!
+        // Response and coalesced event flush together and may or may not share a TCP segment, so read until the marker.
+        const received = await client.readUntil("EVENT/1.0");
+        const event = received.substring(received.indexOf("EVENT")); // splicing away the http response!
         expect(event).toBe("EVENT/1.0 200 OK\r\n" +
           "Content-Type: application/hap+json\r\n" +
           "Content-Length: 61\r\n" +
@@ -269,8 +278,6 @@ describe("eventedhttp", () => {
           "{\"characteristics\":[{\"aid\":1,\"iid\":1,\"value\":\"Hello Mars!\"}]}");
       },
     );
-
-    client.releaseSocket();
   });
 
   // TODO test events not delivered while in a request!

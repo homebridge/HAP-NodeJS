@@ -1,11 +1,11 @@
-import axios, { AxiosResponse } from "axios";
-import { Agent } from "http";
 import tweetnacl, { BoxKeyPair } from "tweetnacl";
-import { PairingStates, TLVValues } from "../internal-types";
+import { HAPMimeTypes, PairingStates, TLVValues } from "../internal-types";
+import { HAPPairingHTTPCode } from "../lib/HAPServer";
 import { HAPEncryption } from "../lib/util/eventedhttp";
 import * as hapCrypto from "../lib/util/hapCrypto";
 import { EncryptedData } from "../lib/util/hapCrypto";
 import * as tlv from "../lib/util/tlv";
+import { HAPHTTPClient, HTTPResponse } from "./HAPHTTPClient";
 
 export interface PairVerifyM2 {
   sharedSecret: Buffer,
@@ -32,34 +32,41 @@ export interface PairVerifyClientInfo {
   privateKey: Buffer;
 }
 
+/**
+ * Drives the pair-verify handshake over a {@link HAPHTTPClient}'s owned connection. The session keys derived by the
+ * handshake are bound server-side to the exact HAPConnection it ran on, so riding the client's socket - the same socket
+ * that will carry the encrypted session afterwards - is a correctness requirement, not a convenience.
+ */
 export class PairVerifyClient {
-  private readonly port: number;
-  private readonly httpAgent: Agent;
+  private readonly client: HAPHTTPClient;
 
   readonly ephemeralKeyPair: BoxKeyPair;
 
-  constructor(port: number, httpAgent: Agent, ephemeralKeyPair?: BoxKeyPair) {
-    this.port = port;
-    this.httpAgent = httpAgent;
+  constructor(client: HAPHTTPClient, ephemeralKeyPair?: BoxKeyPair) {
+    this.client = client;
 
     this.ephemeralKeyPair = ephemeralKeyPair ?? hapCrypto.generateCurve25519KeyPair();
   }
 
   async sendPairVerify(serverInfo: PairVerifyServerInfo, clientInfo: PairVerifyClientInfo & { publicKey: Buffer }): Promise<HAPEncryption> {
+    // This is the success-path orchestrator, so both hops must come back 200 OK - the TLV payload assertions in the
+    // parse steps do not pin the HTTP status on their own.
     // M1
     const responseM1 = await this.sendM1();
+    expect(responseM1.statusCode).toBe(HAPPairingHTTPCode.OK);
 
     // M2
-    const M2 = this.parseM2(responseM1.data, serverInfo);
+    const M2 = this.parseM2(responseM1.body, serverInfo);
 
     // M3
     const M3 = this.prepareM3(M2, clientInfo);
 
     // step 11 & 12
     const responseM3 = await this.sendM3(M3);
+    expect(responseM3.statusCode).toBe(HAPPairingHTTPCode.OK);
 
     // M4
-    const M4 = this.parseM4(responseM3.data, M2);
+    const M4 = this.parseM4(responseM3.body, M2);
 
     // verify that encryption works!
     const encryption = new HAPEncryption(
@@ -78,14 +85,15 @@ export class PairVerifyClient {
     return encryption;
   }
 
-  sendM1(): Promise<AxiosResponse<Buffer>> {
-    return axios.post(
-      `http://localhost:${this.port}/pair-verify`,
+  sendM1(): Promise<HTTPResponse> {
+    return this.client.writeHTTPRequest(
+      "POST",
+      "/pair-verify",
       tlv.encode(
         TLVValues.STATE, PairingStates.M1,
         TLVValues.PUBLIC_KEY, this.ephemeralKeyPair.publicKey,
       ),
-      { httpAgent: this.httpAgent, responseType: "arraybuffer" },
+      { contentType: HAPMimeTypes.PAIRING_TLV8 },
     );
   }
 
@@ -183,14 +191,15 @@ export class PairVerifyClient {
     };
   }
 
-  sendM3(m3: PairVerifyM3): Promise<AxiosResponse<Buffer>> {
-    return axios.post(
-      `http://localhost:${this.port}/pair-verify`,
+  sendM3(m3: PairVerifyM3): Promise<HTTPResponse> {
+    return this.client.writeHTTPRequest(
+      "POST",
+      "/pair-verify",
       tlv.encode(
         TLVValues.STATE, PairingStates.M3,
         TLVValues.ENCRYPTED_DATA, Buffer.concat([m3.encryptedData.ciphertext, m3.encryptedData.authTag]),
       ),
-      { httpAgent: this.httpAgent, responseType: "arraybuffer" },
+      { contentType: HAPMimeTypes.PAIRING_TLV8 },
     );
   }
 
