@@ -2,6 +2,19 @@
 
 All notable changes to `@homebridge/hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
+## v2.1.9 (Pending Release)
+
+### Changes
+
+- fix: test harness rewritten around a connection-owning HAP client, removing the axios dependency (#1122) (@hjdhjd)
+- chore(ci): bump actions/setup-node to v7
+
+### Homebridge Dependencies
+
+- `@homebridge/ciao` @ `v1.3.10`
+- `@homebridge/dbus-native` @ `v0.7.7`
+- `bonjour-hap` @ `v3.10.4`
+
 ## v2.1.8 (2026-07-11)
 
 ### Changes
