@@ -8,6 +8,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 
 - fix: test harness rewritten around a connection-owning HAP client, removing the axios dependency (#1122) (@hjdhjd)
 - chore(ci): bump actions/setup-node to v7
+- chore: dependency updates
 
 ### Homebridge Dependencies
 
