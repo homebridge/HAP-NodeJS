@@ -2,6 +2,14 @@
 
 All notable changes to `@homebridge/hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
+## v2.2.0 (Pending Release)
+
+### Changes
+
+- fix: replace node-persist with minimal in-repo file storage (#1125) (@tim-fin)
+- Update for NodeJS 26 (@NorthernMan54)
+- feat: warn when the persist directory is not writable, instead of failing obscurely at publish (#1028)
+
 ## v2.1.9 (2026-07-18)
 
 ### Changes
