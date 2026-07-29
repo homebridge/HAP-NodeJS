@@ -76,7 +76,7 @@ export class HAPFileStorage {
         if (typeof options.dir !== "string" || !path.isAbsolute(options.dir)) {
           // node-persist silently redirected relative paths into its own module directory inside node_modules,
           // where the data was lost on the next npm install. There is no sane location to keep that behavior.
-          throw new Error(`HAP-NodeJS's storage requires an absolute storage path, got "${options.dir}"!`);
+          throw new Error(`HAP-NodeJS's storage requires an absolute storage path, got ${JSON.stringify(options.dir)}!`);
         }
         this.dir = path.normalize(options.dir);
       }
