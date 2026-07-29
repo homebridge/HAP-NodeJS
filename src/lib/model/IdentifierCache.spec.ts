@@ -1,13 +1,5 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import { LocalStorage } from "node-persist";
 import { IdentifierCache } from "./IdentifierCache";
 import { HAPStorage } from "./HAPStorage";
-
-function pullOutLocalStore(): LocalStorage {
-  // @ts-expect-error: private access
-  return HAPStorage.INSTANCE.localStore;
-}
 
 const createIdentifierCache = (username = "username") => {
   return new IdentifierCache(username);
@@ -102,18 +94,23 @@ describe("IdentifierCache", () => {
   describe("#save()", () => {
     it("persists the cache to file storage", () => {
       const identifierCache = createIdentifierCache();
+      identifierCache.setCache("foo", 1);
       identifierCache.save();
 
-      expect(pullOutLocalStore().setItemSync).toHaveBeenCalledTimes(1);
+      const saved = HAPStorage.storage().getItem(IdentifierCache.persistKey(identifierCache.username));
+      expect(saved).toEqual({ cache: { foo: 1 } });
     });
   });
 
   describe("#remove()", () => {
     it("removes the cache from file storage", () => {
       const identifierCache = createIdentifierCache();
+      identifierCache.save();
+      expect(HAPStorage.storage().getItem(IdentifierCache.persistKey(identifierCache.username))).toBeDefined();
+
       IdentifierCache.remove(identifierCache.username);
 
-      expect(pullOutLocalStore().removeItemSync).toHaveBeenCalledTimes(1);
+      expect(HAPStorage.storage().getItem(IdentifierCache.persistKey(identifierCache.username))).toBeUndefined();
     });
   });
 

@@ -9,7 +9,6 @@ const config = {
     "src/index.ts",
   ],
   "intentionallyNotExported": [
-    "LocalStorage",
     "MulticastOptions",
   ],
   "excludePrivate": true,
