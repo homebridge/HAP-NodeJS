@@ -11,8 +11,8 @@ import path from "node:path";
  */
 export interface HAPFileStorageInitOptions {
   /**
-   * Absolute path of the storage directory.
-   * Defaults to the relative directory `persist`, resolved against the current working directory.
+   * Path of the storage directory. If provided, it must be an absolute path.
+   * If omitted, storage defaults to the directory `persist` inside the current working directory.
    */
   dir?: string;
 }
@@ -131,7 +131,7 @@ export class HAPFileStorage {
   private static parse(json: string): any {
     try {
       return JSON.parse(json);
-    } catch (error) {
+    } catch {
       // node-persist 0.0.12 swallowed unparseable files, leaving the value undefined
       return undefined;
     }
