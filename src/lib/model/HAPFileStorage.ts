@@ -43,6 +43,8 @@ const UNSUPPORTED_METHODS = [
  * containing the bare `JSON.stringify` representation of the value. Values are read once
  * at {@link initSync} and served from memory afterwards.
  *
+ * Writes are atomic, which node-persist's were not: see {@link setItemSync}.
+ *
  * @group Model
  */
 export class HAPFileStorage {
@@ -83,12 +85,13 @@ export class HAPFileStorage {
     }
 
     if (fs.existsSync(this.dir)) {
-      for (const filename of fs.readdirSync(this.dir)) {
-        if (filename.startsWith(".")) {
+      for (const entry of fs.readdirSync(this.dir, { withFileTypes: true })) {
+        // directories are skipped: reading one would abort startup with a cryptic EISDIR
+        if (entry.name.startsWith(".") || entry.isDirectory()) {
           continue;
         }
 
-        this.data.set(filename, HAPFileStorage.parse(fs.readFileSync(path.join(this.dir, filename), "utf8")));
+        this.data.set(entry.name, HAPFileStorage.parse(fs.readFileSync(path.join(this.dir, entry.name), "utf8")));
       }
     } else {
       fs.mkdirSync(this.dir, { recursive: true });
@@ -109,13 +112,37 @@ export class HAPFileStorage {
     return this.data.get(key);
   }
 
+  /**
+   * Persists the given value, replacing the file for this key atomically.
+   *
+   * The value is written to a temporary file which is then renamed over the target, so an interrupted write
+   * leaves the previous contents intact instead of a truncated file. This matters because a truncated
+   * `AccessoryInfo` file reads back as an accessory which lost its pairings.
+   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
   setItemSync(key: string, value: any): void {
     this.data.set(key, value);
 
     const file = path.join(this.dir, key);
-    fs.mkdirSync(path.dirname(file), { recursive: true });
-    fs.writeFileSync(file, JSON.stringify(value));
+    const directory = path.dirname(file);
+    fs.mkdirSync(directory, { recursive: true });
+
+    // the dot prefix keeps a temporary file left behind by a crash from being loaded as a key by initSync,
+    // the pid keeps processes sharing a storage directory (like child bridges) from racing on the same temporary file
+    const temporaryFile = path.join(directory, `.${path.basename(file)}.${process.pid}.tmp`);
+
+    try {
+      fs.writeFileSync(temporaryFile, JSON.stringify(value));
+      fs.renameSync(temporaryFile, file);
+    } catch (error) {
+      try {
+        fs.unlinkSync(temporaryFile);
+      } catch {
+        // the temporary file may never have been created, in which case there is nothing to clean up
+      }
+
+      throw error;
+    }
   }
 
   removeItemSync(key: string): void {

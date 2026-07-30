@@ -40,6 +40,16 @@ describe(HAPFileStorage, () => {
       expect(storage.getItem(".DS_Store")).toBeUndefined();
     });
 
+    it("should ignore directories when loading the storage directory", () => {
+      // reading a directory as a file would abort startup with EISDIR
+      fs.mkdirSync(path.join(dir, "backup"));
+      fs.writeFileSync(path.join(dir, "key.json"), "1");
+
+      expect(() => storage.initSync({ dir: dir })).not.toThrow();
+      expect(storage.getItem("backup")).toBeUndefined();
+      expect(storage.getItem("key.json")).toEqual(1);
+    });
+
     it("should treat files with invalid JSON as undefined instead of throwing", () => {
       fs.writeFileSync(path.join(dir, "corrupt.json"), "{ not json !");
       expect(() => storage.initSync({ dir: dir })).not.toThrow();
@@ -122,6 +132,30 @@ describe(HAPFileStorage, () => {
       storage.setItemSync("key.json", { b: 2 });
       expect(storage.getItem("key.json")).toEqual({ b: 2 });
       expect(fs.readFileSync(path.join(dir, "key.json"), "utf8")).toEqual("{\"b\":2}");
+    });
+
+    it("should leave no temporary file behind after writing atomically", () => {
+      storage.setItemSync("key.json", { a: 1 });
+      expect(fs.readdirSync(dir)).toEqual(["key.json"]);
+    });
+
+    it("should keep the previous contents intact when serializing the new value fails", () => {
+      storage.setItemSync("key.json", { a: 1 });
+      const circular: Record<string, unknown> = {};
+      circular.self = circular;
+
+      expect(() => storage.setItemSync("key.json", circular)).toThrow();
+      expect(fs.readFileSync(path.join(dir, "key.json"), "utf8")).toEqual("{\"a\":1}");
+      expect(fs.readdirSync(dir)).toEqual(["key.json"]);
+    });
+
+    it("should clean up the temporary file when replacing the target fails", () => {
+      // renaming onto an existing directory fails, after the temporary file has been written
+      fs.mkdirSync(path.join(dir, "occupied"));
+
+      expect(() => storage.setItemSync("occupied", { a: 1 })).toThrow();
+      // the temporary file is cleaned up rather than left behind in the user's storage directory
+      expect(fs.readdirSync(dir)).toEqual(["occupied"]);
     });
   });
 
