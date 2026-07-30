@@ -149,6 +149,14 @@ describe(HAPFileStorage, () => {
       expect(fs.readdirSync(dir)).toEqual(["key.json"]);
     });
 
+    it("should create parent directories for a nested key, like node-persist 0.0.12", () => {
+      // 0.0.12 did mkdirp.sync(path.dirname(file)) before writing
+      storage.setItemSync(path.join("nested", "key.json"), { a: 1 });
+      expect(fs.readFileSync(path.join(dir, "nested", "key.json"), "utf8")).toEqual("{\"a\":1}");
+      // the temporary file has to be written beside the target, or the rename would not be atomic
+      expect(fs.readdirSync(path.join(dir, "nested"))).toEqual(["key.json"]);
+    });
+
     it("should clean up the temporary file when replacing the target fails", () => {
       // renaming onto an existing directory fails, after the temporary file has been written
       fs.mkdirSync(path.join(dir, "occupied"));
