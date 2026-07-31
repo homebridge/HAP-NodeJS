@@ -149,12 +149,45 @@ describe(HAPFileStorage, () => {
       expect(fs.readdirSync(dir)).toEqual(["key.json"]);
     });
 
-    it("should create parent directories for a nested key, like node-persist 0.0.12", () => {
-      // 0.0.12 did mkdirp.sync(path.dirname(file)) before writing
-      storage.setItemSync(path.join("nested", "key.json"), { a: 1 });
-      expect(fs.readFileSync(path.join(dir, "nested", "key.json"), "utf8")).toEqual("{\"a\":1}");
-      // the temporary file has to be written beside the target, or the rename would not be atomic
-      expect(fs.readdirSync(path.join(dir, "nested"))).toEqual(["key.json"]);
+    it("should write the temporary file beside its target, as renaming across directories is not atomic", () => {
+      const renameSync = jest.spyOn(fs, "renameSync");
+      try {
+        storage.setItemSync("key.json", { a: 1 });
+
+        expect(renameSync).toHaveBeenCalledTimes(1);
+        const [temporaryFile, file] = renameSync.mock.calls[0] as [string, string];
+        expect(path.dirname(temporaryFile)).toEqual(path.dirname(file));
+      } finally {
+        renameSync.mockRestore();
+      }
+    });
+
+    it("should recreate a storage directory which was removed at runtime, like node-persist 0.0.12", () => {
+      // 0.0.12 did mkdirp.sync(path.dirname(file)) before every write
+      fs.rmSync(dir, { recursive: true, force: true });
+
+      storage.setItemSync("key.json", { a: 1 });
+      expect(fs.readFileSync(path.join(dir, "key.json"), "utf8")).toEqual("{\"a\":1}");
+    });
+
+    it.each([
+      ["a key naming a subdirectory", "nested/key.json"],
+      ["a key containing a backslash", "nested\\key.json"],
+      ["the parent directory", ".."],
+      ["the storage directory itself", "."],
+      ["an empty key", ""],
+    ])("should reject %s instead of writing where it could never be read back", (_, key) => {
+      // a subdirectory is skipped by initSync, so such a value would silently come back undefined after a restart
+      expect(() => storage.setItemSync(key, { a: 1 })).toThrow(/plain filename/);
+      expect(fs.readdirSync(dir)).toEqual([]);
+    });
+
+    it("should reject a key escaping the storage directory rather than writing outside it", () => {
+      const inner = new HAPFileStorage();
+      inner.initSync({ dir: path.join(dir, "inner") });
+
+      expect(() => inner.setItemSync(`..${path.sep}escaped.json`, { a: 1 })).toThrow(/plain filename/);
+      expect(fs.readdirSync(dir)).toEqual(["inner"]);
     });
 
     it("should clean up the temporary file when replacing the target fails", () => {
@@ -205,6 +238,15 @@ describe(HAPFileStorage, () => {
 
     it("should silently do nothing for a key which was never persisted", () => {
       expect(() => storage.removeItemSync("missing.json")).not.toThrow();
+    });
+
+    it("should reject a key which is not a plain filename rather than unlinking outside the storage directory", () => {
+      const inner = new HAPFileStorage();
+      inner.initSync({ dir: path.join(dir, "inner") });
+      fs.writeFileSync(path.join(dir, "victim.json"), "1");
+
+      expect(() => inner.removeItemSync(`..${path.sep}victim.json`)).toThrow(/plain filename/);
+      expect(fs.existsSync(path.join(dir, "victim.json"))).toBe(true);
     });
   });
 

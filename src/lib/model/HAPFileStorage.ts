@@ -43,6 +43,9 @@ const UNSUPPORTED_METHODS = [
  * containing the bare `JSON.stringify` representation of the value. Values are read once
  * at {@link initSync} and served from memory afterwards.
  *
+ * Keys must therefore be plain filenames: one which names a subdirectory or escapes the storage
+ * directory is rejected rather than written somewhere it could never be read back from.
+ *
  * Writes are atomic, which node-persist's were not: see {@link setItemSync}.
  *
  * @group Model
@@ -121,15 +124,18 @@ export class HAPFileStorage {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
   setItemSync(key: string, value: any): void {
+    HAPFileStorage.assertPlainKey(key);
+
     this.data.set(key, value);
 
-    const file = path.join(this.dir, key);
-    const directory = path.dirname(file);
-    fs.mkdirSync(directory, { recursive: true });
+    // node-persist 0.0.12 ran mkdirp.sync before every write, which recreated a storage directory removed at runtime
+    fs.mkdirSync(this.dir, { recursive: true });
 
+    const file = path.join(this.dir, key);
     // the dot prefix keeps a temporary file left behind by a crash from being loaded as a key by initSync,
-    // the pid keeps processes sharing a storage directory (like child bridges) from racing on the same temporary file
-    const temporaryFile = path.join(directory, `.${path.basename(file)}.${process.pid}.tmp`);
+    // the pid keeps processes sharing a storage directory (like child bridges) from racing on the same temporary file.
+    // it sits in the storage directory next to its target, as renaming across directories would not be atomic
+    const temporaryFile = path.join(this.dir, `.${key}.${process.pid}.tmp`);
 
     try {
       fs.writeFileSync(temporaryFile, JSON.stringify(value));
@@ -146,12 +152,29 @@ export class HAPFileStorage {
   }
 
   removeItemSync(key: string): void {
+    HAPFileStorage.assertPlainKey(key);
+
     const file = path.join(this.dir, key);
     if (fs.existsSync(file)) {
       fs.unlinkSync(file);
     }
 
     this.data.delete(key);
+  }
+
+  /**
+   * Rejects a key which is not a plain filename, before it reaches the filesystem.
+   *
+   * `path.join` would otherwise read a key as a path: `nested/key.json` writes into a subdirectory which
+   * {@link initSync} skips, so the value comes back `undefined` after a restart, and `../escaped.json` writes
+   * outside the storage directory altogether. node-persist 0.0.12 created such subdirectories too, but crashed
+   * with `EISDIR` on the next load rather than losing the value quietly.
+   */
+  private static assertPlainKey(key: string): void {
+    if (!key || key === "." || key === ".." || /[/\\]/.test(key)) {
+      throw new Error(`HAP-NodeJS's storage requires a key which is a plain filename, got ${JSON.stringify(key)}! ` +
+        "One file is kept per key inside the storage directory, so a key can neither name a subdirectory nor escape it.");
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
