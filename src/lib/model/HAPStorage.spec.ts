@@ -30,6 +30,21 @@ describe(HAPStorage, () => {
       const localStore2 = storage.storage(); // must not init a second time
       expect(localStore2).toBe(localStore);
     });
+
+    it("should init into the default 'persist' directory when no custom path was set", () => {
+      const storage = new HAPStorage();
+
+      const previousCwd = process.cwd();
+      try {
+        process.chdir(storagePath);
+        const localStore = storage.storage();
+
+        expect(localStore).toBeInstanceOf(HAPFileStorage);
+        expect(fs.statSync(path.join(storagePath, "persist")).isDirectory()).toBe(true);
+      } finally {
+        process.chdir(previousCwd);
+      }
+    });
   });
 
   describe("setCustomStoragePath", () => {
