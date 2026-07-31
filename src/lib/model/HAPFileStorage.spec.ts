@@ -7,6 +7,21 @@ function tempDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), "hap-nodejs-storage-test-"));
 }
 
+function symlinksPermitted(): boolean {
+  const probe = tempDir();
+  try {
+    fs.symlinkSync(path.join(probe, "target"), path.join(probe, "link"));
+    return true;
+  } catch {
+    // creating a symlink on Windows needs Developer Mode or an elevated shell
+    return false;
+  } finally {
+    fs.rmSync(probe, { recursive: true, force: true });
+  }
+}
+
+const itWithSymlinks = symlinksPermitted() ? it : it.skip;
+
 describe(HAPFileStorage, () => {
   let dir: string;
   let storage: HAPFileStorage;
@@ -47,6 +62,34 @@ describe(HAPFileStorage, () => {
 
       expect(() => storage.initSync({ dir: dir })).not.toThrow();
       expect(storage.getItem("backup")).toBeUndefined();
+      expect(storage.getItem("key.json")).toEqual(1);
+    });
+
+    itWithSymlinks("should ignore a symlink pointing at a directory, which does not report as one", () => {
+      // a symlink is not a directory to readdir, so it would otherwise reach readFileSync and throw EISDIR
+      fs.mkdirSync(path.join(dir, "backup"));
+      fs.symlinkSync(path.join(dir, "backup"), path.join(dir, "backup-link"));
+      fs.writeFileSync(path.join(dir, "key.json"), "1");
+
+      expect(() => storage.initSync({ dir: dir })).not.toThrow();
+      expect(storage.getItem("backup-link")).toBeUndefined();
+      expect(storage.getItem("key.json")).toEqual(1);
+    });
+
+    itWithSymlinks("should still load a symlink pointing at a file", () => {
+      fs.writeFileSync(path.join(dir, "target.json"), "1");
+      fs.symlinkSync(path.join(dir, "target.json"), path.join(dir, "link.json"));
+
+      storage.initSync({ dir: dir });
+      expect(storage.getItem("link.json")).toEqual(1);
+    });
+
+    itWithSymlinks("should ignore a symlink pointing at nothing rather than failing on it", () => {
+      fs.symlinkSync(path.join(dir, "missing.json"), path.join(dir, "dangling.json"));
+      fs.writeFileSync(path.join(dir, "key.json"), "1");
+
+      expect(() => storage.initSync({ dir: dir })).not.toThrow();
+      expect(storage.getItem("dangling.json")).toBeUndefined();
       expect(storage.getItem("key.json")).toEqual(1);
     });
 
@@ -149,6 +192,24 @@ describe(HAPFileStorage, () => {
       expect(fs.readdirSync(dir)).toEqual(["key.json"]);
     });
 
+    it("should keep the previous in-memory value when the write fails, so memory matches the disk", () => {
+      storage.setItemSync("key.json", { a: 1 });
+      const circular: Record<string, unknown> = {};
+      circular.self = circular;
+
+      expect(() => storage.setItemSync("key.json", circular)).toThrow();
+      // everything is served from memory, so a cached value which never reached the disk reads as saved until a restart
+      expect(storage.getItem("key.json")).toEqual({ a: 1 });
+    });
+
+    it("should not remember a key whose only write failed", () => {
+      // renaming onto an existing directory fails, after the temporary file has been written
+      fs.mkdirSync(path.join(dir, "occupied"));
+
+      expect(() => storage.setItemSync("occupied", { a: 1 })).toThrow();
+      expect(storage.getItem("occupied")).toBeUndefined();
+    });
+
     it("should write the temporary file beside its target, as renaming across directories is not atomic", () => {
       const renameSync = jest.spyOn(fs, "renameSync");
       try {
@@ -173,11 +234,12 @@ describe(HAPFileStorage, () => {
     it.each([
       ["a key naming a subdirectory", "nested/key.json"],
       ["a key containing a backslash", "nested\\key.json"],
+      ["a key starting with a dot", ".hidden"],
       ["the parent directory", ".."],
       ["the storage directory itself", "."],
       ["an empty key", ""],
     ])("should reject %s instead of writing where it could never be read back", (_, key) => {
-      // a subdirectory is skipped by initSync, so such a value would silently come back undefined after a restart
+      // initSync skips both subdirectories and dotfiles, so such a value would silently come back undefined after a restart
       expect(() => storage.setItemSync(key, { a: 1 })).toThrow(/plain filename/);
       expect(fs.readdirSync(dir)).toEqual([]);
     });

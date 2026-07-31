@@ -43,8 +43,8 @@ const UNSUPPORTED_METHODS = [
  * containing the bare `JSON.stringify` representation of the value. Values are read once
  * at {@link initSync} and served from memory afterwards.
  *
- * Keys must therefore be plain filenames: one which names a subdirectory or escapes the storage
- * directory is rejected rather than written somewhere it could never be read back from.
+ * Keys must therefore be plain filenames: one which names a subdirectory, escapes the storage directory
+ * or starts with a dot is rejected rather than written somewhere it could never be read back from.
  *
  * Writes are atomic, which node-persist's were not: see {@link setItemSync}.
  *
@@ -89,12 +89,19 @@ export class HAPFileStorage {
 
     if (fs.existsSync(this.dir)) {
       for (const entry of fs.readdirSync(this.dir, { withFileTypes: true })) {
-        // directories are skipped: reading one would abort startup with a cryptic EISDIR
-        if (entry.name.startsWith(".") || entry.isDirectory()) {
+        if (entry.name.startsWith(".")) {
           continue;
         }
 
-        this.data.set(entry.name, HAPFileStorage.parse(fs.readFileSync(path.join(this.dir, entry.name), "utf8")));
+        const file = path.join(this.dir, entry.name);
+        // only regular files hold values: reading a directory here would abort startup with a cryptic EISDIR.
+        // this resolves symlinks, which entry.isDirectory() does not, so a link to a directory is skipped
+        // like the directory itself while a link to a file still loads
+        if (!HAPFileStorage.isFile(file)) {
+          continue;
+        }
+
+        this.data.set(entry.name, HAPFileStorage.parse(fs.readFileSync(file, "utf8")));
       }
     } else {
       fs.mkdirSync(this.dir, { recursive: true });
@@ -121,12 +128,13 @@ export class HAPFileStorage {
    * The value is written to a temporary file which is then renamed over the target, so an interrupted write
    * leaves the previous contents intact instead of a truncated file. This matters because a truncated
    * `AccessoryInfo` file reads back as an accessory which lost its pairings.
+   *
+   * The in-memory value is only replaced once the new one reached the disk, so a failed write cannot leave
+   * an accessory which reads as paired now and unpaired after a restart.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
   setItemSync(key: string, value: any): void {
     HAPFileStorage.assertPlainKey(key);
-
-    this.data.set(key, value);
 
     // node-persist 0.0.12 ran mkdirp.sync before every write, which recreated a storage directory removed at runtime
     fs.mkdirSync(this.dir, { recursive: true });
@@ -149,6 +157,10 @@ export class HAPFileStorage {
 
       throw error;
     }
+
+    // only now that the value is on disk: everything is served from memory afterwards, so a value cached
+    // for a write which never landed would be indistinguishable from a saved one until the next restart
+    this.data.set(key, value);
   }
 
   removeItemSync(key: string): void {
@@ -169,11 +181,29 @@ export class HAPFileStorage {
    * {@link initSync} skips, so the value comes back `undefined` after a restart, and `../escaped.json` writes
    * outside the storage directory altogether. node-persist 0.0.12 created such subdirectories too, but crashed
    * with `EISDIR` on the next load rather than losing the value quietly.
+   *
+   * A leading dot is rejected for the same reason: {@link initSync} skips dotfiles, so `.hidden` would be
+   * written, served from memory while the process runs, and then be gone after a restart.
    */
   private static assertPlainKey(key: string): void {
-    if (!key || key === "." || key === ".." || /[/\\]/.test(key)) {
+    if (!key || key.startsWith(".") || /[/\\]/.test(key)) {
       throw new Error(`HAP-NodeJS's storage requires a key which is a plain filename, got ${JSON.stringify(key)}! ` +
-        "One file is kept per key inside the storage directory, so a key can neither name a subdirectory nor escape it.");
+        "One file is kept per key inside the storage directory, so a key can neither name a subdirectory, escape it, " +
+        "nor start with a dot, which would be skipped the next time the directory is loaded.");
+    }
+  }
+
+  /**
+   * Whether the given path is a regular file, following symlinks.
+   *
+   * An entry which cannot be stat'ed at all, like a broken or circular symlink, is one to skip
+   * rather than one to abort startup over.
+   */
+  private static isFile(file: string): boolean {
+    try {
+      return fs.statSync(file).isFile();
+    } catch {
+      return false;
     }
   }
 
