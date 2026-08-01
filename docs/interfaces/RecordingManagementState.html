@@ -12,7 +12,7 @@
 <h1>Interface RecordingManagementState</h1></div>
 <div class="tsd-signature"><span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">RecordingManagementState</span> <span class="tsd-signature-symbol">{</span><br/>    <a class="tsd-kind-property" href="#configurationhash">configurationHash</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{</span> <span class="tsd-kind-property">algorithm</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">&quot;sha256&quot;</span><span class="tsd-signature-symbol">;</span> <span class="tsd-kind-property">hash</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span> <span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#eventsnapshotsactive">eventSnapshotsActive</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#homekitcameraactive">homeKitCameraActive</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#periodicsnapshotsactive">periodicSnapshotsActive</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#recordingactive">recordingActive</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#recordingaudioactive">recordingAudioActive</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#selectedconfiguration">selectedConfiguration</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/52c0ba40a076f32f580ad2e15a52b831fc944932/src/lib/camera/RecordingManagement.ts#L349">lib/camera/RecordingManagement.ts:349</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/160e7a10107f8d5867ec9258b0dc28da7d5fd8a7/src/lib/camera/RecordingManagement.ts#L349">lib/camera/RecordingManagement.ts:349</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -40,42 +40,42 @@ If it was changed, we need to discard the <code>selectedConfiguration</code> to 
 that they might reconsider their decision based on the updated configuration.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/52c0ba40a076f32f580ad2e15a52b831fc944932/src/lib/camera/RecordingManagement.ts#L356">lib/camera/RecordingManagement.ts:356</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/160e7a10107f8d5867ec9258b0dc28da7d5fd8a7/src/lib/camera/RecordingManagement.ts#L356">lib/camera/RecordingManagement.ts:356</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="eventsnapshotsactive"><span>event<wbr/>Snapshots<wbr/>Active</span><a href="#eventsnapshotsactive" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">eventSnapshotsActive</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 <div class="tsd-comment tsd-typography"><p>Service <code>CameraOperatingMode</code>; Characteristic <code>EventSnapshotsActive</code></p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/52c0ba40a076f32f580ad2e15a52b831fc944932/src/lib/camera/RecordingManagement.ts#L379">lib/camera/RecordingManagement.ts:379</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/160e7a10107f8d5867ec9258b0dc28da7d5fd8a7/src/lib/camera/RecordingManagement.ts#L379">lib/camera/RecordingManagement.ts:379</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="homekitcameraactive"><span>home<wbr/>Kit<wbr/>Camera<wbr/>Active</span><a href="#homekitcameraactive" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">homeKitCameraActive</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 <div class="tsd-comment tsd-typography"><p>Service <code>CameraOperatingMode</code>; Characteristic <code>HomeKitCameraActive</code></p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/52c0ba40a076f32f580ad2e15a52b831fc944932/src/lib/camera/RecordingManagement.ts#L383">lib/camera/RecordingManagement.ts:383</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/160e7a10107f8d5867ec9258b0dc28da7d5fd8a7/src/lib/camera/RecordingManagement.ts#L383">lib/camera/RecordingManagement.ts:383</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="periodicsnapshotsactive"><span>periodic<wbr/>Snapshots<wbr/>Active</span><a href="#periodicsnapshotsactive" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">periodicSnapshotsActive</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 <div class="tsd-comment tsd-typography"><p>Service <code>CameraOperatingMode</code>; Characteristic <code>PeriodicSnapshotsActive</code></p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/52c0ba40a076f32f580ad2e15a52b831fc944932/src/lib/camera/RecordingManagement.ts#L387">lib/camera/RecordingManagement.ts:387</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/160e7a10107f8d5867ec9258b0dc28da7d5fd8a7/src/lib/camera/RecordingManagement.ts#L387">lib/camera/RecordingManagement.ts:387</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="recordingactive"><span>recording<wbr/>Active</span><a href="#recordingactive" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">recordingActive</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 <div class="tsd-comment tsd-typography"><p>Service <code>CameraRecordingManagement</code>; Characteristic <code>Active</code></p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/52c0ba40a076f32f580ad2e15a52b831fc944932/src/lib/camera/RecordingManagement.ts#L370">lib/camera/RecordingManagement.ts:370</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/160e7a10107f8d5867ec9258b0dc28da7d5fd8a7/src/lib/camera/RecordingManagement.ts#L370">lib/camera/RecordingManagement.ts:370</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="recordingaudioactive"><span>recording<wbr/>Audio<wbr/>Active</span><a href="#recordingaudioactive" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">recordingAudioActive</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 <div class="tsd-comment tsd-typography"><p>Service <code>CameraRecordingManagement</code>; Characteristic <code>RecordingAudioActive</code></p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/52c0ba40a076f32f580ad2e15a52b831fc944932/src/lib/camera/RecordingManagement.ts#L374">lib/camera/RecordingManagement.ts:374</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/160e7a10107f8d5867ec9258b0dc28da7d5fd8a7/src/lib/camera/RecordingManagement.ts#L374">lib/camera/RecordingManagement.ts:374</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="selectedconfiguration"><code class="tsd-tag">Optional</code><span>selected<wbr/>Configuration</span><a href="#selectedconfiguration" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">selectedConfiguration</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span></div>
@@ -83,7 +83,7 @@ that they might reconsider their decision based on the updated configuration.</p
 This value MIGHT be <code>undefined</code> if no HomeKit controller has yet selected a configuration.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/52c0ba40a076f32f580ad2e15a52b831fc944932/src/lib/camera/RecordingManagement.ts#L365">lib/camera/RecordingManagement.ts:365</a></li></ul></aside></section></section></details></div>
+<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/160e7a10107f8d5867ec9258b0dc28da7d5fd8a7/src/lib/camera/RecordingManagement.ts#L365">lib/camera/RecordingManagement.ts:365</a></li></ul></aside></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">

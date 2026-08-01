@@ -52,6 +52,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - Update for NodeJS 26 (@NorthernMan54)
 - feat: warn when the persist directory is not writable, instead of failing obscurely at publish (#1028)
 - chore(deps): dependency updates
+- docs: regenerate docs for `v2.2.0`
 
 ### Homebridge Dependencies
 
