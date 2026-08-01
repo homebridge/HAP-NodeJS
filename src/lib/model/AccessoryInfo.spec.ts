@@ -6,8 +6,8 @@ import { AssertionError } from "assert";
 describe("AccessoryInfo", () => {
   describe("#load()", () => {
     it("should default category to Categories.OTHER when missing", () => {
-      const mockStorage = HAPStorage.storage();
-      (mockStorage.getItem as jest.Mock).mockReturnValueOnce({
+      const username = "0E:AE:FC:45:7B:91";
+      HAPStorage.storage().setItemSync(AccessoryInfo.persistKey(username), {
         displayName: "Test",
         pincode: "123-45-678",
         signSk: "aa".repeat(64),
@@ -16,7 +16,7 @@ describe("AccessoryInfo", () => {
         // category intentionally omitted
       });
 
-      const info = AccessoryInfo.load("0E:AE:FC:45:7B:91");
+      const info = AccessoryInfo.load(username);
       expect(info).not.toBeNull();
       expect(info!.category).toBe(Categories.OTHER);
       expect(typeof info!.category).toBe("number");

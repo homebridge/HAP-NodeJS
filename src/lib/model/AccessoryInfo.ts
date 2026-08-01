@@ -230,7 +230,7 @@ export class AccessoryInfo {
       signPk: this.signPk.toString("hex"),
       pairedClients: {},
       // moving permissions into an extra object, so there is nothing to migrate from old files.
-      // if the legacy node-persist storage should be upgraded some time, it would be reasonable to combine the storage
+      // if the legacy storage format should be upgraded some time, it would be reasonable to combine the storage
       // of public keys (pairedClients object) and permissions.
       pairedClientsPermission: {},
       configVersion: this.configVersion,
