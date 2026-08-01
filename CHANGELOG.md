@@ -4,11 +4,60 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 
 ## v2.2.0 (Pending Release)
 
+### ⚠️ Goodbye `node-persist`
+
+- The long-unmaintained `node-persist` dependency has been replaced with a minimal file storage (#1125, thanks @tim-fin).
+- **For users**: no action needed.
+  - The on-disk format is unchanged — existing pairings and accessory data are read exactly as before, nothing is migrated or rewritten
+  - Writes are now atomic: an interrupted write (power loss, crash) can no longer leave behind a corrupted file that loses your pairings
+  - HAP-NodeJS now also warns at startup if the storage directory is not writable, instead of failing with an obscure error later
+- **For developers** using `HAPStorage.storage()` directly: the returned object now only implements the methods HAP-NodeJS itself uses — `initSync`, `getItem`, `setItemSync` and `removeItemSync`. Everything else from the old `node-persist` API now throws a clear error explaining this change. Also note:
+  - `initSync({ dir })` now requires an absolute path — `node-persist` silently redirected relative paths into `node_modules`, where the data was lost on the next install
+  - Keys must be plain filenames — no slashes, no leading dot
+- `getItem(key, callback)` (the legacy callback form) throws — use the plain `getItem(key)`
+  - <details>
+    <summary>Full list of removed methods:</summary>
+
+    - `setOptions`
+    - `init`
+    - `key`
+    - `keys`
+    - `length`
+    - `forEach`
+    - `values`
+    - `valuesWithKeyMatch`
+    - `setItem`
+    - `getItemSync`
+    - `removeItem`
+    - `clear[Sync]`
+    - `persist[Sync]`
+    - `persistKey[Sync]`
+    - `removePersistedKey[Sync]`
+    - `parseString`
+    - `parseTTLDir[Sync]`
+    - `parseDataDir[Sync]`
+    - `parseDir[Sync]`
+    - `parseDataFile[Sync]`
+    - `parseTTLFile[Sync]`
+    - `parseFile[Sync]`
+    - `isExpired`
+    - `resolveDir`
+    - `stopInterval`
+    - `log`
+  </details>
+
 ### Changes
 
 - fix: replace node-persist with minimal in-repo file storage (#1125) (@tim-fin)
 - Update for NodeJS 26 (@NorthernMan54)
 - feat: warn when the persist directory is not writable, instead of failing obscurely at publish (#1028)
+- chore(deps): dependency updates
+
+### Homebridge Dependencies
+
+- `@homebridge/ciao` @ `v1.3.10`
+- `@homebridge/dbus-native` @ `v0.7.7`
+- `bonjour-hap` @ `v3.10.4`
 
 ## v2.1.9 (2026-07-18)
 
