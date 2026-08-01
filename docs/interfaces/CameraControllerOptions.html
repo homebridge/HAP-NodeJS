@@ -12,7 +12,7 @@
 <h1>Interface CameraControllerOptions</h1></div>
 <div class="tsd-signature"><span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">CameraControllerOptions</span> <span class="tsd-signature-symbol">{</span><br/>    <a class="tsd-kind-property" href="#camerastreamcount">cameraStreamCount</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#delegate">delegate</a><span class="tsd-signature-symbol">:</span> <a href="CameraStreamingDelegate.html" class="tsd-signature-type tsd-kind-interface">CameraStreamingDelegate</a><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#recording">recording</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-symbol">{</span><br/>        <span class="tsd-kind-property">delegate</span><span class="tsd-signature-symbol">:</span> <a href="CameraRecordingDelegate.html" class="tsd-signature-type tsd-kind-interface">CameraRecordingDelegate</a><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">options</span><span class="tsd-signature-symbol">:</span> <a href="CameraRecordingOptions.html" class="tsd-signature-type tsd-kind-interface">CameraRecordingOptions</a><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#sensors">sensors</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-symbol">{</span> <span class="tsd-kind-property">motion</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span><br/>    <span class="tsd-signature-symbol">|</span> <a href="../classes/Service.html" class="tsd-signature-type tsd-kind-class">Service</a><span class="tsd-signature-symbol">;</span> <span class="tsd-kind-property">occupancy</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span> <span class="tsd-signature-symbol">|</span> <a href="../classes/Service.html" class="tsd-signature-type tsd-kind-class">Service</a> <span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#streamingoptions">streamingOptions</a><span class="tsd-signature-symbol">:</span> <a href="../types/CameraStreamingOptions.html" class="tsd-signature-type tsd-kind-type-alias">CameraStreamingOptions</a><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/52c0ba40a076f32f580ad2e15a52b831fc944932/src/lib/controller/CameraController.ts#L42">lib/controller/CameraController.ts:42</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/160e7a10107f8d5867ec9258b0dc28da7d5fd8a7/src/lib/controller/CameraController.ts#L42">lib/controller/CameraController.ts:42</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -38,14 +38,14 @@ Secure Video cameras just expose 1 stream.</p>
 <p>Default value: 1</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/52c0ba40a076f32f580ad2e15a52b831fc944932/src/lib/controller/CameraController.ts#L50">lib/controller/CameraController.ts:50</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/160e7a10107f8d5867ec9258b0dc28da7d5fd8a7/src/lib/controller/CameraController.ts#L50">lib/controller/CameraController.ts:50</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="delegate"><span>delegate</span><a href="#delegate" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">delegate</span><span class="tsd-signature-symbol">:</span> <a href="CameraStreamingDelegate.html" class="tsd-signature-type tsd-kind-interface">CameraStreamingDelegate</a></div>
 <div class="tsd-comment tsd-typography"><p>Delegate which handles the actual RTP/RTCP video/audio streaming and Snapshot requests.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/52c0ba40a076f32f580ad2e15a52b831fc944932/src/lib/controller/CameraController.ts#L55">lib/controller/CameraController.ts:55</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/160e7a10107f8d5867ec9258b0dc28da7d5fd8a7/src/lib/controller/CameraController.ts#L55">lib/controller/CameraController.ts:55</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="recording"><code class="tsd-tag">Optional</code><span>recording</span><a href="#recording" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">recording</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-symbol">{</span><br/>    <span class="tsd-kind-property">delegate</span><span class="tsd-signature-symbol">:</span> <a href="CameraRecordingDelegate.html" class="tsd-signature-type tsd-kind-interface">CameraRecordingDelegate</a><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-kind-property">options</span><span class="tsd-signature-symbol">:</span> <a href="CameraRecordingOptions.html" class="tsd-signature-type tsd-kind-interface">CameraRecordingOptions</a><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div>
@@ -67,7 +67,7 @@ You may add optional characteristics, if required, by accessing the service dire
 <div class="tsd-comment tsd-typography"><p>Options regarding Recordings (Secure Video)</p>
 </div></li></ul></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/52c0ba40a076f32f580ad2e15a52b831fc944932/src/lib/controller/CameraController.ts#L70">lib/controller/CameraController.ts:70</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/160e7a10107f8d5867ec9258b0dc28da7d5fd8a7/src/lib/controller/CameraController.ts#L70">lib/controller/CameraController.ts:70</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="sensors"><code class="tsd-tag">Optional</code><span>sensors</span><a href="#sensors" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">sensors</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-symbol">{</span> <span class="tsd-kind-property">motion</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span> <span class="tsd-signature-symbol">|</span> <a href="../classes/Service.html" class="tsd-signature-type tsd-kind-class">Service</a><span class="tsd-signature-symbol">;</span> <span class="tsd-kind-property">occupancy</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span> <span class="tsd-signature-symbol">|</span> <a href="../classes/Service.html" class="tsd-signature-type tsd-kind-class">Service</a> <span class="tsd-signature-symbol">}</span></div>
@@ -98,14 +98,14 @@ The characteristic <a href="../classes/Characteristic.html#statusactive" class="
 <p>The characteristic <a href="../classes/Characteristic.html#statusactive" class="tsd-kind-property">Characteristic.StatusActive</a> will be added, which is used to enable or disable the sensor.</p>
 </div></li></ul></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/52c0ba40a076f32f580ad2e15a52b831fc944932/src/lib/controller/CameraController.ts#L93">lib/controller/CameraController.ts:93</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/160e7a10107f8d5867ec9258b0dc28da7d5fd8a7/src/lib/controller/CameraController.ts#L93">lib/controller/CameraController.ts:93</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="streamingoptions"><span>streaming<wbr/>Options</span><a href="#streamingoptions" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">streamingOptions</span><span class="tsd-signature-symbol">:</span> <a href="../types/CameraStreamingOptions.html" class="tsd-signature-type tsd-kind-type-alias">CameraStreamingOptions</a></div>
 <div class="tsd-comment tsd-typography"><p>Options regarding video/audio streaming</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/52c0ba40a076f32f580ad2e15a52b831fc944932/src/lib/controller/CameraController.ts#L60">lib/controller/CameraController.ts:60</a></li></ul></aside></section></section></details></div>
+<li>Defined in <a href="https://github.com/homebridge/HAP-NodeJS/blob/160e7a10107f8d5867ec9258b0dc28da7d5fd8a7/src/lib/controller/CameraController.ts#L60">lib/controller/CameraController.ts:60</a></li></ul></aside></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
