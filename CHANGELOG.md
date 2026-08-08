@@ -8,12 +8,13 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 
 - refactor: drop the doubled advertiser check in the configuration-update debounce
 - fix: close the exists-then-unlink gap when removing a storage key
+- chore(deps): dependency updates
 
 ### Homebridge Dependencies
 
-- `@homebridge/ciao` @ `v1.3.10`
-- `@homebridge/dbus-native` @ `v0.7.8`
-- `bonjour-hap` @ `v3.10.4`
+- `@homebridge/ciao` @ `v1.3.12`
+- `@homebridge/dbus-native` @ `v0.7.9`
+- `bonjour-hap` @ `v3.10.5`
 
 ## v2.2.0 (2026-08-08)
 
