@@ -2,6 +2,18 @@
 
 All notable changes to `@homebridge/hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
+## v2.2.1 (Pending Release)
+
+### Changes
+
+- refactor: drop the doubled advertiser check in the configuration-update debounce
+
+### Homebridge Dependencies
+
+- `@homebridge/ciao` @ `v1.3.10`
+- `@homebridge/dbus-native` @ `v0.7.8`
+- `bonjour-hap` @ `v3.10.4`
+
 ## v2.2.0 (2026-08-08)
 
 ### ⚠️ Goodbye `node-persist`

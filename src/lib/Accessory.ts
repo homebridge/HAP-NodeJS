@@ -1298,7 +1298,7 @@ export class Accessory extends EventEmitter {
     this.configurationChangeDebounceTimeout = setTimeout(() => {
       this.configurationChangeDebounceTimeout = undefined;
 
-      if (this._advertiser && this._advertiser) {
+      if (this._advertiser) {
         // get our accessory information in HAP format and determine if our configuration (that is, our
         // Accessories/Services/Characteristics) has changed since the last time we were published. make
         // sure to omit actual values since these are not part of the "configuration".
