@@ -302,6 +302,27 @@ describe(HAPFileStorage, () => {
       expect(() => storage.removeItemSync("missing.json")).not.toThrow();
     });
 
+    // Regression: removeItemSync used to check existsSync and then unlinkSync.
+    // Child bridges share one persist directory, so another process could delete
+    // the file in the gap between those two calls, and the unlink then threw
+    // ENOENT out of a synchronous teardown path. Simulated here by making the
+    // existence check report a file that is not actually there - which is exactly
+    // the state the race leaves behind.
+    it("should not throw when the file disappears between the check and the removal", () => {
+      storage.setItemSync("key.json", { a: 1 });
+      fs.rmSync(path.join(dir, "key.json")); // the racing process got there first
+
+      const existsSpy = jest.spyOn(fs, "existsSync").mockReturnValue(true);
+      try {
+        expect(() => storage.removeItemSync("key.json")).not.toThrow();
+      } finally {
+        existsSpy.mockRestore();
+      }
+
+      // and the in-memory entry still goes, so the two stores cannot drift apart
+      expect(storage.getItem("key.json")).toBeUndefined();
+    });
+
     it("should reject a key which is not a plain filename rather than unlinking outside the storage directory", () => {
       const inner = new HAPFileStorage();
       inner.initSync({ dir: path.join(dir, "inner") });

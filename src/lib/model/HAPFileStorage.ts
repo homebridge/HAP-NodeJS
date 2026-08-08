@@ -166,10 +166,10 @@ export class HAPFileStorage {
   removeItemSync(key: string): void {
     HAPFileStorage.assertPlainKey(key);
 
-    const file = path.join(this.dir, key);
-    if (fs.existsSync(file)) {
-      fs.unlinkSync(file);
-    }
+    // force ignores a file which is already gone, without the exists-then-unlink
+    // gap in which another process (child bridges share a storage directory)
+    // could remove the file first and turn this into an ENOENT crash
+    fs.rmSync(path.join(this.dir, key), { force: true });
 
     this.data.delete(key);
   }
