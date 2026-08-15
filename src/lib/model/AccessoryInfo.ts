@@ -3,7 +3,7 @@ import crypto from "crypto";
 import createDebug from "debug";
 import tweetnacl from "tweetnacl";
 import util from "util";
-import { AccessoryJsonObject, MacAddress } from "../../types";
+import { AccessoryJsonObject, CharacteristicJsonObject, MacAddress, ServiceJsonObject } from "../../types";
 import { Categories } from "../Accessory";
 import { EventedHTTPServer, HAPConnection, HAPUsername } from "../util/eventedhttp";
 import { HAPStorage } from "./HAPStorage";
@@ -181,7 +181,7 @@ export class AccessoryInfo {
    */
   public checkForCurrentConfigurationNumberIncrement(configuration: AccessoryJsonObject[], checkFirmwareIncrement?: boolean): boolean {
     const shasum = crypto.createHash("sha1");
-    shasum.update(JSON.stringify(configuration));
+    shasum.update(JSON.stringify(AccessoryInfo.canonicalizeConfiguration(configuration)));
     const configHash = shasum.digest("hex");
 
     let changed = false;
@@ -219,6 +219,35 @@ export class AccessoryInfo {
 
   public getConfigVersion(): number {
     return this.configVersion;
+  }
+
+  /**
+   * Returns a copy of the configuration with every order-independent array sorted, so that two representations
+   * of the same configuration always produce the same hash. Nothing guarantees plugins rebuild their accessories,
+   * services or characteristic properties in the same order on every start, and each reordering would otherwise
+   * increment the configuration number (and re-advertise) without any real change. Sorting is by aid/iid, which
+   * are persisted in the IdentifierCache and therefore stable across restarts. Only the hash input is
+   * canonicalized - the wire format of /accessories is untouched.
+   */
+  private static canonicalizeConfiguration(configuration: AccessoryJsonObject[]): AccessoryJsonObject[] {
+    return configuration
+      .map((accessory): AccessoryJsonObject => ({
+        ...accessory,
+        services: accessory.services
+          .map((service): ServiceJsonObject => ({
+            ...service,
+            characteristics: service.characteristics
+              .map((characteristic): CharacteristicJsonObject => ({
+                ...characteristic,
+                perms: [...characteristic.perms].sort(),
+                "valid-values": characteristic["valid-values"] && [...characteristic["valid-values"]].sort((a, b) => a - b),
+              }))
+              .sort((a, b) => a.iid - b.iid),
+            linked: service.linked && [...service.linked].sort((a, b) => a - b),
+          }))
+          .sort((a, b) => a.iid - b.iid),
+      }))
+      .sort((a, b) => a.aid - b.aid);
   }
 
   private ensureConfigVersionBounds(): void {
