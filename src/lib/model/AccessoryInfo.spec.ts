@@ -2,6 +2,10 @@ import { AccessoryInfo } from "./AccessoryInfo";
 import { Categories } from "../Accessory";
 import { HAPStorage } from "./HAPStorage";
 import { AssertionError } from "assert";
+import createDebug from "debug";
+import { format } from "util";
+import { AccessoryJsonObject, CharacteristicJsonObject } from "../../types";
+import { Formats, Perms } from "../Characteristic";
 
 describe("AccessoryInfo", () => {
   describe("#load()", () => {
@@ -20,6 +24,78 @@ describe("AccessoryInfo", () => {
       expect(info).not.toBeNull();
       expect(info!.category).toBe(Categories.OTHER);
       expect(typeof info!.category).toBe("number");
+    });
+  });
+
+  describe("#checkForCurrentConfigurationNumberIncrement()", () => {
+    const characteristic = (iid: number, perms: Perms[], validValues?: number[]): CharacteristicJsonObject => ({
+      type: "25",
+      iid,
+      value: null,
+      perms,
+      description: "Test",
+      format: Formats.UINT8,
+      unit: undefined,
+      minValue: undefined,
+      maxValue: undefined,
+      minStep: undefined,
+      maxLen: undefined,
+      maxDataLen: undefined,
+      "valid-values": validValues,
+      "valid-values-range": undefined,
+    });
+
+    const accessory = (aid: number, characteristics: CharacteristicJsonObject[]): AccessoryJsonObject => ({
+      aid,
+      services: [{
+        type: "49",
+        iid: 1,
+        characteristics,
+        hidden: undefined,
+        primary: undefined,
+      }],
+    });
+
+    let info: AccessoryInfo;
+
+    beforeEach(() => {
+      info = AccessoryInfo.create("0E:AE:FC:45:7B:92");
+    });
+
+    it("should increment the configuration number when the configuration changes", () => {
+      expect(info.checkForCurrentConfigurationNumberIncrement([accessory(1, [characteristic(2, [Perms.PAIRED_READ])])])).toBe(true);
+      const version = info.getConfigVersion();
+
+      // same configuration again: no increment
+      expect(info.checkForCurrentConfigurationNumberIncrement([accessory(1, [characteristic(2, [Perms.PAIRED_READ])])])).toBe(false);
+      expect(info.getConfigVersion()).toBe(version);
+
+      // a real change: increment
+      expect(info.checkForCurrentConfigurationNumberIncrement([
+        accessory(1, [characteristic(2, [Perms.PAIRED_READ, Perms.NOTIFY])]),
+      ])).toBe(true);
+      expect(info.getConfigVersion()).toBe(version + 1);
+    });
+
+    it("should emit a debug line when the configuration number increments", () => {
+      const previousNamespaces = createDebug.disable();
+      const originalLog = createDebug.log;
+      const messages: string[] = [];
+
+      createDebug.enable("HAP-NodeJS:AccessoryInfo");
+      createDebug.log = (...args: unknown[]) => {
+        messages.push(format(...args));
+      };
+
+      try {
+        info.checkForCurrentConfigurationNumberIncrement([accessory(1, [characteristic(2, [Perms.PAIRED_READ])])]);
+      } finally {
+        createDebug.log = originalLog;
+        createDebug.enable(previousNamespaces);
+      }
+
+      const version = info.getConfigVersion();
+      expect(messages.some(message => message.includes(`Configuration number incremented to ${version}`))).toBe(true);
     });
   });
 

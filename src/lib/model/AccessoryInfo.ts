@@ -1,5 +1,6 @@
 import assert from "assert";
 import crypto from "crypto";
+import createDebug from "debug";
 import tweetnacl from "tweetnacl";
 import util from "util";
 import { AccessoryJsonObject, MacAddress } from "../../types";
@@ -7,6 +8,8 @@ import { Categories } from "../Accessory";
 import { EventedHTTPServer, HAPConnection, HAPUsername } from "../util/eventedhttp";
 import { HAPStorage } from "./HAPStorage";
 import { readFileSync } from "node:fs";
+
+const debug = createDebug("HAP-NodeJS:AccessoryInfo");
 
 function getVersion(): string {
   const packageJson = JSON.parse(readFileSync(require.resolve("../../../package.json"), "utf-8"));
@@ -184,11 +187,17 @@ export class AccessoryInfo {
     let changed = false;
 
     if (configHash !== this.configHash) {
+      const previousHash = this.configHash;
       this.configVersion++;
       this.configHash = configHash;
 
       this.ensureConfigVersionBounds();
       changed = true;
+
+      // the increment is otherwise invisible: a bridge whose configuration churns bumps c# (and re-advertises)
+      // with no trace in any log, which is exactly what made homebridge/homebridge#3984 hard to diagnose
+      debug("[%s] Configuration number incremented to %d (configuration hash %s -> %s)",
+        this.username, this.configVersion, previousHash || "<none>", configHash);
     }
 
     if (checkFirmwareIncrement) {
