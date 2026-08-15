@@ -9,6 +9,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - refactor: drop the doubled advertiser check in the configuration-update debounce
 - fix: close the exists-then-unlink gap when removing a storage key
 - chore(deps): dependency updates
+- docs: regenerate docs for `v2.2.1`
 
 ### Homebridge Dependencies
 
