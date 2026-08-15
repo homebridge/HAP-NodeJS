@@ -8,6 +8,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 
 - feat: log a debug line when the accessory configuration number increments
 - fix: hash a canonical form of the configuration so array reordering cannot increment c#
+- docs: regenerate docs for `v2.2.2`
 
 ### Homebridge Dependencies
 
