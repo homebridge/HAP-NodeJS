@@ -9,6 +9,7 @@ import {
   Perms,
   SerializedCharacteristic,
   Units,
+  isValidPerms,
 } from "./Characteristic";
 import { SelectedRTPStreamConfiguration } from "./definitions";
 import { HAPStatus } from "./HAPServer";
@@ -22,6 +23,29 @@ function createCharacteristic(type: Formats, customUUID?: string): Characteristi
 function createCharacteristicWithProps(props: CharacteristicProps, customUUID?: string): Characteristic {
   return new Characteristic("Test", customUUID || uuid.generate("Foo"), props);
 }
+
+describe("isValidPerms", () => {
+  it("accepts an array in which every entry is a permission", () => {
+    expect(isValidPerms([Perms.PAIRED_READ])).toBe(true);
+    expect(isValidPerms([
+      Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY, Perms.ADDITIONAL_AUTHORIZATION, Perms.TIMED_WRITE, Perms.HIDDEN, Perms.WRITE_RESPONSE,
+    ])).toBe(true);
+    // the EVENTS alias shares NOTIFY's wire value and is accepted through it
+    expect(isValidPerms([Perms.EVENTS])).toBe(true);
+  });
+
+  it.each([
+    { label: "an empty array", value: [] },
+    { label: "a bare string", value: "pr" },
+    { label: "null", value: null },
+    { label: "undefined", value: undefined },
+    { label: "an array containing null", value: [null, Perms.NOTIFY] },
+    { label: "an array containing an unknown string", value: ["READ", Perms.NOTIFY] },
+    { label: "a nested array", value: [[Perms.PAIRED_READ]] },
+  ])("rejects $label", ({ value }) => {
+    expect(isValidPerms(value)).toBe(false);
+  });
+});
 
 describe("Characteristic", () => {
   beforeEach(() => {
@@ -43,6 +67,8 @@ describe("Characteristic", () => {
       { perms: [null, Perms.NOTIFY] },
       { perms: [[Perms.PAIRED_READ], Perms.NOTIFY] },
       { perms: ["invalid", Perms.NOTIFY] },
+      { perms: [] },
+      { perms: "pr" },
     ])("should reject invalid permissions $perms", ({ perms }) => {
       const characteristic = createCharacteristic(Formats.BOOL);
 
@@ -50,12 +76,6 @@ describe("Characteristic", () => {
         perms: perms as unknown as Perms[],
       })).toThrow(/contains invalid permissions/);
       expect(characteristic.props.perms).toEqual([Perms.PAIRED_READ, Perms.PAIRED_WRITE]);
-    });
-
-    it("should reject an empty permissions array", () => {
-      const characteristic = createCharacteristic(Formats.BOOL);
-
-      expect(() => characteristic.setProps({ perms: [] })).toThrow("characteristic prop perms cannot be empty array");
     });
 
     it("should fail when setting invalid value range", () => {

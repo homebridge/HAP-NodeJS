@@ -3,7 +3,6 @@ import createDebug from "debug";
 import { EventEmitter } from "events";
 import { CharacteristicJsonObject, CharacteristicValue, Nullable, PartialAllowingNull, VoidCallback } from "../types";
 import { CharacteristicWarningType } from "./Accessory";
-import { validatePerms } from "./util/characteristic-permissions";
 import type {
   AccessCodeControlPoint,
   AccessCodeSupportedConfiguration,
@@ -348,6 +347,36 @@ export const enum Perms {
   TIMED_WRITE = "tw",
   HIDDEN = "hd",
   WRITE_RESPONSE = "wr",
+}
+
+/**
+ * The wire values of {@link Perms}, as a runtime lookup. A const enum is erased during compilation and cannot be enumerated, so this set is the enum's
+ * runtime mirror and lives beside it: a permission added to the enum above must be added here as well. The members are referenced rather than retyped,
+ * so the compiler inlines the same string literals the enum declares. `EVENTS` is an alias of `NOTIFY` and shares its value, hence is not listed.
+ */
+const VALID_PERMS: ReadonlySet<unknown> = new Set<string>([
+  Perms.PAIRED_READ,
+  Perms.PAIRED_WRITE,
+  Perms.NOTIFY,
+  Perms.ADDITIONAL_AUTHORIZATION,
+  Perms.TIMED_WRITE,
+  Perms.HIDDEN,
+  Perms.WRITE_RESPONSE,
+]);
+
+/**
+ * Checks that a value is a well-formed permissions array: a non-empty array in which every entry is one of the {@link Perms} wire values.
+ *
+ * HomeKit rejects an accessory whose characteristics carry anything else, so {@link Characteristic.setProps} enforces this and the accessory database
+ * excludes bridged accessories that fail it. It is exported so that plugin authors can check a permissions array themselves before handing it over.
+ *
+ * @param perms - the value to check.
+ * @returns true if the value is a permissions array HomeKit accepts.
+ *
+ * @group Characteristic
+ */
+export function isValidPerms(perms: unknown): perms is Perms[] {
+  return Array.isArray(perms) && perms.length > 0 && perms.every(permission => VALID_PERMS.has(permission));
 }
 
 /**
@@ -1815,9 +1844,7 @@ export class Characteristic extends EventEmitter {
       this.props.format = props.format;
     }
     if (props.perms) {
-      assert(Array.isArray(props.perms), "characteristic prop perms must be an array");
-      assert(props.perms.length > 0, "characteristic prop perms cannot be empty array");
-      assert(validatePerms(props.perms),
+      assert(isValidPerms(props.perms),
         `characteristic '${this.displayName}' (${this.UUID}) contains invalid permissions: ${JSON.stringify(props.perms)}`);
       this.props.perms = props.perms;
     }

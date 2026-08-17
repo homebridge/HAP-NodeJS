@@ -253,21 +253,6 @@ describe("Accessory", () => {
         .toThrow();
     });
 
-    test("blocks a bridged accessory containing invalid characteristic permissions", () => {
-      const bridge = new Bridge("TestBridge", uuid.generate("bridge with invalid accessory"));
-      const invalidAccessory = new Accessory("Invalid Accessory", uuid.generate("invalid accessory"));
-      const service = invalidAccessory.addService(Service.Switch);
-      const characteristic = service.getCharacteristic(Characteristic.On);
-      characteristic.props.perms = [undefined as unknown as Perms, Perms.NOTIFY];
-
-      expect(() => bridge.addBridgedAccessory(invalidAccessory)).toThrow(
-        /Invalid Accessory.*Switch.*On.*invalid permissions/,
-      );
-      expect(bridge.bridgedAccessories).not.toContain(invalidAccessory);
-      expect(invalidAccessory.bridged).toBe(false);
-      expect(invalidAccessory.bridge).toBeUndefined();
-    });
-
     test("removeBridgedAccessory", () => {
       const bridge = new Bridge("TestBridge", uuid.generate("bridge test"));
 
@@ -351,32 +336,131 @@ describe("Accessory", () => {
       expect(accessory.initialized).toBe(false);
     });
 
-    test("publish-time validation skips a malformed bridged accessory and preserves valid accessories", () => {
-      const bridge = new Bridge("TestBridge", uuid.generate("bridge with late invalid accessory"));
-      const validAccessory = new Accessory("Valid Accessory", uuid.generate("valid accessory"));
-      validAccessory.addService(Service.Switch);
-      const invalidAccessory = new Accessory("Invalid Accessory", uuid.generate("late invalid accessory"));
-      const invalidCharacteristic = invalidAccessory.addService(Service.Switch).getCharacteristic(Characteristic.On);
-      const warningHandler = jest.fn();
-      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
-      invalidAccessory.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, warningHandler);
+    describe("quarantine of bridged accessories with invalid characteristic permissions", () => {
+      let bridge: Bridge;
+      let validAccessory: Accessory;
+      let offendingAccessory: Accessory;
+      let offendingCharacteristic: Characteristic;
+      let warningHandler: Mock;
+      let consoleErrorSpy: jest.SpyInstance;
+      let enqueueSpy: jest.SpyInstance;
 
-      bridge.addBridgedAccessories([validAccessory, invalidAccessory]);
-      invalidCharacteristic.props.perms = [null as unknown as Perms, Perms.NOTIFY];
+      // Serves the /accessories route the way a controller would and reports the aids that came back, which is everything HomeKit gets to see.
+      const servedAids = async (): Promise<number[]> => {
+        callback.mockReset();
 
-      // @ts-expect-error: exercise the validation performed at the start of publish()
-      bridge.removeBridgedAccessoriesWithInvalidPermissions();
+        // @ts-expect-error: private access
+        bridge.handleAccessories(connection, callback);
+        await callbackPromise;
 
-      expect(bridge.bridgedAccessories).toEqual([validAccessory]);
-      expect(invalidAccessory.bridged).toBe(false);
-      expect(invalidAccessory.bridge).toBeUndefined();
-      expect(warningHandler).toHaveBeenCalledTimes(1);
-      expect(warningHandler).toHaveBeenCalledWith(expect.objectContaining({
-        characteristic: invalidCharacteristic,
-        type: CharacteristicWarningType.ERROR_MESSAGE,
-        message: expect.stringMatching(/Invalid Accessory.*Switch.*On.*invalid permissions/),
-      }));
-      consoleErrorSpy.mockRestore();
+        const response = callback.mock.calls[0][1] as AccessoriesResponse;
+        return response.accessories.map(served => served.aid);
+      };
+
+      const corruptPermissions = (): void => {
+        offendingCharacteristic.props.perms = [null as unknown as Perms, Perms.NOTIFY];
+      };
+
+      beforeEach(() => {
+        bridge = new Bridge("TestBridge", uuid.generate("bridge with quarantined accessory"));
+
+        validAccessory = new Accessory("Valid Accessory", uuid.generate("valid accessory"));
+        validAccessory.addService(Service.Switch);
+
+        offendingAccessory = new Accessory("Invalid Accessory", uuid.generate("quarantined accessory"));
+        offendingCharacteristic = offendingAccessory.addService(Service.Switch).getCharacteristic(Characteristic.On);
+
+        bridge.addBridgedAccessories([ validAccessory, offendingAccessory ]);
+        bridge._identifierCache = new IdentifierCache(serverUsername);
+
+        warningHandler = jest.fn();
+        offendingAccessory.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, warningHandler);
+
+        consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+        // @ts-expect-error: spying on private method
+        enqueueSpy = jest.spyOn(bridge, "enqueueConfigurationUpdate");
+      });
+
+      afterEach(() => {
+        consoleErrorSpy.mockRestore();
+        enqueueSpy.mockRestore();
+      });
+
+      test("serves the bridge and its valid accessories only, attributing the fault once", async () => {
+        corruptPermissions();
+
+        const aids = await servedAids();
+
+        expect(aids).toEqual([ bridge.aid, validAccessory.aid ]);
+        expect(aids).not.toContain(offendingAccessory.aid);
+
+        // the exclusion is presentation-level: the accessory is still bridged, and only what we serve changed
+        expect(bridge.bridgedAccessories).toContain(offendingAccessory);
+        expect(offendingAccessory.bridged).toBe(true);
+        expect(offendingAccessory.bridge).toBe(bridge);
+
+        expect(warningHandler).toHaveBeenCalledTimes(1);
+        expect(warningHandler).toHaveBeenCalledWith(expect.objectContaining({
+          characteristic: offendingCharacteristic,
+          type: CharacteristicWarningType.ERROR_MESSAGE,
+          message: expect.stringMatching(/Invalid Accessory.*excluded from the accessory database.*Switch.*On.*contains invalid permissions/),
+        }));
+      });
+
+      test("excludes an accessory whose permissions are corrupted after it was already served", async () => {
+        expect(await servedAids()).toEqual([ bridge.aid, validAccessory.aid, offendingAccessory.aid ]);
+
+        corruptPermissions();
+
+        expect(await servedAids()).toEqual([ bridge.aid, validAccessory.aid ]);
+      });
+
+      test("serves the accessory again once its permissions are corrected, under the same aid", async () => {
+        corruptPermissions();
+        expect(await servedAids()).not.toContain(offendingAccessory.aid);
+
+        const quarantinedAid = offendingAccessory.aid;
+        warningHandler.mockClear();
+        offendingCharacteristic.props.perms = [ Perms.PAIRED_READ, Perms.NOTIFY ];
+
+        expect(await servedAids()).toEqual([ bridge.aid, validAccessory.aid, offendingAccessory.aid ]);
+        expect(offendingAccessory.aid).toEqual(quarantinedAid);
+        expect(warningHandler).not.toHaveBeenCalled();
+      });
+
+      test("enqueues a configuration update on entering and on leaving quarantine", async () => {
+        await servedAids();
+        enqueueSpy.mockClear();
+
+        corruptPermissions();
+        await servedAids();
+        expect(enqueueSpy).toHaveBeenCalledTimes(1);
+
+        offendingCharacteristic.props.perms = [ Perms.PAIRED_READ, Perms.NOTIFY ];
+        await servedAids();
+        expect(enqueueSpy).toHaveBeenCalledTimes(2);
+      });
+
+      test("settles while the accessory stays quarantined, without repeating itself", async () => {
+        corruptPermissions();
+
+        await servedAids();
+        await servedAids();
+        await servedAids();
+
+        expect(warningHandler).toHaveBeenCalledTimes(1);
+        expect(enqueueSpy).toHaveBeenCalledTimes(1);
+      });
+
+      test("excludes the same accessory from the configuration that determines the configuration number", async () => {
+        corruptPermissions();
+
+        const aids = await servedAids();
+        // @ts-expect-error: private access
+        const configuration = bridge.internalHAPRepresentation();
+
+        expect(configuration.map(entry => entry.aid)).toEqual(aids);
+      });
     });
 
     test.each`

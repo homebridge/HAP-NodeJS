@@ -6,7 +6,8 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 
 ### Changes
 
-- fix: Reject malformed characteristic permission arrays and skip invalid bridged accessories during publication.
+- fix: reject a malformed characteristic permissions array where it is set, naming the characteristic that carries it
+- fix: exclude bridged accessories whose characteristic permissions HomeKit rejects from the served accessory database, until those permissions are corrected
 
 ## v2.2.2 (2026-08-15)
 

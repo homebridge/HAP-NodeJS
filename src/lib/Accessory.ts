@@ -37,6 +37,7 @@ import {
   CharacteristicOperationContext,
   CharacteristicSetCallback,
   Perms,
+  isValidPerms,
 } from "./Characteristic";
 import {
   CameraController,
@@ -72,7 +73,6 @@ import { formatOutgoingCharacteristicValue } from "./util/request-util";
 import * as uuid from "./util/uuid";
 import { toShortForm } from "./util/uuid";
 import { checkName } from "./util/checkName";
-import { validatePerms } from "./util/characteristic-permissions";
 
 const debug = createDebug("HAP-NodeJS:Accessory");
 const hksvDebug = createDebug("HAP-NodeJS:HKSV");
@@ -319,6 +319,15 @@ const enum WriteRequestState {
 }
 
 /**
+ * The first characteristic on an accessory whose permissions HomeKit would reject, together with the service holding it. The service travels alongside
+ * the characteristic because a characteristic does not know its service, and the message pointing the plugin author at the fault needs both.
+ */
+interface PermsViolation {
+  characteristic: Characteristic;
+  service: Service;
+}
+
+/**
  * @group Accessory
  */
 export const enum AccessoryEventTypes {
@@ -456,6 +465,12 @@ export class Accessory extends EventEmitter {
    * For multiple bursts of /accessories request we don't want to always contact GET handlers
    */
   private lastAccessoriesRequest = 0;
+  /**
+   * The result of the last permissions evaluation made by the bridge that hosts this accessory, used solely to tell a transition in or out of quarantine
+   * from a state that has not changed. It is never consulted to decide what gets served: {@link findPermsViolation}, re-run on every representation build,
+   * is the truth there.
+   */
+  private permsQuarantined = false;
 
   constructor(public displayName: string, public UUID: string) {
     super();
@@ -644,11 +659,6 @@ export class Accessory extends EventEmitter {
       throw new Error("Cannot Bridge more than " + MAX_ACCESSORIES + " Accessories");
     }
 
-    const invalidPermissions = accessory.validateCharacteristicPermissions();
-    if (invalidPermissions) {
-      throw new Error(invalidPermissions.message);
-    }
-
     // listen for changes in ANY characteristics of ANY services on this Accessory
     accessory.on(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, change => this.handleCharacteristicChangeEvent(accessory, change.service, change));
     accessory.on(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, this.enqueueConfigurationUpdate.bind(this));
@@ -687,6 +697,7 @@ export class Accessory extends EventEmitter {
 
     accessory.bridged = false;
     accessory.bridge = undefined;
+    accessory.permsQuarantined = false; // a later bridge starts from a clean slate and re-evaluates the accessory itself
     accessory.removeAllListeners();
 
     if(!deferUpdate) {
@@ -929,38 +940,89 @@ export class Accessory extends EventEmitter {
   }
 
   /**
-   * Finds malformed characteristic permissions on this accessory.
+   * Searches this accessory for the first characteristic whose permissions HomeKit would reject, ignoring any bridged accessories (each one is asked
+   * about itself). The permissions are read from the model on every call rather than remembered, because a plugin can assign `props.perms` directly at
+   * any time, which reaches neither {@link Characteristic.setProps} nor any event.
+   *
+   * @returns the offending characteristic and its service, or undefined if every characteristic on this accessory is well-formed.
    */
-  private validateCharacteristicPermissions(): { characteristic: Characteristic; message: string } | undefined {
+  private findPermsViolation(): PermsViolation | undefined {
     for (const service of this.services) {
       for (const characteristic of service.characteristics) {
-        if (!Array.isArray(characteristic.props.perms)
-          || characteristic.props.perms.length === 0
-          || !validatePerms(characteristic.props.perms)) {
-          const serviceName = service.displayName || service.constructor.name;
-          const message = `HAP-NodeJS cannot publish accessory '${this.displayName}': service '${serviceName}' (${service.UUID}), `
-            + `characteristic '${characteristic.displayName}' (${characteristic.UUID}) contains invalid permissions: `
-            + `${JSON.stringify(characteristic.props.perms)}`;
-          return { characteristic, message };
+        if (!isValidPerms(characteristic.props.perms)) {
+          return { characteristic: characteristic, service: service };
         }
       }
     }
+
+    return undefined;
   }
 
-  private removeBridgedAccessoriesWithInvalidPermissions(): void {
-    for (const accessory of [...this.bridgedAccessories]) {
-      const invalidPermissions = accessory.validateCharacteristicPermissions();
-      if (invalidPermissions) {
-        accessory.sendCharacteristicWarning(
-          invalidPermissions.characteristic,
-          CharacteristicWarningType.ERROR_MESSAGE,
-          invalidPermissions.message,
-        );
-        this.removeBridgedAccessory(accessory, true);
+  /**
+   * Describes a permissions violation to the plugin author: which accessory, which service, which characteristic, and the array that was rejected. The
+   * publish failure and the quarantine warning report the same fault at different boundaries, so they share this text and supply only the phrase that
+   * says what happened as a result.
+   *
+   * @param violation - the violation as returned by {@link findPermsViolation}.
+   * @param disposition - what became of this accessory, phrased to follow its name.
+   */
+  private permsViolationMessage(violation: PermsViolation, disposition: string): string {
+    const serviceName = violation.service.displayName || violation.service.constructor.name;
+
+    return `HAP-NodeJS: accessory '${this.displayName}' ${disposition}. Service '${serviceName}' (${violation.service.UUID}), `
+      + `characteristic '${violation.characteristic.displayName}' (${violation.characteristic.UUID}) contains invalid permissions: `
+      + `${JSON.stringify(violation.characteristic.props.perms)}`;
+  }
+
+  /**
+   * Returns the bridged accessories fit to be served, excluding any whose characteristic permissions HomeKit would reject. Both representation builders
+   * go through here, so the accessory database we hand out and the configuration we hash agree by construction, whatever put the malformed permissions
+   * into the model.
+   *
+   * The exclusion is presentation-level and reversible. A quarantined accessory keeps its place in {@link bridgedAccessories}, its aid, its cached
+   * identifiers and its context, so correcting the permissions restores it exactly where it was, under the same identity HomeKit knew it by.
+   */
+  private servedBridgedAccessories(): Accessory[] {
+    const served: Accessory[] = [];
+
+    for (const accessory of this.bridgedAccessories) {
+      const violation = accessory.findPermsViolation();
+
+      if (violation) {
+        if (!accessory.permsQuarantined) {
+          accessory.permsQuarantined = true;
+          accessory.sendCharacteristicWarning(
+            violation.characteristic,
+            CharacteristicWarningType.ERROR_MESSAGE,
+            accessory.permsViolationMessage(violation, "is excluded from the accessory database until its permissions are corrected"),
+          );
+
+          /* The configuration this accessory contributed has just disappeared from what we serve, so the configuration number has to move. Enqueueing
+           * from inside a representation build is safe and terminates: the build that observes a transition records it before returning, so the
+           * debounced pass that follows sees a settled state, hashes it, and enqueues nothing further.
+           */
+          this.enqueueConfigurationUpdate();
+        }
+
+        continue;
       }
+
+      if (accessory.permsQuarantined) {
+        accessory.permsQuarantined = false;
+        this.enqueueConfigurationUpdate();
+      }
+
+      served.push(accessory);
     }
+
+    return served;
   }
 
+  /**
+   * This method is called right before the accessory is published. It should be used to check for common
+   * mistakes in Accessory structured, which may lead to HomeKit rejecting the accessory when pairing.
+   * If it is called on a bridge it will call this method for all bridged accessories.
+   */
   private validateAccessory(mainAccessory?: boolean) {
     const service = this.getService(Service.AccessoryInformation);
     if (!service) {
@@ -1082,7 +1144,7 @@ export class Accessory extends EventEmitter {
 
     if (!this.bridged) {
       accessories.push(... await Promise.all(
-        this.bridgedAccessories
+        this.servedBridgedAccessories()
           .map(accessory => accessory.toHAP(connection, contactGetHandlers).then(value => value[0])),
       ));
     }
@@ -1108,7 +1170,7 @@ export class Accessory extends EventEmitter {
     const accessories: AccessoryJsonObject[] = [accessory];
 
     if (!this.bridged) {
-      for (const accessory of this.bridgedAccessories) {
+      for (const accessory of this.servedBridgedAccessories()) {
         accessories.push(accessory.internalHAPRepresentation(false)[0]);
       }
     }
@@ -1138,11 +1200,13 @@ export class Accessory extends EventEmitter {
       throw new Error("Can't publish in accessory which is bridged by another accessory. Bridged by " + this.bridge?.displayName);
     }
 
-    const invalidPermissions = this.validateCharacteristicPermissions();
-    if (invalidPermissions) {
-      throw new Error(invalidPermissions.message);
+    /* Bridged accessories with malformed permissions are quarantined at the serving boundary, but the accessory being published is the root of its own
+     * accessory database and has nowhere to be quarantined to. HomeKit would reject the whole database, so we refuse here instead, in the caller's stack.
+     */
+    const violation = this.findPermsViolation();
+    if (violation) {
+      throw new Error(this.permsViolationMessage(violation, "cannot be published"));
     }
-    this.removeBridgedAccessoriesWithInvalidPermissions();
 
     let service = this.getService(Service.ProtocolInformation);
     if (!service) {
