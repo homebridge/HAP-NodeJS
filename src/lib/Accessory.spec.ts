@@ -336,6 +336,21 @@ describe("Accessory", () => {
       expect(accessory.initialized).toBe(false);
     });
 
+    test("validates bridged accessories when the bridge is validated", () => {
+      const bridge = new Bridge("TestBridge", uuid.generate("bridge validation delegation"));
+      const bridgedAccessory = new Accessory("Bridged Accessory", uuid.generate("validated bridged accessory"));
+      bridgedAccessory.addService(Service.Switch);
+      bridge.addBridgedAccessory(bridgedAccessory);
+
+      // @ts-expect-error: spying on private method
+      const validateSpy = jest.spyOn(bridgedAccessory, "validateAccessory");
+      // @ts-expect-error: private access
+      bridge.validateAccessory(true);
+
+      expect(validateSpy).toHaveBeenCalledTimes(1);
+      validateSpy.mockRestore();
+    });
+
     describe("quarantine of bridged accessories with invalid characteristic permissions", () => {
       let bridge: Bridge;
       let validAccessory: Accessory;

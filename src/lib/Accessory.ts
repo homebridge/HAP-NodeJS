@@ -1051,9 +1051,8 @@ export class Accessory extends EventEmitter {
       assert(Buffer.from(this.displayName, "utf8").length <= 63, "Accessory displayName cannot be longer than 63 bytes!");
     }
 
-    if (this.bridged) {
-      this.bridgedAccessories.forEach(accessory => accessory.validateAccessory());
-    }
+    // any accessories we are bridging are validated the same way; the list is empty for anything that is not a bridge
+    this.bridgedAccessories.forEach(accessory => accessory.validateAccessory());
   }
 
   /**
