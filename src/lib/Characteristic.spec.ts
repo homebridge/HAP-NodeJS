@@ -9,6 +9,7 @@ import {
   Perms,
   SerializedCharacteristic,
   Units,
+  describePerms,
   isValidPerms,
 } from "./Characteristic";
 import { SelectedRTPStreamConfiguration } from "./definitions";
@@ -45,6 +46,27 @@ describe("isValidPerms", () => {
   ])("rejects $label", ({ value }) => {
     expect(isValidPerms(value)).toBe(false);
   });
+
+  it("rejects a sparse array, whose holes would serialize to null", () => {
+    const sparse: (Perms | undefined)[] = [ Perms.PAIRED_READ, Perms.NOTIFY ];
+
+    delete sparse[0];
+
+    expect(isValidPerms(sparse)).toBe(false);
+  });
+});
+
+describe("describePerms", () => {
+  it("renders any value without throwing", () => {
+    expect(describePerms([ Perms.PAIRED_READ, null ])).toBe("[\"pr\",null]");
+    expect(describePerms(undefined)).toBe("undefined");
+
+    const cyclic: unknown[] = [ Perms.NOTIFY ];
+    cyclic.push(cyclic);
+
+    expect(typeof describePerms(cyclic)).toBe("string");
+    expect(typeof describePerms([ 1n ])).toBe("string");
+  });
 });
 
 describe("Characteristic", () => {
@@ -75,6 +97,16 @@ describe("Characteristic", () => {
       expect(() => characteristic.setProps({
         perms: perms as unknown as Perms[],
       })).toThrow(/contains invalid permissions/);
+      expect(characteristic.props.perms).toEqual([Perms.PAIRED_READ, Perms.PAIRED_WRITE]);
+    });
+
+    it("rejects permissions whose diagnostic cannot be JSON-serialized", () => {
+      const characteristic = createCharacteristic(Formats.BOOL);
+      const cyclic: unknown[] = [ Perms.NOTIFY ];
+      cyclic.push(cyclic);
+
+      expect(() => characteristic.setProps({ perms: cyclic as Perms[] })).toThrow(/contains invalid permissions/);
+      expect(() => characteristic.setProps({ perms: [ 1n ] as unknown as Perms[] })).toThrow(/contains invalid permissions/);
       expect(characteristic.props.perms).toEqual([Perms.PAIRED_READ, Perms.PAIRED_WRITE]);
     });
 

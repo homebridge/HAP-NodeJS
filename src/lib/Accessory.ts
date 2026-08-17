@@ -37,6 +37,7 @@ import {
   CharacteristicOperationContext,
   CharacteristicSetCallback,
   Perms,
+  describePerms,
   isValidPerms,
 } from "./Characteristic";
 import {
@@ -971,7 +972,7 @@ export class Accessory extends EventEmitter {
 
     return `HAP-NodeJS: accessory '${this.displayName}' ${disposition}. Service '${serviceName}' (${violation.service.UUID}), `
       + `characteristic '${violation.characteristic.displayName}' (${violation.characteristic.UUID}) contains invalid permissions: `
-      + `${JSON.stringify(violation.characteristic.props.perms)}`;
+      + `${describePerms(violation.characteristic.props.perms)}`;
   }
 
   /**

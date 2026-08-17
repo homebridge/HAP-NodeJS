@@ -467,6 +467,13 @@ describe("Accessory", () => {
         expect(enqueueSpy).toHaveBeenCalledTimes(1);
       });
 
+      test("quarantines an accessory whose permissions cannot be JSON-serialized, without failing the request", async () => {
+        offendingCharacteristic.props.perms = [ 1n ] as unknown as Perms[];
+
+        expect(await servedAids()).toEqual([ bridge.aid, validAccessory.aid ]);
+        expect(warningHandler).toHaveBeenCalledTimes(1);
+      });
+
       test("excludes the same accessory from the configuration that determines the configuration number", async () => {
         corruptPermissions();
 

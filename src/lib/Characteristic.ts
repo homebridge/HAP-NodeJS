@@ -1,6 +1,7 @@
 import assert from "assert";
 import createDebug from "debug";
 import { EventEmitter } from "events";
+import { inspect } from "util";
 import { CharacteristicJsonObject, CharacteristicValue, Nullable, PartialAllowingNull, VoidCallback } from "../types";
 import { CharacteristicWarningType } from "./Accessory";
 import type {
@@ -376,7 +377,37 @@ const VALID_PERMS: ReadonlySet<unknown> = new Set<string>([
  * @group Characteristic
  */
 export function isValidPerms(perms: unknown): perms is Perms[] {
-  return Array.isArray(perms) && perms.length > 0 && perms.every(permission => VALID_PERMS.has(permission));
+  if (!Array.isArray(perms) || perms.length === 0) {
+    return false;
+  }
+
+  // for...of iteration surfaces the holes of a sparse array as undefined, which Array.prototype.every would silently skip. A hole survives JSON
+  // serialization as null, the exact malformed entry this check exists to reject.
+  for (const permission of perms) {
+    if (!VALID_PERMS.has(permission)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Formats a permissions value for a diagnostic message without ever throwing. `JSON.stringify` is not total over unknown input (a bigint or a cyclic
+ * entry raises a `TypeError`), and a diagnostic must never become the failure it reports, so anything the JSON form cannot render falls back to
+ * `util.inspect`, which renders any value.
+ *
+ * @param perms - the value to format.
+ * @returns a human-readable rendering of the value.
+ *
+ * @group Characteristic
+ */
+export function describePerms(perms: unknown): string {
+  try {
+    return JSON.stringify(perms) ?? String(perms);
+  } catch {
+    return inspect(perms);
+  }
 }
 
 /**
@@ -1844,8 +1875,9 @@ export class Characteristic extends EventEmitter {
       this.props.format = props.format;
     }
     if (props.perms) {
-      assert(isValidPerms(props.perms),
-        `characteristic '${this.displayName}' (${this.UUID}) contains invalid permissions: ${JSON.stringify(props.perms)}`);
+      if (!isValidPerms(props.perms)) {
+        throw new Error(`characteristic '${this.displayName}' (${this.UUID}) contains invalid permissions: ${describePerms(props.perms)}`);
+      }
       this.props.perms = props.perms;
     }
 
