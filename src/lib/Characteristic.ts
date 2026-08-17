@@ -349,6 +349,20 @@ export const enum Perms {
   WRITE_RESPONSE = "wr",
 }
 
+const VALID_PERMISSIONS: ReadonlySet<unknown> = new Set([
+  Perms.PAIRED_READ,
+  Perms.PAIRED_WRITE,
+  Perms.NOTIFY,
+  Perms.ADDITIONAL_AUTHORIZATION,
+  Perms.TIMED_WRITE,
+  Perms.HIDDEN,
+  Perms.WRITE_RESPONSE,
+]);
+
+export function validatePerms(perms: readonly unknown[]): perms is readonly Perms[] {
+  return perms.length > 0 && perms.every(permission => VALID_PERMISSIONS.has(permission));
+}
+
 /**
  * @group Characteristic
  */
@@ -1814,7 +1828,9 @@ export class Characteristic extends EventEmitter {
       this.props.format = props.format;
     }
     if (props.perms) {
-      assert(props.perms.length > 0, "characteristic prop perms cannot be empty array");
+      assert(Array.isArray(props.perms), "characteristic prop perms must be an array");
+      assert(validatePerms(props.perms),
+        `characteristic '${this.displayName}' (${this.UUID}) contains invalid permissions: ${JSON.stringify(props.perms)}`);
       this.props.perms = props.perms;
     }
 

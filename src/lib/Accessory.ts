@@ -37,6 +37,7 @@ import {
   CharacteristicOperationContext,
   CharacteristicSetCallback,
   Perms,
+  validatePerms,
 } from "./Characteristic";
 import {
   CameraController,
@@ -643,6 +644,8 @@ export class Accessory extends EventEmitter {
       throw new Error("Cannot Bridge more than " + MAX_ACCESSORIES + " Accessories");
     }
 
+    accessory.validateCharacteristicPermissions();
+
     // listen for changes in ANY characteristics of ANY services on this Accessory
     accessory.on(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, change => this.handleCharacteristicChangeEvent(accessory, change.service, change));
     accessory.on(AccessoryEventTypes.SERVICE_CONFIGURATION_CHANGE, this.enqueueConfigurationUpdate.bind(this));
@@ -927,6 +930,25 @@ export class Accessory extends EventEmitter {
    * mistakes in Accessory structured, which may lead to HomeKit rejecting the accessory when pairing.
    * If it is called on a bridge it will call this method for all bridged accessories.
    */
+  private validateCharacteristicPermissions(): void {
+    for (const service of this.services) {
+      for (const characteristic of service.characteristics) {
+        if (!Array.isArray(characteristic.props.perms) || !validatePerms(characteristic.props.perms)) {
+          const serviceName = service.displayName || service.constructor.name;
+          const message = `HAP-NodeJS cannot publish accessory '${this.displayName}': service '${serviceName}' (${service.UUID}), `
+            + `characteristic '${characteristic.displayName}' (${characteristic.UUID}) contains invalid permissions: `
+            + `${JSON.stringify(characteristic.props.perms)}`;
+          this.sendCharacteristicWarning(characteristic, CharacteristicWarningType.ERROR_MESSAGE, message);
+          throw new Error(message);
+        }
+      }
+    }
+
+    if (!this.bridged) {
+      this.bridgedAccessories.forEach(accessory => accessory.validateCharacteristicPermissions());
+    }
+  }
+
   private validateAccessory(mainAccessory?: boolean) {
     const service = this.getService(Service.AccessoryInformation);
     if (!service) {
@@ -1103,6 +1125,8 @@ export class Accessory extends EventEmitter {
     if (this.bridged) {
       throw new Error("Can't publish in accessory which is bridged by another accessory. Bridged by " + this.bridge?.displayName);
     }
+
+    this.validateCharacteristicPermissions();
 
     let service = this.getService(Service.ProtocolInformation);
     if (!service) {

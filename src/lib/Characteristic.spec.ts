@@ -38,6 +38,26 @@ describe("Characteristic", () => {
       expect(characteristic.props).toEqual(NEW_PROPS);
     });
 
+    it.each([
+      { perms: [undefined, Perms.NOTIFY] },
+      { perms: [null, Perms.NOTIFY] },
+      { perms: [[Perms.PAIRED_READ], Perms.NOTIFY] },
+      { perms: ["invalid", Perms.NOTIFY] },
+    ])("should reject invalid permissions $perms", ({ perms }) => {
+      const characteristic = createCharacteristic(Formats.BOOL);
+
+      expect(() => characteristic.setProps({
+        perms: perms as unknown as Perms[],
+      })).toThrow(/contains invalid permissions/);
+      expect(characteristic.props.perms).toEqual([Perms.PAIRED_READ, Perms.PAIRED_WRITE]);
+    });
+
+    it("should reject an empty permissions array", () => {
+      const characteristic = createCharacteristic(Formats.BOOL);
+
+      expect(() => characteristic.setProps({ perms: [] })).toThrow(/contains invalid permissions/);
+    });
+
     it("should fail when setting invalid value range", () => {
       const characteristic = createCharacteristic(Formats.INT);
 
