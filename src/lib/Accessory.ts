@@ -37,7 +37,6 @@ import {
   CharacteristicOperationContext,
   CharacteristicSetCallback,
   Perms,
-  validatePerms,
 } from "./Characteristic";
 import {
   CameraController,
@@ -73,6 +72,7 @@ import { formatOutgoingCharacteristicValue } from "./util/request-util";
 import * as uuid from "./util/uuid";
 import { toShortForm } from "./util/uuid";
 import { checkName } from "./util/checkName";
+import { validatePerms } from "./util/characteristic-permissions";
 
 const debug = createDebug("HAP-NodeJS:Accessory");
 const hksvDebug = createDebug("HAP-NodeJS:HKSV");
@@ -644,7 +644,10 @@ export class Accessory extends EventEmitter {
       throw new Error("Cannot Bridge more than " + MAX_ACCESSORIES + " Accessories");
     }
 
-    accessory.validateCharacteristicPermissions();
+    const invalidPermissions = accessory.validateCharacteristicPermissions();
+    if (invalidPermissions) {
+      throw new Error(invalidPermissions.message);
+    }
 
     // listen for changes in ANY characteristics of ANY services on this Accessory
     accessory.on(AccessoryEventTypes.SERVICE_CHARACTERISTIC_CHANGE, change => this.handleCharacteristicChangeEvent(accessory, change.service, change));
@@ -926,26 +929,35 @@ export class Accessory extends EventEmitter {
   }
 
   /**
-   * This method is called right before the accessory is published. It should be used to check for common
-   * mistakes in Accessory structured, which may lead to HomeKit rejecting the accessory when pairing.
-   * If it is called on a bridge it will call this method for all bridged accessories.
+   * Finds malformed characteristic permissions on this accessory.
    */
-  private validateCharacteristicPermissions(): void {
+  private validateCharacteristicPermissions(): { characteristic: Characteristic; message: string } | undefined {
     for (const service of this.services) {
       for (const characteristic of service.characteristics) {
-        if (!Array.isArray(characteristic.props.perms) || !validatePerms(characteristic.props.perms)) {
+        if (!Array.isArray(characteristic.props.perms)
+          || characteristic.props.perms.length === 0
+          || !validatePerms(characteristic.props.perms)) {
           const serviceName = service.displayName || service.constructor.name;
           const message = `HAP-NodeJS cannot publish accessory '${this.displayName}': service '${serviceName}' (${service.UUID}), `
             + `characteristic '${characteristic.displayName}' (${characteristic.UUID}) contains invalid permissions: `
             + `${JSON.stringify(characteristic.props.perms)}`;
-          this.sendCharacteristicWarning(characteristic, CharacteristicWarningType.ERROR_MESSAGE, message);
-          throw new Error(message);
+          return { characteristic, message };
         }
       }
     }
+  }
 
-    if (!this.bridged) {
-      this.bridgedAccessories.forEach(accessory => accessory.validateCharacteristicPermissions());
+  private removeBridgedAccessoriesWithInvalidPermissions(): void {
+    for (const accessory of [...this.bridgedAccessories]) {
+      const invalidPermissions = accessory.validateCharacteristicPermissions();
+      if (invalidPermissions) {
+        accessory.sendCharacteristicWarning(
+          invalidPermissions.characteristic,
+          CharacteristicWarningType.ERROR_MESSAGE,
+          invalidPermissions.message,
+        );
+        this.removeBridgedAccessory(accessory, true);
+      }
     }
   }
 
@@ -1126,7 +1138,11 @@ export class Accessory extends EventEmitter {
       throw new Error("Can't publish in accessory which is bridged by another accessory. Bridged by " + this.bridge?.displayName);
     }
 
-    this.validateCharacteristicPermissions();
+    const invalidPermissions = this.validateCharacteristicPermissions();
+    if (invalidPermissions) {
+      throw new Error(invalidPermissions.message);
+    }
+    this.removeBridgedAccessoriesWithInvalidPermissions();
 
     let service = this.getService(Service.ProtocolInformation);
     if (!service) {

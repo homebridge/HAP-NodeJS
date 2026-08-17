@@ -3,6 +3,7 @@ import createDebug from "debug";
 import { EventEmitter } from "events";
 import { CharacteristicJsonObject, CharacteristicValue, Nullable, PartialAllowingNull, VoidCallback } from "../types";
 import { CharacteristicWarningType } from "./Accessory";
+import { validatePerms } from "./util/characteristic-permissions";
 import type {
   AccessCodeControlPoint,
   AccessCodeSupportedConfiguration,
@@ -347,20 +348,6 @@ export const enum Perms {
   TIMED_WRITE = "tw",
   HIDDEN = "hd",
   WRITE_RESPONSE = "wr",
-}
-
-const VALID_PERMISSIONS: ReadonlySet<unknown> = new Set([
-  Perms.PAIRED_READ,
-  Perms.PAIRED_WRITE,
-  Perms.NOTIFY,
-  Perms.ADDITIONAL_AUTHORIZATION,
-  Perms.TIMED_WRITE,
-  Perms.HIDDEN,
-  Perms.WRITE_RESPONSE,
-]);
-
-export function validatePerms(perms: readonly unknown[]): perms is readonly Perms[] {
-  return perms.length > 0 && perms.every(permission => VALID_PERMISSIONS.has(permission));
 }
 
 /**
@@ -1829,6 +1816,7 @@ export class Characteristic extends EventEmitter {
     }
     if (props.perms) {
       assert(Array.isArray(props.perms), "characteristic prop perms must be an array");
+      assert(props.perms.length > 0, "characteristic prop perms cannot be empty array");
       assert(validatePerms(props.perms),
         `characteristic '${this.displayName}' (${this.UUID}) contains invalid permissions: ${JSON.stringify(props.perms)}`);
       this.props.perms = props.perms;

@@ -2,17 +2,11 @@
 
 All notable changes to `@homebridge/hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
-## v2.2.3 (2026-08-15)
+## Unreleased
 
 ### Changes
 
-- fix: Root bridge accessories show "No Response" after Apple TV update to tvOS 26.6 (Issue #1128)
-
-### Homebridge Dependencies
-
-- `@homebridge/ciao` @ `v1.3.12`
-- `@homebridge/dbus-native` @ `v0.7.9`
-- `bonjour-hap` @ `v3.10.5`
+- fix: Reject malformed characteristic permission arrays and skip invalid bridged accessories during publication.
 
 ## v2.2.2 (2026-08-15)
 

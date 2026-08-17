@@ -55,7 +55,7 @@ describe("Characteristic", () => {
     it("should reject an empty permissions array", () => {
       const characteristic = createCharacteristic(Formats.BOOL);
 
-      expect(() => characteristic.setProps({ perms: [] })).toThrow(/contains invalid permissions/);
+      expect(() => characteristic.setProps({ perms: [] })).toThrow("characteristic prop perms cannot be empty array");
     });
 
     it("should fail when setting invalid value range", () => {

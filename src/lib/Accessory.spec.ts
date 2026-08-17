@@ -259,37 +259,13 @@ describe("Accessory", () => {
       const service = invalidAccessory.addService(Service.Switch);
       const characteristic = service.getCharacteristic(Characteristic.On);
       characteristic.props.perms = [undefined as unknown as Perms, Perms.NOTIFY];
-      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
       expect(() => bridge.addBridgedAccessory(invalidAccessory)).toThrow(
         /Invalid Accessory.*Switch.*On.*invalid permissions/,
       );
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringMatching(
-        /Invalid Accessory.*Switch.*On.*invalid permissions/,
-      ));
       expect(bridge.bridgedAccessories).not.toContain(invalidAccessory);
       expect(invalidAccessory.bridged).toBe(false);
       expect(invalidAccessory.bridge).toBeUndefined();
-      consoleErrorSpy.mockRestore();
-    });
-
-    test("emits invalid characteristic permissions through the warning event", () => {
-      const bridge = new Bridge("TestBridge", uuid.generate("bridge with attributed invalid accessory"));
-      const invalidAccessory = new Accessory("Invalid Accessory", uuid.generate("attributed invalid accessory"));
-      const service = invalidAccessory.addService(Service.Switch);
-      const characteristic = service.getCharacteristic(Characteristic.On);
-      characteristic.props.perms = [undefined as unknown as Perms, Perms.NOTIFY];
-      const warningHandler = jest.fn();
-      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
-      invalidAccessory.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, warningHandler);
-
-      expect(() => bridge.addBridgedAccessory(invalidAccessory)).toThrow(/invalid permissions/);
-      expect(warningHandler).toHaveBeenCalledWith(expect.objectContaining({
-        characteristic,
-        type: CharacteristicWarningType.ERROR_MESSAGE,
-        message: expect.stringMatching(/invalid permissions/),
-      }));
-      consoleErrorSpy.mockRestore();
     });
 
     test("removeBridgedAccessory", () => {
@@ -362,7 +338,6 @@ describe("Accessory", () => {
       const service = accessory.addService(Service.Switch);
       const characteristic = service.getCharacteristic(Characteristic.On);
       characteristic.props.perms = [null as unknown as Perms, Perms.NOTIFY];
-      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
       const publishInfo: PublishInfo = {
         username: serverUsername,
         pincode: "000-00-000",
@@ -372,11 +347,36 @@ describe("Accessory", () => {
       await expect(accessory.publish(publishInfo)).rejects.toThrow(
         /Test Accessory.*Switch.*On.*invalid permissions/,
       );
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringMatching(
-        /Test Accessory.*Switch.*On.*invalid permissions/,
-      ));
       // @ts-expect-error: verify publication stopped before internal initialization
       expect(accessory.initialized).toBe(false);
+    });
+
+    test("publish-time validation skips a malformed bridged accessory and preserves valid accessories", () => {
+      const bridge = new Bridge("TestBridge", uuid.generate("bridge with late invalid accessory"));
+      const validAccessory = new Accessory("Valid Accessory", uuid.generate("valid accessory"));
+      validAccessory.addService(Service.Switch);
+      const invalidAccessory = new Accessory("Invalid Accessory", uuid.generate("late invalid accessory"));
+      const invalidCharacteristic = invalidAccessory.addService(Service.Switch).getCharacteristic(Characteristic.On);
+      const warningHandler = jest.fn();
+      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+      invalidAccessory.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, warningHandler);
+
+      bridge.addBridgedAccessories([validAccessory, invalidAccessory]);
+      invalidCharacteristic.props.perms = [null as unknown as Perms, Perms.NOTIFY];
+
+      // @ts-expect-error: exercise the validation performed at the start of publish()
+      bridge.removeBridgedAccessoriesWithInvalidPermissions();
+
+      expect(bridge.bridgedAccessories).toEqual([validAccessory]);
+      expect(invalidAccessory.bridged).toBe(false);
+      expect(invalidAccessory.bridge).toBeUndefined();
+      expect(warningHandler).toHaveBeenCalledTimes(1);
+      expect(warningHandler).toHaveBeenCalledWith(expect.objectContaining({
+        characteristic: invalidCharacteristic,
+        type: CharacteristicWarningType.ERROR_MESSAGE,
+        message: expect.stringMatching(/Invalid Accessory.*Switch.*On.*invalid permissions/),
+      }));
+      consoleErrorSpy.mockRestore();
     });
 
     test.each`
