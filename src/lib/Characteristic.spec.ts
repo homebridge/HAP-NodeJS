@@ -91,23 +91,54 @@ describe("Characteristic", () => {
       { perms: ["invalid", Perms.NOTIFY] },
       { perms: [] },
       { perms: "pr" },
-    ])("should reject invalid permissions $perms", ({ perms }) => {
+    ])("should warn about invalid permissions $perms and keep them", ({ perms }) => {
       const characteristic = createCharacteristic(Formats.BOOL);
+      const warnings: { type: CharacteristicWarningType; message: string }[] = [];
+      characteristic.on(CharacteristicEventTypes.CHARACTERISTIC_WARNING, (type, message) => {
+        warnings.push({ type, message });
+      });
 
-      expect(() => characteristic.setProps({
+      characteristic.setProps({
         perms: perms as unknown as Perms[],
-      })).toThrow(/contains invalid permissions/);
-      expect(characteristic.props.perms).toEqual([Perms.PAIRED_READ, Perms.PAIRED_WRITE]);
+      });
+
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0].type).toEqual(CharacteristicWarningType.ERROR_MESSAGE);
+      expect(warnings[0].message).toMatch(/contains invalid permissions/);
+      // The value the plugin declared is what the model carries, which is what the serving boundary quarantines the accessory over.
+      expect(characteristic.props.perms).toEqual(perms);
     });
 
-    it("rejects permissions whose diagnostic cannot be JSON-serialized", () => {
+    it("warns through the console when nothing is subscribed to the characteristic", () => {
+      const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+      const characteristic = createCharacteristic(Formats.BOOL);
+
+      characteristic.setProps({ perms: [null, Perms.NOTIFY] as unknown as Perms[] });
+
+      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
+      expect(consoleWarnSpy.mock.calls[0][0]).toMatch(/^HAP-NodeJS WARNING: \[Test \(.*\)] characteristic contains invalid permissions/);
+      expect(characteristic.props.perms).toEqual([null, Perms.NOTIFY]);
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it("warns about permissions whose diagnostic cannot be JSON-serialized", () => {
+      const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
       const characteristic = createCharacteristic(Formats.BOOL);
       const cyclic: unknown[] = [ Perms.NOTIFY ];
       cyclic.push(cyclic);
 
-      expect(() => characteristic.setProps({ perms: cyclic as Perms[] })).toThrow(/contains invalid permissions/);
-      expect(() => characteristic.setProps({ perms: [ 1n ] as unknown as Perms[] })).toThrow(/contains invalid permissions/);
-      expect(characteristic.props.perms).toEqual([Perms.PAIRED_READ, Perms.PAIRED_WRITE]);
+      characteristic.setProps({ perms: cyclic as Perms[] });
+      characteristic.setProps({ perms: [ 1n ] as unknown as Perms[] });
+
+      expect(consoleWarnSpy).toHaveBeenCalledTimes(2);
+      for (const call of consoleWarnSpy.mock.calls) {
+        expect(typeof call[0]).toBe("string");
+        expect(call[0]).toMatch(/contains invalid permissions/);
+      }
+      expect(characteristic.props.perms).toEqual([ 1n ]);
+
+      consoleWarnSpy.mockRestore();
     });
 
     it("should fail when setting invalid value range", () => {
@@ -2267,6 +2298,24 @@ describe("Characteristic", () => {
       const characteristic = Characteristic.deserialize(json);
 
       expect(characteristic instanceof Characteristic.Name).toBeTruthy();
+    });
+
+    it("should deserialize json carrying malformed permissions, on either branch", () => {
+      const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+      const perms = [null, Perms.NOTIFY] as unknown as Perms[];
+      const json: SerializedCharacteristic = {
+        displayName: "Name",
+        UUID: "00000023-0000-1000-8000-0026BB765291",
+        eventOnlyCharacteristic: false,
+        value: "New Name!",
+        props: { format: Formats.STRING, perms: perms, maxLen: 64 },
+      };
+
+      // A restore reaches setProps whether or not the cached json names a constructor, so both routes out of a poisoned cache have to survive it.
+      expect(Characteristic.deserialize(json).props.perms).toEqual(perms);
+      expect(Characteristic.deserialize({ ...json, constructorName: "Name" }).props.perms).toEqual(perms);
+
+      consoleWarnSpy.mockRestore();
     });
 
   });

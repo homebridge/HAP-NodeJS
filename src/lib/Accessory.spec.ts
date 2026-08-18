@@ -355,6 +355,7 @@ describe("Accessory", () => {
       let bridge: Bridge;
       let validAccessory: Accessory;
       let offendingAccessory: Accessory;
+      let offendingService: Service;
       let offendingCharacteristic: Characteristic;
       let warningHandler: Mock;
       let consoleErrorSpy: jest.SpyInstance;
@@ -383,7 +384,8 @@ describe("Accessory", () => {
         validAccessory.addService(Service.Switch);
 
         offendingAccessory = new Accessory("Invalid Accessory", uuid.generate("quarantined accessory"));
-        offendingCharacteristic = offendingAccessory.addService(Service.Switch).getCharacteristic(Characteristic.On);
+        offendingService = offendingAccessory.addService(Service.Switch);
+        offendingCharacteristic = offendingService.getCharacteristic(Characteristic.On);
 
         bridge.addBridgedAccessories([ validAccessory, offendingAccessory ]);
         bridge._identifierCache = new IdentifierCache(serverUsername);
@@ -472,6 +474,30 @@ describe("Accessory", () => {
 
         expect(await servedAids()).toEqual([ bridge.aid, validAccessory.aid ]);
         expect(warningHandler).toHaveBeenCalledTimes(1);
+      });
+
+      test("quarantines an accessory carrying a characteristic that was constructed with invalid permissions", async () => {
+        const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+
+        const malformedCharacteristic = new Characteristic("Malformed", uuid.generate("characteristic constructed with invalid permissions"), {
+          format: Formats.BOOL,
+          perms: [null as unknown as Perms, Perms.NOTIFY],
+        });
+
+        // Construction is where a plugin hands us its own props, and a bare characteristic has nobody subscribed to it, so the console carries the warning.
+        expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
+        expect(consoleWarnSpy.mock.calls[0][0]).toMatch(/Malformed.*contains invalid permissions/);
+
+        offendingService.addCharacteristic(malformedCharacteristic);
+
+        expect(await servedAids()).toEqual([ bridge.aid, validAccessory.aid ]);
+        expect(warningHandler).toHaveBeenCalledTimes(1);
+        expect(warningHandler).toHaveBeenCalledWith(expect.objectContaining({
+          characteristic: malformedCharacteristic,
+          type: CharacteristicWarningType.ERROR_MESSAGE,
+        }));
+
+        consoleWarnSpy.mockRestore();
       });
 
       test("excludes the same accessory from the configuration that determines the configuration number", async () => {

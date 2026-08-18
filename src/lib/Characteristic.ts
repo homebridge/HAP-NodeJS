@@ -368,13 +368,13 @@ const VALID_PERMS: ReadonlySet<unknown> = new Set<string>([
 /**
  * Checks that a value is a well-formed permissions array: a non-empty array in which every entry is one of the {@link Perms} wire values.
  *
- * HomeKit rejects an accessory whose characteristics carry anything else, so {@link Characteristic.setProps} enforces this and the accessory database
- * excludes bridged accessories that fail it. It is exported so that plugin authors can check a permissions array themselves before handing it over.
+ * HomeKit rejects an accessory whose characteristics carry anything else, so {@link Characteristic.setProps} reports a failing array through the
+ * characteristic warning channel and the accessory database excludes bridged accessories that fail it.
  *
  * @param perms - the value to check.
  * @returns true if the value is a permissions array HomeKit accepts.
  *
- * @group Characteristic
+ * @private
  */
 export function isValidPerms(perms: unknown): perms is Perms[] {
   if (!Array.isArray(perms) || perms.length === 0) {
@@ -400,7 +400,7 @@ export function isValidPerms(perms: unknown): perms is Perms[] {
  * @param perms - the value to format.
  * @returns a human-readable rendering of the value.
  *
- * @group Characteristic
+ * @private
  */
 export function describePerms(perms: unknown): string {
   try {
@@ -1874,9 +1874,18 @@ export class Characteristic extends EventEmitter {
       formatDidChange = this.props.format !== props.format;
       this.props.format = props.format;
     }
+
+    /* A malformed permissions array is reported through the characteristic warning channel and assigned anyway, so the model holds exactly what the plugin
+     * declared and the accessories serving boundary - the one place that decides what HomeKit is shown - can quarantine the accessory until the permissions
+     * are corrected. A throw here would surface inside plugin characteristic constructors and inside cached accessory restore, neither of which is wrapped
+     * by anything that can recover.
+     */
     if (props.perms) {
       if (!isValidPerms(props.perms)) {
-        throw new Error(`characteristic '${this.displayName}' (${this.UUID}) contains invalid permissions: ${describePerms(props.perms)}`);
+        this.characteristicWarning(
+          `characteristic contains invalid permissions: ${describePerms(props.perms)}`,
+          CharacteristicWarningType.ERROR_MESSAGE,
+        );
       }
       this.props.perms = props.perms;
     }
@@ -2913,7 +2922,11 @@ export class Characteristic extends EventEmitter {
   }
 
   private characteristicWarning(message: string, type = CharacteristicWarningType.WARN_MESSAGE, stack = new Error().stack): void {
-    this.emit(CharacteristicEventTypes.CHARACTERISTIC_WARNING, type, message, stack);
+    // A characteristic that is not part of a service yet has nothing subscribed to its warnings, and construction is exactly when a plugin's own mistakes
+    // in props surface, so a warning that reached nobody goes to the console instead of being dropped.
+    if (!this.emit(CharacteristicEventTypes.CHARACTERISTIC_WARNING, type, message, stack)) {
+      console.warn(`HAP-NodeJS WARNING: [${this.displayName} (${this.UUID})] ${message}`);
+    }
   }
 
   /**
