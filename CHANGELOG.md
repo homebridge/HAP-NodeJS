@@ -2,6 +2,18 @@
 
 All notable changes to `@homebridge/hap-nodejs` will be documented in this file. This project tries to adhere to [Semantic Versioning](http://semver.org/).
 
+## v2.2.3 (Pending Release)
+
+### Changes
+
+- ci: rename the pr-labeler caller job from stale to label
+
+### Homebridge Dependencies
+
+- `@homebridge/ciao` @ `v1.3.12`
+- `@homebridge/dbus-native` @ `v0.7.9`
+- `bonjour-hap` @ `v3.10.5`
+
 ## v2.2.2 (2026-08-15)
 
 ### Changes
