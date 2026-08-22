@@ -9,6 +9,8 @@ import {
   Perms,
   SerializedCharacteristic,
   Units,
+  describePerms,
+  isValidPerms,
 } from "./Characteristic";
 import { SelectedRTPStreamConfiguration } from "./definitions";
 import { HAPStatus } from "./HAPServer";
@@ -23,6 +25,50 @@ function createCharacteristicWithProps(props: CharacteristicProps, customUUID?: 
   return new Characteristic("Test", customUUID || uuid.generate("Foo"), props);
 }
 
+describe("isValidPerms", () => {
+  it("accepts an array in which every entry is a permission", () => {
+    expect(isValidPerms([Perms.PAIRED_READ])).toBe(true);
+    expect(isValidPerms([
+      Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.NOTIFY, Perms.ADDITIONAL_AUTHORIZATION, Perms.TIMED_WRITE, Perms.HIDDEN, Perms.WRITE_RESPONSE,
+    ])).toBe(true);
+    // the EVENTS alias shares NOTIFY's wire value and is accepted through it
+    expect(isValidPerms([Perms.EVENTS])).toBe(true);
+  });
+
+  it.each([
+    { label: "an empty array", value: [] },
+    { label: "a bare string", value: "pr" },
+    { label: "null", value: null },
+    { label: "undefined", value: undefined },
+    { label: "an array containing null", value: [null, Perms.NOTIFY] },
+    { label: "an array containing an unknown string", value: ["READ", Perms.NOTIFY] },
+    { label: "a nested array", value: [[Perms.PAIRED_READ]] },
+  ])("rejects $label", ({ value }) => {
+    expect(isValidPerms(value)).toBe(false);
+  });
+
+  it("rejects a sparse array, whose holes would serialize to null", () => {
+    const sparse: (Perms | undefined)[] = [ Perms.PAIRED_READ, Perms.NOTIFY ];
+
+    delete sparse[0];
+
+    expect(isValidPerms(sparse)).toBe(false);
+  });
+});
+
+describe("describePerms", () => {
+  it("renders any value without throwing", () => {
+    expect(describePerms([ Perms.PAIRED_READ, null ])).toBe("[\"pr\",null]");
+    expect(describePerms(undefined)).toBe("undefined");
+
+    const cyclic: unknown[] = [ Perms.NOTIFY ];
+    cyclic.push(cyclic);
+
+    expect(typeof describePerms(cyclic)).toBe("string");
+    expect(typeof describePerms([ 1n ])).toBe("string");
+  });
+});
+
 describe("Characteristic", () => {
   beforeEach(() => {
     jest.resetAllMocks();
@@ -36,6 +82,116 @@ describe("Characteristic", () => {
       characteristic.setProps(NEW_PROPS);
 
       expect(characteristic.props).toEqual(NEW_PROPS);
+    });
+
+    it.each([
+      { perms: [undefined, Perms.NOTIFY] },
+      { perms: [null, Perms.NOTIFY] },
+      { perms: [[Perms.PAIRED_READ], Perms.NOTIFY] },
+      { perms: ["invalid", Perms.NOTIFY] },
+      { perms: [] },
+      { perms: "pr" },
+    ])("should warn about invalid permissions $perms and keep them", ({ perms }) => {
+      const characteristic = createCharacteristic(Formats.BOOL);
+      const warnings: { type: CharacteristicWarningType; message: string }[] = [];
+      characteristic.on(CharacteristicEventTypes.CHARACTERISTIC_WARNING, (type, message) => {
+        warnings.push({ type, message });
+      });
+
+      characteristic.setProps({
+        perms: perms as unknown as Perms[],
+      });
+
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0].type).toEqual(CharacteristicWarningType.ERROR_MESSAGE);
+      expect(warnings[0].message).toMatch(/contains invalid permissions/);
+      // An array the plugin declared is what the model carries, which is what the serving boundary quarantines the accessory over. A non-array
+      // becomes an empty array instead, because everything downstream indexes, iterates and pushes into this - see the test below.
+      expect(characteristic.props.perms).toEqual(Array.isArray(perms) ? perms : []);
+    });
+
+    it("substitutes an empty array for a non-array permissions value, so the array consumers stay safe", () => {
+      const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+      const characteristic = createCharacteristic(Formats.BOOL);
+
+      // A bare string is the dangerous shape: String.prototype.includes substring-matches, so `props.perms.includes(Perms.PAIRED_READ)`
+      // would answer true and silently grant read access, while `props.perms.push(...)` would throw.
+      characteristic.setProps({ perms: Perms.PAIRED_READ as unknown as Perms[] });
+
+      expect(Array.isArray(characteristic.props.perms)).toBe(true);
+      expect(characteristic.props.perms.includes(Perms.PAIRED_READ)).toBe(false);
+      // An empty array is still invalid, so the serving boundary quarantines the accessory rather than serving it with no permissions.
+      expect(isValidPerms(characteristic.props.perms)).toBe(false);
+      expect(() => characteristic.setupAdditionalAuthorization(() => true)).not.toThrow();
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    // Characterisation, not a regression test: the set lookup already rejected these, and the explicit `typeof` check in isValidPerms exists so
+    // VALID_PERMS can be typed ReadonlySet<string> without casting the unknown entry back to a string.
+    it("rejects a permissions entry that is not a string at all", () => {
+      expect(isValidPerms([Perms.NOTIFY, 1])).toBe(false);
+      expect(isValidPerms([Perms.NOTIFY, { toString: () => Perms.NOTIFY }])).toBe(false);
+    });
+
+    it("warns through the console when nothing is subscribed to the characteristic", () => {
+      const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+      const characteristic = createCharacteristic(Formats.BOOL);
+
+      characteristic.setProps({ perms: [null, Perms.NOTIFY] as unknown as Perms[] });
+
+      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
+      expect(consoleWarnSpy.mock.calls[0][0]).toMatch(/^HAP-NodeJS WARNING: \[Test \(.*\)] characteristic contains invalid permissions/);
+      // Nothing else will report this warning, and a characteristic with no service carries no accessory or service name, so the stack that the
+      // event subscribers would have received has to reach the console too - it is the only thing that points at the line responsible.
+      expect(consoleWarnSpy.mock.calls[0][0]).toMatch(/\nThrown at: [\s\S]*\n\s+at /);
+      expect(characteristic.props.perms).toEqual([null, Perms.NOTIFY]);
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it("keeps a characteristic's own value out of the console when nothing is subscribed", () => {
+      const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+      // A value warning quotes the value that was rejected, and on something like PasswordSetting that value is the secret itself. The console
+      // fallback exists for a malformed *declaration*, which never carries one, so a value warning on an unheard characteristic still goes nowhere.
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.STRING,
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+        maxLen: 4,
+      });
+
+      characteristic.updateValue("hunter2-the-actual-password");
+
+      for (const spy of [consoleWarnSpy, consoleErrorSpy]) {
+        for (const call of spy.mock.calls) {
+          expect(String(call[0])).not.toContain("hunter2-the-actual-password");
+        }
+      }
+      expect(consoleWarnSpy).not.toHaveBeenCalled();
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+
+      consoleWarnSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
+    });
+
+    it("warns about permissions whose diagnostic cannot be JSON-serialized", () => {
+      const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+      const characteristic = createCharacteristic(Formats.BOOL);
+      const cyclic: unknown[] = [ Perms.NOTIFY ];
+      cyclic.push(cyclic);
+
+      characteristic.setProps({ perms: cyclic as Perms[] });
+      characteristic.setProps({ perms: [ 1n ] as unknown as Perms[] });
+
+      expect(consoleWarnSpy).toHaveBeenCalledTimes(2);
+      for (const call of consoleWarnSpy.mock.calls) {
+        expect(typeof call[0]).toBe("string");
+        expect(call[0]).toMatch(/contains invalid permissions/);
+      }
+      expect(characteristic.props.perms).toEqual([ 1n ]);
+
+      consoleWarnSpy.mockRestore();
     });
 
     it("should fail when setting invalid value range", () => {
@@ -2195,6 +2351,24 @@ describe("Characteristic", () => {
       const characteristic = Characteristic.deserialize(json);
 
       expect(characteristic instanceof Characteristic.Name).toBeTruthy();
+    });
+
+    it("should deserialize json carrying malformed permissions, on either branch", () => {
+      const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+      const perms = [null, Perms.NOTIFY] as unknown as Perms[];
+      const json: SerializedCharacteristic = {
+        displayName: "Name",
+        UUID: "00000023-0000-1000-8000-0026BB765291",
+        eventOnlyCharacteristic: false,
+        value: "New Name!",
+        props: { format: Formats.STRING, perms: perms, maxLen: 64 },
+      };
+
+      // A restore reaches setProps whether or not the cached json names a constructor, so both routes out of a poisoned cache have to survive it.
+      expect(Characteristic.deserialize(json).props.perms).toEqual(perms);
+      expect(Characteristic.deserialize({ ...json, constructorName: "Name" }).props.perms).toEqual(perms);
+
+      consoleWarnSpy.mockRestore();
     });
 
   });

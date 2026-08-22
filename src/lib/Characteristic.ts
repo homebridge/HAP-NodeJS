@@ -1,6 +1,7 @@
 import assert from "assert";
 import createDebug from "debug";
 import { EventEmitter } from "events";
+import { inspect } from "util";
 import { CharacteristicJsonObject, CharacteristicValue, Nullable, PartialAllowingNull, VoidCallback } from "../types";
 import { CharacteristicWarningType } from "./Accessory";
 import type {
@@ -347,6 +348,66 @@ export const enum Perms {
   TIMED_WRITE = "tw",
   HIDDEN = "hd",
   WRITE_RESPONSE = "wr",
+}
+
+/**
+ * The wire values of {@link Perms}, as a runtime lookup. A const enum is erased during compilation and cannot be enumerated, so this set is the enum's
+ * runtime mirror and lives beside it: a permission added to the enum above must be added here as well. The members are referenced rather than retyped,
+ * so the compiler inlines the same string literals the enum declares. `EVENTS` is an alias of `NOTIFY` and shares its value, hence is not listed.
+ */
+const VALID_PERMS: ReadonlySet<string> = new Set<string>([
+  Perms.PAIRED_READ,
+  Perms.PAIRED_WRITE,
+  Perms.NOTIFY,
+  Perms.ADDITIONAL_AUTHORIZATION,
+  Perms.TIMED_WRITE,
+  Perms.HIDDEN,
+  Perms.WRITE_RESPONSE,
+]);
+
+/**
+ * Checks that a value is a well-formed permissions array: a non-empty array in which every entry is one of the {@link Perms} wire values.
+ *
+ * HomeKit rejects an accessory whose characteristics carry anything else, so {@link Characteristic.setProps} reports a failing array through the
+ * characteristic warning channel and the accessory database excludes bridged accessories that fail it.
+ *
+ * @param perms - the value to check.
+ * @returns true if the value is a permissions array HomeKit accepts.
+ *
+ * @private
+ */
+export function isValidPerms(perms: unknown): perms is Perms[] {
+  if (!Array.isArray(perms) || perms.length === 0) {
+    return false;
+  }
+
+  // for...of iteration surfaces the holes of a sparse array as undefined, which Array.prototype.every would silently skip. A hole survives JSON
+  // serialization as null, the exact malformed entry this check exists to reject.
+  for (const permission of perms) {
+    if (typeof permission !== "string" || !VALID_PERMS.has(permission)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Formats a permissions value for a diagnostic message without ever throwing. `JSON.stringify` is not total over unknown input (a bigint or a cyclic
+ * entry raises a `TypeError`), and a diagnostic must never become the failure it reports, so anything the JSON form cannot render falls back to
+ * `util.inspect`, which renders any value.
+ *
+ * @param perms - the value to format.
+ * @returns a human-readable rendering of the value.
+ *
+ * @private
+ */
+export function describePerms(perms: unknown): string {
+  try {
+    return JSON.stringify(perms) ?? String(perms);
+  } catch {
+    return inspect(perms);
+  }
 }
 
 /**
@@ -1813,9 +1874,27 @@ export class Characteristic extends EventEmitter {
       formatDidChange = this.props.format !== props.format;
       this.props.format = props.format;
     }
+
+    /* A malformed permissions array is reported through the characteristic warning channel and assigned anyway, so the model holds exactly what the plugin
+     * declared and the accessories serving boundary - the one place that decides what HomeKit is shown - can quarantine the accessory until the permissions
+     * are corrected. A throw here would surface inside plugin characteristic constructors and inside cached accessory restore, neither of which is wrapped
+     * by anything that can recover.
+     */
     if (props.perms) {
-      assert(props.perms.length > 0, "characteristic prop perms cannot be empty array");
-      this.props.perms = props.perms;
+      if (!isValidPerms(props.perms)) {
+        this.characteristicWarning(
+          `characteristic contains invalid permissions: ${describePerms(props.perms)}`,
+          CharacteristicWarningType.ERROR_MESSAGE,
+          undefined,
+          true, // a declaration, not a value - safe to print, and nothing else will report it during construction
+        );
+      }
+      /* Everything downstream treats `props.perms` as an array. A non-array is the dangerous shape rather than merely an invalid one: on a string
+       * `includes` substring-matches, so a declared `"pr"` would answer true to a paired-read check and quietly grant access, and `push` would throw
+       * out of {@link setupAdditionalAuthorization}. An empty array fails {@link isValidPerms} exactly as the declared value does, so the accessory is
+       * still quarantined - it just fails closed on the way there. The warning above quotes what the plugin actually declared.
+       */
+      this.props.perms = Array.isArray(props.perms) ? props.perms : [];
     }
 
     if (props.unit !== undefined) {
@@ -2849,8 +2928,29 @@ export class Characteristic extends EventEmitter {
     this.iid = identifierCache.getIID(accessoryName, serviceUUID, serviceSubtype, this.UUID);
   }
 
-  private characteristicWarning(message: string, type = CharacteristicWarningType.WARN_MESSAGE, stack = new Error().stack): void {
-    this.emit(CharacteristicEventTypes.CHARACTERISTIC_WARNING, type, message, stack);
+  /**
+   * @param message - what went wrong.
+   * @param type - the severity the subscribers see.
+   * @param stack - where it was raised.
+   * @param reportWhenUnheard - print to the console if nothing is subscribed. **Only for a message that describes how a characteristic was DECLARED.**
+   * A characteristic that is not part of a service yet has nothing subscribed to its warnings, and a declaration is made in the constructor, which is
+   * exactly where a plugin gets it wrong - so those warnings would otherwise vanish. Every other warning quotes the offending characteristic VALUE
+   * (see {@link validateUserInput}), and on something like {@link Characteristic.PasswordSetting} that value is the secret itself, so those keep the
+   * long-standing behaviour of going nowhere until an accessory is listening.
+   */
+  private characteristicWarning(
+    message: string,
+    type = CharacteristicWarningType.WARN_MESSAGE,
+    stack = new Error().stack,
+    reportWhenUnheard = false,
+  ): void {
+    const heard = this.emit(CharacteristicEventTypes.CHARACTERISTIC_WARNING, type, message, stack);
+
+    if (!heard && reportWhenUnheard) {
+      // The stack the subscribers would have received goes with it: a characteristic with no service carries no accessory or service name, so it is
+      // the only thing that locates the fault.
+      console.warn(`HAP-NodeJS WARNING: [${this.displayName} (${this.UUID})] ${message}\nThrown at: ${stack ?? "unknown"}`);
+    }
   }
 
   /**
