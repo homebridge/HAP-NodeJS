@@ -8,6 +8,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 
 - ci: rename the pr-labeler caller job from stale to label
 - fix: stop one accessory's invalid permissions taking down the whole bridge (#1129)
+- chore(deps): dependency updates
 
 ### Homebridge Dependencies
 
