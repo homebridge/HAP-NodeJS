@@ -197,8 +197,17 @@ describe("hapCrypto", () => {
 
     it("should return zeros for a public key of small order, like tweetnacl", () => {
       const secretKey = hapCrypto.generateCurve25519KeyPair().secretKey;
-      expect(Buffer.from(hapCrypto.generateCurve25519SharedSecKey(secretKey, Buffer.alloc(32)))).toEqual(Buffer.alloc(32));
-      expect(Buffer.from(tweetnacl.scalarMult(secretKey, Buffer.alloc(32)))).toEqual(Buffer.alloc(32));
+      // points of small order (0, 1, a point of order 8, p - 1)
+      const smallOrder = [
+        "0000000000000000000000000000000000000000000000000000000000000000",
+        "0100000000000000000000000000000000000000000000000000000000000000",
+        "e0eb7a7c3b41b8ae1656e3faf19fc46ada098deb9c32b1fd866205165f49b800",
+        "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+      ].map(fromHex);
+      for (const publicKey of smallOrder) {
+        expect(Buffer.from(hapCrypto.generateCurve25519SharedSecKey(secretKey, publicKey))).toEqual(Buffer.alloc(32));
+        expect(Buffer.from(tweetnacl.scalarMult(secretKey, publicKey))).toEqual(Buffer.alloc(32));
+      }
     });
 
     it("should reject keys of the wrong size", () => {

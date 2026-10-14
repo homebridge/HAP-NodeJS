@@ -71,7 +71,10 @@ export function generateCurve25519SharedSecKey(priKey: Uint8Array, pubKey: Uint8
   } catch (error) {
     // OpenSSL refuses a public key of small order, whose shared secret is all zeros; tweetnacl returned the zeros.
     // The peer cannot complete the pairing with it anyway: it still has to sign with its long-term key.
-    return Buffer.alloc(32);
+    if ((error as NodeJS.ErrnoException).code === "ERR_OSSL_FAILED_DURING_DERIVATION") {
+      return Buffer.alloc(32);
+    }
+    throw error;
   }
 }
 
