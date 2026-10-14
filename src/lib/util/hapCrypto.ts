@@ -1,7 +1,6 @@
 import assert from "assert";
 import crypto from "crypto";
 import hkdf from "futoin-hkdf";
-import tweetnacl, { BoxKeyPair } from "tweetnacl";
 import { HAPEncryption } from "./eventedhttp";
 
 if (!crypto.getCiphers().includes("chacha20-poly1305")) {
@@ -9,18 +8,106 @@ if (!crypto.getCiphers().includes("chacha20-poly1305")) {
     "At least a nodejs version of v10.17.0 (excluding v11.0 and v11.1) is required!");
 }
 
+// Curve25519 and Ed25519 use the crypto built into Node.js (OpenSSL). The JavaScript implementation used before
+// (tweetnacl) needed about 115 ms for the X25519 and Ed25519 operations of one pair verify on a Raspberry Pi, about
+// 2 ms natively; a bridge reconnecting all its controllers at once spent seconds on the event loop in them.
+
+// raw 32-byte keys in the DER structures node's crypto takes (RFC 8410)
+const X25519_PKCS8_PREFIX = Buffer.from("302e020100300506032b656e04220420", "hex");
+const X25519_SPKI_PREFIX = Buffer.from("302a300506032b656e032100", "hex");
+const ED25519_PKCS8_PREFIX = Buffer.from("302e020100300506032b657004220420", "hex");
+const ED25519_SPKI_PREFIX = Buffer.from("302a300506032b6570032100", "hex");
+
+function privateKeyObject(prefix: Buffer, key: Uint8Array): crypto.KeyObject {
+  return crypto.createPrivateKey({ key: Buffer.concat([prefix, key]), format: "der", type: "pkcs8" });
+}
+
+function publicKeyObject(prefix: Buffer, key: Uint8Array): crypto.KeyObject {
+  return crypto.createPublicKey({ key: Buffer.concat([prefix, key]), format: "der", type: "spki" });
+}
+
+function rawKey(key: crypto.KeyObject): Buffer {
+  return key.export({ format: "der", type: key.type === "private" ? "pkcs8" : "spki" }).subarray(-32);
+}
+
 /**
  * @group Cryptography
  */
-export function generateCurve25519KeyPair(): BoxKeyPair {
-  return tweetnacl.box.keyPair();
+export interface Curve25519KeyPair {
+  publicKey: Uint8Array;
+  secretKey: Uint8Array;
+}
+
+/**
+ * An Ed25519 key pair. The secret key has 64 bytes: the 32-byte seed followed by the public key
+ * (the layout of tweetnacl, in which the long-term keys of accessories are stored).
+ *
+ * @group Cryptography
+ */
+export interface Ed25519KeyPair {
+  publicKey: Uint8Array;
+  secretKey: Uint8Array;
+}
+
+/**
+ * @group Cryptography
+ */
+export function generateCurve25519KeyPair(): Curve25519KeyPair {
+  const { publicKey, privateKey } = crypto.generateKeyPairSync("x25519");
+  return { publicKey: rawKey(publicKey), secretKey: rawKey(privateKey) };
 }
 
 /**
  * @group Cryptography
  */
 export function generateCurve25519SharedSecKey(priKey: Uint8Array, pubKey: Uint8Array): Uint8Array {
-  return tweetnacl.scalarMult(priKey, pubKey);
+  assert(priKey.length === 32, "bad private key size");
+  assert(pubKey.length === 32, "bad public key size");
+  try {
+    return crypto.diffieHellman({
+      privateKey: privateKeyObject(X25519_PKCS8_PREFIX, priKey),
+      publicKey: publicKeyObject(X25519_SPKI_PREFIX, pubKey),
+    });
+  } catch (error) {
+    // OpenSSL refuses a public key of small order, whose shared secret is all zeros; tweetnacl returned the zeros.
+    // The peer cannot complete the pairing with it anyway: it still has to sign with its long-term key.
+    return Buffer.alloc(32);
+  }
+}
+
+/**
+ * @group Cryptography
+ */
+export function generateEd25519KeyPair(): Ed25519KeyPair {
+  const { publicKey, privateKey } = crypto.generateKeyPairSync("ed25519");
+  const rawPublicKey = rawKey(publicKey);
+  return { publicKey: rawPublicKey, secretKey: Buffer.concat([rawKey(privateKey), rawPublicKey]) };
+}
+
+/**
+ * Signs with the 64-byte secret key of an {@link Ed25519KeyPair}.
+ *
+ * @group Cryptography
+ */
+export function ed25519Sign(message: Uint8Array, secretKey: Uint8Array): Buffer {
+  assert(secretKey.length === 64, "bad secret key size");
+  return crypto.sign(null, message, privateKeyObject(ED25519_PKCS8_PREFIX, secretKey.subarray(0, 32)));
+}
+
+/**
+ * False also for a signature or public key of the wrong size, and for a public key that is no point on the curve.
+ *
+ * @group Cryptography
+ */
+export function ed25519Verify(message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array): boolean {
+  if (signature.length !== 64 || publicKey.length !== 32) {
+    return false;
+  }
+  try {
+    return crypto.verify(null, message, publicKeyObject(ED25519_SPKI_PREFIX, publicKey), signature);
+  } catch (error) {
+    return false;
+  }
 }
 
 /**
