@@ -112,15 +112,87 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("BufferActivityCommand", () => {
+    it("should be able to construct", () => {
+      new Characteristic.BufferActivityCommand();
+    });
+  });
+
+  describe("BufferEventCommand", () => {
+    it("should be able to construct", () => {
+      new Characteristic.BufferEventCommand();
+    });
+  });
+
+  describe("BufferEventSequenceNumber", () => {
+    it("should be able to construct", () => {
+      new Characteristic.BufferEventSequenceNumber();
+    });
+  });
+
+  describe("BufferUploadCommand", () => {
+    it("should be able to construct", () => {
+      new Characteristic.BufferUploadCommand();
+    });
+  });
+
   describe("ButtonEvent", () => {
     it("should be able to construct", () => {
       new Characteristic.ButtonEvent();
     });
   });
 
+  describe("CameraCapabilitiesConfiguration", () => {
+    it("should be able to construct", () => {
+      new Characteristic.CameraCapabilitiesConfiguration();
+    });
+  });
+
+  describe("CameraClientCertificate", () => {
+    it("should be able to construct", () => {
+      new Characteristic.CameraClientCertificate();
+    });
+  });
+
+  describe("CameraClientCertificateStatus", () => {
+    it("should be able to construct", () => {
+      new Characteristic.CameraClientCertificateStatus();
+    });
+  });
+
+  describe("CameraClientCSR", () => {
+    it("should be able to construct", () => {
+      new Characteristic.CameraClientCSR();
+    });
+  });
+
+  describe("CameraKey", () => {
+    it("should be able to construct", () => {
+      new Characteristic.CameraKey();
+    });
+  });
+
+  describe("CameraKeyID", () => {
+    it("should be able to construct", () => {
+      new Characteristic.CameraKeyID();
+    });
+  });
+
   describe("CameraOperatingModeIndicator", () => {
     it("should be able to construct", () => {
       new Characteristic.CameraOperatingModeIndicator();
+    });
+  });
+
+  describe("CameraRecordingPublishingPoint", () => {
+    it("should be able to construct", () => {
+      new Characteristic.CameraRecordingPublishingPoint();
+    });
+  });
+
+  describe("CameraZones", () => {
+    it("should be able to construct", () => {
+      new Characteristic.CameraZones();
     });
   });
 
@@ -223,6 +295,12 @@ describe("CharacteristicDefinitions", () => {
   describe("ContactSensorState", () => {
     it("should be able to construct", () => {
       new Characteristic.ContactSensorState();
+    });
+  });
+
+  describe("ContributingSensors", () => {
+    it("should be able to construct", () => {
+      new Characteristic.ContributingSensors();
     });
   });
 
@@ -640,6 +718,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("MotionEnabled", () => {
+    it("should be able to construct", () => {
+      new Characteristic.MotionEnabled();
+    });
+  });
+
   describe("MultifunctionButton", () => {
     it("should be able to construct", () => {
       new Characteristic.MultifunctionButton();
@@ -922,6 +1006,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("RTPStreamingControl", () => {
+    it("should be able to construct", () => {
+      new Characteristic.RTPStreamingControl();
+    });
+  });
+
   describe("Saturation", () => {
     it("should be able to construct", () => {
       new Characteristic.Saturation();
@@ -979,6 +1069,12 @@ describe("CharacteristicDefinitions", () => {
   describe("SelectedSleepConfiguration", () => {
     it("should be able to construct", () => {
       new Characteristic.SelectedSleepConfiguration();
+    });
+  });
+
+  describe("SensorUUID", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SensorUUID();
     });
   });
 
@@ -1138,6 +1234,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("StreamingEnabled", () => {
+    it("should be able to construct", () => {
+      new Characteristic.StreamingEnabled();
+    });
+  });
+
   describe("StreamingStatus", () => {
     it("should be able to construct", () => {
       new Characteristic.StreamingStatus();
@@ -1165,6 +1267,12 @@ describe("CharacteristicDefinitions", () => {
   describe("SupportedAudioStreamConfiguration", () => {
     it("should be able to construct", () => {
       new Characteristic.SupportedAudioStreamConfiguration();
+    });
+  });
+
+  describe("SupportedAudioStreamTiers", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SupportedAudioStreamTiers();
     });
   });
 
@@ -1249,6 +1357,12 @@ describe("CharacteristicDefinitions", () => {
   describe("SupportedVideoStreamConfiguration", () => {
     it("should be able to construct", () => {
       new Characteristic.SupportedVideoStreamConfiguration();
+    });
+  });
+
+  describe("SupportedVideoStreamTiers", () => {
+    it("should be able to construct", () => {
+      new Characteristic.SupportedVideoStreamTiers();
     });
   });
 
@@ -1495,6 +1609,54 @@ describe("CharacteristicDefinitions", () => {
   describe("WaterLevel", () => {
     it("should be able to construct", () => {
       new Characteristic.WaterLevel();
+    });
+  });
+
+  describe("WebRTCNumberOfActiveSessions", () => {
+    it("should be able to construct", () => {
+      new Characteristic.WebRTCNumberOfActiveSessions();
+    });
+  });
+
+  describe("WebRTCProvideAnswer", () => {
+    it("should be able to construct", () => {
+      new Characteristic.WebRTCProvideAnswer();
+    });
+  });
+
+  describe("WebRTCReoffer", () => {
+    it("should be able to construct", () => {
+      new Characteristic.WebRTCReoffer();
+    });
+  });
+
+  describe("WebRTCSolicitOffer", () => {
+    it("should be able to construct", () => {
+      new Characteristic.WebRTCSolicitOffer();
+    });
+  });
+
+  describe("WebRTCStreamingControl", () => {
+    it("should be able to construct", () => {
+      new Characteristic.WebRTCStreamingControl();
+    });
+  });
+
+  describe("WebRTCSupportedAudioStreamTiers", () => {
+    it("should be able to construct", () => {
+      new Characteristic.WebRTCSupportedAudioStreamTiers();
+    });
+  });
+
+  describe("WebRTCSupportedVideoStreamTiers", () => {
+    it("should be able to construct", () => {
+      new Characteristic.WebRTCSupportedVideoStreamTiers();
+    });
+  });
+
+  describe("WebRTCUpdateSession", () => {
+    it("should be able to construct", () => {
+      new Characteristic.WebRTCUpdateSession();
     });
   });
 

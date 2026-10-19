@@ -305,6 +305,253 @@ export const CharacteristicManualAdditions: Map<string, GeneratedCharacteristic>
     format: "int",
     properties: 3, // read, notify
   }],
+  ["sensor-uuid", {
+    id: "sensor-uuid",
+    UUID: "0000805B-0000-1000-8000-0026BB765291",
+    name: "Sensor UUID",
+    className: "SensorUUID",
+    since: "27",
+    format: "data",
+    properties: 2, // read
+  }],
+  ["motion-enabled", {
+    id: "motion-enabled",
+    UUID: "00008087-0000-1000-8000-0026BB765291",
+    name: "Motion Enabled",
+    className: "MotionEnabled",
+    since: "27",
+    format: "bool",
+    properties: 39, // notify, read, write, timed write
+    adminOnlyAccess: [Access.WRITE],
+  }],
+  ["supported-video-stream-tiers", {
+    id: "supported-video-stream-tiers",
+    UUID: "00008043-0000-1000-8000-0026BB765291",
+    name: "Supported Video Stream Tiers",
+    className: "SupportedVideoStreamTiers",
+    since: "27",
+    format: "tlv8",
+    properties: 3, // notify, read
+  }],
+  ["supported-audio-stream-tiers", {
+    id: "supported-audio-stream-tiers",
+    UUID: "00008044-0000-1000-8000-0026BB765291",
+    name: "Supported Audio Stream Tiers",
+    className: "SupportedAudioStreamTiers",
+    since: "27",
+    format: "tlv8",
+    properties: 3, // notify, read
+  }],
+  ["camera-capabilities", {
+    id: "camera-capabilities",
+    UUID: "00008011-0000-1000-8000-0026BB765291",
+    name: "Camera Capabilities",
+    className: "CameraCapabilitiesConfiguration",
+    since: "27",
+    format: "tlv8",
+    properties: 2, // read
+  }],
+  ["contributing-sensors", {
+    id: "contributing-sensors",
+    UUID: "00008086-0000-1000-8000-0026BB765291",
+    name: "Contributing Sensors",
+    className: "ContributingSensors",
+    since: "27",
+    format: "tlv8",
+    properties: 3, // notify, read
+  }],
+  ["camera-key", {
+    id: "camera-key",
+    UUID: "00008051-0000-1000-8000-0026BB765291",
+    name: "Camera Key",
+    className: "CameraKey",
+    since: "27",
+    format: "tlv8",
+    properties: 36, // write, timed write
+  }],
+  ["camera-key-id", {
+    id: "camera-key-id",
+    UUID: "00008052-0000-1000-8000-0026BB765291",
+    name: "Camera Key ID",
+    className: "CameraKeyID",
+    since: "27",
+    format: "tlv8",
+    properties: 3, // notify, read
+  }],
+  ["camera-buffer-command", {
+    id: "camera-buffer-command",
+    UUID: "00008013-0000-1000-8000-0026BB765291",
+    name: "Buffer Upload Command",
+    className: "BufferUploadCommand",
+    since: "27",
+    format: "tlv8",
+    properties: 134, // read, write, write response
+  }],
+  ["camera-activity-command", {
+    id: "camera-activity-command",
+    UUID: "00008017-0000-1000-8000-0026BB765291",
+    name: "Buffer Activity Command",
+    className: "BufferActivityCommand",
+    since: "27",
+    format: "tlv8",
+    properties: 4, // write
+  }],
+  ["camera-buffer-event-command", {
+    id: "camera-buffer-event-command",
+    UUID: "00008014-0000-1000-8000-0026BB765291",
+    name: "Buffer Event Command",
+    className: "BufferEventCommand",
+    since: "27",
+    format: "tlv8",
+    properties: 134, // read, write, write response
+  }],
+  ["camera-buffer-event-sequence-number", {
+    id: "camera-buffer-event-sequence-number",
+    UUID: "00008015-0000-1000-8000-0026BB765291",
+    name: "Buffer Event Sequence Number",
+    className: "BufferEventSequenceNumber",
+    since: "27",
+    format: "uint32",
+    properties: 3, // notify, read
+  }],
+  ["camera-recording-publishing-point", {
+    id: "camera-recording-publishing-point",
+    UUID: "00008016-0000-1000-8000-0026BB765291",
+    name: "Camera Recording Publishing Point",
+    className: "CameraRecordingPublishingPoint",
+    since: "27",
+    format: "tlv8",
+    properties: 6, // read, write
+  }],
+  ["camera-zones", {
+    id: "camera-zones",
+    UUID: "00008022-0000-1000-8000-0026BB765291",
+    name: "Camera Zones",
+    className: "CameraZones",
+    since: "27",
+    format: "tlv8",
+    properties: 6, // read, write
+  }],
+  ["streaming-enabled", {
+    id: "streaming-enabled",
+    UUID: "00008041-0000-1000-8000-0026BB765291",
+    name: "Streaming Enabled",
+    className: "StreamingEnabled",
+    since: "27",
+    format: "bool",
+    properties: 39, // notify, read, write, timed write
+    adminOnlyAccess: [Access.WRITE],
+  }],
+  ["rtp-streaming-control", {
+    id: "rtp-streaming-control",
+    UUID: "00008045-0000-1000-8000-0026BB765291",
+    name: "RTP Streaming Control",
+    className: "RTPStreamingControl",
+    since: "27",
+    format: "tlv8",
+    properties: 134, // read, write, write response
+  }],
+  ["webrtc-solicit-offer", {
+    id: "webrtc-solicit-offer",
+    UUID: "00008053-0000-1000-8000-0026BB765291",
+    name: "WebRTC Solicit Offer",
+    className: "WebRTCSolicitOffer",
+    since: "27",
+    format: "tlv8",
+    properties: 134, // read, write, write response
+  }],
+  ["webrtc-provide-answer", {
+    id: "webrtc-provide-answer",
+    UUID: "00008054-0000-1000-8000-0026BB765291",
+    name: "WebRTC Provide Answer",
+    className: "WebRTCProvideAnswer",
+    since: "27",
+    format: "tlv8",
+    properties: 134, // read, write, write response
+  }],
+  ["webrtc-streaming-control", {
+    id: "webrtc-streaming-control",
+    UUID: "00008056-0000-1000-8000-0026BB765291",
+    name: "WebRTC Streaming Control",
+    className: "WebRTCStreamingControl",
+    since: "27",
+    format: "tlv8",
+    properties: 134, // read, write, write response
+  }],
+  ["webrtc-number-of-active-sessions", {
+    id: "webrtc-number-of-active-sessions",
+    UUID: "00008057-0000-1000-8000-0026BB765291",
+    name: "WebRTC Number Of Active Sessions",
+    className: "WebRTCNumberOfActiveSessions",
+    since: "27",
+    format: "uint8",
+    properties: 3, // notify, read
+    minValue: 0,
+    maxValue: 255,
+  }],
+  ["webrtc-reoffer", {
+    id: "webrtc-reoffer",
+    UUID: "00008058-0000-1000-8000-0026BB765291",
+    name: "WebRTC Reoffer",
+    className: "WebRTCReoffer",
+    since: "27",
+    format: "tlv8",
+    properties: 134, // read, write, write response
+  }],
+  ["webrtc-update-session", {
+    id: "webrtc-update-session",
+    UUID: "0000805C-0000-1000-8000-0026BB765291",
+    name: "WebRTC Update Session",
+    className: "WebRTCUpdateSession",
+    since: "27",
+    format: "tlv8",
+    properties: 134, // read, write, write response
+  }],
+  ["webrtc-supported-video-stream-tiers", {
+    id: "webrtc-supported-video-stream-tiers",
+    UUID: "00008059-0000-1000-8000-0026BB765291",
+    name: "WebRTC Supported Video Stream Tiers",
+    className: "WebRTCSupportedVideoStreamTiers",
+    since: "27",
+    format: "tlv8",
+    properties: 3, // notify, read
+  }],
+  ["webrtc-supported-audio-stream-tiers", {
+    id: "webrtc-supported-audio-stream-tiers",
+    UUID: "0000805A-0000-1000-8000-0026BB765291",
+    name: "WebRTC Supported Audio Stream Tiers",
+    className: "WebRTCSupportedAudioStreamTiers",
+    since: "27",
+    format: "tlv8",
+    properties: 3, // notify, read
+  }],
+  ["camera-client-csr", {
+    id: "camera-client-csr",
+    UUID: "00008081-0000-1000-8000-0026BB765291",
+    name: "Camera Client CSR",
+    className: "CameraClientCSR",
+    since: "27",
+    format: "tlv8",
+    properties: 134, // read, write, write response
+  }],
+  ["camera-client-certificate", {
+    id: "camera-client-certificate",
+    UUID: "00008082-0000-1000-8000-0026BB765291",
+    name: "Camera Client Certificate",
+    className: "CameraClientCertificate",
+    since: "27",
+    format: "tlv8",
+    properties: 38, // read, write, timed write
+  }],
+  ["camera-client-certificate-status", {
+    id: "camera-client-certificate-status",
+    UUID: "00008083-0000-1000-8000-0026BB765291",
+    name: "Camera Client Certificate Status",
+    className: "CameraClientCertificateStatus",
+    since: "27",
+    format: "tlv8",
+    properties: 3, // notify, read
+  }],
 ]);
 
 export const ServiceNameOverrides: Map<string, string> = new Map([
@@ -329,6 +576,7 @@ interface CharacteristicConfigurationOverride {
 export const ServiceCharacteristicConfigurationOverrides: Map<string, CharacteristicConfigurationOverride> = new Map([
   ["accessory-information", { addedRequired: ["firmware.revision"], removedOptional: ["firmware.revision"] }],
   ["camera-operating-mode", { addedOptional: ["diagonal-field-of-view"] }],
+  ["sensor.motion", { addedOptional: ["contributing-sensors", "motion-enabled"] }],
 ]);
 
 export const ServiceManualAdditions: Map<string, GeneratedService> = new Map([
@@ -379,6 +627,81 @@ export const ServiceManualAdditions: Map<string, GeneratedService> = new Map([
       "tunneled-accessory-connected",
       "tunneled-accessory-state-number",
     ],
+  }],
+  ["camera-capabilities", {
+    id: "camera-capabilities",
+    UUID: "00008010-0000-1000-8000-0026BB765291",
+    name: "Camera Capabilities",
+    className: "CameraCapabilities",
+    since: "27",
+    requiredCharacteristics: ["version", "camera-capabilities"],
+    optionalCharacteristics: ["manually-disabled"],
+  }],
+  ["camera-global-operating-mode", {
+    id: "camera-global-operating-mode",
+    UUID: "00008032-0000-1000-8000-0026BB765291",
+    name: "Camera Global Operating Mode",
+    className: "CameraGlobalOperatingMode",
+    since: "27",
+    requiredCharacteristics: ["homekit-camera-active", "streaming-enabled", "camera-operating-mode-indicator"],
+    optionalCharacteristics: ["manually-disabled", "night-vision", "third-party-camera-active"],
+  }],
+  ["camera-motion-zones", {
+    id: "camera-motion-zones",
+    UUID: "00008021-0000-1000-8000-0026BB765291",
+    name: "Camera Motion Zones",
+    className: "CameraMotionZones",
+    since: "27",
+    requiredCharacteristics: ["version", "active", "camera-zones"],
+  }],
+  ["camera-buffer-management", {
+    id: "camera-buffer-management",
+    UUID: "00008000-0000-1000-8000-0026BB765291",
+    name: "Camera Buffer Management",
+    className: "CameraBufferManagement",
+    since: "27",
+    requiredCharacteristics: [
+      "camera-buffer-command", "camera-activity-command", "camera-buffer-event-command", "camera-buffer-event-sequence-number",
+      "camera-recording-publishing-point",
+    ],
+  }],
+  ["camera-multi-tier-rtp-stream-management", {
+    id: "camera-multi-tier-rtp-stream-management",
+    UUID: "00008031-0000-1000-8000-0026BB765291",
+    name: "Camera Multi-Tier RTP Stream Management",
+    className: "CameraMultiTierRTPStreamManagement",
+    since: "27",
+    requiredCharacteristics: [
+      "streaming-enabled", "status-active", "supported-video-stream-tiers", "supported-audio-stream-tiers", "supported-rtp-configuration",
+      "setup-stream-endpoint", "rtp-streaming-control", "sensor-uuid",
+    ],
+  }],
+  ["camera-webrtc-stream-management", {
+    id: "camera-webrtc-stream-management",
+    UUID: "00008033-0000-1000-8000-0026BB765291",
+    name: "Camera WebRTC Stream Management",
+    className: "CameraWebRTCStreamManagement",
+    since: "27",
+    requiredCharacteristics: [
+      "webrtc-solicit-offer", "webrtc-provide-answer", "webrtc-streaming-control", "webrtc-number-of-active-sessions", "webrtc-reoffer",
+      "webrtc-update-session", "webrtc-supported-video-stream-tiers", "webrtc-supported-audio-stream-tiers", "streaming-enabled", "sensor-uuid",
+    ],
+  }],
+  ["camera-key-management", {
+    id: "camera-key-management",
+    UUID: "00008050-0000-1000-8000-0026BB765291",
+    name: "Camera Key Management",
+    className: "CameraKeyManagement",
+    since: "27",
+    requiredCharacteristics: ["camera-key", "camera-key-id"],
+  }],
+  ["camera-client-certificate-management", {
+    id: "camera-client-certificate-management",
+    UUID: "00008080-0000-1000-8000-0026BB765291",
+    name: "Camera Client Certificate Management",
+    className: "CameraClientCertificateManagement",
+    since: "27",
+    requiredCharacteristics: ["camera-client-csr", "camera-client-certificate", "camera-client-certificate-status"],
   }],
 ]);
 

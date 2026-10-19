@@ -1,5 +1,7 @@
 import { Service } from "../Service";
 
+import type { ResourceRequestReason } from "./CameraController";
+
 /**
  * A ControllerServiceMap represents all services used by a Controller.
  * It is up to the Controller to choose unique and persistent names for its services.
@@ -193,4 +195,29 @@ export interface SerializableController<M extends ControllerServiceMap = Control
  */
 export function isSerializableController(controller: Controller): controller is SerializableController {
   return "serialize" in controller && "deserialize" in controller && "setupStateChangeDelegate" in controller;
+}
+
+/**
+ * A Controller which serves the camera snapshots requested through the HAP image resource request.
+ * An {@link Accessory} routes those requests to the last configured controller implementing this interface.
+ *
+ * @group Controller API
+ */
+export interface SnapshotController<M extends ControllerServiceMap = ControllerServiceMap> extends Controller<M> {
+  /**
+   * @param height - requested image height
+   * @param width - requested image width
+   * @param accessoryName - display name of the accessory, for log output
+   * @param reason - reason of the request, if supplied by the controller
+   * @returns the JPEG image, or rejects with a {@link HAPStatus}
+   */
+  handleSnapshotRequest(height: number, width: number, accessoryName?: string, reason?: ResourceRequestReason): Promise<Buffer>;
+}
+
+/**
+ * @param controller
+ * @group Controller API
+ */
+export function isSnapshotController(controller: Controller): controller is SnapshotController {
+  return typeof (controller as SnapshotController).handleSnapshotRequest === "function";
 }

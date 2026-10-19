@@ -547,9 +547,14 @@ export class RecordingManagement {
     const target: string = message.target;
     const reason: string = message.reason;
 
-    if (target !== "controller" || type !== "ipcamera.recording") {
-      debug("[HDS %s] Received data send with unexpected target: %s or type: %d. Rejecting...",
-        connection.remoteAddress, target, type);
+    // only the recording data stream is ours; other types (e.g. the secure video "ipcamera.snapshot" relay) are
+    // owned by other handlers registered on the same data stream, so leave them alone instead of rejecting
+    if (type !== "ipcamera.recording") {
+      return;
+    }
+
+    if (target !== "controller") {
+      debug("[HDS %s] Received data send with unexpected target: %s. Rejecting...", connection.remoteAddress, target);
       connection.sendResponse(Protocols.DATA_SEND, Topics.OPEN, id, HDSStatus.PROTOCOL_SPECIFIC_ERROR, {
         status: HDSProtocolSpecificErrorReason.UNEXPECTED_FAILURE,
       });

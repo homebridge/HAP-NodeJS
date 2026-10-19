@@ -27,7 +27,7 @@ import {
   Perms,
   Units,
 } from "./Characteristic";
-import { CameraController, Controller, ControllerIdentifier, ControllerServiceMap } from "./controller";
+import { CameraController, Controller, ControllerIdentifier, ControllerServiceMap, ResourceRequestReason, SnapshotController } from "./controller";
 import { createCameraControllerOptions, MOCK_IMAGE } from "./controller/CameraController.spec";
 import { HAPHTTPCode, HAPStatus, IdentifyCallback, TLVErrorCode } from "./HAPServer";
 import { AccessoryInfo, PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
@@ -1996,6 +1996,23 @@ describe("Accessory", () => {
 
         await testRequestResponse({ aid: 1 });
         expect(callback).toHaveBeenCalledWith(undefined, MOCK_IMAGE);
+      });
+
+      test("retrieve image resource from any snapshot controller", async () => {
+        accessory.removeController(cameraController);
+        const snapshotController: SnapshotController = {
+          controllerId: () => "snapshot",
+          constructServices: () => ({}),
+          initWithServices: () => undefined,
+          configureServices: () => undefined,
+          handleControllerRemoved: () => undefined,
+          handleSnapshotRequest: jest.fn().mockResolvedValue(MOCK_IMAGE),
+        };
+        accessory.configureController(snapshotController);
+
+        await testRequestResponse({ reason: ResourceRequestReason.PERIODIC });
+        expect(callback).toHaveBeenCalledWith(undefined, MOCK_IMAGE);
+        expect(snapshotController.handleSnapshotRequest).toHaveBeenCalledWith(200, 200, accessory.displayName, ResourceRequestReason.PERIODIC);
       });
 
       test("retrieve image resource on bridge", async () => {

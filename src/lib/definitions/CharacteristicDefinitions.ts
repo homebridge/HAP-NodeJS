@@ -357,6 +357,78 @@ export class Brightness extends Characteristic {
 Characteristic.Brightness = Brightness;
 
 /**
+ * Characteristic "Buffer Activity Command"
+ * @since iOS 27
+ */
+export class BufferActivityCommand extends Characteristic {
+
+  public static readonly UUID: string = "00008017-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Buffer Activity Command", BufferActivityCommand.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_WRITE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.BufferActivityCommand = BufferActivityCommand;
+
+/**
+ * Characteristic "Buffer Event Command"
+ * @since iOS 27
+ */
+export class BufferEventCommand extends Characteristic {
+
+  public static readonly UUID: string = "00008014-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Buffer Event Command", BufferEventCommand.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.BufferEventCommand = BufferEventCommand;
+
+/**
+ * Characteristic "Buffer Event Sequence Number"
+ * @since iOS 27
+ */
+export class BufferEventSequenceNumber extends Characteristic {
+
+  public static readonly UUID: string = "00008015-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Buffer Event Sequence Number", BufferEventSequenceNumber.UUID, {
+      format: Formats.UINT32,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.BufferEventSequenceNumber = BufferEventSequenceNumber;
+
+/**
+ * Characteristic "Buffer Upload Command"
+ * @since iOS 27
+ */
+export class BufferUploadCommand extends Characteristic {
+
+  public static readonly UUID: string = "00008013-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Buffer Upload Command", BufferUploadCommand.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.BufferUploadCommand = BufferUploadCommand;
+
+/**
  * Characteristic "Button Event"
  */
 export class ButtonEvent extends Characteristic {
@@ -373,6 +445,114 @@ export class ButtonEvent extends Characteristic {
   }
 }
 Characteristic.ButtonEvent = ButtonEvent;
+
+/**
+ * Characteristic "Camera Capabilities"
+ * @since iOS 27
+ */
+export class CameraCapabilitiesConfiguration extends Characteristic {
+
+  public static readonly UUID: string = "00008011-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Camera Capabilities", CameraCapabilitiesConfiguration.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.CameraCapabilitiesConfiguration = CameraCapabilitiesConfiguration;
+
+/**
+ * Characteristic "Camera Client Certificate"
+ * @since iOS 27
+ */
+export class CameraClientCertificate extends Characteristic {
+
+  public static readonly UUID: string = "00008082-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Camera Client Certificate", CameraClientCertificate.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.TIMED_WRITE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.CameraClientCertificate = CameraClientCertificate;
+
+/**
+ * Characteristic "Camera Client Certificate Status"
+ * @since iOS 27
+ */
+export class CameraClientCertificateStatus extends Characteristic {
+
+  public static readonly UUID: string = "00008083-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Camera Client Certificate Status", CameraClientCertificateStatus.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.CameraClientCertificateStatus = CameraClientCertificateStatus;
+
+/**
+ * Characteristic "Camera Client CSR"
+ * @since iOS 27
+ */
+export class CameraClientCSR extends Characteristic {
+
+  public static readonly UUID: string = "00008081-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Camera Client CSR", CameraClientCSR.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.CameraClientCSR = CameraClientCSR;
+
+/**
+ * Characteristic "Camera Key"
+ * @since iOS 27
+ */
+export class CameraKey extends Characteristic {
+
+  public static readonly UUID: string = "00008051-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Camera Key", CameraKey.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_WRITE, Perms.TIMED_WRITE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.CameraKey = CameraKey;
+
+/**
+ * Characteristic "Camera Key ID"
+ * @since iOS 27
+ */
+export class CameraKeyID extends Characteristic {
+
+  public static readonly UUID: string = "00008052-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Camera Key ID", CameraKeyID.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.CameraKeyID = CameraKeyID;
 
 /**
  * Characteristic "Camera Operating Mode Indicator"
@@ -394,6 +574,42 @@ export class CameraOperatingModeIndicator extends Characteristic {
   }
 }
 Characteristic.CameraOperatingModeIndicator = CameraOperatingModeIndicator;
+
+/**
+ * Characteristic "Camera Recording Publishing Point"
+ * @since iOS 27
+ */
+export class CameraRecordingPublishingPoint extends Characteristic {
+
+  public static readonly UUID: string = "00008016-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Camera Recording Publishing Point", CameraRecordingPublishingPoint.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.CameraRecordingPublishingPoint = CameraRecordingPublishingPoint;
+
+/**
+ * Characteristic "Camera Zones"
+ * @since iOS 27
+ */
+export class CameraZones extends Characteristic {
+
+  public static readonly UUID: string = "00008022-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Camera Zones", CameraZones.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.CameraZones = CameraZones;
 
 /**
  * Characteristic "Carbon Dioxide Detected"
@@ -739,6 +955,24 @@ export class ContactSensorState extends Characteristic {
   }
 }
 Characteristic.ContactSensorState = ContactSensorState;
+
+/**
+ * Characteristic "Contributing Sensors"
+ * @since iOS 27
+ */
+export class ContributingSensors extends Characteristic {
+
+  public static readonly UUID: string = "00008086-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Contributing Sensors", ContributingSensors.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.ContributingSensors = ContributingSensors;
 
 /**
  * Characteristic "Cooling Threshold Temperature"
@@ -2174,6 +2408,25 @@ export class MotionDetected extends Characteristic {
 Characteristic.MotionDetected = MotionDetected;
 
 /**
+ * Characteristic "Motion Enabled"
+ * @since iOS 27
+ */
+export class MotionEnabled extends Characteristic {
+
+  public static readonly UUID: string = "00008087-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Motion Enabled", MotionEnabled.UUID, {
+      format: Formats.BOOL,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.TIMED_WRITE],
+      adminOnlyAccess: [Access.WRITE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.MotionEnabled = MotionEnabled;
+
+/**
  * Characteristic "Multifunction Button"
  */
 export class MultifunctionButton extends Characteristic {
@@ -3116,6 +3369,24 @@ export class RouterStatus extends Characteristic {
 Characteristic.RouterStatus = RouterStatus;
 
 /**
+ * Characteristic "RTP Streaming Control"
+ * @since iOS 27
+ */
+export class RTPStreamingControl extends Characteristic {
+
+  public static readonly UUID: string = "00008045-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("RTP Streaming Control", RTPStreamingControl.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.RTPStreamingControl = RTPStreamingControl;
+
+/**
  * Characteristic "Saturation"
  */
 export class Saturation extends Characteristic {
@@ -3314,6 +3585,24 @@ export class SelectedSleepConfiguration extends Characteristic {
   }
 }
 Characteristic.SelectedSleepConfiguration = SelectedSleepConfiguration;
+
+/**
+ * Characteristic "Sensor UUID"
+ * @since iOS 27
+ */
+export class SensorUUID extends Characteristic {
+
+  public static readonly UUID: string = "0000805B-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Sensor UUID", SensorUUID.UUID, {
+      format: Formats.DATA,
+      perms: [Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SensorUUID = SensorUUID;
 
 /**
  * Characteristic "Serial Number"
@@ -3840,6 +4129,25 @@ export class StatusTampered extends Characteristic {
 Characteristic.StatusTampered = StatusTampered;
 
 /**
+ * Characteristic "Streaming Enabled"
+ * @since iOS 27
+ */
+export class StreamingEnabled extends Characteristic {
+
+  public static readonly UUID: string = "00008041-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Streaming Enabled", StreamingEnabled.UUID, {
+      format: Formats.BOOL,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.TIMED_WRITE],
+      adminOnlyAccess: [Access.WRITE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.StreamingEnabled = StreamingEnabled;
+
+/**
  * Characteristic "Streaming Status"
  */
 export class StreamingStatus extends Characteristic {
@@ -3926,6 +4234,24 @@ export class SupportedAudioStreamConfiguration extends Characteristic {
   }
 }
 Characteristic.SupportedAudioStreamConfiguration = SupportedAudioStreamConfiguration;
+
+/**
+ * Characteristic "Supported Audio Stream Tiers"
+ * @since iOS 27
+ */
+export class SupportedAudioStreamTiers extends Characteristic {
+
+  public static readonly UUID: string = "00008044-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Supported Audio Stream Tiers", SupportedAudioStreamTiers.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SupportedAudioStreamTiers = SupportedAudioStreamTiers;
 
 /**
  * Characteristic "Supported Camera Recording Configuration"
@@ -4167,6 +4493,24 @@ export class SupportedVideoStreamConfiguration extends Characteristic {
   }
 }
 Characteristic.SupportedVideoStreamConfiguration = SupportedVideoStreamConfiguration;
+
+/**
+ * Characteristic "Supported Video Stream Tiers"
+ * @since iOS 27
+ */
+export class SupportedVideoStreamTiers extends Characteristic {
+
+  public static readonly UUID: string = "00008043-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Supported Video Stream Tiers", SupportedVideoStreamTiers.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.SupportedVideoStreamTiers = SupportedVideoStreamTiers;
 
 /**
  * Characteristic "Swing Mode"
@@ -5026,6 +5370,152 @@ export class WaterLevel extends Characteristic {
   }
 }
 Characteristic.WaterLevel = WaterLevel;
+
+/**
+ * Characteristic "WebRTC Number Of Active Sessions"
+ * @since iOS 27
+ */
+export class WebRTCNumberOfActiveSessions extends Characteristic {
+
+  public static readonly UUID: string = "00008057-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("WebRTC Number Of Active Sessions", WebRTCNumberOfActiveSessions.UUID, {
+      format: Formats.UINT8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      minValue: 0,
+      maxValue: 255,
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.WebRTCNumberOfActiveSessions = WebRTCNumberOfActiveSessions;
+
+/**
+ * Characteristic "WebRTC Provide Answer"
+ * @since iOS 27
+ */
+export class WebRTCProvideAnswer extends Characteristic {
+
+  public static readonly UUID: string = "00008054-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("WebRTC Provide Answer", WebRTCProvideAnswer.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.WebRTCProvideAnswer = WebRTCProvideAnswer;
+
+/**
+ * Characteristic "WebRTC Reoffer"
+ * @since iOS 27
+ */
+export class WebRTCReoffer extends Characteristic {
+
+  public static readonly UUID: string = "00008058-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("WebRTC Reoffer", WebRTCReoffer.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.WebRTCReoffer = WebRTCReoffer;
+
+/**
+ * Characteristic "WebRTC Solicit Offer"
+ * @since iOS 27
+ */
+export class WebRTCSolicitOffer extends Characteristic {
+
+  public static readonly UUID: string = "00008053-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("WebRTC Solicit Offer", WebRTCSolicitOffer.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.WebRTCSolicitOffer = WebRTCSolicitOffer;
+
+/**
+ * Characteristic "WebRTC Streaming Control"
+ * @since iOS 27
+ */
+export class WebRTCStreamingControl extends Characteristic {
+
+  public static readonly UUID: string = "00008056-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("WebRTC Streaming Control", WebRTCStreamingControl.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.WebRTCStreamingControl = WebRTCStreamingControl;
+
+/**
+ * Characteristic "WebRTC Supported Audio Stream Tiers"
+ * @since iOS 27
+ */
+export class WebRTCSupportedAudioStreamTiers extends Characteristic {
+
+  public static readonly UUID: string = "0000805A-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("WebRTC Supported Audio Stream Tiers", WebRTCSupportedAudioStreamTiers.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.WebRTCSupportedAudioStreamTiers = WebRTCSupportedAudioStreamTiers;
+
+/**
+ * Characteristic "WebRTC Supported Video Stream Tiers"
+ * @since iOS 27
+ */
+export class WebRTCSupportedVideoStreamTiers extends Characteristic {
+
+  public static readonly UUID: string = "00008059-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("WebRTC Supported Video Stream Tiers", WebRTCSupportedVideoStreamTiers.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.WebRTCSupportedVideoStreamTiers = WebRTCSupportedVideoStreamTiers;
+
+/**
+ * Characteristic "WebRTC Update Session"
+ * @since iOS 27
+ */
+export class WebRTCUpdateSession extends Characteristic {
+
+  public static readonly UUID: string = "0000805C-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("WebRTC Update Session", WebRTCUpdateSession.UUID, {
+      format: Formats.TLV8,
+      perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.WebRTCUpdateSession = WebRTCUpdateSession;
 
 /**
  * Characteristic "Wi-Fi Capabilities"

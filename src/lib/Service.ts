@@ -16,9 +16,17 @@ import type {
   Assistant,
   AudioStreamManagement,
   Battery,
+  CameraBufferManagement,
+  CameraCapabilities,
+  CameraClientCertificateManagement,
+  CameraGlobalOperatingMode,
+  CameraKeyManagement,
+  CameraMotionZones,
+  CameraMultiTierRTPStreamManagement,
   CameraOperatingMode,
   CameraRecordingManagement,
   CameraRTPStreamManagement,
+  CameraWebRTCStreamManagement,
   CarbonDioxideSensor,
   CarbonMonoxideSensor,
   CloudRelay,
@@ -215,6 +223,34 @@ export class Service extends EventEmitter {
   /**
    * @group Service Definitions
    */
+  public static CameraBufferManagement: typeof CameraBufferManagement;
+  /**
+   * @group Service Definitions
+   */
+  public static CameraCapabilities: typeof CameraCapabilities;
+  /**
+   * @group Service Definitions
+   */
+  public static CameraClientCertificateManagement: typeof CameraClientCertificateManagement;
+  /**
+   * @group Service Definitions
+   */
+  public static CameraGlobalOperatingMode: typeof CameraGlobalOperatingMode;
+  /**
+   * @group Service Definitions
+   */
+  public static CameraKeyManagement: typeof CameraKeyManagement;
+  /**
+   * @group Service Definitions
+   */
+  public static CameraMotionZones: typeof CameraMotionZones;
+  /**
+   * @group Service Definitions
+   */
+  public static CameraMultiTierRTPStreamManagement: typeof CameraMultiTierRTPStreamManagement;
+  /**
+   * @group Service Definitions
+   */
   public static CameraOperatingMode: typeof CameraOperatingMode;
   /**
    * @group Service Definitions
@@ -224,6 +260,10 @@ export class Service extends EventEmitter {
    * @group Service Definitions
    */
   public static CameraRTPStreamManagement: typeof CameraRTPStreamManagement;
+  /**
+   * @group Service Definitions
+   */
+  public static CameraWebRTCStreamManagement: typeof CameraWebRTCStreamManagement;
   /**
    * @group Service Definitions
    */
