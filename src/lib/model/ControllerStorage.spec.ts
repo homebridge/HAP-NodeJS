@@ -12,7 +12,7 @@ interface State {
 // characteristic updates during deserialize trigger its own change listeners
 class SteppedController implements SerializableController<ControllerServiceMap, State> {
   state: State = {};
-  private stateChangeDelegate?: StateChangeDelegate;
+  protected stateChangeDelegate?: StateChangeDelegate;
 
   controllerId(): ControllerIdentifier {
     return "stepped";
@@ -53,6 +53,22 @@ class SteppedController implements SerializableController<ControllerServiceMap, 
   }
 }
 
+// can't read its stored data and reports the reset, like the adaptive lighting controller
+class UnreadableController extends SteppedController {
+  controllerId(): ControllerIdentifier {
+    return "unreadable";
+  }
+
+  deserialize(): void {
+    throw new Error("unreadable");
+  }
+
+  handleFactoryReset(): void {
+    super.handleFactoryReset();
+    this.stateChangeDelegate?.();
+  }
+}
+
 describe("ControllerStorage", () => {
   test("state changes reported while restoring do not overwrite the stored data", () => {
     const accessory = new Accessory("Test", uuid.generate("controller-storage"));
@@ -72,6 +88,24 @@ describe("ControllerStorage", () => {
     storage.handleStateChange(controller);
     // @ts-expect-error: private access
     expect(storage.controllerData.stepped.data).toEqual({ first: "a", second: "c" });
+    // @ts-expect-error: private access
+    clearTimeout(storage.queuedSaveTimeout);
+  });
+
+  test("the reset after unreadable stored data is saved", () => {
+    const accessory = new Accessory("Test", uuid.generate("controller-storage-reset"));
+    const storage = new ControllerStorage(accessory);
+    const controller = new UnreadableController();
+    storage.trackController(controller);
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    // @ts-expect-error: private access
+    storage.init([{ type: "unreadable", controllerData: { data: { first: "a", second: "b" } } }]);
+
+    expect(warn).toHaveBeenCalledTimes(1);
+    // @ts-expect-error: private access
+    expect(storage.controllerData.unreadable.data).toEqual({});
+    warn.mockRestore();
     // @ts-expect-error: private access
     clearTimeout(storage.queuedSaveTimeout);
   });

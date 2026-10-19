@@ -188,6 +188,8 @@ export class ControllerStorage {
         controller.deserialize(controllerData.data);
       } catch (error) {
         console.warn(`Could not initialize controller of type '${controller.controllerId()}' from data stored on disk. Resetting to default: ${error.stack}`);
+        // the reset must be saved, otherwise the unreadable data stays on disk
+        this.restoring = false;
         controller.handleFactoryReset();
       } finally {
         this.restoring = wasRestoring;
