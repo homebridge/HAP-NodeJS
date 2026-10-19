@@ -7,13 +7,15 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 ### Changes
 
 - fix: ignore state changes reported while a controller is being restored (#1133) (@seydx)
+- perf: use the native crypto of Node.js for Curve25519 and Ed25519 (#1135) (@StefanRiese)
 - chore: update hap characteristics and services
+- chore(deps): dependency updates
 
 ### Homebridge Dependencies
 
-- `@homebridge/ciao` @ `v1.3.12`
-- `@homebridge/dbus-native` @ `v0.7.9`
-- `bonjour-hap` @ `v3.10.5`
+- `@homebridge/ciao` @ `v1.3.13-beta`
+- `@homebridge/dbus-native` @ `v0.7.10-beta`
+- `bonjour-hap` @ `v3.10.6-beta`
 
 ## v2.2.3 (2026-08-22)
 
