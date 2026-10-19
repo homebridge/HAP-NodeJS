@@ -47,6 +47,11 @@ export class ControllerStorage {
   private controllerData: Record<ControllerIdentifier, ControllerData> = {};
   private restoredAccessories?: Record<string, StoredControllerData[]>; // indexed by accessory UUID
 
+  // deserializing a controller updates its characteristics, which can report state changes (its own, or
+  // those of another controller listening on a shared service) before the restore is complete.
+  // Those must not overwrite the stored data with a partially restored state.
+  private restoring = false;
+
   private parent?: ControllerStorage;
   private linkedAccessories?: ControllerStorage[];
 
@@ -133,6 +138,9 @@ export class ControllerStorage {
   }
 
   private handleStateChange(controller: SerializableController) {
+    if (this.restoring) {
+      return;
+    }
     const id = controller.controllerId();
     const serialized = controller.serialize();
 
@@ -174,11 +182,17 @@ export class ControllerStorage {
       this.accessoryUUID, controller.controllerId(), !!controllerData);
 
     if (controllerData) {
+      const wasRestoring = this.restoring;
+      this.restoring = true;
       try {
         controller.deserialize(controllerData.data);
       } catch (error) {
         console.warn(`Could not initialize controller of type '${controller.controllerId()}' from data stored on disk. Resetting to default: ${error.stack}`);
+        // the reset must be saved, otherwise the unreadable data stays on disk
+        this.restoring = false;
         controller.handleFactoryReset();
+      } finally {
+        this.restoring = wasRestoring;
       }
       controllerData.purgeOnNextLoad = undefined;
     }
@@ -202,10 +216,15 @@ export class ControllerStorage {
     }
 
     const restoredControllers: ControllerIdentifier[] = [];
-    this.trackedControllers.forEach(controller => {
-      this.restoreController(controller);
-      restoredControllers.push(controller.controllerId());
-    });
+    this.restoring = true;
+    try {
+      this.trackedControllers.forEach(controller => {
+        this.restoreController(controller);
+        restoredControllers.push(controller.controllerId());
+      });
+    } finally {
+      this.restoring = false;
+    }
     this.trackedControllers.splice(0, this.trackedControllers.length); // clear tracking list
 
     let purgedData = false;
