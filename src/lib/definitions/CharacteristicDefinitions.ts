@@ -1,5 +1,5 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=888
+// V=889
 
 import { Access, Characteristic, Formats, Perms, Units } from "../Characteristic";
 
@@ -386,8 +386,11 @@ export class CameraOperatingModeIndicator extends Characteristic {
 
   constructor() {
     super("Camera Operating Mode Indicator", CameraOperatingModeIndicator.UUID, {
-      format: Formats.BOOL,
+      format: Formats.UINT8,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.TIMED_WRITE],
+      minValue: 0,
+      maxValue: 1,
+      minStep: 1,
       validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
@@ -1543,6 +1546,7 @@ export class HomeKitCameraActive extends Characteristic {
       perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
       minValue: 0,
       maxValue: 1,
+      minStep: 1,
       validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
@@ -2022,8 +2026,11 @@ export class ManuallyDisabled extends Characteristic {
 
   constructor() {
     super("Manually Disabled", ManuallyDisabled.UUID, {
-      format: Formats.BOOL,
+      format: Formats.UINT8,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      minValue: 0,
+      maxValue: 1,
+      minStep: 1,
       validValues: [0, 1],
     });
     this.value = this.getDefaultValue();
@@ -2811,6 +2818,23 @@ export class ProgramMode extends Characteristic {
   }
 }
 Characteristic.ProgramMode = ProgramMode;
+
+/**
+ * Characteristic "Proximity Control Enabled"
+ */
+export class ProximityControlEnabled extends Characteristic {
+
+  public static readonly UUID: string = "00000316-0000-1000-8000-0026BB765291";
+
+  constructor() {
+    super("Proximity Control Enabled", ProximityControlEnabled.UUID, {
+      format: Formats.BOOL,
+      perms: [Perms.NOTIFY, Perms.PAIRED_READ, Perms.PAIRED_WRITE],
+    });
+    this.value = this.getDefaultValue();
+  }
+}
+Characteristic.ProximityControlEnabled = ProximityControlEnabled;
 
 /**
  * Characteristic "Received Signal Strength Indication"
@@ -4607,6 +4631,9 @@ export class ThirdPartyCameraActive extends Characteristic {
     super("Third Party Camera Active", ThirdPartyCameraActive.UUID, {
       format: Formats.UINT8,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ],
+      minValue: 0,
+      maxValue: 1,
+      minStep: 1,
       validValues: [0, 1],
     });
     this.value = this.getDefaultValue();

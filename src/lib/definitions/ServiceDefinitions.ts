@@ -1,5 +1,5 @@
 // THIS FILE IS AUTO-GENERATED - DO NOT MODIFY
-// V=888
+// V=889
 
 import { Characteristic } from "../Characteristic";
 import { Service } from "../Service";
@@ -1034,6 +1034,22 @@ export class ProtocolInformation extends Service {
   }
 }
 Service.ProtocolInformation = ProtocolInformation;
+
+/**
+ * Service "Proximity Control"
+ */
+export class ProximityControl extends Service {
+
+  public static readonly UUID: string = "00000315-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, ProximityControl.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.ProximityControlEnabled);
+  }
+}
+Service.ProximityControl = ProximityControl;
 
 /**
  * Service "Security System"

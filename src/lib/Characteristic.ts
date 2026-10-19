@@ -144,6 +144,7 @@ import type {
   ProgrammableSwitchEvent,
   ProgrammableSwitchOutputState,
   ProgramMode,
+  ProximityControlEnabled,
   ReceivedSignalStrengthIndication,
   ReceiverSensitivity,
   RecordingAudioActive,
@@ -1293,6 +1294,10 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static ProgramMode: typeof ProgramMode;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static ProximityControlEnabled: typeof ProximityControlEnabled;
   /**
    * @group Characteristic Definitions
    */

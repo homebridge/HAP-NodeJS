@@ -51,6 +51,7 @@ import type {
   Pairing,
   PowerManagement,
   ProtocolInformation,
+  ProximityControl,
   SecuritySystem,
   ServiceLabel,
   Siri,
@@ -353,6 +354,10 @@ export class Service extends EventEmitter {
    * @group Service Definitions
    */
   public static ProtocolInformation: typeof ProtocolInformation;
+  /**
+   * @group Service Definitions
+   */
+  public static ProximityControl: typeof ProximityControl;
   /**
    * @group Service Definitions
    */

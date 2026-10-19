@@ -838,6 +838,12 @@ describe("CharacteristicDefinitions", () => {
     });
   });
 
+  describe("ProximityControlEnabled", () => {
+    it("should be able to construct", () => {
+      new Characteristic.ProximityControlEnabled();
+    });
+  });
+
   describe("ReceivedSignalStrengthIndication", () => {
     it("should be able to construct", () => {
       new Characteristic.ReceivedSignalStrengthIndication();
