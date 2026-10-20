@@ -8,11 +8,6 @@ if (!crypto.getCiphers().includes("chacha20-poly1305")) {
     "At least a nodejs version of v10.17.0 (excluding v11.0 and v11.1) is required!");
 }
 
-// Curve25519 and Ed25519 use the crypto built into Node.js (OpenSSL). The JavaScript implementation used before
-// (tweetnacl) needed about 115 ms for the X25519 and Ed25519 operations of one pair verify on a Raspberry Pi, about
-// 2 ms natively; a bridge reconnecting all its controllers at once spent seconds on the event loop in them.
-
-// raw 32-byte keys in the DER structures node's crypto takes (RFC 8410)
 const X25519_PKCS8_PREFIX = Buffer.from("302e020100300506032b656e04220420", "hex");
 const X25519_SPKI_PREFIX = Buffer.from("302a300506032b656e032100", "hex");
 const ED25519_PKCS8_PREFIX = Buffer.from("302e020100300506032b657004220420", "hex");
