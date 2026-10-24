@@ -1,11 +1,11 @@
 import assert from "assert";
 import crypto from "crypto";
 import createDebug from "debug";
-import tweetnacl from "tweetnacl";
 import util from "util";
 import { AccessoryJsonObject, CharacteristicJsonObject, MacAddress, ServiceJsonObject } from "../../types";
 import { Categories } from "../Accessory";
 import { EventedHTTPServer, HAPConnection, HAPUsername } from "../util/eventedhttp";
+import { generateEd25519KeyPair } from "../util/hapCrypto";
 import { HAPStorage } from "./HAPStorage";
 import { readFileSync } from "node:fs";
 
@@ -301,7 +301,7 @@ export class AccessoryInfo {
     accessoryInfo.lastFirmwareVersion = getVersion();
 
     // Create a new unique key pair for this accessory.
-    const keyPair = tweetnacl.sign.keyPair();
+    const keyPair = generateEd25519KeyPair();
 
     accessoryInfo.signSk = Buffer.from(keyPair.secretKey);
     accessoryInfo.signPk = Buffer.from(keyPair.publicKey);

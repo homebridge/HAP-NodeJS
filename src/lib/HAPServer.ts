@@ -3,7 +3,6 @@ import createDebug from "debug";
 import { EventEmitter } from "events";
 import { SRP, SrpServer } from "fast-srp-hap";
 import { IncomingMessage, ServerResponse } from "http";
-import tweetnacl from "tweetnacl";
 import { URL } from "url";
 import { consideredTrue, HAPMimeTypes, PairingStates, PairMethods, TLVValues } from "../internal-types";
 import {
@@ -634,7 +633,7 @@ export class HAPServer extends EventEmitter {
     const controllerInfo = Buffer.from("Pair-Setup-Controller-Sign-Info");
     const outputKey = hapCrypto.HKDF("sha512", controllerSalt, S_private, controllerInfo, 32);
     const completeData = Buffer.concat([outputKey, clientUsername, clientLTPK]);
-    if (!tweetnacl.sign.detached.verify(completeData, clientProof, clientLTPK)) {
+    if (!hapCrypto.ed25519Verify(completeData, clientProof, clientLTPK)) {
       debug("[%s] Invalid signature", this.accessoryInfo.username);
       response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
       response.end(tlv.encode(TLVValues.SEQUENCE_NUM, PairingStates.M6, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
@@ -662,7 +661,7 @@ export class HAPServer extends EventEmitter {
     const usernameData = Buffer.from(this.accessoryInfo.username);
     const material = Buffer.concat([outputKey, usernameData, serverLTPK]);
     const privateKey = Buffer.from(this.accessoryInfo.signSk);
-    const serverProof = tweetnacl.sign.detached(material, privateKey);
+    const serverProof = hapCrypto.ed25519Sign(material, privateKey);
     const message = tlv.encode(TLVValues.USERNAME, usernameData, TLVValues.PUBLIC_KEY, serverLTPK, TLVValues.PROOF, serverProof);
 
     const encrypted = hapCrypto.chacha20_poly1305_encryptAndSeal(hkdfEncKey, Buffer.from("PS-Msg06"), null, message);
@@ -723,7 +722,7 @@ export class HAPServer extends EventEmitter {
     const usernameData = Buffer.from(this.accessoryInfo.username);
     const material = Buffer.concat([publicKey, usernameData, clientPublicKey]);
     const privateKey = Buffer.from(this.accessoryInfo.signSk);
-    const serverProof = tweetnacl.sign.detached(material, privateKey);
+    const serverProof = hapCrypto.ed25519Sign(material, privateKey);
     const encSalt = Buffer.from("Pair-Verify-Encrypt-Salt");
     const encInfo = Buffer.from("Pair-Verify-Encrypt-Info");
     const outputKey = hapCrypto.HKDF("sha512", encSalt, sharedSec, encInfo, 32).subarray(0, 32);
@@ -804,7 +803,7 @@ export class HAPServer extends EventEmitter {
       connection._pairVerifyState = undefined;
       return;
     }
-    if (!tweetnacl.sign.detached.verify(material, proof, clientPublicKey)) {
+    if (!hapCrypto.ed25519Verify(material, proof, clientPublicKey)) {
       debug("[%s] Client %s provided an invalid signature", this.accessoryInfo.username, clientUsername);
       response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
       response.end(tlv.encode(TLVValues.STATE, PairingStates.M4, TLVValues.ERROR_CODE, TLVErrorCode.AUTHENTICATION));
