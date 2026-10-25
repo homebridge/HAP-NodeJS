@@ -43,6 +43,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix(characteristic): recompute the configuration number when setProps is called after publish
 - refactor(accessory): share the read and write timeout handling and answer an empty write at once
 - fix(server): answer a malformed request URL with 400 instead of crashing
+- fix(server): only accept the proxy socket on the internal loopback HTTP server
 
 ### Homebridge Dependencies
 

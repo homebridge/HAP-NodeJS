@@ -1,4 +1,5 @@
 import { IncomingMessage, ServerResponse } from "http";
+import net, { AddressInfo } from "net";
 import os from "os";
 import { HAPHTTPClient } from "../../test-utils/HAPHTTPClient";
 import { HAPHTTPCode } from "../HAPServer";
@@ -282,6 +283,101 @@ describe("eventedhttp", () => {
   });
 
   // TODO test events not delivered while in a request!
+
+  describe("internal HTTP server", () => {
+    // a local process connecting to the internal loopback port must not be able to send requests as this connection
+    test("should reject a socket which is not the proxy socket", async () => {
+      server.once(EventedHTTPServerEvent.REQUEST, defaultRequestHandler);
+      const connectionOpened: Promise<HAPConnection> = awaitEventOnce(server, EventedHTTPServerEvent.CONNECTION_OPENED);
+      const client = await connectClient();
+      const connection = await connectionOpened;
+      expect((await client.writeHTTPRequest("GET", "/")).statusCode).toBe(HAPHTTPCode.OK);
+
+      const requestHandler = jest.fn(defaultRequestHandler);
+      server.on(EventedHTTPServerEvent.REQUEST, requestHandler);
+
+      // @ts-expect-error: private access
+      const internalAddress = connection.internalHttpServer.address() as AddressInfo;
+      const foreignSocket = net.connect(internalAddress.port, internalAddress.address);
+      foreignSocket.on("error", () => {});
+      const received: Buffer[] = [];
+      foreignSocket.on("data", (data: Buffer) => received.push(data));
+      const closed = new Promise<boolean>(resolve => foreignSocket.once("close", () => resolve(true)));
+      foreignSocket.write("GET /accessories HTTP/1.1\r\nHost: localhost\r\n\r\n");
+      const wasClosed = await Promise.race([
+        closed,
+        PromiseTimeout(1000).then(() => false),
+      ]);
+      foreignSocket.destroy();
+
+      expect(wasClosed).toBe(true);
+      expect(requestHandler).not.toHaveBeenCalled();
+      expect(Buffer.concat(received).length).toBe(0);
+
+      // the real connection keeps working
+      expect((await client.writeHTTPRequest("GET", "/")).statusCode).toBe(HAPHTTPCode.OK);
+      expect(requestHandler).toHaveBeenCalledTimes(1);
+    });
+
+    test("should reject a request from a socket which connected before the proxy socket was known", async () => {
+      server.once(EventedHTTPServerEvent.REQUEST, defaultRequestHandler);
+      const connectionOpened: Promise<HAPConnection> = awaitEventOnce(server, EventedHTTPServerEvent.CONNECTION_OPENED);
+      const client = await connectClient();
+      const connection = await connectionOpened;
+      expect((await client.writeHTTPRequest("GET", "/")).statusCode).toBe(HAPHTTPCode.OK);
+
+      const requestHandler = jest.fn();
+      server.on(EventedHTTPServerEvent.REQUEST, requestHandler);
+
+      // such a socket got past the connection check, so it is only caught once it sends a request
+      const foreignSocket = {
+        remoteAddress: "127.0.0.1",
+        remotePort: 1,
+        setNoDelay: jest.fn(),
+        destroy: jest.fn(),
+      };
+      // @ts-expect-error: private access
+      connection.handleHttpServerRequest({ socket: foreignSocket, url: "/accessories" }, {});
+
+      expect(foreignSocket.destroy).toHaveBeenCalled();
+      expect(requestHandler).not.toHaveBeenCalled();
+    });
+
+    test("should listen on the IPv4 loopback address when no loopback interface was detected", async () => {
+      // the setup file already loaded this module graph, so a fresh copy is loaded with net-utils mocked
+      let FreshEventedHTTPServer!: typeof EventedHTTPServer;
+      jest.isolateModules(() => {
+        jest.doMock("./net-utils", () => ({
+          ...jest.requireActual("./net-utils"),
+          getOSLoopbackAddressIfAvailable: () => undefined,
+        }));
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        FreshEventedHTTPServer = require("./eventedhttp").EventedHTTPServer;
+      });
+
+      const freshServer = new FreshEventedHTTPServer();
+      try {
+        freshServer.listen(0, "127.0.0.1");
+        await awaitEventOnce(freshServer, EventedHTTPServerEvent.LISTENING);
+
+        const connectionOpened: Promise<HAPConnection> = awaitEventOnce(freshServer, EventedHTTPServerEvent.CONNECTION_OPENED);
+        const client = new HAPHTTPClient("127.0.0.1", freshServer.address().port);
+        clients.push(client);
+        await client.connect();
+        const connection = await connectionOpened;
+        freshServer.once(EventedHTTPServerEvent.REQUEST, defaultRequestHandler);
+        expect((await client.writeHTTPRequest("GET", "/")).statusCode).toBe(HAPHTTPCode.OK);
+
+        // without a detected loopback address, Node.js would otherwise listen on every interface
+        // @ts-expect-error: private access
+        expect((connection.internalHttpServer.address() as AddressInfo).address).toBe("127.0.0.1");
+      } finally {
+        freshServer.stop();
+        freshServer.destroy();
+        jest.dontMock("./net-utils");
+      }
+    });
+  });
 });
 
 describe(HAPConnection, () => {
