@@ -579,6 +579,8 @@ export class HDSConnectionError extends Error {
 export class DataStreamConnection extends EventEmitter {
 
   private static readonly MAX_PAYLOAD_LENGTH = 0b11111111111111111111;
+  // time we give the remote to close its side of the socket after we called `end()`, before we destroy the socket
+  private static readonly SOCKET_END_TIMEOUT = 5000;
 
   private socket: Socket;
   private connection?: HAPConnection; // reference to the hap connection. is present when state > UNIDENTIFIED
@@ -608,6 +610,7 @@ export class DataStreamConnection extends EventEmitter {
   private responseTimers: Record<number, NodeJS.Timeout> = {}; // used to store response timeouts indexed by their respective requestId
 
   private helloTimer?: NodeJS.Timeout;
+  private socketEndTimer?: NodeJS.Timeout;
 
   constructor(socket: Socket) {
     super();
@@ -1123,6 +1126,13 @@ export class DataStreamConnection extends EventEmitter {
 
     this.state = ConnectionState.CLOSING;
     this.socket.end();
+
+    // a remote which never closes its side would otherwise keep the half-closed socket (and this connection) around forever
+    this.socketEndTimer = setTimeout(() => {
+      debug("[%s] Remote did not close the socket in time. Destroying it now.", this.remoteAddress);
+      this.socket.destroy();
+    }, DataStreamConnection.SOCKET_END_TIMEOUT);
+    this.socketEndTimer.unref();
   }
 
   isConsideredClosed(): boolean {
@@ -1143,6 +1153,11 @@ export class DataStreamConnection extends EventEmitter {
   private onSocketClose() {
     // this instance is now considered completely dead
     this.state = ConnectionState.CLOSED;
+
+    if (this.socketEndTimer) {
+      clearTimeout(this.socketEndTimer);
+      this.socketEndTimer = undefined;
+    }
     this.emit(DataStreamConnectionEvent.CLOSED);
 
     this.connection?.removeListener(HAPConnectionEvent.CLOSED, this.hapConnectionClosedListener);
