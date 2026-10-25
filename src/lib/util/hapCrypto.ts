@@ -235,7 +235,12 @@ export function layerDecrypt(packet: Buffer, encryption: HAPEncryption): Buffer 
   const total = packet.length;
 
   for (let offset = 0; offset < total;) {
-    const realDataLength = packet.subarray(offset, offset + 2).readUInt16LE(0);
+    if (total - offset < 2) { // TCP split the packet within the 2-byte length header
+      encryption.incompleteFrame = packet.subarray(offset);
+      break;
+    }
+
+    const realDataLength = packet.readUInt16LE(offset);
 
     const availableDataLength = total - offset - 2 - 16;
     if (realDataLength > availableDataLength) { // Fragmented packet
