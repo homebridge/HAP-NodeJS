@@ -430,10 +430,11 @@ export class HAPConnection extends EventEmitter {
     this.internalHttpServer.timeout = 0; // clients expect to hold connections open as long as they want
     this.internalHttpServer.keepAliveTimeout = 0; // workaround for https://github.com/nodejs/node/issues/13391
     this.internalHttpServer.on("listening", this.onHttpServerListening.bind(this));
+    this.internalHttpServer.on("connection", this.onHttpServerConnection.bind(this));
     this.internalHttpServer.on("request", this.handleHttpServerRequest.bind(this));
     this.internalHttpServer.on("error", this.onHttpServerError.bind(this));
     // close event is added later on the "connect" event as possible listen retries would throw unnecessary close events
-    this.internalHttpServer.listen(0, this.internalHttpServerAddress = getOSLoopbackAddressIfAvailable());
+    this.internalHttpServer.listen(0, this.internalHttpServerAddress = HAPConnection.internalHttpServerListenAddress());
   }
 
   private debugListenerRegistration(event: string | symbol, registration = true, beforeCount = -1): void {
@@ -755,11 +756,37 @@ export class HAPConnection extends EventEmitter {
   }
 
   /**
+   * The internal HTTP server listens on a loopback port which any local process can connect to. Only our own proxy
+   * socket may use it: a request on any other socket would run with the pairing state of this connection.
+   */
+  private isProxySocket(socket: Socket): boolean {
+    return this.httpSocket?.localPort !== undefined
+      && socket.remotePort === this.httpSocket.localPort
+      && socket.remoteAddress === this.httpSocket.localAddress;
+  }
+
+  private onHttpServerConnection(socket: Socket): void {
+    // the server can see our proxy socket before its "connect" event told us its local port, so until then
+    // a foreign socket is left to handleHttpServerRequest, which only runs once the proxy is connected
+    if (this.httpSocket?.localPort !== undefined && !this.isProxySocket(socket)) {
+      debugCon("[%s] Rejected a connection to the internal HTTP server from %s:%s", this.remoteAddress, socket.remoteAddress, socket.remotePort);
+      socket.destroy();
+    }
+  }
+
+  /**
    * This event handler is called when the internal http server receives a request.
    * Meaning we received data from the HomeKit controller in {@link onTCPSocketData}, which then send the
    * data unencrypted to the internal http server. And now it landed here, fully parsed as a http request.
    */
   private handleHttpServerRequest(request: IncomingMessage, response: ServerResponse): void {
+    if (!this.isProxySocket(request.socket)) {
+      // a socket which connected before our proxy socket did, so onHttpServerConnection couldn't tell it apart yet
+      debugCon("[%s] Rejected a request on the internal HTTP server which did not come through the proxy socket", this.remoteAddress);
+      request.socket.destroy();
+      return;
+    }
+
     if (this.state > HAPConnectionState.AUTHENTICATED) {
       // don't accept data of a connection which is about to be closed or already closed
       return;
@@ -824,7 +851,7 @@ export class HAPConnection extends EventEmitter {
       this.internalHttpServerPort = undefined;
 
       this.internalHttpServer.close();
-      this.internalHttpServer.listen(0, this.internalHttpServerAddress = getOSLoopbackAddressIfAvailable());
+      this.internalHttpServer.listen(0, this.internalHttpServerAddress = HAPConnection.internalHttpServerListenAddress());
     }
   }
 
@@ -878,6 +905,14 @@ export class HAPConnection extends EventEmitter {
     }
 
     throw new Error("Could not find " + ipVersion + " address for interface " + this.networkInterface);
+  }
+
+  /**
+   * The internal HTTP server must only ever be reachable locally. If no loopback interface could be detected,
+   * we still bind to the IPv4 loopback address instead of letting Node.js listen on every interface.
+   */
+  private static internalHttpServerListenAddress(): string {
+    return getOSLoopbackAddressIfAvailable() ?? "127.0.0.1";
   }
 
   private static getLocalNetworkInterface(socket: Socket): string {
