@@ -400,6 +400,41 @@ describe("eventedhttp", () => {
   });
 });
 
+describe(EventedHTTPServer, () => {
+  describe("idle connection timeout", () => {
+    it("should schedule the next check for the connection which becomes idle first", () => {
+      jest.useFakeTimers();
+      const server = new EventedHTTPServer();
+      try {
+        // @ts-expect-error: private access
+        server.tcpServer = { listening: true };
+        const now = Date.now();
+        const hour = 60 * 60 * 1000;
+        for (let i = 0; i < 16; i++) {
+          // one connection is a minute away from the idle time, all others were just used
+          // @ts-expect-error: private access
+          server.connections.add({
+            lastSocketOperation: i === 0
+              ? now - hour + 60_000
+              : now,
+            close: jest.fn(),
+          });
+        }
+
+        const setTimeoutSpy = jest.spyOn(global, "setTimeout");
+        // @ts-expect-error: private access
+        server.scheduleNextConnectionIdleTimeout();
+        expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 60_000);
+      } finally {
+        // @ts-expect-error: private access
+        clearTimeout(server.connectionIdleTimeout);
+        jest.useRealTimers();
+        jest.restoreAllMocks();
+      }
+    });
+  });
+});
+
 describe(HAPConnection, () => {
   describe("getLocalNetworkInterface", () => {
     it("should warn only once about a local address it cannot match to an interface", () => {

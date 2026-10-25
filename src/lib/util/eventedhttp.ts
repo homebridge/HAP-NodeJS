@@ -137,20 +137,21 @@ export class EventedHTTPServer extends EventEmitter {
     debug("Running idle timeout timer...");
 
     const currentTime = new Date().getTime();
-    let nextTimeout = -1;
+    let nextTimeout = Infinity; // the connection which reaches the idle time first
 
     for (const connection of this.connections) {
       const timeDelta = currentTime - connection.lastSocketOperation;
 
       if (timeDelta >= EventedHTTPServer.MAX_CONNECTION_IDLE_TIME) {
-        debug("[%s] Closing connection as it was inactive for " + timeDelta + "ms");
+        debug("[%s] Closing connection as it was inactive for " + timeDelta + "ms", connection.remoteAddress);
         connection.close();
       } else {
-        nextTimeout = Math.max(nextTimeout, EventedHTTPServer.MAX_CONNECTION_IDLE_TIME - timeDelta);
+        nextTimeout = Math.min(nextTimeout, EventedHTTPServer.MAX_CONNECTION_IDLE_TIME - timeDelta);
       }
     }
 
-    if (this.connections.size >= EventedHTTPServer.CONNECTION_TIMEOUT_LIMIT) {
+    // without a connection left to time out, the next connection which reaches the limit starts the timer again
+    if (this.connections.size >= EventedHTTPServer.CONNECTION_TIMEOUT_LIMIT && nextTimeout !== Infinity) {
       this.connectionIdleTimeout = setTimeout(this.scheduleNextConnectionIdleTimeout.bind(this), nextTimeout);
     }
   }
