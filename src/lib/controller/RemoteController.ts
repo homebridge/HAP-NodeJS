@@ -1481,6 +1481,9 @@ export class SiriAudioSession extends EventEmitter {
         } else if (status) { // status codes are those returned by the hds response
           debug("Controller responded with non-zero status code: %s", HDSStatus[status]);
         }
+        if (this.producerRunning) {
+          this.stopAudioProducer();
+        }
         this.closed();
       } else {
         this.streamId = message.streamId;
