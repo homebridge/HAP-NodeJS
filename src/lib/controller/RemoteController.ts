@@ -576,7 +576,14 @@ export class RemoteController extends EventEmitter
    */
   public pushAndReleaseButton(button: ButtonType, time = 200): void {
     this.pushButton(button);
-    setTimeout(() => this.releaseButton(button), time);
+    setTimeout(() => {
+      try {
+        this.releaseButton(button);
+      } catch (error) {
+        // e.g. the remote was set inactive in the meantime; throwing inside the timer would crash the process
+        debug("Failed to release button %d: %s", button, error.message);
+      }
+    }, time);
   }
 
   // ---------------------------------- CONFIGURATION ----------------------------------

@@ -1,6 +1,9 @@
+import { EventEmitter } from "events";
+
 import { Characteristic } from "../Characteristic";
+import { HAPConnectionEvent } from "../util/eventedhttp";
 import * as tlv from "../util/tlv";
-import { RemoteController, RemoteControllerEvents, TargetUpdates } from "./RemoteController";
+import { ButtonType, RemoteController, RemoteControllerEvents, TargetUpdates } from "./RemoteController";
 
 const Operation = {
   LIST: 0x01,
@@ -176,6 +179,30 @@ describe("remoteController", () => {
       const buttons = controller.targetConfigurations.get(2)!.buttonConfiguration;
       expect(buttons[101].buttonName).toBe("Back");
       expect(buttons[105]).toBeUndefined();
+    });
+  });
+
+  describe("buttons", () => {
+    it("should not throw from the release timer when the remote was set inactive in the meantime", async () => {
+      jest.useFakeTimers();
+      try {
+        const controller = createController();
+        await writeTargetControl(controller, Operation.ADD, targetTLV(1, "Living Room", [
+          buttonTLV(101, 1),
+        ]));
+        const connection = new EventEmitter();
+        // @ts-expect-error: private access
+        controller.handleActiveWrite(true, () => {}, connection);
+        expect(controller.isActive()).toBeTruthy();
+
+        controller.pushAndReleaseButton(ButtonType.MENU, 200);
+        connection.emit(HAPConnectionEvent.CLOSED);
+        expect(controller.isActive()).toBeFalsy();
+
+        expect(() => jest.advanceTimersByTime(200)).not.toThrow();
+      } finally {
+        jest.useRealTimers();
+      }
     });
   });
 });
