@@ -198,4 +198,38 @@ describe("ControllerStorage", () => {
       expect(controller.state).toEqual({ first: "a", second: "b" });
     });
   });
+
+  test("controller data cleared on an accessory bridged after publish is not saved again", () => {
+    const username = "AA:BB:CC:00:00:05";
+    const accessoryUUID = uuid.generate("controller-storage-restored-child");
+    HAPStorage.storage().setItemSync(ControllerStorage.persistKey(username), {
+      accessories: {
+        [accessoryUUID]: [
+          {
+            type: "stepped",
+            controllerData: {
+              data: { first: "a", second: "b" },
+            },
+          },
+        ],
+      },
+    });
+
+    const bridge = new Bridge("Bridge", uuid.generate("controller-storage-restored-bridge"));
+    bridge.controllerStorage.purgeUnidentifiedAccessoryData = false; // what publish() does for a bridge without accessories
+    bridge.controllerStorage.load(username);
+
+    const accessory = new Accessory("Child", accessoryUUID);
+    const controller = new SteppedController();
+    accessory.controllerStorage.trackController(controller);
+    bridge.addBridgedAccessory(accessory);
+    expect(controller.state).toEqual({ first: "a", second: "b" });
+
+    accessory.controllerStorage.purgeControllerData(controller); // e.g. the last pairing was removed
+    // @ts-expect-error: private access
+    clearTimeout(bridge.controllerStorage.queuedSaveTimeout);
+    bridge.controllerStorage.save();
+
+    expect(HAPStorage.storage().getItem(ControllerStorage.persistKey(username))).toBeUndefined();
+  });
 });

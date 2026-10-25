@@ -35,6 +35,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix(accessory): unlink controller storage when a bridged accessory is removed
 - fix(accessory): report slow and timed out handlers through the bridged accessory
 - fix(accessory): track the primary service of a restored accessory
+- fix(controller-storage): stop saving restored controller data again after it was cleared
 
 ### Homebridge Dependencies
 

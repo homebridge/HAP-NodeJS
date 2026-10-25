@@ -114,6 +114,11 @@ export class ControllerStorage {
     if (this.initialized) {
       storage.init(saved);
     }
+
+    if (this.restoredAccessories) {
+      // the linked storage owns this data now; a copy left here would be saved again after the controller cleared it
+      delete this.restoredAccessories[accessory.UUID];
+    }
   }
 
   /**
