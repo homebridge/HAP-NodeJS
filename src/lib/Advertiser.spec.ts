@@ -87,6 +87,37 @@ describe("D-Bus advertisers", () => {
     }
   });
 
+  it("should warn about a connection error on every system bus it opens instead of crashing", async () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+    try {
+      new AvahiAdvertiser(AccessoryInfo.create("AA:BB:CC:DD:EE:FF"));
+      new ResolvedAdvertiser(AccessoryInfo.create("AA:BB:CC:DD:EE:FF"));
+      await new Promise(resolve => process.nextTick(resolve)); // the fake buses connect on the next tick
+
+      expect(mockBuses).toHaveLength(2);
+      for (const bus of mockBuses) {
+        expect(() => bus.connection.emit("error", new Error("read ECONNRESET"))).not.toThrow();
+      }
+      expect(warn).toHaveBeenCalledTimes(2);
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("read ECONNRESET"));
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("should not warn when the system bus cannot be reached while checking availability", async () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+    try {
+      const available = AvahiAdvertiser.isAvailable();
+      // fails before the fake bus connects on the next tick
+      mockBuses[0].connection.emit("error", new Error("connect ENOENT /var/run/dbus/system_bus_socket"));
+      await expect(available).resolves.toBe(false);
+      expect(warn).not.toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
   it("should read MulticastDNS from systemd-resolved as a plain value", async () => {
     mockInvokeHandler = msg => msg.member === "Get" ? "yes" : undefined;
     await expect(ResolvedAdvertiser.isAvailable()).resolves.toBe(true);
