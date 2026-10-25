@@ -31,6 +31,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix(color-utils): stop rounding the shared color temperature lookup table in place
 - fix(adaptive-lighting): guard the curve maths against zero-length segments and NaN
 - fix(check-name): accept names that are a single letter or number
+- docs(uuid): say that unparse reads 16 bytes, not 8
 
 ### Homebridge Dependencies
 
