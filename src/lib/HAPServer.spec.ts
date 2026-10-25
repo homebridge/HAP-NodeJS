@@ -746,6 +746,23 @@ describe("HAPServer", () => {
       client.enableEncryption(encryption);
     });
 
+    test("rejects pair-verify on the already verified connection and keeps it encrypted", async () => {
+      const response = await client.writeHTTPRequest("POST", "/pair-verify", tlv.encode(
+        TLVValues.STATE,
+        PairingStates.M1,
+        TLVValues.PUBLIC_KEY,
+        hapCrypto.generateCurve25519KeyPair().publicKey,
+      ), { contentType: HAPMimeTypes.PAIRING_TLV8 });
+      expect(response.statusCode).toBe(HAPPairingHTTPCode.BAD_REQUEST);
+      const objects = tlv.decode(response.body);
+      expect(objects[TLVValues.STATE]).toEqual(Buffer.from([PairingStates.M2]));
+      expect(objects[TLVValues.ERROR_CODE]).toEqual(Buffer.from([TLVErrorCode.UNKNOWN]));
+
+      // the session still uses its keys
+      server.on(HAPServerEventTypes.ACCESSORIES, (connection, callback) => callback(undefined, { accessories: [] }));
+      await expect(client.sendAccessoriesRequest()).resolves.toEqual({ accessories: [] });
+    });
+
     test("test /pairings ADD_PAIRING", async () => {
       const exampleKey = crypto.randomBytes(32);
 
