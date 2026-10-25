@@ -827,7 +827,7 @@ export class DataStreamConnection extends EventEmitter {
     if (this.state === ConnectionState.EXPECTING_HELLO) {
       const firstMessage = messages[0];
 
-      if (firstMessage.protocol !== Protocols.CONTROL || firstMessage.type !== MessageType.REQUEST || firstMessage.topic !== Topics.HELLO) {
+      if (!firstMessage || firstMessage.protocol !== Protocols.CONTROL || firstMessage.type !== MessageType.REQUEST || firstMessage.topic !== Topics.HELLO) {
         // first message is not the expected hello request
         debug("[%s] First message received was not the expected hello message. Instead got: %o", this.remoteAddress, firstMessage);
         this.close();
@@ -986,6 +986,11 @@ export class DataStreamConnection extends EventEmitter {
         throw new HDSConnectionError("Reached illegal state. Encountered HDSFrame with wasn't decrypted yet!", HDSConnectionErrorType.ILLEGAL_STATE);
       }
 
+      if (payload.length < 1 || payload.readUInt8(0) > payload.length - 1) {
+        debug("[%s] Encountered HDS payload with a missing or too long header (payload: %s)", this.remoteAddress, payload.toString("hex"));
+        return;
+      }
+
       const headerLength = payload.readUInt8(0);
       const messageLength = payload.length - headerLength - 1;
 
@@ -1012,6 +1017,11 @@ export class DataStreamConnection extends EventEmitter {
         messagePayload.finished();
       } catch (error) {
         debug("[%s] Failed to decode message payload: %s (header: %o)", this.remoteAddress, error.message, headerDictionary);
+        return;
+      }
+
+      if (headerDictionary === null || typeof headerDictionary !== "object") {
+        debug("[%s] Encountered payload header which is not a dictionary: %o", this.remoteAddress, headerDictionary);
         return;
       }
 
