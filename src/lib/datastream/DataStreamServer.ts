@@ -807,8 +807,9 @@ export class DataStreamConnection extends EventEmitter {
         }
       });
 
-      if (this.state === ConnectionState.UNIDENTIFIED) {
-        // did not find a prepared connection, server already closed this connection; nothing to do here
+      // the cast is needed as typescript doesn't know that the callback above changes the state
+      if ((this.state as ConnectionState) !== ConnectionState.EXPECTING_HELLO) {
+        // did not find a prepared connection, server already closed this connection (state is CLOSING); nothing to do here
         return;
       }
     }
