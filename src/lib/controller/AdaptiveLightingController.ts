@@ -1257,6 +1257,8 @@ export class AdaptiveLightingController
       updateInterval: updateInterval ?? 60000,
       notifyIntervalThreshold: notifyIntervalThreshold,
     };
+    // the saved position belongs to the previous curve
+    this.lastTransitionPointInfo = undefined;
 
     if (this.updateTimeout) {
       clearTimeout(this.updateTimeout);
