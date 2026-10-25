@@ -19,6 +19,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix(camera): answer SetupEndpoints with an error when the prepared stream response is invalid
 - fix(camera): keep RTP proxy sockets open and only log errors after they are bound
 - fix(datastream): decode binary data of up to 32 bytes instead of dropping it
+- fix(datastream): make back-references follow the OPACK rule so reader and writer agree
 
 ### Homebridge Dependencies
 

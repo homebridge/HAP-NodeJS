@@ -168,6 +168,9 @@ export class DataStreamParser {
       return buffer.readFloat64LE();
     } else if (tag >= DataFormatTags.UTF8_LENGTH_START && tag <= DataFormatTags.UTF8_LENGTH_STOP) {
       const length = tag - DataFormatTags.UTF8_LENGTH_START;
+      if (length === 0) {
+        return ""; // a one-byte value, which is never tracked for back-references (see DataStreamReader.trackData)
+      }
       return buffer.readUTF8(length);
     } else if (tag === DataFormatTags.UTF8_LENGTH8) {
       return buffer.readUTF8_Length8();
@@ -181,6 +184,9 @@ export class DataStreamParser {
       return buffer.readUTF8_NULL_terminated();
     } else if (tag >= DataFormatTags.DATA_LENGTH_START && tag <= DataFormatTags.DATA_LENGTH_STOP) {
       const length = tag - DataFormatTags.DATA_LENGTH_START;
+      if (length === 0) {
+        return Buffer.alloc(0); // a one-byte value, which is never tracked for back-references (see DataStreamReader.trackData)
+      }
       return buffer.readData(length);
     } else if (tag === DataFormatTags.DATA_LENGTH8) {
       return buffer.readData_Length8();
@@ -366,6 +372,15 @@ export class DataStreamReader {
     return this.trackedCompressedData[index];
   }
 
+  /**
+   * Remembers a decoded value, so a later back-reference tag (`0xA0 + index`) can point to it.
+   *
+   * Apple doesn't document this format (it is their OPACK encoding). The rule we follow comes from the
+   * reverse-engineered implementation in pyatv (https://github.com/postlund/pyatv, `pyatv/support/opack.py`):
+   * only values whose encoding is longer than one byte are tracked. Values encoded in the tag byte alone
+   * (true, false, null, -1, the integers 0-39, the empty string and empty data) are never tracked.
+   * The {@link DataStreamWriter} follows the same rule, so both agree on the index of every value.
+   */
   private trackData<T>(data: T): T {
     this.trackedCompressedData.push(data);
     return data;
@@ -383,20 +398,22 @@ export class DataStreamReader {
     return this.data.readUInt8(this.readerIndex++);
   }
 
+  // the following values are encoded in the tag byte alone and are thus never tracked (see trackData)
+
   readTrue(): true {
-    return this.trackData(true); // do those tag encoded values get cached?
+    return true;
   }
 
   readFalse(): false {
-    return this.trackData(false);
+    return false;
   }
 
   readNegOne(): -1 {
-    return this.trackData(-1);
+    return -1;
   }
 
   readIntRange(tag: number): number {
-    return this.trackData(tag - DataFormatTags.INTEGER_RANGE_START_0); // integer values from 0-39
+    return tag - DataFormatTags.INTEGER_RANGE_START_0; // integer values from 0-39
   }
 
   readInt8(): number {
@@ -618,6 +635,11 @@ class WrittenDataList { // wrapper class since javascript doesn't really have a 
 export class DataStreamWriter {
 
   private static readonly chunkSize = 128; // seems to be a good default
+  /**
+   * Highest index which can be written as a single back-reference tag (`0xA0 + index`).
+   * pyatv (see DataStreamReader.trackData) only uses 0xA0-0xC0 like this; 0xC1-0xC4 are followed by a longer index.
+   */
+  private static readonly maxDirectReferenceIndex = 0x20;
 
   private data: Buffer;
   private writerIndex: number;
@@ -654,7 +676,7 @@ export class DataStreamWriter {
       // data is not present yet
       this.writtenData.push(data);
       return false;
-    } else if (index <= DataFormatTags.COMPRESSION_STOP - DataFormatTags.COMPRESSION_START) {
+    } else if (index <= DataStreamWriter.maxDirectReferenceIndex) {
       // data was already written and the index is in the applicable range => shorten the payload
       this.writeTag(DataFormatTags.COMPRESSION_START + index);
       return true;
@@ -784,6 +806,12 @@ export class DataStreamWriter {
   }
 
   writeUTF8(utf8: string): void {
+    if (utf8.length === 0) {
+      // a one-byte value, which is never tracked for back-references (see DataStreamReader.trackData)
+      this.writeTag(DataFormatTags.UTF8_LENGTH_START);
+      return;
+    }
+
     if (this.compressDataIfPossible(utf8)) {
       return;
     }
@@ -859,6 +887,12 @@ export class DataStreamWriter {
   }
 
   writeData(data: Buffer): void {
+    if (data.length === 0) {
+      // a one-byte value, which is never tracked for back-references (see DataStreamReader.trackData)
+      this.writeTag(DataFormatTags.DATA_LENGTH_START);
+      return;
+    }
+
     if (this.compressDataIfPossible(data)) {
       return;
     }

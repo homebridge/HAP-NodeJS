@@ -109,4 +109,74 @@ describe("DataStreamParser", () => {
       expect(decoded).toEqual({ packet: data });
     });
   });
+
+  describe("back-references", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function roundTrip(value: any): any {
+      const writer = new DataStreamWriter();
+      DataStreamParser.encode(value, writer);
+      return DataStreamParser.decode(new DataStreamReader(writer.getData()));
+    }
+
+    test("should round-trip a repeated string after a value encoded in the tag byte alone", () => {
+      const message = {
+        streamId: 1,
+        type: "ipcamera.recording",
+        target: "ipcamera.recording",
+      };
+      expect(roundTrip(message)).toEqual(message);
+      expect(roundTrip({ a: true, b: "same-string", c: "same-string" })).toEqual({ a: true, b: "same-string", c: "same-string" });
+    });
+
+    test("should not count values encoded in the tag byte alone when reading a back-reference", () => {
+      // { a: true, b: <reference to index 1> }: "a" is index 0, true is not tracked, "b" is index 1
+      const data = Buffer.from([
+        0xE2,
+        0x41,
+        0x61,
+        0x01,
+        0x41,
+        0x62,
+        0xA1,
+      ]);
+      expect(DataStreamParser.decode(new DataStreamReader(data))).toEqual({ a: true, b: "b" });
+    });
+
+    test("should not track the empty string", () => {
+      // { a: '', b: 'x', c: <reference to index 2> }: "a" is index 0, "" is not tracked, "b" is 1, "x" is 2, "c" is 3
+      const data = Buffer.from([
+        0xE3,
+        0x41,
+        0x61,
+        0x40,
+        0x41,
+        0x62,
+        0x41,
+        0x78,
+        0x41,
+        0x63,
+        0xA2,
+      ]);
+      expect(DataStreamParser.decode(new DataStreamReader(data))).toEqual({ a: "", b: "x", c: "x" });
+
+      const writer = new DataStreamWriter();
+      DataStreamParser.encode({ a: "", b: "x", c: "x" }, writer);
+      expect(writer.getData()).toEqual(data);
+    });
+
+    test("should only write back-references up to index 0x20 as a single tag", () => {
+      const strings = Array.from({ length: 0x30 }, (_, i) => `s${i.toString().padStart(2, "0")}`);
+      const value = [
+        ...strings,
+        ...strings,
+      ]; // the second half repeats every string
+
+      const writer = new DataStreamWriter();
+      DataStreamParser.encode(value, writer);
+      const data = writer.getData();
+
+      expect(data.filter(byte => byte >= 0xC1 && byte <= 0xCF)).toHaveLength(0);
+      expect(DataStreamParser.decode(new DataStreamReader(data))).toEqual(value);
+    });
+  });
 });
