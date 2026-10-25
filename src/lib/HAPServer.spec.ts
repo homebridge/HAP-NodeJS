@@ -1011,6 +1011,30 @@ describe("HAPServer", () => {
       expect(httpResponse.statusCode).toEqual(HAPHTTPCode.NO_CONTENT);
     });
 
+    test("accepts a request body above the unauthenticated limit once pair-verified", async () => {
+      const writeRequest: CharacteristicsWriteRequest = {
+        characteristics: [
+          {
+            aid: 1,
+            iid: 9,
+            value: "x".repeat(100 * 1024),
+          },
+        ],
+      };
+
+      server.on(HAPServerEventTypes.SET_CHARACTERISTICS, (connection, request, callback) => {
+        expect(request).toEqual(writeRequest);
+        callback(undefined, {
+          characteristics: [
+            { aid: 1, iid: 9, status: HAPStatus.SUCCESS },
+          ],
+        });
+      });
+
+      const httpResponse = await client.sendCharacteristicWrite(writeRequest);
+      expect(httpResponse.statusCode).toEqual(HAPHTTPCode.NO_CONTENT);
+    });
+
     test("test PUT /characteristics value with MULTI_STATUS", async () => {
       const ids: CharacteristicId[] = [ { aid: 1, iid: 9 }, { aid: 2, iid: 14 } ];
       const writeRequest: CharacteristicsWriteRequest = {
@@ -1168,6 +1192,18 @@ describe("HAPServer", () => {
     const response = await client.writeHTTPRequest("POST", "/non-existent");
     expect(response.statusCode).toBe(HAPHTTPCode.NOT_FOUND);
     expect(JSON.parse(response.body.toString())).toEqual({ status: HAPStatus.RESOURCE_DOES_NOT_EXIST });
+  });
+
+  test("rejects an oversized request body on an unauthenticated connection and closes it", async () => {
+    server = new HAPServer(accessoryInfoUnpaired);
+    const [port] = await bindServer(server);
+
+    const client = await connectClient(port);
+
+    const response = await client.writeHTTPRequest("POST", "/pair-setup", Buffer.alloc(64 * 1024 + 1, 0x41), { contentType: HAPMimeTypes.PAIRING_TLV8 });
+    expect(response.statusCode).toBe(HAPHTTPCode.BAD_REQUEST);
+    expect(JSON.parse(response.body.toString())).toEqual({ status: HAPStatus.OUT_OF_RESOURCE });
+    await client.waitForClose();
   });
 
   test.each(["//[", "//a:99999"])("answers the unparseable url %s with 400 instead of crashing", async (route) => {
