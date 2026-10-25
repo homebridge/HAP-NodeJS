@@ -975,8 +975,12 @@ export class AdaptiveLightingController
         try {
           return this.handleTransitionControlWrite(value);
         } catch (error) {
-          console.warn(`[%s] DEBUG: '${value}'`);
-          console.warn("[%s] Encountered error on CharacteristicValueTransitionControl characteristic: " + error.stack);
+          if (error instanceof HapStatusError) {
+            throw error; // the request was rejected on purpose, the active transition stays untouched
+          }
+
+          debug("[%s] Failed CharacteristicValueTransitionControl write: '%s'", this.lightbulb.displayName, value);
+          console.warn("[" + this.lightbulb.displayName + "] Encountered error on CharacteristicValueTransitionControl characteristic: " + error.stack);
           this.disableAdaptiveLighting();
           throw new HapStatusError(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
         }

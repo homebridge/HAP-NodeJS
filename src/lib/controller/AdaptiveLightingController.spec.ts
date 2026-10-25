@@ -1,4 +1,5 @@
 import { Characteristic } from "../Characteristic";
+import { HAPStatus } from "../HAPServer";
 import { Service } from "../Service";
 import * as tlv from "../util/tlv";
 import { AdaptiveLightingController, AdaptiveLightingControllerMode } from "./AdaptiveLightingController";
@@ -109,5 +110,45 @@ describe("adaptiveLightingController", () => {
     expect(controller.isAdaptiveLightingActive()).toBeTruthy();
     expect(controller.getCurrentAdaptiveLightingTransitionPoint()?.lowerBound.temperature).toBe(300);
     controller.disableAdaptiveLighting();
+  });
+
+  describe("control point errors", () => {
+    it("should reject a read for another characteristic without disabling adaptive lighting", async () => {
+      const { lightbulb, controller } = createController();
+      const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+      try {
+        await writeTransitionControl(lightbulb, buildUpdateTransition(lightbulb, Date.now(), curve(5)));
+
+        const brightnessIID = lightbulb.getCharacteristic(Characteristic.Brightness).iid!;
+        const read = tlv.encode(0x01, tlv.encode(0x01, tlv.writeVariableUIntLE(brightnessIID))).toString("base64");
+
+        await expect(writeTransitionControl(lightbulb, read)).rejects.toBe(HAPStatus.INVALID_VALUE_IN_REQUEST);
+        expect(controller.isAdaptiveLightingActive()).toBeTruthy();
+      } finally {
+        warn.mockRestore();
+        controller.disableAdaptiveLighting();
+      }
+    });
+
+    it("should name the light in the warning and keep the raw value out of it", async () => {
+      const { lightbulb } = createController();
+      const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+      try {
+        // an update request which is missing everything but the characteristic iid and the transition flag
+        const iid = lightbulb.getCharacteristic(Characteristic.ColorTemperature).iid!;
+        const value = tlv.encode(0x02, tlv.encode(0x01, tlv.encode(0x01, tlv.writeVariableUIntLE(iid), 0x03, 1))).toString("base64");
+
+        await expect(writeTransitionControl(lightbulb, value)).rejects.toBe(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+
+        const messages = warn.mock.calls.map(call => String(call[0]));
+        expect(messages.length).toBeGreaterThan(0);
+        for (const message of messages) {
+          expect(message.startsWith("[Light]")).toBeTruthy();
+          expect(message).not.toContain(value);
+        }
+      } finally {
+        warn.mockRestore();
+      }
+    });
   });
 });
