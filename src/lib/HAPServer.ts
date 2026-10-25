@@ -914,6 +914,9 @@ export class HAPServer extends EventEmitter {
 
     const state = objects[TLVValues.STATE][0];
     if (state !== PairingStates.M1) {
+      debug("[%s] Pairings: received unexpected state %d", this.accessoryInfo.username, state);
+      response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
+      response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
       return;
     }
 
@@ -987,6 +990,10 @@ export class HAPServer extends EventEmitter {
         response.end(list);
         debug("[%s] Pairings: successfully executed LIST_PAIRINGS", this.accessoryInfo.username);
       }));
+    } else {
+      debug("[%s] Pairings: received unsupported method %d", this.accessoryInfo.username, method);
+      response.writeHead(HAPPairingHTTPCode.OK, { "Content-Type": "application/pairing+tlv8" });
+      response.end(tlv.encode(TLVValues.STATE, PairingStates.M2, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
     }
   }
 
