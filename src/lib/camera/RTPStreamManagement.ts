@@ -1158,7 +1158,19 @@ export class RTPStreamManagement {
           this.handleSessionClosed();
           callback(error);
         } else {
-          this.generateSetupEndpointResponse(connection, sessionIdentifier, prepareRequest, response, callback);
+          try {
+            this.generateSetupEndpointResponse(connection, sessionIdentifier, prepareRequest, response, callback);
+          } catch (error) {
+            // the delegate usually calls back asynchronously, so nothing up the stack would catch this
+            debug(`Failed to build the SetupEndpoints response from the PrepareStreamResponse: ${error.message}`);
+            this.setupEndpointsResponse = tlv.encode(
+              SetupEndpointsResponseTypes.SESSION_ID, uuid.write(sessionIdentifier),
+              SetupEndpointsResponseTypes.STATUS, SetupEndpointsStatus.ERROR,
+            ).toString("base64");
+
+            this.handleSessionClosed();
+            callback(error);
+          }
         }
       }));
     }).catch((error: Error) => {

@@ -309,4 +309,58 @@ describe("RTPStreamManagement", () => {
       expect(decoded[0x02].readUInt8(0)).not.toBe(0x01);
     });
   });
+
+  describe("handleSetupEndpoints invalid PrepareStreamResponse", () => {
+    let controller: CameraController;
+
+    beforeEach(() => {
+      controller = new CameraController(buildControllerOptions(baseStreamingOptions));
+      controller.constructServices();
+      controller.configureServices();
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+      controller.handleFactoryReset();
+    });
+
+    test("should answer with an error when a delayed response is missing the audio info", async () => {
+      const rtp = controller.streamManagements[0] as RTPStreamManagement;
+      const prepareStream = (_request: unknown, callback: PrepareStreamCallback) => {
+        // like most plugins, call back after some asynchronous work
+        setTimeout(() => callback(undefined, {
+          video: {
+            port: 5000,
+            ssrc: 1,
+            srtp_key: Buffer.alloc(16),
+            srtp_salt: Buffer.alloc(14),
+          },
+        }), 1);
+      };
+      jest.spyOn(MockDelegate.prototype, "prepareStream").mockImplementation(prepareStream);
+
+      const errors: Error[] = [];
+      const onUncaught = (error: Error) => errors.push(error);
+      process.on("uncaughtException", onUncaught);
+
+      try {
+        const error = await new Promise<Error | undefined>((resolve, reject) => {
+          setTimeout(() => reject(new Error("SetupEndpoints callback was never called")), 500);
+          // @ts-expect-error: private method access
+          rtp.handleSetupEndpoints(buildSetupEndpointsTlv(), err => resolve(err as Error | undefined), buildMockConnection());
+        });
+
+        expect(error).toBeInstanceOf(Error);
+      } finally {
+        process.off("uncaughtException", onUncaught);
+      }
+
+      expect(errors).toEqual([]);
+      expect(rtp.streamStatus).toBe(0); // StreamingStatus.AVAILABLE
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const decoded = tlv.decode(Buffer.from((rtp as any).setupEndpointsResponse as string, "base64"));
+      // SetupEndpointsResponseTypes.STATUS = 0x02; SetupEndpointsStatus.ERROR = 0x02
+      expect(decoded[0x02].readUInt8(0)).toBe(0x02);
+    });
+  });
 });
