@@ -2103,6 +2103,18 @@ describe("Accessory", () => {
         await response;
       });
 
+      test("an empty write is answered straight away", async () => {
+        // @ts-expect-error: private access
+        accessory.handleSetCharacteristics(connection, { characteristics: [] }, callback);
+
+        // there is nothing to wait for, so this must not take the 9s timeout
+        await Promise.race([
+          callbackPromise,
+          PromiseTimeout(500),
+        ]);
+        expect(callback).toHaveBeenCalledWith(undefined, { characteristics: [] });
+      });
+
       test("identify Write with a plugin onSet handler calls it, identifies, and warns about nothing", async () => {
         const warnings: string[] = [];
         accessory.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, warning => warnings.push(warning.message));
