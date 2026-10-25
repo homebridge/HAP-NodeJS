@@ -98,4 +98,15 @@ describe("DataStreamParser", () => {
       expect(decoded).toBe(testString);
     });
   });
+
+  describe("short binary data", () => {
+    test.each([0, 3, 32])("should decode %d bytes of data with the length in the tag", (length) => {
+      const data = Buffer.alloc(length, 0xAB);
+      const writer = new DataStreamWriter();
+      DataStreamParser.encode({ packet: data }, writer);
+
+      const decoded = DataStreamParser.decode(new DataStreamReader(writer.getData()));
+      expect(decoded).toEqual({ packet: data });
+    });
+  });
 });
