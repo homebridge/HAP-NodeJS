@@ -184,4 +184,25 @@ describe("DataStreamServer", () => {
       expect(socket.destroy).not.toHaveBeenCalled();
     });
   });
+
+  describe("unknown frame types", () => {
+    it("should skip a frame of an unknown type without allocating a buffer for its payload", () => {
+      const { socket } = setupSession();
+      const payloadLength = 0x10000;
+      const header = Buffer.from([0x02, 0, 0, 0]); // payload type 2 is unknown
+      header.writeUIntBE(payloadLength, 1, 3);
+
+      const allocSpy = jest.spyOn(Buffer, "alloc");
+      try {
+        expect(() => socket.emit("data", Buffer.concat([
+          header,
+          Buffer.alloc(payloadLength + 16),
+        ]))).not.toThrow();
+        expect(allocSpy.mock.calls.filter(call => call[0] === payloadLength)).toHaveLength(0);
+      } finally {
+        allocSpy.mockRestore();
+      }
+      expect(socket.end).not.toHaveBeenCalled();
+    });
+  });
 });

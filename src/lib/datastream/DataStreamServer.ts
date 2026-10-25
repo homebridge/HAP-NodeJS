@@ -942,7 +942,6 @@ export class DataStreamConnection extends EventEmitter {
 
       const header = data.subarray(frameBegin, payloadBegin); // header is also authenticated using authTag
       const cipheredPayload = data.subarray(payloadBegin, authTagBegin);
-      const plaintextPayload = Buffer.alloc(payloadLength);
       const authTag = data.subarray(authTagBegin, authTagBegin + 16);
 
       frameBegin = authTagBegin + 16; // move to next frame
@@ -955,7 +954,7 @@ export class DataStreamConnection extends EventEmitter {
         };
         frames.push(hdsFrame);
       } else {
-        debug("[%s] Encountered unknown payload type %d for payload: %s", this.remoteAddress, plaintextPayload.toString("hex"));
+        debug("[%s] Encountered unknown payload type %d with a payload of %d bytes", this.remoteAddress, payloadType, payloadLength);
       }
     }
 
