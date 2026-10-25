@@ -247,6 +247,152 @@ export class Battery extends Service {
 Service.Battery = Battery;
 
 /**
+ * Service "Camera Buffer Management"
+ * @since iOS 27
+ */
+export class CameraBufferManagement extends Service {
+
+  public static readonly UUID: string = "00008000-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, CameraBufferManagement.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.BufferActivityCommand);
+    this.addCharacteristic(Characteristic.BufferEventCommand);
+    this.addCharacteristic(Characteristic.BufferEventSequenceNumber);
+    this.addCharacteristic(Characteristic.BufferUploadCommand);
+    this.addCharacteristic(Characteristic.CameraRecordingPublishingPoint);
+  }
+}
+Service.CameraBufferManagement = CameraBufferManagement;
+
+/**
+ * Service "Camera Capabilities"
+ * @since iOS 27
+ */
+export class CameraCapabilities extends Service {
+
+  public static readonly UUID: string = "00008010-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, CameraCapabilities.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.CameraCapabilitiesConfiguration);
+    this.addCharacteristic(Characteristic.Version);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.ManuallyDisabled);
+  }
+}
+Service.CameraCapabilities = CameraCapabilities;
+
+/**
+ * Service "Camera Client Certificate Management"
+ * @since iOS 27
+ */
+export class CameraClientCertificateManagement extends Service {
+
+  public static readonly UUID: string = "00008080-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, CameraClientCertificateManagement.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.CameraClientCertificate);
+    this.addCharacteristic(Characteristic.CameraClientCertificateStatus);
+    this.addCharacteristic(Characteristic.CameraClientCSR);
+  }
+}
+Service.CameraClientCertificateManagement = CameraClientCertificateManagement;
+
+/**
+ * Service "Camera Global Operating Mode"
+ * @since iOS 27
+ */
+export class CameraGlobalOperatingMode extends Service {
+
+  public static readonly UUID: string = "00008032-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, CameraGlobalOperatingMode.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.CameraOperatingModeIndicator);
+    this.addCharacteristic(Characteristic.HomeKitCameraActive);
+    this.addCharacteristic(Characteristic.StreamingEnabled);
+
+    // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.ManuallyDisabled);
+    this.addOptionalCharacteristic(Characteristic.NightVision);
+    this.addOptionalCharacteristic(Characteristic.ThirdPartyCameraActive);
+  }
+}
+Service.CameraGlobalOperatingMode = CameraGlobalOperatingMode;
+
+/**
+ * Service "Camera Key Management"
+ * @since iOS 27
+ */
+export class CameraKeyManagement extends Service {
+
+  public static readonly UUID: string = "00008050-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, CameraKeyManagement.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.CameraKey);
+    this.addCharacteristic(Characteristic.CameraKeyID);
+  }
+}
+Service.CameraKeyManagement = CameraKeyManagement;
+
+/**
+ * Service "Camera Motion Zones"
+ * @since iOS 27
+ */
+export class CameraMotionZones extends Service {
+
+  public static readonly UUID: string = "00008021-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, CameraMotionZones.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.Active);
+    this.addCharacteristic(Characteristic.CameraZones);
+    this.addCharacteristic(Characteristic.Version);
+  }
+}
+Service.CameraMotionZones = CameraMotionZones;
+
+/**
+ * Service "Camera Multi-Tier RTP Stream Management"
+ * @since iOS 27
+ */
+export class CameraMultiTierRTPStreamManagement extends Service {
+
+  public static readonly UUID: string = "00008031-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, CameraMultiTierRTPStreamManagement.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.RTPStreamingControl);
+    this.addCharacteristic(Characteristic.SensorUUID);
+    this.addCharacteristic(Characteristic.SetupEndpoints);
+    this.addCharacteristic(Characteristic.StatusActive);
+    this.addCharacteristic(Characteristic.StreamingEnabled);
+    this.addCharacteristic(Characteristic.SupportedAudioStreamTiers);
+    this.addCharacteristic(Characteristic.SupportedRTPConfiguration);
+    this.addCharacteristic(Characteristic.SupportedVideoStreamTiers);
+  }
+}
+Service.CameraMultiTierRTPStreamManagement = CameraMultiTierRTPStreamManagement;
+
+/**
  * Service "Camera Operating Mode"
  */
 export class CameraOperatingMode extends Service {
@@ -317,6 +463,32 @@ export class CameraRTPStreamManagement extends Service {
   }
 }
 Service.CameraRTPStreamManagement = CameraRTPStreamManagement;
+
+/**
+ * Service "Camera WebRTC Stream Management"
+ * @since iOS 27
+ */
+export class CameraWebRTCStreamManagement extends Service {
+
+  public static readonly UUID: string = "00008033-0000-1000-8000-0026BB765291";
+
+  constructor(displayName?: string, subtype?: string) {
+    super(displayName, CameraWebRTCStreamManagement.UUID, subtype);
+
+    // Required Characteristics
+    this.addCharacteristic(Characteristic.SensorUUID);
+    this.addCharacteristic(Characteristic.StreamingEnabled);
+    this.addCharacteristic(Characteristic.WebRTCNumberOfActiveSessions);
+    this.addCharacteristic(Characteristic.WebRTCProvideAnswer);
+    this.addCharacteristic(Characteristic.WebRTCReoffer);
+    this.addCharacteristic(Characteristic.WebRTCSolicitOffer);
+    this.addCharacteristic(Characteristic.WebRTCStreamingControl);
+    this.addCharacteristic(Characteristic.WebRTCSupportedAudioStreamTiers);
+    this.addCharacteristic(Characteristic.WebRTCSupportedVideoStreamTiers);
+    this.addCharacteristic(Characteristic.WebRTCUpdateSession);
+  }
+}
+Service.CameraWebRTCStreamManagement = CameraWebRTCStreamManagement;
 
 /**
  * Service "Carbon Dioxide Sensor"
@@ -908,6 +1080,8 @@ export class MotionSensor extends Service {
     this.addCharacteristic(Characteristic.MotionDetected);
 
     // Optional Characteristics
+    this.addOptionalCharacteristic(Characteristic.ContributingSensors);
+    this.addOptionalCharacteristic(Characteristic.MotionEnabled);
     this.addOptionalCharacteristic(Characteristic.Name);
     this.addOptionalCharacteristic(Characteristic.StatusActive);
     this.addOptionalCharacteristic(Characteristic.StatusFault);

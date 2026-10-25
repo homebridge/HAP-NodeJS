@@ -23,8 +23,20 @@ import type {
   AudioFeedback,
   BatteryLevel,
   Brightness,
+  BufferActivityCommand,
+  BufferEventCommand,
+  BufferEventSequenceNumber,
+  BufferUploadCommand,
   ButtonEvent,
+  CameraCapabilitiesConfiguration,
+  CameraClientCertificate,
+  CameraClientCertificateStatus,
+  CameraClientCSR,
+  CameraKey,
+  CameraKeyID,
   CameraOperatingModeIndicator,
+  CameraRecordingPublishingPoint,
+  CameraZones,
   CarbonDioxideDetected,
   CarbonDioxideLevel,
   CarbonDioxidePeakLevel,
@@ -42,6 +54,7 @@ import type {
   ConfiguredName,
   ConnectionHealthMonitor,
   ContactSensorState,
+  ContributingSensors,
   CoolingThresholdTemperature,
   CryptoHash,
   CurrentAirPurifierState,
@@ -111,6 +124,7 @@ import type {
   MetricsBufferFullState,
   Model,
   MotionDetected,
+  MotionEnabled,
   MultifunctionButton,
   Mute,
   Name,
@@ -158,6 +172,7 @@ import type {
   RotationDirection,
   RotationSpeed,
   RouterStatus,
+  RTPStreamingControl,
   Saturation,
   SecuritySystemAlarmType,
   SecuritySystemCurrentState,
@@ -168,6 +183,7 @@ import type {
   SelectedRTPStreamConfiguration,
   SelectedSessionKeepaliveConfigurationList,
   SelectedSleepConfiguration,
+  SensorUUID,
   SerialNumber,
   ServiceLabelIndex,
   ServiceLabelNamespace,
@@ -194,11 +210,13 @@ import type {
   StatusJammed,
   StatusLowBattery,
   StatusTampered,
+  StreamingEnabled,
   StreamingStatus,
   SulphurDioxideDensity,
   SupportedAssetTypes,
   SupportedAudioRecordingConfiguration,
   SupportedAudioStreamConfiguration,
+  SupportedAudioStreamTiers,
   SupportedCameraRecordingConfiguration,
   SupportedCharacteristicValueTransitionConfiguration,
   SupportedDataStreamTransportConfiguration,
@@ -213,6 +231,7 @@ import type {
   SupportedTransferTransportConfiguration,
   SupportedVideoRecordingConfiguration,
   SupportedVideoStreamConfiguration,
+  SupportedVideoStreamTiers,
   SwingMode,
   TapType,
   TargetAirPurifierState,
@@ -254,6 +273,14 @@ import type {
   WANConfigurationList,
   WANStatusList,
   WaterLevel,
+  WebRTCNumberOfActiveSessions,
+  WebRTCProvideAnswer,
+  WebRTCReoffer,
+  WebRTCSolicitOffer,
+  WebRTCStreamingControl,
+  WebRTCSupportedAudioStreamTiers,
+  WebRTCSupportedVideoStreamTiers,
+  WebRTCUpdateSession,
   WiFiCapabilities,
   WiFiConfigurationControl,
   WiFiSatelliteStatus,
@@ -812,11 +839,59 @@ export class Characteristic extends EventEmitter {
   /**
    * @group Characteristic Definitions
    */
+  public static BufferActivityCommand: typeof BufferActivityCommand;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static BufferEventCommand: typeof BufferEventCommand;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static BufferEventSequenceNumber: typeof BufferEventSequenceNumber;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static BufferUploadCommand: typeof BufferUploadCommand;
+  /**
+   * @group Characteristic Definitions
+   */
   public static ButtonEvent: typeof ButtonEvent;
   /**
    * @group Characteristic Definitions
    */
+  public static CameraCapabilitiesConfiguration: typeof CameraCapabilitiesConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static CameraClientCertificate: typeof CameraClientCertificate;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static CameraClientCertificateStatus: typeof CameraClientCertificateStatus;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static CameraClientCSR: typeof CameraClientCSR;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static CameraKey: typeof CameraKey;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static CameraKeyID: typeof CameraKeyID;
+  /**
+   * @group Characteristic Definitions
+   */
   public static CameraOperatingModeIndicator: typeof CameraOperatingModeIndicator;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static CameraRecordingPublishingPoint: typeof CameraRecordingPublishingPoint;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static CameraZones: typeof CameraZones;
   /**
    * @group Characteristic Definitions
    */
@@ -885,6 +960,10 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static ContactSensorState: typeof ContactSensorState;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static ContributingSensors: typeof ContributingSensors;
   /**
    * @group Characteristic Definitions
    */
@@ -1164,6 +1243,10 @@ export class Characteristic extends EventEmitter {
   /**
    * @group Characteristic Definitions
    */
+  public static MotionEnabled: typeof MotionEnabled;
+  /**
+   * @group Characteristic Definitions
+   */
   public static MultifunctionButton: typeof MultifunctionButton;
   /**
    * @group Characteristic Definitions
@@ -1355,6 +1438,10 @@ export class Characteristic extends EventEmitter {
   /**
    * @group Characteristic Definitions
    */
+  public static RTPStreamingControl: typeof RTPStreamingControl;
+  /**
+   * @group Characteristic Definitions
+   */
   public static Saturation: typeof Saturation;
   /**
    * @group Characteristic Definitions
@@ -1392,6 +1479,10 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static SelectedSleepConfiguration: typeof SelectedSleepConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static SensorUUID: typeof SensorUUID;
   /**
    * @group Characteristic Definitions
    */
@@ -1499,6 +1590,10 @@ export class Characteristic extends EventEmitter {
   /**
    * @group Characteristic Definitions
    */
+  public static StreamingEnabled: typeof StreamingEnabled;
+  /**
+   * @group Characteristic Definitions
+   */
   public static StreamingStatus: typeof StreamingStatus;
   /**
    * @group Characteristic Definitions
@@ -1516,6 +1611,10 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static SupportedAudioStreamConfiguration: typeof SupportedAudioStreamConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static SupportedAudioStreamTiers: typeof SupportedAudioStreamTiers;
   /**
    * @group Characteristic Definitions
    */
@@ -1572,6 +1671,10 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static SupportedVideoStreamConfiguration: typeof SupportedVideoStreamConfiguration;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static SupportedVideoStreamTiers: typeof SupportedVideoStreamTiers;
   /**
    * @group Characteristic Definitions
    */
@@ -1742,6 +1845,38 @@ export class Characteristic extends EventEmitter {
    * @group Characteristic Definitions
    */
   public static WaterLevel: typeof WaterLevel;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static WebRTCNumberOfActiveSessions: typeof WebRTCNumberOfActiveSessions;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static WebRTCProvideAnswer: typeof WebRTCProvideAnswer;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static WebRTCReoffer: typeof WebRTCReoffer;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static WebRTCSolicitOffer: typeof WebRTCSolicitOffer;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static WebRTCStreamingControl: typeof WebRTCStreamingControl;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static WebRTCSupportedAudioStreamTiers: typeof WebRTCSupportedAudioStreamTiers;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static WebRTCSupportedVideoStreamTiers: typeof WebRTCSupportedVideoStreamTiers;
+  /**
+   * @group Characteristic Definitions
+   */
+  public static WebRTCUpdateSession: typeof WebRTCUpdateSession;
   /**
    * @group Characteristic Definitions
    */
