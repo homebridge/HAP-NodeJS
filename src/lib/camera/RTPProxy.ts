@@ -1,4 +1,13 @@
 import dgram, { Socket, SocketType } from "dgram";
+import createDebug from "debug";
+
+const debug = createDebug("HAP-NodeJS:Camera:RTPProxy");
+
+// once a socket is bound, errors (e.g. a send to an unreachable controller) are only logged.
+// a dgram socket without any error listener would crash the process.
+function logSocketError(error: Error): void {
+  debug("Encountered socket error: %s", error.message);
+}
 
 /**
  * @group Camera
@@ -269,6 +278,8 @@ export default class RTPProxy {
         socket.once("error", bindErrorHandler);
 
         socket.on("listening", () => {
+          socket.removeListener("error", bindErrorHandler);
+          socket.on("error", logSocketError);
           resolve(socket);
         });
 
@@ -292,6 +303,11 @@ export default class RTPProxy {
           }
 
           if(state.socket1 === 2 && state.socket2 === 2) {
+            // the sockets were created right here, so the only error listeners are the bind ones below
+            socket1.removeAllListeners("error");
+            socket2.removeAllListeners("error");
+            socket1.on("error", logSocketError);
+            socket2.on("error", logSocketError);
             resolve([socket1, socket2]);
             return;
           }
