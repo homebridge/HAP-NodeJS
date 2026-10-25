@@ -4,7 +4,9 @@ import {
   Characteristic,
   CharacteristicChange,
   CharacteristicEventTypes,
+  CharacteristicGetCallback,
   CharacteristicProps,
+  CharacteristicSetCallback,
   Formats,
   Perms,
   SerializedCharacteristic,
@@ -1953,6 +1955,26 @@ describe("Characteristic", () => {
       expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       expect(mock).toHaveBeenCalledTimes(0);
     });
+
+    it("should reject, not throw into the plugin, when a later on('get') callback supplies an illegal value", async () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.DATA,
+        perms: [Perms.PAIRED_READ],
+      });
+      // @ts-expect-error: spying on private property
+      const warning = jest.spyOn(characteristic, "characteristicWarning");
+      let answer: CharacteristicGetCallback | undefined;
+      characteristic.on("get", (callback) => {
+        answer = callback; // the plugin answers later, from its own code
+      });
+
+      const result = characteristic.handleGetRequest();
+      expect(() => answer!(null, undefined)).not.toThrow();
+      await expect(result).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(warning).toHaveBeenCalledWith(expect.stringContaining("An illegal value was supplied by the read handler"),
+        CharacteristicWarningType.WARN_MESSAGE, expect.anything());
+    });
   });
 
   describe("onGet handler", () => {
@@ -2079,6 +2101,28 @@ describe("Characteristic", () => {
       await expect(characteristic.handleSetRequest("hello")).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       expect(mock).toHaveBeenCalledTimes(0);
+    });
+
+    it("should reject, not throw into the plugin, when a later on('set') callback supplies an illegal write response", async () => {
+      const characteristic = createCharacteristicWithProps({
+        format: Formats.DATA,
+        perms: [Perms.PAIRED_READ, Perms.PAIRED_WRITE, Perms.WRITE_RESPONSE],
+        maxDataLen: 4,
+      });
+      // @ts-expect-error: spying on private property
+      const warning = jest.spyOn(characteristic, "characteristicWarning");
+      let answer: CharacteristicSetCallback | undefined;
+      characteristic.on("set", (value, callback) => {
+        answer = callback; // the plugin answers later, from its own code
+      });
+
+      const result = characteristic.handleSetRequest("AA==");
+      await new Promise(resolve => setImmediate(resolve));
+      expect(() => answer!(null, "AAAAAAAA")).not.toThrow();
+      await expect(result).rejects.toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(characteristic.statusCode).toEqual(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      expect(warning).toHaveBeenCalledWith(expect.stringContaining("An illegal write response value was supplied by the write handler"),
+        CharacteristicWarningType.WARN_MESSAGE, expect.anything());
     });
   });
 

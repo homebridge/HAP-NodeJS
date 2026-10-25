@@ -2419,7 +2419,16 @@ export class Characteristic extends EventEmitter {
 
           this.statusCode = HAPStatus.SUCCESS;
 
-          value = this.validateUserInput(value);
+          try {
+            value = this.validateUserInput(value);
+          } catch (error) {
+            // this runs inside the plugin's callback; a throw would land in the plugin and leave the request unanswered
+            this.characteristicWarning(`An illegal value was supplied by the read handler for characteristic: ${error?.message}`,
+              CharacteristicWarningType.WARN_MESSAGE, error?.stack);
+            this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+            reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+            return;
+          }
           const oldValue = this.value;
           this.value = value;
 
@@ -2534,7 +2543,16 @@ export class Characteristic extends EventEmitter {
 
             if (writeResponse != null && this.props.perms.includes(Perms.WRITE_RESPONSE)) {
               // support write response simply by letting the implementor pass the response as second argument to the callback
-              this.value = this.validateUserInput(writeResponse);
+              try {
+                this.value = this.validateUserInput(writeResponse);
+              } catch (error) {
+                // this runs inside the plugin's callback; a throw would land in the plugin and leave the request unanswered
+                this.characteristicWarning(`An illegal write response value was supplied by the write handler for characteristic: ${error?.message}`,
+                  CharacteristicWarningType.WARN_MESSAGE, error?.stack);
+                this.statusCode = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+                reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+                return;
+              }
               resolve(this.value!);
             } else {
               if (writeResponse != null) {
