@@ -53,6 +53,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix(server): limit the timed write ttl, unref its timer and clear it when the connection closes
 - fix(advertiser): warn about a system D-Bus connection error instead of crashing
 - fix(tlv): reject a truncated entry in decodeWithLists instead of cutting it short
+- fix(server): skip an event notification whose events were all unregistered
 
 ### Homebridge Dependencies
 

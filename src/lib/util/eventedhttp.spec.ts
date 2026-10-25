@@ -284,6 +284,21 @@ describe("eventedhttp", () => {
 
   // TODO test events not delivered while in a request!
 
+  test("should not send an empty event notification when every queued event was unregistered", async () => {
+    server.once(EventedHTTPServerEvent.REQUEST, defaultRequestHandler);
+    const connectionOpened: Promise<HAPConnection> = awaitEventOnce(server, EventedHTTPServerEvent.CONNECTION_OPENED);
+    const client = await connectClient();
+    const connection = await connectionOpened;
+    expect((await client.writeHTTPRequest("GET", "/")).statusCode).toBe(HAPHTTPCode.OK);
+
+    connection.enableEventNotifications(1, 1);
+    connection.sendEvent(1, 1, "Hello World!");
+    connection.disableEventNotifications(1, 1);
+
+    await PromiseTimeout(HAPConnection.EVENT_COALESCING_DELAY + 50);
+    expect(client.receiveBufferCount).toBe(0);
+  });
+
   test("should not write an event into the middle of a response larger than 64 KiB", async () => {
     const body = "x".repeat(300_000);
     server.once(EventedHTTPServerEvent.REQUEST, (connection: HAPConnection, request: IncomingMessage, response: ServerResponse) => {
