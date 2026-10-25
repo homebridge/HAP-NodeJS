@@ -2377,6 +2377,35 @@ describe("Accessory", () => {
       expect(accessory.services.length).toEqual(2);
     });
 
+    test("a restored accessory keeps a single primary service", () => {
+      const accessory = new Accessory("Primary", uuid.generate("deserialize-primary"));
+      accessory.addService(Service.Switch, "Alpha", "a").setPrimaryService();
+      accessory.addService(Service.Switch, "Beta", "b");
+
+      const restored = Accessory.deserialize(Accessory.serialize(accessory));
+      const alpha = restored.getServiceById(Service.Switch, "a")!;
+      const beta = restored.getServiceById(Service.Switch, "b")!;
+      // @ts-expect-error: private access
+      expect(restored.primaryService).toBe(alpha);
+
+      beta.setPrimaryService();
+      expect(alpha.isPrimaryService).toBeFalsy();
+      expect(beta.isPrimaryService).toBeTruthy();
+    });
+
+    test("a restored accessory with two primary services keeps only the first", () => {
+      const accessory = new Accessory("Primary", uuid.generate("deserialize-two-primaries"));
+      accessory.addService(Service.Switch, "Alpha", "a");
+      accessory.addService(Service.Switch, "Beta", "b");
+      const json = Accessory.serialize(accessory);
+      json.services.filter(service => service.subtype).forEach(service => service.primaryService = true);
+
+      const restored = Accessory.deserialize(json);
+      expect(restored.services.filter(service => service.isPrimaryService)).toEqual([
+        restored.getServiceById(Service.Switch, "a"),
+      ]);
+    });
+
     test("deserialize complete json", () => {
       // json for a light accessory
       const json = JSON.parse("{\"displayName\":\"TestAccessory\",\"UUID\":\"0beec7b5-ea3f-40fd-bc95-d0dd47f3c5bc\"," +

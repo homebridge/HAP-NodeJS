@@ -34,6 +34,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - docs(uuid): say that unparse reads 16 bytes, not 8
 - fix(accessory): unlink controller storage when a bridged accessory is removed
 - fix(accessory): report slow and timed out handlers through the bridged accessory
+- fix(accessory): track the primary service of a restored accessory
 
 ### Homebridge Dependencies
 
