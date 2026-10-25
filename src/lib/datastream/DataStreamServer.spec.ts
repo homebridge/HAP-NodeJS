@@ -109,4 +109,56 @@ describe("DataStreamServer", () => {
       expect(session.socket.write).toHaveBeenCalledTimes(1); // the hello response
     });
   });
+
+  describe("malformed frames", () => {
+    function identifiedSession(): TestSession {
+      const session = setupSession();
+      session.socket.emit("data", encryptedFrame(session, messagePayload({ protocol: "control", request: "hello", id: 1 })));
+      return session;
+    }
+
+    it.each([
+      [
+        "an empty payload",
+        Buffer.alloc(0),
+      ],
+      [
+        "a header length longer than the payload",
+        Buffer.from([0x05, 0x04]),
+      ],
+      [
+        "an undecodable header",
+        Buffer.from([0x01, 0x00]),
+      ],
+      [
+        "a header which is not a dictionary",
+        Buffer.from([0x01, 0x04, 0xE0]),
+      ],
+    ])("should drop a first frame with %s and close the connection", (_, payload) => {
+      const session = setupSession();
+
+      expect(() => session.socket.emit("data", encryptedFrame(session, payload))).not.toThrow();
+      expect(session.socket.end).toHaveBeenCalled();
+    });
+
+    it.each([
+      [
+        "an empty payload",
+        Buffer.alloc(0),
+      ],
+      [
+        "a header length longer than the payload",
+        Buffer.from([0x05, 0x04]),
+      ],
+      [
+        "a header which is not a dictionary",
+        Buffer.from([0x01, 0x04, 0xE0]),
+      ],
+    ])("should drop a later frame with %s", (_, payload) => {
+      const session = identifiedSession();
+
+      expect(() => session.socket.emit("data", encryptedFrame(session, payload))).not.toThrow();
+      expect(session.socket.end).not.toHaveBeenCalled();
+    });
+  });
 });
