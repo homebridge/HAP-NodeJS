@@ -2076,6 +2076,19 @@ export class Accessory extends EventEmitter {
 
     this.services = targetServices.slice();
 
+    // the restored services carry their own primary flag; track it, so a later primary service replaces it
+    for (const service of this.services) {
+      if (!service.isPrimaryService) {
+        continue;
+      }
+
+      if (this.primaryService) {
+        service.isPrimaryService = false; // only one primary service, which a cache written before this fix may not hold to
+      } else {
+        this.primaryService = service;
+      }
+    }
+
     // Fix Identify
     this
       .getService(Service.AccessoryInformation)!
