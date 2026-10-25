@@ -50,6 +50,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix(server): refuse pair-verify on a connection that is already verified
 - fix(server): answer /pairings requests with an unexpected state or method
 - fix(server): check idle connections again when the first one reaches the idle time
+- fix(server): limit the timed write ttl, unref its timer and clear it when the connection closes
 
 ### Homebridge Dependencies
 

@@ -1166,6 +1166,40 @@ describe("HAPServer", () => {
       expect(hapConnection.timedWritePid).toBeUndefined();
     });
 
+    test.each([0, -1, 2 ** 32, "1000"])("rejects a prepare write request with the ttl %s", async (ttl) => {
+      // @ts-expect-error: a string ttl is the wrong type on purpose
+      await expect(client.sendPrepareWrite({ pid: 1337, ttl })).rejects.toThrow();
+    });
+
+    async function prepareTimedWrite(): Promise<HAPConnection> {
+      await client.sendPrepareWrite({ pid: 1337, ttl: 60_000 });
+
+      // we just do a /accessories request to get hold onto the HAPConnection object
+      let hapConnection!: HAPConnection;
+      server.on(HAPServerEventTypes.ACCESSORIES, (connection, callback) => {
+        hapConnection = connection;
+        callback(undefined, { accessories: [] });
+      });
+      await client.sendAccessoriesRequest();
+      return hapConnection;
+    }
+
+    test("does not keep the process alive for a pending timed write", async () => {
+      const hapConnection = await prepareTimedWrite();
+      expect(hapConnection.timedWriteTimeout!.hasRef()).toBe(false);
+    });
+
+    test("clears a pending timed write when the connection closes", async () => {
+      const hapConnection = await prepareTimedWrite();
+      expect(hapConnection.timedWriteTimeout).toBeDefined();
+
+      const closed = awaitEventOnce(server, HAPServerEventTypes.CONNECTION_CLOSED);
+      client.destroy();
+      await closed;
+      expect(hapConnection.timedWriteTimeout).toBeUndefined();
+      expect(hapConnection.timedWritePid).toBeUndefined();
+    });
+
     test("test resource request", async () => {
       const image = crypto.randomBytes(256);
       const request: ResourceRequest = {

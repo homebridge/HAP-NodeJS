@@ -862,6 +862,12 @@ export class HAPConnection extends EventEmitter {
 
     debugCon("[%s] Client connection closed", this.remoteAddress);
 
+    if (this.timedWriteTimeout) {
+      clearTimeout(this.timedWriteTimeout);
+      this.timedWriteTimeout = undefined;
+      this.timedWritePid = undefined;
+    }
+
     if (this.httpSocket) {
       this.httpSocket.destroy();
     }

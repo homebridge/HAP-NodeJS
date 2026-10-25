@@ -343,6 +343,11 @@ export class HAPServer extends EventEmitter {
   private static readonly MAX_UNAUTHENTICATED_REQUEST_BODY_SIZE = 64 * 1024;
   private static readonly MAX_REQUEST_BODY_SIZE = 1024 * 1024;
 
+  /**
+   * The longest delay a Node.js timer supports. Above it, the timer fires after 1 ms and the timed write would expire at once.
+   */
+  private static readonly MAX_TIMED_WRITE_TTL = 0x7FFFFFFF;
+
   private unsuccessfulPairAttempts = 0; // after 100 unsuccessful attempts the server won't accept any further attempts. Will currently be reset on a reboot
 
   allowInsecureRequest: boolean;
@@ -1164,7 +1169,8 @@ export class HAPServer extends EventEmitter {
 
       const prepareRequest = JSON.parse(data.toString()) as PrepareWriteRequest;
 
-      if (prepareRequest.pid && prepareRequest.ttl) {
+      const ttl = prepareRequest.ttl;
+      if (prepareRequest.pid && typeof ttl === "number" && ttl > 0 && ttl <= HAPServer.MAX_TIMED_WRITE_TTL) {
         debug("[%s] Received prepare write request with pid %d and ttl %d", this.accessoryInfo.username, prepareRequest.pid, prepareRequest.ttl);
 
         if (connection.timedWriteTimeout) { // clear any currently existing timeouts
@@ -1176,7 +1182,8 @@ export class HAPServer extends EventEmitter {
           debug("[%s] Timed write request timed out for pid %d", this.accessoryInfo.username, prepareRequest.pid);
           connection.timedWritePid = undefined;
           connection.timedWriteTimeout = undefined;
-        }, prepareRequest.ttl);
+        }, ttl);
+        connection.timedWriteTimeout.unref(); // the HAPConnection clears it when it closes
 
         response.writeHead(HAPHTTPCode.OK, { "Content-Type": HAPMimeTypes.HAP_JSON });
         response.end(JSON.stringify({ status: HAPStatus.SUCCESS }));
