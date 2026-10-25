@@ -829,6 +829,18 @@ describe("HAPServer", () => {
         expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
       });
 
+      test.each([
+        ["an unexpected STATE", PairMethods.LIST_PAIRINGS, PairingStates.M3],
+        ["an unsupported METHOD", PairMethods.PAIR_VERIFY, PairingStates.M1],
+      ])("should reject %s instead of never answering", async (_, method, state) => {
+        const request = tlv.encode(TLVValues.METHOD, method, TLVValues.STATE, state);
+        const httpResponse = await client.writeHTTPRequest("POST", "/pairings", request, { contentType: HAPMimeTypes.PAIRING_TLV8 });
+        expect(httpResponse.statusCode).toEqual(HAPPairingHTTPCode.OK);
+        const objects = tlv.decode(httpResponse.body);
+        expect(objects[TLVValues.STATE].readUInt8(0)).toEqual(PairingStates.M2);
+        expect(objects[TLVValues.ERROR_CODE].readUInt8(0)).toEqual(TLVErrorCode.UNKNOWN);
+      });
+
       test("ADD_PAIRING should reject when IDENTIFIER is missing", async () => {
         const malformed = tlv.encode(
           TLVValues.METHOD, PairMethods.ADD_PAIRING,
