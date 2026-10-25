@@ -28,6 +28,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix(remote): stop the Siri audio producer when the stream is refused
 - fix(adaptive-lighting): forget the saved curve position when a new curve arrives
 - fix(adaptive-lighting): keep Adaptive Lighting on when a control point request is rejected
+- fix(color-utils): stop rounding the shared color temperature lookup table in place
 
 ### Homebridge Dependencies
 
