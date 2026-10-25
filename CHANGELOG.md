@@ -25,6 +25,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix(remote): read target configurations from the Map they are stored in
 - fix(remote): remove a whole target when the request lists no buttons
 - fix(remote): don't crash when a delayed button release fails
+- fix(remote): stop the Siri audio producer when the stream is refused
 
 ### Homebridge Dependencies
 

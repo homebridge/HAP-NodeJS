@@ -3,7 +3,7 @@ import { EventEmitter } from "events";
 import { Characteristic } from "../Characteristic";
 import { HAPConnectionEvent } from "../util/eventedhttp";
 import * as tlv from "../util/tlv";
-import { ButtonType, RemoteController, RemoteControllerEvents, TargetUpdates } from "./RemoteController";
+import { ButtonType, RemoteController, RemoteControllerEvents, SiriAudioSession, TargetUpdates } from "./RemoteController";
 
 const Operation = {
   LIST: 0x01,
@@ -203,6 +203,40 @@ describe("remoteController", () => {
       } finally {
         jest.useRealTimers();
       }
+    });
+  });
+
+  describe("siri audio session", () => {
+    it("should stop the audio producer when the controller refuses the stream", async () => {
+      const startAudioProduction = jest.fn();
+      const stopAudioProduction = jest.fn();
+      class Producer {
+        startAudioProduction = startAudioProduction;
+        stopAudioProduction = stopAudioProduction;
+      }
+
+      const connection = Object.assign(new EventEmitter(), {
+        // the controller answers the dataSend open request with a non-zero status
+        sendRequest: jest.fn((_protocol, _topic, _message, callback) => setTimeout(callback, 0, undefined, 1, {})),
+        sendEvent: jest.fn(),
+      });
+      const configuration = {
+        codecType: 3,
+        parameters: {
+          channels: 1,
+          bitrate: 0,
+          samplerate: 1,
+        },
+      };
+
+      // @ts-expect-error: the connection is a minimal fake
+      const session = new SiriAudioSession(connection, configuration, Producer);
+      const closed = new Promise<void>(resolve => session.on("close", resolve));
+      session.start();
+      await closed;
+
+      expect(startAudioProduction).toHaveBeenCalledTimes(1);
+      expect(stopAudioProduction).toHaveBeenCalledTimes(1);
     });
   });
 });
