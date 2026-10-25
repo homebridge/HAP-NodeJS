@@ -541,9 +541,9 @@ export class RemoteController extends EventEmitter
    * @returns The targetIdentifier of the device or undefined if not existent.
    */
   public getTargetIdentifierByName(name: string): number | undefined {
-    for (const [ activeIdentifier, configuration ] of Object.entries(this.targetConfigurations)) {
+    for (const [ activeIdentifier, configuration ] of this.targetConfigurations) {
       if (configuration.targetName === name) {
-        return parseInt(activeIdentifier, 10);
+        return activeIdentifier;
       }
     }
 
@@ -792,7 +792,7 @@ export class RemoteController extends EventEmitter
     }
 
     // this.targetConfigurationsString is updated after each change, so we basically don't need to do anything here
-    debug("Returning " + Object.keys(this.targetConfigurations).length + " target configurations");
+    debug("Returning " + this.targetConfigurations.size + " target configurations");
     return HAPStatus.SUCCESS;
   }
 
@@ -947,7 +947,7 @@ export class RemoteController extends EventEmitter
 
   private updatedTargetConfiguration(): void {
     const bufferList = [];
-    for (const configuration of Object.values(this.targetConfigurations)) {
+    for (const configuration of this.targetConfigurations.values()) {
       const targetIdentifier = tlv.encode(
         TargetConfigurationTypes.TARGET_IDENTIFIER, tlv.writeUInt32(configuration.targetIdentifier),
       );
@@ -961,7 +961,7 @@ export class RemoteController extends EventEmitter
       );
 
       const buttonConfigurationBuffers: Buffer[] = [];
-      for (const value of configuration.buttonConfiguration.values()) {
+      for (const value of Object.values(configuration.buttonConfiguration)) {
         let tlvBuffer = tlv.encode(
           ButtonConfigurationTypes.BUTTON_ID, value.buttonID,
           ButtonConfigurationTypes.BUTTON_TYPE, tlv.writeUInt16(value.buttonType),
@@ -987,10 +987,13 @@ export class RemoteController extends EventEmitter
         [targetIdentifier, targetName, targetCategory, buttonConfiguration],
       );
 
-      bufferList.push(tlv.encode(TargetControlList.TARGET_CONFIGURATION, targetConfiguration));
+      bufferList.push(targetConfiguration);
     }
 
-    this.targetConfigurationsString = Buffer.concat(bufferList).toString("base64");
+    // targets are a tlv list, thus every entry is separated by an empty tlv
+    this.targetConfigurationsString = bufferList.length === 0
+      ? ""
+      : tlv.encode(TargetControlList.TARGET_CONFIGURATION, bufferList).toString("base64");
     this.stateChangeDelegate?.();
   }
 
@@ -1346,7 +1349,7 @@ export class RemoteController extends EventEmitter
    * @private
    */
   serialize(): SerializedControllerState | undefined {
-    if (!this.activeIdentifier && Object.keys(this.targetConfigurations).length === 0) {
+    if (!this.activeIdentifier && this.targetConfigurations.size === 0) {
       return undefined;
     }
 
