@@ -612,6 +612,10 @@ export class HAPConnection extends EventEmitter {
     this.queuedEvents.splice(0, this.queuedEvents.length);
     this.eventsQueuedForImmediateDelivery = false;
 
+    if (eventData.characteristics.length === 0) {
+      return; // the client unregistered every queued event in the meantime
+    }
+
     this.writeEventNotification(eventData);
   }
 
