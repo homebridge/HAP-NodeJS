@@ -194,6 +194,16 @@ describe("tlv", () => {
       expect(() => decodeWithLists(Buffer.from("01010a01010b", "hex")))
         .toThrow();
     });
+
+    test("reject an entry whose declared length exceeds the buffer instead of truncating it", () => {
+      expect(() => decodeWithLists(Buffer.from("010aaa", "hex")))
+        .toThrow("TLV decode failure: declared length 10 exceeds remaining buffer 1");
+    });
+
+    test("reject a trailing byte which is not a complete type/length header", () => {
+      expect(() => decodeWithLists(Buffer.from("0101aa02", "hex")))
+        .toThrow("TLV decode failure: incomplete type/length header");
+    });
   });
 
   describe("decodeList", () => {
