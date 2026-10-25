@@ -701,6 +701,8 @@ export class Accessory extends EventEmitter {
     accessory.permsQuarantined = false; // a later bridge starts from a clean slate and re-evaluates the accessory itself
     accessory.removeAllListeners();
 
+    this.controllerStorage.unlinkAccessory(accessory);
+
     if(!deferUpdate) {
       this.enqueueConfigurationUpdate();
     }
