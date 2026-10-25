@@ -338,11 +338,25 @@ async function dbusInvoke( bus: MessageBus, destination: string, path: string, d
  * dbus-native turns an exception raised while handling an incoming message into a `handlerError` event on the
  * connection, and crashes the process when nothing listens for it. The system bus refusing our Hello or a signal
  * subscription (see https://github.com/homebridge/HAP-NodeJS/issues/993) both arrive that way, so report them instead.
+ *
+ * The same goes for an `error` event, like the socket to the system bus failing.
+ * A failure to connect in the first place is reported through the calls made on the bus, so it is only logged for debugging.
  */
 function systemBus(): MessageBus {
   const bus = dbus.systemBus();
+  let connected = false;
+  bus.connection.once("connect", () => {
+    connected = true;
+  });
   bus.connection.on("handlerError", error => {
     console.warn("The system D-Bus reported an error: " + error.message);
+  });
+  bus.connection.on("error", error => {
+    if (connected) {
+      console.warn("The connection to the system D-Bus failed: " + error.message);
+    } else {
+      debug("Failed to connect to the system D-Bus: %s", error.message);
+    }
   });
   return bus;
 }
