@@ -1,6 +1,6 @@
 import ciao, { CiaoService, MDNSServerOptions, Responder, ServiceEvent, ServiceTxt, ServiceType } from "@homebridge/ciao";
 import { InterfaceName, IPAddress } from "@homebridge/ciao/lib/NetworkManager";
-import dbus, { DBusInterface, MessageBus } from "@homebridge/dbus-native";
+import dbus, { DBusInterface, MessageBus, variantValue } from "dbus-native";
 import assert from "assert";
 import bonjour, { Advertisement, Bonjour } from "bonjour-hap";
 import crypto from "crypto";
@@ -297,14 +297,15 @@ export class DBusInvokeError extends Error {
   readonly errorName: string;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  constructor(errorObject: { name: string, message: any }) {
+  constructor(errorObject: { name: string, message: any, dbusName?: string }) {
     super();
 
     Object.setPrototypeOf(this, DBusInvokeError.prototype);
 
     this.name = "DBusInvokeError";
 
-    this.errorName = errorObject.name;
+    // dbus-native's DBusError carries the D-Bus error name in `dbusName`; its `name` is just "DBusError"
+    this.errorName = errorObject.dbusName ?? errorObject.name;
 
     if (Array.isArray(errorObject.message) && errorObject.message.length === 1) {
       this.message = errorObject.message[0];
@@ -315,25 +316,35 @@ export class DBusInvokeError extends Error {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function dbusInvoke( bus: MessageBus, destination: string, path: string, dbusInterface: string, member: string, others?: any): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const command = {
-      destination,
-      path,
-      interface: dbusInterface,
-      member,
-      ...(others || {}),
-    };
+async function dbusInvoke( bus: MessageBus, destination: string, path: string, dbusInterface: string, member: string, others?: any): Promise<any> {
+  const command = {
+    destination,
+    path,
+    interface: dbusInterface,
+    member,
+    ...(others || {}),
+  };
 
-    bus.invoke(command, (err, result) => {
-      if (err) {
-        reject(new DBusInvokeError(err));
-      } else {
-        resolve(result);
-      }
-    });
+  try {
+    return await bus.invoke(command);
+  } catch (error) {
+    throw new DBusInvokeError(error);
+  }
+}
 
+/**
+ * Connect to the system bus.
+ *
+ * dbus-native turns an exception raised while handling an incoming message into a `handlerError` event on the
+ * connection, and crashes the process when nothing listens for it. The system bus refusing our Hello or a signal
+ * subscription (see https://github.com/homebridge/HAP-NodeJS/issues/993) both arrive that way, so report them instead.
+ */
+function systemBus(): MessageBus {
+  const bus = dbus.systemBus();
+  bus.connection.on("handlerError", error => {
+    console.warn("The system D-Bus reported an error: " + error.message);
   });
+  return bus;
 }
 
 
@@ -381,7 +392,7 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
 
     debug(`Preparing Advertiser for '${this.accessoryInfo.displayName}' using Avahi backend!`);
 
-    this.bus = dbus.systemBus();
+    this.bus = systemBus();
 
     this.stateChangeHandler = this.handleStateChangedEvent.bind(this);
   }
@@ -498,7 +509,7 @@ export class AvahiAdvertiser extends EventEmitter implements Advertiser {
   }
 
   public static async isAvailable(): Promise<boolean> {
-    const bus = dbus.systemBus();
+    const bus = systemBus();
 
     try {
       try {
@@ -578,7 +589,7 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
     this.accessoryInfo = accessoryInfo;
     this.setupHash = CiaoAdvertiser.computeSetupHash(accessoryInfo);
 
-    this.bus = dbus.systemBus();
+    this.bus = systemBus();
 
     debug(`Preparing Advertiser for '${this.accessoryInfo.displayName}' using systemd-resolved backend!`);
   }
@@ -669,7 +680,7 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
   }
 
   public static async isAvailable(): Promise<boolean> {
-    const bus = dbus.systemBus();
+    const bus = systemBus();
 
     try {
       try {
@@ -702,11 +713,12 @@ export class ResolvedAdvertiser extends EventEmitter implements Advertiser {
           },
         );
 
-        if (mdnsStatus[0][0].type !== "s") {
+        const multicastDNS = variantValue(mdnsStatus);
+        if (typeof multicastDNS !== "string") {
           throw new Error("Invalid type for MulticastDNS");
         }
 
-        if (mdnsStatus[1][0] !== "yes" ) {
+        if (multicastDNS !== "yes") {
           debug("systemd-resolved/DBus classified unavailable because MulticastDNS is not enabled!");
           return false;
         }
