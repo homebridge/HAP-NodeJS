@@ -387,6 +387,11 @@ export class HAPConnection extends EventEmitter {
 
   private pendingClientSocketData?: Buffer = Buffer.alloc(0); // data received from client before HTTP proxy is fully setup
   private handlingRequest = false; // true while we are composing an HTTP response (so events can wait)
+  /**
+   * Byte offset in the stream read by {@link httpSocket} at which the last finished HTTP response ends.
+   * The internal HTTP server hands us a response in chunks of at most 64 KiB, so the first chunk is not the whole response.
+   */
+  private httpResponseEnd?: number;
 
   username?: HAPUsername; // username is unique to every user in the home, basically identifies an Apple ID
   encryption?: HAPEncryption; // created in handlePairVerifyStepOne
@@ -796,6 +801,12 @@ export class HAPConnection extends EventEmitter {
 
     request.socket.setNoDelay(true);
 
+    response.once("finish", () => {
+      // the response was handed to the server side of the proxy socket: it ends at the bytes written so far
+      this.httpResponseEnd = request.socket.bytesWritten;
+      this.handleHttpResponseCompleteIfReceived();
+    });
+
     this.emit(HAPConnectionEvent.REQUEST, request, response);
   }
 
@@ -807,6 +818,20 @@ export class HAPConnection extends EventEmitter {
   private handleHttpServerResponse(data: Buffer): void {
     data = this.encrypt(data);
     this.tcpSocket.write(data, this.handleTCPSocketWriteFulfilled.bind(this));
+
+    this.handleHttpResponseCompleteIfReceived();
+  }
+
+  /**
+   * Called when a response finished and whenever a chunk of it was forwarded to the HomeKit controller.
+   * Event notifications may only be written once every byte of the response went out, otherwise they would land
+   * in the middle of its body.
+   */
+  private handleHttpResponseCompleteIfReceived(): void {
+    if (this.httpResponseEnd === undefined || this.httpSocket!.bytesRead < this.httpResponseEnd) {
+      return;
+    }
+    this.httpResponseEnd = undefined;
 
     debugCon("[%s] HTTP Response is finished", this.remoteAddress);
     this.handlingRequest = false;
