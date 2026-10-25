@@ -32,6 +32,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix(adaptive-lighting): guard the curve maths against zero-length segments and NaN
 - fix(check-name): accept names that are a single letter or number
 - docs(uuid): say that unparse reads 16 bytes, not 8
+- fix(accessory): unlink controller storage when a bridged accessory is removed
 
 ### Homebridge Dependencies
 

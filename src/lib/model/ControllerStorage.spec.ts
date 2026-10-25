@@ -1,7 +1,9 @@
 import { Accessory } from "../Accessory";
+import { Bridge } from "../Bridge";
 import { ControllerIdentifier, ControllerServiceMap, SerializableController, StateChangeDelegate } from "../controller";
 import * as uuid from "../util/uuid";
 import { ControllerStorage } from "./ControllerStorage";
+import { HAPStorage } from "./HAPStorage";
 
 interface State {
   first?: string;
@@ -108,5 +110,92 @@ describe("ControllerStorage", () => {
     warn.mockRestore();
     // @ts-expect-error: private access
     clearTimeout(storage.queuedSaveTimeout);
+  });
+
+  describe("removing a bridged accessory", () => {
+    const storedData = (username: string, accessoryUUID: string) => HAPStorage.storage().setItemSync(ControllerStorage.persistKey(username), {
+      accessories: {
+        [accessoryUUID]: [
+          {
+            type: "stepped",
+            controllerData: {
+              data: { first: "a", second: "b" },
+            },
+          },
+        ],
+      },
+    });
+
+    test("unlinks its storage from the bridge", () => {
+      const bridge = new Bridge("Bridge", uuid.generate("controller-storage-unlink-bridge"));
+      const accessory = new Accessory("Child", uuid.generate("controller-storage-unlink-child"));
+      bridge.addBridgedAccessory(accessory);
+      bridge.removeBridgedAccessory(accessory);
+
+      // @ts-expect-error: private access
+      expect(bridge.controllerStorage.linkedAccessories).toEqual([]);
+      // @ts-expect-error: private access
+      expect(accessory.controllerStorage.parent).toBeUndefined();
+    });
+
+    test("a state change on the removed accessory does not schedule a save it cannot do", () => {
+      const bridge = new Bridge("Bridge", uuid.generate("controller-storage-orphan-bridge"));
+      bridge.controllerStorage.load("AA:BB:CC:00:00:04");
+      const accessory = new Accessory("Child", uuid.generate("controller-storage-orphan-child"));
+      const controller = new SteppedController();
+      accessory.controllerStorage.trackController(controller);
+      bridge.addBridgedAccessory(accessory);
+      bridge.removeBridgedAccessory(accessory);
+      // @ts-expect-error: private access
+      clearTimeout(bridge.controllerStorage.queuedSaveTimeout);
+
+      // @ts-expect-error: private access
+      accessory.controllerStorage.handleStateChange(controller);
+      // @ts-expect-error: private access
+      expect(accessory.controllerStorage.queuedSaveTimeout).toBeUndefined();
+    });
+
+    test("the same accessory can be bridged again after the bridge was published", () => {
+      const bridge = new Bridge("Bridge", uuid.generate("controller-storage-readd-bridge"));
+      bridge.controllerStorage.load("AA:BB:CC:00:00:01");
+      const accessory = new Accessory("Child", uuid.generate("controller-storage-readd-child"));
+      bridge.addBridgedAccessory(accessory);
+      bridge.removeBridgedAccessory(accessory);
+
+      expect(() => bridge.addBridgedAccessory(accessory)).not.toThrow();
+      // @ts-expect-error: private access
+      expect(bridge.controllerStorage.linkedAccessories).toEqual([accessory.controllerStorage]);
+      // @ts-expect-error: private access
+      clearTimeout(bridge.controllerStorage.queuedSaveTimeout);
+    });
+
+    test("the same accessory bridged again before the bridge was published does not break loading", () => {
+      const bridge = new Bridge("Bridge", uuid.generate("controller-storage-readd-early-bridge"));
+      const accessory = new Accessory("Child", uuid.generate("controller-storage-readd-early-child"));
+      bridge.addBridgedAccessory(accessory);
+      bridge.removeBridgedAccessory(accessory);
+      bridge.addBridgedAccessory(accessory);
+
+      expect(() => bridge.controllerStorage.load("AA:BB:CC:00:00:02")).not.toThrow();
+    });
+
+    test("a replacement with the same UUID restores the stored controller data", () => {
+      const username = "AA:BB:CC:00:00:03";
+      const accessoryUUID = uuid.generate("controller-storage-replace-child");
+      storedData(username, accessoryUUID);
+
+      const bridge = new Bridge("Bridge", uuid.generate("controller-storage-replace-bridge"));
+      const old = new Accessory("Child", accessoryUUID);
+      bridge.addBridgedAccessory(old);
+      bridge.removeBridgedAccessory(old);
+
+      const replacement = new Accessory("Child", accessoryUUID);
+      const controller = new SteppedController();
+      replacement.controllerStorage.trackController(controller);
+      bridge.addBridgedAccessory(replacement);
+      bridge.controllerStorage.load(username);
+
+      expect(controller.state).toEqual({ first: "a", second: "b" });
+    });
   });
 });

@@ -68,6 +68,11 @@ export class ControllerStorage {
       return;
     }
 
+    if (!this.username) {
+      // a bridged accessory removed from its bridge has nowhere to save to; a timer here would throw in save()
+      return;
+    }
+
     const plannedTime = Date.now() + timeout;
 
     if (this.queuedSaveTimeout) {
@@ -99,9 +104,36 @@ export class ControllerStorage {
     this.linkedAccessories.push(storage);
     storage.parent = this;
 
+    if (storage.initialized) {
+      // the accessory was bridged before and removed again; its storage still holds the live controller data
+      this.enqueueSaveRequest(100);
+      return;
+    }
+
     const saved = this.restoredAccessories && this.restoredAccessories[accessory.UUID];
     if (this.initialized) {
       storage.init(saved);
+    }
+  }
+
+  /**
+   * Unlinks a bridged accessory from the ControllerStorage of the bridge accessory, the counterpart of {@link linkAccessory}.
+   * Its controller data is no longer saved with the bridge.
+   *
+   * @param accessory
+   */
+  public unlinkAccessory(accessory: Accessory): void {
+    const storage = accessory.controllerStorage;
+    const index = this.linkedAccessories?.indexOf(storage) ?? -1;
+    if (index === -1) {
+      return;
+    }
+
+    this.linkedAccessories!.splice(index, 1);
+    storage.parent = undefined;
+
+    if (this.initialized) {
+      this.enqueueSaveRequest(100);
     }
   }
 
