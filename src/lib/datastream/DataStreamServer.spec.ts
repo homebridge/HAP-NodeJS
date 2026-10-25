@@ -161,4 +161,27 @@ describe("DataStreamServer", () => {
       expect(session.socket.end).not.toHaveBeenCalled();
     });
   });
+
+  describe("closing", () => {
+    it("should destroy a closed socket which the remote never closes", () => {
+      const { socket, connection } = setupSession();
+
+      connection.close();
+      expect(socket.end).toHaveBeenCalledTimes(1);
+      expect(socket.destroy).not.toHaveBeenCalled();
+
+      jest.advanceTimersByTime(5000);
+      expect(socket.destroy).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not destroy a socket which the remote closed in time", () => {
+      const { socket, connection } = setupSession();
+
+      connection.close();
+      socket.emit("close");
+
+      jest.advanceTimersByTime(5000);
+      expect(socket.destroy).not.toHaveBeenCalled();
+    });
+  });
 });
