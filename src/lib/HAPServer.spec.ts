@@ -1170,6 +1170,17 @@ describe("HAPServer", () => {
     expect(JSON.parse(response.body.toString())).toEqual({ status: HAPStatus.RESOURCE_DOES_NOT_EXIST });
   });
 
+  test.each(["//[", "//a:99999"])("answers the unparseable url %s with 400 instead of crashing", async (route) => {
+    server = new HAPServer(accessoryInfoUnpaired);
+    const [port] = await bindServer(server);
+
+    const client = await connectClient(port);
+
+    const response = await client.writeHTTPRequest("GET", route);
+    expect(response.statusCode).toBe(HAPHTTPCode.BAD_REQUEST);
+    expect(JSON.parse(response.body.toString())).toEqual({ status: HAPStatus.INVALID_VALUE_IN_REQUEST });
+  });
+
 });
 
 describe(IsKnownHAPStatusError, () => {
