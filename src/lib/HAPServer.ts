@@ -751,6 +751,15 @@ export class HAPServer extends EventEmitter {
     }
     const sequence = tlvData[TLVValues.SEQUENCE_NUM][0]; // value is single byte with sequence number
 
+    if (connection.isAuthenticated()) {
+      // M1 would replace the session keys of this connection with empty ones: it would keep counting as
+      // authenticated while accepting and sending plaintext
+      debug("[%s] Pair-Verify: rejecting pair-verify on an already verified connection", this.accessoryInfo.username);
+      response.writeHead(HAPPairingHTTPCode.BAD_REQUEST, { "Content-Type": "application/pairing+tlv8" });
+      response.end(tlv.encode(TLVValues.STATE, sequence + 1, TLVValues.ERROR_CODE, TLVErrorCode.UNKNOWN));
+      return;
+    }
+
     if (sequence === PairingStates.M1) {
       this.handlePairVerifyM1(connection, request, response, tlvData);
     } else if (sequence === PairingStates.M3 && connection._pairVerifyState === PairingStates.M2) {

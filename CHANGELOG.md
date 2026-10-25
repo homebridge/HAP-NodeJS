@@ -47,6 +47,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix(server): wait for the whole HTTP response before writing event notifications
 - fix(server): cap the size of request bodies, with a lower limit before pair-verify
 - fix(crypto): keep a frame whose length header arrived split across two TCP packets
+- fix(server): refuse pair-verify on a connection that is already verified
 
 ### Homebridge Dependencies
 
