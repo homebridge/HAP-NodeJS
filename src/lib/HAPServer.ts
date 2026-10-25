@@ -371,6 +371,16 @@ export class HAPServer extends EventEmitter {
   }
 
   /**
+   * Removes the event registrations every connected client holds for the accessory with the given aid.
+   *
+   * @param aid - The accessory id of the accessory.
+   * @returns the instance ids of the removed registrations, once for every connection that held one.
+   */
+  public disableEventNotificationsForAccessory(aid: number): number[] {
+    return this.httpServer.disableEventNotificationsForAccessory(aid);
+  }
+
+  /**
    * Send an even notification for given characteristic and changed value to all connected clients.
    * If `originator` is specified, the given {@link HAPConnection} will be excluded from the broadcast.
    *

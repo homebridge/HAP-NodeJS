@@ -29,7 +29,7 @@ import {
 } from "./Characteristic";
 import { CameraController, Controller, ControllerIdentifier, ControllerServiceMap } from "./controller";
 import { createCameraControllerOptions, MOCK_IMAGE } from "./controller/CameraController.spec";
-import { HAPHTTPCode, HAPStatus, IdentifyCallback, TLVErrorCode } from "./HAPServer";
+import { HAPHTTPCode, HAPServer, HAPStatus, IdentifyCallback, TLVErrorCode } from "./HAPServer";
 import { AccessoryInfo, PairingInformation, PermissionTypes } from "./model/AccessoryInfo";
 import { IdentifierCache } from "./model/IdentifierCache";
 import { Service } from "./Service";
@@ -296,6 +296,53 @@ describe("Accessory", () => {
       expect(bridge.getAccessoryByAID(2)).toBe(accessory);
       // @ts-expect-error: private access
       expect(accessory.getAccessoryByAID(2)).toBe(accessory);
+    });
+
+    test("removing a bridged accessory drops the event registrations of connected clients", async () => {
+      const bridge = new Bridge("TestBridge", uuid.generate("bridge test"));
+      bridge._identifierCache = new IdentifierCache(serverUsername);
+      const registeredEvents = new Set<string>();
+      const client = {
+        username: clientUsername0,
+        registeredEvents,
+        enableEventNotifications: (aid: number, iid: number) => registeredEvents.add(`${aid}.${iid}`),
+        disableEventNotifications: (aid: number, iid: number) => registeredEvents.delete(`${aid}.${iid}`),
+        hasEventNotifications: (aid: number, iid: number) => registeredEvents.has(`${aid}.${iid}`),
+      } as unknown as HAPConnection;
+      bridge._server = {
+        disableEventNotificationsForAccessory: (aid: number) => HAPConnection.prototype.disableEventNotificationsForAccessory.call(client, aid),
+      } as unknown as HAPServer;
+
+      const subscribe = (target: Accessory, characteristic: Characteristic) => new Promise<void>((resolve) => {
+        // @ts-expect-error: private access
+        bridge.handleSetCharacteristics(client, {
+          characteristics: [
+            { aid: target.aid!, iid: characteristic.iid!, ev: true },
+          ],
+        }, () => resolve());
+      });
+
+      const on = accessory.addService(Service.Switch, "Switch").getCharacteristic(Characteristic.On);
+      bridge.addBridgedAccessory(accessory);
+      bridge._assignIDs(bridge._identifierCache);
+      const unsubscribed = jest.fn();
+      on.on(CharacteristicEventTypes.UNSUBSCRIBE, unsubscribed);
+      await subscribe(accessory, on);
+
+      bridge.removeBridgedAccessory(accessory);
+      expect(registeredEvents.size).toBe(0);
+      expect(unsubscribed).toHaveBeenCalledTimes(1);
+
+      // a replacement under the same UUID gets the same ids, and must see the client subscribe again
+      const replacement = new Accessory(TEST_DISPLAY_NAME, TEST_UUID);
+      const replacementOn = replacement.addService(Service.Switch, "Switch").getCharacteristic(Characteristic.On);
+      bridge.addBridgedAccessory(replacement);
+      bridge._assignIDs(bridge._identifierCache);
+      expect(replacementOn.iid).toBe(on.iid);
+      const subscribed = jest.fn();
+      replacementOn.on(CharacteristicEventTypes.SUBSCRIBE, subscribed);
+      await subscribe(replacement, replacementOn);
+      expect(subscribed).toHaveBeenCalledTimes(1);
     });
 
     test("slow and timed out handlers are reported through the bridged accessory", async () => {
