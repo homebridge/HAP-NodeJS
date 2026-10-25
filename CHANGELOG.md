@@ -15,6 +15,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix(datastream): stop a stray unidentified frame from crashing the process
 - fix(datastream): drop malformed frame payloads instead of crashing the process
 - fix(datastream): destroy closed sockets when the remote never closes its side
+- fix(camera): reject malformed SetupEndpoints writes before marking the stream busy
 
 ### Homebridge Dependencies
 

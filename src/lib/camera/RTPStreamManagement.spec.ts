@@ -134,13 +134,18 @@ const SRTPParametersTypes = {
   MASTER_SALT: 0x03,
 } as const;
 
-function buildSetupEndpointsTlv(): string {
-  const addressTlv = tlv.encode(
-    AddressTypes.ADDRESS_VERSION, 0x00, // IPV4
-    AddressTypes.ADDRESS, "127.0.0.1",
-    AddressTypes.VIDEO_RTP_PORT, tlv.writeUInt16(5000),
-    AddressTypes.AUDIO_RTP_PORT, tlv.writeUInt16(5001),
-  );
+function buildSetupEndpointsTlv(withPorts = true): string {
+  const addressTlv = withPorts
+    ? tlv.encode(
+      AddressTypes.ADDRESS_VERSION, 0x00, // IPV4
+      AddressTypes.ADDRESS, "127.0.0.1",
+      AddressTypes.VIDEO_RTP_PORT, tlv.writeUInt16(5000),
+      AddressTypes.AUDIO_RTP_PORT, tlv.writeUInt16(5001),
+    )
+    : tlv.encode(
+      AddressTypes.ADDRESS_VERSION, 0x00, // IPV4
+      AddressTypes.ADDRESS, "127.0.0.1",
+    );
   const srtpTlv = tlv.encode(
     SRTPParametersTypes.SRTP_CRYPTO_SUITE, SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80,
     SRTPParametersTypes.MASTER_KEY, Buffer.alloc(16),
@@ -263,6 +268,45 @@ describe("RTPStreamManagement", () => {
       const decoded = tlv.decode(Buffer.from(response, "base64"));
       // SetupEndpointsResponseTypes.STATUS = 0x02; SetupEndpointsStatus.ERROR = 0x02
       expect(decoded[0x02].readUInt8(0)).toBe(0x02);
+    });
+  });
+
+  describe("handleSetupEndpoints malformed TLV", () => {
+    let controller: CameraController;
+
+    beforeEach(() => {
+      controller = new CameraController(buildControllerOptions(baseStreamingOptions));
+      controller.constructServices();
+      controller.configureServices();
+    });
+
+    afterEach(() => {
+      controller.handleFactoryReset();
+    });
+
+    test("should reject a request without ports and not keep the stream busy", async () => {
+      const rtp = controller.streamManagements[0] as RTPStreamManagement;
+      const callback = jest.fn();
+
+      expect(() => {
+        // @ts-expect-error: private method access
+        rtp.handleSetupEndpoints(buildSetupEndpointsTlv(false), callback, buildMockConnection());
+      }).not.toThrow();
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback.mock.calls[0][0]).toBe(HAPStatus.INVALID_VALUE_IN_REQUEST);
+      expect(rtp.streamStatus).toBe(0); // StreamingStatus.AVAILABLE
+      expect(rtp.sessionIdentifier).toBeUndefined();
+
+      // the next valid request must not be answered with BUSY
+      await new Promise<void>((resolve) => {
+        // @ts-expect-error: private method access
+        rtp.handleSetupEndpoints(buildSetupEndpointsTlv(), () => resolve(), buildMockConnection());
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const decoded = tlv.decode(Buffer.from((rtp as any).setupEndpointsResponse as string, "base64"));
+      // SetupEndpointsResponseTypes.STATUS = 0x02; SetupEndpointsStatus.BUSY = 0x01
+      expect(decoded[0x02].readUInt8(0)).not.toBe(0x01);
     });
   });
 });
