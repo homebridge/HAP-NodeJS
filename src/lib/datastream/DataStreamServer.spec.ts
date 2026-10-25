@@ -3,8 +3,8 @@ import { EventEmitter } from "events";
 import { Socket } from "net";
 import { HAPConnection } from "../util/eventedhttp";
 import * as hapCrypto from "../util/hapCrypto";
-import { DataStreamParser, DataStreamWriter } from "./DataStreamParser";
-import { DataStreamConnection, DataStreamServer, PreparedDataStreamSession } from "./DataStreamServer";
+import { DataStreamParser, DataStreamReader, DataStreamWriter } from "./DataStreamParser";
+import { DataStreamConnection, DataStreamServer, HDSStatus, PreparedDataStreamSession } from "./DataStreamServer";
 
 class FakeSocket extends EventEmitter {
   remoteAddress = "192.0.2.1";
@@ -203,6 +203,57 @@ describe("DataStreamServer", () => {
         allocSpy.mockRestore();
       }
       expect(socket.end).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("unhandled requests", () => {
+    // decrypts the n-th frame the accessory wrote and returns its decoded header
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function sentHeader(session: TestSession, index: number): Record<string, any> {
+      const frame: Buffer = session.socket.write.mock.calls[index][0];
+      const header = frame.subarray(0, 4);
+      const ciphertext = frame.subarray(4, frame.length - 16);
+      const authTag = frame.subarray(frame.length - 16);
+
+      const nonce = Buffer.alloc(8);
+      hapCrypto.writeUInt64LE(index, nonce);
+      const payload = hapCrypto.chacha20_poly1305_decryptAndVerify(session.prepared.accessoryToControllerEncryptionKey, nonce, header, ciphertext, authTag);
+
+      return DataStreamParser.decode(new DataStreamReader(payload.subarray(1, 1 + payload.readUInt8(0))));
+    }
+
+    function identifiedSession(): TestSession {
+      const session = setupSession();
+      session.socket.emit("data", encryptedFrame(session, messagePayload({ protocol: "control", request: "hello", id: 1 })));
+      return session;
+    }
+
+    it.each([
+      ["an unknown protocol", "unknownProtocol"],
+      ["a known protocol", "control"],
+    ])("should answer a request with an unknown topic on %s", (_, protocol) => {
+      const session = identifiedSession();
+
+      session.socket.emit("data", encryptedFrame(session, messagePayload({ protocol, request: "unknownTopic", id: 7 })));
+
+      expect(session.socket.write).toHaveBeenCalledTimes(2); // hello response + our answer
+      expect(sentHeader(session, 1)).toEqual({
+        protocol,
+        response: "unknownTopic",
+        id: 7,
+        status: HDSStatus.MISSING_PROTOCOL,
+      });
+    });
+
+    it("should not answer an unhandled event or a request without an id", () => {
+      const session = identifiedSession();
+
+      expect(() => {
+        session.socket.emit("data", encryptedFrame(session, messagePayload({ protocol: "unknownProtocol", event: "unknownTopic" })));
+        session.socket.emit("data", encryptedFrame(session, messagePayload({ protocol: "unknownProtocol", request: "unknownTopic" })));
+      }).not.toThrow();
+
+      expect(session.socket.write).toHaveBeenCalledTimes(1); // only the hello response
     });
   });
 });

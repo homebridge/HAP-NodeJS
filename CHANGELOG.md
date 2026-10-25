@@ -21,6 +21,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix(datastream): decode binary data of up to 32 bytes instead of dropping it
 - fix(datastream): make back-references follow the OPACK rule so reader and writer agree
 - perf(datastream): stop allocating an unused buffer for every received frame
+- fix(datastream): answer requests that have no handler instead of leaving them unanswered
 
 ### Homebridge Dependencies
 
