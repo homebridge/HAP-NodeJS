@@ -70,4 +70,17 @@ describe("#checkName()", () => {
 
     expect(consoleWarnSpy).toHaveBeenCalledTimes(0);
   });
+
+  test("Accessory Name of a single letter or number", async () => {
+    checkName("displayName", "Name", "A");
+    checkName("displayName", "Name", "1");
+
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(0);
+  });
+
+  test("Accessory Name of a single symbol", async () => {
+    checkName("displayName", "Name", "!");
+
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
+  });
 });
