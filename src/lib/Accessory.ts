@@ -1565,7 +1565,7 @@ export class Accessory extends EventEmitter {
         if (!accessory || !characteristic) {
           continue;
         }
-        this.sendCharacteristicWarning(characteristic, CharacteristicWarningType.SLOW_READ, "The read handler for the characteristic '" +
+        accessory.sendCharacteristicWarning(characteristic, CharacteristicWarningType.SLOW_READ, "The read handler for the characteristic '" +
           characteristic.displayName + "' on the accessory '" + accessory.displayName + "' was slow to respond!");
       }
 
@@ -1583,7 +1583,7 @@ export class Accessory extends EventEmitter {
           if (!accessory || !characteristic) {
             continue;
           }
-          this.sendCharacteristicWarning(characteristic, CharacteristicWarningType.TIMEOUT_READ, "The read handler for the characteristic '" +
+          accessory.sendCharacteristicWarning(characteristic, CharacteristicWarningType.TIMEOUT_READ, "The read handler for the characteristic '" +
             characteristic.displayName + "' on the accessory '" + accessory.displayName + "' didn't respond at all!. " +
             "Please check that you properly call the callback!");
 
@@ -1741,7 +1741,7 @@ export class Accessory extends EventEmitter {
         if (!accessory || !characteristic) {
           continue;
         }
-        this.sendCharacteristicWarning(characteristic, CharacteristicWarningType.SLOW_WRITE, "The write handler for the characteristic '" +
+        accessory.sendCharacteristicWarning(characteristic, CharacteristicWarningType.SLOW_WRITE, "The write handler for the characteristic '" +
           characteristic.displayName + "' on the accessory '" + accessory.displayName + "' was slow to respond!");
       }
 
@@ -1759,7 +1759,7 @@ export class Accessory extends EventEmitter {
           if (!accessory || !characteristic) {
             continue;
           }
-          this.sendCharacteristicWarning(characteristic, CharacteristicWarningType.TIMEOUT_WRITE, "The write handler for the characteristic '" +
+          accessory.sendCharacteristicWarning(characteristic, CharacteristicWarningType.TIMEOUT_WRITE, "The write handler for the characteristic '" +
             characteristic.displayName + "' on the accessory '" + accessory.displayName + "' didn't respond at all!. " +
             "Please check that you properly call the callback!");
 

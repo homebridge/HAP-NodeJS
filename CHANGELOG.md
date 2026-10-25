@@ -33,6 +33,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix(check-name): accept names that are a single letter or number
 - docs(uuid): say that unparse reads 16 bytes, not 8
 - fix(accessory): unlink controller storage when a bridged accessory is removed
+- fix(accessory): report slow and timed out handlers through the bridged accessory
 
 ### Homebridge Dependencies
 

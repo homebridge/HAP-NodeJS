@@ -297,6 +297,56 @@ describe("Accessory", () => {
       // @ts-expect-error: private access
       expect(accessory.getAccessoryByAID(2)).toBe(accessory);
     });
+
+    test("slow and timed out handlers are reported through the bridged accessory", async () => {
+      jest.useFakeTimers({ doNotFake: ["nextTick", "queueMicrotask"] });
+
+      try {
+        const bridge = new Bridge("TestBridge", uuid.generate("bridge test"));
+        const on = accessory.addService(Service.Switch, "Switch").getCharacteristic(Characteristic.On);
+        on.onGet(() => new Promise(() => {}));
+        on.onSet(() => new Promise(() => {}));
+        bridge.addBridgedAccessory(accessory);
+        bridge._identifierCache = new IdentifierCache(serverUsername);
+        bridge._assignIDs(bridge._identifierCache);
+
+        // homebridge listens on every bridged accessory (to know the plugin) and silences the bridge itself
+        const accessoryWarnings: [CharacteristicWarningType, string[]][] = [];
+        accessory.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, warning => accessoryWarnings.push([
+          warning.type,
+          [...warning.originatorChain],
+        ]));
+        bridge.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, () => {});
+
+        // @ts-expect-error: private access
+        bridge.handleGetCharacteristics(connection, {
+          ids: [
+            { aid: accessory.aid!, iid: on.iid! },
+          ],
+          includeMeta: false,
+          includeEvent: false,
+          includeType: false,
+          includePerms: false,
+        }, jest.fn());
+        // @ts-expect-error: private access
+        bridge.handleSetCharacteristics(connection, {
+          characteristics: [
+            { aid: accessory.aid!, iid: on.iid!, value: true },
+          ],
+        }, jest.fn());
+        jest.advanceTimersByTime(9000);
+
+        expect(accessoryWarnings.map(([type]) => type)).toEqual([
+          CharacteristicWarningType.SLOW_READ,
+          CharacteristicWarningType.SLOW_WRITE,
+          CharacteristicWarningType.TIMEOUT_READ,
+          CharacteristicWarningType.TIMEOUT_WRITE,
+        ]);
+        expect(accessoryWarnings[0][1]).toContain(accessory.displayName);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
   });
 
   describe("accessory controllers", () => {
