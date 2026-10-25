@@ -953,6 +953,9 @@ export class Service extends EventEmitter {
     });
 
     characteristic.on(CharacteristicEventTypes.CHARACTERISTIC_WARNING, this.emitCharacteristicWarningEvent.bind(this, characteristic));
+
+    // changed properties change the configuration served to HomeKit
+    characteristic.on(CharacteristicEventTypes.CHARACTERISTIC_CONFIGURATION_CHANGE, () => this.emit(ServiceEventTypes.SERVICE_CONFIGURATION_CHANGE));
   }
 
   /**
