@@ -139,9 +139,16 @@ export function decodeWithLists(buffer: Buffer): Record<number, Buffer | Buffer[
   let lastItemWasDelimiter = false;
 
   for (; leftBytes > 0;) {
+    if (leftBytes < 2) {
+      throw new Error("TLV decode failure: incomplete type/length header");
+    }
     const type = buffer.readUInt8(readIndex++);
     const length = buffer.readUInt8(readIndex++);
     leftBytes -= 2;
+
+    if (length > leftBytes) {
+      throw new Error("TLV decode failure: declared length " + length + " exceeds remaining buffer " + leftBytes);
+    }
 
     const data = buffer.subarray(readIndex, readIndex + length);
     readIndex += length;
