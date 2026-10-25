@@ -45,6 +45,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix(server): answer a malformed request URL with 400 instead of crashing
 - fix(server): only accept the proxy socket on the internal loopback HTTP server
 - fix(server): wait for the whole HTTP response before writing event notifications
+- fix(server): cap the size of request bodies, with a lower limit before pair-verify
 
 ### Homebridge Dependencies
 

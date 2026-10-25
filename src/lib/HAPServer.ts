@@ -336,6 +336,13 @@ export class HAPServer extends EventEmitter {
 
   private accessoryInfo: AccessoryInfo;
   private httpServer: EventedHTTPServer;
+  /**
+   * Request bodies are buffered in memory before a route handler runs. A pairing request is well below 1 KiB,
+   * so a connection which hasn't gone through pair-verify gets a much lower limit than an authenticated one.
+   */
+  private static readonly MAX_UNAUTHENTICATED_REQUEST_BODY_SIZE = 64 * 1024;
+  private static readonly MAX_REQUEST_BODY_SIZE = 1024 * 1024;
+
   private unsuccessfulPairAttempts = 0; // after 100 unsuccessful attempts the server won't accept any further attempts. Will currently be reset on a reboot
 
   allowInsecureRequest: boolean;
@@ -406,10 +413,36 @@ export class HAPServer extends EventEmitter {
   // Called when an HTTP request was detected.
   private handleRequestOnHAPConnection(connection: HAPConnection, request: IncomingMessage, response: ServerResponse): void {
     debug("[%s] HAP Request: %s %s", this.accessoryInfo.username, request.method, request.url);
+    const maxBodySize = connection.isAuthenticated() || this.allowInsecureRequest
+      ? HAPServer.MAX_REQUEST_BODY_SIZE
+      : HAPServer.MAX_UNAUTHENTICATED_REQUEST_BODY_SIZE;
     const buffers: Buffer[] = [];
-    request.on("data", data => buffers.push(data));
+    let bodySize = 0;
+    let bodyTooLarge = false;
+    request.on("data", (data: Buffer) => {
+      if (bodyTooLarge) {
+        return;
+      }
+
+      bodySize += data.length;
+      if (bodySize > maxBodySize) {
+        bodyTooLarge = true;
+        buffers.length = 0;
+        debug("[%s] Rejecting request %s as its body exceeds %d bytes", this.accessoryInfo.username, request.url, maxBodySize);
+        // closing the connection stops the client from sending the rest of the body
+        response.writeHead(HAPHTTPCode.BAD_REQUEST, { "Content-Type": HAPMimeTypes.HAP_JSON, "Connection": "close" });
+        response.end(JSON.stringify({ status: HAPStatus.OUT_OF_RESOURCE }));
+        return;
+      }
+
+      buffers.push(data);
+    });
 
     request.on("end", () => {
+      if (bodyTooLarge) {
+        return;
+      }
+
       let url: URL;
       try {
         url = new URL(request.url!, "http://hap-nodejs.local"); // parse the url (query strings etc)
