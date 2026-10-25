@@ -181,7 +181,7 @@ export class DataStreamParser {
       return buffer.readUTF8_NULL_terminated();
     } else if (tag >= DataFormatTags.DATA_LENGTH_START && tag <= DataFormatTags.DATA_LENGTH_STOP) {
       const length = tag - DataFormatTags.DATA_LENGTH_START;
-      buffer.readData(length);
+      return buffer.readData(length);
     } else if (tag === DataFormatTags.DATA_LENGTH8) {
       return buffer.readData_Length8();
     } else if (tag === DataFormatTags.DATA_LENGTH16LE) {
