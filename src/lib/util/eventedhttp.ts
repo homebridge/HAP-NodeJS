@@ -223,6 +223,20 @@ export class EventedHTTPServer extends EventEmitter {
     }
   }
 
+  /**
+   * Removes the event registrations every connection holds for the accessory with the given aid.
+   *
+   * @param aid - The accessory id of the accessory.
+   * @returns the instance ids of the removed registrations, once for every connection that held one.
+   */
+  public disableEventNotificationsForAccessory(aid: number): number[] {
+    const iids: number[] = [];
+    for (const connection of this.connections) {
+      iids.push(...connection.disableEventNotificationsForAccessory(aid));
+    }
+    return iids;
+  }
+
   private onConnection(socket: Socket): void {
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     const connection = new HAPConnection(this, socket);
@@ -628,6 +642,24 @@ export class HAPConnection extends EventEmitter {
 
   public disableEventNotifications(aid: number, iid: number): void {
     this.registeredEvents.delete(aid + "." + iid);
+  }
+
+  /**
+   * Removes all event registrations of this connection for the accessory with the given aid.
+   *
+   * @param aid - The accessory id of the accessory.
+   * @returns the instance ids of the removed registrations.
+   */
+  public disableEventNotificationsForAccessory(aid: number): number[] {
+    const prefix = `${aid}.`;
+    const iids: number[] = [];
+    for (const event of this.registeredEvents) {
+      if (event.startsWith(prefix)) {
+        this.registeredEvents.delete(event);
+        iids.push(parseInt(event.slice(prefix.length), 10));
+      }
+    }
+    return iids;
   }
 
   public hasEventNotifications(aid: number, iid: number): boolean {

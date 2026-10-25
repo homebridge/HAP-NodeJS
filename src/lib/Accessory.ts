@@ -696,6 +696,13 @@ export class Accessory extends EventEmitter {
 
     this.bridgedAccessories.splice(accessoryIndex, 1);
 
+    if (this._server && accessory.aid != null) {
+      // connected clients stay subscribed to the removed accessory's ids, which a replacement under the same UUID gets again
+      for (const iid of this._server.disableEventNotificationsForAccessory(accessory.aid)) {
+        accessory.getCharacteristicByIID(iid)?.unsubscribe();
+      }
+    }
+
     accessory.bridged = false;
     accessory.bridge = undefined;
     accessory.permsQuarantined = false; // a later bridge starts from a clean slate and re-evaluates the accessory itself

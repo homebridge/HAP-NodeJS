@@ -310,4 +310,12 @@ describe(HAPConnection, () => {
       }
     });
   });
+
+  it("disableEventNotificationsForAccessory removes only the registrations of that accessory", () => {
+    const registeredEvents = new Set(["2.9", "2.10", "12.9", "1.9"]);
+    const connection = { registeredEvents } as unknown as HAPConnection;
+
+    expect(HAPConnection.prototype.disableEventNotificationsForAccessory.call(connection, 2)).toEqual([9, 10]);
+    expect([...registeredEvents]).toEqual(["12.9", "1.9"]);
+  });
 });
