@@ -11,6 +11,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - chore: update hap characteristics and services
 - chore(deps): dependency updates
 - chore(deps): switch from the @homebridge/dbus-native fork back to upstream dbus-native
+- fix: warn only once per address when a connection's local interface can't be found (#1131)
 
 ### Homebridge Dependencies
 

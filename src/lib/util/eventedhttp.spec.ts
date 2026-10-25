@@ -1,4 +1,5 @@
 import { IncomingMessage, ServerResponse } from "http";
+import os from "os";
 import { HAPHTTPClient } from "../../test-utils/HAPHTTPClient";
 import { HAPHTTPCode } from "../HAPServer";
 import { EventedHTTPServer, EventedHTTPServerEvent, HAPConnection, HAPConnectionEvent } from "./eventedhttp";
@@ -281,4 +282,32 @@ describe("eventedhttp", () => {
   });
 
   // TODO test events not delivered while in a request!
+});
+
+describe(HAPConnection, () => {
+  describe("getLocalNetworkInterface", () => {
+    it("should warn only once about a local address it cannot match to an interface", () => {
+      // Node.js leaves out an interface that is up but has no link, like an unused docker0 bridge (#1131)
+      const networkInterfaces = jest.spyOn(os, "networkInterfaces").mockReturnValue({
+        eth0: [{
+          address: "192.168.1.5", netmask: "255.255.255.0", family: "IPv4", mac: "00:00:00:00:00:00", internal: false, cidr: "192.168.1.5/24",
+        }],
+      });
+      const log = jest.spyOn(console, "log").mockImplementation(() => undefined);
+
+      try {
+        const socket = { localAddress: "::ffff:172.17.0.1", remoteAddress: "::ffff:192.168.1.5", remotePort: 51612 };
+        for (let i = 0; i < 3; i++) {
+          // @ts-expect-error: private access
+          expect(HAPConnection.getLocalNetworkInterface(socket)).toEqual("eth0");
+        }
+
+        const warnings = log.mock.calls.filter(([message]) => String(message).includes("unable to determine which interface"));
+        expect(warnings).toHaveLength(1);
+      } finally {
+        log.mockRestore();
+        networkInterfaces.mockRestore();
+      }
+    });
+  });
 });

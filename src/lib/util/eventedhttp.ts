@@ -345,6 +345,13 @@ export class HAPConnection extends EventEmitter {
   static readonly EVENT_COALESCING_DELAY = 250;
 
   /**
+   * Local addresses {@link getLocalNetworkInterface} has already warned about. An address can stay unmatchable for
+   * good - Node.js leaves out interfaces that are up but have no link, like an unused docker0 bridge - and then
+   * every connection to it would repeat the same warning.
+   */
+  private static readonly unmatchedLocalAddresses = new Set<string>();
+
+  /**
    * @private file-private API
    */
   readonly server: EventedHTTPServer;
@@ -884,8 +891,14 @@ export class HAPConnection extends EventEmitter {
       }
     }
 
-    console.log("WARNING: unable to determine which interface to use for socket coming from " + socket.remoteAddress + ":" + socket.remotePort + " to " +
-      socket.localAddress + ".");
+    const message = "unable to determine which interface to use for socket coming from " + socket.remoteAddress + ":" + socket.remotePort + " to " +
+      socket.localAddress + ".";
+    if (HAPConnection.unmatchedLocalAddresses.has(localAddress)) {
+      debugCon(message);
+    } else {
+      HAPConnection.unmatchedLocalAddresses.add(localAddress);
+      console.log("WARNING: " + message + " Using the default interface. This is only logged once per address.");
+    }
 
     return defaultInterface();
   }
