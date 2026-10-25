@@ -426,15 +426,18 @@ export class ColorUtils {
 
     colorTemperature = Math.round(colorTemperature); // ensure integer
     const hueAndTemperature = lookupTable.get(colorTemperature);
-    assert(colorTemperature != null, "lookup for temperature " + colorTemperature + " did not yield any results");
+    assert(hueAndTemperature != null, "lookup for temperature " + colorTemperature + " did not yield any results");
+
+    // copy the values, rounding them in place would alter the lookup table for every later call
+    let [saturation, hue] = hueAndTemperature;
     if (roundResults) {
-      hueAndTemperature![0] = Math.round(hueAndTemperature![0]);
-      hueAndTemperature![1] = Math.round(hueAndTemperature![1]);
+      saturation = Math.round(saturation);
+      hue = Math.round(hue);
     }
 
     return {
-      saturation: hueAndTemperature![0],
-      hue: hueAndTemperature![1],
+      saturation,
+      hue,
     };
   }
 
