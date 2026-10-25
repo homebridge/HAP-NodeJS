@@ -2039,6 +2039,30 @@ describe("Accessory", () => {
 
         await response;
       });
+
+      test("identify Write of false is answered without identifying", async () => {
+        const identify = jest.fn();
+        accessory.on(AccessoryEventTypes.IDENTIFY, identify);
+
+        // @ts-expect-error: private access
+        accessory.handleSetCharacteristics(connection, {
+          characteristics: [
+            { aid, iid: iids.identify, value: false },
+          ],
+        }, callback);
+
+        // without an answer the request would only complete after the 9s timeout
+        await Promise.race([
+          callbackPromise,
+          PromiseTimeout(500),
+        ]);
+        expect(callback).toHaveBeenCalledWith(undefined, {
+          characteristics: [
+            { aid, iid: iids.identify, status: HAPStatus.SUCCESS },
+          ],
+        });
+        expect(identify).not.toHaveBeenCalled();
+      });
     });
 
     describe("handleResource", () => {

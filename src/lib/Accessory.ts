@@ -495,6 +495,8 @@ export class Accessory extends EventEmitter {
         if (value) {
           const paired = true;
           this.identificationRequest(paired, callback);
+        } else {
+          callback(); // nothing to identify, but the write still needs its answer
         }
       });
   }
@@ -2104,6 +2106,8 @@ export class Accessory extends EventEmitter {
         if (value) {
           const paired = true;
           this.identificationRequest(paired, callback);
+        } else {
+          callback(); // nothing to identify, but the write still needs its answer
         }
       });
   }
