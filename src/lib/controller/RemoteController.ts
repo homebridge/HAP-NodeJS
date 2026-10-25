@@ -717,13 +717,19 @@ export class RemoteController extends EventEmitter
       configuredTarget.targetCategory = targetConfiguration.targetCategory;
       updates.push(TargetUpdates.CATEGORY);
     }
-    if (targetConfiguration.buttonConfiguration) {
+    // the parsed buttonConfiguration is an empty object when the request didn't contain any buttons
+    if (Object.keys(targetConfiguration.buttonConfiguration).length > 0) {
       debug("%d button configurations were updated for target '%s' (%d)",
         Object.keys(targetConfiguration.buttonConfiguration).length,
         configuredTarget.targetName, configuredTarget.targetIdentifier);
 
       for (const configuration of Object.values(targetConfiguration.buttonConfiguration)) {
         const savedConfiguration = configuredTarget.buttonConfiguration[configuration.buttonID];
+        if (!savedConfiguration) {
+          debug("Ignoring update for unknown button %d of target '%s' (%d)",
+            configuration.buttonID, configuredTarget.targetName, configuredTarget.targetIdentifier);
+          continue;
+        }
 
         savedConfiguration.buttonType = configuration.buttonType;
         savedConfiguration.buttonName = configuration.buttonName;
@@ -747,7 +753,8 @@ export class RemoteController extends EventEmitter
       return HAPStatus.INVALID_VALUE_IN_REQUEST;
     }
 
-    if (targetConfiguration.buttonConfiguration) {
+    // the parsed buttonConfiguration is an empty object when the request didn't contain any buttons
+    if (Object.keys(targetConfiguration.buttonConfiguration).length > 0) {
       for (const key in targetConfiguration.buttonConfiguration) {
         if (Object.prototype.hasOwnProperty.call(targetConfiguration.buttonConfiguration, key)) {
           delete configuredTarget.buttonConfiguration[key];
@@ -763,8 +770,10 @@ export class RemoteController extends EventEmitter
       debug ("Target '%s' (%d) was removed", configuredTarget.targetName, configuredTarget.targetIdentifier);
       setTimeout(() => this.emit(RemoteControllerEvents.TARGET_REMOVED, targetConfiguration.targetIdentifier), 0);
 
-      const keys = Object.keys(this.targetConfigurations);
-      this.setActiveIdentifier(keys.length === 0? 0: parseInt(keys[0], 10)); // switch to next available remote
+      if (this.activeIdentifier === targetConfiguration.targetIdentifier) {
+        // switch to next available remote
+        this.setActiveIdentifier(this.targetConfigurations.keys().next().value ?? 0);
+      }
     }
 
     this.updatedTargetConfiguration(); // set response
