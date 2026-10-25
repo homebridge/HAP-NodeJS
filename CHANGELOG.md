@@ -41,6 +41,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix(accessory): handle a paired identify without a set listener on the Identify characteristic
 - fix(characteristic): reject instead of throwing when a legacy callback supplies an illegal value
 - fix(characteristic): recompute the configuration number when setProps is called after publish
+- refactor(accessory): share the read and write timeout handling and answer an empty write at once
 
 ### Homebridge Dependencies
 
