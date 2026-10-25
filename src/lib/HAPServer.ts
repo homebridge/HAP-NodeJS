@@ -410,7 +410,16 @@ export class HAPServer extends EventEmitter {
     request.on("data", data => buffers.push(data));
 
     request.on("end", () => {
-      const url = new URL(request.url!, "http://hap-nodejs.local"); // parse the url (query strings etc)
+      let url: URL;
+      try {
+        url = new URL(request.url!, "http://hap-nodejs.local"); // parse the url (query strings etc)
+      } catch {
+        // e.g. "//[" parses as an invalid host. this runs in an event listener, so a throw here would crash the process
+        debug("[%s] Received request with an invalid url: %s", this.accessoryInfo.username, request.url);
+        response.writeHead(HAPHTTPCode.BAD_REQUEST, { "Content-Type": HAPMimeTypes.HAP_JSON });
+        response.end(JSON.stringify({ status: HAPStatus.INVALID_VALUE_IN_REQUEST }));
+        return;
+      }
 
       const handler = this.getHandler(url);
 
