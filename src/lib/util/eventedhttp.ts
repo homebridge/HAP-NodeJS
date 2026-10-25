@@ -478,8 +478,8 @@ export class HAPConnection extends EventEmitter {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   off(event: string | symbol, listener: (...args: any[]) => void): this {
-    const result =  super.off(event, listener);
     const beforeCount = this.listeners(event).length;
+    const result =  super.off(event, listener);
     this.debugListenerRegistration(event, false, beforeCount);
     return result;
   }

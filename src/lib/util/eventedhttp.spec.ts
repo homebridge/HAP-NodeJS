@@ -1,3 +1,4 @@
+import { EventEmitter } from "events";
 import { IncomingMessage, ServerResponse } from "http";
 import net, { AddressInfo } from "net";
 import os from "os";
@@ -451,6 +452,21 @@ describe(EventedHTTPServer, () => {
 });
 
 describe(HAPConnection, () => {
+  describe("listener registration debugging", () => {
+    it.each(["off", "removeListener"] as const)("%s() should report the listener count from before the removal", (method) => {
+      const connection = Object.create(HAPConnection.prototype) as HAPConnection;
+      EventEmitter.call(connection);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const debugListenerRegistration = jest.spyOn(connection as any, "debugListenerRegistration").mockImplementation(() => undefined);
+
+      const listener = (): void => undefined;
+      connection.on(HAPConnectionEvent.CLOSED, listener);
+      connection[method](HAPConnectionEvent.CLOSED, listener);
+
+      expect(debugListenerRegistration).toHaveBeenLastCalledWith(HAPConnectionEvent.CLOSED, false, 1);
+    });
+  });
+
   describe("getLocalNetworkInterface", () => {
     it("should warn only once about a local address it cannot match to an interface", () => {
       // Node.js leaves out an interface that is up but has no link, like an unused docker0 bridge (#1131)
