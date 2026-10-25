@@ -460,6 +460,7 @@ export class DataStreamServer extends EventEmitter {
 
     if (!hadListeners) {
       debug("[%s] WARNING no handler was found for message: %o", connection.remoteAddress, message);
+      connection.respondToUnhandledRequest(message);
     }
   }
 
@@ -888,6 +889,7 @@ export class DataStreamConnection extends EventEmitter {
           let requestHandler: RequestHandler;
           if (!handler.requestHandler || !(requestHandler = handler.requestHandler[message.topic])) {
             debug("[%s] WARNING no request handler was found for message: %o", this.remoteAddress, message);
+            this.respondToUnhandledRequest(message);
             return;
           }
 
@@ -959,6 +961,23 @@ export class DataStreamConnection extends EventEmitter {
     }
 
     return frames;
+  }
+
+  /**
+   * Answers a request which no handler took care of, so the controller doesn't wait for a response which never comes.
+   *
+   * @private
+   */
+  respondToUnhandledRequest(message: DataStreamMessage): void {
+    if (message.type !== MessageType.REQUEST || typeof message.id !== "number" || this.isConsideredClosed()) {
+      return;
+    }
+
+    try {
+      this.sendResponse(message.protocol, message.topic, message.id, HDSStatus.MISSING_PROTOCOL);
+    } catch (error) {
+      debug("[%s] Failed to answer the unhandled request: %s", this.remoteAddress, error.message);
+    }
   }
 
   /**
