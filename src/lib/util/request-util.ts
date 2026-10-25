@@ -1,5 +1,6 @@
 import { CharacteristicValue, Nullable } from "../../types";
 import { CharacteristicProps, Formats } from "../Characteristic";
+import { HAPStatus, IsKnownHAPStatusError } from "../HAPServer";
 
 /**
  * Prepares the characteristic value to be sent to the HomeKit controller.
@@ -119,4 +120,27 @@ export function numericUpperBound(format: Formats | string): number {
   default:
     throw new Error("Unable to determine numeric lower bound for " + format);
   }
+}
+
+const numberPattern = /^-?\d+$/;
+
+/**
+ * Extracts the {@link HAPStatus} a handler reported through a generic error whose message is the status number.
+ *
+ * @param error - The error reported by the handler.
+ * @returns the status, or {@link HAPStatus.SERVICE_COMMUNICATION_FAILURE} if the message isn't a known status.
+ * @private
+ */
+export function extractHAPStatusFromError(error: Error): HAPStatus {
+  let errorValue = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
+
+  if (numberPattern.test(error.message)) {
+    const value = parseInt(error.message, 10);
+
+    if (IsKnownHAPStatusError(value)) {
+      errorValue = value;
+    }
+  }
+
+  return errorValue;
 }

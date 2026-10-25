@@ -259,13 +259,14 @@ import type {
   WiFiConfigurationControl,
   WiFiSatelliteStatus,
 } from "./definitions";
-import { HAPStatus, IsKnownHAPStatusError } from "./HAPServer";
+import { HAPStatus } from "./HAPServer";
 import { IdentifierCache } from "./model/IdentifierCache";
 import { clone } from "./util/clone";
 import { HAPConnection } from "./util/eventedhttp";
 import { HapStatusError } from "./util/hapStatusError";
 import { once } from "./util/once";
 import {
+  extractHAPStatusFromError,
   formatOutgoingCharacteristicValue,
   isIntegerNumericFormat,
   isNumericFormat,
@@ -684,21 +685,6 @@ class ValidValuesIterable implements Iterable<number> {
     }
   }
 
-}
-
-const numberPattern = /^-?\d+$/;
-function extractHAPStatusFromError(error: Error) {
-  let errorValue = HAPStatus.SERVICE_COMMUNICATION_FAILURE;
-
-  if (numberPattern.test(error.message)) {
-    const value = parseInt(error.message, 10);
-
-    if (IsKnownHAPStatusError(value)) {
-      errorValue = value;
-    }
-  }
-
-  return errorValue;
 }
 
 function maxWithUndefined(a?: number, b?: number): number | undefined {

@@ -11,7 +11,6 @@ import {
   CharacteristicsReadResponse,
   CharacteristicsWriteRequest,
   CharacteristicsWriteResponse,
-  CharacteristicValue,
   CharacteristicWrite,
   CharacteristicWriteData,
   ConstructorArgs,
@@ -33,9 +32,7 @@ import {
   Access,
   ChangeReason,
   Characteristic,
-  CharacteristicEventTypes,
   CharacteristicOperationContext,
-  CharacteristicSetCallback,
   Perms,
   describePerms,
   isValidPerms,
@@ -70,7 +67,9 @@ import { IdentifierCache } from "./model/IdentifierCache";
 import { SerializedService, Service, ServiceCharacteristicChange, ServiceEventTypes, ServiceId } from "./Service";
 import { clone } from "./util/clone";
 import { EventName, HAPConnection, HAPUsername } from "./util/eventedhttp";
-import { formatOutgoingCharacteristicValue } from "./util/request-util";
+import { HapStatusError } from "./util/hapStatusError";
+import { once } from "./util/once";
+import { extractHAPStatusFromError, formatOutgoingCharacteristicValue } from "./util/request-util";
 import * as uuid from "./util/uuid";
 import { toShortForm } from "./util/uuid";
 import { checkName } from "./util/checkName";
@@ -335,9 +334,8 @@ export const enum AccessoryEventTypes {
   /**
    * Emitted when an iOS device wishes for this Accessory to identify itself. If `paired` is false, then
    * this device is currently browsing for Accessories in the system-provided "Add Accessory" screen. If
-   * `paired` is true, then this is a device that has already paired with us. Note that if `paired` is true,
-   * listening for this event is a shortcut for the underlying mechanism of setting the `Identify` Characteristic:
-   * `getService(Service.AccessoryInformation).getCharacteristic(Characteristic.Identify).on('set', ...)`
+   * `paired` is true, then this is a device that has already paired with us, and wrote `true` to the `Identify` Characteristic
+   * of the `AccessoryInformation` service (after any handlers a plugin set up on that characteristic were called).
    * You must call the callback for identification to be successful.
    */
   IDENTIFY = "identify",
@@ -486,19 +484,6 @@ export class Accessory extends EventEmitter {
     checkName(this.displayName, "Name", displayName);
     this.addService(Service.AccessoryInformation)
       .setCharacteristic(Characteristic.Name, displayName);
-
-    // sign up for when iOS attempts to "set" the `Identify` characteristic - this means a paired device wishes
-    // for us to identify ourselves (as opposed to an unpaired device - that case is handled by HAPServer 'identify' event)
-    this.getService(Service.AccessoryInformation)!
-      .getCharacteristic(Characteristic.Identify)!
-      .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        if (value) {
-          const paired = true;
-          this.identificationRequest(paired, callback);
-        } else {
-          callback(); // nothing to identify, but the write still needs its answer
-        }
-      });
   }
 
   private identificationRequest(paired: boolean, callback: IdentifyCallback) {
@@ -512,6 +497,42 @@ export class Accessory extends EventEmitter {
       debug("[%s] Identification request ignored; no listeners to 'identify' event", this.displayName);
       callback();
     }
+  }
+
+  /**
+   * A paired device wishes for us to identify ourselves by writing `true` to the `Identify` characteristic (as opposed
+   * to an unpaired device - that case is handled by the HAPServer 'identify' event). This is handled here rather than
+   * by a `set` listener on the characteristic, so a plugin's own handlers on it don't compete with ours.
+   */
+  private isIdentifyCharacteristic(characteristic: Characteristic): boolean {
+    return characteristic.UUID === Characteristic.Identify.UUID
+      && !!this.getService(Service.AccessoryInformation)?.characteristics.includes(characteristic);
+  }
+
+  /**
+   * @returns a promise resolving once the identification is done, rejecting with the {@link HAPStatus} to answer otherwise.
+   */
+  private handlePairedIdentify(characteristic: Characteristic): Promise<void> {
+    return new Promise((resolve, reject) => {
+      try {
+        this.identificationRequest(true, once((error?: Nullable<Error | HAPStatus>) => {
+          if (!error) {
+            resolve();
+          } else if (typeof error === "number") {
+            reject(new HapStatusError(error).hapStatus);
+          } else if (error instanceof HapStatusError) {
+            reject(error.hapStatus);
+          } else {
+            debug("[%s] Received error from identify handler %s", this.displayName, error.stack);
+            reject(extractHAPStatusFromError(error));
+          }
+        }));
+      } catch (error) {
+        this.sendCharacteristicWarning(characteristic, CharacteristicWarningType.ERROR_MESSAGE,
+          `Unhandled error thrown inside identify handler: ${error?.message}`);
+        reject(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      }
+    });
   }
 
   /**
@@ -1915,7 +1936,13 @@ export class Accessory extends EventEmitter {
         return { status: HAPStatus.INVALID_VALUE_IN_REQUEST };
       }
 
-      return characteristic.handleSetRequest(data.value, connection).then(value => {
+      const accessory = this.getAccessoryByAID(data.aid)!;
+      return characteristic.handleSetRequest(data.value, connection).then(async (value) => {
+        if (data.value && accessory.isIdentifyCharacteristic(characteristic)) {
+          await accessory.handlePairedIdentify(characteristic);
+        }
+        return value;
+      }).then((value) => {
         debug("[%s] Setting Characteristic \"%s\" to value %s", this.displayName, characteristic.displayName, data.value);
         return {
           // if write response is requests and value is provided, return that
@@ -2097,19 +2124,6 @@ export class Accessory extends EventEmitter {
         this.primaryService = service;
       }
     }
-
-    // Fix Identify
-    this
-      .getService(Service.AccessoryInformation)!
-      .getCharacteristic(Characteristic.Identify)!
-      .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        if (value) {
-          const paired = true;
-          this.identificationRequest(paired, callback);
-        } else {
-          callback(); // nothing to identify, but the write still needs its answer
-        }
-      });
   }
 
   private static _generateSetupID(): string {

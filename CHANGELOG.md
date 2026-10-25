@@ -38,6 +38,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix(controller-storage): stop saving restored controller data again after it was cleared
 - fix(accessory): drop client event registrations when a bridged accessory is removed
 - fix(accessory): answer an Identify write of false instead of letting it time out
+- fix(accessory): handle a paired identify without a set listener on the Identify characteristic
 
 ### Homebridge Dependencies
 
