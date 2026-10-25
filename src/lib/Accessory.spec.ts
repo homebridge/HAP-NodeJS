@@ -2040,6 +2040,52 @@ describe("Accessory", () => {
         await response;
       });
 
+      test("identify Write with a plugin onSet handler calls it, identifies, and warns about nothing", async () => {
+        const warnings: string[] = [];
+        accessory.on(AccessoryEventTypes.CHARACTERISTIC_WARNING, warning => warnings.push(warning.message));
+        const onSet = jest.fn();
+        accessory.getService(Service.AccessoryInformation)!.getCharacteristic(Characteristic.Identify).onSet(onSet);
+        accessory.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, identified: IdentifyCallback) => identified());
+
+        await testRequestResponse({
+          characteristics: [
+            { aid, iid: iids.identify, value: true },
+          ],
+        }, {
+          aid,
+          iid: iids.identify,
+          status: HAPStatus.SUCCESS,
+        });
+
+        expect(onSet).toHaveBeenCalledTimes(1);
+        expect(warnings).toEqual([]);
+      });
+
+      test("identify Write answers with the status the identify listener reports", async () => {
+        accessory.on(AccessoryEventTypes.IDENTIFY, (paired: boolean, identified: IdentifyCallback) => {
+          identified(new HapStatusError(HAPStatus.RESOURCE_BUSY));
+        });
+
+        await testRequestResponse({
+          characteristics: [
+            { aid, iid: iids.identify, value: true },
+          ],
+        }, {
+          aid,
+          iid: iids.identify,
+          status: HAPStatus.RESOURCE_BUSY,
+        });
+      });
+
+      test("identify is not handled through a public set listener", () => {
+        const restored = Accessory.deserialize(Accessory.serialize(accessory));
+
+        for (const target of [accessory, restored]) {
+          const identify = target.getService(Service.AccessoryInformation)!.getCharacteristic(Characteristic.Identify);
+          expect(identify.listenerCount(CharacteristicEventTypes.SET)).toBe(0);
+        }
+      });
+
       test("identify Write of false is answered without identifying", async () => {
         const identify = jest.fn();
         accessory.on(AccessoryEventTypes.IDENTIFY, identify);
