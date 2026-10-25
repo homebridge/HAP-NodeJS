@@ -23,6 +23,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - perf(datastream): stop allocating an unused buffer for every received frame
 - fix(datastream): answer requests that have no handler instead of leaving them unanswered
 - fix(remote): read target configurations from the Map they are stored in
+- fix(remote): remove a whole target when the request lists no buttons
 
 ### Homebridge Dependencies
 
