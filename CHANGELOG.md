@@ -30,6 +30,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix(adaptive-lighting): keep Adaptive Lighting on when a control point request is rejected
 - fix(color-utils): stop rounding the shared color temperature lookup table in place
 - fix(adaptive-lighting): guard the curve maths against zero-length segments and NaN
+- fix(check-name): accept names that are a single letter or number
 
 ### Homebridge Dependencies
 

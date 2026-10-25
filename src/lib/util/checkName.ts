@@ -15,9 +15,10 @@ export function checkName(displayName: string, name: string, value: Nullable<Cha
   // Home app validation currently rejects names ending in apostrophes,
   // including U+2019 (curly apostrophe), so the end character is restricted
   // to a Unicode letter or number only.
+  // A single letter or number (e.g. "A" or "1") is a valid name as well.
   if (
     typeof value === "string" &&
-    !/^[\p{L}\p{N}][\p{L}\p{N}\p{Zs}\u2019'&!._:;()/,-]*[\p{L}\p{N}]$/u.test(value)
+    !/^[\p{L}\p{N}](?:[\p{L}\p{N}\p{Zs}\u2019'&!._:;()/,-]*[\p{L}\p{N}])?$/u.test(value)
   ) {
     console.warn(
       "HAP-NodeJS WARNING: The accessory '" + displayName +
