@@ -54,6 +54,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix(advertiser): warn about a system D-Bus connection error instead of crashing
 - fix(tlv): reject a truncated entry in decodeWithLists instead of cutting it short
 - fix(server): skip an event notification whose events were all unregistered
+- fix(server): log the listener count from before the removal in HAPConnection.off()
 
 ### Homebridge Dependencies
 
