@@ -44,6 +44,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - refactor(accessory): share the read and write timeout handling and answer an empty write at once
 - fix(server): answer a malformed request URL with 400 instead of crashing
 - fix(server): only accept the proxy socket on the internal loopback HTTP server
+- fix(server): wait for the whole HTTP response before writing event notifications
 
 ### Homebridge Dependencies
 

@@ -284,6 +284,26 @@ describe("eventedhttp", () => {
 
   // TODO test events not delivered while in a request!
 
+  test("should not write an event into the middle of a response larger than 64 KiB", async () => {
+    const body = "x".repeat(300_000);
+    server.once(EventedHTTPServerEvent.REQUEST, (connection: HAPConnection, request: IncomingMessage, response: ServerResponse) => {
+      connection.enableEventNotifications(1, 1);
+      // an event to be delivered immediately (like a ProgrammableSwitchEvent) arrives while the response is being produced
+      connection.sendEvent(1, 1, "Hello Mars!", true);
+      response.writeHead(HAPHTTPCode.OK, { "Content-Type": "plain/text" });
+      response.end(body);
+    });
+
+    const client = await connectClient();
+    const response = await client.writeHTTPRequest("GET", "/accessories");
+    expect(response.statusCode).toBe(HAPHTTPCode.OK);
+    expect(response.body.toString()).toEqual(body);
+
+    // the event follows once the whole response went out
+    const received = await client.readUntil("EVENT/1.0");
+    expect(received.startsWith("EVENT/1.0 200 OK")).toBeTruthy();
+  });
+
   describe("internal HTTP server", () => {
     // a local process connecting to the internal loopback port must not be able to send requests as this connection
     test("should reject a socket which is not the proxy socket", async () => {
