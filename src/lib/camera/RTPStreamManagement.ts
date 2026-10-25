@@ -1035,10 +1035,29 @@ export class RTPStreamManagement {
       return;
     }
 
-    const data = Buffer.from(value as string, "base64");
-    const objects = tlv.decode(data);
+    let request: ReturnType<RTPStreamManagement["parseSetupEndpointsRequest"]>;
+    try {
+      // parse and check every field before changing any state, so a malformed request can't leave the stream stuck as busy
+      request = this.parseSetupEndpointsRequest(value);
+    } catch (error) {
+      debug("Failed to parse SetupEndpoints request: %s", (error as Error).message);
+      callback(HAPStatus.INVALID_VALUE_IN_REQUEST);
+      return;
+    }
 
-    const sessionIdentifier = uuid.unparse(objects[SetupEndpointsTypes.SESSION_ID]);
+    const {
+      sessionIdentifier,
+      addressVersion,
+      controllerAddress,
+      targetVideoPort,
+      targetAudioPort,
+      videoCryptoSuite,
+      videoMasterKey,
+      videoMasterSalt,
+      audioCryptoSuite,
+      audioMasterKey,
+      audioMasterSalt,
+    } = request;
 
     if (this.streamStatus !== StreamingStatus.AVAILABLE) {
       this.setupEndpointsResponse = tlv.encode(
@@ -1058,28 +1077,6 @@ export class RTPStreamManagement {
 
     this.sessionIdentifier = sessionIdentifier;
     this._updateStreamStatus(StreamingStatus.IN_USE);
-
-    // Address
-    const targetAddressPayload = objects[SetupEndpointsTypes.CONTROLLER_ADDRESS];
-    const processedAddressInfo = tlv.decode(targetAddressPayload);
-    const addressVersion = processedAddressInfo[AddressTypes.ADDRESS_VERSION][0];
-    const controllerAddress = processedAddressInfo[AddressTypes.ADDRESS].toString("utf8");
-    const targetVideoPort = processedAddressInfo[AddressTypes.VIDEO_RTP_PORT].readUInt16LE(0);
-    const targetAudioPort = processedAddressInfo[AddressTypes.AUDIO_RTP_PORT].readUInt16LE(0);
-
-    // Video SRTP Params
-    const videoSRTPPayload = objects[SetupEndpointsTypes.VIDEO_SRTP_PARAMETERS];
-    const processedVideoInfo = tlv.decode(videoSRTPPayload);
-    const videoCryptoSuite = processedVideoInfo[SRTPParametersTypes.SRTP_CRYPTO_SUITE][0];
-    const videoMasterKey = processedVideoInfo[SRTPParametersTypes.MASTER_KEY];
-    const videoMasterSalt = processedVideoInfo[SRTPParametersTypes.MASTER_SALT];
-
-    // Audio SRTP Params
-    const audioSRTPPayload = objects[SetupEndpointsTypes.AUDIO_SRTP_PARAMETERS];
-    const processedAudioInfo = tlv.decode(audioSRTPPayload);
-    const audioCryptoSuite = processedAudioInfo[SRTPParametersTypes.SRTP_CRYPTO_SUITE][0];
-    const audioMasterKey = processedAudioInfo[SRTPParametersTypes.MASTER_KEY];
-    const audioMasterSalt = processedAudioInfo[SRTPParametersTypes.MASTER_SALT];
 
     debug(
       "Session: ", sessionIdentifier,
@@ -1174,6 +1171,57 @@ export class RTPStreamManagement {
       this.handleSessionClosed();
       callback(error);
     });
+  }
+
+  private parseSetupEndpointsRequest(value: CharacteristicValue) {
+    const data = Buffer.from(value as string, "base64");
+    const objects = tlv.decode(data);
+
+    const sessionIdentifier = uuid.unparse(objects[SetupEndpointsTypes.SESSION_ID]);
+
+    // Address
+    const targetAddressPayload = objects[SetupEndpointsTypes.CONTROLLER_ADDRESS];
+    const processedAddressInfo = tlv.decode(targetAddressPayload);
+    const addressVersion = processedAddressInfo[AddressTypes.ADDRESS_VERSION].readUInt8(0);
+    const controllerAddress = processedAddressInfo[AddressTypes.ADDRESS].toString("utf8");
+    const targetVideoPort = processedAddressInfo[AddressTypes.VIDEO_RTP_PORT].readUInt16LE(0);
+    const targetAudioPort = processedAddressInfo[AddressTypes.AUDIO_RTP_PORT].readUInt16LE(0);
+
+    // Video SRTP Params
+    const videoSRTPPayload = objects[SetupEndpointsTypes.VIDEO_SRTP_PARAMETERS];
+    const processedVideoInfo = tlv.decode(videoSRTPPayload);
+    const videoCryptoSuite: SRTPCryptoSuites = processedVideoInfo[SRTPParametersTypes.SRTP_CRYPTO_SUITE].readUInt8(0);
+    const videoMasterKey = processedVideoInfo[SRTPParametersTypes.MASTER_KEY];
+    const videoMasterSalt = processedVideoInfo[SRTPParametersTypes.MASTER_SALT];
+
+    // Audio SRTP Params
+    const audioSRTPPayload = objects[SetupEndpointsTypes.AUDIO_SRTP_PARAMETERS];
+    const processedAudioInfo = tlv.decode(audioSRTPPayload);
+    const audioCryptoSuite: SRTPCryptoSuites = processedAudioInfo[SRTPParametersTypes.SRTP_CRYPTO_SUITE].readUInt8(0);
+    const audioMasterKey = processedAudioInfo[SRTPParametersTypes.MASTER_KEY];
+    const audioMasterSalt = processedAudioInfo[SRTPParametersTypes.MASTER_SALT];
+
+    // if the suite is NONE, keys and salts are zero-length
+    if (videoCryptoSuite !== SRTPCryptoSuites.NONE && (!videoMasterKey || !videoMasterSalt)) {
+      throw new Error("Video SRTP master key or salt is missing");
+    }
+    if (audioCryptoSuite !== SRTPCryptoSuites.NONE && (!audioMasterKey || !audioMasterSalt)) {
+      throw new Error("Audio SRTP master key or salt is missing");
+    }
+
+    return {
+      sessionIdentifier,
+      addressVersion,
+      controllerAddress,
+      targetVideoPort,
+      targetAudioPort,
+      videoCryptoSuite,
+      videoMasterKey,
+      videoMasterSalt,
+      audioCryptoSuite,
+      audioMasterKey,
+      audioMasterSalt,
+    };
   }
 
   private generateSetupEndpointResponse(
