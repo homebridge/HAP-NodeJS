@@ -29,6 +29,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix(adaptive-lighting): forget the saved curve position when a new curve arrives
 - fix(adaptive-lighting): keep Adaptive Lighting on when a control point request is rejected
 - fix(color-utils): stop rounding the shared color temperature lookup table in place
+- fix(adaptive-lighting): guard the curve maths against zero-length segments and NaN
 
 ### Homebridge Dependencies
 
