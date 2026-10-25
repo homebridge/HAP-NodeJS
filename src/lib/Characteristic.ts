@@ -562,6 +562,11 @@ export const enum CharacteristicEventTypes {
    * @private
    */
   CHARACTERISTIC_WARNING = "characteristic-warning",
+  /**
+   * Emitted when {@link Characteristic.setProps} was called, so the configuration number can follow a change of the properties.
+   * @private
+   */
+  CHARACTERISTIC_CONFIGURATION_CHANGE = "characteristic-configurationChange",
 }
 
 /**
@@ -614,6 +619,10 @@ export declare interface Characteristic {
    * @private
    */
   on(event: "characteristic-warning", listener: (type: CharacteristicWarningType, message: string, stack?: string) => void): this;
+  /**
+   * @private
+   */
+  on(event: "characteristic-configurationChange", listener: () => void): this;
 
   /**
    * @private
@@ -639,6 +648,10 @@ export declare interface Characteristic {
    * @private
    */
   emit(event: "characteristic-warning", type: CharacteristicWarningType, message: string, stack?: string): boolean;
+  /**
+   * @private
+   */
+  emit(event: "characteristic-configurationChange"): boolean;
 
 }
 
@@ -1856,7 +1869,6 @@ export class Characteristic extends EventEmitter {
    */
   public setProps(props: PartialAllowingNull<CharacteristicProps>): Characteristic {
     assert(props, "props cannot be undefined when setting props");
-    // TODO calling setProps after publish doesn't lead to a increment in the current configuration number
 
     let formatDidChange = false;
 
@@ -2046,6 +2058,10 @@ export class Characteristic extends EventEmitter {
         throw new Error("Error setting CharacteristicsProps for '" + this.displayName + "': 'minValue' cannot be greater or equal the 'maxValue'!");
       }
     }
+
+    // the properties are part of the configuration HomeKit is served, so a published accessory must recompute its configuration number;
+    // a call that changes nothing leaves the configuration hash and therefore the number as it was
+    this.emit(CharacteristicEventTypes.CHARACTERISTIC_CONFIGURATION_CHANGE);
 
     if ((isNumericFormat(this.props.format) || this.props.format === Formats.STRING)
       && this.value != null

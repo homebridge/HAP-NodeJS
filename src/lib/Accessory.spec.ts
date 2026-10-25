@@ -396,6 +396,69 @@ describe("Accessory", () => {
     });
   });
 
+  describe("configuration number", () => {
+    const setUp = (target: Accessory) => {
+      target._identifierCache = new IdentifierCache(serverUsername);
+      target._accessoryInfo = AccessoryInfo.create(serverUsername);
+      const updateAdvertisement = jest.fn();
+      target._advertiser = {
+        updateAdvertisement,
+        destroy: jest.fn(),
+      } as unknown as BonjourHAPAdvertiser;
+      // @ts-expect-error: private access
+      target._accessoryInfo.checkForCurrentConfigurationNumberIncrement(target.internalHAPRepresentation(), true); // what publish() does
+      return updateAdvertisement;
+    };
+
+    test("setProps after publish increments the configuration number, unless nothing changed", () => {
+      jest.useFakeTimers({ doNotFake: ["nextTick", "queueMicrotask"] });
+
+      try {
+        // created under the fake timers, so its queued configuration updates can be run
+        const light = new Accessory("Light", uuid.generate("configuration number"));
+        const brightness = light.addService(Service.Lightbulb, "Light").getCharacteristic(Characteristic.Brightness);
+        const updateAdvertisement = setUp(light);
+        const configVersion = light._accessoryInfo!.getConfigVersion();
+        jest.advanceTimersByTime(1000); // the update queued by adding the service changes nothing
+        expect(light._accessoryInfo!.getConfigVersion()).toBe(configVersion);
+
+        brightness.setProps({ minValue: 0, maxValue: 100 }); // the defaults: nothing changes
+        jest.advanceTimersByTime(1000);
+        expect(light._accessoryInfo!.getConfigVersion()).toBe(configVersion);
+        expect(updateAdvertisement).not.toHaveBeenCalled();
+
+        brightness.setProps({ maxValue: 50 });
+        jest.advanceTimersByTime(1000);
+        expect(light._accessoryInfo!.getConfigVersion()).toBe(configVersion + 1);
+        expect(updateAdvertisement).toHaveBeenCalledTimes(1);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test("setProps on a bridged accessory increments the configuration number of the bridge", () => {
+      jest.useFakeTimers({ doNotFake: ["nextTick", "queueMicrotask"] });
+
+      try {
+        const bridge = new Bridge("TestBridge", uuid.generate("bridge test"));
+        const light = new Accessory("Light", uuid.generate("configuration number"));
+        const brightness = light.addService(Service.Lightbulb, "Light").getCharacteristic(Characteristic.Brightness);
+        bridge.addBridgedAccessory(light);
+        const updateAdvertisement = setUp(bridge);
+        const configVersion = bridge._accessoryInfo!.getConfigVersion();
+        jest.advanceTimersByTime(1000); // the update queued by adding the accessory changes nothing
+        expect(bridge._accessoryInfo!.getConfigVersion()).toBe(configVersion);
+
+        brightness.setProps({ minStep: 5 });
+        jest.advanceTimersByTime(1000);
+        expect(bridge._accessoryInfo!.getConfigVersion()).toBe(configVersion + 1);
+        expect(updateAdvertisement).toHaveBeenCalledTimes(1);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+  });
+
   describe("accessory controllers", () => {
     test("configureController deserialize controllers and remove/add/replace services correctly", () => {
       accessory.configureController(new TestController());
