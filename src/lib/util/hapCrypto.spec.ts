@@ -163,6 +163,17 @@ describe("hapCrypto", () => {
       );
       expect(S_decrypted1).toEqual(Buffer.concat([message1, message2]));
     });
+
+    test("incomplete frames decryption; split within the length header", () => {
+      const encrypted = Buffer.concat([
+        hapCrypto.layerEncrypt(message0, serverEncryption),
+        hapCrypto.layerEncrypt(message1, serverEncryption),
+      ]);
+      const splitAt = 2 + message0.length + 16 + 1; // the first byte of the second frame's length header
+
+      expect(hapCrypto.layerDecrypt(encrypted.subarray(0, splitAt), clientEncryption)).toEqual(message0);
+      expect(hapCrypto.layerDecrypt(encrypted.subarray(splitAt), clientEncryption)).toEqual(message1);
+    });
   });
 
   describe("curve25519", () => {
