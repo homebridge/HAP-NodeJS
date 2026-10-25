@@ -35,6 +35,9 @@ import {
 
 const debug = createDebug("HAP-NodeJS:Controller:TransitionControl");
 
+// lower bound for the update timer, an update interval of zero sent by the controller would otherwise result in a busy loop
+const MINIMUM_UPDATE_INTERVAL = 1000;
+
 const enum SupportedCharacteristicValueTransitionConfigurationsTypes {
   SUPPORTED_TRANSITION_CONFIGURATION = 0x01,
 }
@@ -847,7 +850,10 @@ export class AdaptiveLightingController
       interpolatedTemperature = lowerBound.temperature;
       interpolatedAdjustmentFactor = lowerBound.brightnessAdjustmentFactor;
     } else {
-      const timePercentage = (transitionPoint.transitionOffset - (lowerBound.duration ?? 0)) / upperBound.transitionTime;
+      // a transition time of zero means the upper bound is reached immediately (and avoids dividing by zero)
+      const timePercentage = upperBound.transitionTime > 0
+        ? (transitionPoint.transitionOffset - (lowerBound.duration ?? 0)) / upperBound.transitionTime
+        : 1;
       interpolatedTemperature = lowerBound.temperature + (upperBound.temperature - lowerBound.temperature) * timePercentage;
       interpolatedAdjustmentFactor = lowerBound.brightnessAdjustmentFactor
         + (upperBound.brightnessAdjustmentFactor - lowerBound.brightnessAdjustmentFactor) * timePercentage;
@@ -865,6 +871,16 @@ export class AdaptiveLightingController
 
     // apply any manually applied temperature adjustments
     temperature += this.customTemperatureAdjustment;
+
+    if (Number.isNaN(temperature)) { // infinite values are fine, they get clamped below
+      // e.g. the cached brightness value isn't a number; skip this step instead of throwing inside the update timer
+      debug("[%s] Skipping adaptive lighting update as the calculated temperature is %d (for brightness %d)",
+        this.lightbulb.displayName, temperature, adjustmentMultiplier);
+      if (!dryRun) {
+        this.updateTimeout = setTimeout(this.scheduleNextUpdate.bind(this), Math.max(MINIMUM_UPDATE_INTERVAL, this.activeTransition.updateInterval));
+      }
+      return;
+    }
 
     const min = this.colorTemperatureCharacteristic?.props.minValue ?? 140;
     const max = this.colorTemperatureCharacteristic?.props.maxValue ?? 500;
@@ -936,7 +952,7 @@ export class AdaptiveLightingController
     }
 
     if (!dryRun) {
-      this.updateTimeout = setTimeout(this.scheduleNextUpdate.bind(this), this.activeTransition.updateInterval);
+      this.updateTimeout = setTimeout(this.scheduleNextUpdate.bind(this), Math.max(MINIMUM_UPDATE_INTERVAL, this.activeTransition.updateInterval));
     }
   }
 

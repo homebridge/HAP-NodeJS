@@ -151,4 +151,64 @@ describe("adaptiveLightingController", () => {
       }
     });
   });
+
+  describe("number edge cases", () => {
+    it("should handle a curve segment with a transition time of zero", async () => {
+      const { lightbulb, controller } = createController();
+      const entries: CurveEntry[] = [
+        {
+          temperature: 200,
+          adjustmentFactor: -0.5,
+          transitionOffset: 0,
+          duration: 0,
+        },
+        {
+          temperature: 300,
+          adjustmentFactor: -0.5,
+          transitionOffset: 0,
+          duration: 0,
+        },
+        { temperature: 400, adjustmentFactor: -0.5, transitionOffset: HOUR },
+      ];
+
+      await writeTransitionControl(lightbulb, buildUpdateTransition(lightbulb, Date.now(), entries));
+
+      expect(controller.isAdaptiveLightingActive()).toBeTruthy();
+      // 300 mired at the upper bound, adjusted by -0.5 * 50% brightness
+      expect(lightbulb.getCharacteristic(Characteristic.ColorTemperature).value).toBe(275);
+      controller.disableAdaptiveLighting();
+    });
+
+    it("should skip an update when the temperature is not a number instead of throwing in the timer", async () => {
+      const { lightbulb, controller } = createController();
+      await writeTransitionControl(lightbulb, buildUpdateTransition(lightbulb, Date.now(), curve(5)));
+
+      lightbulb.getCharacteristic(Characteristic.Brightness).value = Number.NaN;
+      expect(() => jest.advanceTimersByTime(60000)).not.toThrow();
+      expect(controller.isAdaptiveLightingActive()).toBeTruthy();
+
+      // the update loop keeps running once the brightness is a number again
+      lightbulb.getCharacteristic(Characteristic.Brightness).value = 100;
+      jest.advanceTimersByTime(60000);
+      expect(lightbulb.getCharacteristic(Characteristic.ColorTemperature).value).toBe(150);
+      controller.disableAdaptiveLighting();
+    });
+
+    it("should not schedule updates more often than once per second", async () => {
+      const { lightbulb, controller } = createController();
+      const setTimeoutSpy = jest.spyOn(globalThis, "setTimeout");
+      try {
+        await writeTransitionControl(lightbulb, buildUpdateTransition(lightbulb, Date.now(), curve(5), 0));
+
+        const delays = setTimeoutSpy.mock.calls.map(call => call[1]);
+        expect(delays.length).toBeGreaterThan(0);
+        for (const delay of delays) {
+          expect(delay).toBeGreaterThanOrEqual(1000);
+        }
+      } finally {
+        setTimeoutSpy.mockRestore();
+        controller.disableAdaptiveLighting();
+      }
+    });
+  });
 });
