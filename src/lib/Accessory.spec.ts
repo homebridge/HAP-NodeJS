@@ -1056,6 +1056,18 @@ describe("Accessory", () => {
         accessory.handleAddPairing(connection, clientUsername1, crypto.randomBytes(32), PermissionTypes.ADMIN, callback);
         expect(callback).toHaveBeenCalledWith(TLVErrorCode.UNKNOWN);
       });
+
+      test("update permission with a public key which only differs in bytes that are not valid UTF-8", () => {
+        // 0x80 and 0x81 are both a lone UTF-8 continuation byte, so toString() turns both into the same U+FFFD
+        const existingKey = Buffer.alloc(32, 0x80);
+        accessory._accessoryInfo = accessoryInfoPaired;
+        accessoryInfoPaired.addPairedClient(clientUsername1, existingKey, PermissionTypes.USER);
+
+        // @ts-expect-error: private access
+        accessory.handleAddPairing(connection, clientUsername1, Buffer.alloc(32, 0x81), PermissionTypes.ADMIN, callback);
+        expect(callback).toHaveBeenCalledWith(TLVErrorCode.UNKNOWN);
+        expect(accessoryInfoPaired.pairedClients[clientUsername1].permission).toBe(PermissionTypes.USER);
+      });
     });
 
     describe("handleRemovePairing", () => {

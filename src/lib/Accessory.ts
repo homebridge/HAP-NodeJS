@@ -1495,7 +1495,7 @@ export class Accessory extends EventEmitter {
 
     const existingKey = this._accessoryInfo.getClientPublicKey(username);
     if (existingKey) {
-      if (existingKey.toString() !== publicKey.toString()) {
+      if (!existingKey.equals(publicKey)) {
         callback(TLVErrorCode.UNKNOWN);
         return;
       }

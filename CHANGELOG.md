@@ -55,6 +55,7 @@ All notable changes to `@homebridge/hap-nodejs` will be documented in this file.
 - fix(tlv): reject a truncated entry in decodeWithLists instead of cutting it short
 - fix(server): skip an event notification whose events were all unregistered
 - fix(server): log the listener count from before the removal in HAPConnection.off()
+- fix(accessory): compare a pairing's public key byte for byte instead of as text
 
 ### Homebridge Dependencies
 
